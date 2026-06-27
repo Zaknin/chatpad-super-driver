@@ -9,6 +9,7 @@ chatpad-stage*.tar.gz
 
 # Visual Studio, WDK, and build outputs
 .vs/
+artifacts/
 Debug/
 Release/
 x86/
@@ -26,6 +27,8 @@ obj/
 *.tlog
 *.lastbuildstate
 *.log
+*.user
+*.suo
 *.sys
 *.exe
 *.dll

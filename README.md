@@ -4,6 +4,16 @@
 >
 >Currently, only wired controllers are supported.  Future plans include investigating support for wireless XBox 360 controllers.
 
+#### Windows 11 Port
+
+Windows 11 port work is isolated on the `win11-port`, `analysis/source-audit`, and `build/modern-wdk` branches. The modern project is currently a compile-only, nonfunctional skeleton and must not be installed.
+
+- [Legacy architecture](docs/LEGACY-ARCHITECTURE.md)
+- [Windows 11 blockers](docs/WIN11-BLOCKERS.md)
+- [Porting plan](docs/PORTING-PLAN.md)
+- [Building](docs/BUILDING.md)
+- [Toolchain requirements](docs/TOOLCHAIN.md)
+
 #### ThisCodedBox Goals and Additions
 
 Configured driver package to function on **Windows 10 x64**
