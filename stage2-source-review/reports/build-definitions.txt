@@ -1,0 +1,218 @@
+
+============================================================
+FILE: chatpad_control/makefile
+============================================================
+!INCLUDE $(NTMAKEENV)\makefile.def
+
+
+
+============================================================
+FILE: chatpad_control/sources
+============================================================
+MAJORCOMP=GAFBlizzard
+
+TARGETNAME=chatpad_control
+TARGETPATH=.
+TARGETTYPE=PROGRAM
+TARGETLIBS=$(SDK_LIB_PATH)\user32.lib \
+           $(SDK_LIB_PATH)\kernel32.lib \
+
+UMTYPE=console
+# TODO how does UMBASE work?
+UMBASE=0x400000
+UMENTRY=main
+
+# Use multithreaded static libraries.
+USE_LIBCMT=1
+
+INCLUDES=..\include
+
+SOURCES=chatpad_cmdline.cpp         \
+        chatpad_control_code.cpp    \
+        chatpad_config.cpp          \
+
+
+
+============================================================
+FILE: chatpad_keyboard_kmdf/makefile
+============================================================
+!INCLUDE $(NTMAKEENV)\makefile.def
+
+
+
+============================================================
+FILE: chatpad_keyboard_kmdf/sources
+============================================================
+TARGETNAME=chatpad_keyboard_kmdf
+TARGETTYPE=DRIVER
+
+KMDF_VERSION_MAJOR=1
+KMDF_VERSION_MINOR=9
+
+SOURCES=chatpad_keyboard_kmdf.cpp      \
+
+INCLUDES=..\include
+
+# TODO:  What does the following do?
+!IFDEF WDF_ROOT
+!Include $(WDF_ROOT)\project.mk
+!ENDIF
+
+TARGETPATH=.
+TARGETLIBS=$(DDK_LIB_PATH)\hidclass.lib   \
+           $(DDK_LIB_PATH)\ntstrsafe.lib  \
+           $(DDK_LIB_PATH)\wdmsec.lib
+
+TARGET_DESTINATION=wdf
+
+
+
+============================================================
+FILE: chatpad_mouse_kmdf/makefile
+============================================================
+!INCLUDE $(NTMAKEENV)\makefile.def
+
+
+
+============================================================
+FILE: chatpad_mouse_kmdf/sources
+============================================================
+TARGETNAME=chatpad_mouse_kmdf
+TARGETTYPE=DRIVER
+
+KMDF_VERSION_MAJOR=1
+KMDF_VERSION_MINOR=9
+
+SOURCES=chatpad_mouse_kmdf.cpp      \
+
+INCLUDES=..\include
+
+# TODO:  What does the following do?
+!IFDEF WDF_ROOT
+!Include $(WDF_ROOT)\project.mk
+!ENDIF
+
+TARGETPATH=.
+TARGETLIBS=$(DDK_LIB_PATH)\hidclass.lib   \
+           $(DDK_LIB_PATH)\ntstrsafe.lib  \
+           $(DDK_LIB_PATH)\wdmsec.lib
+
+TARGET_DESTINATION=wdf
+
+
+
+============================================================
+FILE: filter/makefile
+============================================================
+!INCLUDE $(NTMAKEENV)\makefile.def
+
+
+
+============================================================
+FILE: filter/sources
+============================================================
+TARGETNAME=chatpad_filter
+TARGETTYPE=DRIVER
+
+KMDF_VERSION_MAJOR=1
+KMDF_VERSION_MINOR=9
+
+SOURCES=chatpad_filter.cpp             \
+
+INCLUDES=..\include
+
+# TODO:  What does the following do?
+!IFDEF WDF_ROOT
+!Include $(WDF_ROOT)\project.mk
+!ENDIF
+
+TARGETPATH=.
+TARGETLIBS=$(DDK_LIB_PATH)\wdmsec.lib
+
+
+
+============================================================
+FILE: hid_keyboard_interface/makefile
+============================================================
+!INCLUDE $(NTMAKEENV)\makefile.def
+
+
+
+============================================================
+FILE: hid_keyboard_interface/sources
+============================================================
+TARGETNAME=chatpad_keyboard
+TARGETTYPE=DRIVER
+
+KMDF_VERSION_MAJOR=1
+KMDF_VERSION_MINOR=9
+
+TARGETPATH=.
+TARGETLIBS=$(DDK_LIB_PATH)\hidclass.lib
+
+SOURCES=chatpad_keyboard.c
+
+# TODO what does this specify?
+TARGET_DESTINATION=wdf
+
+
+
+============================================================
+FILE: hid_mouse_interface/makefile
+============================================================
+!INCLUDE $(NTMAKEENV)\makefile.def
+
+
+
+============================================================
+FILE: hid_mouse_interface/sources
+============================================================
+TARGETNAME=chatpad_mouse
+TARGETTYPE=DRIVER
+
+KMDF_VERSION_MAJOR=1
+KMDF_VERSION_MINOR=9
+
+TARGETPATH=.
+TARGETLIBS=$(DDK_LIB_PATH)\hidclass.lib
+
+SOURCES=chatpad_mouse.c
+
+# TODO what does this specify?
+TARGET_DESTINATION=wdf
+
+
+
+============================================================
+FILE: installer/makefile
+============================================================
+!INCLUDE $(NTMAKEENV)\makefile.def
+
+
+
+============================================================
+FILE: installer/sources
+============================================================
+MAJORCOMP=GAFBlizzard
+
+TARGETNAME=chatpad_installer
+TARGETPATH=.
+TARGETTYPE=PROGRAM
+TARGETLIBS=$(SDK_LIB_PATH)\setupapi.lib \
+
+UMTYPE=windows
+# TODO how does UMBASE work?  Is it needed?
+UMBASE=0x400000
+UMENTRY=winmain
+
+# Use multithreaded static libraries.
+USE_LIBCMT=1
+
+# TODO why doesn't it work to just include the uninstaller directory here?
+INCLUDES=..\include                                      \
+
+SOURCES=chatpad_installer.cpp                            \
+        uninstall_virtual_devices.cpp                    \
+        chatpad_installer.rc                             \
+
+

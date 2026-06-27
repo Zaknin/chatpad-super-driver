@@ -1,0 +1,93 @@
+     1	//
+     2	// Chatpad virtual mouse KMDF driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+     3	//
+     4	// This code is released under the MIT license.  See LICENSE.TXT for details.
+     5	//
+     6	
+     7	// This driver was hand-written by following the hidkmdf example from the 7600.16385.1 WinDDK.
+     8	
+     9	#ifndef CHATPAD_MOUSE_KMDF_H
+    10	#define CHATPAD_MOUSE_KMDF_H
+    11	
+    12	// TODO REMOVE if debug output is not desired
+    13	#define CHATPAD_MOUSE_KMDF_DBG
+    14	
+    15	extern "C"
+    16	{
+    17	#include <ntddk.h>
+    18	#include <wdf.h>
+    19	}
+    20	
+    21	#include <hidport.h>
+    22	
+    23	#define NTSTRSAFE_LIB
+    24	#include <ntstrsafe.h>
+    25	
+    26	#include "chatpad_mouse_ioctl.h"
+    27	
+    28	
+    29	// Support debug tracing.
+    30	#ifdef CHATPAD_MOUSE_KMDF_DBG
+    31	// TODO add this above the other DbgPrint if desired for more information in DebugView.
+    32	//   Make sure to add a '\' at the end if this is done.
+    33	/*
+    34	   DbgPrint("CHATPAD!"__FUNCTION__ ": ");
+    35	*/
+    36	#define ChatpadTrace(_MSG_) \
+    37	{ \
+    38	   DbgPrint _MSG_; \
+    39	}
+    40	#else
+    41	#define ChatpadTrace(__MSG__) \
+    42	{ \
+    43	}
+    44	#endif
+    45	
+    46	
+    47	// Constants
+    48	
+    49	
+    50	// TODO change the names of some of the constants below so that they are less generic and less
+    51	//   likely to ever have a collision?
+    52	
+    53	#define CHATPADMOUSEKMDF_POOL_TAG                  static_cast<ULONG>('zilB')
+    54	#define CHATPADMOUSEKMDF_HARDWARE_IDS              L"HID\\ChatpadMouse\0\0"
+    55	#define CHATPADMOUSEKMDF_HARDWARE_IDS_LENGTH       sizeof(CHATPADMOUSEKMDF_HARDWARE_IDS)
+    56	
+    57	// Control device names.
+    58	#define CHATPAD_MOUSE_KMDF_CONTROL_NAME            L"\\Device\\ChatpadMouseKMDF"
+    59	#define CHATPAD_MOUSE_KMDF_CONTROL_LINK            L"\\DosDevices\\ChatpadMouseKMDF"
+    60	
+    61	
+    62	// Structure definitions
+    63	
+    64	
+    65	// Structure for a device context for the device.
+    66	typedef struct _DEVICE_CONTEXT
+    67	{
+    68	   // Whether this virtual mouse is enabled.
+    69	   BOOLEAN                       mouseEnabled;
+    70	
+    71	   // Queue for read IOCTLs from hidclass that will be satisfied with virtual mouse data.
+    72	   WDFQUEUE                      hidReadRequestQueue;
+    73	} DEVICE_CONTEXT, *PDEVICE_CONTEXT;
+    74	
+    75	WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(
+    76	  DEVICE_CONTEXT,
+    77	  ChatpadMouseKMDFGetDeviceContext)
+    78	
+    79	// Control device extension data.
+    80	typedef struct _CHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION
+    81	{
+    82	   // TODO is this safe?  I am doing this so I have access to hidReadRequestQueue
+    83	   //   in the close handler, and can generate a HID response indicating that no
+    84	   //   simulated mouse events are now occurring.
+    85	   PDEVICE_CONTEXT               mouseDeviceContext;
+    86	} CHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION, *PCHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION;
+    87	
+    88	WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(
+    89	  CHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION,
+    90	  ChatpadMouseKMDFControlGetData);
+    91	
+    92	#endif // CHATPAD_MOUSE_KMDF_H
+    93	

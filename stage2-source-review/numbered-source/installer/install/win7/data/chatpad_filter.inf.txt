@@ -1,0 +1,150 @@
+     1	;
+     2	; Copyright (c) 2010 GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond
+     3	;
+     4	; Chatpad KMDF USB filter driver.
+     5	; This file is for Windows 7 only.
+     6	;
+     7	; This code is released under the MIT license.  See LICENSE.TXT for details.
+     8	;
+     9	
+    10	; Based on sample INF file for WinUSB at http://msdn.microsoft.com/en-us/library/ff540283(v=VS.85).aspx
+    11	; and sample toaster filter driver INF.
+    12	
+    13	[Version]
+    14	Signature = "$Windows NT$"
+    15	Class=XnaComposite
+    16	ClassGuid={D61CA365-5AF4-4486-998B-9DB4734C6CA3}
+    17	;Class=Chatpad
+    18	;ClassGuid={ae499f30-04fa-4ceb-98d9-323a9c5745e1}
+    19	Provider=%ProviderName%
+    20	; TODO see if it is easy to make a catalog file
+    21	; CatalogFile=chatpad.cat
+    22	; TODO make an installer/uninstaller
+    23	DriverVer=12/25/2010,1.0.1.4
+    24	
+    25	[DestinationDirs]
+    26	DefaultDestDir = 12
+    27	
+    28	; ================== Class section ==================
+    29	
+    30	; Note, apparently some (all?) versions of Windows do not parse this section if
+    31	; the class is already installed, supposedly.
+    32	[ClassInstall32]
+    33	Addreg=ChatpadClass_RegistryAdd
+    34	; TODO why does the example use the DLL?
+    35	;CopyFiles=ChatpadClass_InstallerCopyFiles
+    36	
+    37	[ChatpadClass_RegistryAdd]
+    38	HKR,,,0,%ClassName%
+    39	; TODO eventually use a custom icon, or at least one that does not include a question mark, if possible?
+    40	; HKR,,Icon,,100
+    41	HKR,,Icon,,-2
+    42	; TODO how do these work?
+    43	HKR,,DeviceCharacteristics,0x10001,0x100     ; Use same security checks on relative opens.
+    44	HKR,,Security,,"D:P(A;;GA;;;SY)(A;;GA;;;BA)" ; Allow generic all access to system and built-in Admin,
+    45	                                             ; overriding the security set by the driver.
+    46	
+    47	; ========== Manufacturer/Models sections ===========
+    48	
+    49	[Manufacturer]
+    50	%ProviderName%=Standard, NTia64.6.1, NTamd64.6.1, NTx86.6.1
+    51	
+    52	[Standard.NTia64.6.1]
+    53	%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+    54	
+    55	[Standard.NTamd64.6.1]
+    56	%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+    57	
+    58	[Standard.NTx86.6.1]
+    59	%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+    60	
+    61	; === Windows 7 ===
+    62	
+    63	[ChatpadFilter.NT]
+    64	CopyFiles=ChatpadFilter.NT.Copy
+    65	
+    66	[ChatpadFilter.NT.Copy]
+    67	chatpad_filter.sys
+    68	; TODO why filter.sys AND wdffeatured.sys in the example?
+    69	
+    70	[ChatpadFilter.NT.HW]
+    71	AddReg = ChatpadFilter.NT.HW.AddReg
+    72	DelReg = ChatpadFilter.NT.HW.DelReg
+    73	
+    74	[ChatpadFilter.NT.HW.AddReg]
+    75	HKR,,"LowerFilters",0x00010000,"ChatpadFilter"
+    76	
+    77	[ChatpadFilter.NT.HW.DelReg]
+    78	HKR,,"LowerFilters"
+    79	; TODO is the surprise removal thing needed?
+    80	;HKR,,"SurpriseRemovalOK"
+    81	
+    82	; =================== Filter service section ===================
+    83	
+    84	[ChatpadFilter.NT.Services]
+    85	; Do not specify SPSVCINST_ASSOCSERVICE on filter drivers.
+    86	AddService = ChatpadFilter,, Chatpad_Service_Install
+    87	; TODO is another driver needed here?
+    88	
+    89	[Chatpad_Service_Install]
+    90	DisplayName     = %Chatpad_Filter_SvcDesc%
+    91	ServiceType     = 1  ; SERVICE_KERNEL_DRIVER
+    92	StartType       = 3  ; SERVICE_DEMAND_START
+    93	ErrorControl    = 1  ; SERVICE_ERROR_NORMAL
+    94	ServiceBinary   = %12%\chatpad_filter.sys
+    95	
+    96	; =================== Source file information ===================
+    97	
+    98	; TODO eventually support Win2k if needed?  (seems unlikely unless it is embedded)
+    99	
+   100	[SourceDisksNames]
+   101	1 = %MediaDescription1%,,,"\ia64"
+   102	2 = %MediaDescription2%,,,"\amd64"
+   103	3 = %MediaDescription3%,,,"\i386"
+   104	
+   105	[SourceDisksFiles.ia64]
+   106	chatpad_filter.sys            = 1
+   107	WdfCoInstaller01009.dll       = 1
+   108	
+   109	[SourceDisksFiles.amd64]
+   110	chatpad_filter.sys            = 2
+   111	WdfCoInstaller01009.dll       = 2
+   112	
+   113	[SourceDisksFiles.x86]
+   114	chatpad_filter.sys            = 3
+   115	WdfCoInstaller01009.dll       = 3
+   116	
+   117	; Coinstaller installation
+   118	[DestinationDirs]
+   119	ChatpadFilter_CoInstaller_CopyFiles = 11
+   120	
+   121	[ChatpadFilter.NT.CoInstallers]
+   122	AddReg      = ChatpadFilter_CoInstaller_AddReg
+   123	CopyFiles   = ChatpadFilter_CoInstaller_CopyFiles
+   124	
+   125	[ChatpadFilter_CoInstaller_AddReg]
+   126	HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+   127	
+   128	[ChatpadFilter_CoInstaller_CopyFiles]
+   129	WdfCoInstaller01009.dll
+   130	
+   131	[ChatpadFilter.NT.Wdf]
+   132	KmdfService             = ChatpadFilter, Filter_WdfSection
+   133	
+   134	[Filter_WdfSection]
+   135	KmdfLibraryVersion=1.9
+   136	
+   137	; =================== Strings ===================
+   138	
+   139	[Strings]
+   140	SPSVCINST_ASSOCSERVICE = 0x00000002
+   141	ProviderName="AgentElrond"
+   142	Chatpad_Filter_SvcDesc="Chatpad Filter Service"
+   143	MediaDescription1="XBox 360 Controller Chatpad Installation Media, ia64"
+   144	MediaDescription2="XBox 360 Controller Chatpad Installation Media, amd64"
+   145	MediaDescription3="XBox 360 Controller Chatpad Installation Media, x86"
+   146	ControllerDeviceName="XBox 360 Controller Filter Driver for Chatpad"
+   147	ClassName="XBox 360 Controller Chatpad"
+   148	
+   149	
+   150	

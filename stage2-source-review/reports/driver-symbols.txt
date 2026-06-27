@@ -1,0 +1,1300 @@
+stage2-source-review/source/chatpad_control/chatpad_cmdline.cpp:2:// Chatpad utility program that works with a KMDF USB filter driver, by
+stage2-source-review/source/chatpad_control/chatpad_config.cpp:2:// Chatpad utility code that works with a KMDF USB filter driver, by
+stage2-source-review/source/chatpad_control/chatpad_config.h:2:// Chatpad utility code that works with a KMDF USB filter driver, by
+stage2-source-review/source/chatpad_control/chatpad_control.h:2:// Chatpad utility code that works with a KMDF USB filter driver, by
+stage2-source-review/source/chatpad_control/chatpad_control.h:24:// The HID keyboard report permits six keys to be held down simultaneously, if I understand correctly.
+stage2-source-review/source/chatpad_control/chatpad_control.h:26://                  supported by the HID report in the virtual keyboard driver,
+stage2-source-review/source/chatpad_control/chatpad_control.h:151:// Note that these values match the specification for USB HID scan codes.
+stage2-source-review/source/chatpad_control/chatpad_control.h:152:// (see USB HID Usage Tables, version 1.12, section 10)
+stage2-source-review/source/chatpad_control/chatpad_control.h:281:// No more keys from the USB HID specification seem useful after this point.
+stage2-source-review/source/chatpad_control/chatpad_control.h:285:// Keyboard modifier codes.  Note that these values match the specification for the USB HID modifier byte.
+stage2-source-review/source/chatpad_control/chatpad_control.h:286:// (see HID Device Class Definition, version 1.11, section 8.3)
+stage2-source-review/source/chatpad_control/chatpad_control.h:290:// TODO is it even possible to display odd symbols and international letters for an English HID keyboard?
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:2:// Chatpad utility code that works with a KMDF USB filter driver, by
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:520:      // Open the filter device, using the path \\.\ChatpadKeyboardKMDF
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:522:        "\\\\.\\ChatpadKeyboardKMDF",
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:561:      // Open the filter device, using the path \\.\ChatpadMouseKMDF
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:563:        "\\\\.\\ChatpadMouseKMDF",
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:821:        IOCTL_CHATPAD_SEND_CONTROL_TRANSFER,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:866:        IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:900:        IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:933:        IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:950:// The enableValue parameter must be CHATPAD_KEYBOARD_KMDF_ENABLE or
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:951:// CHATPAD_KEYBOARD_KMDF_DISABLE.
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:979:      (CHATPAD_KEYBOARD_KMDF_ENABLE != enableValue)   &&
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:980:      (CHATPAD_KEYBOARD_KMDF_DISABLE != enableValue))
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1011:        IOCTL_CHATPAD_KEYBOARD_KMDF_SET_ENABLED,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1106:// amount of data to work with the IOCTL_CHATPAD_KEYBOARD_KMDF_SEND_DATA IOCTL,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1169:        IOCTL_CHATPAD_KEYBOARD_KMDF_SEND_DATA,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1299:// The enableValue parameter must be CHATPAD_MOUSE_KMDF_ENABLE or
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1300:// CHATPAD_MOUSE_KMDF_DISABLE.
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1328:      (CHATPAD_MOUSE_KMDF_ENABLE != enableValue)      &&
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1329:      (CHATPAD_MOUSE_KMDF_DISABLE != enableValue))
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1360:        IOCTL_CHATPAD_MOUSE_KMDF_SET_ENABLED,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1457:// amount of data to work with the IOCTL_CHATPAD_MOUSE_KMDF_SEND_DATA IOCTL,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:1514:        IOCTL_CHATPAD_MOUSE_KMDF_SEND_DATA,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:3267:              IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:3801:              IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:4108:        IOCTL_CHATPAD_IS_MS_INIT_DONE,
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:4680:         SetVirtualKeyboardDeviceEnabled(CHATPAD_KEYBOARD_KMDF_ENABLE);
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:4699:         SetVirtualMouseDeviceEnabled(CHATPAD_MOUSE_KMDF_ENABLE);
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:4819:      SetVirtualKeyboardDeviceEnabled(CHATPAD_KEYBOARD_KMDF_DISABLE);
+stage2-source-review/source/chatpad_control/chatpad_control_code.cpp:4831:      SetVirtualMouseDeviceEnabled(CHATPAD_MOUSE_KMDF_DISABLE);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:2:// Chatpad virtual keyboard KMDF driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:19:WDFWAITLOCK                      chatpadKeyboardKMDFDeviceCollectionLock;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:24:WDFDEVICE                        chatpadKeyboardKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:28:BOOLEAN                          chatpadKeyboardKMDFControlDeviceAvailable = FALSE;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:31:WDFCOLLECTION                    chatpadKeyboardKMDFDeviceCollection;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:35:// HID descriptors
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:38:// The Device Class Definition for Human Interface Devices (HID) document, version 1.11,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:39:// and the HID Descriptor Tool (DT) were used to create the HID descriptors below.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:41:typedef UCHAR HID_REPORT_DESCRIPTOR, *PHID_REPORT_DESCRIPTOR;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:51:typedef struct _CHATPAD_KEYBOARD_HID_INPUT_REPORT
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:59:   // USB key codes (see USB HID Usage Table specification, section 10) of keys
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:62:} CHATPAD_KEYBOARD_HID_INPUT_REPORT, *PCHATPAD_KEYBOARD_HID_INPUT_REPORT;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:66:// HID report descriptor (keyboard).
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:67:const HID_REPORT_DESCRIPTOR chatpadKeyboardHidReportDescriptor[] =
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:114:// HID descriptor (keyboard).
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:115:CONST HID_DESCRIPTOR chatpadKeyboardHidDefaultDescriptor =
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:117:   0x09,    // Length of HID descriptor.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:118:   0x21,    // Descriptor type (HID 0x21, assigned by USB?).
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:119:   0x0101,  // HID spec release (1.01).
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:121:   0x01,    // Number of HID class descriptors.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:131:NTSTATUS ChatpadKeyboardKMDFCreateControlDevice(WDFDEVICE device);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:132:VOID ChatpadKeyboardKMDFDeleteControlDevice(VOID);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:134:NTSTATUS ChatpadKeyboardKMDFGetHidDescriptor(WDFDEVICE device, WDFREQUEST request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:135:NTSTATUS ChatpadKeyboardKMDFGetHidDeviceAttributes(WDFREQUEST request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:136:NTSTATUS ChatpadKeyboardKMDFGetHidReportDescriptor(WDFDEVICE device, WDFREQUEST request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:137:NTSTATUS ChatpadKeyboardKMDFGetHidString(WDFREQUEST request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:141:EVT_WDF_DEVICE_PREPARE_HARDWARE              ChatpadKeyboardKMDFEvtPrepareHardware;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:142:EVT_WDF_DEVICE_D0_ENTRY                      ChatpadKeyboardKMDFD0Entry;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:143:EVT_WDF_DEVICE_D0_EXIT                       ChatpadKeyboardKMDFD0Exit;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:144:EVT_WDF_DRIVER_DEVICE_ADD                    ChatpadKeyboardKMDFEvtDeviceAdd;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:145:EVT_WDFDEVICE_WDM_IRP_PREPROCESS             ChatpadKeyboardKMDFEvtWdmPreprocessMnQueryId;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:146:EVT_WDF_DEVICE_FILE_CREATE                   ChatpadKeyboardKMDFControlDeviceCreateHandler;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:147:EVT_WDF_FILE_CLOSE                           ChatpadKeyboardKMDFControlDeviceCloseHandler;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:148:EVT_WDF_OBJECT_CONTEXT_CLEANUP               ChatpadKeyboardKMDFDriverContextCleanup;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:149:EVT_WDF_DEVICE_CONTEXT_CLEANUP               ChatpadKeyboardKMDFContextCleanup;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:150:EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL  ChatpadKeyboardKMDFInternalIOCTLHandler;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:151:EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL           ChatpadKeyboardKMDFIOCTLHandler;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:154:DRIVER_INITIALIZE DriverEntry;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:160:DriverEntry(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:168:   ChatpadTrace(("XBox 360 Controller Chatpad Virtual Keyboard KMDF Layer by GAFBlizzard.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:174:   ChatpadTrace(("sizeof(CHATPAD_KEYBOARD_HID_INPUT_REPORT)  == %u\n", sizeof(CHATPAD_KEYBOARD_HID_INPUT_REPORT)));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:179:                          ChatpadKeyboardKMDFEvtDeviceAdd);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:186:   objectAttributes.EvtCleanupCallback = ChatpadKeyboardKMDFDriverContextCleanup;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:189:   retStatus = WdfDriverCreate(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:197:      ChatpadTrace(("WdfDriverCreate failed:  0x%0x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:205:        &chatpadKeyboardKMDFDeviceCollection);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:216:        &chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:224:} // end DriverEntry
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:231:   ChatpadTrace(("Unloading chatpad virtual keyboard KMDF layer.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:240:ChatpadKeyboardKMDFEvtPrepareHardware(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:250:   devContext = ChatpadKeyboardKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:261:} // end ChatpadKeyboardKMDFEvtPrepareHardware
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:265:ChatpadKeyboardKMDFD0Entry(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:272:   devContext = ChatpadKeyboardKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:277:      WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:278:      chatpadKeyboardKMDFControlDeviceAvailable = TRUE;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:279:      WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:288:} // end ChatpadKeyboardKMDFD0Entry
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:292:ChatpadKeyboardKMDFD0Exit(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:299:   devContext = ChatpadKeyboardKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:310:} // end ChatpadKeyboardKMDFD0Exit
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:313:ChatpadKeyboardKMDFEvtDeviceAdd(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:344:        ChatpadKeyboardKMDFEvtWdmPreprocessMnQueryId,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:358:      powerCallbacks.EvtDevicePrepareHardware = ChatpadKeyboardKMDFEvtPrepareHardware;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:359:      powerCallbacks.EvtDeviceD0Entry = ChatpadKeyboardKMDFD0Entry;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:360:      powerCallbacks.EvtDeviceD0Exit = ChatpadKeyboardKMDFD0Exit;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:367:      objectAttributes.EvtCleanupCallback = ChatpadKeyboardKMDFContextCleanup;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:370:      retStatus = WdfDeviceCreate(&deviceInit, &objectAttributes, &wdfDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:373:         ChatpadTrace(("WdfDeviceCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:379:      devContext = ChatpadKeyboardKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:395:            // This should catch IOCTL_INTERNAL_USB_SUBMIT_URB.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:397:              ChatpadKeyboardKMDFInternalIOCTLHandler;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:400:            retStatus = WdfIoQueueCreate(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:407:               ChatpadTrace(("Created chatpad keyboard KMDF layer default queue successfully.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:411:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:417:            // Create manual I/O queue for handling HID read requests from
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:425:              WdfIoQueueCreate(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:432:               ChatpadTrace(("Created HID read request queue successfully.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:436:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:449:      WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:452:        chatpadKeyboardKMDFDeviceCollection,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:459:      WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:465:      retStatus = ChatpadKeyboardKMDFCreateControlDevice(wdfDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:466:      // ChatpadKeyboardKMDFCreateControlDevice should print an error if it fails.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:470:} // end ChatpadKeyboardKMDFEvtDeviceAdd
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:472:// This is just a wrapper for ExAllocatePoolWithTag, since OACR refuses to stop complaining
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:477:ExAllocatePoolWithTagWrapper(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:482:   return ExAllocatePoolWithTag(PoolType, NumberOfBytes, Tag);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:483:} // end ExAllocatePoolWithTagWrapper
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:488:ChatpadKeyboardKMDFEvtWdmPreprocessMnQueryId(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:502:   // forwarded by the HIDCLASS for the parent framework device object.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:532:            // In this case, according to vmulti, HIDClass is asking for a child
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:538:            buffer = static_cast<PWCHAR>(ExAllocatePoolWithTagWrapper(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:540:              CHATPADKEYBOARDKMDF_HARDWARE_IDS_LENGTH,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:541:              CHATPADKEYBOARDKMDF_POOL_TAG));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:547:                 CHATPADKEYBOARDKMDF_HARDWARE_IDS,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:548:                 CHATPADKEYBOARDKMDF_HARDWARE_IDS_LENGTH);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:566:      IoCompleteRequest(irp, IO_NO_INCREMENT);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:569:   ChatpadTrace(("ChatpadKeyboardKMDFEvtWdmPreprocessMnQueryId returning status 0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:572:} // end ChatpadKeyboardKMDFEvtWdmPreprocessMnQueryId
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:575:ChatpadKeyboardKMDFControlDeviceCreateHandler(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:583:   WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:596:   ChatpadTrace(("There are now %lu open handles to the chatpad keyboard KMDF control device.\n", numOpenHandles));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:602:      PCHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION controlExtension  = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:607:         controlExtension = ChatpadKeyboardKMDFControlGetData(chatpadKeyboardKMDFControlDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:635:   WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:637:   WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:638:} // end ChatpadKeyboardKMDFControlDeviceCreateHandler
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:641:ChatpadKeyboardKMDFControlDeviceCloseHandler(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:646:   ChatpadTrace(("The IRQL in the keyboard close handler is %u.\n", KeGetCurrentIrql()));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:649:   WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:661:   ChatpadTrace(("There are now %lu open handles to the chatpad keyboard KMDF control device.\n", numOpenHandles));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:667:      //   I want to make sure the no-keys-pressed HID response gets sent, though.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:668:      PCHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION controlExtension  = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:672:      if(NULL == chatpadKeyboardKMDFControlDevice)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:680:         controlExtension = ChatpadKeyboardKMDFControlGetData(chatpadKeyboardKMDFControlDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:711:            ChatpadTrace(("No top-level HID read report request available.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:718:         PCHATPAD_KEYBOARD_HID_INPUT_REPORT  inputReport                   = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:723:         bytesToCopy = sizeof(CHATPAD_KEYBOARD_HID_INPUT_REPORT);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:724:         apiStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:749:            ChatpadTrace(("Unable to get valid buffer from top-level HID read report request:  0x%x\n",
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:755:         WdfRequestCompleteWithInformation(requestFromAbove, apiStatus, bytesTransferred);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:760:            ChatpadTrace(("Successfully sent HID response indicating all keys are released.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:766:   WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:767:} // end ChatpadKeyboardKMDFControlDeviceCloseHandler
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:770:ChatpadKeyboardKMDFDriverContextCleanup(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:777:} // end ChatpadKeyboardKMDFDriverContextCleanup
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:780:ChatpadKeyboardKMDFContextCleanup(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:795:   devContext = ChatpadKeyboardKMDFGetDeviceContext(device);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:798:      WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:802:      deviceCount = WdfCollectionGetCount(chatpadKeyboardKMDFDeviceCollection);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:809:         // According to the toaster KMDF sideband filter example, the deletion
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:816:            ChatpadKeyboardKMDFDeleteControlDevice();
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:826:      chatpadKeyboardKMDFControlDeviceAvailable = FALSE;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:828:      WdfCollectionRemove(chatpadKeyboardKMDFDeviceCollection, device);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:830:      WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:841:ChatpadKeyboardKMDFCreateControlDevice(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:848:   WDFDEVICE               newChatpadKeyboardKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:850:   DECLARE_CONST_UNICODE_STRING(ntDeviceName, CHATPAD_KEYBOARD_KMDF_CONTROL_NAME);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:851:   DECLARE_CONST_UNICODE_STRING(symbolicLinkName, CHATPAD_KEYBOARD_KMDF_CONTROL_LINK);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:856:   WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:859:   ChatpadTrace(("Collection device count is %d.\n", WdfCollectionGetCount(chatpadKeyboardKMDFDeviceCollection)));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:861:   if(NULL == chatpadKeyboardKMDFControlDevice)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:866:   WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:870:      ChatpadTrace(("Chatpad keyboard KMDF control device was already created.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:874:      ChatpadTrace(("Creating chatpad keyboard KMDF control device.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:900:        ChatpadKeyboardKMDFControlDeviceCreateHandler,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:901:        ChatpadKeyboardKMDFControlDeviceCloseHandler,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:913:           CHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:915:         retStatus = WdfDeviceCreate(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:918:           &newChatpadKeyboardKMDFControlDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:922:      PDEVICE_CONTEXT devContext = ChatpadKeyboardKMDFGetDeviceContext(device);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:925:         PCHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION controlExtension =
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:926:           ChatpadKeyboardKMDFControlGetData(newChatpadKeyboardKMDFControlDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:947:         retStatus = WdfDeviceCreateSymbolicLink(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:948:           newChatpadKeyboardKMDFControlDevice,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:964:           ChatpadKeyboardKMDFIOCTLHandler;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:967:         retStatus = WdfIoQueueCreate(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:968:           newChatpadKeyboardKMDFControlDevice,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:976:         WdfControlFinishInitializing(newChatpadKeyboardKMDFControlDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:977:         WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:978:         chatpadKeyboardKMDFControlDevice = newChatpadKeyboardKMDFControlDevice;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:979:         WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:981:         ChatpadTrace(("Chatpad keyboard KMDF control device created successfully.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:985:         ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:992:      ChatpadTrace(("Failed to create chatpad keyboard KMDF control device:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1000:      if(NULL != newChatpadKeyboardKMDFControlDevice)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1003:         WdfObjectDelete(newChatpadKeyboardKMDFControlDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1004:         newChatpadKeyboardKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1009:} // end ChatpadKeyboardKMDFCreateControlDevice
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1014:// currently acquired on chatpadKeyboardKMDFDeviceCollectionLock.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1016:ChatpadKeyboardKMDFDeleteControlDevice(VOID)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1020:   if(chatpadKeyboardKMDFControlDevice)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1022:      WdfObjectDelete(chatpadKeyboardKMDFControlDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1023:      chatpadKeyboardKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1025:} // end ChatpadKeyboardKMDFDeleteControlDevice
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1028:ChatpadKeyboardKMDFInternalIOCTLHandler(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1041://   ChatpadTrace(("Chatpad keyboard KMDF layer internal IOCTL handler called with ioControlCode == %x\n",
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1047:   devContext = ChatpadKeyboardKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1050:   if(IOCTL_HID_GET_DEVICE_DESCRIPTOR == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1052:      apiStatus = ChatpadKeyboardKMDFGetHidDescriptor(wdfDevice, request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1054:   else if(IOCTL_HID_GET_DEVICE_ATTRIBUTES == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1057:      apiStatus = ChatpadKeyboardKMDFGetHidDeviceAttributes(request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1059:   else if(IOCTL_HID_GET_REPORT_DESCRIPTOR == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1061:      apiStatus = ChatpadKeyboardKMDFGetHidReportDescriptor(wdfDevice, request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1063:   else if(IOCTL_HID_GET_STRING == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1065:      apiStatus = ChatpadKeyboardKMDFGetHidString(request);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1067:   else if(IOCTL_HID_SET_FEATURE == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1069:ChatpadTrace(("Received HID set feature request.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1073:   else if(IOCTL_HID_GET_FEATURE == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1075:ChatpadTrace(("Received HID get feature request.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1079:   else if(IOCTL_HID_WRITE_REPORT == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1081:ChatpadTrace(("Received HID write report request.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1085:   else if(IOCTL_HID_READ_REPORT == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1089:      // TODO NEXT do I need to handle IOCTL_HID_GET_INPUT_REPORT as well?
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1090:      //   If only handling IOCTL_HID_READ_REPORT works on XP, Vista, and Windows 7, then apparently I don't.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1091:      apiStatus = WdfRequestForwardToIoQueue(request, devContext->hidReadRequestQueue);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1098:         ChatpadTrace(("WdfRequestForwardToIoQueue failed:  0x%x\n", apiStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1109:      WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1113:} // end ChatpadKeyboardKMDFInternalIOCTLHandler
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1115:// This function retrieves the keyboard HID descriptor.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1117:ChatpadKeyboardKMDFGetHidDescriptor(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1125:   ChatpadTrace(("Received HID get \"device\" descriptor request.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1127:   retStatus = WdfRequestRetrieveOutputMemory(request, &outputMemory);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1130:      ChatpadTrace(("WdfRequestRetrieveOutputMemory failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1135:      // Use hardcoded HID descriptor.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1137:      //   request for a "device HID descriptor", and according to the HID spec that is
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1143:         ChatpadTrace(("Error, invalid internal HID descriptor.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1153:        const_cast<HID_DESCRIPTOR*>(&chatpadKeyboardHidDefaultDescriptor),
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1165:      WdfRequestSetInformation(request, bytesToCopy);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1169:} // end ChatpadKeyboardKMDFGetHidDescriptor
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1173:ChatpadKeyboardKMDFGetHidDeviceAttributes(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1177:   PHID_DEVICE_ATTRIBUTES  deviceAttributes        = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1181:   devContext = ChatpadKeyboardKMDFGetDeviceContext(WdfIoQueueGetDevice(WdfRequestGetIoQueue(request)));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1183:   ChatpadTrace(("Received HID get device attributes request.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1186:   retStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1188:     sizeof(HID_DEVICE_ATTRIBUTES),
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1193:      ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1198:      deviceAttributes = static_cast<PHID_DEVICE_ATTRIBUTES>(deviceAttributesAsVoid);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1204:         deviceAttributes->Size           = sizeof(HID_DEVICE_ATTRIBUTES);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1219:      ChatpadTrace(("Reporting %lu bytes.\n", sizeof(HID_DEVICE_ATTRIBUTES)));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1220:      WdfRequestSetInformation(request, sizeof(HID_DEVICE_ATTRIBUTES));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1224:} // end ChatpadKeyboardKMDFGetHidDeviceAttributes
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1226:// This function retrieves the keyboard HID descriptor.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1228:ChatpadKeyboardKMDFGetHidReportDescriptor(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1236://   ChatpadTrace(("Received HID get report descriptor request.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1238:   retStatus = WdfRequestRetrieveOutputMemory(request, &outputMemory);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1241:      ChatpadTrace(("WdfRequestRetrieveOutputMemory failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1246:      // Use hardcoded HID descriptor.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1248:      //   request for a "device HID descriptor", and according to the HID spec that is
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1254:         ChatpadTrace(("Error, invalid internal HID report descriptor.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1264:        const_cast<PHID_REPORT_DESCRIPTOR>(chatpadKeyboardHidReportDescriptor),
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1276:      WdfRequestSetInformation(request, bytesToCopy);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1280:} // end ChatpadKeyboardKMDFGetHidReportDescriptor
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1282:// This function retrieves a keyboard HID string.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1285:ChatpadKeyboardKMDFGetHidString(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1296:   ChatpadTrace(("Received HID get string request.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1299:   WdfRequestGetParameters(request, &requestParameters);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1311:      case HID_STRING_ID_IMANUFACTURER:
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1317:      case HID_STRING_ID_IPRODUCT:
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1323:      case HID_STRING_ID_ISERIALNUMBER:
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1332:           "Unknown value for getting a HID string:  0x%x\n",
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1352:      retStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1360:         ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1366:      // Copy the HID string.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1368:      WdfRequestSetInformation(request, lengthToReturn);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1371:   ChatpadTrace(("ChatpadKeyboardKMDFGetHidString returning status 0x%x\n", retStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1374:} // end ChatpadKeyboardKMDFGetHidString
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1376:// This function runs at PASSIVE IRQL.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1378:ChatpadKeyboardKMDFIOCTLHandler(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1397://   ChatpadTrace(("The IRQL in the chatpad keyboard KMDF IOCTL handler is %u.\n", KeGetCurrentIrql()));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1399:   WdfWaitLockAcquire(chatpadKeyboardKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1401:   if(TRUE == chatpadKeyboardKMDFControlDeviceAvailable)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1404:      numDriverInstances = WdfCollectionGetCount(chatpadKeyboardKMDFDeviceCollection);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1408:         devContext = ChatpadKeyboardKMDFGetDeviceContext(WdfCollectionGetItem(chatpadKeyboardKMDFDeviceCollection, 0));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1419:   WdfWaitLockRelease(chatpadKeyboardKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1424:      WdfRequestCompleteWithInformation(request, STATUS_INTERNAL_ERROR, 0);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1428:   if(IOCTL_CHATPAD_KEYBOARD_KMDF_SET_ENABLED == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1440:         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1445:            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1451:         if(CHATPAD_KEYBOARD_KMDF_ENABLE == dataFromUser[0])
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1456:         else if(CHATPAD_KEYBOARD_KMDF_DISABLE == dataFromUser[0])
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1466:   } // end if(IOCTL_CHATPAD_KEYBOARD_KMDF_SET_ENABLED == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1467:   else if(IOCTL_CHATPAD_KEYBOARD_KMDF_SEND_DATA == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1479:         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1484:            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1510:            PCHATPAD_KEYBOARD_HID_INPUT_REPORT  inputReport                   = NULL;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1513:            bytesToCopy = sizeof(CHATPAD_KEYBOARD_HID_INPUT_REPORT);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1514:            apiStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1526:               // See section 10 in the HID usage table spec for the USB key code reference.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1539:               ChatpadTrace(("Unable to get valid buffer from top-level HID read report request:  0x%x\n",
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1545:            WdfRequestCompleteWithInformation(requestFromAbove, apiStatus, bytesTransferred);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1549:            ChatpadTrace(("No top-level HID read report request available.\n"));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1558:   } // end if(IOCTL_CHATPAD_KEYBOARD_KMDF_SEND_DATA == ioControlCode)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1567://   ChatpadTrace(("Completing ChatpadKeyboardKMDFIOCTLHandler with bytesTransferred == %lu\n", bytesTransferred));
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1572:   WdfRequestCompleteWithInformation(request, apiStatus, bytesTransferred);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:1575:} // end ChatpadKeyboardKMDFIOCTLHandler
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:2:// Chatpad virtual keyboard KMDF driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:9:#ifndef CHATPAD_KEYBOARD_KMDF_H
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:10:#define CHATPAD_KEYBOARD_KMDF_H
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:13:#define CHATPAD_KBD_KMDF_DBG
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:30:#ifdef CHATPAD_KBD_KMDF_DBG
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:53:#define CHATPADKEYBOARDKMDF_POOL_TAG               static_cast<ULONG>('zilB')
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:54:#define CHATPADKEYBOARDKMDF_HARDWARE_IDS           L"HID\\ChatpadKbd\0\0"
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:55:#define CHATPADKEYBOARDKMDF_HARDWARE_IDS_LENGTH    sizeof(CHATPADKEYBOARDKMDF_HARDWARE_IDS)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:58:#define CHATPAD_KEYBOARD_KMDF_CONTROL_NAME         L"\\Device\\ChatpadKeyboardKMDF"
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:59:#define CHATPAD_KEYBOARD_KMDF_CONTROL_LINK         L"\\DosDevices\\ChatpadKeyboardKMDF"
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:77:  ChatpadKeyboardKMDFGetDeviceContext)
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:80:typedef struct _CHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:83:   //   in the close handler, and can generate a HID response indicating that no
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:86:} CHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION, *PCHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION;
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:89:  CHATPAD_KEYBOARD_KMDF_CONTROL_DEVICE_EXTENSION,
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:90:  ChatpadKeyboardKMDFControlGetData);
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:92:#endif // CHATPAD_KEYBOARD_KMDF_H
+stage2-source-review/source/chatpad_keyboard_kmdf/sources:4:KMDF_VERSION_MAJOR=1
+stage2-source-review/source/chatpad_keyboard_kmdf/sources:5:KMDF_VERSION_MINOR=9
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:2:// Chatpad virtual mouse KMDF driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:19:WDFWAITLOCK                      chatpadMouseKMDFDeviceCollectionLock;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:24:WDFDEVICE                        chatpadMouseKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:28:BOOLEAN                          chatpadMouseKMDFControlDeviceAvailable = FALSE;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:31:WDFCOLLECTION                    chatpadMouseKMDFDeviceCollection;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:35:// HID descriptors
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:38:// The Device Class Definition for Human Interface Devices (HID) document, version 1.11,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:39:// and the HID Descriptor Tool (DT) were used to create the HID descriptors below.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:41:typedef UCHAR HID_REPORT_DESCRIPTOR, *PHID_REPORT_DESCRIPTOR;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:51:typedef struct _CHATPAD_MOUSE_HID_INPUT_REPORT
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:77:} CHATPAD_MOUSE_HID_INPUT_REPORT, *PCHATPAD_MOUSE_HID_INPUT_REPORT;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:81:// HID report descriptor (mouse), based off an example in HID1_11.PDF and the HID report descriptor in vmulti.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:82:const HID_REPORT_DESCRIPTOR chatpadMouseHidReportDescriptor[] =
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:103:   // TODO should I make the X and Y report values more complex, like in the vmulti HID report descriptor,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:126:// HID descriptor (mouse).
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:127:CONST HID_DESCRIPTOR chatpadMouseHidDefaultDescriptor =
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:129:   0x09,    // Length of HID descriptor.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:130:   0x21,    // Descriptor type (HID 0x21, assigned by USB?).
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:131:   0x0101,  // HID spec release (1.01).
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:133:   0x01,    // Number of HID class descriptors.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:142:NTSTATUS ChatpadMouseKMDFCreateControlDevice(WDFDEVICE device);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:143:VOID ChatpadMouseKMDFDeleteControlDevice(VOID);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:145:NTSTATUS ChatpadMouseKMDFGetHidDescriptor(WDFDEVICE device, WDFREQUEST request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:146:NTSTATUS ChatpadMouseKMDFGetHidDeviceAttributes(WDFREQUEST request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:147:NTSTATUS ChatpadMouseKMDFGetHidReportDescriptor(WDFDEVICE device, WDFREQUEST request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:148:NTSTATUS ChatpadMouseKMDFGetHidString(WDFREQUEST request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:152:EVT_WDF_DEVICE_PREPARE_HARDWARE              ChatpadMouseKMDFEvtPrepareHardware;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:153:EVT_WDF_DEVICE_D0_ENTRY                      ChatpadMouseKMDFD0Entry;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:154:EVT_WDF_DEVICE_D0_EXIT                       ChatpadMouseKMDFD0Exit;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:155:EVT_WDF_DRIVER_DEVICE_ADD                    ChatpadMouseKMDFEvtDeviceAdd;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:156:EVT_WDFDEVICE_WDM_IRP_PREPROCESS             ChatpadMouseKMDFEvtWdmPreprocessMnQueryId;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:157:EVT_WDF_DEVICE_FILE_CREATE                   ChatpadMouseKMDFControlDeviceCreateHandler;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:158:EVT_WDF_FILE_CLOSE                           ChatpadMouseKMDFControlDeviceCloseHandler;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:159:EVT_WDF_OBJECT_CONTEXT_CLEANUP               ChatpadMouseKMDFDriverContextCleanup;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:160:EVT_WDF_DEVICE_CONTEXT_CLEANUP               ChatpadMouseKMDFContextCleanup;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:161:EVT_WDF_IO_QUEUE_IO_INTERNAL_DEVICE_CONTROL  ChatpadMouseKMDFInternalIOCTLHandler;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:162:EVT_WDF_IO_QUEUE_IO_DEVICE_CONTROL           ChatpadMouseKMDFIOCTLHandler;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:165:DRIVER_INITIALIZE DriverEntry;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:171:DriverEntry(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:179:   ChatpadTrace(("XBox 360 Controller Chatpad Virtual Mouse KMDF Layer by GAFBlizzard.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:185:   ChatpadTrace(("sizeof(CHATPAD_MOUSE_HID_INPUT_REPORT)  == %u\n", sizeof(CHATPAD_MOUSE_HID_INPUT_REPORT)));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:190:                          ChatpadMouseKMDFEvtDeviceAdd);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:197:   objectAttributes.EvtCleanupCallback = ChatpadMouseKMDFDriverContextCleanup;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:200:   retStatus = WdfDriverCreate(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:208:      ChatpadTrace(("WdfDriverCreate failed:  0x%0x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:216:        &chatpadMouseKMDFDeviceCollection);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:227:        &chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:235:} // end DriverEntry
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:242:   ChatpadTrace(("Unloading chatpad virtual mouse KMDF layer.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:251:ChatpadMouseKMDFEvtPrepareHardware(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:261:   devContext = ChatpadMouseKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:272:} // end ChatpadMouseKMDFEvtPrepareHardware
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:276:ChatpadMouseKMDFD0Entry(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:283:   devContext = ChatpadMouseKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:288:      WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:289:      chatpadMouseKMDFControlDeviceAvailable = TRUE;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:290:      WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:299:} // end ChatpadMouseKMDFD0Entry
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:303:ChatpadMouseKMDFD0Exit(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:310:   devContext = ChatpadMouseKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:321:} // end ChatpadMouseKMDFD0Exit
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:324:ChatpadMouseKMDFEvtDeviceAdd(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:355:        ChatpadMouseKMDFEvtWdmPreprocessMnQueryId,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:369:      powerCallbacks.EvtDevicePrepareHardware = ChatpadMouseKMDFEvtPrepareHardware;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:370:      powerCallbacks.EvtDeviceD0Entry = ChatpadMouseKMDFD0Entry;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:371:      powerCallbacks.EvtDeviceD0Exit = ChatpadMouseKMDFD0Exit;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:378:      objectAttributes.EvtCleanupCallback = ChatpadMouseKMDFContextCleanup;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:381:      retStatus = WdfDeviceCreate(&deviceInit, &objectAttributes, &wdfDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:384:         ChatpadTrace(("WdfDeviceCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:390:      devContext = ChatpadMouseKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:406:            // This should catch IOCTL_INTERNAL_USB_SUBMIT_URB.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:408:              ChatpadMouseKMDFInternalIOCTLHandler;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:411:            retStatus = WdfIoQueueCreate(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:418:               ChatpadTrace(("Created chatpad mouse KMDF layer default queue successfully.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:422:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:428:            // Create manual I/O queue for handling HID read requests from
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:436:              WdfIoQueueCreate(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:443:               ChatpadTrace(("Created HID read request queue successfully.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:447:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:460:      WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:463:        chatpadMouseKMDFDeviceCollection,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:470:      WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:476:      retStatus = ChatpadMouseKMDFCreateControlDevice(wdfDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:477:      // ChatpadMouseKMDFCreateControlDevice should print an error if it fails.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:481:} // end ChatpadMouseKMDFEvtDeviceAdd
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:483:// This is just a wrapper for ExAllocatePoolWithTag, since OACR refuses to stop complaining
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:488:ExAllocatePoolWithTagWrapper(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:493:   return ExAllocatePoolWithTag(PoolType, NumberOfBytes, Tag);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:494:} // end ExAllocatePoolWithTagWrapper
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:499:ChatpadMouseKMDFEvtWdmPreprocessMnQueryId(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:513:   // forwarded by the HIDCLASS for the parent framework device object.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:543:            // In this case, according to vmulti, HIDClass is asking for a child
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:549:            buffer = static_cast<PWCHAR>(ExAllocatePoolWithTagWrapper(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:551:              CHATPADMOUSEKMDF_HARDWARE_IDS_LENGTH,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:552:              CHATPADMOUSEKMDF_POOL_TAG));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:558:                 CHATPADMOUSEKMDF_HARDWARE_IDS,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:559:                 CHATPADMOUSEKMDF_HARDWARE_IDS_LENGTH);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:576:      IoCompleteRequest(irp, IO_NO_INCREMENT);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:579:   ChatpadTrace(("ChatpadMouseKMDFEvtWdmPreprocessMnQueryId returning status 0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:582:} // end ChatpadMouseKMDFEvtWdmPreprocessMnQueryId
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:585:ChatpadMouseKMDFControlDeviceCreateHandler(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:593:   WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:606:   ChatpadTrace(("There are now %lu open handles to the chatpad mouse KMDF control device.\n", numOpenHandles));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:612:      PCHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION    controlExtension  = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:617:         controlExtension = ChatpadMouseKMDFControlGetData(chatpadMouseKMDFControlDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:645:   WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:647:   WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:648:} // end ChatpadMouseKMDFControlDeviceCreateHandler
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:651:ChatpadMouseKMDFControlDeviceCloseHandler(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:656:   ChatpadTrace(("The IRQL in the mouse close handler is %u.\n", KeGetCurrentIrql()));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:659:   WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:671:   ChatpadTrace(("There are now %lu open handles to the chatpad mouse KMDF control device.\n", numOpenHandles));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:677:      //   I want to make sure the no-mouse-events-active HID response gets sent, though.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:678:      PCHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION    controlExtension  = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:682:      if(NULL == chatpadMouseKMDFControlDevice)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:690:         controlExtension = ChatpadMouseKMDFControlGetData(chatpadMouseKMDFControlDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:721:            ChatpadTrace(("No top-level HID read report request available.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:728:         PCHATPAD_MOUSE_HID_INPUT_REPORT     inputReport                   = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:733:         bytesToCopy = sizeof(CHATPAD_MOUSE_HID_INPUT_REPORT);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:734:         apiStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:757:            ChatpadTrace(("Unable to get valid buffer from top-level HID read report request:  0x%x\n",
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:763:         WdfRequestCompleteWithInformation(requestFromAbove, apiStatus, bytesTransferred);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:768:            ChatpadTrace(("Successfully sent HID response indicating no mouse action is active.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:774:   WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:775:} // end ChatpadMouseKMDFControlDeviceCloseHandler
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:778:ChatpadMouseKMDFDriverContextCleanup(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:785:} // end ChatpadMouseKMDFDriverContextCleanup
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:788:ChatpadMouseKMDFContextCleanup(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:803:   devContext = ChatpadMouseKMDFGetDeviceContext(device);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:806:      WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:810:      deviceCount = WdfCollectionGetCount(chatpadMouseKMDFDeviceCollection);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:817:         // According to the toaster KMDF sideband filter example, the deletion
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:824:            ChatpadMouseKMDFDeleteControlDevice();
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:834:      chatpadMouseKMDFControlDeviceAvailable = FALSE;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:836:      WdfCollectionRemove(chatpadMouseKMDFDeviceCollection, device);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:838:      WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:849:ChatpadMouseKMDFCreateControlDevice(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:856:   WDFDEVICE               newChatpadMouseKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:858:   DECLARE_CONST_UNICODE_STRING(ntDeviceName, CHATPAD_MOUSE_KMDF_CONTROL_NAME);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:859:   DECLARE_CONST_UNICODE_STRING(symbolicLinkName, CHATPAD_MOUSE_KMDF_CONTROL_LINK);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:864:   WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:867:   ChatpadTrace(("Collection device count is %d.\n", WdfCollectionGetCount(chatpadMouseKMDFDeviceCollection)));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:869:   if(NULL == chatpadMouseKMDFControlDevice)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:874:   WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:878:      ChatpadTrace(("Chatpad mouse KMDF control device was already created.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:882:      ChatpadTrace(("Creating chatpad mouse KMDF control device.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:908:        ChatpadMouseKMDFControlDeviceCreateHandler,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:909:        ChatpadMouseKMDFControlDeviceCloseHandler,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:921:           CHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:923:         retStatus = WdfDeviceCreate(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:926:           &newChatpadMouseKMDFControlDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:930:      PDEVICE_CONTEXT devContext = ChatpadMouseKMDFGetDeviceContext(device);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:933:         PCHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION controlExtension =
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:934:           ChatpadMouseKMDFControlGetData(newChatpadMouseKMDFControlDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:955:         retStatus = WdfDeviceCreateSymbolicLink(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:956:           newChatpadMouseKMDFControlDevice,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:972:           ChatpadMouseKMDFIOCTLHandler;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:975:         retStatus = WdfIoQueueCreate(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:976:           newChatpadMouseKMDFControlDevice,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:984:         WdfControlFinishInitializing(newChatpadMouseKMDFControlDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:985:         WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:986:         chatpadMouseKMDFControlDevice = newChatpadMouseKMDFControlDevice;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:987:         WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:989:         ChatpadTrace(("Chatpad mouse KMDF control device created successfully.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:993:         ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1000:      ChatpadTrace(("Failed to create chatpad mouse KMDF control device:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1008:      if(NULL != newChatpadMouseKMDFControlDevice)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1011:         WdfObjectDelete(newChatpadMouseKMDFControlDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1012:         newChatpadMouseKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1017:} // end ChatpadMouseKMDFCreateControlDevice
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1022:// currently acquired on chatpadMouseKMDFDeviceCollectionLock.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1024:ChatpadMouseKMDFDeleteControlDevice(VOID)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1028:   if(chatpadMouseKMDFControlDevice)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1030:      WdfObjectDelete(chatpadMouseKMDFControlDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1031:      chatpadMouseKMDFControlDevice = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1033:} // end ChatpadMouseKMDFDeleteControlDevice
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1036:ChatpadMouseKMDFInternalIOCTLHandler(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1049://   ChatpadTrace(("Chatpad mouse KMDF layer internal IOCTL handler called with ioControlCode == %x\n",
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1055:   devContext = ChatpadMouseKMDFGetDeviceContext(wdfDevice);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1058:   if(IOCTL_HID_GET_DEVICE_DESCRIPTOR == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1060:      apiStatus = ChatpadMouseKMDFGetHidDescriptor(wdfDevice, request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1062:   else if(IOCTL_HID_GET_DEVICE_ATTRIBUTES == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1065:      apiStatus = ChatpadMouseKMDFGetHidDeviceAttributes(request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1067:   else if(IOCTL_HID_GET_REPORT_DESCRIPTOR == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1069:      apiStatus = ChatpadMouseKMDFGetHidReportDescriptor(wdfDevice, request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1071:   else if(IOCTL_HID_GET_STRING == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1073:      apiStatus = ChatpadMouseKMDFGetHidString(request);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1075:   else if(IOCTL_HID_SET_FEATURE == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1077:ChatpadTrace(("Received HID set feature request.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1081:   else if(IOCTL_HID_GET_FEATURE == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1083:ChatpadTrace(("Received HID get feature request.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1087:   else if(IOCTL_HID_WRITE_REPORT == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1089:ChatpadTrace(("Received HID write report request.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1093:   else if(IOCTL_HID_READ_REPORT == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1097:      // TODO NEXT do I need to handle IOCTL_HID_GET_INPUT_REPORT as well?
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1098:      //   If only handling IOCTL_HID_READ_REPORT works on XP, Vista, and Windows 7, then apparently I don't.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1099:      apiStatus = WdfRequestForwardToIoQueue(request, devContext->hidReadRequestQueue);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1106:         ChatpadTrace(("WdfRequestForwardToIoQueue failed:  0x%x\n", apiStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1117:      WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1121:} // end ChatpadMouseKMDFInternalIOCTLHandler
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1123:// This function retrieves the mouse HID descriptor.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1125:ChatpadMouseKMDFGetHidDescriptor(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1133:   ChatpadTrace(("Received HID get \"device\" descriptor request.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1135:   retStatus = WdfRequestRetrieveOutputMemory(request, &outputMemory);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1138:      ChatpadTrace(("WdfRequestRetrieveOutputMemory failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1143:      // Use hardcoded HID descriptor.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1145:      //   request for a "device HID descriptor", and according to the HID spec that is
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1151:         ChatpadTrace(("Error, invalid internal HID descriptor.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1161:        const_cast<HID_DESCRIPTOR*>(&chatpadMouseHidDefaultDescriptor),
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1173:      WdfRequestSetInformation(request, bytesToCopy);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1177:} // end ChatpadMouseKMDFGetHidDescriptor
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1181:ChatpadMouseKMDFGetHidDeviceAttributes(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1185:   PHID_DEVICE_ATTRIBUTES  deviceAttributes        = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1189:   devContext = ChatpadMouseKMDFGetDeviceContext(WdfIoQueueGetDevice(WdfRequestGetIoQueue(request)));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1191:   ChatpadTrace(("Received HID get device attributes request.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1194:   retStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1196:     sizeof(HID_DEVICE_ATTRIBUTES),
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1201:      ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1206:      deviceAttributes = static_cast<PHID_DEVICE_ATTRIBUTES>(deviceAttributesAsVoid);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1212:         deviceAttributes->Size           = sizeof(HID_DEVICE_ATTRIBUTES);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1227:      ChatpadTrace(("Reporting %lu bytes.\n", sizeof(HID_DEVICE_ATTRIBUTES)));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1228:      WdfRequestSetInformation(request, sizeof(HID_DEVICE_ATTRIBUTES));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1232:} // end ChatpadMouseKMDFGetHidDeviceAttributes
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1234:// This function retrieves the mouse HID descriptor.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1236:ChatpadMouseKMDFGetHidReportDescriptor(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1244://   ChatpadTrace(("Received HID get report descriptor request.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1246:   retStatus = WdfRequestRetrieveOutputMemory(request, &outputMemory);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1249:      ChatpadTrace(("WdfRequestRetrieveOutputMemory failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1254:      // Use hardcoded HID descriptor.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1256:      //   request for a "device HID descriptor", and according to the HID spec that is
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1262:         ChatpadTrace(("Error, invalid internal HID report descriptor.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1272:        const_cast<PHID_REPORT_DESCRIPTOR>(chatpadMouseHidReportDescriptor),
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1284:      WdfRequestSetInformation(request, bytesToCopy);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1288:} // end ChatpadMouseKMDFGetHidReportDescriptor
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1290:// This function retrieves a mouse HID string.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1293:ChatpadMouseKMDFGetHidString(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1304:   ChatpadTrace(("Received HID get string request.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1307:   WdfRequestGetParameters(request, &requestParameters);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1319:      case HID_STRING_ID_IMANUFACTURER:
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1325:      case HID_STRING_ID_IPRODUCT:
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1331:      case HID_STRING_ID_ISERIALNUMBER:
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1340:           "Unknown value for getting a HID string:  0x%x\n",
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1360:      retStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1368:         ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1374:      // Copy the HID string.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1376:      WdfRequestSetInformation(request, lengthToReturn);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1379:   ChatpadTrace(("ChatpadMouseKMDFGetHidString returning status 0x%x\n", retStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1382:} // end ChatpadMouseKMDFGetHidString
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1384:// This function runs at PASSIVE IRQL.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1386:ChatpadMouseKMDFIOCTLHandler(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1405://   ChatpadTrace(("The IRQL in the chatpad mouse KMDF IOCTL handler is %u.\n", KeGetCurrentIrql()));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1407:   WdfWaitLockAcquire(chatpadMouseKMDFDeviceCollectionLock, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1409:   if(TRUE == chatpadMouseKMDFControlDeviceAvailable)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1412:      numDriverInstances = WdfCollectionGetCount(chatpadMouseKMDFDeviceCollection);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1416:         devContext = ChatpadMouseKMDFGetDeviceContext(WdfCollectionGetItem(chatpadMouseKMDFDeviceCollection, 0));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1427:   WdfWaitLockRelease(chatpadMouseKMDFDeviceCollectionLock);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1432:      WdfRequestCompleteWithInformation(request, STATUS_INTERNAL_ERROR, 0);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1436:   if(IOCTL_CHATPAD_MOUSE_KMDF_SET_ENABLED == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1448:         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1453:            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1459:         if(CHATPAD_MOUSE_KMDF_ENABLE == dataFromUser[0])
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1464:         else if(CHATPAD_MOUSE_KMDF_DISABLE == dataFromUser[0])
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1474:   } // end if(IOCTL_CHATPAD_MOUSE_KMDF_SET_ENABLED == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1475:   else if(IOCTL_CHATPAD_MOUSE_KMDF_SEND_DATA == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1486:         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1491:            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1514:            PCHATPAD_MOUSE_HID_INPUT_REPORT     inputReport                   = NULL;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1517:            bytesToCopy = sizeof(CHATPAD_MOUSE_HID_INPUT_REPORT);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1518:            apiStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1538:               ChatpadTrace(("Unable to get valid buffer from top-level HID read report request:  0x%x\n",
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1544:            WdfRequestCompleteWithInformation(requestFromAbove, apiStatus, bytesTransferred);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1548:            ChatpadTrace(("No top-level HID read report request available.\n"));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1557:   } // end if(IOCTL_CHATPAD_MOUSE_KMDF_SEND_DATA == ioControlCode)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1566://   ChatpadTrace(("Completing ChatpadMouseKMDFIOCTLHandler with bytesTransferred == %lu\n", bytesTransferred));
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1571:   WdfRequestCompleteWithInformation(request, apiStatus, bytesTransferred);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:1574:} // end ChatpadMouseKMDFIOCTLHandler
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:2:// Chatpad virtual mouse KMDF driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:9:#ifndef CHATPAD_MOUSE_KMDF_H
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:10:#define CHATPAD_MOUSE_KMDF_H
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:13:#define CHATPAD_MOUSE_KMDF_DBG
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:30:#ifdef CHATPAD_MOUSE_KMDF_DBG
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:53:#define CHATPADMOUSEKMDF_POOL_TAG                  static_cast<ULONG>('zilB')
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:54:#define CHATPADMOUSEKMDF_HARDWARE_IDS              L"HID\\ChatpadMouse\0\0"
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:55:#define CHATPADMOUSEKMDF_HARDWARE_IDS_LENGTH       sizeof(CHATPADMOUSEKMDF_HARDWARE_IDS)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:58:#define CHATPAD_MOUSE_KMDF_CONTROL_NAME            L"\\Device\\ChatpadMouseKMDF"
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:59:#define CHATPAD_MOUSE_KMDF_CONTROL_LINK            L"\\DosDevices\\ChatpadMouseKMDF"
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:77:  ChatpadMouseKMDFGetDeviceContext)
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:80:typedef struct _CHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:83:   //   in the close handler, and can generate a HID response indicating that no
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:86:} CHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION, *PCHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION;
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:89:  CHATPAD_MOUSE_KMDF_CONTROL_DEVICE_EXTENSION,
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:90:  ChatpadMouseKMDFControlGetData);
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:92:#endif // CHATPAD_MOUSE_KMDF_H
+stage2-source-review/source/chatpad_mouse_kmdf/sources:4:KMDF_VERSION_MAJOR=1
+stage2-source-review/source/chatpad_mouse_kmdf/sources:5:KMDF_VERSION_MINOR=9
+stage2-source-review/source/filter/chatpad_filter.cpp:2:// Chatpad KMDF USB filter driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/filter/chatpad_filter.cpp:38:DRIVER_INITIALIZE DriverEntry;
+stage2-source-review/source/filter/chatpad_filter.cpp:43:DriverEntry(
+stage2-source-review/source/filter/chatpad_filter.cpp:58:                          ChatpadFilterEvtDeviceAdd);
+stage2-source-review/source/filter/chatpad_filter.cpp:62:   retStatus = WdfDriverCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:71:      ChatpadTrace(("WdfDriverCreate failed:  0x%0x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:98:} // end DriverEntry
+stage2-source-review/source/filter/chatpad_filter.cpp:177:   ChatpadTrace(("ChatpadFilterEvtQueryRemove called with IRQL %u\n", KeGetCurrentIrql()));
+stage2-source-review/source/filter/chatpad_filter.cpp:187:   ChatpadTrace(("ChatpadFilterEvtSurpriseRemoval called with IRQL %u\n", KeGetCurrentIrql()));
+stage2-source-review/source/filter/chatpad_filter.cpp:247:ChatpadFilterEvtDeviceAdd(
+stage2-source-review/source/filter/chatpad_filter.cpp:303:      retStatus = WdfDeviceCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:398:            retStatus = WdfRequestCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:404:               ChatpadTrace(("WdfRequestCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:502:               retStatus = WdfRequestCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:508:                  ChatpadTrace(("WdfRequestCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:574:               retStatus = WdfRequestCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:580:                  ChatpadTrace(("WdfRequestCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:594:            // This should catch IOCTL_INTERNAL_USB_SUBMIT_URB.
+stage2-source-review/source/filter/chatpad_filter.cpp:599:            retStatus = WdfIoQueueCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:610:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:623:              WdfIoQueueCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:634:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:647:              WdfIoQueueCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:658:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:671:              WdfIoQueueCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:682:               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:693:      ChatpadTrace(("WdfDeviceCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:722:} // end ChatpadFilterEvtDeviceAdd
+stage2-source-review/source/filter/chatpad_filter.cpp:804:      retStatus = WdfRequestAllocateTimer(devContext->controlsWriteRequest);
+stage2-source-review/source/filter/chatpad_filter.cpp:807:         ChatpadTrace(("WdfRequestAllocateTimer failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:814:      if(WdfRequestSend(devContext->controlsWriteRequest,
+stage2-source-review/source/filter/chatpad_filter.cpp:819:         retStatus = WdfRequestGetStatus(devContext->controlsWriteRequest);
+stage2-source-review/source/filter/chatpad_filter.cpp:824:            ChatpadTrace(("(WdfRequestGetStatus returns 0x%x)\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:842:      retStatus = WdfRequestReuse(
+stage2-source-review/source/filter/chatpad_filter.cpp:847:         ChatpadTrace(("WdfRequestReuse failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:933:      WdfRequestSetCompletionRoutine(
+stage2-source-review/source/filter/chatpad_filter.cpp:939:      if(WdfRequestSend(devContext->controlsReadRequests[requestIndex],
+stage2-source-review/source/filter/chatpad_filter.cpp:945:         retStatus = WdfRequestGetStatus(devContext->controlsReadRequests[requestIndex]);
+stage2-source-review/source/filter/chatpad_filter.cpp:949://            ChatpadTrace(("(WdfRequestGetStatus returns 0x%x)\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1040:      WdfRequestSetCompletionRoutine(
+stage2-source-review/source/filter/chatpad_filter.cpp:1046:      if(WdfRequestSend(devContext->chatpadReadRequests[requestIndex],
+stage2-source-review/source/filter/chatpad_filter.cpp:1052:         retStatus = WdfRequestGetStatus(devContext->chatpadReadRequests[requestIndex]);
+stage2-source-review/source/filter/chatpad_filter.cpp:1056://            ChatpadTrace(("(for chatpad, WdfRequestGetStatus returns 0x%x)\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1104:   WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/filter/chatpad_filter.cpp:1274:         // According to the toaster KMDF sideband filter example, the deletion
+stage2-source-review/source/filter/chatpad_filter.cpp:1386:         retStatus = WdfDeviceCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:1418:         retStatus = WdfDeviceCreateSymbolicLink(
+stage2-source-review/source/filter/chatpad_filter.cpp:1440:         retStatus = WdfIoQueueCreate(
+stage2-source-review/source/filter/chatpad_filter.cpp:1458:         ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1500:// This function normally runs at DISPATCH IRQL.  It might run at PASSIVE if
+stage2-source-review/source/filter/chatpad_filter.cpp:1527://   ChatpadTrace(("Controls read completion callback called with IRQL %u\n", KeGetCurrentIrql()));
+stage2-source-review/source/filter/chatpad_filter.cpp:1536:      apiStatus = WdfRequestGetStatus(request);
+stage2-source-review/source/filter/chatpad_filter.cpp:1537://      ChatpadTrace(("WdfRequestGetStatus returns 0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1597:                                 WdfRequestWdmGetIrp(
+stage2-source-review/source/filter/chatpad_filter.cpp:1643:                           apiStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/filter/chatpad_filter.cpp:1652:                              ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1709:   apiStatus = WdfRequestReuse(
+stage2-source-review/source/filter/chatpad_filter.cpp:1714:      ChatpadTrace(("WdfRequestReuse failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1761:      WdfRequestCompleteWithInformation(driverRequestFromAbove,
+stage2-source-review/source/filter/chatpad_filter.cpp:1774:      WdfRequestCompleteWithInformation(userRequestFromAbove,
+stage2-source-review/source/filter/chatpad_filter.cpp:1799:// This function normally runs at DISPATCH IRQL.  It might run at PASSIVE if
+stage2-source-review/source/filter/chatpad_filter.cpp:1824://   ChatpadTrace(("Chatpad read completion callback called with IRQL %u\n", KeGetCurrentIrql()));
+stage2-source-review/source/filter/chatpad_filter.cpp:1834:      apiStatus = WdfRequestGetStatus(request);
+stage2-source-review/source/filter/chatpad_filter.cpp:1835://      ChatpadTrace(("WdfRequestGetStatus returns 0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1898:                        apiStatus = WdfRequestRetrieveOutputBuffer(
+stage2-source-review/source/filter/chatpad_filter.cpp:1907:                           ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:1963:   apiStatus = WdfRequestReuse(
+stage2-source-review/source/filter/chatpad_filter.cpp:1968:      ChatpadTrace(("WdfRequestReuse failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:2008:      WdfRequestCompleteWithInformation(requestFromAbove,
+stage2-source-review/source/filter/chatpad_filter.cpp:2032:// This function, at least for bulk and interrupt requests, runs at DISPATCH IRQL.
+stage2-source-review/source/filter/chatpad_filter.cpp:2049://      For now, I am simply making this function ONLY get called for completion on IOCTL_INTERNAL_USB_SUBMIT_URB
+stage2-source-review/source/filter/chatpad_filter.cpp:2051:/*   if((WdfRequestTypeDeviceControlInternal == params->Type)    &&
+stage2-source-review/source/filter/chatpad_filter.cpp:2052:      (IOCTL_INTERNAL_USB_SUBMIT_URB == params->Parameters.Ioctl.IoControlCode))*/
+stage2-source-review/source/filter/chatpad_filter.cpp:2053://   ChatpadTrace(("Internal IOCTL completion callback called with IRQL %u\n", KeGetCurrentIrql()));
+stage2-source-review/source/filter/chatpad_filter.cpp:2057:   PURB existingURB = static_cast<PURB>(URB_FROM_IRP(WdfRequestWdmGetIrp(request)));
+stage2-source-review/source/filter/chatpad_filter.cpp:2155:   WdfRequestComplete(request, params->IoStatus.Status);
+stage2-source-review/source/filter/chatpad_filter.cpp:2158:// This is just a wrapper for ExAllocatePoolWithTag, since OACR refuses to stop complaining
+stage2-source-review/source/filter/chatpad_filter.cpp:2163:ExAllocatePoolWithTagWrapper(
+stage2-source-review/source/filter/chatpad_filter.cpp:2168:   return ExAllocatePoolWithTag(PoolType, NumberOfBytes, Tag);
+stage2-source-review/source/filter/chatpad_filter.cpp:2169:} // end ExAllocatePoolWithTagWrapper
+stage2-source-review/source/filter/chatpad_filter.cpp:2195:   if(IOCTL_INTERNAL_USB_SUBMIT_URB == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:2205:      existingURB = static_cast<PURB>(URB_FROM_IRP(WdfRequestWdmGetIrp(request)));
+stage2-source-review/source/filter/chatpad_filter.cpp:2333:                            ExAllocatePoolWithTagWrapper(
+stage2-source-review/source/filter/chatpad_filter.cpp:2523:            WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/filter/chatpad_filter.cpp:2643:               WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/filter/chatpad_filter.cpp:2705:                     apiStatus = WdfRequestForwardToIoQueue(request, devContext->controlsParkedDriverReadRequestQueue);
+stage2-source-review/source/filter/chatpad_filter.cpp:2799:   } // end if(IOCTL_INTERNAL_USB_SUBMIT_URB == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:2808:      WdfRequestFormatRequestUsingCurrentType(request);
+stage2-source-review/source/filter/chatpad_filter.cpp:2817:         if(!WdfRequestSend(request,
+stage2-source-review/source/filter/chatpad_filter.cpp:2821:            apiStatus = WdfRequestGetStatus(request);
+stage2-source-review/source/filter/chatpad_filter.cpp:2822:            ChatpadTrace(("WdfRequestSend failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:2824:            WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/filter/chatpad_filter.cpp:2832:            WdfRequestSetCompletionRoutine(
+stage2-source-review/source/filter/chatpad_filter.cpp:2837:            if(!WdfRequestSend(request,
+stage2-source-review/source/filter/chatpad_filter.cpp:2841:               apiStatus = WdfRequestGetStatus(request);
+stage2-source-review/source/filter/chatpad_filter.cpp:2842:               ChatpadTrace(("WdfRequestSend failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:2843:               WdfRequestComplete(request, apiStatus);
+stage2-source-review/source/filter/chatpad_filter.cpp:2856:// This function runs at PASSIVE IRQL.
+stage2-source-review/source/filter/chatpad_filter.cpp:2880://   ChatpadTrace(("The IRQL in the filter IOCTL handler is %u.\n", KeGetCurrentIrql()));
+stage2-source-review/source/filter/chatpad_filter.cpp:2909:      WdfRequestCompleteWithInformation(request, STATUS_INTERNAL_ERROR, 0);
+stage2-source-review/source/filter/chatpad_filter.cpp:2918:   else if(IOCTL_CHATPAD_IS_MS_INIT_DONE == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:2929:   } // end if(IOCTL_CHATPAD_IS_MS_INIT_DONE == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:2935:   else if(IOCTL_CHATPAD_SEND_CONTROL_TRANSFER == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:2972:            apiStatus = WdfRequestRetrieveOutputBuffer(request, outputBufferLength, &dataFromDeviceBuffer, NULL);
+stage2-source-review/source/filter/chatpad_filter.cpp:2975:               ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:2983:         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+stage2-source-review/source/filter/chatpad_filter.cpp:2988:            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:3052:         //   WdfRequestAllocateTimer()?  Hopefully there is not really a need for that.
+stage2-source-review/source/filter/chatpad_filter.cpp:3076:   } // end else if(IOCTL_CHATPAD_SEND_CONTROL_TRANSFER == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3077:   else if(IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3092:         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+stage2-source-review/source/filter/chatpad_filter.cpp:3097:            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:3107:   } // end else if(IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3108:   else if(IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3121:      apiStatus = WdfRequestForwardToIoQueue(request, devContext->controlsParkedUserReadRequestQueue);
+stage2-source-review/source/filter/chatpad_filter.cpp:3160:   } // end else if(IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3161:   else if(IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3170:      apiStatus = WdfRequestForwardToIoQueue(request, devContext->chatpadParkedUserReadRequestQueue);
+stage2-source-review/source/filter/chatpad_filter.cpp:3209:   } // end else if(IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3210:   else if(IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3213:   } // end else if(IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3214:   else if(IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3224:      apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+stage2-source-review/source/filter/chatpad_filter.cpp:3229:         ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+stage2-source-review/source/filter/chatpad_filter.cpp:3264:   } // end else if(IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE == ioControlCode)
+stage2-source-review/source/filter/chatpad_filter.cpp:3278:      WdfRequestCompleteWithInformation(request, apiStatus, bytesTransferred);
+stage2-source-review/source/filter/chatpad_filter.h:2:// Chatpad KMDF USB filter driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/filter/chatpad_filter.h:215:EVT_WDF_DRIVER_DEVICE_ADD ChatpadFilterEvtDeviceAdd;
+stage2-source-review/source/filter/chatpad_filter.h:218:ChatpadFilterEvtDeviceAdd(
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:4:; Chatpad KMDF USB filter driver.
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:71:AddReg = ChatpadFilter.NT.HW.AddReg
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:74:[ChatpadFilter.NT.HW.AddReg]
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:75:HKR,,"LowerFilters",0x00010000,"ChatpadFilter"
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:78:HKR,,"LowerFilters"
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:107:WdfCoInstaller01009.dll       = 1
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:111:WdfCoInstaller01009.dll       = 2
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:115:WdfCoInstaller01009.dll       = 3
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:122:AddReg      = ChatpadFilter_CoInstaller_AddReg
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:125:[ChatpadFilter_CoInstaller_AddReg]
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:126:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:129:WdfCoInstaller01009.dll
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:4:; Chatpad KMDF USB filter driver.
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:72:AddReg = ChatpadFilter.NT.HW.AddReg
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:75:[ChatpadFilter.NT.HW.AddReg]
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:76:HKR,,"LowerFilters",0x00010000,"ChatpadFilter"
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:79:HKR,,"LowerFilters"
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:87:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:108:WdfCoInstaller01009.dll       = 1
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:112:WdfCoInstaller01009.dll       = 2
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:116:WdfCoInstaller01009.dll       = 3
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:123:AddReg      = ChatpadFilter_CoInstaller_AddReg
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:126:[ChatpadFilter_CoInstaller_AddReg]
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:127:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:130:WdfCoInstaller01009.dll
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:4:; Chatpad KMDF USB filter driver.
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:71:AddReg = ChatpadFilter.NT.HW.AddReg
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:74:[ChatpadFilter.NT.HW.AddReg]
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:75:HKR,,"LowerFilters",0x00010000,"ChatpadFilter"
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:78:HKR,,"LowerFilters"
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:107:WdfCoInstaller01009.dll       = 1
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:111:WdfCoInstaller01009.dll       = 2
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:115:WdfCoInstaller01009.dll       = 3
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:122:AddReg      = ChatpadFilter_CoInstaller_AddReg
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:125:[ChatpadFilter_CoInstaller_AddReg]
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:126:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:129:WdfCoInstaller01009.dll
+stage2-source-review/source/filter/sources:4:KMDF_VERSION_MAJOR=1
+stage2-source-review/source/filter/sources:5:KMDF_VERSION_MINOR=9
+stage2-source-review/source/hid_keyboard_interface/chatpad_keyboard.c:18:  (((PHID_DEVICE_EXTENSION)(DO)->DeviceExtension)->NextDeviceObject)
+stage2-source-review/source/hid_keyboard_interface/chatpad_keyboard.c:46:DRIVER_INITIALIZE DriverEntry;
+stage2-source-review/source/hid_keyboard_interface/chatpad_keyboard.c:50:DriverEntry(
+stage2-source-review/source/hid_keyboard_interface/chatpad_keyboard.c:55:   HID_MINIDRIVER_REGISTRATION   hidMinidriverRegistration;
+stage2-source-review/source/hid_keyboard_interface/chatpad_keyboard.c:75:   hidMinidriverRegistration.Revision              = HID_REVISION;
+stage2-source-review/source/hid_keyboard_interface/chatpad_keyboard.c:93:} // end DriverEntry
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:66:[ChatpadKeyboardKMDF.Inst.NT]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:70:[ChatpadKeyboardKMDF.Inst.NT.HW]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:71:AddReg = ChatpadKeyboardKMDF_Parameters.AddReg
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:73:[ChatpadKeyboardKMDF.Inst.NT.Services]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:78:[ChatpadKeyboardKMDF_Parameters.AddReg]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadKeyboard"
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:95:[ChatpadKeyboardKMDF_Service_Inst]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:106:ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:108:[ChatpadKeyboardKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:109:AddReg = ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:110:CopyFiles = ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:112:[ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:115:[ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:118:[ChatpadKeyboardKMDF.Inst.NT.Wdf]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:119:KmdfService = ChatpadKeyboardKMDF, ChatpadKeyboardKMDF_wdfsect
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:121:[ChatpadKeyboardKMDF_wdfsect]
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:128:Chatpad_Keyboard_SvcDesc="Chatpad HID Keyboard"
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:129:Chatpad_Keyboard_KMDF_SvcDesc="Chatpad HID Keyboard KMDF Layer"
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:133:ControllerDeviceName="XBox 360 Controller HID Keyboard for Chatpad"
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:66:[ChatpadKeyboardKMDF.Inst.NT]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:70:[ChatpadKeyboardKMDF.Inst.NT.HW]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:71:AddReg = ChatpadKeyboardKMDF_Parameters.AddReg
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:73:[ChatpadKeyboardKMDF.Inst.NT.Services]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:78:[ChatpadKeyboardKMDF_Parameters.AddReg]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadKeyboard"
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:95:[ChatpadKeyboardKMDF_Service_Inst]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:106:ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:108:[ChatpadKeyboardKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:109:AddReg = ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:110:CopyFiles = ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:112:[ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:115:[ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:118:[ChatpadKeyboardKMDF.Inst.NT.Wdf]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:119:KmdfService = ChatpadKeyboardKMDF, ChatpadKeyboardKMDF_wdfsect
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:121:[ChatpadKeyboardKMDF_wdfsect]
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:128:Chatpad_Keyboard_SvcDesc="Chatpad HID Keyboard"
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:129:Chatpad_Keyboard_KMDF_SvcDesc="Chatpad HID Keyboard KMDF Layer"
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:133:ControllerDeviceName="XBox 360 Controller HID Keyboard for Chatpad"
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:66:[ChatpadKeyboardKMDF.Inst.NT]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:70:[ChatpadKeyboardKMDF.Inst.NT.HW]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:71:AddReg = ChatpadKeyboardKMDF_Parameters.AddReg
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:73:[ChatpadKeyboardKMDF.Inst.NT.Services]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:78:[ChatpadKeyboardKMDF_Parameters.AddReg]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadKeyboard"
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:95:[ChatpadKeyboardKMDF_Service_Inst]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:106:ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:108:[ChatpadKeyboardKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:109:AddReg = ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:110:CopyFiles = ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:112:[ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:115:[ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:118:[ChatpadKeyboardKMDF.Inst.NT.Wdf]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:119:KmdfService = ChatpadKeyboardKMDF, ChatpadKeyboardKMDF_wdfsect
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:121:[ChatpadKeyboardKMDF_wdfsect]
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:128:Chatpad_Keyboard_SvcDesc="Chatpad HID Keyboard"
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:129:Chatpad_Keyboard_KMDF_SvcDesc="Chatpad HID Keyboard KMDF Layer"
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:133:ControllerDeviceName="XBox 360 Controller HID Keyboard for Chatpad"
+stage2-source-review/source/hid_keyboard_interface/sources:4:KMDF_VERSION_MAJOR=1
+stage2-source-review/source/hid_keyboard_interface/sources:5:KMDF_VERSION_MINOR=9
+stage2-source-review/source/hid_mouse_interface/chatpad_mouse.c:18:  (((PHID_DEVICE_EXTENSION)(DO)->DeviceExtension)->NextDeviceObject)
+stage2-source-review/source/hid_mouse_interface/chatpad_mouse.c:46:DRIVER_INITIALIZE DriverEntry;
+stage2-source-review/source/hid_mouse_interface/chatpad_mouse.c:50:DriverEntry(
+stage2-source-review/source/hid_mouse_interface/chatpad_mouse.c:55:   HID_MINIDRIVER_REGISTRATION   hidMinidriverRegistration;
+stage2-source-review/source/hid_mouse_interface/chatpad_mouse.c:75:   hidMinidriverRegistration.Revision              = HID_REVISION;
+stage2-source-review/source/hid_mouse_interface/chatpad_mouse.c:93:} // end DriverEntry
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:66:[ChatpadMouseKMDF.Inst.NT]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:70:[ChatpadMouseKMDF.Inst.NT.HW]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:71:AddReg = ChatpadMouseKMDF_Parameters.AddReg
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:73:[ChatpadMouseKMDF.Inst.NT.Services]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:78:[ChatpadMouseKMDF_Parameters.AddReg]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadMouse"
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:95:[ChatpadMouseKMDF_Service_Inst]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:106:ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:108:[ChatpadMouseKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:109:AddReg = ChatpadMouseKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:110:CopyFiles = ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:112:[ChatpadMouseKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:115:[ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:118:[ChatpadMouseKMDF.Inst.NT.Wdf]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:119:KmdfService = ChatpadMouseKMDF, ChatpadMouseKMDF_wdfsect
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:121:[ChatpadMouseKMDF_wdfsect]
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:128:Chatpad_Mouse_SvcDesc="Chatpad HID Mouse"
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:129:Chatpad_Mouse_KMDF_SvcDesc="Chatpad HID Mouse KMDF Layer"
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:133:ControllerDeviceName="XBox 360 Controller HID Mouse for Chatpad"
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:66:[ChatpadMouseKMDF.Inst.NT]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:70:[ChatpadMouseKMDF.Inst.NT.HW]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:71:AddReg = ChatpadMouseKMDF_Parameters.AddReg
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:73:[ChatpadMouseKMDF.Inst.NT.Services]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:78:[ChatpadMouseKMDF_Parameters.AddReg]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadMouse"
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:95:[ChatpadMouseKMDF_Service_Inst]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:106:ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:108:[ChatpadMouseKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:109:AddReg = ChatpadMouseKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:110:CopyFiles = ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:112:[ChatpadMouseKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:115:[ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:118:[ChatpadMouseKMDF.Inst.NT.Wdf]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:119:KmdfService = ChatpadMouseKMDF, ChatpadMouseKMDF_wdfsect
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:121:[ChatpadMouseKMDF_wdfsect]
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:128:Chatpad_Mouse_SvcDesc="Chatpad HID Mouse"
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:129:Chatpad_Mouse_KMDF_SvcDesc="Chatpad HID Mouse KMDF Layer"
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:133:ControllerDeviceName="XBox 360 Controller HID Mouse for Chatpad"
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:66:[ChatpadMouseKMDF.Inst.NT]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:70:[ChatpadMouseKMDF.Inst.NT.HW]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:71:AddReg = ChatpadMouseKMDF_Parameters.AddReg
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:73:[ChatpadMouseKMDF.Inst.NT.Services]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:78:[ChatpadMouseKMDF_Parameters.AddReg]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadMouse"
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:95:[ChatpadMouseKMDF_Service_Inst]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:106:ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:108:[ChatpadMouseKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:109:AddReg = ChatpadMouseKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:110:CopyFiles = ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:112:[ChatpadMouseKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:115:[ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:118:[ChatpadMouseKMDF.Inst.NT.Wdf]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:119:KmdfService = ChatpadMouseKMDF, ChatpadMouseKMDF_wdfsect
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:121:[ChatpadMouseKMDF_wdfsect]
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:128:Chatpad_Mouse_SvcDesc="Chatpad HID Mouse"
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:129:Chatpad_Mouse_KMDF_SvcDesc="Chatpad HID Mouse KMDF Layer"
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:133:ControllerDeviceName="XBox 360 Controller HID Mouse for Chatpad"
+stage2-source-review/source/hid_mouse_interface/sources:4:KMDF_VERSION_MAJOR=1
+stage2-source-review/source/hid_mouse_interface/sources:5:KMDF_VERSION_MINOR=9
+stage2-source-review/source/include/chatpad_filter_ioctl.h:2:// Chatpad KMDF USB filter driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/include/chatpad_filter_ioctl.h:14:#ifndef CHATPAD_FILTER_IOCTL_H
+stage2-source-review/source/include/chatpad_filter_ioctl.h:15:#define CHATPAD_FILTER_IOCTL_H
+stage2-source-review/source/include/chatpad_filter_ioctl.h:24:#define IOCTL_CHATPAD_IS_MS_INIT_DONE              CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:26:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:30:#define IOCTL_CHATPAD_SEND_CONTROL_TRANSFER        CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:32:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:37:#define IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT   CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:39:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:45:#define IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT  CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:47:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:52:#define IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT   CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:54:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:62:#define IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS        CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:64:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:72:#define IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE     CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:74:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_filter_ioctl.h:79:// Enum to be used with IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE to set the filter mode.
+stage2-source-review/source/include/chatpad_filter_ioctl.h:93:// Enum to be used with IOCTL_CHATPAD_SEND_CONTROL_TRANSFER
+stage2-source-review/source/include/chatpad_filter_ioctl.h:162:#endif // CHATPAD_FILTER_IOCTL_H
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:2:// Chatpad virtual keyboard KMDF driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:9:#ifndef CHATPAD_KEYBOARD_IOCTL_H
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:10:#define CHATPAD_KEYBOARD_IOCTL_H
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:13:// Constants that can be used with IOCTL_CHATPAD_KEYBOARD_KMDF_SET_ENABLED.
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:14:#define CHATPAD_KEYBOARD_KMDF_DISABLE        0
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:15:#define CHATPAD_KEYBOARD_KMDF_ENABLE         1
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:25:#define IOCTL_CHATPAD_KEYBOARD_KMDF_SET_ENABLED    CTL_CODE(FILE_DEVICE_CHATPAD_KEYBOARD_FILTER,   \
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:27:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:31:#define IOCTL_CHATPAD_KEYBOARD_KMDF_SEND_DATA      CTL_CODE(FILE_DEVICE_CHATPAD_KEYBOARD_FILTER,   \
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:33:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_keyboard_ioctl.h:36:#endif // CHATPAD_KEYBOARD_IOCTL_H
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:2:// Chatpad virtual mouse KMDF driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:9:#ifndef CHATPAD_MOUSE_IOCTL_H
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:10:#define CHATPAD_MOUSE_IOCTL_H
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:13:// Constants that can be used with IOCTL_CHATPAD_MOUSE_KMDF_SET_ENABLED.
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:14:#define CHATPAD_MOUSE_KMDF_DISABLE        0
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:15:#define CHATPAD_MOUSE_KMDF_ENABLE         1
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:25:#define IOCTL_CHATPAD_MOUSE_KMDF_SET_ENABLED    CTL_CODE(FILE_DEVICE_CHATPAD_MOUSE_FILTER,   \
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:27:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:31:#define IOCTL_CHATPAD_MOUSE_KMDF_SEND_DATA      CTL_CODE(FILE_DEVICE_CHATPAD_MOUSE_FILTER,   \
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:33:                                                            METHOD_BUFFERED,              \
+stage2-source-review/source/include/chatpad_mouse_ioctl.h:36:#endif // CHATPAD_MOUSE_IOCTL_H
+stage2-source-review/source/installer/chatpad_installer.cpp:2:// Chatpad driver installation program that works with a KMDF USB filter driver, by
+stage2-source-review/source/installer/chatpad_installer.cpp:36:#define VIRTUAL_KEYBOARD_HW_ID               "HID\\ChatpadKbd"
+stage2-source-review/source/installer/chatpad_installer.cpp:37:#define VIRTUAL_MOUSE_HW_ID                  "HID\\ChatpadMouse"
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:4:; Chatpad KMDF USB filter driver.
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:71:AddReg = ChatpadFilter.NT.HW.AddReg
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:74:[ChatpadFilter.NT.HW.AddReg]
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:75:HKR,,"LowerFilters",0x00010000,"ChatpadFilter"
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:78:HKR,,"LowerFilters"
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:107:WdfCoInstaller01009.dll       = 1
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:111:WdfCoInstaller01009.dll       = 2
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:115:WdfCoInstaller01009.dll       = 3
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:122:AddReg      = ChatpadFilter_CoInstaller_AddReg
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:125:[ChatpadFilter_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:126:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:129:WdfCoInstaller01009.dll
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:66:[ChatpadKeyboardKMDF.Inst.NT]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:70:[ChatpadKeyboardKMDF.Inst.NT.HW]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:71:AddReg = ChatpadKeyboardKMDF_Parameters.AddReg
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:73:[ChatpadKeyboardKMDF.Inst.NT.Services]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:78:[ChatpadKeyboardKMDF_Parameters.AddReg]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadKeyboard"
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:95:[ChatpadKeyboardKMDF_Service_Inst]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:106:ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:108:[ChatpadKeyboardKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:109:AddReg = ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:110:CopyFiles = ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:112:[ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:115:[ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:118:[ChatpadKeyboardKMDF.Inst.NT.Wdf]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:119:KmdfService = ChatpadKeyboardKMDF, ChatpadKeyboardKMDF_wdfsect
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:121:[ChatpadKeyboardKMDF_wdfsect]
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:128:Chatpad_Keyboard_SvcDesc="Chatpad HID Keyboard"
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:129:Chatpad_Keyboard_KMDF_SvcDesc="Chatpad HID Keyboard KMDF Layer"
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:133:ControllerDeviceName="XBox 360 Controller HID Keyboard for Chatpad"
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:66:[ChatpadMouseKMDF.Inst.NT]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:70:[ChatpadMouseKMDF.Inst.NT.HW]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:71:AddReg = ChatpadMouseKMDF_Parameters.AddReg
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:73:[ChatpadMouseKMDF.Inst.NT.Services]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:78:[ChatpadMouseKMDF_Parameters.AddReg]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadMouse"
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:95:[ChatpadMouseKMDF_Service_Inst]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:106:ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:108:[ChatpadMouseKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:109:AddReg = ChatpadMouseKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:110:CopyFiles = ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:112:[ChatpadMouseKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:115:[ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:118:[ChatpadMouseKMDF.Inst.NT.Wdf]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:119:KmdfService = ChatpadMouseKMDF, ChatpadMouseKMDF_wdfsect
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:121:[ChatpadMouseKMDF_wdfsect]
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:128:Chatpad_Mouse_SvcDesc="Chatpad HID Mouse"
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:129:Chatpad_Mouse_KMDF_SvcDesc="Chatpad HID Mouse KMDF Layer"
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:133:ControllerDeviceName="XBox 360 Controller HID Mouse for Chatpad"
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:4:; Chatpad KMDF USB filter driver.
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:72:AddReg = ChatpadFilter.NT.HW.AddReg
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:75:[ChatpadFilter.NT.HW.AddReg]
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:76:HKR,,"LowerFilters",0x00010000,"ChatpadFilter"
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:79:HKR,,"LowerFilters"
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:87:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:108:WdfCoInstaller01009.dll       = 1
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:112:WdfCoInstaller01009.dll       = 2
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:116:WdfCoInstaller01009.dll       = 3
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:123:AddReg      = ChatpadFilter_CoInstaller_AddReg
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:126:[ChatpadFilter_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:127:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:130:WdfCoInstaller01009.dll
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:66:[ChatpadKeyboardKMDF.Inst.NT]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:70:[ChatpadKeyboardKMDF.Inst.NT.HW]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:71:AddReg = ChatpadKeyboardKMDF_Parameters.AddReg
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:73:[ChatpadKeyboardKMDF.Inst.NT.Services]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:78:[ChatpadKeyboardKMDF_Parameters.AddReg]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadKeyboard"
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:95:[ChatpadKeyboardKMDF_Service_Inst]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:106:ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:108:[ChatpadKeyboardKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:109:AddReg = ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:110:CopyFiles = ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:112:[ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:115:[ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:118:[ChatpadKeyboardKMDF.Inst.NT.Wdf]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:119:KmdfService = ChatpadKeyboardKMDF, ChatpadKeyboardKMDF_wdfsect
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:121:[ChatpadKeyboardKMDF_wdfsect]
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:128:Chatpad_Keyboard_SvcDesc="Chatpad HID Keyboard"
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:129:Chatpad_Keyboard_KMDF_SvcDesc="Chatpad HID Keyboard KMDF Layer"
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:133:ControllerDeviceName="XBox 360 Controller HID Keyboard for Chatpad"
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:66:[ChatpadMouseKMDF.Inst.NT]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:70:[ChatpadMouseKMDF.Inst.NT.HW]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:71:AddReg = ChatpadMouseKMDF_Parameters.AddReg
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:73:[ChatpadMouseKMDF.Inst.NT.Services]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:78:[ChatpadMouseKMDF_Parameters.AddReg]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadMouse"
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:95:[ChatpadMouseKMDF_Service_Inst]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:106:ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:108:[ChatpadMouseKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:109:AddReg = ChatpadMouseKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:110:CopyFiles = ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:112:[ChatpadMouseKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:115:[ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:118:[ChatpadMouseKMDF.Inst.NT.Wdf]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:119:KmdfService = ChatpadMouseKMDF, ChatpadMouseKMDF_wdfsect
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:121:[ChatpadMouseKMDF_wdfsect]
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:128:Chatpad_Mouse_SvcDesc="Chatpad HID Mouse"
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:129:Chatpad_Mouse_KMDF_SvcDesc="Chatpad HID Mouse KMDF Layer"
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:133:ControllerDeviceName="XBox 360 Controller HID Mouse for Chatpad"
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:4:; Chatpad KMDF USB filter driver.
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:71:AddReg = ChatpadFilter.NT.HW.AddReg
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:74:[ChatpadFilter.NT.HW.AddReg]
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:75:HKR,,"LowerFilters",0x00010000,"ChatpadFilter"
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:78:HKR,,"LowerFilters"
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:107:WdfCoInstaller01009.dll       = 1
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:111:WdfCoInstaller01009.dll       = 2
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:115:WdfCoInstaller01009.dll       = 3
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:122:AddReg      = ChatpadFilter_CoInstaller_AddReg
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:125:[ChatpadFilter_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:126:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:129:WdfCoInstaller01009.dll
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:66:[ChatpadKeyboardKMDF.Inst.NT]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:70:[ChatpadKeyboardKMDF.Inst.NT.HW]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:71:AddReg = ChatpadKeyboardKMDF_Parameters.AddReg
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:73:[ChatpadKeyboardKMDF.Inst.NT.Services]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:78:[ChatpadKeyboardKMDF_Parameters.AddReg]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadKeyboard"
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:95:[ChatpadKeyboardKMDF_Service_Inst]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:106:ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:108:[ChatpadKeyboardKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:109:AddReg = ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:110:CopyFiles = ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:112:[ChatpadKeyboardKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:115:[ChatpadKeyboardKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:118:[ChatpadKeyboardKMDF.Inst.NT.Wdf]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:119:KmdfService = ChatpadKeyboardKMDF, ChatpadKeyboardKMDF_wdfsect
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:121:[ChatpadKeyboardKMDF_wdfsect]
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:128:Chatpad_Keyboard_SvcDesc="Chatpad HID Keyboard"
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:129:Chatpad_Keyboard_KMDF_SvcDesc="Chatpad HID Keyboard KMDF Layer"
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:133:ControllerDeviceName="XBox 360 Controller HID Keyboard for Chatpad"
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:26:WdfCoInstaller01009.dll    = 91
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:31:WdfCoInstaller01009.dll    = 92
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:36:WdfCoInstaller01009.dll    = 93
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:66:[ChatpadMouseKMDF.Inst.NT]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:70:[ChatpadMouseKMDF.Inst.NT.HW]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:71:AddReg = ChatpadMouseKMDF_Parameters.AddReg
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:73:[ChatpadMouseKMDF.Inst.NT.Services]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:78:[ChatpadMouseKMDF_Parameters.AddReg]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:79:HKR,,"UpperFilters",0x00010000,"ChatpadMouse"
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:95:[ChatpadMouseKMDF_Service_Inst]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:106:ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles = 11
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:108:[ChatpadMouseKMDF.Inst.NT.CoInstallers]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:109:AddReg = ChatpadMouseKMDF.Inst_CoInstaller_AddReg
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:110:CopyFiles = ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:112:[ChatpadMouseKMDF.Inst_CoInstaller_AddReg]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:113:HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:115:[ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:116:WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:118:[ChatpadMouseKMDF.Inst.NT.Wdf]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:119:KmdfService = ChatpadMouseKMDF, ChatpadMouseKMDF_wdfsect
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:121:[ChatpadMouseKMDF_wdfsect]
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:128:Chatpad_Mouse_SvcDesc="Chatpad HID Mouse"
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:129:Chatpad_Mouse_KMDF_SvcDesc="Chatpad HID Mouse KMDF Layer"
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:133:ControllerDeviceName="XBox 360 Controller HID Mouse for Chatpad"
+stage2-source-review/source/installer/uninstall_virtual_devices.cpp:2:// Chatpad driver uninstallation program that works with a KMDF USB filter driver, by

@@ -1,0 +1,86 @@
+CURRENT DIRECTORY
+/c/Dev/chatpad-super-driver
+
+STATUS
+## analysis/source-audit...origin/analysis/source-audit
+?? Downloads/
+?? FETCH_HEAD
+?? audit-output/
+?? legacy-source/
+?? win11-port
+
+REMOTES
+origin	https://github.com/Zaknin/chatpad-super-driver.git (fetch)
+origin	https://github.com/Zaknin/chatpad-super-driver.git (push)
+tcb	https://github.com/thiscodedbox/chatpad-super-driver.git (fetch)
+tcb	https://github.com/thiscodedbox/chatpad-super-driver.git (push)
+upstream	https://github.com/GAFBlizzard/chatpad-super-driver.git (fetch)
+upstream	https://github.com/GAFBlizzard/chatpad-super-driver.git (push)
+
+BRANCHES
+* analysis/source-audit 4a2c50b [origin/analysis/source-audit] Update README.md
+  master                4a2c50b [origin/master] Update README.md
+  win11-port            4a2c50b [origin/win11-port] Update README.md
+
+RECENT HISTORY
+* 4a2c50b (HEAD -> analysis/source-audit, tcb/master, tcb/HEAD, origin/win11-port, origin/master, origin/analysis/source-audit, origin/HEAD, win11-port, master) Update README.md
+* bc52051 Update README.md
+* 20aedcf Update README.md
+* 12dabd6 (tag: 0_0_3a_tcb_win10) Update README.md
+* c8e943c cleanup
+*   9c3e63e Merge branch 'master' of https://github.com/thiscodedbox/chatpad-super-driver
+|\  
+| * 2a564f4 Delete _config.yml
+* | 5ab5b63 cleanup etc.
+|/  
+* 4505965 Update README.md
+* a7d8a9a Update README.md
+* 7cd594b Update README.md
+* 24c377e Set theme jekyll-theme-midnight
+* 2480846 Update README.md
+* 71ba803 Update README.md
+* e3a285f Update README.md
+* 973f493 cleanup
+* e3749f9 updating readme
+* cb8c525 (upstream/master, upstream/HEAD) Renamed ProjectHome.md to README.md
+* 03884c0 Added Downloads folder and contents.
+* 37a7f68 Removed wiki directory.
+* 3e7708b Porting from Google Code to github.
+* 6768afe Edited wiki page GettingStarted through web user interface.
+* 5b9c7bf Edited wiki page GettingStarted through web user interface.
+* 33ed49b Edited wiki page GettingStarted through web user interface.
+* c94aeae Edited wiki page GettingStarted through web user interface.
+* ada61df Edited wiki page GettingStarted through web user interface.
+* e79fe77 Edited wiki page GettingStarted through web user interface.
+* cbf3896 Edited wiki page GettingStarted through web user interface.
+* 140d088 Edited wiki page GettingStarted through web user interface.
+* 6c1d0aa Edited wiki page GettingStarted through web user interface.
+* af121b1 Edited wiki page GettingStarted through web user interface.
+* 94075ff Edited wiki page GettingStarted through web user interface.
+* 377adbf Edited wiki page GettingStarted through web user interface.
+* ca5f90d Edited wiki page GettingStarted through web user interface.
+* 00e9c72 Edited wiki page GettingStarted through web user interface.
+* d7a5d59 Edited wiki page GettingStarted through web user interface.
+* 034f04b Edited wiki page GettingStarted through web user interface.
+* ddef57b Edited wiki page GettingStarted through web user interface.
+* 92b55a1 Edited wiki page GettingStarted through web user interface.
+* 17d52e1 Edited wiki page GettingStarted through web user interface.
+
+THISCODEDBOX CHANGES RELATIVE TO ORIGINAL
+ Downloads/LICENSE.TXT                          |  21 --
+ Downloads/chatpad_0_0_3a_win7.zip              | Bin 6154756 -> 0 bytes
+ Downloads/chatpad_0_0_3a_winvista.zip          | Bin 6151130 -> 0 bytes
+ Downloads/chatpad_0_0_3a_winxp.zip             | Bin 1597835 -> 0 bytes
+ Downloads/chatpad_config_ger_ver2.txt          | 403 -------------------------
+ Downloads/source_release_0_0_4a.zip            | Bin 13760560 -> 0 bytes
+ Downloads/uk_config.txt                        | 370 -----------------------
+ Downloads/win7_amd64_chatpad_control_test1.exe | Bin 125952 -> 0 bytes
+ Downloads/win7_amd64_chatpad_control_test2.exe | Bin 119296 -> 0 bytes
+ Downloads/win7_amd64_chatpad_control_test3.exe | Bin 125440 -> 0 bytes
+ Downloads/winvista_i386_mouse_installer.exe    | Bin 75776 -> 0 bytes
+ Downloads/winvista_i386_test.zip               | Bin 6039451 -> 0 bytes
+ Downloads/winxp_i386_chatpad_control_test4.exe | Bin 117760 -> 0 bytes
+ GettingStarted.md                              |  85 ------
+ Downloads/README.TXT => README.TXT             |   0
+ README.md                                      |  26 +-
+ 16 files changed, 24 insertions(+), 881 deletions(-)

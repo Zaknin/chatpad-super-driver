@@ -1,0 +1,134 @@
+     1	;
+     2	; Copyright (c) 2010 GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond
+     3	;
+     4	; Chatpad virtual mouse driver.
+     5	; This file is for Windows Vista only.
+     6	;
+     7	; This code is released under the MIT license.  See LICENSE.TXT for details.
+     8	;
+     9	
+    10	; Based on INF from chatpad_filter and the hidusbfx2.inx example
+    11	
+    12	[Version]
+    13	Signature="$Windows NT$"
+    14	Class=HidClass
+    15	ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+    16	Provider=%ProviderName%
+    17	; TODO see if it is easy to make a catalog file
+    18	; CatalogFile=chatpad.cat
+    19	; TODO make some sort of installer and uninstaller so I do not keep
+    20	;      having to change the version etc. and leaving old drivers on disk?
+    21	DriverVer=12/25/2010,1.0.1.2
+    22	
+    23	[SourceDisksFiles.ia64]
+    24	chatpad_mouse.sys       = 91
+    25	chatpad_mouse_kmdf.sys  = 91
+    26	WdfCoInstaller01009.dll    = 91
+    27	
+    28	[SourceDisksFiles.amd64]
+    29	chatpad_mouse.sys       = 92
+    30	chatpad_mouse_kmdf.sys  = 92
+    31	WdfCoInstaller01009.dll    = 92
+    32	
+    33	[SourceDisksFiles.x86]
+    34	chatpad_mouse.sys       = 93
+    35	chatpad_mouse_kmdf.sys  = 93
+    36	WdfCoInstaller01009.dll    = 93
+    37	
+    38	[SourceDisksNames]
+    39	91 = %MediaDescription1%,,,"\ia64"
+    40	92 = %MediaDescription2%,,,"\amd64"
+    41	93 = %MediaDescription3%,,,"\i386"
+    42	
+    43	[DestinationDirs]
+    44	DefaultDestDir = 12
+    45	
+    46	[Manufacturer]
+    47	%ProviderName%=Standard,NTx86,NTamd64,NTia64
+    48	
+    49	; For Windows 2000
+    50	[Standard]
+    51	; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+    52	;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+    53	%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+    54	; TODO do I need to use the custom collection from the hidusbfx2 example?  Or at least provide a keyboard/mouse interface?
+    55	;   (if so, it would need to be integrated into the rest of the INF file as well)
+    56	
+    57	[Standard.NTx86]
+    58	%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+    59	
+    60	[Standard.NTamd64]
+    61	%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+    62	
+    63	[Standard.NTia64]
+    64	%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+    65	
+    66	[ChatpadMouseKMDF.Inst.NT]
+    67	; TODO do I need to worry about hidparse.sys and hidclass.sys, since Vista does not seem to have the layout.inf thing?
+    68	CopyFiles = CopyFunctionDriver, CopyFilterDriver
+    69	
+    70	[ChatpadMouseKMDF.Inst.NT.HW]
+    71	AddReg = ChatpadMouseKMDF_Parameters.AddReg
+    72	
+    73	[ChatpadMouseKMDF.Inst.NT.Services]
+    74	AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+    75	; TODO what does the 0x00000002 do?
+    76	AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+    77	
+    78	[ChatpadMouseKMDF_Parameters.AddReg]
+    79	HKR,,"UpperFilters",0x00010000,"ChatpadMouse"
+    80	
+    81	[ChatpadMouse_Service_Inst]
+    82	DisplayName    = %Chatpad_Mouse_SvcDesc%
+    83	ServiceType    = 1      ; SERVICE_KERNEL_DRIVER
+    84	StartType      = 3      ; SERVICE_DEMAND_START
+    85	ErrorControl   = 1      ; SERVICE_ERROR_NORMAL
+    86	ServiceBinary  = %12%\chatpad_mouse.sys
+    87	LoadOrderGroup = PNP Filter
+    88	
+    89	[CopyFunctionDriver]
+    90	chatpad_mouse.sys
+    91	
+    92	[CopyFilterDriver]
+    93	chatpad_mouse_kmdf.sys
+    94	
+    95	[ChatpadMouseKMDF_Service_Inst]
+    96	DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+    97	ServiceType    = 1      ; SERVICE_KERNEL_DRIVER
+    98	StartType      = 3      ; SERVICE_DEMAND_START
+    99	ErrorControl   = 0      ; SERVICE_ERROR_IGNORE
+   100	ServiceBinary  = %12%\chatpad_mouse_kmdf.sys
+   101	
+   102	; TODO do I need a custom collection install section here?
+   103	
+   104	; =================== WDF coinstaller section ===================
+   105	[DestinationDirs]
+   106	ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles = 11
+   107	
+   108	[ChatpadMouseKMDF.Inst.NT.CoInstallers]
+   109	AddReg = ChatpadMouseKMDF.Inst_CoInstaller_AddReg
+   110	CopyFiles = ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles
+   111	
+   112	[ChatpadMouseKMDF.Inst_CoInstaller_AddReg]
+   113	HKR,,CoInstallers32,0x00010000, "WdfCoInstaller01009.dll,WdfCoInstaller"
+   114	
+   115	[ChatpadMouseKMDF.Inst_CoInstaller_CopyFiles]
+   116	WdfCoInstaller01009.dll,,,0x00000010   ; COPYFLG_NO_OVERWRITE (for win2k)
+   117	
+   118	[ChatpadMouseKMDF.Inst.NT.Wdf]
+   119	KmdfService = ChatpadMouseKMDF, ChatpadMouseKMDF_wdfsect
+   120	
+   121	[ChatpadMouseKMDF_wdfsect]
+   122	KmdfLibraryVersion=1.9
+   123	
+   124	; =================== Strings ===================
+   125	
+   126	[Strings]
+   127	ProviderName="AgentElrond"
+   128	Chatpad_Mouse_SvcDesc="Chatpad HID Mouse"
+   129	Chatpad_Mouse_KMDF_SvcDesc="Chatpad HID Mouse KMDF Layer"
+   130	MediaDescription1="XBox 360 Controller Chatpad Installation Media, ia64"
+   131	MediaDescription2="XBox 360 Controller Chatpad Installation Media, amd64"
+   132	MediaDescription3="XBox 360 Controller Chatpad Installation Media, x86"
+   133	ControllerDeviceName="XBox 360 Controller HID Mouse for Chatpad"
+   134	

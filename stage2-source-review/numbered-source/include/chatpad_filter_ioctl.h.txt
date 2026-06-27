@@ -1,0 +1,163 @@
+     1	//
+     2	// Chatpad KMDF USB filter driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+     3	//
+     4	// This header file is shared between the WDF filter driver and the user mode application.
+     5	// TODO rename to chatpad_filter_common.h if that is a more accurate name?
+     6	//
+     7	// This code is released under the MIT license.  See LICENSE.TXT for details.
+     8	//
+     9	
+    10	// The awesome guide at http://www.osronline.com/article.cfm?name=wdffltr_v10.zip&id=446 was
+    11	// used as a basis for how to put this driver together, but the code in this driver was all
+    12	// written by hand.
+    13	
+    14	#ifndef CHATPAD_FILTER_IOCTL_H
+    15	#define CHATPAD_FILTER_IOCTL_H
+    16	
+    17	
+    18	// Arbitrary device type from the user-defined range.
+    19	#define FILE_DEVICE_CHATPAD_FILTER  41000
+    20	
+    21	// IOCTL codes.  The range can be from 2048-4095 inclusive.
+    22	
+    23	// This IOCTL checks whether the controller has been initialized by the Microsoft driver.
+    24	#define IOCTL_CHATPAD_IS_MS_INIT_DONE              CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+    25	                                                            2049,                         \
+    26	                                                            METHOD_BUFFERED,              \
+    27	                                                            FILE_READ_DATA | FILE_WRITE_DATA)
+    28	
+    29	// This IOCTL sends a control transfer to the device.
+    30	#define IOCTL_CHATPAD_SEND_CONTROL_TRANSFER        CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+    31	                                                            2050,                         \
+    32	                                                            METHOD_BUFFERED,              \
+    33	                                                            FILE_READ_DATA | FILE_WRITE_DATA)
+    34	
+    35	// This IOCTL writes data to the controls endpoint.  This can do things like flashing lights
+    36	// on the controller or activating the rumble motors.
+    37	#define IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT   CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+    38	                                                            2051,                         \
+    39	                                                            METHOD_BUFFERED,              \
+    40	                                                            FILE_READ_DATA | FILE_WRITE_DATA)
+    41	
+    42	// This IOCTL queues a read from the controls endpoint.  Data will only become available
+    43	// if controls data interception is enabled.  The data includes information about the
+    44	// thumbsticks and buttons.
+    45	#define IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT  CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+    46	                                                            2052,                         \
+    47	                                                            METHOD_BUFFERED,              \
+    48	                                                            FILE_READ_DATA | FILE_WRITE_DATA)
+    49	
+    50	// This IOCTL queues a read from the chatpad endpoint.  The data includes information
+    51	// about keys being pressed.
+    52	#define IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT   CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+    53	                                                            2053,                         \
+    54	                                                            METHOD_BUFFERED,              \
+    55	                                                            FILE_READ_DATA | FILE_WRITE_DATA)
+    56	
+    57	// This IOCTL sets options for controls mapping.  XBox 360 controller controls mappings
+    58	// to other buttons (i.e. swapping the A and B buttons) only take effect if the controls
+    59	// filter mode is set to filtered.
+    60	//
+    61	// This IOCTL can also be used to enable or disable thumbstick vertical axis inversion.
+    62	#define IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS        CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+    63	                                                            2054,                         \
+    64	                                                            METHOD_BUFFERED,              \
+    65	                                                            FILE_READ_DATA | FILE_WRITE_DATA)
+    66	
+    67	// This IOCTL sets options for filtering controls data.  Controls data can be unfiltered
+    68	// (no bindings available, everything passes through), filtered (allows the guide button
+    69	// to be mapped even while playing a game), or intercepted (allows for Windows Mode
+    70	// functionality where the thumbsticks can control the mouse instead of affecting a game
+    71	// at all).
+    72	#define IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE     CTL_CODE(FILE_DEVICE_CHATPAD_FILTER,   \
+    73	                                                            2055,                         \
+    74	                                                            METHOD_BUFFERED,              \
+    75	                                                            FILE_READ_DATA | FILE_WRITE_DATA)
+    76	
+    77	
+    78	
+    79	// Enum to be used with IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE to set the filter mode.
+    80	typedef enum _CHATPAD_FILTER_MODE
+    81	{
+    82	   // In unfiltered mode, controls data is not mapped or intercepted.
+    83	   FILTER_MODE_UNFILTERED        = 0,
+    84	
+    85	   // In filtered mode, some controls may be remapped.
+    86	   FILTER_MODE_FILTERED          = 1,
+    87	
+    88	   // In intercepted mode, controls may not be used for normal ingame functions.
+    89	   FILTER_MODE_INTERCEPTED       = 2
+    90	} CHATPAD_FILTER_MODE;
+    91	
+    92	
+    93	// Enum to be used with IOCTL_CHATPAD_SEND_CONTROL_TRANSFER
+    94	// to select USB interfaces.
+    95	typedef enum _XBOX_CONTROLLER_INTERFACE
+    96	{
+    97	   // This interface is used for some general commands.
+    98	   // TODO verify that the above description is accurate.
+    99	   MAIN_INTERFACE       = 0,
+   100	
+   101	   // This interface is used to read data from thumbsticks, buttons, etc.
+   102	   // TODO verify that the above description is accurate.
+   103	   CONTROLS_INTERFACE   = 1,
+   104	
+   105	   // This interface is used to interact with the chatpad.
+   106	   // TODO verify that the above description is accurate.
+   107	   CHATPAD_INTERFACE    = 2
+   108	} XBOX_CONTROLLER_INTERFACE;
+   109	
+   110	
+   111	// Structure definitions
+   112	
+   113	// TODO NEXT delete below if these structures are not needed?
+   114	
+   115	// Request types.
+   116	// TODO is there any restriction on these values?
+   117	// TODO do I need some standard ones, ala PnPRequest etc.?
+   118	typedef enum _REQUEST_TYPE
+   119	{
+   120	   ControlsWriteRequest    = 0x3000,
+   121	   ControlsReadRequest     = 0x3001,
+   122	   ChatpadReadRequest      = 0x3002,
+   123	   ChatpadMaxRequestType   = 0x3003
+   124	} REQUEST_TYPE;
+   125	
+   126	// Request buffer entries "inherit" this header.
+   127	typedef struct _CHATPAD_REQUEST_ENTRY_HEADER
+   128	{
+   129	   REQUEST_TYPE requestType;
+   130	} CHATPAD_REQUEST_ENTRY_HEADER, *PCHATPAD_REQUEST_ENTRY_HEADER;
+   131	
+   132	typedef struct _CHATPAD_INIT_REQUEST
+   133	{
+   134	   // 16-bit init code for chatpad, like 0x90 0x00.
+   135	   // TODO change the above if the code is wrong.
+   136	   UCHAR initCode[2];
+   137	} CHATPAD_INIT_REQUEST, *PCHATPAD_INIT_REQUEST;
+   138	
+   139	// TODO NEXT create more structures for read, write, maybe others
+   140	
+   141	// Union of request types, keyed by CHATPAD_REQUEST->RequestType.
+   142	// TODO this syntax looks like C++...is that normal for a kernel driver like this?
+   143	typedef struct _CHATPAD_REQUEST : CHATPAD_REQUEST_ENTRY_HEADER
+   144	{
+   145	   union
+   146	   {
+   147	      CHATPAD_INIT_REQUEST          initRequest;
+   148	      // TODO add read, write, maybe others
+   149	   };
+   150	} CHATPAD_REQUEST, *PCHATPAD_REQUEST;
+   151	
+   152	// TODO is there a guideline about this limit?
+   153	#define MAX_CHATPAD_REQUESTS_PER_BUFFER   0x0200
+   154	typedef struct _CHATPAD_REQUEST_BUFFER
+   155	{
+   156	   LIST_ENTRY        listEntry;
+   157	   ULONG             validRequestCount;
+   158	   CHATPAD_REQUEST   chatpadRequests[MAX_CHATPAD_REQUESTS_PER_BUFFER];
+   159	} CHATPAD_REQUEST_BUFFER, *PCHATPAD_REQUEST_BUFFER;
+   160	
+   161	
+   162	#endif // CHATPAD_FILTER_IOCTL_H
+   163	

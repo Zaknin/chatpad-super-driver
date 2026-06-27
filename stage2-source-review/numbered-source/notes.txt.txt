@@ -1,0 +1,108 @@
+     1	TODO:
+     2	=====
+     3	
+     4	* TODO NEXT try driver verifier...currently getting bug check 0xC9 even if controller not connected...problem with virtual device drivers?
+     5	* TODO NEXT with pool check active, I get this bug check:  
+     6	   0x62
+     7	    Name of the driver
+     8	    Reserved 
+     9	    Total number of allocations that were not freed, including both paged and nonpaged pool
+    10	    The driver is unloading without first freeing its pool allocations. A bug check with this parameter occurs only when the Pool Tracking option of Driver Verifier is active.
+    11	 
+    12	
+    13	
+    14	* TODO NEXT WIP finish uninstall (see devcon for example), combine it with install utility and dialog
+    15	* TODO NEXT WIP make sure that install utility will even delete multiple bad devices if installation already failed,
+    16	    at minimum deleting drivers out of Windows\System32.
+    17	
+    18	* TODO NEXT find a way to make the Vista/7 boot menu always appear even with a single OS, to make hitting F8 easier,
+    19	    and describe that, including screenshots, in the wiki.
+    20	
+    21	* TODO NEXT WIP add code to chatpad_control_code.cpp to conditionally send enable activation code to controller,
+    22	    to theoretically support both default 360 controllers and the "made for Windows" variant
+    23	
+    24	* TODO NEXT WIP continue working on installer, looking at line 1116 of cmds.cpp and 851 of devcon.cpp for example code?
+    25	* TODO NEXT (make sure I can do updates without creating extra keyboard devices...devcon seems to do that sometimes)
+    26	* TODO NEXT back up WIKI pages  (is there any way to import/export/backup/view old versions?)
+    27	
+    28	* TODO add option to not print error for first controller response?  (0x01, 0x03, 0x06, or something like that)
+    29	
+    30	* TODO do I need to eventually add upgrade/uninstall code that cleans out previous driver store folders?
+    31	* TODO do I need to add upgrade/uninstall code that removes the filter from the 360 controller instead
+    32	    of simply deleting the file?
+    33	
+    34	* TODO figure out how to end up in the proper class, using the right icon in device manager,
+    35	    and showing up for XInput programs
+    36	  + Update:  If it looks fine in Windows 7, just delete this TODO item.
+    37	  + Update:  I have the right icon and show up in the right category.
+    38	      TODO will this potentially cause problems if my INF was ever run before the official
+    39	        INF?  Would my Class= etc. section install bad values?  Test if possible,
+    40	        if I can figure out how to uninstall a class or whatever.
+    41	
+    42	* If everything is finally working, do at least 10 plugs and unplugs
+    43	  while using the device to make sure there are no crashes.
+    44	
+    45	* If the above test succeeds, update the driver 5 times after pressing buttons and chatpad keys
+    46	  in both Windows Mode and normal mode, and make sure that the driver never freezes due to
+    47	  requests being uncompleted or whatnot.
+    48	
+    49	* I received no forum response regarding VAC, and the official support response was that Valve will not assist
+    50	  and give any information or analysis.  So, the state of affairs is that it should not cause problems, but you
+    51	  use my drivers at your own risk, and I cannot guarantee anything.
+    52	  Make sure to note this information on the webpage and release posts.
+    53	
+    54	
+    55	
+    56	After initial release, possible future options:
+    57	===============================================
+    58	* TODO finish documentation and testing examples in chatpad_config.txt
+    59	* TODO either combine INF files or use the build system to automatically generate the INF files so
+    60	    I do not have to change three files at once whenever a version changes.
+    61	* TODO is there a way to affect the volume controls?  The KEYBOARD_KEY_MUTE etc. keys do not seem to do anything,
+    62	    and I want to be able to use chatpad binds and controller button binds in Windows Mode to change the volume
+    63	    and/or mute.
+    64	* TODO implement IOCTL to set controller button remapping options, and at the same time enable/disable
+    65	    vertical thumbstick axis inversion
+    66	* TODO add bindable config file options for thumbstick inversion
+    67	* TODO add support for repeated mouse scrolling, i.e. mouse worker thread repeatedly sending
+    68	    the scroll event at a configurable interval, slower than the movement update rate so
+    69	    that scrolling does not happen too rapidly.
+    70	
+    71	* Research possible support for wireless controller.
+    72	* Research possibility of using timing to better determine how many times a key was rapidly pressed.
+    73	  Normal double messages seem to be around 30 ms apart, so a filter at 40-50 ms or more might help
+    74	  a little bit.  I am not sure if this is a working solution or not.  The issue only really seems to happen
+    75	  now if a single key is pressed and released very rapidly, and in actual use this would probably only happen
+    76	  with backspace.  The current plan is to wait and see if it bothers many users, and if so, is there any way
+    77	  to improve the behavior without causing any side effects with chatpad response timing and accuracy.
+    78	* Maybe have an option to keep the backlight always on (requested by Persnoody), though this would not be
+    79	  turned on by default since it would probably drain wireless controller batteries.
+    80	* Research possibility of supporting chatpad keypresses but having the backlight disabled.
+    81	  (the 0x04 command seems to turn the backlight off instantly, so I could at least make it turn off quickly)
+    82	* Allow the left and right triggers to be treated as mappable buttons in Windows Mode.
+    83	* If possible, add special actions or some other way (timed keypresses might be tricky or cause issues)
+    84	  for the special symbols on the chatpad to be typed into Windows.  Alt-numpad-key-codes might work but
+    85	  might be slow due to the possible need for delays between messages...
+    86	* Allow optional deadzone adjustment for the control sticks?
+    87	* Is there a way to work around the potential bug of an external keyboard pressing caps lock, either before the
+    88	    utility launches, or while it is launched?
+    89	   (Looks like I would have to handle write reports to the HID keyboard device in that case, sine they seem
+    90	      to be generated when caps lock is pressed)
+    91	   (In that case, I would also have to have an IOCTL to report the state to the user utility presumably)
+    92	   (I may want to just move the special case to a future feature to save time)
+    93	* Provide some features like deadzone adjustment and key mapping without requiring the chatpad at all?
+    94	* Consider possibility of having hotkeys to switch between bind sets?
+    95	* Eventually, I might add an option or options so that some mappings (like shift + whatever, or alt + whatever)
+    96	  have default versions if you don't specify them, so the config file does not have to be so long.
+    97	* Add Windows Mode as a modifier that can affect mappings for chatpad keys?  If so, make the default
+    98	  such that keys automatically behave as normal unless a special Windows Mode modifier mapping is
+    99	  provided for them?
+   100	* Eventually, I might want to combine the hid_keyboard_interface and hid_mouse_interface WDM drivers since
+   101	  they are virtually identical.  Two copies of the same driver would be installed if they were combined,
+   102	  which is presumably fine.
+   103	* Eventually, support more than 3 mouse buttons?
+   104	* Eventually, support more advanced/precise mouse control and options?
+   105	    (more lines scrolled at once, horizontal scroll, extra precision, etc.?)
+   106	
+   107	
+   108	

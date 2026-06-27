@@ -1,0 +1,3283 @@
+     1	//
+     2	// Chatpad KMDF USB filter driver, by GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+     3	//
+     4	// This code is released under the MIT license.  See LICENSE.TXT for details.
+     5	//
+     6	
+     7	// The awesome guide at http://www.osronline.com/article.cfm?id=446 was
+     8	// used for information on how to put this driver together, along with
+     9	// the WinDDK toaster filter example(s), but the code in this driver was all
+    10	// written by hand.
+    11	
+    12	#include "chatpad_filter.h"
+    13	
+    14	// Global variables.
+    15	
+    16	// Lock for synchronization.  This protects the below global variables.
+    17	// TODO do I need to worry about deleting this (and if so how), or is just letting the
+    18	//   system handle it upon driver unload okay?
+    19	WDFWAITLOCK                      chatpadDeviceCollectionLock;
+    20	
+    21	// How many handles are open on the device.  This value should never be greater than one.
+    22	ULONG                            numOpenHandles = 0;
+    23	// Handle to the control device.
+    24	WDFDEVICE                        chatpadControlDevice = NULL;
+    25	// Whether the control device is available.  If the device is unplugged,
+    26	// the control device may remain in existence, but it will be marked
+    27	// as unavailable.
+    28	BOOLEAN                          chatpadControlDeviceAvailable = FALSE;
+    29	
+    30	// Collection of objects for different physical device instances.
+    31	WDFCOLLECTION                    chatpadDeviceCollection;
+    32	
+    33	// Forward declarations so that functions can be referenced before they are defined.
+    34	EVT_WDF_REQUEST_COMPLETION_ROUTINE ControlsReadCompletion;
+    35	EVT_WDF_REQUEST_COMPLETION_ROUTINE ChatpadReadCompletion;
+    36	
+    37	extern "C"
+    38	DRIVER_INITIALIZE DriverEntry;
+    39	
+    40	// Called when driver is first loaded.
+    41	extern "C"
+    42	NTSTATUS
+    43	DriverEntry(
+    44	  PDRIVER_OBJECT  driverObject,
+    45	  PUNICODE_STRING registryPath)
+    46	{
+    47	   NTSTATUS                retStatus = STATUS_SUCCESS;
+    48	   WDF_DRIVER_CONFIG       driverConfig;
+    49	
+    50	   ChatpadTrace(("XBox 360 Controller Chatpad Super Driver by GAFBlizzard.\n"));
+    51	   ChatpadTrace(("Build %s %s\n", __DATE__, __TIME__));
+    52	
+    53	   // This is just an information printout so I can check the size of a DEVICE_CONTEXT structure
+    54	   // (only the structure itself, not any additional allocated memory).
+    55	   ChatpadTrace(("sizeof(DEVICE_CONTEXT) == %u\n", sizeof(DEVICE_CONTEXT)));
+    56	
+    57	   WDF_DRIVER_CONFIG_INIT(&driverConfig,
+    58	                          ChatpadFilterEvtDeviceAdd);
+    59	   // Set up the driver unload function.
+    60	   driverConfig.EvtDriverUnload = DriverUnload;
+    61	
+    62	   retStatus = WdfDriverCreate(
+    63	     driverObject,
+    64	     registryPath,
+    65	     WDF_NO_OBJECT_ATTRIBUTES,
+    66	     &driverConfig,
+    67	     NULL);
+    68	   if(!NT_SUCCESS(retStatus))
+    69	   {
+    70	      // TODO why double parentheses?  Macro issues?
+    71	      ChatpadTrace(("WdfDriverCreate failed:  0x%0x\n", retStatus));
+    72	   }
+    73	
+    74	   // Create collection for different instances of the physical device.
+    75	   if(NT_SUCCESS(retStatus))
+    76	   {
+    77	      retStatus = WdfCollectionCreate(
+    78	        WDF_NO_OBJECT_ATTRIBUTES,
+    79	        &chatpadDeviceCollection);
+    80	      if(!NT_SUCCESS(retStatus))
+    81	      {
+    82	         ChatpadTrace(("WdfCollectionCreate failed:  0x%x\n", retStatus));
+    83	      }
+    84	   }
+    85	
+    86	   if(NT_SUCCESS(retStatus))
+    87	   {
+    88	      retStatus = WdfWaitLockCreate(
+    89	        WDF_NO_OBJECT_ATTRIBUTES,
+    90	        &chatpadDeviceCollectionLock);
+    91	      if(!NT_SUCCESS(retStatus))
+    92	      {
+    93	         ChatpadTrace(("WdfWaitLockCreate failed:  0x%x\n", retStatus));
+    94	      }
+    95	   }
+    96	
+    97	   return retStatus;
+    98	} // end DriverEntry
+    99	
+   100	// Unloads the driver.
+   101	VOID
+   102	DriverUnload(
+   103	  IN WDFDRIVER driver)
+   104	{
+   105	   // TODO why double parentheses?
+   106	   ChatpadTrace(("Unloading chatpad filter driver.\n"));
+   107	
+   108	   // Clean up any global data.
+   109	   // TODO NEXT add code here?
+   110	   return;
+   111	} // end DriverUnload
+   112	
+   113	// Utility method to free any allocated usbdInterfaceInformation pointers
+   114	// and mark the number of interfaces as 0 in devContext.
+   115	//
+   116	// IMPORTANT NOTE:  Any needed synchronization must be done outside of
+   117	//   this function.  Let the caller beware, and not call this in multiple
+   118	//   threads simultaneously or anything like that.
+   119	// TODO is there any risk of synchronization issues?  I assume not
+   120	//   since other things should not be called once the device context
+   121	//   cleanup function is called, but I may want to make sure.
+   122	NTSTATUS
+   123	ReleaseCachedInterfaceInformation(PDEVICE_CONTEXT devContext)
+   124	{
+   125	   NTSTATUS retStatus = STATUS_SUCCESS;
+   126	
+   127	   for(BYTE i = 0; i < devContext->numInterfaces; i++)
+   128	   {
+   129	      if(NULL != devContext->usbdInterfaceInformation[i])
+   130	      {
+   131	         ExFreePoolWithTag(devContext->usbdInterfaceInformation[i], 'zilB');
+   132	         devContext->usbdInterfaceInformation[i] = NULL;
+   133	      }
+   134	   }
+   135	
+   136	   return retStatus;
+   137	} // end ReleaseCachedInterfaceInformation
+   138	
+   139	EVT_WDF_DEVICE_PREPARE_HARDWARE ChatpadFilterEvtPrepareHardware;
+   140	
+   141	NTSTATUS
+   142	ChatpadFilterEvtPrepareHardware(
+   143	  IN WDFDEVICE                   wdfDevice,
+   144	  IN WDFCMRESLIST                resourcesRaw,
+   145	  IN WDFCMRESLIST                resourcesTranslated)
+   146	{
+   147	   NTSTATUS                      retStatus = STATUS_SUCCESS;
+   148	   PDEVICE_CONTEXT               devContext = NULL;
+   149	
+   150	   devContext = ChatpadFilterGetDeviceContext(wdfDevice);
+   151	   if(NULL != devContext)
+   152	   {
+   153	      if(NULL == devContext->usbDevice)
+   154	      {
+   155	         retStatus = WdfUsbTargetDeviceCreate(
+   156	           wdfDevice,
+   157	           WDF_NO_OBJECT_ATTRIBUTES,
+   158	           &(devContext->usbDevice));
+   159	      }
+   160	   }
+   161	   else
+   162	   {
+   163	      retStatus = STATUS_INTERNAL_ERROR;
+   164	   }
+   165	
+   166	   return retStatus;
+   167	} // end ChatpadFilterEvtPrepareHardware
+   168	
+   169	EVT_WDF_DEVICE_QUERY_REMOVE ChatpadFilterEvtQueryRemove;
+   170	
+   171	NTSTATUS
+   172	ChatpadFilterEvtQueryRemove(
+   173	  IN WDFDEVICE wdfDevice)
+   174	{
+   175	   NTSTATUS    retStatus   = STATUS_SUCCESS;
+   176	
+   177	   ChatpadTrace(("ChatpadFilterEvtQueryRemove called with IRQL %u\n", KeGetCurrentIrql()));
+   178	   return retStatus;
+   179	} // end ChatpadFilterEvtQueryRemove
+   180	
+   181	EVT_WDF_DEVICE_SURPRISE_REMOVAL ChatpadFilterEvtSurpriseRemoval;
+   182	
+   183	VOID
+   184	ChatpadFilterEvtSurpriseRemoval(
+   185	  IN WDFDEVICE wdfDevice)
+   186	{
+   187	   ChatpadTrace(("ChatpadFilterEvtSurpriseRemoval called with IRQL %u\n", KeGetCurrentIrql()));
+   188	} // end ChatpadFilterEvtSurpriseRemoval
+   189	
+   190	EVT_WDF_DEVICE_D0_ENTRY ChatpadFilterD0Entry;
+   191	
+   192	// NOTE:  This function must not do anything that could cause a page fault, according to the osrusbfx2 example.
+   193	NTSTATUS
+   194	ChatpadFilterD0Entry(
+   195	  IN WDFDEVICE                wdfDevice,
+   196	  IN WDF_POWER_DEVICE_STATE   previousState)
+   197	{
+   198	   NTSTATUS          retStatus   = STATUS_SUCCESS;
+   199	   PDEVICE_CONTEXT   devContext  = NULL;
+   200	
+   201	   devContext = ChatpadFilterGetDeviceContext(wdfDevice);
+   202	   if(NULL != devContext)
+   203	   {
+   204	      ChatpadTrace(("D0 entry occurred.\n"));
+   205	
+   206	      // TODO is this safe?  Are there any synchronizations problem with using the below lines?
+   207	      WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+   208	      chatpadControlDeviceAvailable = TRUE;
+   209	      WdfWaitLockRelease(chatpadDeviceCollectionLock);
+   210	   } // end if(NULL != devContext)
+   211	   else
+   212	   {
+   213	      ChatpadTrace(("Unable to obtain device context.\n"));
+   214	      retStatus = STATUS_INTERNAL_ERROR;
+   215	   }
+   216	
+   217	   return retStatus;
+   218	} // end ChatpadFilterD0Entry
+   219	
+   220	EVT_WDF_DEVICE_D0_EXIT ChatpadFilterD0Exit;
+   221	
+   222	// NOTE:  This function must not do anything that could cause a page fault, according to the osrusbfx2 example.
+   223	NTSTATUS
+   224	ChatpadFilterD0Exit(
+   225	  WDFDEVICE                wdfDevice,
+   226	  WDF_POWER_DEVICE_STATE   targetState)
+   227	{
+   228	   NTSTATUS retStatus = STATUS_SUCCESS;
+   229	   PDEVICE_CONTEXT devContext  = NULL;
+   230	
+   231	   // TODO I assume I do not need the PAGED_CODE() call from the osrusbfx2 example?
+   232	
+   233	   devContext = ChatpadFilterGetDeviceContext(wdfDevice);
+   234	   if(NULL != devContext)
+   235	   {
+   236	      ChatpadTrace(("D0 exit occurred.\n"));
+   237	   }
+   238	   else
+   239	   {
+   240	      retStatus = STATUS_INTERNAL_ERROR;
+   241	   }
+   242	
+   243	   return retStatus;
+   244	} // end ChatpadFilterD0Exit
+   245	
+   246	NTSTATUS
+   247	ChatpadFilterEvtDeviceAdd(
+   248	  IN WDFDRIVER       driver,
+   249	  IN PWDFDEVICE_INIT deviceInit)
+   250	{
+   251	   NTSTATUS                      retStatus = STATUS_SUCCESS;
+   252	   PDEVICE_CONTEXT               devContext = NULL;
+   253	   //ULONG                         serialNumber = 0;
+   254	   //ULONG                         returnSize = 0;
+   255	   WDF_OBJECT_ATTRIBUTES         wdfObjectAttr;
+   256	   WDFDEVICE                     wdfDevice;
+   257	   WDF_IO_QUEUE_CONFIG           ioQueueConfig;
+   258	   WDF_PNPPOWER_EVENT_CALLBACKS  powerCallbacks;
+   259	
+   260	   // TODO:  Find some way to get the serial number, or otherwise identify the device, since trying
+   261	   //        to get the DevicePropertyUINumber fails (STATUS_OBJECT_NAME_NOT_FOUND) on my Vista 64 system, at least.
+   262	   /*
+   263	   // Get device serial number.
+   264	   retStatus = WdfFdoInitQueryProperty(
+   265	     deviceInit,
+   266	     DevicePropertyUINumber,
+   267	     sizeof(serialNumber),
+   268	     &serialNumber,
+   269	     &returnSize);
+   270	   */
+   271	
+   272	   if(STATUS_SUCCESS == retStatus)
+   273	   {
+   274	      // Mark ourselves as a filter, causing requests we don't care about to be
+   275	      // passed along etc.
+   276	      // 
+   277	      // By the way, apparently FDO means "Framework Device Object".
+   278	      WdfFdoInitSetFilter(deviceInit);
+   279	
+   280	      // Mark our device type as unknown.
+   281	      // TODO should this be set eventually since this driver is not generic, or is the
+   282	      //      automatic stuff fine?
+   283	      WdfDeviceInitSetDeviceType(deviceInit, FILE_DEVICE_UNKNOWN);
+   284	
+   285	      // Register a prepare hardware callback to create a WDF USB device object.
+   286	      WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&powerCallbacks);
+   287	      powerCallbacks.EvtDevicePrepareHardware = ChatpadFilterEvtPrepareHardware;
+   288	      powerCallbacks.EvtDeviceD0Entry = ChatpadFilterD0Entry;
+   289	      powerCallbacks.EvtDeviceD0Exit = ChatpadFilterD0Exit;
+   290	      powerCallbacks.EvtDeviceSurpriseRemoval = ChatpadFilterEvtSurpriseRemoval;
+   291	      powerCallbacks.EvtDeviceQueryRemove = ChatpadFilterEvtQueryRemove;
+   292	
+   293	      WdfDeviceInitSetPnpPowerEventCallbacks(
+   294	        deviceInit,
+   295	        &powerCallbacks);
+   296	
+   297	      WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(&wdfObjectAttr, DEVICE_CONTEXT);
+   298	
+   299	      // Register for cleanup notification.
+   300	      wdfObjectAttr.EvtCleanupCallback = ChatpadFilterEvtDeviceContextCleanup;
+   301	
+   302	      // Create framework device object, attach to the lower stack etc.
+   303	      retStatus = WdfDeviceCreate(
+   304	        &deviceInit,
+   305	        &wdfObjectAttr,
+   306	        &wdfDevice);
+   307	   }
+   308	   /*
+   309	   else
+   310	   {
+   311	      ChatpadTrace(("Failed to get serial number:  0x%x\n", retStatus));
+   312	   }
+   313	   */
+   314	
+   315	   if(STATUS_SUCCESS == retStatus)
+   316	   {
+   317	      devContext = ChatpadFilterGetDeviceContext(wdfDevice);
+   318	      if(NULL != devContext)
+   319	      {
+   320	         // Initialize DEVICE_CONTEXT values.
+   321	         ChatpadTrace(("Initializing device context.\n"));
+   322	
+   323	         devContext->magicNumber = DEVICE_CONTEXT_MAGIC_NUMBER;
+   324	         // TODO if I ever support multiple devices, this probably needs to be unique per device!
+   325	         //   It would be based on serial number or something similar.
+   326	         //devContext->serialNumber = serialNumber;
+   327	         devContext->serialNumber = 0x00000042;
+   328	         devContext->targetForRequests = WdfDeviceGetIoTarget(wdfDevice);
+   329	         devContext->usbDevice = NULL;
+   330	         devContext->usbConfigSelected = FALSE;
+   331	         devContext->msInitFinished = FALSE;
+   332	         devContext->chatpadInitFinished = FALSE;
+   333	         // Filter initially until the Microsoft driver controller init is finished.
+   334	         devContext->filterMode = FILTER_MODE_FILTERED;
+   335	         devContext->numInterfaces = 0;
+   336	
+   337	         for(BYTE i = 0; i < CHATPAD_DRIVER_MAX_SUPPORTED_NUM_INTERFACES; i++)
+   338	         {
+   339	            devContext->usbdInterfaceInformation[i] = NULL;
+   340	         }
+   341	
+   342	         devContext->numPipes = 0;
+   343	
+   344	         for(BYTE i = 0; i < CHATPAD_DRIVER_MAX_SUPPORTED_NUM_PIPES; i++)
+   345	         {
+   346	            WDF_USB_PIPE_INFORMATION_INIT(&(devContext->wdfUsbPipeInfo[i]));
+   347	            devContext->wdfUsbPipe[i] = NULL;
+   348	         }
+   349	
+   350	         // Create requests and memory buffers for writing to and reading from endpoints.
+   351	         // I am not sure if these have to be non-pageable, but I am making all request
+   352	         // storage non-pageable to be on the safe side especially since the total amount
+   353	         // of data I am allocating is presumably pretty small.
+   354	
+   355	         WDF_OBJECT_ATTRIBUTES requestAttributes;
+   356	
+   357	         WDF_OBJECT_ATTRIBUTES_INIT(&requestAttributes);
+   358	
+   359	         // Make the I/O target the parent object of these requests so that
+   360	         // they will get deleted when the I/O target is deleted.
+   361	         // TODO I may want to do more research and verify that these get
+   362	         //   deleted properly, if possible.  Could they ever hang the
+   363	         //   driver on shutdown or driver upgrade if they are not pending?
+   364	         requestAttributes.ParentObject = devContext->targetForRequests;
+   365	
+   366	         if(STATUS_SUCCESS == retStatus)
+   367	         {
+   368	            retStatus = WdfMemoryCreate(
+   369	              WDF_NO_OBJECT_ATTRIBUTES,
+   370	              NonPagedPool,
+   371	              0,
+   372	              CONTROLS_WRITE_BUFFER_LENGTH,
+   373	              &(devContext->controlsWriteBufferMemory),
+   374	              NULL);
+   375	            if(STATUS_SUCCESS != retStatus)
+   376	            {
+   377	               ChatpadTrace(("Allocation failed for controls write buffer memory.\n"));
+   378	            }
+   379	         }
+   380	
+   381	         if(STATUS_SUCCESS == retStatus)
+   382	         {
+   383	            retStatus = WdfMemoryCreate(
+   384	              WDF_NO_OBJECT_ATTRIBUTES,
+   385	              NonPagedPool,
+   386	              0,
+   387	              sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER),
+   388	              &(devContext->controlsWriteUrbMemory),
+   389	              NULL);
+   390	            if(STATUS_SUCCESS != retStatus)
+   391	            {
+   392	               ChatpadTrace(("Allocation failed for controls write URB memory.\n"));
+   393	            }
+   394	         }
+   395	
+   396	         if(STATUS_SUCCESS == retStatus)
+   397	         {
+   398	            retStatus = WdfRequestCreate(
+   399	              &requestAttributes,
+   400	              devContext->targetForRequests,
+   401	              &(devContext->controlsWriteRequest));
+   402	            if(STATUS_SUCCESS != retStatus)
+   403	            {
+   404	               ChatpadTrace(("WdfRequestCreate failed:  0x%x\n", retStatus));
+   405	            }
+   406	         }
+   407	
+   408	         if(STATUS_SUCCESS == retStatus)
+   409	         {
+   410	            PURB controlsWriteUrb =
+   411	              static_cast<PURB>(WdfMemoryGetBuffer(devContext->controlsWriteUrbMemory, NULL));
+   412	            if(NULL != controlsWriteUrb)
+   413	            {
+   414	               // TODO move this code somewhere common so it will not be redundant and prone to bugs if
+   415	               //   one side changes?
+   416	               controlsWriteUrb->UrbHeader.Function = URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER;
+   417	               controlsWriteUrb->UrbHeader.Length = sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER);
+   418	               controlsWriteUrb->UrbBulkOrInterruptTransfer.PipeHandle = NULL;
+   419	               controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferFlags =
+   420	                 USBD_TRANSFER_DIRECTION_OUT;
+   421	               controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBufferLength =
+   422	                 CONTROLS_WRITE_BUFFER_LENGTH;
+   423	               controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL = NULL;
+   424	               controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBuffer =
+   425	                 WdfMemoryGetBuffer(devContext->controlsWriteBufferMemory, NULL);
+   426	               controlsWriteUrb->UrbBulkOrInterruptTransfer.UrbLink = NULL;
+   427	            }
+   428	            else
+   429	            {
+   430	               ChatpadTrace(("Failed to get controls write URB memory buffer.\n"));
+   431	               retStatus = STATUS_INTERNAL_ERROR;
+   432	            }
+   433	         }
+   434	
+   435	         for(int requestIndex = 0;
+   436	             ((STATUS_SUCCESS == retStatus) &&
+   437	              (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+   438	             requestIndex++)
+   439	         {
+   440	            if(STATUS_SUCCESS == retStatus)
+   441	            {
+   442	               retStatus = WdfMemoryCreate(
+   443	                 WDF_NO_OBJECT_ATTRIBUTES,
+   444	                 NonPagedPool,
+   445	                 0,
+   446	                 CONTROLS_READ_BUFFER_LENGTH,
+   447	                 &(devContext->controlsReadBufferMemory[requestIndex]),
+   448	                 NULL);
+   449	               if(STATUS_SUCCESS != retStatus)
+   450	               {
+   451	                  ChatpadTrace(("Allocation failed for controls read buffer memory.\n"));
+   452	               }
+   453	            }
+   454	
+   455	            if(STATUS_SUCCESS == retStatus)
+   456	            {
+   457	               retStatus = WdfMemoryCreate(
+   458	                 WDF_NO_OBJECT_ATTRIBUTES,
+   459	                 NonPagedPool,
+   460	                 0,
+   461	                 sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER),
+   462	                 &(devContext->controlsReadUrbMemory[requestIndex]),
+   463	                 NULL);
+   464	               if(STATUS_SUCCESS != retStatus)
+   465	               {
+   466	                  ChatpadTrace(("Allocation failed for controls read URB memory.\n"));
+   467	               }
+   468	            }
+   469	
+   470	            if(STATUS_SUCCESS == retStatus)
+   471	            {
+   472	               PURB controlsReadUrb =
+   473	                 static_cast<PURB>(WdfMemoryGetBuffer(devContext->controlsReadUrbMemory[requestIndex], NULL));
+   474	               if(NULL != controlsReadUrb)
+   475	               {
+   476	                  // TODO move this code somewhere common so it will not be redundant and prone to bugs if
+   477	                  //   one side changes?
+   478	                  controlsReadUrb->UrbHeader.Function = URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER;
+   479	                  controlsReadUrb->UrbHeader.Length = sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER);
+   480	                  controlsReadUrb->UrbBulkOrInterruptTransfer.PipeHandle = NULL;
+   481	                  // TODO could the short transfer flag ever cause problems on some controllers and/or hubs?
+   482	                  controlsReadUrb->UrbBulkOrInterruptTransfer.TransferFlags =
+   483	                    USBD_TRANSFER_DIRECTION_IN | USBD_SHORT_TRANSFER_OK;
+   484	                  controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength =
+   485	                    CONTROLS_READ_BUFFER_LENGTH;
+   486	                  controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL = NULL;
+   487	                  controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer =
+   488	                    WdfMemoryGetBuffer(devContext->controlsReadBufferMemory[requestIndex], NULL);
+   489	                  controlsReadUrb->UrbBulkOrInterruptTransfer.UrbLink = NULL;
+   490	               }
+   491	               else
+   492	               {
+   493	                  ChatpadTrace(("Failed to get controls read URB memory buffer.\n"));
+   494	                  retStatus = STATUS_INTERNAL_ERROR;
+   495	               }
+   496	            }
+   497	
+   498	            if(STATUS_SUCCESS == retStatus)
+   499	            {
+   500	               devContext->controlsReadRequestsInUse[requestIndex] = FALSE;
+   501	
+   502	               retStatus = WdfRequestCreate(
+   503	                 &requestAttributes,
+   504	                 devContext->targetForRequests,
+   505	                 &(devContext->controlsReadRequests[requestIndex]));
+   506	               if(STATUS_SUCCESS != retStatus)
+   507	               {
+   508	                  ChatpadTrace(("WdfRequestCreate failed:  0x%x\n", retStatus));
+   509	               }
+   510	            }
+   511	
+   512	            if(STATUS_SUCCESS == retStatus)
+   513	            {
+   514	               retStatus = WdfMemoryCreate(
+   515	                 WDF_NO_OBJECT_ATTRIBUTES,
+   516	                 NonPagedPool,
+   517	                 0,
+   518	                 CHATPAD_READ_BUFFER_LENGTH,
+   519	                 &(devContext->chatpadReadBufferMemory[requestIndex]),
+   520	                 NULL);
+   521	               if(STATUS_SUCCESS != retStatus)
+   522	               {
+   523	                  ChatpadTrace(("Allocation failed for chatpad read buffer memory.\n"));
+   524	               }
+   525	            }
+   526	
+   527	            if(STATUS_SUCCESS == retStatus)
+   528	            {
+   529	               retStatus = WdfMemoryCreate(
+   530	                 WDF_NO_OBJECT_ATTRIBUTES,
+   531	                 NonPagedPool,
+   532	                 0,
+   533	                 sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER),
+   534	                 &(devContext->chatpadReadUrbMemory[requestIndex]),
+   535	                 NULL);
+   536	               if(STATUS_SUCCESS != retStatus)
+   537	               {
+   538	                  ChatpadTrace(("Allocation failed for chatpad read URB memory.\n"));
+   539	               }
+   540	            }
+   541	
+   542	            if(STATUS_SUCCESS == retStatus)
+   543	            {
+   544	               PURB chatpadReadUrb =
+   545	                 static_cast<PURB>(WdfMemoryGetBuffer(devContext->chatpadReadUrbMemory[requestIndex], NULL));
+   546	               if(NULL != chatpadReadUrb)
+   547	               {
+   548	                  // TODO move this code somewhere common so it will not be redundant and prone to bugs if
+   549	                  //   one side changes?
+   550	                  chatpadReadUrb->UrbHeader.Function = URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER;
+   551	                  chatpadReadUrb->UrbHeader.Length = sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER);
+   552	                  chatpadReadUrb->UrbBulkOrInterruptTransfer.PipeHandle = NULL;
+   553	                  // TODO could the short transfer flag ever cause problems on some controllers and/or hubs?
+   554	                  chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferFlags =
+   555	                    USBD_TRANSFER_DIRECTION_IN | USBD_SHORT_TRANSFER_OK;
+   556	                  chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength =
+   557	                    CHATPAD_READ_BUFFER_LENGTH;
+   558	                  chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL = NULL;
+   559	                  chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer =
+   560	                    WdfMemoryGetBuffer(devContext->chatpadReadBufferMemory[requestIndex], NULL);
+   561	                  chatpadReadUrb->UrbBulkOrInterruptTransfer.UrbLink = NULL;
+   562	               }
+   563	               else
+   564	               {
+   565	                  ChatpadTrace(("Failed to get chatpad read URB memory buffer.\n"));
+   566	                  retStatus = STATUS_INTERNAL_ERROR;
+   567	               }
+   568	            }
+   569	
+   570	            if(STATUS_SUCCESS == retStatus)
+   571	            {
+   572	               devContext->chatpadReadRequestsInUse[requestIndex] = FALSE;
+   573	
+   574	               retStatus = WdfRequestCreate(
+   575	                 &requestAttributes,
+   576	                 devContext->targetForRequests,
+   577	                 &(devContext->chatpadReadRequests[requestIndex]));
+   578	               if(STATUS_SUCCESS != retStatus)
+   579	               {
+   580	                  ChatpadTrace(("WdfRequestCreate failed:  0x%x\n", retStatus));
+   581	               }
+   582	            }
+   583	         } // end looping through chatpad filter driver request indices
+   584	
+   585	         if(STATUS_SUCCESS == retStatus)
+   586	         {
+   587	            // Initialize default queue config structure.
+   588	            WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(
+   589	              &ioQueueConfig,
+   590	              WdfIoQueueDispatchParallel);
+   591	
+   592	            // Select what we want from the queue.
+   593	
+   594	            // This should catch IOCTL_INTERNAL_USB_SUBMIT_URB.
+   595	            ioQueueConfig.EvtIoInternalDeviceControl =
+   596	              ChatpadFilterInternalIOCTLHandler;
+   597	
+   598	            // Create the default queue.
+   599	            retStatus = WdfIoQueueCreate(
+   600	              wdfDevice,
+   601	              &ioQueueConfig,
+   602	              WDF_NO_OBJECT_ATTRIBUTES,
+   603	              NULL);
+   604	            if(STATUS_SUCCESS == retStatus)
+   605	            {
+   606	               ChatpadTrace(("Created device filter default queue successfully.\n"));
+   607	            }
+   608	            else
+   609	            {
+   610	               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+   611	            }
+   612	         } // end if(STATUS_SUCCESS == retStatus)
+   613	
+   614	         if(STATUS_SUCCESS == retStatus)
+   615	         {
+   616	            // Create manual I/O queue for parking controls endpoint read requests
+   617	            // from the top-level driver.
+   618	            WDF_IO_QUEUE_CONFIG controlsParkedDriverReadRequestQueueConfig;
+   619	
+   620	            WDF_IO_QUEUE_CONFIG_INIT(&controlsParkedDriverReadRequestQueueConfig,
+   621	                                     WdfIoQueueDispatchManual);
+   622	            retStatus =
+   623	              WdfIoQueueCreate(
+   624	                wdfDevice,
+   625	                &controlsParkedDriverReadRequestQueueConfig,
+   626	                WDF_NO_OBJECT_ATTRIBUTES,
+   627	                &(devContext->controlsParkedDriverReadRequestQueue));
+   628	            if(STATUS_SUCCESS == retStatus)
+   629	            {
+   630	               ChatpadTrace(("Created controls driver read request parking queue successfully.\n"));
+   631	            }
+   632	            else
+   633	            {
+   634	               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+   635	            }
+   636	         } // end if(STATUS_SUCCESS == retStatus)
+   637	
+   638	         if(STATUS_SUCCESS == retStatus)
+   639	         {
+   640	            // Create manual I/O queue for parking controls endpoint read requests
+   641	            // from the user.
+   642	            WDF_IO_QUEUE_CONFIG controlsParkedUserReadRequestQueueConfig;
+   643	
+   644	            WDF_IO_QUEUE_CONFIG_INIT(&controlsParkedUserReadRequestQueueConfig,
+   645	                                     WdfIoQueueDispatchManual);
+   646	            retStatus =
+   647	              WdfIoQueueCreate(
+   648	                wdfDevice,
+   649	                &controlsParkedUserReadRequestQueueConfig,
+   650	                WDF_NO_OBJECT_ATTRIBUTES,
+   651	                &(devContext->controlsParkedUserReadRequestQueue));
+   652	            if(STATUS_SUCCESS == retStatus)
+   653	            {
+   654	               ChatpadTrace(("Created controls user read request parking queue successfully.\n"));
+   655	            }
+   656	            else
+   657	            {
+   658	               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+   659	            }
+   660	         } // end if(STATUS_SUCCESS == retStatus)
+   661	
+   662	         if(STATUS_SUCCESS == retStatus)
+   663	         {
+   664	            // Create manual I/O queue for parking chatpad endpoint read requests
+   665	            // from the user.
+   666	            WDF_IO_QUEUE_CONFIG chatpadParkedUserReadRequestQueueConfig;
+   667	
+   668	            WDF_IO_QUEUE_CONFIG_INIT(&chatpadParkedUserReadRequestQueueConfig,
+   669	                                     WdfIoQueueDispatchManual);
+   670	            retStatus =
+   671	              WdfIoQueueCreate(
+   672	                wdfDevice,
+   673	                &chatpadParkedUserReadRequestQueueConfig,
+   674	                WDF_NO_OBJECT_ATTRIBUTES,
+   675	                &(devContext->chatpadParkedUserReadRequestQueue));
+   676	            if(STATUS_SUCCESS == retStatus)
+   677	            {
+   678	               ChatpadTrace(("Created chatpad user read request parking queue successfully.\n"));
+   679	            }
+   680	            else
+   681	            {
+   682	               ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+   683	            }
+   684	         } // end if(STATUS_SUCCESS == retStatus)
+   685	      } // end if(NULL != devContext)
+   686	      else
+   687	      {
+   688	         retStatus = STATUS_INTERNAL_ERROR;
+   689	      }
+   690	   } // end if(STATUS_SUCCESS == retStatus)
+   691	   else
+   692	   {
+   693	      ChatpadTrace(("WdfDeviceCreate failed:  0x%x\n", retStatus));
+   694	   }
+   695	
+   696	   if(STATUS_SUCCESS == retStatus)
+   697	   {
+   698	      // Add the device to the collection.
+   699	      WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+   700	
+   701	      retStatus = WdfCollectionAdd(
+   702	        chatpadDeviceCollection,
+   703	        wdfDevice);
+   704	      if(STATUS_SUCCESS != retStatus)
+   705	      {
+   706	         ChatpadTrace(("WdfCollectionAdd failed:  0x%x\n", retStatus));
+   707	      }
+   708	
+   709	      WdfWaitLockRelease(chatpadDeviceCollectionLock);
+   710	   }
+   711	
+   712	   // Create the control device.
+   713	   if(STATUS_SUCCESS == retStatus)
+   714	   {
+   715	      retStatus = ChatpadCreateControlDevice(wdfDevice);
+   716	      // For now, the return status here is ignored since
+   717	      // ChatpadCreateControlDevice should print an error if it fails, anyway.
+   718	   }
+   719	
+   720	   // Always succeed..this seems to be the best choice for some reason.
+   721	   return STATUS_SUCCESS;
+   722	} // end ChatpadFilterEvtDeviceAdd
+   723	
+   724	// This method sends the controls data write request specified by the given
+   725	// device context and request index.
+   726	NTSTATUS SendControlsWriteRequest(
+   727	  IN PDEVICE_CONTEXT devContext,
+   728	  PUCHAR             inputBuffer,
+   729	  ULONG              bytesToWrite,
+   730	  PULONG             bytesTransferred)
+   731	{
+   732	   NTSTATUS                   retStatus         = STATUS_SUCCESS;
+   733	   PURB                       controlsWriteUrb  = NULL;
+   734	   WDF_REQUEST_SEND_OPTIONS   sendOptions;
+   735	
+   736	   if((NULL == devContext)          ||
+   737	      (NULL == inputBuffer)         ||
+   738	      (0 == bytesToWrite)           ||
+   739	      (NULL == bytesTransferred))
+   740	   {
+   741	      ChatpadTrace(("Invalid parameters to SendControlsWriteRequest.\n"));
+   742	      retStatus = STATUS_INTERNAL_ERROR;
+   743	   }
+   744	
+   745	   if(STATUS_SUCCESS == retStatus)
+   746	   {
+   747	      RtlFillMemory(WdfMemoryGetBuffer(devContext->controlsWriteBufferMemory, NULL),
+   748	                    0x00,
+   749	                    CONTROLS_WRITE_BUFFER_LENGTH);
+   750	
+   751	      // Reinitialize the URB since its contents may have been adjusted during
+   752	      // the most recent transfer.
+   753	      controlsWriteUrb =
+   754	        static_cast<PURB>(WdfMemoryGetBuffer(devContext->controlsWriteUrbMemory, NULL));
+   755	      if(NULL != controlsWriteUrb)
+   756	      {
+   757	         // TODO move this code somewhere common so it will not be redundant and prone to bugs if
+   758	         //   one side changes?
+   759	         controlsWriteUrb->UrbHeader.Function = URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER;
+   760	         controlsWriteUrb->UrbHeader.Length = sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER);
+   761	         controlsWriteUrb->UrbBulkOrInterruptTransfer.PipeHandle =
+   762	           devContext->usbdInterfaceInformation[0]->Pipes[1].PipeHandle;
+   763	         controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferFlags =
+   764	           USBD_TRANSFER_DIRECTION_OUT;
+   765	         controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBufferLength =
+   766	           CONTROLS_WRITE_BUFFER_LENGTH;
+   767	         controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL = NULL;
+   768	         controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBuffer =
+   769	           WdfMemoryGetBuffer(devContext->controlsWriteBufferMemory, NULL);
+   770	         controlsWriteUrb->UrbBulkOrInterruptTransfer.UrbLink = NULL;
+   771	
+   772	         // Copy the data to send and the data length into the URB.
+   773	         RtlCopyMemory(
+   774	           controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBuffer,
+   775	           inputBuffer,
+   776	           bytesToWrite);
+   777	         controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBufferLength = bytesToWrite;
+   778	      }
+   779	      else
+   780	      {
+   781	         ChatpadTrace(("Error, failed to get controls write URB memory buffer.\n"));
+   782	         retStatus = STATUS_INTERNAL_ERROR;
+   783	      }
+   784	   } // end if(STATUS_SUCCESS == retStatus)
+   785	
+   786	   if(STATUS_SUCCESS == retStatus)
+   787	   {
+   788	      // TODO make enums or some other system for pipe indices?
+   789	      // Format the request for sending an URB.
+   790	      retStatus = WdfUsbTargetPipeFormatRequestForUrb(
+   791	        devContext->wdfUsbPipe[0],
+   792	        devContext->controlsWriteRequest,
+   793	        devContext->controlsWriteUrbMemory,
+   794	        NULL);
+   795	   }
+   796	
+   797	   if(STATUS_SUCCESS == retStatus)
+   798	   {
+   799	      // Set up a timeout.
+   800	      WDF_REQUEST_SEND_OPTIONS_INIT(
+   801	        &sendOptions,
+   802	        WDF_REQUEST_SEND_OPTION_SYNCHRONOUS | WDF_REQUEST_SEND_OPTION_TIMEOUT);
+   803	      sendOptions.Timeout = WDF_REL_TIMEOUT_IN_SEC(CHATPAD_DRIVER_SYNCHRONOUS_REQUEST_TIMEOUT_LENGTH);
+   804	      retStatus = WdfRequestAllocateTimer(devContext->controlsWriteRequest);
+   805	      if(STATUS_SUCCESS != retStatus)
+   806	      {
+   807	         ChatpadTrace(("WdfRequestAllocateTimer failed:  0x%x\n", retStatus));
+   808	      }
+   809	   }
+   810	
+   811	   if(STATUS_SUCCESS == retStatus)
+   812	   {
+   813	      // Send the request synchronously.
+   814	      if(WdfRequestSend(devContext->controlsWriteRequest,
+   815	                        devContext->targetForRequests,
+   816	                        &sendOptions))
+   817	      {
+   818	//         ChatpadTrace(("*** Sent controls write request successfully. ***\n"));
+   819	         retStatus = WdfRequestGetStatus(devContext->controlsWriteRequest);
+   820	         // I presumably should never have a value other than STATUS_SUCCESS since
+   821	         // I am sending the request synchronously, so all values are treated as errors.
+   822	         if(STATUS_SUCCESS != retStatus)
+   823	         {
+   824	            ChatpadTrace(("(WdfRequestGetStatus returns 0x%x)\n", retStatus));
+   825	         }
+   826	      }
+   827	      else
+   828	      {
+   829	         ChatpadTrace(("*** Failed to send write request. ***\n"));
+   830	         retStatus = STATUS_INTERNAL_ERROR;
+   831	      }
+   832	
+   833	      // Make sure that the IOCTL sees the proper number of bytes transferred.
+   834	      *bytesTransferred = controlsWriteUrb->UrbBulkOrInterruptTransfer.TransferBufferLength;
+   835	
+   836	      WDF_REQUEST_REUSE_PARAMS reuseParams;
+   837	
+   838	      WDF_REQUEST_REUSE_PARAMS_INIT(
+   839	        &reuseParams,
+   840	        WDF_REQUEST_REUSE_NO_FLAGS,
+   841	        STATUS_SUCCESS);
+   842	      retStatus = WdfRequestReuse(
+   843	        devContext->controlsWriteRequest,
+   844	        &reuseParams);
+   845	      if(STATUS_SUCCESS != retStatus)
+   846	      {
+   847	         ChatpadTrace(("WdfRequestReuse failed:  0x%x\n", retStatus));
+   848	      }
+   849	   } // end if(STATUS_SUCCESS == retStatus)
+   850	   else
+   851	   {
+   852	      ChatpadTrace(("WdfUsbTargetPipeFormatRequestForUrb failed:  0x%x\n", retStatus));
+   853	   }
+   854	
+   855	   return retStatus;
+   856	} // end SendControlsWriteRequest
+   857	
+   858	// This method sends the controls data read request specified by the given
+   859	// device context and request index.
+   860	NTSTATUS SendControlsReadRequest(
+   861	  IN PDEVICE_CONTEXT devContext,
+   862	  IN ULONG           requestIndex)
+   863	{
+   864	   NTSTATUS                   retStatus      = STATUS_SUCCESS;
+   865	   WDF_REQUEST_SEND_OPTIONS   sendOptions;
+   866	
+   867	   RtlFillMemory(WdfMemoryGetBuffer(devContext->controlsReadBufferMemory[requestIndex], NULL),
+   868	                 0x00,
+   869	                 CONTROLS_READ_BUFFER_LENGTH);
+   870	
+   871	   // Reinitialize the URB since its contents may have been adjusted during
+   872	   // the most recent transfer.
+   873	   PURB controlsReadUrb =
+   874	     static_cast<PURB>(WdfMemoryGetBuffer(devContext->controlsReadUrbMemory[requestIndex], NULL));
+   875	   if(NULL != controlsReadUrb)
+   876	   {
+   877	      // TODO move this code somewhere common so it will not be redundant and prone to bugs if
+   878	      //   one side changes?
+   879	      controlsReadUrb->UrbHeader.Function = URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER;
+   880	      controlsReadUrb->UrbHeader.Length = sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER);
+   881	      controlsReadUrb->UrbBulkOrInterruptTransfer.PipeHandle =
+   882	        devContext->usbdInterfaceInformation[0]->Pipes[0].PipeHandle;
+   883	      // TODO could the short transfer flag ever cause problems on some controllers and/or hubs?
+   884	      controlsReadUrb->UrbBulkOrInterruptTransfer.TransferFlags =
+   885	        USBD_TRANSFER_DIRECTION_IN | USBD_SHORT_TRANSFER_OK;
+   886	      controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength =
+   887	        CONTROLS_READ_BUFFER_LENGTH;
+   888	      controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL = NULL;
+   889	      controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer =
+   890	        WdfMemoryGetBuffer(devContext->controlsReadBufferMemory[requestIndex], NULL);
+   891	      controlsReadUrb->UrbBulkOrInterruptTransfer.UrbLink = NULL;
+   892	
+   893	      // This is just code that I am saving in case I ever want to
+   894	      // print bulk or interrupt transfer URB information again.
+   895	/*
+   896	      ChatpadTrace((
+   897	        "!!! %u %u 0x%x 0x%x %u 0x%x 0x%x 0x%x\n",
+   898	        controlsReadUrb->UrbHeader.Function,
+   899	        controlsReadUrb->UrbHeader.Length,
+   900	        controlsReadUrb->UrbBulkOrInterruptTransfer.PipeHandle,
+   901	        controlsReadUrb->UrbBulkOrInterruptTransfer.TransferFlags,
+   902	        controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength,
+   903	        controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL,
+   904	        controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer,
+   905	        controlsReadUrb->UrbBulkOrInterruptTransfer.UrbLink));
+   906	*/
+   907	   }
+   908	   else
+   909	   {
+   910	      ChatpadTrace(("Error, failed to get controls read URB memory buffer.\n"));
+   911	      retStatus = STATUS_INTERNAL_ERROR;
+   912	   }
+   913	
+   914	   if(STATUS_SUCCESS == retStatus)
+   915	   {
+   916	      // TODO make enums or some other system for pipe indices?
+   917	      // Format the request for sending an URB.
+   918	      retStatus = WdfUsbTargetPipeFormatRequestForUrb(
+   919	        devContext->wdfUsbPipe[0],
+   920	        devContext->controlsReadRequests[requestIndex],
+   921	        devContext->controlsReadUrbMemory[requestIndex],
+   922	        NULL);
+   923	   }
+   924	
+   925	   if(STATUS_SUCCESS == retStatus)
+   926	   {
+   927	      // TODO eventually figure out, if possible, why the URB (Argument1) value is going
+   928	      //   away before the completion routine gets called.  If I still had that, I could
+   929	      //   use a single completion routine instead of two separate ones for endpoint read
+   930	      //   data.  UPDATE:  Doron Holan says (http://www.osronline.com/showthread.cfm?link=195082)
+   931	      //   that stack locations are zeroed as the IRP is completed up the stack.
+   932	      //   TODO am I safe using the completion parameters then?
+   933	      WdfRequestSetCompletionRoutine(
+   934	        devContext->controlsReadRequests[requestIndex],
+   935	        ControlsReadCompletion,
+   936	        devContext);
+   937	
+   938	      // Send the request.
+   939	      if(WdfRequestSend(devContext->controlsReadRequests[requestIndex],
+   940	                        devContext->targetForRequests,
+   941	                        WDF_NO_SEND_OPTIONS))
+   942	      {
+   943	//         ChatpadTrace(("*** Sent controls read request successfully. ***\n"));
+   944	         // TODO do I need to do this here?
+   945	         retStatus = WdfRequestGetStatus(devContext->controlsReadRequests[requestIndex]);
+   946	         if(STATUS_SUCCESS != retStatus)
+   947	         {
+   948	            // 0x00000103 means pending and is presumably normal.
+   949	//            ChatpadTrace(("(WdfRequestGetStatus returns 0x%x)\n", retStatus));
+   950	            // Ignore the normal pending value so that we continue executing successfully.
+   951	            if(STATUS_PENDING == retStatus)
+   952	            {
+   953	               retStatus = STATUS_SUCCESS;
+   954	            }
+   955	         }
+   956	      }
+   957	      else
+   958	      {
+   959	         ChatpadTrace(("*** Failed to send read request. ***\n"));
+   960	         retStatus = STATUS_INTERNAL_ERROR;
+   961	      }
+   962	   } // end if(STATUS_SUCCESS == retStatus)
+   963	   else
+   964	   {
+   965	      ChatpadTrace(("WdfUsbTargetPipeFormatRequestForUrb failed:  0x%x\n", retStatus));
+   966	   }
+   967	
+   968	   return retStatus;
+   969	} // end SendControlsReadRequest
+   970	
+   971	// This method sends the chatpad data read request specified by the given
+   972	// device context and request index.
+   973	NTSTATUS SendChatpadReadRequest(
+   974	  IN PDEVICE_CONTEXT devContext,
+   975	  IN ULONG           requestIndex)
+   976	{
+   977	   NTSTATUS retStatus = STATUS_SUCCESS;
+   978	
+   979	   RtlFillMemory(WdfMemoryGetBuffer(devContext->chatpadReadBufferMemory[requestIndex], NULL),
+   980	                 0x00,
+   981	                 CHATPAD_READ_BUFFER_LENGTH);
+   982	
+   983	//ChatpadTrace((".\n")); // TODO REMOVE
+   984	   // Reinitialize the URB since its contents may have been adjusted during
+   985	   // the most recent transfer.
+   986	   PURB chatpadReadUrb =
+   987	     static_cast<PURB>(WdfMemoryGetBuffer(devContext->chatpadReadUrbMemory[requestIndex], NULL));
+   988	   if(NULL != chatpadReadUrb)
+   989	   {
+   990	      // TODO move this code somewhere common so it will not be redundant and prone to bugs if
+   991	      //   one side changes?
+   992	      chatpadReadUrb->UrbHeader.Function = URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER;
+   993	      chatpadReadUrb->UrbHeader.Length = sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER);
+   994	      chatpadReadUrb->UrbBulkOrInterruptTransfer.PipeHandle =
+   995	        devContext->usbdInterfaceInformation[2]->Pipes[0].PipeHandle;
+   996	      // TODO could the short transfer flag ever cause problems on some controllers and/or hubs?
+   997	      chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferFlags =
+   998	        USBD_TRANSFER_DIRECTION_IN | USBD_SHORT_TRANSFER_OK;
+   999	      chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength =
+  1000	        CHATPAD_READ_BUFFER_LENGTH;
+  1001	      chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL = NULL;
+  1002	      chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer =
+  1003	        WdfMemoryGetBuffer(devContext->chatpadReadBufferMemory[requestIndex], NULL);
+  1004	      chatpadReadUrb->UrbBulkOrInterruptTransfer.UrbLink = NULL;
+  1005	
+  1006	      // This is just code that I am saving in case I ever want to
+  1007	      // print bulk or interrupt transfer URB information again.
+  1008	/*
+  1009	      ChatpadTrace((
+  1010	        "!!! %u %u 0x%x 0x%x %u 0x%x 0x%x 0x%x\n",
+  1011	        chatpadReadUrb->UrbHeader.Function,
+  1012	        chatpadReadUrb->UrbHeader.Length,
+  1013	        chatpadReadUrb->UrbBulkOrInterruptTransfer.PipeHandle,
+  1014	        chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferFlags,
+  1015	        chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength,
+  1016	        chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBufferMDL,
+  1017	        chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer,
+  1018	        chatpadReadUrb->UrbBulkOrInterruptTransfer.UrbLink));
+  1019	*/
+  1020	   }
+  1021	   else
+  1022	   {
+  1023	      ChatpadTrace(("Error, failed to get chatpad read URB memory buffer.\n"));
+  1024	      retStatus = STATUS_INTERNAL_ERROR;
+  1025	   }
+  1026	
+  1027	   if(STATUS_SUCCESS == retStatus)
+  1028	   {
+  1029	      // TODO make enums or some other system for pipe indices?
+  1030	      // Format the request for sending an URB.
+  1031	      retStatus = WdfUsbTargetPipeFormatRequestForUrb(
+  1032	        devContext->wdfUsbPipe[0],
+  1033	        devContext->chatpadReadRequests[requestIndex],
+  1034	        devContext->chatpadReadUrbMemory[requestIndex],
+  1035	        NULL);
+  1036	   }
+  1037	
+  1038	   if(STATUS_SUCCESS == retStatus)
+  1039	   {
+  1040	      WdfRequestSetCompletionRoutine(
+  1041	        devContext->chatpadReadRequests[requestIndex],
+  1042	        ChatpadReadCompletion,
+  1043	        devContext);
+  1044	
+  1045	      // Send the request.
+  1046	      if(WdfRequestSend(devContext->chatpadReadRequests[requestIndex],
+  1047	                        devContext->targetForRequests,
+  1048	                        WDF_NO_SEND_OPTIONS))
+  1049	      {
+  1050	//         ChatpadTrace(("*** Sent chatpad read request successfully. ***\n"));
+  1051	/*
+  1052	         retStatus = WdfRequestGetStatus(devContext->chatpadReadRequests[requestIndex]);
+  1053	         if(STATUS_SUCCESS != retStatus)
+  1054	         {
+  1055	            // 0x00000103 means pending and is presumably normal.
+  1056	//            ChatpadTrace(("(for chatpad, WdfRequestGetStatus returns 0x%x)\n", retStatus));
+  1057	            // Ignore the normal pending value so that we continue executing successfully.
+  1058	            if(STATUS_PENDING == retStatus)
+  1059	            {
+  1060	               retStatus = STATUS_SUCCESS;
+  1061	            }
+  1062	         }
+  1063	*/
+  1064	      }
+  1065	      else
+  1066	      {
+  1067	         ChatpadTrace(("*** Failed to send read request. ***\n"));
+  1068	         retStatus = STATUS_INTERNAL_ERROR;
+  1069	      }
+  1070	   } // end if(STATUS_SUCCESS == retStatus)
+  1071	   else
+  1072	   {
+  1073	      ChatpadTrace(("WdfUsbTargetPipeFormatRequestForUrb failed:  0x%x\n", retStatus));
+  1074	   }
+  1075	
+  1076	   return retStatus;
+  1077	} // end SendChatpadReadRequest
+  1078	
+  1079	EVT_WDF_DEVICE_FILE_CREATE ChatpadControlDeviceCreateHandler;
+  1080	
+  1081	VOID
+  1082	ChatpadControlDeviceCreateHandler(
+  1083	  WDFDEVICE       device,
+  1084	  WDFREQUEST      request,
+  1085	  WDFFILEOBJECT   fileObject)
+  1086	{
+  1087	   NTSTATUS apiStatus = STATUS_SUCCESS;
+  1088	
+  1089	   // Increment the open count.
+  1090	   WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+  1091	
+  1092	   // Since I have a wait lock, can I safely just modify it like this?
+  1093	   if(numOpenHandles < 1)
+  1094	   {
+  1095	      numOpenHandles++;
+  1096	   }
+  1097	   else
+  1098	   {
+  1099	      ChatpadTrace(("Error, there was already an open handle to the control device.\n"));
+  1100	      apiStatus = STATUS_INTERNAL_ERROR;
+  1101	   }
+  1102	
+  1103	   ChatpadTrace(("There are now %lu open handles to the chatpad filter device.\n", numOpenHandles));
+  1104	   WdfRequestComplete(request, apiStatus);
+  1105	
+  1106	   WdfWaitLockRelease(chatpadDeviceCollectionLock);
+  1107	} // end ChatpadControlDeviceCreateHandler
+  1108	
+  1109	EVT_WDF_FILE_CLOSE ChatpadControlDeviceCloseHandler;
+  1110	
+  1111	VOID
+  1112	ChatpadControlDeviceCloseHandler(
+  1113	  WDFFILEOBJECT   fileObject)
+  1114	{
+  1115	   NTSTATUS apiStatus = STATUS_SUCCESS;
+  1116	
+  1117	   // Decrement the open count.
+  1118	   WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+  1119	
+  1120	   // Since I have a wait lock, can I safely just modify it like this?
+  1121	   if(numOpenHandles > 0)
+  1122	   {
+  1123	      numOpenHandles--;
+  1124	   }
+  1125	   else
+  1126	   {
+  1127	      ChatpadTrace(("Error, there are supposedly 0 open handles but the close handler was called...\n"));
+  1128	   }
+  1129	
+  1130	   ChatpadTrace(("There are now %lu open handles to the chatpad filter device.\n", numOpenHandles));
+  1131	
+  1132	   if(0 == numOpenHandles)
+  1133	   {
+  1134	      // TODO there is probably a cleaner way to do this than having one extension
+  1135	      //   have a pointer to the other one etc...maybe?  I want to make sure
+  1136	      //   that filter mode gets disabled if the application disconnects,
+  1137	      //   though.
+  1138	      PCHATPAD_CONTROL_DEVICE_EXTENSION   controlExtension  = NULL;
+  1139	      PDEVICE_CONTEXT                     devContext        = NULL;
+  1140	
+  1141	      if(NULL == chatpadControlDevice)
+  1142	      {
+  1143	         ChatpadTrace(("Error, control device handle is NULL.\n"));
+  1144	         apiStatus = STATUS_INTERNAL_ERROR;
+  1145	      }
+  1146	
+  1147	      if(STATUS_SUCCESS == apiStatus)
+  1148	      {
+  1149	         controlExtension = ChatpadControlGetData(chatpadControlDevice);
+  1150	
+  1151	         if(NULL == controlExtension)
+  1152	         {
+  1153	            ChatpadTrace(("Failed to get control device extension in chatpad filter close handler.\n"));
+  1154	            apiStatus = STATUS_INTERNAL_ERROR;
+  1155	         }
+  1156	      }
+  1157	
+  1158	      if(STATUS_SUCCESS == apiStatus)
+  1159	      {
+  1160	         devContext = controlExtension->chatpadFilterDeviceContext;
+  1161	         if(NULL == devContext)
+  1162	         {
+  1163	            ChatpadTrace(("Failed to get device context in close handler.\n"));
+  1164	            apiStatus = STATUS_INTERNAL_ERROR;
+  1165	         }
+  1166	      }
+  1167	
+  1168	      if(STATUS_SUCCESS == apiStatus)
+  1169	      {
+  1170	         // Set the filter mode to unfiltered when the application disconnects.
+  1171	         // TODO could messing with the device context here cause synchronization issues?
+  1172	         devContext->filterMode = FILTER_MODE_UNFILTERED;
+  1173	         ChatpadTrace(("Filter mode set to unfiltered on application disconnect.\n"));
+  1174	
+  1175	         // If any available controls read requests are not already pending,
+  1176	         // then send them.  This is done because the top-level driver
+  1177	         // should always have read requests pending, so we can just
+  1178	         // start completing them as soon as we get data.
+  1179	         for(int requestIndex = 0;
+  1180	             ((STATUS_SUCCESS == apiStatus) &&
+  1181	              (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  1182	             requestIndex++)
+  1183	         {
+  1184	            // TODO do I need synchronization here?
+  1185	            if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  1186	            {
+  1187	               devContext->controlsReadRequestsInUse[requestIndex] = TRUE;
+  1188	               apiStatus = SendControlsReadRequest(devContext, requestIndex);
+  1189	            } // if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  1190	         } // end looping through chatpad filter driver request indices
+  1191	      } // end if(STATUS_SUCCESS == apiStatus)
+  1192	   } // end if(0 == numOpenHandles)
+  1193	
+  1194	   WdfWaitLockRelease(chatpadDeviceCollectionLock);
+  1195	} // end ChatpadControlDeviceCloseHandler
+  1196	
+  1197	VOID
+  1198	ChatpadFilterEvtDeviceContextCleanup(
+  1199	  IN WDFOBJECT       object)
+  1200	{
+  1201	   NTSTATUS apiStatus = STATUS_SUCCESS;
+  1202	   // TODO is static_cast or reinterpret_cast preferred here?  I'm doing an
+  1203	   //      oldstyle cast because that's what the suggestion on osronline
+  1204	   //      said to do.  :)
+  1205	   //      Normally, for void* to something* I'd do static_cast, and from
+  1206	   //      thingA* to thingB* I'd do reinterpret_cast.
+  1207	   WDFDEVICE device = (WDFDEVICE) object;
+  1208	   PDEVICE_CONTEXT devContext = NULL;
+  1209	   ULONG deviceCount;
+  1210	
+  1211	   ChatpadTrace(("Cleaning up device context.\n"));
+  1212	
+  1213	   devContext = ChatpadFilterGetDeviceContext(device);
+  1214	   if((NULL != device) && (NULL != devContext))
+  1215	   {
+  1216	      WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+  1217	
+  1218	      // Clean up device context resources.
+  1219	      // TODO is this the appropriate place to do the cleanup, inside the lock
+  1220	      //   and before the device gets deleted?
+  1221	      ReleaseCachedInterfaceInformation(devContext);
+  1222	      for(int requestIndex = 0;
+  1223	          ((STATUS_SUCCESS == apiStatus) &&
+  1224	           (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  1225	          requestIndex++)
+  1226	      {
+  1227	         // TODO is it safe to release request memory here, or is there any chance
+  1228	         //   that it could still be in use by the system/requests?
+  1229	
+  1230	         if(NULL != devContext->controlsWriteBufferMemory)
+  1231	         {
+  1232	            WdfObjectDelete(devContext->controlsWriteBufferMemory);
+  1233	            devContext->controlsWriteBufferMemory = NULL;
+  1234	         }
+  1235	
+  1236	         if(NULL != devContext->controlsWriteUrbMemory)
+  1237	         {
+  1238	            WdfObjectDelete(devContext->controlsWriteUrbMemory);
+  1239	            devContext->controlsWriteUrbMemory = NULL;
+  1240	         }
+  1241	
+  1242	         if(NULL != devContext->controlsReadBufferMemory[requestIndex])
+  1243	         {
+  1244	            WdfObjectDelete(devContext->controlsReadBufferMemory[requestIndex]);
+  1245	            devContext->controlsReadBufferMemory[requestIndex] = NULL;
+  1246	         }
+  1247	
+  1248	         if(NULL != devContext->controlsReadUrbMemory[requestIndex])
+  1249	         {
+  1250	            WdfObjectDelete(devContext->controlsReadUrbMemory[requestIndex]);
+  1251	            devContext->controlsReadUrbMemory[requestIndex] = NULL;
+  1252	         }
+  1253	
+  1254	         if(NULL != devContext->chatpadReadBufferMemory[requestIndex])
+  1255	         {
+  1256	            WdfObjectDelete(devContext->chatpadReadBufferMemory[requestIndex]);
+  1257	            devContext->chatpadReadBufferMemory[requestIndex] = NULL;
+  1258	         }
+  1259	
+  1260	         if(NULL != devContext->chatpadReadUrbMemory[requestIndex])
+  1261	         {
+  1262	            WdfObjectDelete(devContext->chatpadReadUrbMemory[requestIndex]);
+  1263	            devContext->chatpadReadUrbMemory[requestIndex] = NULL;
+  1264	         }
+  1265	      } // end looping through chatpad filter driver request indices
+  1266	
+  1267	      deviceCount = WdfCollectionGetCount(chatpadDeviceCollection);
+  1268	      if(deviceCount == 1)
+  1269	      {
+  1270	         // If we are the last instance, then delete the control device so that
+  1271	         // the driver can unload.  Apparently there was a bug in WDF 1.0, but 
+  1272	         // apparently this sort of thing is fine in WDF 1.9 (and even earlier?).
+  1273	         //
+  1274	         // According to the toaster KMDF sideband filter example, the deletion
+  1275	         // below has to be done while the lock on the collection is acquired
+  1276	         // since it protects the global device variable, and another thread
+  1277	         // cannot try to create while we are deleting the device.
+  1278	
+  1279	         // I added an open count, protected by chatpadDeviceCollectionLock,
+  1280	         // which means that if the device is unplugged while the user still
+  1281	         // has a handle open, the device should remain open until it is
+  1282	         // replugged and unplugged after that point.
+  1283	         // TODO make the above behavior nicer if possible?  Is it possible
+  1284	         //   to delete the control device from the close handler?
+  1285	         if(0 == numOpenHandles)
+  1286	         {
+  1287	            ChatpadDeleteControlDevice();
+  1288	         }
+  1289	         else
+  1290	         {
+  1291	            ChatpadTrace(("The device was not deleted since there are still %lu open handles to it.\n",
+  1292	                          numOpenHandles));
+  1293	         }
+  1294	      }
+  1295	
+  1296	      // Even if the control device was not deleted, however, we mark it as unavailable since the cable
+  1297	      // was pulled or whatnot.
+  1298	      chatpadControlDeviceAvailable = FALSE;
+  1299	
+  1300	      WdfCollectionRemove(chatpadDeviceCollection, device);
+  1301	
+  1302	      WdfWaitLockRelease(chatpadDeviceCollectionLock);
+  1303	   } // end if((NULL != device) && (NULL != devContext))
+  1304	   else
+  1305	   {
+  1306	      // This should never happen.
+  1307	      ChatpadTrace(("Error, device and/or devContext are NULL while cleaning up.\n"));
+  1308	   }
+  1309	} // end ChatpadFilterEvtDeviceContextCleanup
+  1310	
+  1311	// Creates a control device object so that an application can talk to the filter driver.
+  1312	// TODO how does this thing link to the regular filter device and its queues?
+  1313	NTSTATUS
+  1314	ChatpadCreateControlDevice(
+  1315	  WDFDEVICE device)
+  1316	{
+  1317	   NTSTATUS                retStatus = STATUS_SUCCESS;
+  1318	   BOOLEAN                 createDevice = FALSE;
+  1319	   PWDFDEVICE_INIT         deviceInit = NULL;
+  1320	   WDF_FILEOBJECT_CONFIG   fileObjectConfig;
+  1321	   WDFDEVICE               newChatpadControlDevice = NULL;
+  1322	   WDF_OBJECT_ATTRIBUTES   controlAttributes;
+  1323	   DECLARE_CONST_UNICODE_STRING(ntDeviceName, CHATPAD_FILTER_CONTROL_NAME);
+  1324	   DECLARE_CONST_UNICODE_STRING(symbolicLinkName, CHATPAD_FILTER_CONTROL_LINK);
+  1325	   WDFQUEUE                newQueue;
+  1326	   WDF_IO_QUEUE_CONFIG     ioQueueConfig;
+  1327	
+  1328	   // Determine whether we should create the device, or if it already exists.
+  1329	   WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+  1330	
+  1331	// TODO NEXT REMOVE after testing
+  1332	ChatpadTrace(("Collection device count is %d.\n", WdfCollectionGetCount(chatpadDeviceCollection)));
+  1333	   // TODO is this a safe way to synchronize things?
+  1334	   if(NULL == chatpadControlDevice)
+  1335	   {
+  1336	      createDevice = TRUE;
+  1337	   }
+  1338	
+  1339	   WdfWaitLockRelease(chatpadDeviceCollectionLock);
+  1340	
+  1341	   if(!createDevice)
+  1342	   {
+  1343	      ChatpadTrace(("Chatpad control device was already created.\n"));
+  1344	   }
+  1345	   else
+  1346	   {
+  1347	      ChatpadTrace(("Creating chatpad control device.\n"));
+  1348	
+  1349	      // Allocate and initialize a WDFDEVICE_INIT structure for the control device.
+  1350	      deviceInit = WdfControlDeviceInitAllocate(
+  1351	        WdfDeviceGetDriver(device),
+  1352	        // TODO what does this ugly thing govern -- permissions?  Based off of toaster sideband filter example.
+  1353	        &SDDL_DEVOBJ_SYS_ALL_ADM_RWX_WORLD_RW_RES_R);
+  1354	      if(NULL == deviceInit)
+  1355	      {
+  1356	         retStatus = STATUS_INSUFFICIENT_RESOURCES;
+  1357	      }
+  1358	
+  1359	      if(STATUS_SUCCESS == retStatus)
+  1360	      {
+  1361	         // Make the control device exclusive.  I only want one application talking to it at a time.
+  1362	         WdfDeviceInitSetExclusive(deviceInit, TRUE);
+  1363	         // Get device name.
+  1364	         retStatus = WdfDeviceInitAssignName(deviceInit, &ntDeviceName);
+  1365	      }
+  1366	
+  1367	      // Set up callbacks so we can keep track of whether user mode has the
+  1368	      // control device open.
+  1369	      WDF_FILEOBJECT_CONFIG_INIT(
+  1370	        &fileObjectConfig,
+  1371	        ChatpadControlDeviceCreateHandler,
+  1372	        ChatpadControlDeviceCloseHandler,
+  1373	        WDF_NO_EVENT_CALLBACK);
+  1374	
+  1375	      WdfDeviceInitSetFileObjectConfig(
+  1376	        deviceInit,
+  1377	        &fileObjectConfig,
+  1378	        WDF_NO_OBJECT_ATTRIBUTES);
+  1379	
+  1380	      if(STATUS_SUCCESS == retStatus)
+  1381	      {
+  1382	         WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
+  1383	           &controlAttributes,
+  1384	           CHATPAD_CONTROL_DEVICE_EXTENSION);
+  1385	         // Create the control device.
+  1386	         retStatus = WdfDeviceCreate(
+  1387	           &deviceInit,
+  1388	           &controlAttributes,
+  1389	           &newChatpadControlDevice);
+  1390	      }
+  1391	
+  1392	      // Initialize control extension.
+  1393	      PDEVICE_CONTEXT devContext = ChatpadFilterGetDeviceContext(device);
+  1394	      if(NULL != devContext)
+  1395	      {
+  1396	         PCHATPAD_CONTROL_DEVICE_EXTENSION controlExtension =
+  1397	           ChatpadControlGetData(newChatpadControlDevice);
+  1398	
+  1399	         if(NULL != controlExtension)
+  1400	         {
+  1401	            ChatpadTrace(("Initializing chatpad filter control device extension.\n"));
+  1402	            controlExtension->chatpadFilterDeviceContext = devContext;
+  1403	         }
+  1404	         else
+  1405	         {
+  1406	            ChatpadTrace(("Error, could not initialize control device extension.\n"));
+  1407	            retStatus = STATUS_INTERNAL_ERROR;
+  1408	         }
+  1409	      }
+  1410	      else
+  1411	      {
+  1412	         retStatus = STATUS_INTERNAL_ERROR;
+  1413	      }
+  1414	
+  1415	      if(STATUS_SUCCESS == retStatus)
+  1416	      {
+  1417	         // Create symbolic link so user mode can open the device.
+  1418	         retStatus = WdfDeviceCreateSymbolicLink(
+  1419	           newChatpadControlDevice,
+  1420	           &symbolicLinkName);
+  1421	      }
+  1422	
+  1423	      if(STATUS_SUCCESS == retStatus)
+  1424	      {
+  1425	         // Configure default queue so that requests to the control device will be parallel.
+  1426	         // TODO is this okay?  The idea here is that I want to be able to do read and
+  1427	         //   write requests at the same time depending on how blocking works.
+  1428	         WDF_IO_QUEUE_CONFIG_INIT_DEFAULT_QUEUE(
+  1429	           &ioQueueConfig,
+  1430	           //WdfIoQueueDispatchSequential);
+  1431	           WdfIoQueueDispatchParallel);
+  1432	
+  1433	         // Select what we want from the queue.
+  1434	
+  1435	         // This should catch application-command IOCTLs.
+  1436	         ioQueueConfig.EvtIoDeviceControl =
+  1437	           ChatpadFilterIOCTLHandler;
+  1438	
+  1439	         // Create the queue.
+  1440	         retStatus = WdfIoQueueCreate(
+  1441	           newChatpadControlDevice,
+  1442	           &ioQueueConfig,
+  1443	           WDF_NO_OBJECT_ATTRIBUTES, // TODO what does this parameter do?
+  1444	           &newQueue);
+  1445	      } // end if(STATUS_SUCCESS == retStatus)
+  1446	
+  1447	      if(STATUS_SUCCESS == retStatus)
+  1448	      {
+  1449	         WdfControlFinishInitializing(newChatpadControlDevice);
+  1450	         WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+  1451	         chatpadControlDevice = newChatpadControlDevice;
+  1452	         WdfWaitLockRelease(chatpadDeviceCollectionLock);
+  1453	
+  1454	         ChatpadTrace(("Chatpad control device created successfully.\n"));
+  1455	      }
+  1456	      else
+  1457	      {
+  1458	         ChatpadTrace(("WdfIoQueueCreate failed:  0x%x\n", retStatus));
+  1459	      }
+  1460	   } // end if creating the control device
+  1461	
+  1462	   // Handle error cases.
+  1463	   if(STATUS_SUCCESS != retStatus)
+  1464	   {
+  1465	      ChatpadTrace(("Failed to create chatpad control device:  0x%x\n", retStatus));
+  1466	
+  1467	      if(NULL != deviceInit)
+  1468	      {
+  1469	         WdfDeviceInitFree(deviceInit);
+  1470	         deviceInit = NULL;
+  1471	      }
+  1472	
+  1473	      if(NULL != newChatpadControlDevice)
+  1474	      {
+  1475	         // Release the newly created, but uninitialized, object.
+  1476	         WdfObjectDelete(newChatpadControlDevice);
+  1477	         newChatpadControlDevice = NULL;
+  1478	      }
+  1479	   }
+  1480	
+  1481	   return retStatus;
+  1482	} // end ChatpadCreateControlDevice
+  1483	
+  1484	// Deletes the control device object.
+  1485	//
+  1486	// IMPORTANT NOTE:  This device should only be called if a wait lock is
+  1487	// currently acquired on chatpadDeviceCollectionLock.
+  1488	VOID
+  1489	ChatpadDeleteControlDevice(VOID)
+  1490	{
+  1491	   ChatpadTrace(("Deleting chatpad control device.\n"));
+  1492	
+  1493	   if(chatpadControlDevice)
+  1494	   {
+  1495	      WdfObjectDelete(chatpadControlDevice);
+  1496	      chatpadControlDevice = NULL;
+  1497	   }
+  1498	} // end ChatpadDeleteControlDevice
+  1499	
+  1500	// This function normally runs at DISPATCH IRQL.  It might run at PASSIVE if
+  1501	// something gets messed up with requests.
+  1502	VOID
+  1503	ControlsReadCompletion(
+  1504	  IN WDFREQUEST                     request,
+  1505	  IN WDFIOTARGET                    target,
+  1506	  IN PWDF_REQUEST_COMPLETION_PARAMS params,
+  1507	  IN WDFCONTEXT                     context)
+  1508	{
+  1509	   PDEVICE_CONTEXT   devContext           = reinterpret_cast<PDEVICE_CONTEXT>(context);
+  1510	   NTSTATUS          apiStatus            = STATUS_SUCCESS;
+  1511	   WDFMEMORY         urbMemory            = NULL;
+  1512	   PUCHAR            transferBuffer       = NULL;
+  1513	   ULONG             bytesTransferred     = 0;
+  1514	   BOOLEAN           wasRequestCancelled  = FALSE;
+  1515	
+  1516	   // These variables are used for completing controls data read requests.
+  1517	   WDFREQUEST        driverRequestFromAbove;
+  1518	   WDFREQUEST        userRequestFromAbove;
+  1519	   NTSTATUS          driverCompletionStatusForAboveCode  = STATUS_SUCCESS;
+  1520	   NTSTATUS          userCompletionStatusForAboveCode    = STATUS_SUCCESS;
+  1521	   BOOLEAN           driverCompleteRequestToAboveCode    = FALSE;
+  1522	   BOOLEAN           userCompleteRequestToAboveCode      = FALSE;
+  1523	
+  1524	   ASSERT(devContext);
+  1525	   ASSERT(params);
+  1526	
+  1527	//   ChatpadTrace(("Controls read completion callback called with IRQL %u\n", KeGetCurrentIrql()));
+  1528	//   ChatpadTrace(("I/O status:  0x%x\n", params->IoStatus.Status));
+  1529	
+  1530	   // Get the status.  If the request was cancelled, then we want to be careful
+  1531	   // not to complete requests from above.  Otherwise, there was apparently
+  1532	   // some sort of infinite loop due to the top-level requests.
+  1533	   // TODO why was this the case?
+  1534	   if(STATUS_SUCCESS == apiStatus)
+  1535	   {
+  1536	      apiStatus = WdfRequestGetStatus(request);
+  1537	//      ChatpadTrace(("WdfRequestGetStatus returns 0x%x\n", apiStatus));
+  1538	
+  1539	      if(STATUS_CANCELLED == apiStatus)
+  1540	      {
+  1541	         ChatpadTrace(("Controls read request was cancelled.\n"));
+  1542	         wasRequestCancelled = TRUE;
+  1543	      }
+  1544	   }
+  1545	
+  1546	   // Only do this processing if the request was not cancelled.
+  1547	   if(FALSE == wasRequestCancelled)
+  1548	   {
+  1549	//      ChatpadTrace(("USBD status 0x%x, request type %d\n",
+  1550	//                    params->Parameters.Usb.Completion->UsbdStatus,
+  1551	//                    params->Parameters.Usb.Completion->Type));
+  1552	      PWDF_USB_REQUEST_COMPLETION_PARAMS completionParams =
+  1553	        params->Parameters.Usb.Completion;
+  1554	      if(NULL != completionParams)
+  1555	      {
+  1556	         if(WdfUsbRequestTypePipeUrb == completionParams->Type)
+  1557	         {
+  1558	            urbMemory = completionParams->Parameters.PipeUrb.Buffer;
+  1559	//            ChatpadTrace(("WDFMEMORY handle is 0x%x\n", urbMemory));
+  1560	            if(NULL != urbMemory)
+  1561	            {
+  1562	               PURB controlsReadUrb =
+  1563	                 static_cast<PURB>(WdfMemoryGetBuffer(urbMemory, NULL));
+  1564	               if(NULL != controlsReadUrb)
+  1565	               {
+  1566	                  transferBuffer =
+  1567	                    static_cast<PUCHAR>(controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer);
+  1568	                  bytesTransferred = controlsReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength;
+  1569	//                  ChatpadTrace(("Buffer address is 0x%x with data length %lu\n", transferBuffer, bytesTransferred));
+  1570	                  if(NULL != transferBuffer)
+  1571	                  {
+  1572	/*
+  1573	                     ChatpadTrace(("### Buffer data (length %lu):  %02x %02x %02x %02x %02x %02x %02x %02x ... ###\n",
+  1574	                                   bytesTransferred,
+  1575	                                   transferBuffer[0],
+  1576	                                   transferBuffer[1],
+  1577	                                   transferBuffer[2],
+  1578	                                   transferBuffer[3],
+  1579	                                   transferBuffer[4],
+  1580	                                   transferBuffer[5],
+  1581	                                   transferBuffer[6],
+  1582	                                   transferBuffer[7]));
+  1583	*/
+  1584	
+  1585	                     // Only forward data to the top-level driver if we are not intercepting the data.
+  1586	                     if(FILTER_MODE_INTERCEPTED != devContext->filterMode)
+  1587	                     {
+  1588	                        apiStatus = WdfIoQueueRetrieveNextRequest(
+  1589	                          devContext->controlsParkedDriverReadRequestQueue,
+  1590	                          &driverRequestFromAbove);
+  1591	
+  1592	                        if(STATUS_SUCCESS == apiStatus)
+  1593	                        {
+  1594	                           PURB topLevelUrb =
+  1595	                             static_cast<PURB>(
+  1596	                               URB_FROM_IRP(
+  1597	                                 WdfRequestWdmGetIrp(
+  1598	                                   driverRequestFromAbove)));
+  1599	
+  1600	                           if(NULL != topLevelUrb)
+  1601	                           {
+  1602	                              RtlCopyMemory(static_cast<unsigned char*>(
+  1603	                                              topLevelUrb->UrbBulkOrInterruptTransfer.TransferBuffer),
+  1604	                                            transferBuffer,
+  1605	                                            bytesTransferred);
+  1606	                              topLevelUrb->UrbBulkOrInterruptTransfer.TransferBufferLength = bytesTransferred;
+  1607	
+  1608	                              driverCompleteRequestToAboveCode       = TRUE;
+  1609	                              driverCompletionStatusForAboveCode     = apiStatus;
+  1610	                           }
+  1611	                           else
+  1612	                           {
+  1613	                              ChatpadTrace(("Unable to get pointer to URB from top-level driver request.\n"));
+  1614	                              apiStatus = STATUS_INTERNAL_ERROR;
+  1615	                           }
+  1616	                        } // end if(STATUS_SUCCESS == apiStatus)
+  1617	                        else
+  1618	                        {
+  1619	                           ChatpadTrace(("No top-level controls read request available.\n"));
+  1620	                           apiStatus = STATUS_INTERNAL_ERROR;
+  1621	                        }
+  1622	                     } // end if(FILTER_MODE_INTERCEPTED != devContext->filterMode)
+  1623	
+  1624	                     // Only send data to the user if we are filtering or intercepting the data.
+  1625	                     if((FILTER_MODE_FILTERED      == devContext->filterMode)    ||
+  1626	                        (FILTER_MODE_INTERCEPTED   == devContext->filterMode))
+  1627	                     {
+  1628	                        PVOID bufferToUserAsVoid   = NULL;
+  1629	                        PUCHAR bufferToUser        = NULL;
+  1630	
+  1631	                        apiStatus = WdfIoQueueRetrieveNextRequest(
+  1632	                          devContext->controlsParkedUserReadRequestQueue,
+  1633	                          &userRequestFromAbove);
+  1634	                        if(STATUS_SUCCESS != apiStatus)
+  1635	                        {
+  1636	                           ChatpadTrace(("No user-provided controls read request available.\n"));
+  1637	                        }
+  1638	
+  1639	                        if(STATUS_SUCCESS == apiStatus)
+  1640	                        {
+  1641	//                           ChatpadTrace(("Got a user-provided read request from the queue.\n"));
+  1642	
+  1643	                           apiStatus = WdfRequestRetrieveOutputBuffer(
+  1644	                             userRequestFromAbove,
+  1645	                             bytesTransferred,
+  1646	                             &bufferToUserAsVoid,
+  1647	                             NULL);
+  1648	                           // This ugly cast is probably avoidable, but it works for now.
+  1649	                           bufferToUser = static_cast<PUCHAR>(bufferToUserAsVoid);
+  1650	                           if(STATUS_SUCCESS != apiStatus)
+  1651	                           {
+  1652	                              ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", apiStatus));
+  1653	                           }
+  1654	
+  1655	                           // Just in case, check the pointer.
+  1656	                           if(NULL == bufferToUser)
+  1657	                           {
+  1658	                              ChatpadTrace(("Failed to obtain buffer for writing controls data back to user.\n"));
+  1659	                              apiStatus = STATUS_INTERNAL_ERROR;
+  1660	                           }
+  1661	                        }
+  1662	
+  1663	                        if(STATUS_SUCCESS == apiStatus)
+  1664	                        {
+  1665	                           RtlCopyMemory(bufferToUser,
+  1666	                                         transferBuffer,
+  1667	                                         bytesTransferred);
+  1668	
+  1669	                           userCompleteRequestToAboveCode         = TRUE;
+  1670	                           userCompletionStatusForAboveCode       = apiStatus;
+  1671	                        } // end if(STATUS_SUCCESS == apiStatus)
+  1672	                     } // end if(FILTER_MODE_UNFILTERED != devContext->filterMode)
+  1673	                  } // end if(NULL != transferBuffer)
+  1674	                  else
+  1675	                  {
+  1676	                     apiStatus = STATUS_INTERNAL_ERROR;
+  1677	                  }
+  1678	               } // end if(NULL != controlsReadUrb)
+  1679	               else
+  1680	               {
+  1681	                  apiStatus = STATUS_INTERNAL_ERROR;
+  1682	               }
+  1683	            } // end if(NULL != urbMemory)
+  1684	            else
+  1685	            {
+  1686	               apiStatus = STATUS_INTERNAL_ERROR;
+  1687	            }
+  1688	         } // end if(WdfUsbRequestTypePipeUrb == completionParams->Type)
+  1689	         else
+  1690	         {
+  1691	            apiStatus = STATUS_INTERNAL_ERROR;
+  1692	         }
+  1693	      } // end if(NULL != completionParams)
+  1694	      else
+  1695	      {
+  1696	         ChatpadTrace(("Error, completion parameter pointer is NULL.\n"));
+  1697	         apiStatus = STATUS_INTERNAL_ERROR;
+  1698	      }
+  1699	   } // end if(FALSE == wasRequestCancelled)
+  1700	
+  1701	   // The request reuse code is called even if an error like STATUS_CANCELLED
+  1702	   // or STATUS_INTERNAL_ERROR occurred so that the driver can keep operating.
+  1703	   WDF_REQUEST_REUSE_PARAMS reuseParams;
+  1704	
+  1705	   WDF_REQUEST_REUSE_PARAMS_INIT(
+  1706	     &reuseParams,
+  1707	     WDF_REQUEST_REUSE_NO_FLAGS,
+  1708	     STATUS_SUCCESS);
+  1709	   apiStatus = WdfRequestReuse(
+  1710	     request,
+  1711	     &reuseParams);
+  1712	   if(STATUS_SUCCESS != apiStatus)
+  1713	   {
+  1714	      ChatpadTrace(("WdfRequestReuse failed:  0x%x\n", apiStatus));
+  1715	   }
+  1716	
+  1717	   // Find which request index corresponded to this request, and mark it
+  1718	   // as available once again.
+  1719	
+  1720	   int requestIndex = 0;
+  1721	
+  1722	   // TODO do I need to use synchronization here?
+  1723	   for(requestIndex = 0;
+  1724	       requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS;
+  1725	       requestIndex++)
+  1726	   {
+  1727	      if((NULL != devContext) &&
+  1728	         (request == devContext->controlsReadRequests[requestIndex]))
+  1729	      {
+  1730	         // Only mark the request as unused if the filtering mode is unfiltered, since in
+  1731	         // that case this request is a leftover proxy request and we will not automatically
+  1732	         // be sending more proxy requests until the filtering mode is changed.
+  1733	         if(FILTER_MODE_UNFILTERED == devContext->filterMode)
+  1734	         {
+  1735	            devContext->controlsReadRequestsInUse[requestIndex] = FALSE;
+  1736	         }
+  1737	         break;
+  1738	      }
+  1739	   }
+  1740	
+  1741	   if(CHATPAD_MAX_NUM_PENDING_USB_REQUESTS == requestIndex)
+  1742	   {
+  1743	      ChatpadTrace(("Failed to find this request in the chatpad filter driver's controls request array.\n"));
+  1744	      apiStatus = STATUS_INTERNAL_ERROR;
+  1745	   }
+  1746	
+  1747	   // Now that the original request is marked available again, complete a
+  1748	   // request back to the above code if needed.  Waiting until the
+  1749	   // previous request is marked available will hopefully prevent any problems
+  1750	   // that could result from requests coming down so quickly that we do not
+  1751	   // have time to mark proxy requests as available.
+  1752	   // TODO should I use a WDFQUEUE to store the proxy requests as well?
+  1753	
+  1754	   if(TRUE == driverCompleteRequestToAboveCode)
+  1755	   {
+  1756	      // Completing with the length as the information here seems to work, but I cannot seem to find
+  1757	      // in the API or an example where that is specified as actually always happening for IOCTLs.
+  1758	      // In this case, I am completing with that information for both an URB and an IOCTL request
+  1759	      // from two different queues.
+  1760	      // TODO is this safe?
+  1761	      WdfRequestCompleteWithInformation(driverRequestFromAbove,
+  1762	                                        driverCompletionStatusForAboveCode,
+  1763	                                        bytesTransferred);
+  1764	//      ChatpadTrace(("Sent data back up to top-level driver.\n"));
+  1765	   }
+  1766	
+  1767	   if(TRUE == userCompleteRequestToAboveCode)
+  1768	   {
+  1769	      // Completing with the length as the information here seems to work, but I cannot seem to find
+  1770	      // in the API or an example where that is specified as actually always happening for IOCTLs.
+  1771	      // In this case, I am completing with that information for both an URB and an IOCTL request
+  1772	      // from two different queues.
+  1773	      // TODO is this safe?
+  1774	      WdfRequestCompleteWithInformation(userRequestFromAbove,
+  1775	                                        userCompletionStatusForAboveCode,
+  1776	                                        bytesTransferred);
+  1777	//      ChatpadTrace(("Sent data back up to user code.\n"));
+  1778	   }
+  1779	
+  1780	   // Do not try to resend a request if filtering has been disabled, since actual top-level requests
+  1781	   // will simply be forwarded on in that case and we do not want to use proxy requests.
+  1782	   if((FILTER_MODE_UNFILTERED != devContext->filterMode)       &&
+  1783	      (CHATPAD_MAX_NUM_PENDING_USB_REQUESTS != requestIndex)   &&
+  1784	      (FALSE == wasRequestCancelled))
+  1785	   {
+  1786	      // Note that the request is only sent if the original request is not
+  1787	      // cancelled.  Otherwise, the system crashes when the controller is
+  1788	      // unplugged.
+  1789	      SendControlsReadRequest(devContext, requestIndex);
+  1790	   } // end if(TRUE == completeRequestToAboveCode)
+  1791	
+  1792	//   ChatpadTrace(("Controls read completion callback finished, with apiStatus == 0x%x\n", apiStatus));
+  1793	} // end ControlsReadCompletion
+  1794	
+  1795	NTSTATUS SendChatpadReadRequest(
+  1796	  IN PDEVICE_CONTEXT devContext,
+  1797	  IN ULONG           requestIndex);
+  1798	
+  1799	// This function normally runs at DISPATCH IRQL.  It might run at PASSIVE if
+  1800	// something gets messed up with requests.
+  1801	VOID
+  1802	ChatpadReadCompletion(
+  1803	  IN WDFREQUEST                     request,
+  1804	  IN WDFIOTARGET                    target,
+  1805	  IN PWDF_REQUEST_COMPLETION_PARAMS params,
+  1806	  IN WDFCONTEXT                     context)
+  1807	{
+  1808	   PDEVICE_CONTEXT   devContext        = reinterpret_cast<PDEVICE_CONTEXT>(context);
+  1809	   NTSTATUS          apiStatus         = STATUS_SUCCESS;
+  1810	   WDFMEMORY         urbMemory         = NULL;
+  1811	   PUCHAR            transferBuffer    = NULL;
+  1812	   ULONG             bytesTransferred  = 0;
+  1813	
+  1814	   // These variables are used for completing chatpad data read requests back
+  1815	   // to higher-level code.
+  1816	   WDFREQUEST        requestFromAbove;
+  1817	   NTSTATUS          completionStatusForAboveCode        = STATUS_SUCCESS;
+  1818	   BOOLEAN           wasRequestCancelled                 = FALSE;
+  1819	   BOOLEAN           completeRequestToAboveCode          = FALSE;
+  1820	
+  1821	   ASSERT(devContext);
+  1822	   ASSERT(params);
+  1823	
+  1824	//   ChatpadTrace(("Chatpad read completion callback called with IRQL %u\n", KeGetCurrentIrql()));
+  1825	//   ChatpadTrace(("I/O status:  0x%x\n", params->IoStatus.Status));
+  1826	
+  1827	   // Get the status.  If the request was cancelled, then we want to be careful
+  1828	   // not to complete requests from above.  Otherwise, there might apparently
+  1829	   // be some sort of infinite loop due to higher-level requests.  I am not
+  1830	   // sure if this would actually happen in this case, but this code seems to
+  1831	   // work so I am keeping it.
+  1832	   if(STATUS_SUCCESS == apiStatus)
+  1833	   {
+  1834	      apiStatus = WdfRequestGetStatus(request);
+  1835	//      ChatpadTrace(("WdfRequestGetStatus returns 0x%x\n", apiStatus));
+  1836	
+  1837	      if(STATUS_CANCELLED == apiStatus)
+  1838	      {
+  1839	         ChatpadTrace(("Chatpad read request was cancelled.\n"));
+  1840	         wasRequestCancelled = TRUE;
+  1841	      }
+  1842	   }
+  1843	
+  1844	   // Only do this processing if the request was not cancelled.
+  1845	   if(FALSE == wasRequestCancelled)
+  1846	   {
+  1847	//      ChatpadTrace(("USBD status 0x%x, request type %d\n",
+  1848	//                    params->Parameters.Usb.Completion->UsbdStatus,
+  1849	//                    params->Parameters.Usb.Completion->Type));
+  1850	      PWDF_USB_REQUEST_COMPLETION_PARAMS completionParams =
+  1851	        params->Parameters.Usb.Completion;
+  1852	      if(NULL != completionParams)
+  1853	      {
+  1854	         if(WdfUsbRequestTypePipeUrb == completionParams->Type)
+  1855	         {
+  1856	            urbMemory = completionParams->Parameters.PipeUrb.Buffer;
+  1857	//            ChatpadTrace(("WDFMEMORY handle is 0x%x\n", urbMemory));
+  1858	            if(NULL != urbMemory)
+  1859	            {
+  1860	               PURB chatpadReadUrb =
+  1861	                 static_cast<PURB>(WdfMemoryGetBuffer(urbMemory, NULL));
+  1862	               if(NULL != chatpadReadUrb)
+  1863	               {
+  1864	                  transferBuffer =
+  1865	                    static_cast<PUCHAR>(chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBuffer);
+  1866	                  bytesTransferred = chatpadReadUrb->UrbBulkOrInterruptTransfer.TransferBufferLength;
+  1867	//                  ChatpadTrace(("Buffer address is 0x%x with data length %lu\n", transferBuffer, bytesTransferred));
+  1868	                  if(NULL != transferBuffer)
+  1869	                  {
+  1870	/*
+  1871	                     ChatpadTrace(("### Buffer data (length %lu):  %02x %02x %02x %02x %02x %02x %02x %02x ... ###\n",
+  1872	                                   bytesTransferred,
+  1873	                                   transferBuffer[0],
+  1874	                                   transferBuffer[1],
+  1875	                                   transferBuffer[2],
+  1876	                                   transferBuffer[3],
+  1877	                                   transferBuffer[4],
+  1878	                                   transferBuffer[5],
+  1879	                                   transferBuffer[6],
+  1880	                                   transferBuffer[7]));
+  1881	*/
+  1882	
+  1883	                     PVOID bufferToUserAsVoid   = NULL;
+  1884	                     PUCHAR bufferToUser        = NULL;
+  1885	
+  1886	                     apiStatus = WdfIoQueueRetrieveNextRequest(
+  1887	                       devContext->chatpadParkedUserReadRequestQueue,
+  1888	                       &requestFromAbove);
+  1889	                     if(STATUS_SUCCESS != apiStatus)
+  1890	                     {
+  1891	                        ChatpadTrace(("No user-provided chatpad read request available.\n"));
+  1892	                     }
+  1893	
+  1894	                     if(STATUS_SUCCESS == apiStatus)
+  1895	                     {
+  1896	//                        ChatpadTrace(("Got a user-provided read request from the queue.\n"));
+  1897	
+  1898	                        apiStatus = WdfRequestRetrieveOutputBuffer(
+  1899	                          requestFromAbove,
+  1900	                          bytesTransferred,
+  1901	                          &bufferToUserAsVoid,
+  1902	                          NULL);
+  1903	                        // This ugly cast is probably avoidable, but it works for now.
+  1904	                        bufferToUser = static_cast<PUCHAR>(bufferToUserAsVoid);
+  1905	                        if(STATUS_SUCCESS != apiStatus)
+  1906	                        {
+  1907	                           ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", apiStatus));
+  1908	                        }
+  1909	
+  1910	                        // Just in case, check the pointer.
+  1911	                        if(NULL == bufferToUser)
+  1912	                        {
+  1913	                           ChatpadTrace(("Failed to obtain buffer for writing chatpad data back to user.\n"));
+  1914	                           apiStatus = STATUS_INTERNAL_ERROR;
+  1915	                        }
+  1916	                     }
+  1917	
+  1918	                     if(STATUS_SUCCESS == apiStatus)
+  1919	                     {
+  1920	                        RtlCopyMemory(bufferToUser,
+  1921	                                      transferBuffer,
+  1922	                                      bytesTransferred);
+  1923	
+  1924	                        completeRequestToAboveCode          = TRUE;
+  1925	                        completionStatusForAboveCode        = apiStatus;
+  1926	                     } // end if(STATUS_SUCCESS == apiStatus)
+  1927	                  } // end if(NULL != transferBuffer)
+  1928	                  else
+  1929	                  {
+  1930	                     apiStatus = STATUS_INTERNAL_ERROR;
+  1931	                  }
+  1932	               } // end if(NULL != chatpadReadUrb)
+  1933	               else
+  1934	               {
+  1935	                  apiStatus = STATUS_INTERNAL_ERROR;
+  1936	               }
+  1937	            } // end if(NULL != urbMemory)
+  1938	            else
+  1939	            {
+  1940	               apiStatus = STATUS_INTERNAL_ERROR;
+  1941	            }
+  1942	         } // end if(WdfUsbRequestTypePipeUrb == completionParams->Type)
+  1943	         else
+  1944	         {
+  1945	            apiStatus = STATUS_INTERNAL_ERROR;
+  1946	         }
+  1947	      } // end if(NULL != completionParams)
+  1948	      else
+  1949	      {
+  1950	         ChatpadTrace(("Error, completion parameter pointer is NULL.\n"));
+  1951	         apiStatus = STATUS_INTERNAL_ERROR;
+  1952	      }
+  1953	   } // end if(FALSE == wasRequestCancelled)
+  1954	
+  1955	   // The request reuse code is called even if an error like STATUS_CANCELLED
+  1956	   // or STATUS_INTERNAL_ERROR occurred so that the driver can keep operating.
+  1957	   WDF_REQUEST_REUSE_PARAMS reuseParams;
+  1958	
+  1959	   WDF_REQUEST_REUSE_PARAMS_INIT(
+  1960	     &reuseParams,
+  1961	     WDF_REQUEST_REUSE_NO_FLAGS,
+  1962	     STATUS_SUCCESS);
+  1963	   apiStatus = WdfRequestReuse(
+  1964	     request,
+  1965	     &reuseParams);
+  1966	   if(STATUS_SUCCESS != apiStatus)
+  1967	   {
+  1968	      ChatpadTrace(("WdfRequestReuse failed:  0x%x\n", apiStatus));
+  1969	   }
+  1970	
+  1971	   // Find which request index corresponded to this request, and mark it
+  1972	   // as available once again.
+  1973	
+  1974	   int requestIndex = 0;
+  1975	
+  1976	   // TODO do I need to use synchronization here?
+  1977	   for(requestIndex = 0;
+  1978	       requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS;
+  1979	       requestIndex++)
+  1980	   {
+  1981	      if((NULL != devContext) &&
+  1982	         (request == devContext->chatpadReadRequests[requestIndex]))
+  1983	      {
+  1984	         break;
+  1985	      }
+  1986	   }
+  1987	
+  1988	   if(CHATPAD_MAX_NUM_PENDING_USB_REQUESTS == requestIndex)
+  1989	   {
+  1990	      ChatpadTrace(("Failed to find this request in the chatpad filter driver's chatpad request array.\n"));
+  1991	      apiStatus = STATUS_INTERNAL_ERROR;
+  1992	   }
+  1993	
+  1994	   // Now that the original request is marked available again, complete a
+  1995	   // request back to the above code if needed.  Waiting until the
+  1996	   // previous request is marked available will hopefully prevent any problems
+  1997	   // that could result from requests coming down so quickly that we do not
+  1998	   // have time to mark proxy requests as available.
+  1999	   // TODO should I use a WDFQUEUE to store the proxy requests as well?
+  2000	
+  2001	   if(TRUE == completeRequestToAboveCode)
+  2002	   {
+  2003	      // Completing with the length as the information here seems to work, but I cannot seem to find
+  2004	      // in the API or an example where that is specified as actually always happening for IOCTLs.
+  2005	      // In this case, I am completing with that information for both an URB and an IOCTL request
+  2006	      // from two different queues.
+  2007	      // TODO is this safe?
+  2008	      WdfRequestCompleteWithInformation(requestFromAbove,
+  2009	                                        completionStatusForAboveCode,
+  2010	                                        bytesTransferred);
+  2011	//      ChatpadTrace(("Sent data back up to top-level driver.\n"));
+  2012	   }
+  2013	
+  2014	   // According to the WinDDK toastmon example, one should not resend
+  2015	   // requests here because it can result in recursion if a lower-level
+  2016	   // driver completes the request synchronously.
+  2017	   // UPDATE:  According to Tim Roberts this should be okay, it seems.
+  2018	   if((CHATPAD_MAX_NUM_PENDING_USB_REQUESTS != requestIndex) &&
+  2019	      (FALSE == wasRequestCancelled))
+  2020	   {
+  2021	      // Note that the request is only sent if the original request is not
+  2022	      // cancelled.  Otherwise, the system crashes when the controller is
+  2023	      // unplugged.
+  2024	      SendChatpadReadRequest(devContext, requestIndex);
+  2025	   } // end if(TRUE == completeRequestToAboveCode)
+  2026	
+  2027	//   ChatpadTrace(("Chatpad read completion callback finished, with apiStatus == 0x%x\n", apiStatus));
+  2028	} // end ChatpadReadCompletion
+  2029	
+  2030	EVT_WDF_REQUEST_COMPLETION_ROUTINE ChatpadFilterSubmitURBCompletion;
+  2031	
+  2032	// This function, at least for bulk and interrupt requests, runs at DISPATCH IRQL.
+  2033	VOID
+  2034	ChatpadFilterSubmitURBCompletion(
+  2035	  IN WDFREQUEST                     request,
+  2036	  IN WDFIOTARGET                    target,
+  2037	  IN PWDF_REQUEST_COMPLETION_PARAMS params,
+  2038	  IN WDFCONTEXT                     context)
+  2039	{
+  2040	   PDEVICE_CONTEXT   devContext        = reinterpret_cast<PDEVICE_CONTEXT>(context);
+  2041	   ULONG             ioControlCode;
+  2042	
+  2043	   ASSERT(params);
+  2044	
+  2045	/*ChatpadTrace(("params->Type == 0x%x  ioctl code == 0x%x\n",
+  2046	              params->Type,
+  2047	              params->Parameters.Ioctl.IoControlCode));*/
+  2048	// TODO why are the parameters invalid?  Invalid unless they're explicitly setup somehow by my own driver?
+  2049	//      For now, I am simply making this function ONLY get called for completion on IOCTL_INTERNAL_USB_SUBMIT_URB
+  2050	//      internal IOCTLs, rather than having to figure the parameter stuff out.  I got a BSOD the first time I tried.  :-D
+  2051	/*   if((WdfRequestTypeDeviceControlInternal == params->Type)    &&
+  2052	      (IOCTL_INTERNAL_USB_SUBMIT_URB == params->Parameters.Ioctl.IoControlCode))*/
+  2053	//   ChatpadTrace(("Internal IOCTL completion callback called with IRQL %u\n", KeGetCurrentIrql()));
+  2054	//   ChatpadTrace(("I/O status:  0x%x\n", params->IoStatus.Status));
+  2055	
+  2056	   // Get the URB.
+  2057	   PURB existingURB = static_cast<PURB>(URB_FROM_IRP(WdfRequestWdmGetIrp(request)));
+  2058	
+  2059	   if(NULL != existingURB)
+  2060	   {
+  2061	//      ChatpadTrace(("[completion]  URB function:  %d\n", existingURB->UrbHeader.Function));
+  2062	      if(URB_FUNCTION_CONTROL_TRANSFER == existingURB->UrbHeader.Function)
+  2063	      {
+  2064	         // TODO move this stuff below, seems useless.
+  2065	         // Interesting, get descriptor data comes back as a control transfer.
+  2066	         // TODO do I need a different completion routine?  I will if more than one type of control transfer response
+  2067	         //      needs to be handled.  For now, I am assuming only get config descriptor requests get completion handled
+  2068	         //      through this code.
+  2069	         if(153 == existingURB->UrbControlTransfer.TransferBufferLength)
+  2070	         {
+  2071	            ChatpadTrace(("[completion]  Received config descriptor.\n"));
+  2072	         }
+  2073	         else
+  2074	         {
+  2075	            // This doesn't seem to be a get config descriptor response, so we don't know what it is...
+  2076	            ChatpadTrace(("[completion]  Control transfer:  pipe 0x%x, flags 0x%x, buffer length %lu.\n",
+  2077	                          existingURB->UrbControlTransfer.PipeHandle,
+  2078	                          existingURB->UrbControlTransfer.TransferFlags,
+  2079	                          existingURB->UrbControlTransfer.TransferBufferLength));
+  2080	         }
+  2081	      } // end if(URB_FUNCTION_CONTROL_TRANSFER == existingURB->UrbHeader.Function)
+  2082	      else if(URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER == existingURB->UrbHeader.Function)
+  2083	      {
+  2084	         // TODO do checking against pipe handle?  will it always be constant?
+  2085	/*
+  2086	         ChatpadTrace((
+  2087	           "[completion]  pipe handle 0x%x, %s device, flags 0x%x, buffer length %lu\n",
+  2088	           existingURB->UrbBulkOrInterruptTransfer.PipeHandle,
+  2089	           (existingURB->UrbBulkOrInterruptTransfer.TransferFlags & USBD_TRANSFER_DIRECTION_IN) ? "from" : "to",
+  2090	           existingURB->UrbBulkOrInterruptTransfer.TransferFlags,
+  2091	           existingURB->UrbBulkOrInterruptTransfer.TransferBufferLength));
+  2092	*/
+  2093	         if(NULL != (existingURB->UrbBulkOrInterruptTransfer.TransferBuffer))
+  2094	         {
+  2095	            UCHAR bufferData[80];
+  2096	            RtlFillMemory(bufferData, 0x00, 80 * sizeof(UCHAR));
+  2097	            RtlCopyMemory(bufferData,
+  2098	                          static_cast<unsigned char*>(existingURB->UrbBulkOrInterruptTransfer.TransferBuffer),
+  2099	                          (existingURB->UrbBulkOrInterruptTransfer.TransferBufferLength));
+  2100	/*
+  2101	            ChatpadTrace(("[completion]  %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+  2102	              bufferData[0],
+  2103	              bufferData[1],
+  2104	              bufferData[2],
+  2105	              bufferData[3],
+  2106	              bufferData[4],
+  2107	              bufferData[5],
+  2108	              bufferData[6],
+  2109	              bufferData[7],
+  2110	              bufferData[8],
+  2111	              bufferData[9],
+  2112	              bufferData[10],
+  2113	              bufferData[11],
+  2114	              bufferData[12],
+  2115	              bufferData[13],
+  2116	              bufferData[14],
+  2117	              bufferData[15],
+  2118	              bufferData[16],
+  2119	              bufferData[17],
+  2120	              bufferData[18],
+  2121	              bufferData[19]));
+  2122	*/
+  2123	
+  2124	            // Detect if the 0x01 0x03 0x06 hex sequence was encountered.  On two
+  2125	            // presumably different driver versions, on two different OSes,
+  2126	            // this sequence was detected.  The final sequence on Vista 64
+  2127	            // was 0x05 0x03 0x00, but this did not show up on the 32-bit
+  2128	            // XP machine so I am not using that sequence.
+  2129	            // TODO what does this sequence mean?
+  2130	            // TODO since someone else on Vista 64 had problems with this sequence working, I'm just ignoring it for now
+  2131	            //   and marking the controller as initialized as soon as the configuration is selected.
+  2132	            /*
+  2133	            if((0x01 == bufferData[0]) &&
+  2134	               (0x03 == bufferData[1]) &&
+  2135	               (0x06 == bufferData[2]))
+  2136	            {
+  2137	               ChatpadTrace(("End of Microsoft init detected.  Chatpad init can now begin.\n"));
+  2138	               devContext->msInitFinished = TRUE;
+  2139	               // Turn filtering off until further notice.
+  2140	               devContext->filterMode = FILTER_MODE_UNFILTERED;
+  2141	            }
+  2142	            */
+  2143	         } // end if(NULL != (existingURB->UrbBulkOrInterruptTransfer.TransferBuffer))
+  2144	      } // end if(URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER == existingURB->UrbHeader.Function)
+  2145	      else
+  2146	      {
+  2147	         ChatpadTrace(("Unknown URB function 0x%x.\n", existingURB->UrbHeader.Function));
+  2148	      }
+  2149	   } // end if(NULL != existingURB)
+  2150	   else
+  2151	   {
+  2152	      ChatpadTrace(("[completion] Error, existingURB is NULL.\n"));
+  2153	   }
+  2154	
+  2155	   WdfRequestComplete(request, params->IoStatus.Status);
+  2156	} // end ChatpadFilterSubmitURBCompletion
+  2157	
+  2158	// This is just a wrapper for ExAllocatePoolWithTag, since OACR refuses to stop complaining
+  2159	// about the memory possibly being leaked otherwise, and I do not know if there
+  2160	// is a way to add the __drv_aliasesMem thing without a wrapper function.
+  2161	__drv_aliasesMem
+  2162	PVOID
+  2163	ExAllocatePoolWithTagWrapper(
+  2164	  __in __drv_strictTypeMatch(__drv_typeExpr) POOL_TYPE PoolType,
+  2165	  __in SIZE_T NumberOfBytes,
+  2166	  __in ULONG Tag)
+  2167	{
+  2168	   return ExAllocatePoolWithTag(PoolType, NumberOfBytes, Tag);
+  2169	} // end ExAllocatePoolWithTagWrapper
+  2170	
+  2171	VOID
+  2172	ChatpadFilterInternalIOCTLHandler(
+  2173	  IN WDFQUEUE     queue,
+  2174	  IN WDFREQUEST   request,
+  2175	  IN size_t       outputBufferLength,
+  2176	  IN size_t       inputBufferLength,
+  2177	  IN ULONG        ioControlCode)
+  2178	{
+  2179	   PIRP                       ioctlIRP                = NULL;
+  2180	   PDEVICE_CONTEXT            devContext              = NULL;
+  2181	   NTSTATUS                   apiStatus               = STATUS_SUCCESS;
+  2182	   BOOLEAN                    messageAlreadyHandled   = FALSE;
+  2183	   BOOLEAN                    handleCompletion        = FALSE;
+  2184	   PURB                       existingURB             = NULL;
+  2185	   WDF_USB_DEVICE_SELECT_CONFIG_PARAMS usbDevConfigurationParams;
+  2186	   WDF_REQUEST_SEND_OPTIONS   sendOptions;
+  2187	
+  2188	   //ChatpadTrace(("Internal IOCTL received.\n"));
+  2189	
+  2190	   // Get device context so we know where to forward the request.
+  2191	   devContext = ChatpadFilterGetDeviceContext(WdfIoQueueGetDevice(queue));
+  2192	   // TODO is a failed assertion going to do anything horrible?
+  2193	   ASSERT(IS_DEVICE_CONTEXT(devContext));
+  2194	
+  2195	   if(IOCTL_INTERNAL_USB_SUBMIT_URB == ioControlCode)
+  2196	   {
+  2197	/*
+  2198	      ChatpadTrace((
+  2199	        "ChatpadFilter:  inbuf len %u, outbuf len %u, \n",
+  2200	        inputBufferLength,
+  2201	        outputBufferLength));
+  2202	*/
+  2203	
+  2204	      // Get the URB.
+  2205	      existingURB = static_cast<PURB>(URB_FROM_IRP(WdfRequestWdmGetIrp(request)));
+  2206	
+  2207	      if(NULL != existingURB)
+  2208	      {
+  2209	         if(URB_FUNCTION_SELECT_CONFIGURATION == existingURB->UrbHeader.Function)
+  2210	         {
+  2211	            ChatpadTrace(("ChatpadFilter:  Selecting configuration.\n"));
+  2212	            // TODO:  Does WdfUsbTargetDeviceSelectConfig HAVE to be called from the prepare hardware section,
+  2213	            //        or is that part of the MSDN documentation not strictly true?
+  2214	            // Use the existing URB.  This presumably means the return
+  2215	            // information gets properly stored in the URB where the top-level
+  2216	            // driver can see it.
+  2217	            // TODO some day I could add some trace statements before WdfUsbTargetDeviceSelectConfig
+  2218	            //   and make sure that some of the URB values are 0 beforehand and set afterwards?
+  2219	            WDF_USB_DEVICE_SELECT_CONFIG_PARAMS_INIT_URB(&usbDevConfigurationParams, existingURB);
+  2220	            apiStatus = WdfUsbTargetDeviceSelectConfig(
+  2221	              devContext->usbDevice,
+  2222	              WDF_NO_OBJECT_ATTRIBUTES,
+  2223	              &usbDevConfigurationParams);
+  2224	            if(STATUS_SUCCESS == apiStatus)
+  2225	            {
+  2226	               ChatpadTrace((
+  2227	                 "ChatpadFilter:  Configuration %u selected.\n",
+  2228	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.ConfigurationDescriptor->bConfigurationValue));
+  2229	               ChatpadTrace((
+  2230	                 "hdr %u %u %u 0x%x %lu\n",
+  2231	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Hdr.Length,
+  2232	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Hdr.Function,
+  2233	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Hdr.Status,
+  2234	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Hdr.UsbdDeviceHandle,
+  2235	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Hdr.UsbdFlags));
+  2236	               ChatpadTrace((
+  2237	                 "descriptor 0x%x handle 0x%x #interfaces %u configvalue %u interface 0x%x\n",
+  2238	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.ConfigurationDescriptor,
+  2239	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.ConfigurationHandle,
+  2240	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.ConfigurationDescriptor->bNumInterfaces,
+  2241	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.ConfigurationDescriptor->bConfigurationValue,
+  2242	                 usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface));
+  2243	/*
+  2244	   ChatpadTrace((
+  2245	     "Interface info:  len %u num %u altset %u class %u sub %u prot %u res %u handle 0x%x numpipes %lu\n",
+  2246	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.Length,
+  2247	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.InterfaceNumber,
+  2248	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.AlternateSetting,
+  2249	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.Class,
+  2250	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.SubClass,
+  2251	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.Protocol,
+  2252	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.Reserved,
+  2253	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.InterfaceHandle,
+  2254	     usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.NumberOfPipes));
+  2255	   PUSBD_PIPE_INFORMATION pipeInfo;
+  2256	   for(ULONG i = 0;
+  2257	       i < usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.NumberOfPipes;
+  2258	       i++)
+  2259	   {
+  2260	      pipeInfo = &(usbDevConfigurationParams.Types.Urb.Urb->UrbSelectConfiguration.Interface.Pipes[i]);
+  2261	      ChatpadTrace((
+  2262	        "Pipe:  mps %u addr %u intv %u type 0x%x handle 0x%x mts %lu flags %lu\n",
+  2263	        pipeInfo->MaximumPacketSize,
+  2264	        pipeInfo->EndpointAddress,
+  2265	        pipeInfo->Interval,
+  2266	        pipeInfo->PipeType,
+  2267	        pipeInfo->PipeHandle,
+  2268	        pipeInfo->MaximumTransferSize,
+  2269	        pipeInfo->PipeFlags));
+  2270	   }
+  2271	*/
+  2272	
+  2273	               if((usbDevConfigurationParams.Types.Urb.
+  2274	                     Urb->UrbSelectConfiguration.ConfigurationDescriptor->bNumInterfaces) >
+  2275	                  CHATPAD_DRIVER_MAX_SUPPORTED_NUM_INTERFACES)
+  2276	               {
+  2277	                  ChatpadTrace(("Error, unsupported number of interfaces:  %u\n",
+  2278	                                usbDevConfigurationParams.Types.Urb.Urb->
+  2279	                                  UrbSelectConfiguration.ConfigurationDescriptor->bNumInterfaces));
+  2280	                  apiStatus = STATUS_INTERNAL_ERROR;
+  2281	               }
+  2282	
+  2283	               if(STATUS_SUCCESS == apiStatus)
+  2284	               {
+  2285	                  ULONG_PTR curInterfacePointerOffset = 0;
+  2286	                  WDFUSBINTERFACE curInterface = NULL;
+  2287	
+  2288	                  // Reset the pipe count to zero before enumerating pipes,
+  2289	                  // just in case they have been enumerated before.
+  2290	                  devContext->numPipes = 0;
+  2291	
+  2292	                  // Release all saved interface information, if any, so we can save new information.
+  2293	                  ReleaseCachedInterfaceInformation(devContext);
+  2294	                  for(UCHAR interfaceIndex = 0;
+  2295	                      ((STATUS_SUCCESS == apiStatus) &&
+  2296	                       (interfaceIndex < usbDevConfigurationParams.Types.Urb.Urb->
+  2297	                                           UrbSelectConfiguration.ConfigurationDescriptor->bNumInterfaces));
+  2298	                      interfaceIndex++)
+  2299	                  {
+  2300	                     // Copy the USBD_INTERFACE_INFORMATION information so we
+  2301	                     // can handle URB_FUNCTION_SELECT_INTERFACE later, by
+  2302	                     // simply returning the saved information (since the
+  2303	                     // controller presumably does not need any alternate
+  2304	                     // settings selected).  The data is copied instead of just
+  2305	                     // saving a pointer here, in case the structure from the
+  2306	                     // top-level driver is freed at some point.
+  2307	
+  2308	                     // Allocate enough memory to store the structure.  The tag
+  2309	                     // used is 'Bliz' backwards, and hopefully no one else
+  2310	                     // uses that tag.  :P Note that single quotes are
+  2311	                     // apparently used here.
+  2312	                     PUSBD_INTERFACE_INFORMATION
+  2313	                        originalUsbdInterfaceInformation =
+  2314	                       reinterpret_cast<PUSBD_INTERFACE_INFORMATION>
+  2315	                         (reinterpret_cast<PUCHAR>(&(usbDevConfigurationParams.Types.Urb.Urb->
+  2316	                                                       UrbSelectConfiguration.Interface)) +
+  2317	                          curInterfacePointerOffset);
+  2318	                     if(NULL == originalUsbdInterfaceInformation)
+  2319	                     {
+  2320	                        ChatpadTrace(("Error trying to get original usbd interface information.\n"));
+  2321	                        apiStatus = STATUS_INTERNAL_ERROR;
+  2322	                     }
+  2323	
+  2324	                     if(STATUS_SUCCESS == apiStatus)
+  2325	                     {
+  2326	                        // TODO if possible, figure out the right combination of magic keywords
+  2327	                        // (see http://msdn.microsoft.com/en-us/library/ff549130%28VS.85%29.aspx
+  2328	                        //  and http://flylib.com/books/en/3.141.1.177/1/) to get rid of the OACR
+  2329	                        //  warning about possibly leaking memory.  This memory should be freed
+  2330	                        //  later in a ReleaseCachedInterfaceInformation() call.
+  2331	                        devContext->usbdInterfaceInformation[interfaceIndex] =
+  2332	                          static_cast<PUSBD_INTERFACE_INFORMATION>(
+  2333	                            ExAllocatePoolWithTagWrapper(
+  2334	                              PagedPool,
+  2335	                              originalUsbdInterfaceInformation->Length,
+  2336	                              'zilB'));
+  2337	                        if(NULL == devContext->usbdInterfaceInformation[interfaceIndex])
+  2338	                        {
+  2339	                           ChatpadTrace(("Error allocating memory for interface information.\n"));
+  2340	                           apiStatus = STATUS_INTERNAL_ERROR;
+  2341	                        }
+  2342	                     } // end if(STATUS_SUCCESS == apiStatus)
+  2343	
+  2344	                     if(STATUS_SUCCESS == apiStatus)
+  2345	                     {
+  2346	                        // Note that the pointer is reinterpreted as a PUCHAR so the pointer arithmetic will work properly.
+  2347	                        // TODO will this cause problems on 32- vs. 64-bit systems?
+  2348	                        RtlCopyMemory(
+  2349	                          devContext->usbdInterfaceInformation[interfaceIndex],
+  2350	                          originalUsbdInterfaceInformation,
+  2351	                          originalUsbdInterfaceInformation->Length);
+  2352	
+  2353	                        // Update the pointer offset to get information on the next interface, if any.
+  2354	                        curInterfacePointerOffset += (devContext->usbdInterfaceInformation[interfaceIndex])->Length;
+  2355	
+  2356	                        if(NULL != devContext->usbdInterfaceInformation[interfaceIndex])
+  2357	                        {
+  2358	                           ChatpadTrace(("Interface with index %u, number %u, and %u pipes\n",
+  2359	                                         interfaceIndex,
+  2360	                                         (devContext->usbdInterfaceInformation[interfaceIndex])->InterfaceNumber,
+  2361	                                         (devContext->usbdInterfaceInformation[interfaceIndex])->NumberOfPipes));
+  2362	                        }
+  2363	                        else
+  2364	                        {
+  2365	                           // This should never happen as long as the pointer is dynamically allocated
+  2366	                           // and checked above, but it is left in here anyway in case other code is
+  2367	                           // ever changed, to make this code robust.
+  2368	                           ChatpadTrace(("Error, interface pointer is NULL.\n"));
+  2369	                           apiStatus = STATUS_INTERNAL_ERROR;
+  2370	                        }
+  2371	                     } // end if(STATUS_SUCCESS == apiStatus)
+  2372	
+  2373	                     // Save pointers for all endpoint pipes.
+  2374	                     if(STATUS_SUCCESS == apiStatus)
+  2375	                     {
+  2376	                        curInterface =
+  2377	                          WdfUsbTargetDeviceGetInterface(devContext->usbDevice, interfaceIndex);
+  2378	                        if(NULL == curInterface)
+  2379	                        {
+  2380	                           ChatpadTrace(("WdfUsbTargetDeviceGetInterface failed.\n"));
+  2381	                           apiStatus = STATUS_INTERNAL_ERROR;
+  2382	                        }
+  2383	                     } // end if(STATUS_SUCCESS == apiStatus)
+  2384	
+  2385	                     if(STATUS_SUCCESS == apiStatus)
+  2386	                     {
+  2387	                        BYTE selectedSettingIndex =
+  2388	                          WdfUsbInterfaceGetConfiguredSettingIndex(curInterface);
+  2389	                        BYTE numEndpoints = WdfUsbInterfaceGetNumEndpoints(curInterface, selectedSettingIndex);
+  2390	                        ChatpadTrace(("The interface with index %u has alternate setting %u selected, and %u endpoints.\n",
+  2391	                                      interfaceIndex,
+  2392	                                      selectedSettingIndex,
+  2393	                                      numEndpoints));
+  2394	                        BYTE numConfiguredPipes = WdfUsbInterfaceGetNumConfiguredPipes(curInterface);
+  2395	                        ChatpadTrace(("The interface also has %u pipes configured.\n",
+  2396	                                      numConfiguredPipes));
+  2397	                        if(numEndpoints != numConfiguredPipes)
+  2398	                        {
+  2399	                           ChatpadTrace(("Error, the number of endpoints does not equal the number of configured pipes.\n"));
+  2400	                           apiStatus = STATUS_INTERNAL_ERROR;
+  2401	                        }
+  2402	
+  2403	                        for(UCHAR pipeIndex = 0;
+  2404	                            ((STATUS_SUCCESS == apiStatus) &&
+  2405	                             (pipeIndex < numConfiguredPipes));
+  2406	                            pipeIndex++)
+  2407	                        {
+  2408	                           // Get pipe information.
+  2409	                           WDF_USB_PIPE_INFORMATION pipeInfo;
+  2410	
+  2411	                           WDF_USB_PIPE_INFORMATION_INIT(&pipeInfo);
+  2412	                           WDFUSBPIPE curPipe =
+  2413	                             WdfUsbInterfaceGetConfiguredPipe(curInterface, pipeIndex, &pipeInfo);
+  2414	                           if(NULL != curPipe)
+  2415	                           {
+  2416	                              // Tell the framework that it is okay to read
+  2417	                              // (and write?) less than the maximum packet
+  2418	                              // size.
+  2419	                              WdfUsbTargetPipeSetNoMaximumPacketSizeCheck(curPipe);
+  2420	                              // TODO is it okay to set this for all pipes?
+  2421	                              // Save the WDF pipe information.
+  2422	                              WDF_USB_PIPE_INFORMATION_INIT(&(devContext->wdfUsbPipeInfo[pipeIndex]));
+  2423	                              RtlCopyMemory(
+  2424	                                &(devContext->wdfUsbPipeInfo[pipeIndex]),
+  2425	                                &pipeInfo,
+  2426	                                pipeInfo.Size);
+  2427	                              // Save the WDF pipe handle.
+  2428	                              devContext->wdfUsbPipe[pipeIndex] = curPipe;
+  2429	                              devContext->numPipes++;
+  2430	
+  2431	                              ChatpadTrace(("Pipe endpoint address %u, handle 0x%x",
+  2432	                                            devContext->wdfUsbPipeInfo[pipeIndex].EndpointAddress,
+  2433	                                            devContext->wdfUsbPipe[pipeIndex]));
+  2434	                           }
+  2435	                           else
+  2436	                           {
+  2437	                              ChatpadTrace(("WdfUsbInterfaceGetConfiguredPipe failed.\n"));
+  2438	                              apiStatus = STATUS_INTERNAL_ERROR;
+  2439	                           }
+  2440	                        } // end looping through configured pipes
+  2441	                     } // end if(STATUS_SUCCESS == apiStatus)
+  2442	                  } // end looping through interfaces
+  2443	               } // end if(STATUS_SUCCESS == apiStatus)
+  2444	
+  2445	               // Finish initializing the URB for the write request.
+  2446	
+  2447	               if(STATUS_SUCCESS == apiStatus)
+  2448	               {
+  2449	                  PURB controlsWriteUrb =
+  2450	                    static_cast<PURB>(WdfMemoryGetBuffer(devContext->controlsWriteUrbMemory, NULL));
+  2451	                  // TODO create enums or some other method for indexing interfaces and pipes?
+  2452	                  if((NULL != devContext->usbdInterfaceInformation[0])                       &&
+  2453	                     (NULL != devContext->usbdInterfaceInformation[0]->Pipes[1].PipeHandle))
+  2454	                  {
+  2455	                     controlsWriteUrb->UrbBulkOrInterruptTransfer.PipeHandle =
+  2456	                       devContext->usbdInterfaceInformation[0]->Pipes[1].PipeHandle;
+  2457	                     ChatpadTrace(("For writing controls data, using USBD handle 0x%x\n",
+  2458	                                   controlsWriteUrb->UrbBulkOrInterruptTransfer.PipeHandle));
+  2459	                  }
+  2460	                  else
+  2461	                  {
+  2462	                     ChatpadTrace(("Failed to get controls data interface pointer and pipe handle.\n"));
+  2463	                     apiStatus = STATUS_INTERNAL_ERROR;
+  2464	                  }
+  2465	               } // end if(STATUS_SUCCESS == apiStatus)
+  2466	
+  2467	               // Finish initializing the URBs for read requests.
+  2468	
+  2469	               for(int requestIndex = 0;
+  2470	                   ((STATUS_SUCCESS == apiStatus) &&
+  2471	                    (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  2472	                   requestIndex++)
+  2473	               {
+  2474	                  PURB controlsReadUrb =
+  2475	                    static_cast<PURB>(WdfMemoryGetBuffer(devContext->controlsReadUrbMemory[requestIndex], NULL));
+  2476	                  // TODO create enums or some other method for indexing interfaces and pipes?
+  2477	                  if((NULL != devContext->usbdInterfaceInformation[0])                       &&
+  2478	                     (NULL != devContext->usbdInterfaceInformation[0]->Pipes[0].PipeHandle))
+  2479	                  {
+  2480	                     controlsReadUrb->UrbBulkOrInterruptTransfer.PipeHandle =
+  2481	                       devContext->usbdInterfaceInformation[0]->Pipes[0].PipeHandle;
+  2482	                     ChatpadTrace(("For reading controls data, using USBD handle 0x%x\n",
+  2483	                                   controlsReadUrb->UrbBulkOrInterruptTransfer.PipeHandle));
+  2484	                  }
+  2485	                  else
+  2486	                  {
+  2487	                     ChatpadTrace(("Failed to get controls data interface pointer and pipe handle.\n"));
+  2488	                     apiStatus = STATUS_INTERNAL_ERROR;
+  2489	                  }
+  2490	
+  2491	                  PURB chatpadReadUrb =
+  2492	                    static_cast<PURB>(WdfMemoryGetBuffer(devContext->chatpadReadUrbMemory[requestIndex], NULL));
+  2493	                  // TODO create enums or some other method for indexing interfaces and pipes?
+  2494	                  if((NULL != devContext->usbdInterfaceInformation[2])                       &&
+  2495	                     (NULL != devContext->usbdInterfaceInformation[2]->Pipes[0].PipeHandle))
+  2496	                  {
+  2497	                     chatpadReadUrb->UrbBulkOrInterruptTransfer.PipeHandle =
+  2498	                       devContext->usbdInterfaceInformation[2]->Pipes[0].PipeHandle;
+  2499	                     ChatpadTrace(("For reading chatpad data, using USBD handle 0x%x\n",
+  2500	                                   chatpadReadUrb->UrbBulkOrInterruptTransfer.PipeHandle));
+  2501	                  }
+  2502	                  else
+  2503	                  {
+  2504	                     ChatpadTrace(("Failed to get chatpad data interface pointer and pipe handle.\n"));
+  2505	                     apiStatus = STATUS_INTERNAL_ERROR;
+  2506	                  }
+  2507	               } // end looping through chatpad filter driver request indices
+  2508	
+  2509	               // TODO eventually I might properly detect when the Microsoft driver has finished
+  2510	               //   initializing the controller.  Since these messages seem to vary between
+  2511	               //   systems/hardware, I am just setting it to TRUE for now as soon as
+  2512	               //   the USB device configuration is selected.
+  2513	               devContext->msInitFinished = TRUE;
+  2514	               // Turn filtering off until further notice.
+  2515	               devContext->filterMode = FILTER_MODE_UNFILTERED;
+  2516	
+  2517	               devContext->usbConfigSelected = TRUE;
+  2518	            } // end if(STATUS_SUCCESS == apiStatus)
+  2519	            else
+  2520	            {
+  2521	               ChatpadTrace(("WdfUsbTargetDeviceSelectConfig failed:  0x%x\n", apiStatus));
+  2522	            }
+  2523	            WdfRequestComplete(request, apiStatus);
+  2524	            messageAlreadyHandled = TRUE;
+  2525	         } // end if(URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE == existingURB->UrbHeader.Function)
+  2526	         else if(URB_FUNCTION_SELECT_INTERFACE == existingURB->UrbHeader.Function)
+  2527	         {
+  2528	            UCHAR interfaceNumber = existingURB->UrbSelectInterface.Interface.InterfaceNumber;
+  2529	            UCHAR numInterfaces = WdfUsbTargetDeviceGetNumInterfaces(devContext->usbDevice);
+  2530	            WDFUSBINTERFACE usbInterface = NULL;
+  2531	            UCHAR interfaceIndex = 0;
+  2532	
+  2533	            ChatpadTrace(("ChatpadFilter:  Selecting interface setting for interface number %u.\n", interfaceNumber));
+  2534	
+  2535	            if(TRUE == devContext->usbConfigSelected)
+  2536	            {
+  2537	               // Just in case interface number is ever not the same as
+  2538	               // interface index, I am doing this the annoying way by manually
+  2539	               // searching through the interfaces.
+  2540	               for(interfaceIndex = 0; interfaceIndex < numInterfaces; interfaceIndex++)
+  2541	               {
+  2542	                  if(interfaceNumber == (devContext->usbdInterfaceInformation[interfaceIndex])->InterfaceNumber)
+  2543	                  {
+  2544	                     // IMPORTANT NOTE:  For now, I am not calling
+  2545	                     // WdfUsbInterfaceSelectSetting, since the original
+  2546	                     // WdfUsbTargetDeviceSelectConfig call should use
+  2547	                     // alternate setting 0 for all interfaces by default.
+  2548	                     //
+  2549	                     // If WdfUsbInterfaceSelectSetting is called, and the
+  2550	                     // official XBox 360 controller driver is trying to use
+  2551	                     // a non-zero setting (which it does not, as far as I
+  2552	                     // know), then calling WdfUsbInterfaceSelectSetting
+  2553	                     // might in theory delete or change interface and/or pipe
+  2554	                     // data that has been cached, without filling in the
+  2555	                     // URB to get new handles.  So, right now the filter
+  2556	                     // driver just saves the original interface data and
+  2557	                     // passes it back up.
+  2558	                     //
+  2559	                     // An alternative would be ditching the Wdf API and using
+  2560	                     // annoying lower-level interfaces.  If there is a way to
+  2561	                     // fill in the select setting URB for the return trip
+  2562	                     // properly using Wdf, that would be great, but I do not
+  2563	                     // know one.
+  2564	
+  2565	                     if(NULL != devContext->usbdInterfaceInformation[interfaceIndex])
+  2566	                     {
+  2567	                        // TODO NEXT COMMENT OUT BELOW
+  2568	                        ChatpadTrace(("Found interface to copy with index %u, number %u, and %u pipes\n",
+  2569	                                      interfaceIndex,
+  2570	                                      (devContext->usbdInterfaceInformation[interfaceIndex])->InterfaceNumber,
+  2571	                                      (devContext->usbdInterfaceInformation[interfaceIndex])->NumberOfPipes));
+  2572	                        // Copy saved interface information into the URB.
+  2573	                        RtlCopyMemory(
+  2574	                          &(existingURB->UrbSelectInterface.Interface),
+  2575	                          devContext->usbdInterfaceInformation[interfaceIndex],
+  2576	                          devContext->usbdInterfaceInformation[interfaceIndex]->Length);
+  2577	
+  2578	                        ChatpadTrace((
+  2579	                          "hdr %u %u %u 0x%x %lu\n",
+  2580	                          existingURB->UrbSelectInterface.Hdr.Length,
+  2581	                          existingURB->UrbSelectInterface.Hdr.Function,
+  2582	                          existingURB->UrbSelectInterface.Hdr.Status,
+  2583	                          existingURB->UrbSelectInterface.Hdr.UsbdDeviceHandle,
+  2584	                          existingURB->UrbSelectInterface.Hdr.UsbdFlags));
+  2585	                        ChatpadTrace((
+  2586	                          "handle 0x%x interface 0x%x\n",
+  2587	                          existingURB->UrbSelectInterface.ConfigurationHandle,
+  2588	                          existingURB->UrbSelectInterface.Interface));
+  2589	                        ChatpadTrace((
+  2590	                          "Interface info:  len %u num %u altset %u class %u sub %u\n",
+  2591	                          existingURB->UrbSelectInterface.Interface.Length,
+  2592	                          existingURB->UrbSelectInterface.Interface.InterfaceNumber,
+  2593	                          existingURB->UrbSelectInterface.Interface.AlternateSetting,
+  2594	                          existingURB->UrbSelectInterface.Interface.Class,
+  2595	                          existingURB->UrbSelectInterface.Interface.SubClass));
+  2596	                        ChatpadTrace(("  prot %u res %u handle 0x%x numpipes %lu\n",
+  2597	                          existingURB->UrbSelectInterface.Interface.Protocol,
+  2598	                          existingURB->UrbSelectInterface.Interface.Reserved,
+  2599	                          existingURB->UrbSelectInterface.Interface.InterfaceHandle,
+  2600	                          existingURB->UrbSelectInterface.Interface.NumberOfPipes));
+  2601	                        PUSBD_PIPE_INFORMATION pipeInfo;
+  2602	                        for(ULONG i = 0;
+  2603	                            i < existingURB->
+  2604	                                  UrbSelectInterface.Interface.NumberOfPipes;
+  2605	                            i++)
+  2606	                        {
+  2607	                           pipeInfo = &(existingURB->
+  2608	                                          UrbSelectInterface.Interface.Pipes[i]);
+  2609	                           ChatpadTrace((
+  2610	                             "Pipe:  mps %u addr %u intv %u type 0x%x handle 0x%x mts %lu flags %lu\n",
+  2611	                             pipeInfo->MaximumPacketSize,
+  2612	                             pipeInfo->EndpointAddress,
+  2613	                             pipeInfo->Interval,
+  2614	                             pipeInfo->PipeType,
+  2615	                             pipeInfo->PipeHandle,
+  2616	                             pipeInfo->MaximumTransferSize,
+  2617	                             pipeInfo->PipeFlags));
+  2618	                        }
+  2619	
+  2620	                        // Stop searching since the interface was found.
+  2621	                        break;
+  2622	                     } // end if(NULL != devContext->usbdInterfaceInformation[interfaceIndex])
+  2623	                     else
+  2624	                     {
+  2625	                        ChatpadTrace(("Error, cached interface pointer is NULL.\n"));
+  2626	                        apiStatus = STATUS_INTERNAL_ERROR;
+  2627	                     }
+  2628	                  } // end if interface number matches
+  2629	               } // end for(interfaceIndex = 0; interfaceIndex < numInterfaces; interfaceIndex++)
+  2630	
+  2631	               // Fail if the interface number was not found.
+  2632	               if(interfaceIndex == numInterfaces)
+  2633	               {
+  2634	                  ChatpadTrace(("Error, could not find interface with number %d.\n", interfaceNumber));
+  2635	                  apiStatus = STATUS_INTERNAL_ERROR;
+  2636	               }
+  2637	
+  2638	               // Complete the request, now that the URB has the interface information filled in.
+  2639	               // (If there was a failure or something, apiStatus should not be STATUS_SUCCESS
+  2640	               //  at this point anyway, so completing the request here should not result in
+  2641	               //  a BSOD.)
+  2642	               ChatpadTrace(("Status at end of handling select interface is 0x%x.\n", apiStatus));
+  2643	               WdfRequestComplete(request, apiStatus);
+  2644	               messageAlreadyHandled = TRUE;
+  2645	            } // end if(TRUE == devContext->usbConfigSelected)
+  2646	            else
+  2647	            {
+  2648	               ChatpadTrace(("Error, device not already configured.\n"));
+  2649	               apiStatus = STATUS_INTERNAL_ERROR;
+  2650	            }
+  2651	         } // end if(URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE == existingURB->UrbHeader.Function)
+  2652	// TODO NEXT:  Finish implementing chatpad read functionality in driver.
+  2653	// TODO NEXT:  Implement chatpad read functionality up through userspace.
+  2654	// TODO NEXT:  Implement something like the original chatpad app if possible, with 1f/1e timed loop.
+  2655	// TODO NEXT:  Test automatic controller code detection, to support plain wired 360 controllers, in theory.
+  2656	// TODO NEXT:  Make nice installer package that ideally includes all files for x86, amd64, and ia64,
+  2657	//             for XP, Vista, and Windows 7.
+  2658	// TODO NEXT:  Include an explicit source code license and reference it from all .cpp, .h, etc. files.
+  2659	         else if(URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE == existingURB->UrbHeader.Function)
+  2660	         {
+  2661	            ChatpadTrace((
+  2662	              "ChatpadFilter:  Getting descriptor (type 0x%x) from device.\n",
+  2663	              existingURB->UrbControlDescriptorRequest.DescriptorType));
+  2664	            // Set up the completion handler for this packet.
+  2665	            //handleCompletion = TRUE;
+  2666	         } // end if(URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE == existingURB->UrbHeader.Function)
+  2667	         else if(URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER == existingURB->UrbHeader.Function)
+  2668	         {
+  2669	//ChatpadTrace((".")); // TODO remove if desired, this is just for testing timing in DebugView
+  2670	            if(TRUE == devContext->usbConfigSelected)
+  2671	            {
+  2672	               int numOutstandingProxyRequests = 0;
+  2673	               int requestIndex = 0;
+  2674	
+  2675	               // Count the number of outstanding proxy requests.
+  2676	               for(requestIndex = 0;
+  2677	                   ((STATUS_SUCCESS == apiStatus) &&
+  2678	                    (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  2679	                   requestIndex++)
+  2680	               {
+  2681	                  // TODO do I need to use synchronization here?
+  2682	                  if(TRUE == devContext->controlsReadRequestsInUse[requestIndex])
+  2683	                  {
+  2684	                     numOutstandingProxyRequests++;
+  2685	                  } // if(TRUE == devContext->controlsReadRequestsInUse[requestIndex])
+  2686	               } // end looping through chatpad filter driver request indices
+  2687	
+  2688	               // Only support completion handling if filtering or intercepting controls data,
+  2689	               // or if there are still outstanding proxy controls data read requests.
+  2690	               if((FILTER_MODE_FILTERED      == devContext->filterMode)    ||
+  2691	                  (FILTER_MODE_INTERCEPTED   == devContext->filterMode)    ||
+  2692	                  (numOutstandingProxyRequests > 0))
+  2693	               {
+  2694	                  if(existingURB->UrbBulkOrInterruptTransfer.PipeHandle ==
+  2695	                     devContext->usbdInterfaceInformation[0]->Pipes[0].PipeHandle)
+  2696	                  {
+  2697	                     // We park driver-provided controls data read requests in a
+  2698	                     // manual queue so that we can complete them later.  This
+  2699	                     // apparently lets the framework automatically handle
+  2700	                     // cancellation for us, so the driver should not freeze when
+  2701	                     // it is upgraded or the computer shuts down.
+  2702	
+  2703	                     // NOTE:  Apparently we do not need to format the request here to forward it to the queue.
+  2704	                     // TODO research why that is the case?
+  2705	                     apiStatus = WdfRequestForwardToIoQueue(request, devContext->controlsParkedDriverReadRequestQueue);
+  2706	                     if(STATUS_SUCCESS != apiStatus)
+  2707	                     {
+  2708	                        ChatpadTrace(("Failed to forward request:  0x%x\n", apiStatus));
+  2709	                        apiStatus = STATUS_INTERNAL_ERROR;
+  2710	                     }
+  2711	
+  2712	                     // Initialize and send a read request to the controls data endpoint.
+  2713	                     if((FILTER_MODE_FILTERED      == devContext->filterMode)    ||
+  2714	                        (FILTER_MODE_INTERCEPTED   == devContext->filterMode))
+  2715	                     {
+  2716	                        for(requestIndex = 0;
+  2717	                            ((STATUS_SUCCESS == apiStatus) &&
+  2718	                             (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  2719	                            requestIndex++)
+  2720	                        {
+  2721	                           // TODO do I need to use synchronization here?
+  2722	                           if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  2723	                           {
+  2724	                              devContext->controlsReadRequestsInUse[requestIndex] = TRUE;
+  2725	                              apiStatus = SendControlsReadRequest(devContext, requestIndex);
+  2726	                              break;
+  2727	                           } // if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  2728	                        } // end looping through chatpad filter driver request indices
+  2729	                     } // end if filtering or intercepting controls data
+  2730	
+  2731	                     // For now, I am always treating the message as handled even
+  2732	                     // if I do not have new read requests to send, since there
+  2733	                     // may already be pending read requests.
+  2734	                     // TODO could this ever cause problems?
+  2735	                     messageAlreadyHandled = TRUE;
+  2736	   /*
+  2737	                     if(requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS)
+  2738	                     {
+  2739	                        messageAlreadyHandled = TRUE;
+  2740	                     }
+  2741	                     else
+  2742	                     {
+  2743	                        ChatpadTrace(("Error, failed to find an available proxy request to send.\n"));
+  2744	                        apiStatus = STATUS_INTERNAL_ERROR;
+  2745	                     }
+  2746	   */
+  2747	                  } // end if this is a read request to the controls data pipe
+  2748	                  else
+  2749	                  {
+  2750	   /*
+  2751	                     ChatpadTrace((
+  2752	                       "ChatpadFilter:  pipe handle 0x%x, %s device, buffer length %lu\n",
+  2753	                       existingURB->UrbBulkOrInterruptTransfer.PipeHandle,
+  2754	                       (existingURB->UrbBulkOrInterruptTransfer.TransferFlags & USBD_TRANSFER_DIRECTION_IN) ? "from" : "to",
+  2755	                       existingURB->UrbBulkOrInterruptTransfer.TransferBufferLength));
+  2756	   */
+  2757	                     if(NULL != (existingURB->UrbBulkOrInterruptTransfer.TransferBuffer))
+  2758	                     {
+  2759	                        // Set up the completion handler for this packet.
+  2760	                        handleCompletion = TRUE;
+  2761	
+  2762	                        UCHAR bufferData[80];
+  2763	                        RtlFillMemory(bufferData, 0x00, 80 * sizeof(UCHAR));
+  2764	                        RtlCopyMemory(bufferData,
+  2765	                                      static_cast<unsigned char*>(existingURB->UrbBulkOrInterruptTransfer.TransferBuffer),
+  2766	                                      (existingURB->UrbBulkOrInterruptTransfer.TransferBufferLength));
+  2767	   /*
+  2768	                        ChatpadTrace(("%02x %02x %02x %02x %02x %02x %02x %02x ...\n",
+  2769	                                     bufferData[0],
+  2770	                                     bufferData[1],
+  2771	                                     bufferData[2],
+  2772	                                     bufferData[3],
+  2773	                                     bufferData[4],
+  2774	                                     bufferData[5],
+  2775	                                     bufferData[6],
+  2776	                                     bufferData[7]));
+  2777	   */
+  2778	                     }
+  2779	                  } // end if this is not a read request to the controls data pipe
+  2780	               } // end if filtering or intercepting controls data, or if there are
+  2781	                 // outstanding proxy controls data read requests
+  2782	            } // end if(TRUE == devContext->usbConfigSelected)
+  2783	            else
+  2784	            {
+  2785	               ChatpadTrace(("Error, received a bulk or interrupt transfer but the device is not yet configured.\n"));
+  2786	               apiStatus = STATUS_INTERNAL_ERROR;
+  2787	            }
+  2788	         } // end if(URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER == existingURB->UrbHeader.Function)
+  2789	         else if(URB_FUNCTION_CONTROL_TRANSFER == existingURB->UrbHeader.Function)
+  2790	         {
+  2791	            ChatpadTrace(("Control transfer detected.\n"));
+  2792	            // TODO print out details on control transfers for informational purposes?
+  2793	         }
+  2794	         else
+  2795	         {
+  2796	            ChatpadTrace(("Unknown URB function 0x%x.\n", existingURB->UrbHeader.Function));
+  2797	         }
+  2798	      } // end if(NULL != existingURB)
+  2799	   } // end if(IOCTL_INTERNAL_USB_SUBMIT_URB == ioControlCode)
+  2800	   else
+  2801	   {
+  2802	      ChatpadTrace(("Unknown control code 0x%x.\n", ioControlCode));
+  2803	   }
+  2804	
+  2805	   if(!messageAlreadyHandled)
+  2806	   {
+  2807	      // Forward the request unmodified.
+  2808	      WdfRequestFormatRequestUsingCurrentType(request);
+  2809	
+  2810	      if(!handleCompletion)
+  2811	      {
+  2812	         WDF_REQUEST_SEND_OPTIONS_INIT(
+  2813	           &sendOptions,
+  2814	           WDF_REQUEST_SEND_OPTION_SEND_AND_FORGET);
+  2815	
+  2816	         // Try to forward the request.
+  2817	         if(!WdfRequestSend(request,
+  2818	                            devContext->targetForRequests,
+  2819	                            &sendOptions))
+  2820	         {
+  2821	            apiStatus = WdfRequestGetStatus(request);
+  2822	            ChatpadTrace(("WdfRequestSend failed:  0x%x\n", apiStatus));
+  2823	            // Just complete the request ourselves since something went horribly wrong.
+  2824	            WdfRequestComplete(request, apiStatus);
+  2825	         }
+  2826	      } // end if not handling completion tracking
+  2827	      else
+  2828	      {
+  2829	         if(NULL != existingURB)
+  2830	         {
+  2831	            // Set up completion routine.
+  2832	            WdfRequestSetCompletionRoutine(
+  2833	              request,
+  2834	              ChatpadFilterSubmitURBCompletion,
+  2835	              devContext);
+  2836	            // Try to forward the request.
+  2837	            if(!WdfRequestSend(request,
+  2838	                               devContext->targetForRequests,
+  2839	                               WDF_NO_SEND_OPTIONS))
+  2840	            {
+  2841	               apiStatus = WdfRequestGetStatus(request);
+  2842	               ChatpadTrace(("WdfRequestSend failed:  0x%x\n", apiStatus));
+  2843	               WdfRequestComplete(request, apiStatus);
+  2844	            }
+  2845	         }
+  2846	         else
+  2847	         {
+  2848	            ChatpadTrace(("Error, non-URB internal IOCTLs not supported for completion tracking.\n"));
+  2849	         }
+  2850	      } // end if handling completion tracking
+  2851	   } // end if(!messageAlreadyHandled)
+  2852	
+  2853	   return;
+  2854	} // end ChatpadFilterInternalIOCTLHandler
+  2855	
+  2856	// This function runs at PASSIVE IRQL.
+  2857	VOID
+  2858	ChatpadFilterIOCTLHandler(
+  2859	  IN WDFQUEUE     queue,
+  2860	  IN WDFREQUEST   request,
+  2861	  IN size_t       outputBufferLength,
+  2862	  IN size_t       inputBufferLength,
+  2863	  IN ULONG        ioControlCode)
+  2864	{
+  2865	   PIRP                       ioctlIRP                            = NULL;
+  2866	   ULONG                      numDriverInstances                  = 0;
+  2867	   // Device context for a particular filter driver instance.
+  2868	   PDEVICE_CONTEXT            devContext                          = NULL;
+  2869	   NTSTATUS                   apiStatus                           = STATUS_SUCCESS;
+  2870	   PVOID                      dataFromUserAsVoid                  = NULL;
+  2871	   PUCHAR                     dataFromUser                        = NULL;
+  2872	   PVOID                      dataFromDeviceBuffer                = NULL;
+  2873	   // The following pointer can point at either a receive buffer or a send buffer.
+  2874	   PVOID                      controlTransferExtraBufferPointer   = NULL;
+  2875	   ULONG                      controlTransferExtraBufferLength    = 0;
+  2876	   ULONG                      bytesTransferred                    = 0;
+  2877	   BOOLEAN                    messageAlreadyHandled               = FALSE;
+  2878	   BOOLEAN                    immediatelyFailRequest              = FALSE;
+  2879	
+  2880	//   ChatpadTrace(("The IRQL in the filter IOCTL handler is %u.\n", KeGetCurrentIrql()));
+  2881	
+  2882	   WdfWaitLockAcquire(chatpadDeviceCollectionLock, NULL);
+  2883	
+  2884	   if(TRUE == chatpadControlDeviceAvailable)
+  2885	   {
+  2886	      // Get the number of filter driver instances.
+  2887	      numDriverInstances = WdfCollectionGetCount(chatpadDeviceCollection);
+  2888	      // Get device context.
+  2889	      if(numDriverInstances >= 1)
+  2890	      {
+  2891	         devContext = ChatpadFilterGetDeviceContext(WdfCollectionGetItem(chatpadDeviceCollection, 0));
+  2892	         // TODO is a failed assertion going to do anything horrible in a kernel driver?
+  2893	         ASSERT(IS_DEVICE_CONTEXT(devContext));
+  2894	      }
+  2895	   }
+  2896	   else
+  2897	   {
+  2898	      // If there is no control device available, then we want to return immediately to avoid
+  2899	      // crashing.  This situation can happen if a user program has the driver open
+  2900	      // and the device is suddenly unplugged.
+  2901	      immediatelyFailRequest = TRUE;
+  2902	   }
+  2903	
+  2904	   WdfWaitLockRelease(chatpadDeviceCollectionLock);
+  2905	
+  2906	   if(TRUE == immediatelyFailRequest)
+  2907	   {
+  2908	      ChatpadTrace(("Ignoring control device IOCTL since the device is unavailable.\n"));
+  2909	      WdfRequestCompleteWithInformation(request, STATUS_INTERNAL_ERROR, 0);
+  2910	      return;
+  2911	   }
+  2912	
+  2913	   if(FALSE == devContext->usbConfigSelected)
+  2914	   {
+  2915	      ChatpadTrace(("IOCTL received for filter driver, but the USB device is not yet configured.\n"));
+  2916	      apiStatus = STATUS_INTERNAL_ERROR;
+  2917	   }
+  2918	   else if(IOCTL_CHATPAD_IS_MS_INIT_DONE == ioControlCode)
+  2919	   {
+  2920	      if(FALSE == devContext->msInitFinished)
+  2921	      {
+  2922	         ChatpadTrace(("Error, Microsoft initialization may not have finished yet.\n"));
+  2923	         apiStatus = STATUS_INTERNAL_ERROR;
+  2924	      }
+  2925	      else
+  2926	      {
+  2927	         ChatpadTrace(("Microsoft initialization seems to be finished.\n"));
+  2928	      }
+  2929	   } // end if(IOCTL_CHATPAD_IS_MS_INIT_DONE == ioControlCode)
+  2930	   else if(FALSE == devContext->msInitFinished)
+  2931	   {
+  2932	      ChatpadTrace(("IOCTL received for filter driver, but Microsoft initialization does not seem to be finished yet.\n"));
+  2933	      apiStatus = STATUS_INTERNAL_ERROR;
+  2934	   }
+  2935	   else if(IOCTL_CHATPAD_SEND_CONTROL_TRANSFER == ioControlCode)
+  2936	   {
+  2937	      // Make sure the user provided us with enough data.
+  2938	      // We require at least 9 bytes.  (TODO make that a symbolic constant)
+  2939	      if(inputBufferLength >= 9)
+  2940	      {
+  2941	//         ChatpadTrace(("Input buffer length is %u.\n", inputBufferLength));
+  2942	      }
+  2943	      else
+  2944	      {
+  2945	         ChatpadTrace(("Error, input buffer length is only %u.\n", inputBufferLength));
+  2946	         apiStatus = STATUS_INTERNAL_ERROR;
+  2947	      }
+  2948	
+  2949	      // Get output buffer pointer (to return data back from the device), if a buffer is provided.
+  2950	      if((STATUS_SUCCESS == apiStatus) &&
+  2951	         (outputBufferLength > 0))
+  2952	      {
+  2953	         // Make sure the user provided us with a buffer that is large enough
+  2954	         // for a reasonably large return message.  We require at least 32
+  2955	         // bytes since the 360 controller should not return more than that
+  2956	         // amount.
+  2957	         // TODO Make the 32 a symbolic constant.
+  2958	         // TODO Research the behavior if a device returns more data than is
+  2959	         //   available in a buffer?  Would an error simply be returned?
+  2960	         if(outputBufferLength >= 32)
+  2961	         {
+  2962	            ChatpadTrace(("Output buffer length is %u.\n", outputBufferLength));
+  2963	         }
+  2964	         else
+  2965	         {
+  2966	            ChatpadTrace(("Error, output buffer length is only %u.\n", outputBufferLength));
+  2967	            apiStatus = STATUS_INTERNAL_ERROR;
+  2968	         }
+  2969	
+  2970	         if(STATUS_SUCCESS == apiStatus)
+  2971	         {
+  2972	            apiStatus = WdfRequestRetrieveOutputBuffer(request, outputBufferLength, &dataFromDeviceBuffer, NULL);
+  2973	            if((STATUS_SUCCESS != apiStatus) || (NULL == dataFromDeviceBuffer))
+  2974	            {
+  2975	               ChatpadTrace(("WdfRequestRetrieveOutputBuffer failed:  0x%x\n", apiStatus));
+  2976	            }
+  2977	         }
+  2978	      }
+  2979	
+  2980	      if(STATUS_SUCCESS == apiStatus)
+  2981	      {
+  2982	         // Get input buffer data.
+  2983	         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+  2984	         // This ugly cast is probably avoidable, but it works for now.
+  2985	         dataFromUser = static_cast<PUCHAR>(dataFromUserAsVoid);
+  2986	         if((STATUS_SUCCESS != apiStatus) || (NULL == dataFromUser))
+  2987	         {
+  2988	            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+  2989	         }
+  2990	      }
+  2991	
+  2992	      if(STATUS_SUCCESS == apiStatus)
+  2993	      {
+  2994	/*
+  2995	         ChatpadTrace(("In theory, we should send a control transfer to interface %u.\n", dataFromUser[0]));
+  2996	         ChatpadTrace(("Raw data to send:  0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
+  2997	                       dataFromUser[1],
+  2998	                       dataFromUser[2],
+  2999	                       dataFromUser[3],
+  3000	                       dataFromUser[4],
+  3001	                       dataFromUser[5],
+  3002	                       dataFromUser[6],
+  3003	                       dataFromUser[7],
+  3004	                       dataFromUser[8]));
+  3005	*/
+  3006	
+  3007	         // TODO eventually print out serial numbers, and/or use them to identify the
+  3008	         //      proper device?  For now, we always default to the first one.
+  3009	
+  3010	         // TODO is it safe to do something outside the lock here?
+  3011	
+  3012	//         ChatpadTrace(("Sending control transfer synchronously to interface index 0.\n"));
+  3013	
+  3014	         // Actually send the control transfer.
+  3015	         WDF_USB_CONTROL_SETUP_PACKET setupPacket;
+  3016	         // Copy starting at the byte past the interface number.
+  3017	         RtlCopyMemory(setupPacket.Generic.Bytes, &(dataFromUser[1]), 8);
+  3018	         if(0x80 == (0x80 & dataFromUser[1]))
+  3019	         {
+  3020	            // In this case, we should receive data if any is available.
+  3021	            if(outputBufferLength > 0)
+  3022	            {
+  3023	               controlTransferExtraBufferPointer = dataFromDeviceBuffer;
+  3024	               controlTransferExtraBufferLength = outputBufferLength;
+  3025	            }
+  3026	         }
+  3027	         else
+  3028	         {
+  3029	            // In this case, we should send data if any is available.
+  3030	            if(inputBufferLength > 9)
+  3031	            {
+  3032	               controlTransferExtraBufferPointer = &(dataFromUser[9]);
+  3033	               controlTransferExtraBufferLength = inputBufferLength - 9;
+  3034	            }
+  3035	         }
+  3036	         // Note that we can just use a local memory structure since the
+  3037	         // control transfer is sent synchronously.
+  3038	         WDF_MEMORY_DESCRIPTOR memoryDescriptor;
+  3039	         WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(
+  3040	           &memoryDescriptor,
+  3041	           controlTransferExtraBufferPointer,
+  3042	           controlTransferExtraBufferLength);
+  3043	
+  3044	         WDF_REQUEST_SEND_OPTIONS sendOptions;
+  3045	
+  3046	         // Set up a timeout.
+  3047	         WDF_REQUEST_SEND_OPTIONS_INIT(
+  3048	           &sendOptions,
+  3049	           WDF_REQUEST_SEND_OPTION_TIMEOUT);
+  3050	         sendOptions.Timeout = WDF_REL_TIMEOUT_IN_SEC(CHATPAD_DRIVER_SYNCHRONOUS_REQUEST_TIMEOUT_LENGTH);
+  3051	         // TODO should I create the control transfer request myself, so that I can call
+  3052	         //   WdfRequestAllocateTimer()?  Hopefully there is not really a need for that.
+  3053	
+  3054	         // Even without specifying a specific interface, this just seems to work.  Yay.
+  3055	         apiStatus = WdfUsbTargetDeviceSendControlTransferSynchronously(
+  3056	           devContext->usbDevice,
+  3057	           WDF_NO_HANDLE,
+  3058	           &sendOptions,
+  3059	           &setupPacket,
+  3060	           &memoryDescriptor,
+  3061	           &bytesTransferred);
+  3062	         if(!NT_SUCCESS(apiStatus))
+  3063	         {
+  3064	            ChatpadTrace(("Control transfer failed:  0x%x\n", apiStatus));
+  3065	            ChatpadTrace(("(buf 0x%x  buflen %lu  numbytes %lu)\n",
+  3066	                          controlTransferExtraBufferPointer,
+  3067	                          controlTransferExtraBufferLength,
+  3068	                          bytesTransferred));
+  3069	         }
+  3070	         else
+  3071	         {
+  3072	//            ChatpadTrace(("Control transfer succeeded with %lu additional bytes transferred.\n",
+  3073	//                          bytesTransferred));
+  3074	         }
+  3075	      } // end if(STATUS_SUCCESS == apiStatus)
+  3076	   } // end else if(IOCTL_CHATPAD_SEND_CONTROL_TRANSFER == ioControlCode)
+  3077	   else if(IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT == ioControlCode)
+  3078	   {
+  3079	      if(inputBufferLength > 0)
+  3080	      {
+  3081	//         ChatpadTrace(("Input buffer length is %u.\n", inputBufferLength));
+  3082	      }
+  3083	      else
+  3084	      {
+  3085	         ChatpadTrace(("Error, input buffer length is %u.\n", inputBufferLength));
+  3086	         apiStatus = STATUS_INTERNAL_ERROR;
+  3087	      }
+  3088	
+  3089	      if(STATUS_SUCCESS == apiStatus)
+  3090	      {
+  3091	         // Get input buffer data.
+  3092	         apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+  3093	         // This ugly cast is probably avoidable, but it works for now.
+  3094	         dataFromUser = static_cast<PUCHAR>(dataFromUserAsVoid);
+  3095	         if((STATUS_SUCCESS != apiStatus) || (NULL == dataFromUser))
+  3096	         {
+  3097	            ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+  3098	         }
+  3099	      }
+  3100	
+  3101	      if(STATUS_SUCCESS == apiStatus)
+  3102	      {
+  3103	         ChatpadTrace(("Writing data synchronously to controls endpoint.\n"));
+  3104	
+  3105	         apiStatus = SendControlsWriteRequest(devContext, dataFromUser, inputBufferLength, &bytesTransferred);
+  3106	      } // end if(STATUS_SUCCESS == apiStatus)
+  3107	   } // end else if(IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT == ioControlCode)
+  3108	   else if(IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT == ioControlCode)
+  3109	   {
+  3110	      // Note that if controls data is not currently being intercepted, this
+  3111	      // request will go into a queue but simply sit there forever until
+  3112	      // interception mode becomes active or the driver is shut down.
+  3113	
+  3114	      // We park user-provided controls data read requests in a manual queue so
+  3115	      // that we can complete them later.  This apparently lets the framework
+  3116	      // automatically handle cancellation for us, so the driver should not
+  3117	      // freeze when it is upgraded or the computer shuts down.
+  3118	
+  3119	      // NOTE:  Apparently we do not need to format the request here to forward it to the queue.
+  3120	      // TODO research why that is the case?
+  3121	      apiStatus = WdfRequestForwardToIoQueue(request, devContext->controlsParkedUserReadRequestQueue);
+  3122	      if(STATUS_SUCCESS == apiStatus)
+  3123	      {
+  3124	//         ChatpadTrace(("Forwarded user-provided controls endpoint read request to a waiting queue.\n"));
+  3125	      }
+  3126	      else
+  3127	      {
+  3128	         ChatpadTrace(("Failed to forward request:  0x%x\n", apiStatus));
+  3129	         apiStatus = STATUS_INTERNAL_ERROR;
+  3130	      }
+  3131	
+  3132	      int requestIndex = 0;
+  3133	
+  3134	      // Initialize and send a read request to the controls data endpoint.
+  3135	      for(requestIndex = 0;
+  3136	          ((STATUS_SUCCESS == apiStatus) &&
+  3137	           (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  3138	          requestIndex++)
+  3139	      {
+  3140	         // TODO do I need to use synchronization here?
+  3141	         if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  3142	         {
+  3143	            devContext->controlsReadRequestsInUse[requestIndex] = TRUE;
+  3144	            apiStatus = SendControlsReadRequest(devContext, requestIndex);
+  3145	            break;
+  3146	         } // if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  3147	      } // end looping through chatpad filter driver request indices
+  3148	
+  3149	      // This makes the request NOT be completed in this function.  If it was,
+  3150	      // then when the device is removed (or perhaps when data comes through)
+  3151	      // the request would be completed for a second time causing a system
+  3152	      // crash.  The request should only be completed when data becomes
+  3153	      // available or when it is cancelled.
+  3154	      messageAlreadyHandled = TRUE;
+  3155	
+  3156	      // For now, I am always treating the message as handled even
+  3157	      // if I do not have new read requests to send, since there
+  3158	      // may already be pending read requests.
+  3159	      // TODO could this practice ever cause problems?
+  3160	   } // end else if(IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT == ioControlCode)
+  3161	   else if(IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT == ioControlCode)
+  3162	   {
+  3163	      // We park user-provided chatpad data read requests in a manual queue so
+  3164	      // that we can complete them later.  This apparently lets the framework
+  3165	      // automatically handle cancellation for us, so the driver should not
+  3166	      // freeze when it is upgraded or the computer shuts down.
+  3167	
+  3168	      // NOTE:  Apparently we do not need to format the request here to forward it to the queue.
+  3169	      // TODO research why that is the case?
+  3170	      apiStatus = WdfRequestForwardToIoQueue(request, devContext->chatpadParkedUserReadRequestQueue);
+  3171	      if(STATUS_SUCCESS == apiStatus)
+  3172	      {
+  3173	//         ChatpadTrace(("Forwarded user-provided chatpad endpoint read request to a waiting queue.\n"));
+  3174	      }
+  3175	      else
+  3176	      {
+  3177	         ChatpadTrace(("Failed to forward request:  0x%x\n", apiStatus));
+  3178	         apiStatus = STATUS_INTERNAL_ERROR;
+  3179	      }
+  3180	
+  3181	      int requestIndex = 0;
+  3182	
+  3183	      // Initialize and send a read request to the chatpad data endpoint.
+  3184	      for(requestIndex = 0;
+  3185	          ((STATUS_SUCCESS == apiStatus) &&
+  3186	           (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  3187	          requestIndex++)
+  3188	      {
+  3189	         // TODO do I need to use synchronization here?
+  3190	         if(FALSE == devContext->chatpadReadRequestsInUse[requestIndex])
+  3191	         {
+  3192	            devContext->chatpadReadRequestsInUse[requestIndex] = TRUE;
+  3193	            apiStatus = SendChatpadReadRequest(devContext, requestIndex);
+  3194	            break;
+  3195	         } // if(FALSE == devContext->chatpadReadRequestsInUse[requestIndex])
+  3196	      } // end looping through chatpad filter driver request indices
+  3197	
+  3198	      // This makes the request NOT be completed in this function.  If it was,
+  3199	      // then when the device is removed (or perhaps when data comes through)
+  3200	      // the request would be completed for a second time causing a system
+  3201	      // crash.  The request should only be completed when data becomes
+  3202	      // available or when it is cancelled.
+  3203	      messageAlreadyHandled = TRUE;
+  3204	
+  3205	      // For now, I am always treating the message as handled even
+  3206	      // if I do not have new read requests to send, since there
+  3207	      // may already be pending read requests.
+  3208	      // TODO could this practice ever cause problems?
+  3209	   } // end else if(IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT == ioControlCode)
+  3210	   else if(IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS == ioControlCode)
+  3211	   {
+  3212	ChatpadTrace(("TODO NEXT implement setting controls mappings.\n"));
+  3213	   } // end else if(IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS == ioControlCode)
+  3214	   else if(IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE == ioControlCode)
+  3215	   {
+  3216	      // TODO add constant for how long the buffer should be
+  3217	      if(inputBufferLength != 1)
+  3218	      {
+  3219	         ChatpadTrace(("Error, set controls filter mode input buffer length is %u.\n", inputBufferLength));
+  3220	         apiStatus = STATUS_INTERNAL_ERROR;
+  3221	      }
+  3222	
+  3223	      // Get input buffer data.
+  3224	      apiStatus = WdfRequestRetrieveInputBuffer(request, inputBufferLength, &dataFromUserAsVoid, NULL);
+  3225	      // This ugly cast is probably avoidable, but it works for now.
+  3226	      dataFromUser = static_cast<PUCHAR>(dataFromUserAsVoid);
+  3227	      if((STATUS_SUCCESS != apiStatus) || (NULL == dataFromUser))
+  3228	      {
+  3229	         ChatpadTrace(("WdfRequestRetrieveInputBuffer failed:  0x%x\n", apiStatus));
+  3230	      }
+  3231	
+  3232	      if((FILTER_MODE_UNFILTERED    == dataFromUser[0])  ||
+  3233	         (FILTER_MODE_FILTERED      == dataFromUser[0])  ||
+  3234	         (FILTER_MODE_INTERCEPTED   == dataFromUser[0]))
+  3235	      {
+  3236	         devContext->filterMode = dataFromUser[0];
+  3237	         ChatpadTrace(("Changed filter mode to %u.\n", devContext->filterMode));
+  3238	
+  3239	         if(FILTER_MODE_INTERCEPTED != devContext->filterMode)
+  3240	         {
+  3241	            // If any available controls read requests are not already pending,
+  3242	            // then send them.  This is done because the top-level driver
+  3243	            // should always have read requests pending, so we can just
+  3244	            // start completing them as soon as we get data.
+  3245	            for(int requestIndex = 0;
+  3246	                ((STATUS_SUCCESS == apiStatus) &&
+  3247	                 (requestIndex < CHATPAD_MAX_NUM_PENDING_USB_REQUESTS));
+  3248	                requestIndex++)
+  3249	            {
+  3250	               // TODO do I need synchronization here?
+  3251	               if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  3252	               {
+  3253	                  devContext->controlsReadRequestsInUse[requestIndex] = TRUE;
+  3254	                  apiStatus = SendControlsReadRequest(devContext, requestIndex);
+  3255	               } // if(FALSE == devContext->controlsReadRequestsInUse[requestIndex])
+  3256	            } // end looping through chatpad filter driver request indices
+  3257	         } // end if(FILTER_MODE_INTERCEPTED != devContext->filterMode)
+  3258	      } // end if new filter mode is valid
+  3259	      else
+  3260	      {
+  3261	         ChatpadTrace(("Error, invalid filter mode %u.\n", dataFromUser[0]));
+  3262	         apiStatus = STATUS_INTERNAL_ERROR;
+  3263	      } // end handling case where new filter mode is not valid
+  3264	   } // end else if(IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE == ioControlCode)
+  3265	   else
+  3266	   {
+  3267	      ChatpadTrace(("Unknown ioctl control code 0x%x.\n", ioControlCode));
+  3268	      // TODO does this status make the driver/device die, or just return an error
+  3269	      //   to DeviceIoControl?
+  3270	      apiStatus = STATUS_INTERNAL_ERROR;
+  3271	   }
+  3272	
+  3273	   if(FALSE == messageAlreadyHandled)
+  3274	   {
+  3275	      // Completing with the length as the information here seems to work, but I cannot seem to find
+  3276	      // in the API or an example where that is specified as actually always happening for IOCTLs.
+  3277	      // TODO find that information at some point?
+  3278	      WdfRequestCompleteWithInformation(request, apiStatus, bytesTransferred);
+  3279	   }
+  3280	
+  3281	   return;
+  3282	} // end ChatpadFilterIOCTLHandler
+  3283	

@@ -1,0 +1,1302 @@
+     1	//
+     2	// Chatpad utility code that works with a KMDF USB filter driver, by
+     3	//   GAFBlizzard A.K.A. Blizzard A.K.A. AgentElrond, copyright 2010.
+     4	// This particular file contains code to read data from a configuration
+     5	// file into data structures.
+     6	//
+     7	// This code is released under the MIT license.  See LICENSE.TXT for details.
+     8	//
+     9	
+    10	
+    11	//***
+    12	// Include files
+    13	//***
+    14	
+    15	#include <stdio.h>
+    16	#include <stdlib.h>
+    17	#include <string.h>
+    18	#include "chatpad_config.h"
+    19	
+    20	
+    21	//***
+    22	// Global variables
+    23	//***
+    24	
+    25	// Table that matches config file mapping-related strings to their corresponding numerical constants.
+    26	//
+    27	// IMPORTANT NOTE:  The string values below (corresponding to pString) must not be NULL.
+    28	//
+    29	// IMPORTANT NOTE:  If the number of strings in this string table is changed,
+    30	// then uNumConfigStringTableStrings must be updated to match.
+    31	ChatpadDriverConfigStringMapping configStringTable[] =
+    32	{
+    33	   // Strings corresponding to chatpad keys.
+    34	   //
+    35	   // String count for this section:  47
+    36	   { "CHATPAD_KEY_1",                  CHATPAD_KEY_1,          CHATPAD_KEY_STRING },
+    37	   { "CHATPAD_KEY_2",                  CHATPAD_KEY_2,          CHATPAD_KEY_STRING },
+    38	   { "CHATPAD_KEY_3",                  CHATPAD_KEY_3,          CHATPAD_KEY_STRING },
+    39	   { "CHATPAD_KEY_4",                  CHATPAD_KEY_4,          CHATPAD_KEY_STRING },
+    40	   { "CHATPAD_KEY_5",                  CHATPAD_KEY_5,          CHATPAD_KEY_STRING },
+    41	   { "CHATPAD_KEY_6",                  CHATPAD_KEY_6,          CHATPAD_KEY_STRING },
+    42	   { "CHATPAD_KEY_7",                  CHATPAD_KEY_7,          CHATPAD_KEY_STRING },
+    43	   { "CHATPAD_KEY_8",                  CHATPAD_KEY_8,          CHATPAD_KEY_STRING },
+    44	   { "CHATPAD_KEY_9",                  CHATPAD_KEY_9,          CHATPAD_KEY_STRING },
+    45	   { "CHATPAD_KEY_0",                  CHATPAD_KEY_0,          CHATPAD_KEY_STRING },
+    46	   { "CHATPAD_KEY_Q",                  CHATPAD_KEY_Q,          CHATPAD_KEY_STRING },
+    47	   { "CHATPAD_KEY_W",                  CHATPAD_KEY_W,          CHATPAD_KEY_STRING },
+    48	   { "CHATPAD_KEY_E",                  CHATPAD_KEY_E,          CHATPAD_KEY_STRING },
+    49	   { "CHATPAD_KEY_R",                  CHATPAD_KEY_R,          CHATPAD_KEY_STRING },
+    50	   { "CHATPAD_KEY_T",                  CHATPAD_KEY_T,          CHATPAD_KEY_STRING },
+    51	   { "CHATPAD_KEY_Y",                  CHATPAD_KEY_Y,          CHATPAD_KEY_STRING },
+    52	   { "CHATPAD_KEY_U",                  CHATPAD_KEY_U,          CHATPAD_KEY_STRING },
+    53	   { "CHATPAD_KEY_I",                  CHATPAD_KEY_I,          CHATPAD_KEY_STRING },
+    54	   { "CHATPAD_KEY_O",                  CHATPAD_KEY_O,          CHATPAD_KEY_STRING },
+    55	   { "CHATPAD_KEY_P",                  CHATPAD_KEY_P,          CHATPAD_KEY_STRING },
+    56	   { "CHATPAD_KEY_A",                  CHATPAD_KEY_A,          CHATPAD_KEY_STRING },
+    57	   { "CHATPAD_KEY_S",                  CHATPAD_KEY_S,          CHATPAD_KEY_STRING },
+    58	   { "CHATPAD_KEY_D",                  CHATPAD_KEY_D,          CHATPAD_KEY_STRING },
+    59	   { "CHATPAD_KEY_F",                  CHATPAD_KEY_F,          CHATPAD_KEY_STRING },
+    60	   { "CHATPAD_KEY_G",                  CHATPAD_KEY_G,          CHATPAD_KEY_STRING },
+    61	   { "CHATPAD_KEY_H",                  CHATPAD_KEY_H,          CHATPAD_KEY_STRING },
+    62	   { "CHATPAD_KEY_J",                  CHATPAD_KEY_J,          CHATPAD_KEY_STRING },
+    63	   { "CHATPAD_KEY_K",                  CHATPAD_KEY_K,          CHATPAD_KEY_STRING },
+    64	   { "CHATPAD_KEY_L",                  CHATPAD_KEY_L,          CHATPAD_KEY_STRING },
+    65	   { "CHATPAD_KEY_COMMA",              CHATPAD_KEY_COMMA,      CHATPAD_KEY_STRING },
+    66	   { "CHATPAD_KEY_SHIFT",              CHATPAD_KEY_SHIFT,      CHATPAD_KEY_STRING },
+    67	   { "CHATPAD_KEY_Z",                  CHATPAD_KEY_Z,          CHATPAD_KEY_STRING },
+    68	   { "CHATPAD_KEY_X",                  CHATPAD_KEY_X,          CHATPAD_KEY_STRING },
+    69	   { "CHATPAD_KEY_C",                  CHATPAD_KEY_C,          CHATPAD_KEY_STRING },
+    70	   { "CHATPAD_KEY_V",                  CHATPAD_KEY_V,          CHATPAD_KEY_STRING },
+    71	   { "CHATPAD_KEY_B",                  CHATPAD_KEY_B,          CHATPAD_KEY_STRING },
+    72	   { "CHATPAD_KEY_N",                  CHATPAD_KEY_N,          CHATPAD_KEY_STRING },
+    73	   { "CHATPAD_KEY_M",                  CHATPAD_KEY_M,          CHATPAD_KEY_STRING },
+    74	   { "CHATPAD_KEY_PERIOD",             CHATPAD_KEY_PERIOD,     CHATPAD_KEY_STRING },
+    75	   { "CHATPAD_KEY_ENTER",              CHATPAD_KEY_ENTER,      CHATPAD_KEY_STRING },
+    76	   { "CHATPAD_KEY_GREEN",              CHATPAD_KEY_GREEN,      CHATPAD_KEY_STRING },
+    77	   { "CHATPAD_KEY_PEOPLE",             CHATPAD_KEY_PEOPLE,     CHATPAD_KEY_STRING },
+    78	   { "CHATPAD_KEY_LEFT",               CHATPAD_KEY_LEFT,       CHATPAD_KEY_STRING },
+    79	   { "CHATPAD_KEY_SPACEBAR",           CHATPAD_KEY_SPACEBAR,   CHATPAD_KEY_STRING },
+    80	   { "CHATPAD_KEY_RIGHT",              CHATPAD_KEY_RIGHT,      CHATPAD_KEY_STRING },
+    81	   { "CHATPAD_KEY_BACKSPACE",          CHATPAD_KEY_BACKSPACE,  CHATPAD_KEY_STRING },
+    82	   { "CHATPAD_KEY_ORANGE",             CHATPAD_KEY_ORANGE,     CHATPAD_KEY_STRING },
+    83	
+    84	   // Strings corresponding to chatpad key modifiers.
+    85	   //
+    86	   // String count for this section:  4
+    87	   { "CHATPAD_SHIFT",                  CHATPAD_MODIFIER_SHIFT,    CHATPAD_MODIFIER_STRING },
+    88	   { "CHATPAD_GREEN",                  CHATPAD_MODIFIER_GREEN,    CHATPAD_MODIFIER_STRING },
+    89	   { "CHATPAD_ORANGE",                 CHATPAD_MODIFIER_ORANGE,   CHATPAD_MODIFIER_STRING },
+    90	   { "CHATPAD_PEOPLE",                 CHATPAD_MODIFIER_PEOPLE,   CHATPAD_MODIFIER_STRING },
+    91	
+    92	   // Strings corresponding to XBox 360 controller buttons.
+    93	   //
+    94	   // String count for this section:  11
+    95	   { "CONTROLLER_BUTTON_LB",                 CONTROLLER_BUTTON_LB,                  CONTROLLER_BUTTON_STRING },
+    96	   { "CONTROLLER_BUTTON_RB",                 CONTROLLER_BUTTON_RB,                  CONTROLLER_BUTTON_STRING },
+    97	   { "CONTROLLER_BUTTON_BACK",               CONTROLLER_BUTTON_BACK ,               CONTROLLER_BUTTON_STRING },
+    98	   { "CONTROLLER_BUTTON_GUIDE",              CONTROLLER_BUTTON_GUIDE,               CONTROLLER_BUTTON_STRING },
+    99	   { "CONTROLLER_BUTTON_START",              CONTROLLER_BUTTON_START,               CONTROLLER_BUTTON_STRING },
+   100	   { "CONTROLLER_BUTTON_LEFT_STICK_CLICK",   CONTROLLER_BUTTON_LEFT_STICK_CLICK,    CONTROLLER_BUTTON_STRING },
+   101	   { "CONTROLLER_BUTTON_RIGHT_STICK_CLICK",  CONTROLLER_BUTTON_RIGHT_STICK_CLICK,   CONTROLLER_BUTTON_STRING },
+   102	   { "CONTROLLER_BUTTON_A",                  CONTROLLER_BUTTON_A,                   CONTROLLER_BUTTON_STRING },
+   103	   { "CONTROLLER_BUTTON_B",                  CONTROLLER_BUTTON_B,                   CONTROLLER_BUTTON_STRING },
+   104	   { "CONTROLLER_BUTTON_X",                  CONTROLLER_BUTTON_X,                   CONTROLLER_BUTTON_STRING },
+   105	   { "CONTROLLER_BUTTON_Y",                  CONTROLLER_BUTTON_Y,                   CONTROLLER_BUTTON_STRING },
+   106	
+   107	   // Strings corresponding to XBox 360 controller modifiers.
+   108	   //
+   109	   // String count for this section:  1
+   110	   { "CONTROLLER_WINDOWS_MODE",              CONTROLLER_MODIFIER_WINDOWS_MODE,      CONTROLLER_MODIFIER_STRING },
+   111	
+   112	   // Strings corresponding to simulated keyboard keys.
+   113	   //
+   114	   // String count for this section:  121
+   115	   { "KEYBOARD_KEY_A",                 KEYBOARD_KEY_A,                  KEYBOARD_KEY_STRING },
+   116	   { "KEYBOARD_KEY_B",                 KEYBOARD_KEY_B,                  KEYBOARD_KEY_STRING },
+   117	   { "KEYBOARD_KEY_C",                 KEYBOARD_KEY_C,                  KEYBOARD_KEY_STRING },
+   118	   { "KEYBOARD_KEY_D",                 KEYBOARD_KEY_D,                  KEYBOARD_KEY_STRING },
+   119	   { "KEYBOARD_KEY_E",                 KEYBOARD_KEY_E,                  KEYBOARD_KEY_STRING },
+   120	   { "KEYBOARD_KEY_F",                 KEYBOARD_KEY_F,                  KEYBOARD_KEY_STRING },
+   121	   { "KEYBOARD_KEY_G",                 KEYBOARD_KEY_G,                  KEYBOARD_KEY_STRING },
+   122	   { "KEYBOARD_KEY_H",                 KEYBOARD_KEY_H,                  KEYBOARD_KEY_STRING },
+   123	   { "KEYBOARD_KEY_I",                 KEYBOARD_KEY_I,                  KEYBOARD_KEY_STRING },
+   124	   { "KEYBOARD_KEY_J",                 KEYBOARD_KEY_J,                  KEYBOARD_KEY_STRING },
+   125	   { "KEYBOARD_KEY_K",                 KEYBOARD_KEY_K,                  KEYBOARD_KEY_STRING },
+   126	   { "KEYBOARD_KEY_L",                 KEYBOARD_KEY_L,                  KEYBOARD_KEY_STRING },
+   127	   { "KEYBOARD_KEY_M",                 KEYBOARD_KEY_M,                  KEYBOARD_KEY_STRING },
+   128	   { "KEYBOARD_KEY_N",                 KEYBOARD_KEY_N,                  KEYBOARD_KEY_STRING },
+   129	   { "KEYBOARD_KEY_O",                 KEYBOARD_KEY_O,                  KEYBOARD_KEY_STRING },
+   130	   { "KEYBOARD_KEY_P",                 KEYBOARD_KEY_P,                  KEYBOARD_KEY_STRING },
+   131	   { "KEYBOARD_KEY_Q",                 KEYBOARD_KEY_Q,                  KEYBOARD_KEY_STRING },
+   132	   { "KEYBOARD_KEY_R",                 KEYBOARD_KEY_R,                  KEYBOARD_KEY_STRING },
+   133	   { "KEYBOARD_KEY_S",                 KEYBOARD_KEY_S,                  KEYBOARD_KEY_STRING },
+   134	   { "KEYBOARD_KEY_T",                 KEYBOARD_KEY_T,                  KEYBOARD_KEY_STRING },
+   135	   { "KEYBOARD_KEY_U",                 KEYBOARD_KEY_U,                  KEYBOARD_KEY_STRING },
+   136	   { "KEYBOARD_KEY_V",                 KEYBOARD_KEY_V,                  KEYBOARD_KEY_STRING },
+   137	   { "KEYBOARD_KEY_W",                 KEYBOARD_KEY_W,                  KEYBOARD_KEY_STRING },
+   138	   { "KEYBOARD_KEY_X",                 KEYBOARD_KEY_X,                  KEYBOARD_KEY_STRING },
+   139	   { "KEYBOARD_KEY_Y",                 KEYBOARD_KEY_Y,                  KEYBOARD_KEY_STRING },
+   140	   { "KEYBOARD_KEY_Z",                 KEYBOARD_KEY_Z,                  KEYBOARD_KEY_STRING },
+   141	   { "KEYBOARD_KEY_1",                 KEYBOARD_KEY_1,                  KEYBOARD_KEY_STRING },
+   142	   { "KEYBOARD_KEY_2",                 KEYBOARD_KEY_2,                  KEYBOARD_KEY_STRING },
+   143	   { "KEYBOARD_KEY_3",                 KEYBOARD_KEY_3,                  KEYBOARD_KEY_STRING },
+   144	   { "KEYBOARD_KEY_4",                 KEYBOARD_KEY_4,                  KEYBOARD_KEY_STRING },
+   145	   { "KEYBOARD_KEY_5",                 KEYBOARD_KEY_5,                  KEYBOARD_KEY_STRING },
+   146	   { "KEYBOARD_KEY_6",                 KEYBOARD_KEY_6,                  KEYBOARD_KEY_STRING },
+   147	   { "KEYBOARD_KEY_7",                 KEYBOARD_KEY_7,                  KEYBOARD_KEY_STRING },
+   148	   { "KEYBOARD_KEY_8",                 KEYBOARD_KEY_8,                  KEYBOARD_KEY_STRING },
+   149	   { "KEYBOARD_KEY_9",                 KEYBOARD_KEY_9,                  KEYBOARD_KEY_STRING },
+   150	   { "KEYBOARD_KEY_0",                 KEYBOARD_KEY_0,                  KEYBOARD_KEY_STRING },
+   151	   { "KEYBOARD_KEY_ENTER",             KEYBOARD_KEY_ENTER,              KEYBOARD_KEY_STRING },
+   152	   { "KEYBOARD_KEY_ESCAPE",            KEYBOARD_KEY_ESCAPE,             KEYBOARD_KEY_STRING },
+   153	   { "KEYBOARD_KEY_BACKSPACE",         KEYBOARD_KEY_BACKSPACE,          KEYBOARD_KEY_STRING },
+   154	   { "KEYBOARD_KEY_TAB",               KEYBOARD_KEY_TAB,                KEYBOARD_KEY_STRING },
+   155	   { "KEYBOARD_KEY_SPACEBAR",          KEYBOARD_KEY_SPACEBAR,           KEYBOARD_KEY_STRING },
+   156	   { "KEYBOARD_KEY_MINUS",             KEYBOARD_KEY_MINUS,              KEYBOARD_KEY_STRING },
+   157	   { "KEYBOARD_KEY_EQUALS",            KEYBOARD_KEY_EQUALS,             KEYBOARD_KEY_STRING },
+   158	   { "KEYBOARD_KEY_OPEN_BRACKET",      KEYBOARD_KEY_OPEN_BRACKET,       KEYBOARD_KEY_STRING },
+   159	   { "KEYBOARD_KEY_CLOSE_BRACKET",     KEYBOARD_KEY_CLOSE_BRACKET,      KEYBOARD_KEY_STRING },
+   160	   { "KEYBOARD_KEY_BACKSLASH",         KEYBOARD_KEY_BACKSLASH,          KEYBOARD_KEY_STRING },
+   161	   { "KEYBOARD_KEY_SEMICOLON",         KEYBOARD_KEY_SEMICOLON,          KEYBOARD_KEY_STRING },
+   162	   { "KEYBOARD_KEY_APOSTROPHE",        KEYBOARD_KEY_APOSTROPHE,         KEYBOARD_KEY_STRING },
+   163	   { "KEYBOARD_KEY_GRAVE_ACCENT",      KEYBOARD_KEY_GRAVE_ACCENT,       KEYBOARD_KEY_STRING },
+   164	   { "KEYBOARD_KEY_COMMA",             KEYBOARD_KEY_COMMA,              KEYBOARD_KEY_STRING },
+   165	   { "KEYBOARD_KEY_PERIOD",            KEYBOARD_KEY_PERIOD,             KEYBOARD_KEY_STRING },
+   166	   { "KEYBOARD_KEY_FORWARDSLASH",      KEYBOARD_KEY_FORWARDSLASH,       KEYBOARD_KEY_STRING },
+   167	   { "KEYBOARD_KEY_CAPS_LOCK",         KEYBOARD_KEY_CAPS_LOCK,          KEYBOARD_KEY_STRING },
+   168	   { "KEYBOARD_KEY_F1",                KEYBOARD_KEY_F1,                 KEYBOARD_KEY_STRING },
+   169	   { "KEYBOARD_KEY_F2",                KEYBOARD_KEY_F2,                 KEYBOARD_KEY_STRING },
+   170	   { "KEYBOARD_KEY_F3",                KEYBOARD_KEY_F3,                 KEYBOARD_KEY_STRING },
+   171	   { "KEYBOARD_KEY_F4",                KEYBOARD_KEY_F4,                 KEYBOARD_KEY_STRING },
+   172	   { "KEYBOARD_KEY_F5",                KEYBOARD_KEY_F5,                 KEYBOARD_KEY_STRING },
+   173	   { "KEYBOARD_KEY_F6",                KEYBOARD_KEY_F6,                 KEYBOARD_KEY_STRING },
+   174	   { "KEYBOARD_KEY_F7",                KEYBOARD_KEY_F7,                 KEYBOARD_KEY_STRING },
+   175	   { "KEYBOARD_KEY_F8",                KEYBOARD_KEY_F8,                 KEYBOARD_KEY_STRING },
+   176	   { "KEYBOARD_KEY_F9",                KEYBOARD_KEY_F9,                 KEYBOARD_KEY_STRING },
+   177	   { "KEYBOARD_KEY_F10",               KEYBOARD_KEY_F10,                KEYBOARD_KEY_STRING },
+   178	   { "KEYBOARD_KEY_F11",               KEYBOARD_KEY_F11,                KEYBOARD_KEY_STRING },
+   179	   { "KEYBOARD_KEY_F12",               KEYBOARD_KEY_F12,                KEYBOARD_KEY_STRING },
+   180	   { "KEYBOARD_KEY_PRINTSCREEN",       KEYBOARD_KEY_PRINTSCREEN,        KEYBOARD_KEY_STRING },
+   181	   { "KEYBOARD_KEY_SCROLL_LOCK",       KEYBOARD_KEY_SCROLL_LOCK,        KEYBOARD_KEY_STRING },
+   182	   { "KEYBOARD_KEY_PAUSE",             KEYBOARD_KEY_PAUSE,              KEYBOARD_KEY_STRING },
+   183	   { "KEYBOARD_KEY_INSERT",            KEYBOARD_KEY_INSERT,             KEYBOARD_KEY_STRING },
+   184	   { "KEYBOARD_KEY_HOME",              KEYBOARD_KEY_HOME,               KEYBOARD_KEY_STRING },
+   185	   { "KEYBOARD_KEY_PAGEUP",            KEYBOARD_KEY_PAGEUP,             KEYBOARD_KEY_STRING },
+   186	   { "KEYBOARD_KEY_DELETE",            KEYBOARD_KEY_DELETE,             KEYBOARD_KEY_STRING },
+   187	   { "KEYBOARD_KEY_END",               KEYBOARD_KEY_END,                KEYBOARD_KEY_STRING },
+   188	   { "KEYBOARD_KEY_PAGEDOWN",          KEYBOARD_KEY_PAGEDOWN,           KEYBOARD_KEY_STRING },
+   189	   { "KEYBOARD_KEY_RIGHT",             KEYBOARD_KEY_RIGHT,              KEYBOARD_KEY_STRING },
+   190	   { "KEYBOARD_KEY_LEFT",              KEYBOARD_KEY_LEFT,               KEYBOARD_KEY_STRING },
+   191	   { "KEYBOARD_KEY_DOWN",              KEYBOARD_KEY_DOWN,               KEYBOARD_KEY_STRING },
+   192	   { "KEYBOARD_KEY_UP",                KEYBOARD_KEY_UP,                 KEYBOARD_KEY_STRING },
+   193	   { "KEYBOARD_KEY_KEYPAD_NUM_LOCK",      KEYBOARD_KEY_KEYPAD_NUM_LOCK,       KEYBOARD_KEY_STRING },
+   194	   { "KEYBOARD_KEY_KEYPAD_FORWARDSLASH",  KEYBOARD_KEY_KEYPAD_FORWARDSLASH,   KEYBOARD_KEY_STRING },
+   195	   { "KEYBOARD_KEY_KEYPAD_ASTERISK",      KEYBOARD_KEY_KEYPAD_ASTERISK,       KEYBOARD_KEY_STRING },
+   196	   { "KEYBOARD_KEY_KEYPAD_MINUS",      KEYBOARD_KEY_KEYPAD_MINUS,             KEYBOARD_KEY_STRING },
+   197	   { "KEYBOARD_KEY_KEYPAD_PLUS",       KEYBOARD_KEY_KEYPAD_PLUS,              KEYBOARD_KEY_STRING },
+   198	   { "KEYBOARD_KEY_KEYPAD_ENTER",      KEYBOARD_KEY_KEYPAD_ENTER,             KEYBOARD_KEY_STRING },
+   199	   { "KEYBOARD_KEY_KEYPAD_1",          KEYBOARD_KEY_KEYPAD_1,           KEYBOARD_KEY_STRING },
+   200	   { "KEYBOARD_KEY_KEYPAD_2",          KEYBOARD_KEY_KEYPAD_2,           KEYBOARD_KEY_STRING },
+   201	   { "KEYBOARD_KEY_KEYPAD_3",          KEYBOARD_KEY_KEYPAD_3,           KEYBOARD_KEY_STRING },
+   202	   { "KEYBOARD_KEY_KEYPAD_4",          KEYBOARD_KEY_KEYPAD_4,           KEYBOARD_KEY_STRING },
+   203	   { "KEYBOARD_KEY_KEYPAD_5",          KEYBOARD_KEY_KEYPAD_5,           KEYBOARD_KEY_STRING },
+   204	   { "KEYBOARD_KEY_KEYPAD_6",          KEYBOARD_KEY_KEYPAD_6,           KEYBOARD_KEY_STRING },
+   205	   { "KEYBOARD_KEY_KEYPAD_7",          KEYBOARD_KEY_KEYPAD_7,           KEYBOARD_KEY_STRING },
+   206	   { "KEYBOARD_KEY_KEYPAD_8",          KEYBOARD_KEY_KEYPAD_8,           KEYBOARD_KEY_STRING },
+   207	   { "KEYBOARD_KEY_KEYPAD_9",          KEYBOARD_KEY_KEYPAD_9,           KEYBOARD_KEY_STRING },
+   208	   { "KEYBOARD_KEY_KEYPAD_0",          KEYBOARD_KEY_KEYPAD_0,           KEYBOARD_KEY_STRING },
+   209	   { "KEYBOARD_KEY_KEYPAD_PERIOD",     KEYBOARD_KEY_KEYPAD_PERIOD,      KEYBOARD_KEY_STRING },
+   210	   { "KEYBOARD_KEY_F13",               KEYBOARD_KEY_F13,                KEYBOARD_KEY_STRING },
+   211	   { "KEYBOARD_KEY_F14",               KEYBOARD_KEY_F14,                KEYBOARD_KEY_STRING },
+   212	   { "KEYBOARD_KEY_F15",               KEYBOARD_KEY_F15,                KEYBOARD_KEY_STRING },
+   213	   { "KEYBOARD_KEY_F16",               KEYBOARD_KEY_F16,                KEYBOARD_KEY_STRING },
+   214	   { "KEYBOARD_KEY_F17",               KEYBOARD_KEY_F17,                KEYBOARD_KEY_STRING },
+   215	   { "KEYBOARD_KEY_F18",               KEYBOARD_KEY_F18,                KEYBOARD_KEY_STRING },
+   216	   { "KEYBOARD_KEY_F19",               KEYBOARD_KEY_F19,                KEYBOARD_KEY_STRING },
+   217	   { "KEYBOARD_KEY_F20",               KEYBOARD_KEY_F20,                KEYBOARD_KEY_STRING },
+   218	   { "KEYBOARD_KEY_F21",               KEYBOARD_KEY_F21,                KEYBOARD_KEY_STRING },
+   219	   { "KEYBOARD_KEY_F22",               KEYBOARD_KEY_F22,                KEYBOARD_KEY_STRING },
+   220	   { "KEYBOARD_KEY_F23",               KEYBOARD_KEY_F23,                KEYBOARD_KEY_STRING },
+   221	   { "KEYBOARD_KEY_F24",               KEYBOARD_KEY_F24,                KEYBOARD_KEY_STRING },
+   222	   { "KEYBOARD_KEY_EXECUTE",           KEYBOARD_KEY_EXECUTE,            KEYBOARD_KEY_STRING },
+   223	   { "KEYBOARD_KEY_HELP",              KEYBOARD_KEY_HELP,               KEYBOARD_KEY_STRING },
+   224	   { "KEYBOARD_KEY_MENU",              KEYBOARD_KEY_MENU,               KEYBOARD_KEY_STRING },
+   225	   { "KEYBOARD_KEY_SELECT",            KEYBOARD_KEY_SELECT,             KEYBOARD_KEY_STRING },
+   226	   { "KEYBOARD_KEY_STOP",              KEYBOARD_KEY_STOP,               KEYBOARD_KEY_STRING },
+   227	   { "KEYBOARD_KEY_AGAIN",             KEYBOARD_KEY_AGAIN,              KEYBOARD_KEY_STRING },
+   228	   { "KEYBOARD_KEY_UNDO",              KEYBOARD_KEY_UNDO,               KEYBOARD_KEY_STRING },
+   229	   { "KEYBOARD_KEY_CUT",               KEYBOARD_KEY_CUT,                KEYBOARD_KEY_STRING },
+   230	   { "KEYBOARD_KEY_COPY",              KEYBOARD_KEY_COPY,               KEYBOARD_KEY_STRING },
+   231	   { "KEYBOARD_KEY_PASTE",             KEYBOARD_KEY_PASTE,              KEYBOARD_KEY_STRING },
+   232	   { "KEYBOARD_KEY_FIND",              KEYBOARD_KEY_FIND,               KEYBOARD_KEY_STRING },
+   233	   { "KEYBOARD_KEY_MUTE",              KEYBOARD_KEY_MUTE,               KEYBOARD_KEY_STRING },
+   234	   { "KEYBOARD_KEY_VOLUME_UP",         KEYBOARD_KEY_VOLUME_UP,          KEYBOARD_KEY_STRING },
+   235	   { "KEYBOARD_KEY_VOLUME_DOWN",       KEYBOARD_KEY_VOLUME_DOWN,        KEYBOARD_KEY_STRING },
+   236	
+   237	   // Strings corresponding to simulated keyboard key modifiers.
+   238	   //
+   239	   // String count for this section:  8
+   240	   { "KEYBOARD_LEFT_CONTROL",          KEYBOARD_MODIFIER_LEFT_CONTROL,  KEYBOARD_MODIFIER_STRING },
+   241	   { "KEYBOARD_LEFT_SHIFT",            KEYBOARD_MODIFIER_LEFT_SHIFT,    KEYBOARD_MODIFIER_STRING },
+   242	   { "KEYBOARD_LEFT_ALT",              KEYBOARD_MODIFIER_LEFT_ALT,      KEYBOARD_MODIFIER_STRING },
+   243	   { "KEYBOARD_LEFT_GUI",              KEYBOARD_MODIFIER_LEFT_GUI,      KEYBOARD_MODIFIER_STRING },
+   244	   { "KEYBOARD_RIGHT_CONTROL",         KEYBOARD_MODIFIER_RIGHT_CONTROL, KEYBOARD_MODIFIER_STRING },
+   245	   { "KEYBOARD_RIGHT_SHIFT",           KEYBOARD_MODIFIER_RIGHT_SHIFT,   KEYBOARD_MODIFIER_STRING },
+   246	   { "KEYBOARD_RIGHT_ALT",             KEYBOARD_MODIFIER_RIGHT_ALT,     KEYBOARD_MODIFIER_STRING },
+   247	   { "KEYBOARD_RIGHT_GUI",             KEYBOARD_MODIFIER_RIGHT_GUI,     KEYBOARD_MODIFIER_STRING },
+   248	
+   249	   // Strings corresponding to simulated mouse actions.
+   250	   //
+   251	   // String count for this section:  5
+   252	   { "MOUSE_CLICK_LEFT",               MOUSE_CLICK_LEFT,    MOUSE_ACTION_STRING },
+   253	   { "MOUSE_CLICK_MIDDLE",             MOUSE_CLICK_MIDDLE,  MOUSE_ACTION_STRING },
+   254	   { "MOUSE_CLICK_RIGHT",              MOUSE_CLICK_RIGHT,   MOUSE_ACTION_STRING },
+   255	   { "MOUSE_WHEEL_UP",                 MOUSE_WHEEL_UP,      MOUSE_ACTION_STRING },
+   256	   { "MOUSE_WHEEL_DOWN",               MOUSE_WHEEL_DOWN,    MOUSE_ACTION_STRING },
+   257	
+   258	   // Strings corresponding to special actions.  Chatpad keys
+   259	   // might be bound to these keys, for instance.
+   260	   //
+   261	   // String count for this section:  23
+   262	   { "SPECIAL_ACTION_LEFT_CTRL",             SPECIAL_ACTION_LEFT_CTRL,           SPECIAL_ACTION_STRING },
+   263	   { "SPECIAL_ACTION_LEFT_CTRL_LATCH",       SPECIAL_ACTION_LEFT_CTRL_LATCH,     SPECIAL_ACTION_STRING },
+   264	   { "SPECIAL_ACTION_LEFT_SHIFT",            SPECIAL_ACTION_LEFT_SHIFT,          SPECIAL_ACTION_STRING },
+   265	   { "SPECIAL_ACTION_LEFT_SHIFT_LATCH",      SPECIAL_ACTION_LEFT_SHIFT_LATCH,    SPECIAL_ACTION_STRING },
+   266	   { "SPECIAL_ACTION_LEFT_ALT",              SPECIAL_ACTION_LEFT_ALT,            SPECIAL_ACTION_STRING },
+   267	   { "SPECIAL_ACTION_LEFT_ALT_LATCH",        SPECIAL_ACTION_LEFT_ALT_LATCH,      SPECIAL_ACTION_STRING },
+   268	   { "SPECIAL_ACTION_LEFT_GUI",              SPECIAL_ACTION_LEFT_GUI,            SPECIAL_ACTION_STRING },
+   269	   { "SPECIAL_ACTION_LEFT_GUI_LATCH",        SPECIAL_ACTION_LEFT_GUI_LATCH,      SPECIAL_ACTION_STRING },
+   270	   { "SPECIAL_ACTION_RIGHT_CTRL",            SPECIAL_ACTION_RIGHT_CTRL,          SPECIAL_ACTION_STRING },
+   271	   { "SPECIAL_ACTION_RIGHT_CTRL_LATCH",      SPECIAL_ACTION_RIGHT_CTRL_LATCH,    SPECIAL_ACTION_STRING },
+   272	   { "SPECIAL_ACTION_RIGHT_SHIFT",           SPECIAL_ACTION_RIGHT_SHIFT,         SPECIAL_ACTION_STRING },
+   273	   { "SPECIAL_ACTION_RIGHT_SHIFT_LATCH",     SPECIAL_ACTION_RIGHT_SHIFT_LATCH,   SPECIAL_ACTION_STRING },
+   274	   { "SPECIAL_ACTION_RIGHT_ALT",             SPECIAL_ACTION_RIGHT_ALT,           SPECIAL_ACTION_STRING },
+   275	   { "SPECIAL_ACTION_RIGHT_ALT_LATCH",       SPECIAL_ACTION_RIGHT_ALT_LATCH,     SPECIAL_ACTION_STRING },
+   276	   { "SPECIAL_ACTION_RIGHT_GUI",             SPECIAL_ACTION_RIGHT_GUI,           SPECIAL_ACTION_STRING },
+   277	   { "SPECIAL_ACTION_RIGHT_GUI_LATCH",       SPECIAL_ACTION_RIGHT_GUI_LATCH,     SPECIAL_ACTION_STRING },
+   278	   { "SPECIAL_ACTION_ORANGE",                SPECIAL_ACTION_ORANGE,              SPECIAL_ACTION_STRING },
+   279	   { "SPECIAL_ACTION_ORANGE_LATCH",          SPECIAL_ACTION_ORANGE_LATCH,        SPECIAL_ACTION_STRING },
+   280	   { "SPECIAL_ACTION_GREEN",                 SPECIAL_ACTION_GREEN,               SPECIAL_ACTION_STRING },
+   281	   { "SPECIAL_ACTION_GREEN_LATCH",           SPECIAL_ACTION_GREEN_LATCH,         SPECIAL_ACTION_STRING },
+   282	   { "SPECIAL_ACTION_PEOPLE",                SPECIAL_ACTION_PEOPLE,              SPECIAL_ACTION_STRING },
+   283	   { "SPECIAL_ACTION_PEOPLE_LATCH",          SPECIAL_ACTION_PEOPLE_LATCH,        SPECIAL_ACTION_STRING },
+   284	   { "SPECIAL_ACTION_TOGGLE_WINDOWS_MODE",   SPECIAL_ACTION_TOGGLE_WINDOWS_MODE, SPECIAL_ACTION_STRING }
+   285	}; // end ChatpadDriverConfigStringMapping configStringTable[]
+   286	
+   287	// Number of strings in configStringTable.
+   288	//
+   289	// IMPORTANT NOTE:  This value must exactly match the string table length.
+   290	// If the number of strings in the string table is changed, then this value
+   291	// must be updated to match.  Note that the individual values are from the
+   292	// individual "string count" comments for configStringTable to make the math
+   293	// easier.
+   294	static const unsigned int uNumConfigStringTableStrings = 47 + 4 + 11 + 1 + 121 + 8 + 5 + 23;
+   295	
+   296	// This is a token buffer used while parsing config files.  Putting it as a global
+   297	// variable is probably poor style, but it means that it will not need to be allocated
+   298	// every time a new config file line is parsed.
+   299	#define CONFIG_FILE_TOKEN_BUFFER_LENGTH   (2048+1)
+   300	static char configFileTokenBuffer[CONFIG_FILE_TOKEN_BUFFER_LENGTH];
+   301	
+   302	//***
+   303	// Functions
+   304	//***
+   305	
+   306	// Converts a null-terminated string to uppercase.
+   307	void StringToUpper(char* pString)
+   308	{
+   309	   if(NULL != pString)
+   310	   {
+   311	      char* pStringPtr = pString;
+   312	      while('\0' != (*pStringPtr))
+   313	      {
+   314	         if(((*pStringPtr) >= 'a') &&
+   315	            ((*pStringPtr) <= 'z'))
+   316	         {
+   317	            (*pStringPtr) = ((*pStringPtr) - 'a') + 'A';
+   318	         }
+   319	         pStringPtr++;
+   320	      }
+   321	   }
+   322	} // end StringToUpper
+   323	
+   324	// Skips over whitespace pointed to by pSeekPtr and returns a pointer to a non-whitespace character.
+   325	char* SkipWhiteSpace(char* pSeekPtr)
+   326	{
+   327	   char* pReturnPtr = pSeekPtr;
+   328	
+   329	   if(NULL != pReturnPtr)
+   330	   {
+   331	      while((' ' == (*pReturnPtr))    ||
+   332	            ('\t' == (*pReturnPtr)))
+   333	      {
+   334	         pReturnPtr++;
+   335	      }
+   336	   }
+   337	
+   338	   return pReturnPtr;
+   339	} // end SkipWhiteSpace
+   340	
+   341	// Skips backwards over whitespace pointed to by pSeekPtr and returns a pointer
+   342	// to a non-whitespace character.  The pStringStart parameter must point to
+   343	// the first character of the string to serve as a minimum value that pSeekPtr
+   344	// can hold.  If the string is entirely whitespace then this function will
+   345	// return a pointer to the first character in the string.
+   346	char* SkipEndingWhiteSpace(char* pStringStart, char* pSeekPtr)
+   347	{
+   348	   char* pReturnPtr = pSeekPtr;
+   349	
+   350	   if((NULL != pStringStart) &&
+   351	      (NULL != pReturnPtr))
+   352	   {
+   353	      if(pReturnPtr < pStringStart)
+   354	      {
+   355	         LogMessage("Error, seek pointer is less than start pointer in SkipWhiteSpace.\n");
+   356	         pReturnPtr = pStringStart;
+   357	      }
+   358	
+   359	      while((pReturnPtr > pStringStart) &&
+   360	            ((' ' == (*pReturnPtr))             ||
+   361	             ('\t' == (*pReturnPtr))))
+   362	      {
+   363	         pReturnPtr--;
+   364	      }
+   365	   }
+   366	
+   367	   return pReturnPtr;
+   368	} // end SkipEndingWhiteSpace
+   369	
+   370	// This function checks if pConfigLineLeftSide and pConfigLineRightSide
+   371	// represent a valid config variable assignment.  If so, the assignment is
+   372	// processed and data is written into the structure pointed to by
+   373	// pConfigStructure.  This function then return SUCCESS.
+   374	//
+   375	// IMPORTANT NOTE:  pConfigLineLeftSide and pConfigLineRightSide must
+   376	// point to null-terminated strings since no string lengths are provided
+   377	// to this function.
+   378	//
+   379	// If the left and right side strings do not represent a valid config
+   380	// variable assignment, or if an error occurs, then FAILURE is returned.
+   381	int HandleConfigVariableAssignment(
+   382	  ChatpadDriverConfigStructure*  pConfigStructure,
+   383	  char*                          pConfigLineLeftSide,
+   384	  char*                          pConfigLineRightSide)
+   385	{
+   386	   // By default, assume that this is not a valid assignment.
+   387	   int nRetValue = FAILURE;
+   388	
+   389	   if((NULL != pConfigStructure)       &&
+   390	      (NULL != pConfigLineLeftSide)    &&
+   391	      (NULL != pConfigLineRightSide))
+   392	   {
+   393	      if(0 == strcmp("ENABLE_WINDOWS_MODE", pConfigLineLeftSide))
+   394	      {
+   395	         if(0 == strcmp("TRUE", pConfigLineRightSide))
+   396	         {
+   397	            pConfigStructure->bEnableWindowsMode = true;
+   398	            nRetValue = SUCCESS;
+   399	         }
+   400	         else if(0 == strcmp("FALSE", pConfigLineRightSide))
+   401	         {
+   402	            pConfigStructure->bEnableWindowsMode = false;
+   403	            nRetValue = SUCCESS;
+   404	         }
+   405	         else
+   406	         {
+   407	            LogMessage("Invalid variable value \"%s\", must be TRUE or FALSE.\n", pConfigLineRightSide);
+   408	         }
+   409	      } // end if(0 == strcmp("ENABLE_WINDOWS_MODE", pConfigLineLeftSide))
+   410	      else if(0 == strcmp("CAPS_LOCK_CONTROLS_SHIFT_INDICATOR", pConfigLineLeftSide))
+   411	      {
+   412	         if(0 == strcmp("TRUE", pConfigLineRightSide))
+   413	         {
+   414	            pConfigStructure->bCapsLockControlsShiftIndicator = true;
+   415	            nRetValue = SUCCESS;
+   416	         }
+   417	         else if(0 == strcmp("FALSE", pConfigLineRightSide))
+   418	         {
+   419	            pConfigStructure->bCapsLockControlsShiftIndicator = false;
+   420	            nRetValue = SUCCESS;
+   421	         }
+   422	         else
+   423	         {
+   424	            LogMessage("Invalid variable value \"%s\", must be TRUE or FALSE.\n", pConfigLineRightSide);
+   425	         }
+   426	      } // end else if(0 == strcmp("CAPS_LOCK_CONTROLS_SHIFT_INDICATOR", pConfigLineLeftSide))
+   427	      else if(0 == strcmp("ENABLE_WINDOWS_MODE_PEOPLE_KEY_INDICATOR", pConfigLineLeftSide))
+   428	      {
+   429	         if(0 == strcmp("TRUE", pConfigLineRightSide))
+   430	         {
+   431	            pConfigStructure->bEnableWindowsModePeopleKeyIndicator = true;
+   432	            nRetValue = SUCCESS;
+   433	         }
+   434	         else if(0 == strcmp("FALSE", pConfigLineRightSide))
+   435	         {
+   436	            pConfigStructure->bEnableWindowsModePeopleKeyIndicator = false;
+   437	            nRetValue = SUCCESS;
+   438	         }
+   439	         else
+   440	         {
+   441	            LogMessage("Invalid variable value \"%s\", must be TRUE or FALSE.\n", pConfigLineRightSide);
+   442	         }
+   443	      } // end else if(0 == strcmp("ENABLE_WINDOWS_MODE_PEOPLE_KEY_INDICATOR", pConfigLineLeftSide))
+   444	      else if(0 == strcmp("ENABLE_INGAME_REMAPPED_BUTTONS", pConfigLineLeftSide))
+   445	      {
+   446	         if(0 == strcmp("TRUE", pConfigLineRightSide))
+   447	         {
+   448	            pConfigStructure->bEnableIngameRemappedButtons = true;
+   449	            nRetValue = SUCCESS;
+   450	         }
+   451	         else if(0 == strcmp("FALSE", pConfigLineRightSide))
+   452	         {
+   453	            pConfigStructure->bEnableIngameRemappedButtons = false;
+   454	            nRetValue = SUCCESS;
+   455	         }
+   456	         else
+   457	         {
+   458	            LogMessage("Invalid variable value \"%s\", must be TRUE or FALSE.\n", pConfigLineRightSide);
+   459	         }
+   460	      } // end else if(0 == strcmp("ENABLE_INGAME_REMAPPED_BUTTONS", pConfigLineLeftSide))
+   461	      else if(0 == strcmp("THUMBSTICK_MOUSE_SENSITIVITY", pConfigLineLeftSide))
+   462	      {
+   463	         int nNewVirtualMouseSensitivity = atoi(pConfigLineRightSide);
+   464	         if((nNewVirtualMouseSensitivity >= MINIMUM_VIRTUAL_MOUSE_SENSITIVITY) &&
+   465	            (nNewVirtualMouseSensitivity <= MAXIMUM_VIRTUAL_MOUSE_SENSITIVITY))
+   466	         {
+   467	            pConfigStructure->nVirtualMouseSensitivity = nNewVirtualMouseSensitivity;
+   468	            nRetValue = SUCCESS;
+   469	         }
+   470	         else
+   471	         {
+   472	            LogMessage("Invalid virtual mouse sensitivity %u (valid range %u min, %u max).\n",
+   473	                       nNewVirtualMouseSensitivity,
+   474	                       MINIMUM_VIRTUAL_MOUSE_SENSITIVITY,
+   475	                       MAXIMUM_VIRTUAL_MOUSE_SENSITIVITY);
+   476	         }
+   477	      } // end else if(0 == strcmp("ENABLE_INGAME_REMAPPED_BUTTONS", pConfigLineLeftSide))
+   478	   } // end if function parameters are valid
+   479	
+   480	   return nRetValue;
+   481	} // end HandleConfigVariableAssignment
+   482	
+   483	// This function examines the string pointed to by *pSeekPtr, skips
+   484	// any initial whitespace, copies a token, skips any final whitespace,
+   485	// skips over any '+' character, and leaves *pSeekPtr pointing to
+   486	// a non-whitespace character that should be the start of the next token,
+   487	// or '\0' if no more tokens are available.
+   488	//
+   489	// This function returns SUCCESS on success and FAILURE on failure.
+   490	int CopyNextToken(
+   491	  char** pSeekPtr,
+   492	  char*  pTokenBuffer,
+   493	  int    nTokenBufferLength)
+   494	{
+   495	   int   nRetValue            = SUCCESS;
+   496	   // This pointer is used to copy data into pTokenBuffer.
+   497	   char* pTokenBufferPtr      = NULL;
+   498	   // This pointer points to the last valid location in pTokenBuffer to prevent overruns.
+   499	   char* pTokenBufferEndPtr   = NULL;
+   500	
+   501	   if((NULL == pSeekPtr)         ||
+   502	      (NULL == (*pSeekPtr))      ||
+   503	      (NULL == pTokenBuffer)     ||
+   504	      (0 == nTokenBufferLength))
+   505	   {
+   506	      LogMessage("Invalid parameters provided to CopyNextToken.\n");
+   507	      nRetValue = FAILURE;
+   508	   }
+   509	
+   510	   if(SUCCESS == nRetValue)
+   511	   {
+   512	      pTokenBufferPtr = pTokenBuffer;
+   513	      pTokenBufferEndPtr = pTokenBufferPtr + (nTokenBufferLength - 1);
+   514	
+   515	      // Skip initial whitespace.
+   516	      (*pSeekPtr) = SkipWhiteSpace(*pSeekPtr);
+   517	
+   518	      // Copy the token.
+   519	      while((' ' != (**pSeekPtr))    &&
+   520	            ('\t' != (**pSeekPtr))   &&
+   521	            ('+' != (**pSeekPtr))    &&
+   522	            ('\0' != (**pSeekPtr))   &&
+   523	            (pTokenBufferPtr < pTokenBufferEndPtr))
+   524	      {
+   525	         (*pTokenBufferPtr) = (**pSeekPtr);
+   526	         pTokenBufferPtr++;
+   527	         (*pSeekPtr)++;
+   528	      }
+   529	
+   530	      // Null-terminate the token.
+   531	      (*pTokenBufferPtr) = '\0';
+   532	
+   533	      // Skip ending whitespace.
+   534	      while((' ' == (**pSeekPtr))    ||
+   535	            ('\t' == (**pSeekPtr)))
+   536	      {
+   537	         (*pSeekPtr)++;
+   538	      }
+   539	
+   540	      // Make sure that the next character is a '+' or '\0', or else return an error.
+   541	      if('+' == (**pSeekPtr))
+   542	      {
+   543	         (*pSeekPtr)++;
+   544	      }
+   545	      else
+   546	      {
+   547	         if('\0' != (**pSeekPtr))
+   548	         {
+   549	            nRetValue = FAILURE;
+   550	         }
+   551	      }
+   552	   } // end if(SUCCESS == nRetValue)
+   553	
+   554	   return nRetValue;
+   555	} // end CopyNextToken
+   556	
+   557	// This function looks up the string pTokenString in the configStringTable
+   558	// structure.  If the string is found, then it writes the corresponding data to
+   559	// the structure pointed to by pTokenMapping.
+   560	//
+   561	// IMPORTANT NOTE:  This function copies a string pointer into the structure
+   562	// pointed to by pTokenMapping.  Since this pointer points to a constant
+   563	// string in global storage, calling code should NOT attempt to free it.
+   564	//
+   565	// If the string is not found, or if an error occurs, then this function
+   566	// returns FAILURE.  Otherwise, this function returns SUCCESS.
+   567	int GetTokenMapping(
+   568	  char*                             pTokenString,
+   569	  ChatpadDriverConfigStringMapping* pTokenMapping)
+   570	{
+   571	   int   nRetValue   = SUCCESS;
+   572	
+   573	   if((NULL == pTokenString)     ||
+   574	      (NULL == pTokenMapping))
+   575	   {
+   576	      LogMessage("Invalid parameters provided to GetTokenMapping.\n");
+   577	      nRetValue = FAILURE;
+   578	   }
+   579	
+   580	   if(SUCCESS == nRetValue)
+   581	   {
+   582	      bool bMatchFound = false;
+   583	
+   584	      for(unsigned int i = 0;
+   585	          ((i < uNumConfigStringTableStrings) &&
+   586	           (false == bMatchFound));
+   587	          i++)
+   588	      {
+   589	         if(0 == strcmp(pTokenString, configStringTable[i].pString))
+   590	         {
+   591	            bMatchFound = true;
+   592	            pTokenMapping->pString     = configStringTable[i].pString;
+   593	            pTokenMapping->uConstant   = configStringTable[i].uConstant;
+   594	            pTokenMapping->stringType  = configStringTable[i].stringType;
+   595	         } // end if(0 == strcmp(pTokenString, configStringTable[i]))
+   596	      } // end looping through configStringTable
+   597	
+   598	      if(false == bMatchFound)
+   599	      {
+   600	         nRetValue = FAILURE;
+   601	      }
+   602	   } // end if(SUCCESS == nRetValue)
+   603	
+   604	   return nRetValue;
+   605	}
+   606	
+   607	// This function handles pConfigLineLeftSide and pConfigLineRightSide as a
+   608	// config mapping line.  The line is parsed and data is written into the
+   609	// structure pointed to by pConfigStructure.  This function then return
+   610	// SUCCESS.
+   611	//
+   612	// IMPORTANT NOTE:  pConfigLineLeftSide and pConfigLineRightSide must
+   613	// point to null-terminated strings since no string lengths are provided
+   614	// to this function.
+   615	//
+   616	// If the left and right side strings do not represent a valid config
+   617	// mapping line, or if another error occurs, then FAILURE is returned.
+   618	int HandleConfigMappingLine(
+   619	  ChatpadDriverConfigStructure*  pConfigStructure,
+   620	  char*                          pConfigLineLeftSide,
+   621	  char*                          pConfigLineRightSide)
+   622	{
+   623	   int   nRetValue   = SUCCESS;
+   624	   char* pSeekPtr    = NULL;
+   625	   ChatpadDriverConfigStringMapping sourceTokenMapping;
+   626	   ChatpadDriverConfigStringMapping actionTokenMapping;
+   627	   ChatpadDriverConfigStringMapping modifierTokenMapping;
+   628	   ChatpadDriverActionBinding       actionBinding;
+   629	
+   630	   if((NULL == pConfigStructure)       ||
+   631	      (NULL == pConfigLineLeftSide)    ||
+   632	      (NULL == pConfigLineRightSide))
+   633	   {
+   634	      LogMessage("Invalid parameters provided to HandleConfigMappingLine.\n");
+   635	      nRetValue = FAILURE;
+   636	   }
+   637	
+   638	   if(SUCCESS == nRetValue)
+   639	   {
+   640	      // Parse tokens in the left side string first.
+   641	      pSeekPtr = pConfigLineLeftSide;
+   642	
+   643	      // Copy the first token.
+   644	      configFileTokenBuffer[0] = '\0';
+   645	      nRetValue = CopyNextToken(&pSeekPtr, configFileTokenBuffer, CONFIG_FILE_TOKEN_BUFFER_LENGTH);
+   646	   }
+   647	
+   648	   if(SUCCESS == nRetValue)
+   649	   {
+   650	      actionBinding.uSourceActionModifiers   = 0;
+   651	      actionBinding.bindingType              = BINDING_NONE;
+   652	      actionBinding.uActionModifiers         = 0;
+   653	      actionBinding.uActionCode              = 0;
+   654	      sourceTokenMapping.pString    = NULL;
+   655	      sourceTokenMapping.uConstant  = 0;
+   656	      sourceTokenMapping.stringType = INVALID_STRING;
+   657	      nRetValue = GetTokenMapping(configFileTokenBuffer, &sourceTokenMapping);
+   658	      if(SUCCESS != nRetValue)
+   659	      {
+   660	         LogMessage("Error, unknown config string \"%s\".\nSee README.TXT for valid strings.\n",
+   661	                    configFileTokenBuffer);
+   662	      }
+   663	   }
+   664	
+   665	   if(SUCCESS == nRetValue)
+   666	   {
+   667	      // The first token must correspond to either a chatpad key or a controller button.
+   668	      //
+   669	      // Note that there is probably a more elegant way to do this than repeating so much
+   670	      // code, but repeating the code is easier for now.
+   671	      if(CHATPAD_KEY_STRING == sourceTokenMapping.stringType)
+   672	      {
+   673	         // Since this is a chatpad key binding, check for modifiers that are
+   674	         // compatible with chatpad keys.
+   675	
+   676	         // Note that eventually, this code might be refactored to consolidate some of
+   677	         // the similar code below that loops through modifiers.
+   678	         while(('\0' != (*pSeekPtr))  &&
+   679	               (SUCCESS == nRetValue))
+   680	         {
+   681	            configFileTokenBuffer[0] = '\0';
+   682	            nRetValue = CopyNextToken(&pSeekPtr, configFileTokenBuffer, CONFIG_FILE_TOKEN_BUFFER_LENGTH);
+   683	            if(SUCCESS == nRetValue)
+   684	            {
+   685	               modifierTokenMapping.pString    = NULL;
+   686	               modifierTokenMapping.uConstant  = 0;
+   687	               modifierTokenMapping.stringType = INVALID_STRING;
+   688	               nRetValue = GetTokenMapping(configFileTokenBuffer, &modifierTokenMapping);
+   689	               // Check modifier compatibility.
+   690	               if(CHATPAD_MODIFIER_STRING == modifierTokenMapping.stringType)
+   691	               {
+   692	                  // Add the modifier to the current action binding.
+   693	                  actionBinding.uSourceActionModifiers |= modifierTokenMapping.uConstant;
+   694	               }
+   695	               else
+   696	               {
+   697	                  LogMessage("Error, expected chatpad key modifier but found \"%s\".\n",
+   698	                             configFileTokenBuffer);
+   699	                  nRetValue = FAILURE;
+   700	               }
+   701	            } // end if(SUCCESS == nRetValue)
+   702	         } // end while parsing through source action modifiers
+   703	
+   704	         if(SUCCESS == nRetValue)
+   705	         {
+   706	            bool                          bBindingAlreadyExists   = false;
+   707	            ChatpadKeyMapping*            pKeyMapping             = NULL;
+   708	            ChatpadDriverActionBinding*   pNewBinding             = NULL;
+   709	
+   710	            pKeyMapping = &(pConfigStructure->keyMappings[sourceTokenMapping.uConstant]);
+   711	
+   712	            if(NULL != pKeyMapping->pBindings)
+   713	            {
+   714	               // Check whether there is already a binding for the source action.
+   715	               for(int nBindingIndex = 0; nBindingIndex < (pKeyMapping->nNumBindings); nBindingIndex++)
+   716	               {
+   717	                  if(pKeyMapping->pBindings[nBindingIndex].uSourceActionModifiers ==
+   718	                     actionBinding.uSourceActionModifiers)
+   719	                  {
+   720	                     bBindingAlreadyExists = true;
+   721	                     pNewBinding = &(pKeyMapping->pBindings[nBindingIndex]);
+   722	                     break;
+   723	                  }
+   724	               }
+   725	            }
+   726	
+   727	            if(false == bBindingAlreadyExists)
+   728	            {
+   729	               ChatpadDriverActionBinding* pReallocatedBindings = NULL;
+   730	
+   731	               // An intermediate pointer is used here since realloc could
+   732	               // fail and cause the original memory in pKeyMapping->pBindings
+   733	               // to leak.
+   734	               pReallocatedBindings =
+   735	                 static_cast<ChatpadDriverActionBinding*>(realloc(
+   736	                   pKeyMapping->pBindings,
+   737	                   ((pKeyMapping->nNumBindings + 1) * sizeof(ChatpadDriverActionBinding))));
+   738	               if(NULL != pReallocatedBindings)
+   739	               {
+   740	                  pNewBinding = &(pReallocatedBindings[pKeyMapping->nNumBindings]);
+   741	
+   742	                  pKeyMapping->nNumBindings++;
+   743	                  pKeyMapping->pBindings = pReallocatedBindings;
+   744	               } // end if(NULL != pReallocatedBindings)
+   745	               else
+   746	               {
+   747	                  LogMessage("Error allocating memory in HandleConfigMappingLine.\n");
+   748	                  nRetValue = FAILURE;
+   749	               }
+   750	            } // end if(false == bBindingAlreadyExists)
+   751	            else
+   752	            {
+   753	               LogMessage("Warning, binding already exists for \"%s\".\n", pConfigLineLeftSide);
+   754	            }
+   755	
+   756	            // If successful thus far, parse the right side string.
+   757	            if(SUCCESS == nRetValue)
+   758	            {
+   759	               pSeekPtr = pConfigLineRightSide;
+   760	
+   761	               configFileTokenBuffer[0] = '\0';
+   762	               nRetValue = CopyNextToken(&pSeekPtr, configFileTokenBuffer, CONFIG_FILE_TOKEN_BUFFER_LENGTH);
+   763	            } // end if(SUCCESS == nRetValue)
+   764	
+   765	            if(SUCCESS == nRetValue)
+   766	            {
+   767	               actionTokenMapping.pString    = NULL;
+   768	               actionTokenMapping.uConstant  = 0;
+   769	               actionTokenMapping.stringType = INVALID_STRING;
+   770	               nRetValue = GetTokenMapping(configFileTokenBuffer, &actionTokenMapping);
+   771	               if(SUCCESS != nRetValue)
+   772	               {
+   773	                  LogMessage("Error, unknown config string \"%s\".\nSee README.TXT for valid strings.\n",
+   774	                             configFileTokenBuffer);
+   775	               }
+   776	            } // end if(SUCCESS == nRetValue)
+   777	
+   778	            if(SUCCESS == nRetValue)
+   779	            {
+   780	               if(KEYBOARD_KEY_STRING == actionTokenMapping.stringType)
+   781	               {
+   782	                  actionBinding.bindingType  = BINDING_SIMULATED_KEY;
+   783	                  actionBinding.uActionCode  = actionTokenMapping.uConstant;
+   784	
+   785	                  // Since this is a binding to a simulated key, check for
+   786	                  // modifiers that are compatible with simulated keys.
+   787	
+   788	                  while(('\0' != (*pSeekPtr))  &&
+   789	                        (SUCCESS == nRetValue))
+   790	                  {
+   791	                     configFileTokenBuffer[0] = '\0';
+   792	                     nRetValue = CopyNextToken(&pSeekPtr, configFileTokenBuffer, CONFIG_FILE_TOKEN_BUFFER_LENGTH);
+   793	                     if(SUCCESS == nRetValue)
+   794	                     {
+   795	                        modifierTokenMapping.pString    = NULL;
+   796	                        modifierTokenMapping.uConstant  = 0;
+   797	                        modifierTokenMapping.stringType = INVALID_STRING;
+   798	                        nRetValue = GetTokenMapping(configFileTokenBuffer, &modifierTokenMapping);
+   799	                        // Check modifier compatibility.
+   800	                        if(KEYBOARD_MODIFIER_STRING == modifierTokenMapping.stringType)
+   801	                        {
+   802	                           // Add the modifier to the current action binding.
+   803	                           actionBinding.uActionModifiers |= modifierTokenMapping.uConstant;
+   804	                        }
+   805	                        else
+   806	                        {
+   807	                           LogMessage("Error, expected keyboard key modifier but found \"%s\".\n",
+   808	                                      configFileTokenBuffer);
+   809	                           nRetValue = FAILURE;
+   810	                        }
+   811	                     } // end if(SUCCESS == nRetValue)
+   812	                  } // end while parsing through source action modifiers
+   813	               } // end if(KEYBOARD_KEY_STRING == actionTokenMapping.stringType)
+   814	               else if(MOUSE_ACTION_STRING == actionTokenMapping.stringType)
+   815	               {
+   816	                  actionBinding.bindingType  = BINDING_SIMULATED_MOUSE_ACTION;
+   817	                  actionBinding.uActionCode  = actionTokenMapping.uConstant;
+   818	
+   819	                  if('\0' != (*pSeekPtr))
+   820	                  {
+   821	                     LogMessage("Error, no modifiers are supported for mouse actions.\n");
+   822	                     nRetValue = FAILURE;
+   823	                  }
+   824	               } // end else if(MOUSE_ACTION_STRING == actionTokenMapping.stringType)
+   825	               else if(SPECIAL_ACTION_STRING == actionTokenMapping.stringType)
+   826	               {
+   827	                  actionBinding.bindingType  = BINDING_SPECIAL;
+   828	                  actionBinding.uActionCode  = actionTokenMapping.uConstant;
+   829	
+   830	                  if('\0' != (*pSeekPtr))
+   831	                  {
+   832	                     LogMessage("Error, no modifiers are supported for special actions.\n");
+   833	                     nRetValue = FAILURE;
+   834	                  }
+   835	               } // end else if(SPECIAL_ACTION_STRING == actionTokenMapping.stringType)
+   836	               else
+   837	               {
+   838	                  LogMessage("\"%s\" is not a keyboard key, mouse, or special binding.\n", configFileTokenBuffer);
+   839	                  nRetValue = FAILURE;
+   840	               }
+   841	            } // end if(SUCCESS == nRetValue)
+   842	
+   843	            if((SUCCESS == nRetValue) &&
+   844	               (NULL != pNewBinding))
+   845	            {
+   846	               // Copy the binding data.
+   847	               pNewBinding->uSourceActionModifiers = actionBinding.uSourceActionModifiers;
+   848	               pNewBinding->bindingType            = actionBinding.bindingType;
+   849	               pNewBinding->uActionModifiers       = actionBinding.uActionModifiers;
+   850	               pNewBinding->uActionCode            = actionBinding.uActionCode;
+   851	/*
+   852	               LogMessage("New binding:  0x%x, 0x%x, 0x%x, 0x%x\n",
+   853	                          pNewBinding->uSourceActionModifiers,
+   854	                          pNewBinding->bindingType,
+   855	                          pNewBinding->uActionModifiers,
+   856	                          pNewBinding->uActionCode);
+   857	*/
+   858	            }
+   859	         } // end if(SUCCESS == nRetValue)
+   860	      } // end if(CHATPAD_KEY_STRING == sourceTokenMapping.stringType)
+   861	      else if(CONTROLLER_BUTTON_STRING == sourceTokenMapping.stringType)
+   862	      {
+   863	         // Since this is a controller button binding, check for modifiers that are
+   864	         // compatible with controller buttons.
+   865	
+   866	         while(('\0' != (*pSeekPtr))  &&
+   867	               (SUCCESS == nRetValue))
+   868	         {
+   869	            configFileTokenBuffer[0] = '\0';
+   870	            nRetValue = CopyNextToken(&pSeekPtr, configFileTokenBuffer, CONFIG_FILE_TOKEN_BUFFER_LENGTH);
+   871	            if(SUCCESS == nRetValue)
+   872	            {
+   873	               modifierTokenMapping.pString    = NULL;
+   874	               modifierTokenMapping.uConstant  = 0;
+   875	               modifierTokenMapping.stringType = INVALID_STRING;
+   876	               nRetValue = GetTokenMapping(configFileTokenBuffer, &modifierTokenMapping);
+   877	               // Check modifier compatibility.
+   878	               if(CONTROLLER_MODIFIER_STRING == modifierTokenMapping.stringType)
+   879	               {
+   880	                  // Add the modifier to the current action binding.
+   881	                  actionBinding.uSourceActionModifiers |= modifierTokenMapping.uConstant;
+   882	               }
+   883	               else
+   884	               {
+   885	                  LogMessage("Error, expected controller button modifier but found \"%s\".\n",
+   886	                             configFileTokenBuffer);
+   887	                  nRetValue = FAILURE;
+   888	               }
+   889	            } // end if(SUCCESS == nRetValue)
+   890	         } // end while parsing through source action modifiers
+   891	
+   892	         if(SUCCESS == nRetValue)
+   893	         {
+   894	            bool                          bBindingAlreadyExists   = false;
+   895	            ControllerButtonMapping*      pButtonMapping          = NULL;
+   896	            ChatpadDriverActionBinding*   pNewBinding             = NULL;
+   897	
+   898	            pButtonMapping = &(pConfigStructure->buttonMappings[sourceTokenMapping.uConstant]);
+   899	
+   900	            if(NULL != pButtonMapping->pBindings)
+   901	            {
+   902	               // Check whether there is already a binding for the source action.
+   903	               for(int nBindingIndex = 0; nBindingIndex < (pButtonMapping->nNumBindings); nBindingIndex++)
+   904	               {
+   905	                  if(pButtonMapping->pBindings[nBindingIndex].uSourceActionModifiers ==
+   906	                     actionBinding.uSourceActionModifiers)
+   907	                  {
+   908	                     bBindingAlreadyExists = true;
+   909	                     pNewBinding = &(pButtonMapping->pBindings[nBindingIndex]);
+   910	                     break;
+   911	                  }
+   912	               }
+   913	            }
+   914	
+   915	            if(false == bBindingAlreadyExists)
+   916	            {
+   917	               ChatpadDriverActionBinding* pReallocatedBindings = NULL;
+   918	
+   919	               // An intermediate pointer is used here since realloc could
+   920	               // fail and cause the original memory in pButtonMapping->pBindings
+   921	               // to leak.
+   922	               pReallocatedBindings =
+   923	                 static_cast<ChatpadDriverActionBinding*>(realloc(
+   924	                   pButtonMapping->pBindings,
+   925	                   ((pButtonMapping->nNumBindings + 1) * sizeof(ChatpadDriverActionBinding))));
+   926	               if(NULL != pReallocatedBindings)
+   927	               {
+   928	                  pNewBinding = &(pReallocatedBindings[pButtonMapping->nNumBindings]);
+   929	
+   930	                  pButtonMapping->nNumBindings++;
+   931	                  pButtonMapping->pBindings = pReallocatedBindings;
+   932	               } // end if(NULL != pReallocatedBindings)
+   933	               else
+   934	               {
+   935	                  LogMessage("Error allocating memory in HandleConfigMappingLine.\n");
+   936	                  nRetValue = FAILURE;
+   937	               }
+   938	            } // end if(false == bBindingAlreadyExists)
+   939	            else
+   940	            {
+   941	               LogMessage("Warning, binding already exists for \"%s\".\n", pConfigLineLeftSide);
+   942	            }
+   943	
+   944	            // If successful thus far, parse the right side string.
+   945	            if(SUCCESS == nRetValue)
+   946	            {
+   947	               pSeekPtr = pConfigLineRightSide;
+   948	
+   949	               configFileTokenBuffer[0] = '\0';
+   950	               nRetValue = CopyNextToken(&pSeekPtr, configFileTokenBuffer, CONFIG_FILE_TOKEN_BUFFER_LENGTH);
+   951	            } // end if(SUCCESS == nRetValue)
+   952	
+   953	            if(SUCCESS == nRetValue)
+   954	            {
+   955	               actionTokenMapping.pString    = NULL;
+   956	               actionTokenMapping.uConstant  = 0;
+   957	               actionTokenMapping.stringType = INVALID_STRING;
+   958	               nRetValue = GetTokenMapping(configFileTokenBuffer, &actionTokenMapping);
+   959	               if(SUCCESS != nRetValue)
+   960	               {
+   961	                  LogMessage("Error, unknown config string \"%s\".\nSee README.TXT for valid strings.\n",
+   962	                             configFileTokenBuffer);
+   963	               }
+   964	            } // end if(SUCCESS == nRetValue)
+   965	
+   966	            if(SUCCESS == nRetValue)
+   967	            {
+   968	               if(CONTROLLER_BUTTON_STRING == actionTokenMapping.stringType)
+   969	               {
+   970	                  actionBinding.bindingType  = BINDING_CONTROLLER;
+   971	                  actionBinding.uActionCode  = actionTokenMapping.uConstant;
+   972	
+   973	                  if('\0' != (*pSeekPtr))
+   974	                  {
+   975	                     LogMessage("Error, no modifiers are supported for output controller actions.\n");
+   976	                     nRetValue = FAILURE;
+   977	                  }
+   978	               } // end if(CONTROLLER_BUTTON_STRING == actionTokenMapping.stringType)
+   979	               else if(KEYBOARD_KEY_STRING == actionTokenMapping.stringType)
+   980	               {
+   981	                  actionBinding.bindingType  = BINDING_SIMULATED_KEY;
+   982	                  actionBinding.uActionCode  = actionTokenMapping.uConstant;
+   983	
+   984	                  // Since this is a binding to a simulated key, check for
+   985	                  // modifiers that are compatible with simulated keys.
+   986	
+   987	                  while(('\0' != (*pSeekPtr))  &&
+   988	                        (SUCCESS == nRetValue))
+   989	                  {
+   990	                     configFileTokenBuffer[0] = '\0';
+   991	                     nRetValue = CopyNextToken(&pSeekPtr, configFileTokenBuffer, CONFIG_FILE_TOKEN_BUFFER_LENGTH);
+   992	                     if(SUCCESS == nRetValue)
+   993	                     {
+   994	                        modifierTokenMapping.pString    = NULL;
+   995	                        modifierTokenMapping.uConstant  = 0;
+   996	                        modifierTokenMapping.stringType = INVALID_STRING;
+   997	                        nRetValue = GetTokenMapping(configFileTokenBuffer, &modifierTokenMapping);
+   998	                        // Check modifier compatibility.
+   999	                        if(KEYBOARD_MODIFIER_STRING == modifierTokenMapping.stringType)
+  1000	                        {
+  1001	                           // Add the modifier to the current action binding.
+  1002	                           actionBinding.uActionModifiers |= modifierTokenMapping.uConstant;
+  1003	                        }
+  1004	                        else
+  1005	                        {
+  1006	                           LogMessage("Error, expected keyboard key modifier but found \"%s\".\n",
+  1007	                                      configFileTokenBuffer);
+  1008	                           nRetValue = FAILURE;
+  1009	                        }
+  1010	                     } // end if(SUCCESS == nRetValue)
+  1011	                  } // end while parsing through source action modifiers
+  1012	               } // end if(KEYBOARD_KEY_STRING == actionTokenMapping.stringType)
+  1013	               else if(MOUSE_ACTION_STRING == actionTokenMapping.stringType)
+  1014	               {
+  1015	                  actionBinding.bindingType  = BINDING_SIMULATED_MOUSE_ACTION;
+  1016	                  actionBinding.uActionCode  = actionTokenMapping.uConstant;
+  1017	
+  1018	                  if('\0' != (*pSeekPtr))
+  1019	                  {
+  1020	                     LogMessage("Error, no modifiers are supported for mouse actions.\n");
+  1021	                     nRetValue = FAILURE;
+  1022	                  }
+  1023	               } // end else if(MOUSE_ACTION_STRING == actionTokenMapping.stringType)
+  1024	               else if(SPECIAL_ACTION_STRING == actionTokenMapping.stringType)
+  1025	               {
+  1026	                  actionBinding.bindingType  = BINDING_SPECIAL;
+  1027	                  actionBinding.uActionCode  = actionTokenMapping.uConstant;
+  1028	
+  1029	                  if('\0' != (*pSeekPtr))
+  1030	                  {
+  1031	                     LogMessage("Error, no modifiers are supported for special actions.\n");
+  1032	                     nRetValue = FAILURE;
+  1033	                  }
+  1034	               } // end else if(SPECIAL_ACTION_STRING == actionTokenMapping.stringType)
+  1035	               else
+  1036	               {
+  1037	                  LogMessage("\"%s\" is not a controller, keyboard key, mouse, or special binding.\n", configFileTokenBuffer);
+  1038	                  nRetValue = FAILURE;
+  1039	               }
+  1040	            } // end if(SUCCESS == nRetValue)
+  1041	
+  1042	            if((SUCCESS == nRetValue) &&
+  1043	               (NULL != pNewBinding))
+  1044	            {
+  1045	               // Copy the binding data.
+  1046	               pNewBinding->uSourceActionModifiers = actionBinding.uSourceActionModifiers;
+  1047	               pNewBinding->bindingType            = actionBinding.bindingType;
+  1048	               pNewBinding->uActionModifiers       = actionBinding.uActionModifiers;
+  1049	               pNewBinding->uActionCode            = actionBinding.uActionCode;
+  1050	/*
+  1051	               LogMessage("New binding:  0x%x, 0x%x, 0x%x, 0x%x\n",
+  1052	                          pNewBinding->uSourceActionModifiers,
+  1053	                          pNewBinding->bindingType,
+  1054	                          pNewBinding->uActionModifiers,
+  1055	                          pNewBinding->uActionCode);
+  1056	*/
+  1057	            }
+  1058	         } // end if(SUCCESS == nRetValue)
+  1059	      } // end else if(CONTROLLER_BUTTON_STRING == sourceTokenMapping.stringType)
+  1060	      else
+  1061	      {
+  1062	         LogMessage("\"%s\" is neither a chatpad key nor a controller button.\n", configFileTokenBuffer);
+  1063	         nRetValue = FAILURE;
+  1064	      }
+  1065	   } // end if(SUCCESS == nRetValue)
+  1066	
+  1067	   return nRetValue;
+  1068	} // end HandleConfigMappingLine
+  1069	
+  1070	// Initializes a config data structure to default values.
+  1071	int InitDefaultDriverConfigDataValues(ChatpadDriverConfigStructure* pConfigStructure)
+  1072	{
+  1073	   int nRetValue = SUCCESS;
+  1074	
+  1075	   if(NULL != pConfigStructure)
+  1076	   {
+  1077	      pConfigStructure->bEnableWindowsMode = true;
+  1078	      pConfigStructure->bCapsLockControlsShiftIndicator = false;
+  1079	      pConfigStructure->bEnableWindowsModePeopleKeyIndicator = true;
+  1080	      pConfigStructure->bEnableIngameRemappedButtons = true;
+  1081	      pConfigStructure->nVirtualMouseSensitivity = DEFAULT_VIRTUAL_MOUSE_SENSITIVITY;
+  1082	
+  1083	      for(int i = 0; i < CHATPAD_NUM_KEYS; i++)
+  1084	      {
+  1085	         pConfigStructure->keyMappings[i].nNumBindings = 0;
+  1086	         pConfigStructure->keyMappings[i].pBindings = NULL;
+  1087	      }
+  1088	
+  1089	      for(int i = 0; i < CONTROLLER_NUM_BUTTONS; i++)
+  1090	      {
+  1091	         pConfigStructure->buttonMappings[i].nNumBindings = 0;
+  1092	         pConfigStructure->buttonMappings[i].pBindings = NULL;
+  1093	      }
+  1094	   }
+  1095	   else
+  1096	   {
+  1097	      nRetValue = FAILURE;
+  1098	   }
+  1099	
+  1100	   return nRetValue;
+  1101	} // end InitDefaultDriverConfigDataValues
+  1102	
+  1103	// This function opens a config file, initializes pConfigStructure to a default
+  1104	// state, parses the file, writes data into pConfigStructure as needed, and
+  1105	// closes the file.
+  1106	int LoadConfigFile(
+  1107	  char*                          pFilename,
+  1108	  ChatpadDriverConfigStructure*  pConfigStructure)
+  1109	{
+  1110	   int      nRetValue                  = SUCCESS;
+  1111	   bool     bFinished                  = false;
+  1112	   FILE*    pReadFile                  = NULL;
+  1113	   // Allow for 2048 characters in a command string plus a null terminator.
+  1114	   int      nConfigLineBufferSize      = 2048 + 1;
+  1115	   char*    pConfigLine                = NULL;
+  1116	   char*    pConfigLineLeftSide        = NULL;
+  1117	   char*    pConfigLineRightSide       = NULL;
+  1118	   char*    pReadResult                = NULL;
+  1119	   char*    pSeekPtr                   = NULL;
+  1120	   char*    pConfigLineLeftPtr         = NULL;
+  1121	   char*    pConfigLineRightPtr        = NULL;
+  1122	
+  1123	   if((SUCCESS == nRetValue) &&
+  1124	      ((NULL == pFilename)             ||
+  1125	       (NULL == pConfigStructure)))
+  1126	   {
+  1127	      LogMessage("Invalid parameters provided to LoadConfigFile.\n");
+  1128	      nRetValue = FAILURE;
+  1129	   }
+  1130	
+  1131	   if(SUCCESS == nRetValue)
+  1132	   {
+  1133	      pReadFile = fopen(pFilename, "rb");
+  1134	      if(NULL == pReadFile)
+  1135	      {
+  1136	         LogMessage("Failed to open config file \"%s\".\n", pFilename);
+  1137	         nRetValue = FAILURE;
+  1138	      }
+  1139	   }
+  1140	
+  1141	   if(SUCCESS == nRetValue)
+  1142	   {
+  1143	      nRetValue = InitDefaultDriverConfigDataValues(pConfigStructure);
+  1144	   }
+  1145	
+  1146	   if(SUCCESS == nRetValue)
+  1147	   {
+  1148	      pConfigLine = static_cast<char*>(malloc(nConfigLineBufferSize));
+  1149	      pConfigLineLeftSide = static_cast<char*>(malloc(nConfigLineBufferSize));
+  1150	      pConfigLineRightSide = static_cast<char*>(malloc(nConfigLineBufferSize));
+  1151	      if((NULL == pConfigLine)            ||
+  1152	         (NULL == pConfigLineLeftSide)    ||
+  1153	         (NULL == pConfigLineRightSide))
+  1154	      {
+  1155	         LogMessage("Failed to allocate memory for config line buffers.\n");
+  1156	         nRetValue = FAILURE;
+  1157	      }
+  1158	   }
+  1159	
+  1160	   while((SUCCESS == nRetValue) &&
+  1161	         (false == bFinished))
+  1162	   {
+  1163	      pConfigLine[0] = '\0';
+  1164	      pReadResult = fgets(pConfigLine, nConfigLineBufferSize, pReadFile);
+  1165	
+  1166	      if(NULL != pReadResult)
+  1167	      {
+  1168	         pSeekPtr = pConfigLine;
+  1169	
+  1170	         // Skip initial whitespace.
+  1171	         pSeekPtr = SkipWhiteSpace(pSeekPtr);
+  1172	
+  1173	         // Ignore the line if it is empty or starts with '#'.
+  1174	         if(('#' == (*pSeekPtr))    ||
+  1175	            ('\n' == (*pSeekPtr))   ||
+  1176	            ('\r' == (*pSeekPtr))   ||
+  1177	            ('\0' == (*pSeekPtr)))
+  1178	         {
+  1179	            continue;
+  1180	         }
+  1181	
+  1182	         // Copy the left side of the '=' sign that should exist into a buffer.
+  1183	         pConfigLineLeftSide[0] = '\0';
+  1184	         pConfigLineLeftPtr = pConfigLineLeftSide;
+  1185	         while(('=' != (*pSeekPtr))    &&
+  1186	               ('\0' != (*pSeekPtr)))
+  1187	         {
+  1188	            (*pConfigLineLeftPtr) = (*pSeekPtr);
+  1189	            pConfigLineLeftPtr++;
+  1190	            pSeekPtr++;
+  1191	         }
+  1192	
+  1193	         if('=' == (*pSeekPtr))
+  1194	         {
+  1195	            // Skip backwards over any ending whitespace.
+  1196	            if(pConfigLineLeftPtr > pConfigLineLeftSide)
+  1197	            {
+  1198	               pConfigLineLeftPtr--;
+  1199	               pConfigLineLeftPtr = SkipEndingWhiteSpace(pConfigLineLeftSide, pConfigLineLeftPtr);
+  1200	               pConfigLineLeftPtr++;
+  1201	            }
+  1202	            // Null-terminate the left-side string.
+  1203	            (*pConfigLineLeftPtr) = '\0';
+  1204	         }
+  1205	         else
+  1206	         {
+  1207	            LogMessage("Error, missing '=' in the following line:\n%s", pConfigLine);
+  1208	            nRetValue = FAILURE;
+  1209	            continue;
+  1210	         }
+  1211	
+  1212	         //***
+  1213	         // Copy the right side of the '=' sign into a buffer.  If this point
+  1214	         // in the code was reached, then pSeekPtr currently points to '='.
+  1215	         //***
+  1216	         pSeekPtr++;
+  1217	
+  1218	         // Now that we are past the '=' character, skip any initial whitespace.
+  1219	         pSeekPtr = SkipWhiteSpace(pSeekPtr);
+  1220	
+  1221	         pConfigLineRightSide[0] = '\0';
+  1222	         pConfigLineRightPtr = pConfigLineRightSide;
+  1223	         while(('\n' != (*pSeekPtr))    &&
+  1224	               ('\r' != (*pSeekPtr))    &&
+  1225	               ('\0' != (*pSeekPtr)))
+  1226	         {
+  1227	            (*pConfigLineRightPtr) = (*pSeekPtr);
+  1228	            pConfigLineRightPtr++;
+  1229	            pSeekPtr++;
+  1230	         }
+  1231	
+  1232	         // Skip backwards over any ending whitespace.
+  1233	         if(pConfigLineRightPtr > pConfigLineRightSide)
+  1234	         {
+  1235	            pConfigLineRightPtr--;
+  1236	            pConfigLineRightPtr = SkipEndingWhiteSpace(pConfigLineRightSide, pConfigLineRightPtr);
+  1237	            pConfigLineRightPtr++;
+  1238	         }
+  1239	         // Null-terminate the right-side string.
+  1240	         (*pConfigLineRightPtr) = '\0';
+  1241	
+  1242	         // Convert both left and right sides to all-uppercase.
+  1243	         StringToUpper(pConfigLineLeftSide);
+  1244	         StringToUpper(pConfigLineRightSide);
+  1245	
+  1246	         // Try to handle this as a config variable assignment.  If there is
+  1247	         // a syntax error or the left side does not name a config variable,
+  1248	         // then HandleConfigVariableAssignment will return FAILURE.
+  1249	         // We can then try to handle it as a key/control mapping instead.
+  1250	         if(FAILURE == HandleConfigVariableAssignment(pConfigStructure, pConfigLineLeftSide, pConfigLineRightSide))
+  1251	         {
+  1252	            nRetValue = HandleConfigMappingLine(pConfigStructure, pConfigLineLeftSide, pConfigLineRightSide);
+  1253	            if(SUCCESS != nRetValue)
+  1254	            {
+  1255	               LogMessage("There was an error parsing the following config mapping line:\n%s", pConfigLine);
+  1256	            }
+  1257	         }
+  1258	      } // end if(NULL != pReadResult)
+  1259	      else
+  1260	      {
+  1261	         // This case indicates an error or the end of the file.
+  1262	         bFinished = true;
+  1263	         if(0 != ferror(pReadFile))
+  1264	         {
+  1265	            LogMessage("An error occurred while reading the config file.\n");
+  1266	            nRetValue = FAILURE;
+  1267	         }
+  1268	      }
+  1269	   } // end while successful and not finished
+  1270	
+  1271	   if(NULL == pConfigLine)
+  1272	   {
+  1273	      free(pConfigLine);
+  1274	      pConfigLine = NULL;
+  1275	   }
+  1276	
+  1277	   if(NULL == pConfigLineLeftSide)
+  1278	   {
+  1279	      free(pConfigLineLeftSide);
+  1280	      pConfigLineLeftSide = NULL;
+  1281	   }
+  1282	
+  1283	   if(NULL == pConfigLineRightSide)
+  1284	   {
+  1285	      free(pConfigLineRightSide);
+  1286	      pConfigLineRightSide = NULL;
+  1287	   }
+  1288	
+  1289	   if(NULL != pReadFile)
+  1290	   {
+  1291	      fclose(pReadFile);
+  1292	      pReadFile = NULL;
+  1293	   }
+  1294	
+  1295	   if(SUCCESS != nRetValue)
+  1296	   {
+  1297	      LogMessage("There was an error while attempting to load config file \"%s\".\n", pFilename);
+  1298	   }
+  1299	
+  1300	   return nRetValue;
+  1301	} // end LoadConfigFile
+  1302	

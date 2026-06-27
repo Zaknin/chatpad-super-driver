@@ -1,0 +1,27 @@
+     1	@echo off
+     2	
+     3	if "%1"== "" goto Error
+     4	if "%2"== "" goto Error
+     5	
+     6	build -ceZ 
+     7	
+     8	if "%1"=="winxp" goto CopyExe
+     9	
+    10	REM Add a manifest to request admin access.
+    11	REM Is there a better way to get the path to this?  This might not match the path on other people's systems.
+    12	"C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0a\Bin\mt.exe" -manifest chatpad_installer.exe.manifest -outputresource:"%2\chatpad_installer.exe";#1
+    13	
+    14	:CopyExe
+    15	
+    16	copy /Y %2\chatpad_installer.exe install\%1\chatpad_installer_%2.exe
+    17	
+    18	goto End
+    19	
+    20	:Error
+    21	echo.
+    22	echo Provide build arguments.  For example, "testbuild.bat winvista amd64"
+    23	echo The first argument can be winxp, winvista, or win7.
+    24	echo The second argument can be ia64, amd64, or i386.
+    25	echo.
+    26	
+    27	:End

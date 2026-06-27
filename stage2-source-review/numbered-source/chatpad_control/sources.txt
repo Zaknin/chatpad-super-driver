@@ -1,0 +1,22 @@
+     1	MAJORCOMP=GAFBlizzard
+     2	
+     3	TARGETNAME=chatpad_control
+     4	TARGETPATH=.
+     5	TARGETTYPE=PROGRAM
+     6	TARGETLIBS=$(SDK_LIB_PATH)\user32.lib \
+     7	           $(SDK_LIB_PATH)\kernel32.lib \
+     8	
+     9	UMTYPE=console
+    10	# TODO how does UMBASE work?
+    11	UMBASE=0x400000
+    12	UMENTRY=main
+    13	
+    14	# Use multithreaded static libraries.
+    15	USE_LIBCMT=1
+    16	
+    17	INCLUDES=..\include
+    18	
+    19	SOURCES=chatpad_cmdline.cpp         \
+    20	        chatpad_control_code.cpp    \
+    21	        chatpad_config.cpp          \
+    22	

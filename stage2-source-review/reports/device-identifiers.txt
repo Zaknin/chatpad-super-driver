@@ -1,0 +1,215 @@
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.cpp:947:         retStatus = WdfDeviceCreateSymbolicLink(
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:54:#define CHATPADKEYBOARDKMDF_HARDWARE_IDS           L"HID\\ChatpadKbd\0\0"
+stage2-source-review/source/chatpad_keyboard_kmdf/chatpad_keyboard_kmdf.h:59:#define CHATPAD_KEYBOARD_KMDF_CONTROL_LINK         L"\\DosDevices\\ChatpadKeyboardKMDF"
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.cpp:955:         retStatus = WdfDeviceCreateSymbolicLink(
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:54:#define CHATPADMOUSEKMDF_HARDWARE_IDS              L"HID\\ChatpadMouse\0\0"
+stage2-source-review/source/chatpad_mouse_kmdf/chatpad_mouse_kmdf.h:59:#define CHATPAD_MOUSE_KMDF_CONTROL_LINK            L"\\DosDevices\\ChatpadMouseKMDF"
+stage2-source-review/source/filter/chatpad_filter.cpp:1418:         retStatus = WdfDeviceCreateSymbolicLink(
+stage2-source-review/source/filter/chatpad_filter.h:203:#define CHATPAD_FILTER_CONTROL_LINK    L"\\DosDevices\\ChatpadFilter"
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:16:ClassGuid={D61CA365-5AF4-4486-998B-9DB4734C6CA3}
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:18:;ClassGuid={ae499f30-04fa-4ceb-98d9-323a9c5745e1}
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:53:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:56:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:59:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:90:DisplayName     = %Chatpad_Filter_SvcDesc%
+stage2-source-review/source/filter/install/win7_chatpad_filter.inf:94:ServiceBinary   = %12%\chatpad_filter.sys
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:16:ClassGuid={D61CA365-5AF4-4486-998B-9DB4734C6CA3}
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:18:;ClassGuid={ae499f30-04fa-4ceb-98d9-323a9c5745e1}
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:53:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:56:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:59:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:87:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:91:DisplayName     = %Chatpad_Filter_SvcDesc%
+stage2-source-review/source/filter/install/winvista_chatpad_filter.inf:95:ServiceBinary   = %12%\chatpad_filter.sys
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:16:ClassGuid={D61CA365-5AF4-4486-998B-9DB4734C6CA3}
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:18:;ClassGuid={ae499f30-04fa-4ceb-98d9-323a9c5745e1}
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:53:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:56:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:59:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:90:DisplayName     = %Chatpad_Filter_SvcDesc%
+stage2-source-review/source/filter/install/winxp_chatpad_filter.inf:94:ServiceBinary   = %12%\chatpad_filter.sys
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:82:DisplayName    = %Chatpad_Keyboard_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:86:ServiceBinary  = %12%\chatpad_keyboard.sys
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/win7_chatpad_keyboard.inf:100:ServiceBinary  = %12%\chatpad_keyboard_kmdf.sys
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:82:DisplayName    = %Chatpad_Keyboard_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:86:ServiceBinary  = %12%\chatpad_keyboard.sys
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/winvista_chatpad_keyboard.inf:100:ServiceBinary  = %12%\chatpad_keyboard_kmdf.sys
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:82:DisplayName    = %Chatpad_Keyboard_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:86:ServiceBinary  = %12%\chatpad_keyboard.sys
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/hid_keyboard_interface/install/winxp_chatpad_keyboard.inf:100:ServiceBinary  = %12%\chatpad_keyboard_kmdf.sys
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:82:DisplayName    = %Chatpad_Mouse_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:86:ServiceBinary  = %12%\chatpad_mouse.sys
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/win7_chatpad_mouse.inf:100:ServiceBinary  = %12%\chatpad_mouse_kmdf.sys
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:82:DisplayName    = %Chatpad_Mouse_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:86:ServiceBinary  = %12%\chatpad_mouse.sys
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/winvista_chatpad_mouse.inf:100:ServiceBinary  = %12%\chatpad_mouse_kmdf.sys
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:82:DisplayName    = %Chatpad_Mouse_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:86:ServiceBinary  = %12%\chatpad_mouse.sys
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/hid_mouse_interface/install/winxp_chatpad_mouse.inf:100:ServiceBinary  = %12%\chatpad_mouse_kmdf.sys
+stage2-source-review/source/installer/chatpad_installer.cpp:35:#define WIRED_CONTROLLER_HW_ID               "USB\\VID_045E&PID_028E"
+stage2-source-review/source/installer/chatpad_installer.cpp:36:#define VIRTUAL_KEYBOARD_HW_ID               "HID\\ChatpadKbd"
+stage2-source-review/source/installer/chatpad_installer.cpp:37:#define VIRTUAL_MOUSE_HW_ID                  "HID\\ChatpadMouse"
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:16:ClassGuid={D61CA365-5AF4-4486-998B-9DB4734C6CA3}
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:18:;ClassGuid={ae499f30-04fa-4ceb-98d9-323a9c5745e1}
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:53:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:56:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:59:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:90:DisplayName     = %Chatpad_Filter_SvcDesc%
+stage2-source-review/source/installer/install/win7/data/chatpad_filter.inf:94:ServiceBinary   = %12%\chatpad_filter.sys
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:82:DisplayName    = %Chatpad_Keyboard_SvcDesc%
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:86:ServiceBinary  = %12%\chatpad_keyboard.sys
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/win7/data/chatpad_keyboard.inf:100:ServiceBinary  = %12%\chatpad_keyboard_kmdf.sys
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:82:DisplayName    = %Chatpad_Mouse_SvcDesc%
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:86:ServiceBinary  = %12%\chatpad_mouse.sys
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/win7/data/chatpad_mouse.inf:100:ServiceBinary  = %12%\chatpad_mouse_kmdf.sys
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:16:ClassGuid={D61CA365-5AF4-4486-998B-9DB4734C6CA3}
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:18:;ClassGuid={ae499f30-04fa-4ceb-98d9-323a9c5745e1}
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:53:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:56:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:59:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:87:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:91:DisplayName     = %Chatpad_Filter_SvcDesc%
+stage2-source-review/source/installer/install/winvista/data/chatpad_filter.inf:95:ServiceBinary   = %12%\chatpad_filter.sys
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:82:DisplayName    = %Chatpad_Keyboard_SvcDesc%
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:86:ServiceBinary  = %12%\chatpad_keyboard.sys
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winvista/data/chatpad_keyboard.inf:100:ServiceBinary  = %12%\chatpad_keyboard_kmdf.sys
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:82:DisplayName    = %Chatpad_Mouse_SvcDesc%
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:86:ServiceBinary  = %12%\chatpad_mouse.sys
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winvista/data/chatpad_mouse.inf:100:ServiceBinary  = %12%\chatpad_mouse_kmdf.sys
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:16:ClassGuid={D61CA365-5AF4-4486-998B-9DB4734C6CA3}
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:18:;ClassGuid={ae499f30-04fa-4ceb-98d9-323a9c5745e1}
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:53:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:56:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:59:%ControllerDeviceName%=ChatpadFilter, USB\VID_045E&PID_028E
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:86:AddService = ChatpadFilter,, Chatpad_Service_Install
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:90:DisplayName     = %Chatpad_Filter_SvcDesc%
+stage2-source-review/source/installer/install/winxp/data/chatpad_filter.inf:94:ServiceBinary   = %12%\chatpad_filter.sys
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:53:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:58:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:61:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:64:%ControllerDeviceName%=ChatpadKeyboardKMDF.Inst, HID\ChatpadKbd
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:74:AddService = ChatpadKeyboard,,ChatpadKeyboard_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:76:AddService = ChatpadKeyboardKMDF,0x00000002,ChatpadKeyboardKMDF_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:82:DisplayName    = %Chatpad_Keyboard_SvcDesc%
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:86:ServiceBinary  = %12%\chatpad_keyboard.sys
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:96:DisplayName    = %Chatpad_Keyboard_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winxp/data/chatpad_keyboard.inf:100:ServiceBinary  = %12%\chatpad_keyboard_kmdf.sys
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:15:ClassGuid={745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:51:; TODO is it okay to use HID\ here?  I thought I read some where that HID\ paths should be reserved
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:52:;   for those that are automatically enumerated.  The vmulti INF file uses HID\ so I am doing the same.
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:53:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:58:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:61:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:64:%ControllerDeviceName%=ChatpadMouseKMDF.Inst, HID\ChatpadMouse
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:74:AddService = ChatpadMouse,,ChatpadMouse_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:76:AddService = ChatpadMouseKMDF,0x00000002,ChatpadMouseKMDF_Service_Inst
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:82:DisplayName    = %Chatpad_Mouse_SvcDesc%
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:86:ServiceBinary  = %12%\chatpad_mouse.sys
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:96:DisplayName    = %Chatpad_Mouse_KMDF_SvcDesc%
+stage2-source-review/source/installer/install/winxp/data/chatpad_mouse.inf:100:ServiceBinary  = %12%\chatpad_mouse_kmdf.sys

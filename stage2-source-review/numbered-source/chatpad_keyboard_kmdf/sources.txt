@@ -1,0 +1,22 @@
+     1	TARGETNAME=chatpad_keyboard_kmdf
+     2	TARGETTYPE=DRIVER
+     3	
+     4	KMDF_VERSION_MAJOR=1
+     5	KMDF_VERSION_MINOR=9
+     6	
+     7	SOURCES=chatpad_keyboard_kmdf.cpp      \
+     8	
+     9	INCLUDES=..\include
+    10	
+    11	# TODO:  What does the following do?
+    12	!IFDEF WDF_ROOT
+    13	!Include $(WDF_ROOT)\project.mk
+    14	!ENDIF
+    15	
+    16	TARGETPATH=.
+    17	TARGETLIBS=$(DDK_LIB_PATH)\hidclass.lib   \
+    18	           $(DDK_LIB_PATH)\ntstrsafe.lib  \
+    19	           $(DDK_LIB_PATH)\wdmsec.lib
+    20	
+    21	TARGET_DESTINATION=wdf
+    22	
