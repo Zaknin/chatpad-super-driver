@@ -26,6 +26,6 @@ The generated report may contain local installation paths and is therefore store
 
 ## Current Machine Status
 
-The validation machine is **not ready** for KMDF compilation. Detection found Visual Studio 2022 version 17.14.34, MSVC v143 version 14.44.35207, and Windows SDK 10.0.26100.0. It did not find a WDK, KMDF headers or libraries, WDK MSBuild targets, WDK Visual Studio integration, or v143 x64 Spectre-mitigated libraries.
+The validation machine is **ready** for KMDF compilation. Detection found Visual Studio 2022 version 17.14.35, MSVC v143 version 14.44.35207, Windows SDK 10.0.26100.0, and matching WDK 10.0.26100.0. KMDF headers (latest 1.35), x64 libraries, and WDK MSBuild targets are present. WDK Visual Studio integration is installed.
 
-No SDK/WDK version match can be established until the matching WDK and its Visual Studio integration are installed. The detection script returns a nonzero exit code in this state.
+The build compiles and links in both Debug and Release configurations, but the WDK's `TestSign` post-build task fails with exit code 1 because no signing certificate is configured. The signing failure does not prevent compilation output.
