@@ -1,53 +1,75 @@
 # Next Task
 
-## Current state
+## Exact current state
 
-- **Branch:** `test/protocol-fixtures` / HEAD `d6a5c7e01b644871951aa3cfbb410cca92cdb01a`
-- **Protocol integration:** Committed and pushed.
-- **Working tree:** Clean.
-- **All builds verified passing:** Parser 85/85, Protocol 85/85 (Debug+Release), Driver 0/0 (Debug+Release).
-- **Driver isolation proven:** ChatpadFilter does not link ChatpadProtocol.lib.
-- **ChatpadProtocol static library:** Builds cleanly as x64 Debug and Release under `artifacts/`.
-- **ChatpadProtocolTests test executable:** Builds cleanly as x64 Debug and Release under `artifacts/`.
-- **Dependency mechanism:** `ChatpadProtocolTests.vcxproj` uses a native `ProjectReference` to `ChatpadProtocol.vcxproj`; solution-level `SolutionDependencies` section removed.
-- **Driver build order:** `Build-Driver.ps1` builds ChatpadProtocol first, then ChatpadFilter, via separate MSBuild invocations.
+- **Branch:** `feature/kernel-safe-protocol-interface`, tracking
+  `origin/feature/kernel-safe-protocol-interface`.
+- **Starting point for this checkpoint:**
+  `c18b40b2c66ec9c529567ae2df3d01e3a233b6b8`.
+- **Checkpoint commit:** the commit named
+  `build: add kernel-safe protocol interface check` produced by this task;
+  resolve and verify its full hash with `git rev-parse HEAD` before editing.
+- `ChatpadProtocolTypes.h` is the portable shared type boundary.
+- Direct and integrated user-mode parser tests pass 85/85.
+- The isolated WDK compatibility project builds Debug and Release x64 as a
+  static library and produces no `.sys`.
+- `ChatpadFilter` has no parser or compatibility project reference and links
+  neither library. Debug and Release remain unsigned compile-only builds.
+- Latest installed KMDF headers/libraries are 1.35; `ChatpadFilter` retains its
+  WDK default KMDF target 1.15.
 
 ## Next recommended objective
 
-Design a kernel-safe shared protocol interface boundary without connecting it to USB, IOCTL, HID, device callbacks, keyboard injection, mouse injection, or runtime driver behavior.
+Design a transport-independent parser state machine for initialization and
+status classification using synthetic offline fixtures only.
+
+Do not begin semantic key mappings.
 
 ## Required branch and starting commit
 
-- Branch: `test/protocol-fixtures`
-- Starting commit: `969990ca9e532643b750a3fc1820a4c31770fd44`
+- Continue on a new task branch based directly on the verified checkpoint
+  commit named `build: add kernel-safe protocol interface check`.
+- Before editing, record the full starting hash from `git rev-parse HEAD` and
+  require a clean working tree.
 
 ## Preconditions
 
-- Current state documented above is true (verified by running builds).
-- The next agent must NOT begin Phase 2 semantic key mappings yet.
-- The next agent must NOT recommend live hardware data or "real Chatpad data."
+- Re-run repository safety and confirm prohibited commit `6502452` is not an
+  ancestor of HEAD.
+- Re-run the direct parser, integrated Debug/Release tests, and kernel
+  compatibility Debug/Release builds.
+- Confirm `ChatpadFilter` still has no parser or compatibility dependency.
+- Use only synthetic offline fixture data already justified by documented
+  evidence; do not request or capture live device data.
 
 ## Safety restrictions
 
-- Do not install, load, sign, package, deploy, or execute a driver.
-- Do not connect the interface boundary to USB, IOCTL, HID, device callbacks, keyboard injection, mouse injection, or runtime driver behavior.
+- No USB, HID, IOCTL, device callbacks, PnP, power, registry, service,
+  transport, keyboard injection, mouse injection, or hardware access.
+- Do not install, load, execute, sign, package, deploy, or test a driver.
 - Do not modify `legacy/`.
-- Keep all generated output under ignored `artifacts/`.
-- Ensure prohibited commit `6502452` is not an ancestor of HEAD.
-- Do not introduce private absolute machine paths into tracked source files.
+- Keep all generated output beneath ignored `artifacts/`.
+- Do not add semantic key mappings.
+- Do not link parser or state-machine code into `ChatpadFilter`.
 
 ## Acceptance criteria
 
-- A design artifact describing the shared protocol interface boundary exists (e.g., a header + documentation).
-- The interface is defined in a way that is kernel-safe: no user-mode assumptions, no dynamic dispatch, no function-pointer callbacks, no heap allocation requirements beyond what the static library already permits.
-- The boundary does not reference USB, IOCTL, HID, device callbacks, keyboard injection, mouse injection, or any runtime driver behavior.
-- The design is reviewable as a standalone artifact — the next agent can reason about it without building the driver.
+- A transport-independent state structure and pure parser/classifier API exist.
+- Initialization/status inputs are represented only by synthetic offline
+  fixtures tied to documented evidence and explicitly label unresolved forms.
+- State transitions are deterministic, allocation-free, pointer-retention-free,
+  and independently testable in user mode.
+- Existing 85 parser assertions remain passing, with focused new offline tests
+  for the state machine.
+- Kernel compatibility and driver-isolation gates remain passing.
 
-## Commands or files the next agent should inspect first
+## Inspect first
 
-1. `src/protocol/ChatpadProtocol/ChatpadKeyboardParser.h` — current parser API surface.
-2. `src/protocol/ChatpadProtocol/ChatpadKeyboardParser.c` — current parser implementation.
-3. `docs/CHATPAD-PROTOCOL.md` — wire-format evidence document.
-4. `docs/DECISIONS.md` — all durable decisions to date.
-5. `ChatpadWin11.sln` — current solution structure.
-6. `tools/Test-RepositorySafety.ps1` — repository safety checks.
+1. `AGENTS.md`
+2. `docs/PROJECT-STATE.md`
+3. `docs/DECISIONS.md`
+4. `docs/CHATPAD-PROTOCOL.md`
+5. `src/protocol/ChatpadProtocol/ChatpadProtocolTypes.h`
+6. `src/protocol/ChatpadProtocol/ChatpadKeyboardParser.h`
+7. `tests/kernel/ChatpadProtocolKernelCompileCheck/`
+8. `tests/protocol/fixtures/`

@@ -1,7 +1,7 @@
 #include "ChatpadKeyboardParser.h"
 
-#define CHATPAD_PHASE1_SUPPORTED_TYPE ((uint8_t)0x00)
-#define CHATPAD_PHASE1_MODIFIER_UPPER_MASK ((uint8_t)0xF0)
+#define CHATPAD_PHASE1_SUPPORTED_TYPE ((ChatpadUInt8)0x00)
+#define CHATPAD_PHASE1_MODIFIER_UPPER_MASK ((ChatpadUInt8)0xF0)
 
 static void ChatpadClearKeyboardPacket(ChatpadKeyboardPacket *output)
 {
@@ -13,17 +13,17 @@ static void ChatpadClearKeyboardPacket(ChatpadKeyboardPacket *output)
 }
 
 ChatpadParseResult ChatpadParseKeyboardPacket(
-    const uint8_t *input,
-    size_t length,
+    const ChatpadUInt8 *input,
+    ChatpadSize length,
     ChatpadKeyboardPacket *output)
 {
-    if (output == NULL) {
+    if (output == 0) {
         return CHATPAD_PARSE_NULL_OUTPUT;
     }
 
     ChatpadClearKeyboardPacket(output);
 
-    if (input == NULL && length != 0) {
+    if (input == 0 && length != 0) {
         return CHATPAD_PARSE_NULL_INPUT;
     }
 

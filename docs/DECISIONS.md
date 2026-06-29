@@ -4,6 +4,41 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Use a protocol-owned type boundary and an isolated WDK static-library proof
+
+**Decision:** Public protocol data uses `ChatpadUInt8` and `ChatpadSize` from
+`ChatpadProtocolTypes.h`. MSVC derives them directly from compiler primitive
+types; other C compilers map them to standard `uint8_t` and `size_t`. The
+parser declaration remains in `ChatpadKeyboardParser.h` with C++ `extern "C"`
+linkage. Kernel compatibility is proven by compiling both the full parser
+implementation and a small interface consumer into a standalone WDK static
+library that is not referenced by `ChatpadFilter`.
+
+**Rationale:** Including MSVC's user-mode `stdint.h` beneath the WDK kernel
+toolchain collides with the WDK kernel CRT headers under strict `/W4 /WX`.
+Protocol-owned aliases preserve fixed-width and size semantics without a
+Windows or WDK dependency, warning suppression, packing, or an ABI change.
+The isolated static library proves compile compatibility without introducing
+runtime driver behavior.
+
+**Alternatives rejected:**
+
+* Suppressing WDK/MSVC header-collision warnings — would weaken the strict
+  warning gate and leave the public boundary dependent on conflicting headers.
+* Using WDK types such as `UCHAR` or `SIZE_T` — would make the public header
+  kernel-specific.
+* Linking the parser or compatibility library into `ChatpadFilter` — runtime
+  integration is outside this task and would violate driver isolation.
+* Marking decoded output packed — no wire-layout ABI requirement is proven.
+
+**Consequences:**
+
+* C and C++ user-mode callers retain the existing parser behavior and ABI.
+* Kernel-mode C can consume the headers and compile the parser without Windows
+  user-mode headers, WDK API headers, allocation, mutable globals, or callbacks.
+* Compatibility output is a non-loadable `.lib`; no `.sys`, signing, package,
+  deployment, or hardware path is introduced.
+
 ## 2026-06-29 — Keep the Phase 1 parser raw, neutral, and policy-labeled
 
 **Decision:** `ChatpadParseKeyboardPacket` accepts exactly five bytes, supports only raw type `0x00`, preserves all five accepted bytes without semantic key decoding, returns `CHATPAD_PARSE_UNSUPPORTED_TYPE` for `0xF0` and every other unsupported type, and returns `CHATPAD_PARSE_POLICY_REJECTED_MODIFIER` when modifier upper bits are set. A non-null output is cleared before every failure return.

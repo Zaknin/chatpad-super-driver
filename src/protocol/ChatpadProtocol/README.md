@@ -1,16 +1,24 @@
 # Chatpad Protocol Phase 1 Parser
 
-This directory contains a portable C parser for the documented five-byte
-Chatpad keyboard packet boundary. It allocates no memory, performs no I/O,
-retains no caller pointer, and has no Windows, WDK, USB, HID, IOCTL, device,
-or kernel dependency.
+This directory contains a portable C interface and parser for the documented
+five-byte Chatpad keyboard packet boundary. It allocates no memory, performs
+no I/O, retains no caller pointer, and has no Windows, WDK, USB, HID, IOCTL,
+device, or kernel dependency.
+
+`ChatpadProtocolTypes.h` is the shared public type boundary. It defines
+protocol-owned fixed-width byte and size types, the raw decoded packet, and
+parse results without including a Windows or WDK header. It deliberately uses
+no packing pragma: `ChatpadKeyboardPacket` is decoded output, not an on-wire
+packed structure. `ChatpadKeyboardParser.h` adds the C function declaration
+and C++ `extern "C"` linkage; `ChatpadKeyboardParser.c` is the portable parser
+implementation.
 
 ## Parser API
 
 ```c
 ChatpadParseResult ChatpadParseKeyboardPacket(
-    const uint8_t *input,
-    size_t length,
+    const ChatpadUInt8 *input,
+    ChatpadSize length,
     ChatpadKeyboardPacket *output);
 ```
 
@@ -74,6 +82,19 @@ failure return. Validation completes before any accepted input byte is copied.
 The existing direct-compiler script remains available as a lightweight parser-only regression.
 It does not use MSBuild or the solution.
 
+### Kernel-toolchain compatibility check
+
+```powershell
+.\tools\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Release -Platform x64
+```
+
+This compiles the same parser source and public headers as C with the WDK
+`WindowsKernelModeDriver10.0` toolset. It produces only an isolated static
+library beneath `artifacts/`; it has no runtime entry point and produces no
+`.sys`. `ChatpadFilter` neither references nor links the compatibility library
+or parser implementation.
+
 ### MSBuild directly
 
 ```powershell
@@ -92,6 +113,8 @@ All generated files are contained beneath `artifacts/`:
 | Release test executable | `artifacts\bin\x64\Release\ChatpadProtocolTests\ChatpadProtocolTests.exe` |
 | Intermediate (Debug) | `artifacts\obj\x64\Debug\ChatpadProtocol\` |
 | Intermediate (Release) | `artifacts\obj\x64\Release\ChatpadProtocol\` |
+| Kernel compatibility library (Debug) | `artifacts\bin\x64\Debug\ChatpadProtocolKernelCompileCheck\ChatpadProtocolKernelCompileCheck.lib` |
+| Kernel compatibility library (Release) | `artifacts\bin\x64\Release\ChatpadProtocolKernelCompileCheck\ChatpadProtocolKernelCompileCheck.lib` |
 
 ## Tests
 
@@ -118,7 +141,8 @@ No third-party test framework. No device or hardware APIs. Offline only.
 - **C11**, MSVC v143, x64 only
 - **Strict warnings with warnings-as-errors**
 - **No precompiled headers**
-- **No Windows SDK, WDK, USB, HID, device, or kernel dependencies**
+- **Shared headers require no Windows or WDK API**
+- **The isolated compatibility project compiles the implementation with the WDK toolchain only as a build-time proof**
 - **No signing, deployment, or package configuration**
 - **Parser code is not connected to the kernel driver**
 - **Driver remains unsigned and nonfunctional**
