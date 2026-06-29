@@ -232,3 +232,57 @@
 - **Remaining risks or limitations:** Raw initialization/status forms remain
   unresolved. The state machine is an offline classification layer only and is
   not connected to runtime driver code.
+
+## 2026-06-29T16:36+04:00 — Chatpad initialization and status evidence audit
+
+- **Objective:** Perform a read-only legacy-source audit of initialization,
+  response, status, keepalive, timing, retry, IOCTL, and internal-state
+  evidence; correct continuity; commit and push documentation only.
+- **Starting branch and commit:** `analysis/init-status-evidence` /
+  `55a1af2c1418a95fcda51038c1b299cb5a75b91f`; clean and aligned with
+  `origin/analysis/init-status-evidence`. Prohibited commit `6502452` was not
+  an ancestor.
+- **Continuity discrepancy:** The inherited project-state and next-task files
+  accurately described the parent state-machine checkpoint but named that
+  parent branch rather than this prepared audit branch. They were updated to
+  current repository truth before handoff.
+- **Investigation:** Targeted searches and compact line ranges covered the sole
+  `0x90` occurrence, all references to initialization structures and flags,
+  user-mode request serialization, filter-side WDF control transfer creation,
+  initialization triggers, completion paths, continuous reads, `f0` handling,
+  and periodic requests. `CHATPAD_INIT_REQUEST` is declaration-only. The
+  executable path sends payload `09 00`, not `90 00`.
+- **Confirmed control path:** `main` -> `ChatpadControlMainLoop` -> one
+  `InitChatpad` call -> internal Microsoft-init flag IOCTL -> three unexplained
+  no-data control requests -> two-byte control-IN -> control-OUT with payload
+  `09 00` -> second control-IN. The filter copies the eight setup bytes into a
+  WDF setup packet and provides optional IOCTL bytes 9+ as the data stage.
+- **Status and success boundary:** The filter marks Microsoft initialization
+  complete on USB configuration selection. Two returned bytes are logged but
+  never compared. `chatpadInitFinished` is never set true or read. Received
+  `f0` packets are ignored with unknown meaning. Alternating `001f`/`001e`
+  no-data requests are called keep-alives but have no response validation.
+  Therefore no acknowledgement, response/status format, retry policy, or
+  objective ready state is confirmed.
+- **Files created:** `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/CHATPAD-PROTOCOL.md`,
+  `docs/NEXT-TASK.md`, and append-only `docs/WORKLOG.md`.
+- **Validation before editing:** `tools/Test-RepositorySafety.ps1` — PASS;
+  `git diff --exit-code -- legacy` — exit 0; prohibited-ancestor check — exit
+  1 as required.
+- **Validation after editing:** repository safety, whitespace, legacy-diff,
+  documentation-only scope, forbidden-file, staged-diff, and final-status
+  checks are recorded by the final report for this task. No build was required
+  or run.
+- **Artifacts:** None generated.
+- **Commit and push:** Commit exactly
+  `docs: audit chatpad initialization status evidence`; push only
+  `origin/analysis/init-status-evidence`.
+- **Remaining risks or limitations:** Meanings of the mystery requests,
+  control-IN responses, `f0` packets, `001f`/`001e` periodic requests, and an
+  objective ready condition remain unresolved. The next safe boundary is a
+  neutral offline representation and construction tests for confirmed setup
+  tuples and payload only.
+- **Safety:** `legacy/` remained untouched. No implementation, hardware,
+  driver, build-project, external-skill, installation, signing, packaging,
+  deployment, loading, capture, or runtime action occurred.

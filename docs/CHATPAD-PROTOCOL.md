@@ -191,18 +191,25 @@ typedef struct _CHATPAD_REQUEST_BUFFER {
 
 ## Initialization Code
 
-**Source:** `CHATPAD_INIT_REQUEST` structure, line 134, chatpad_filter_ioctl.h
+The focused audit in `docs/CHATPAD-INIT-STATUS-EVIDENCE.md` supersedes the
+earlier interpretation of this declaration.
 
-From a C header struct definition in the legacy source:
+**Source:** `CHATPAD_INIT_REQUEST` structure, lines 132-137,
+`chatpad_filter_ioctl.h`
 
-```
-initCode[0] = 0x90
-initCode[1] = 0x00
-```
+The header contains a tentative comment saying a 16-bit init code is “like
+`0x90 0x00`” and immediately questions whether it is correct. The declaration
+only creates `UCHAR initCode[2]`; it does not assign either byte. Targeted
+legacy-tree searches find no use of `CHATPAD_INIT_REQUEST`, `initRequest`, or
+`initCode` outside the declarations.
 
-**Comment states:** "16-bit init code for chatpad, like 0x90 0x00." (line 134)
-
-**Classification:** These bytes are from a struct definition. Whether they form a complete command, a partial payload, or are isolated constants is unresolved. Only that the legacy driver defines a 2-byte init code of 0x90 0x00 is confirmed from source. The complete initialization sequence beyond these two bytes is not documented in the source.
+**Corrected classification:** `0x90 0x00` is a comment-only claim attached to
+an unused internal structure. It is not proven payload or a USB setup field.
+The executable legacy activation path instead supplies confirmed two-byte
+payload `0x09 0x00` in `InitChatpad` at
+`chatpad_control_code.cpp:4209-4212`. The surrounding setup fields, response
+handling, status loop, and unresolved semantics are documented in the focused
+audit.
 
 ### Offline State-Machine Classification Boundary
 

@@ -1,13 +1,27 @@
 # Project State
 
-*Last updated: 2026-06-29T16:14+04:00*
+*Last updated: 2026-06-29T16:36+04:00*
 
 ## Current state
 
-- **Branch:** `feature/offline-protocol-state-machine`, tracking
-  `origin/feature/offline-protocol-state-machine`.
-- **Checkpoint:** task commit named `feat: add offline protocol state machine`,
-  based on `804393c9c9e1c0b976c0ad73f6f1fcc5c57de5c2`.
+- **Branch:** `analysis/init-status-evidence`, tracking
+  `origin/analysis/init-status-evidence`.
+- **Starting checkpoint:** `55a1af2c1418a95fcda51038c1b299cb5a75b91f`.
+- **Expected task commit:** `docs: audit chatpad initialization status
+  evidence` (this documentation and continuity commit).
+- **Initialization/status audit:** complete. The authoritative analysis is
+  `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`.
+- **`0x90` conclusion:** its only legacy occurrence is a tentative comment on
+  an unused internal structure. It is not proven as payload or a USB setup
+  field.
+- **Initialization-related `0x00` conclusion:** the executable activation path
+  confirms `0x00` as the second payload byte in `09 00`; other nearby zeros are
+  setup fields, buffer defaults, internal state, or comments. The `00` beside
+  `90` is not proven wire data.
+- **Sequence/response boundary:** the legacy software call sequence is
+  traceable, but no complete semantically confirmed initialization protocol,
+  acknowledgement, status format, retry policy, or objective ready condition
+  is known.
 - **Portable parser:** unchanged Phase 1 five-byte raw keyboard parser.
 - **Portable state machine:** caller-owned, allocation-free last-classification
   state and deterministic transition output.
@@ -38,6 +52,8 @@
   inputs contain neither `ChatpadProtocol.lib` nor the compatibility library.
 - **Toolchain:** Visual Studio 2022 17.14.35; MSVC 14.44.35207; SDK/WDK
   10.0.26100.0; latest installed KMDF 1.35; driver target/link version 1.15.
-- **Unresolved blockers:** None.
+- **Unresolved blockers:** Response bytes, `f0` packet meaning, the three
+  mystery setup requests, and periodic request semantics remain unresolved.
 - **Safety:** PASS. `legacy/` unchanged, prohibited commit absent, generated
-  files ignored beneath `artifacts/`, and no runtime/hardware behavior added.
+  files ignored beneath `artifacts/`, and no implementation, runtime, hardware,
+  build-project, or external-skill change occurred in this audit.
