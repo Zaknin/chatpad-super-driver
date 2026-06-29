@@ -401,3 +401,36 @@ evidence boundary.
   rejected operation kind, and rejected step index.
 * Future transport work must adapt this contract explicitly and cannot treat
   callback emission as successful hardware transmission.
+
+## 2026-06-29 — Transport adapter is a neutral static-library contract
+
+**Decision:** Add `ChatpadTransport` as a WDF-independent static-library
+contract with caller-owned state, explicit device generations, neutral
+operation tokens, callback-based activation-plan emission, and deterministic
+test-only mocks. Keep it separate from `ChatpadFilter`.
+
+**Rationale:** The project has confirmed portable activation descriptors and
+executor ordering, but it still lacks confirmed Windows 11 default-control
+access, input-transfer ownership, endpoint identity, response semantics,
+readiness, retry, and hardware behavior. A neutral adapter contract lets the
+repository test cancellation and generation semantics without pretending to
+own a real transport.
+
+**Alternatives rejected:**
+
+* Adding WDF request objects or USB/control-transfer fields to the contract —
+  would cross the current evidence and authorization boundary.
+* Linking the transport into `ChatpadFilter` immediately — would imply runtime
+  driver integration before a lifecycle scaffold and hardware evidence exist.
+* Duplicating activation descriptor constants in the transport layer — would
+  create a second source of truth instead of using the existing protocol
+  interfaces.
+
+**Consequences:**
+
+* `ChatpadTransport` builds as a user-mode static library and compiles through
+  the WDK static-library compatibility project.
+* Tests use bounded mocks under `tests/transport/` and remain fully offline.
+* `ChatpadFilter` remains disconnected from protocol and transport libraries.
+* Future KMDF work must explicitly adapt this neutral contract and still pass
+  the architecture stop gates before any hardware behavior.

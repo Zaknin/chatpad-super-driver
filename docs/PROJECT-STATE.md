@@ -1,47 +1,47 @@
 # Project State
 
-*Last updated: 2026-06-29T18:55+04:00*
+*Last updated: 2026-06-29T22:15+04:00*
 
 ## Current state
 
-- **Branch:** `analysis/windows11-transport-architecture`.
-- **Starting checkpoint:** `6881fc492af50b7f28977d306fad369a2f6a309f`.
-- **Expected task commit:**
-  `docs: design windows 11 chatpad transport architecture`.
-- **Windows 11 architecture:** complete and authoritative at
-  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`.
-- **Recommended attachment direction:** physical
-  `USB\VID_045E&PID_028E`/`XnaComposite` controller devnode, as a
-  device-specific lower filter beneath Microsoft `xusb22`; do not install a
-  class-wide XNA or HID filter.
-- **Recommendation status:** unresolved for implementation. Legacy evidence
-  supports this architecture direction, but current Windows 11 default-control
-  access and Chatpad input-transfer visibility are not proven, so no candidate
-  is yet preferred.
-- **Activation path:** the six portable descriptors, order, executor seam, and
-  12 ms evidence metadata are confirmed. Translation to a WDF request,
-  default-control-pipe access, response semantics, acknowledgement, and
-  readiness are unresolved.
-- **Input path:** the portable five-byte parser boundary and legacy own-reader
-  design are confirmed evidence. Current endpoint/pipe identity, ownership,
-  transfer observation, and coexistence with `xusb22` are unresolved.
-- **Lifetime direction:** one parented per-`WDFDEVICE` context and generation;
-  stop admission, cancel requests/readers/scheduling, drain callbacks, then
-  release pipes/targets/context. No global first-device pointer or work after
-  removal.
-- **Keyboard direction:** keep output separate from controller transport. The
-  installed WDK 10.0.26100.0 exposes VHF as one supported option, but no output
-  technology is selected pending isolated lifecycle, signing, and HVCI
-  validation.
-- **Required stop gates:** exact attachment, `xusb22` preservation, transport
-  visibility, endpoint/input evidence, mocked safe lifecycle, recovery plan,
-  and later explicit authorization must all pass before any hardware request.
-- **Runtime source/build state:** parser, state machine, activation components,
-  driver skeleton, solution, and project files are unchanged. No build was
-  required; the previous 610/610 and Debug/Release compile checkpoints remain
-  the latest build evidence.
-- **Safety:** repository safety PASS before editing; `legacy/` unchanged; no
-  device/interface handle, live enumeration, USB/HID/IOCTL/URB request,
-  activation, read/write, physical reconnect, driver operation, capture,
-  elevation, runtime/project edit, or external-skill modification occurred.
-  The required Git push is the only authorized network action.
+- **Branch:** `feature/transport-adapter-contract`.
+- **Starting checkpoint:** `37326ec5cc9c3745ee692f9250904475de0af7dd`.
+- **Expected task commit:** `feat: add mocked transport adapter contract`.
+- **Transport adapter contract:** implemented as a portable C static library at
+  `src/transport/ChatpadTransport/ChatpadTransport.vcxproj`.
+- **Transport model:** caller-owned state, explicit device generation, neutral
+  operation tokens, cancellation/stale-completion classification, and
+  callback-based activation-plan emission through the existing protocol
+  executor.
+- **Mock/test model:** `tests/transport/ChatpadTransportTests.vcxproj` uses a
+  bounded test-only mock sink and deterministic offline tests. Current
+  transport assertion count: `186/186` in Debug and Release.
+- **Protocol regression state:** direct protocol parser/state/activation tests
+  pass `610/610`; Debug and Release project regressions pass `610/610`.
+- **Kernel compatibility:** the existing WDK static-library compile check now
+  includes the transport public header and production source in Debug and
+  Release. It produces `.lib` only and no `.sys`, INF, CAT, signing, package,
+  install, deployment, or runtime driver artifact.
+- **Driver integration state:** `ChatpadFilter` runtime source is unchanged.
+  Debug and Release compile-only builds pass, remain `Authenticode.NotSigned`,
+  and show no SignTool execution. `ChatpadFilter.vcxproj` has no project
+  reference to `ChatpadProtocol` or `ChatpadTransport` and does not compile/link
+  transport or protocol sources.
+- **Windows 11 architecture:** unchanged conditional direction: a future
+  device-specific lower filter on physical `USB\VID_045E&PID_028E` beneath
+  `xusb22`, still unresolved until default-control and input-transfer evidence
+  is separately proven.
+- **Safety:** no WDF/WDM/USB/HID/SetupAPI/Configuration Manager/WinUSB/IOCTL/
+  URB/device-handle/endpoint/pipe/ETW/capture/sleep/timer/thread/retry/
+  readiness/response/driver-callback/INF/CAT/sign/package/install/load/deploy
+  behavior was added. `legacy/` remains immutable; generated outputs remain
+  under ignored `artifacts/`.
+
+## Unresolved blockers
+
+- No current Windows 11 transport capability is proven.
+- No endpoint, pipe, interface, default-control access, response semantics,
+  acknowledgement, readiness, retry, timeout, or hardware behavior is selected
+  or implemented.
+- Driver installation, signing, packaging, loading, and live device testing
+  remain unauthorized.

@@ -53,12 +53,42 @@ and offline tests without MSBuild or solution integration.
 | Debug test executable | `artifacts\bin\x64\Debug\ChatpadProtocolTests\ChatpadProtocolTests.exe` |
 | Release test executable | `artifacts\bin\x64\Release\ChatpadProtocolTests\ChatpadProtocolTests.exe` |
 
+## Chatpad Transport Adapter (offline)
+
+Portable C transport-adapter contract plus deterministic mocked tests. Native
+user-mode static library. It adapts the existing activation executor into
+generation-bound neutral operations and models cancellation/stale completion
+classification. It has no WDF, WDM, USB, HID, SetupAPI, Configuration Manager,
+WinUSB, IOCTL, URB, endpoint, pipe, handle, ETW, capture, sleep, timer, retry,
+readiness, response, driver callback, INF, package, signing, install, deploy,
+load, or hardware behavior.
+
+```powershell
+.\tools\Test-ChatpadTransport.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadTransport.ps1 -Configuration Release -Platform x64
+```
+
+The wrapper builds `ChatpadTransport.vcxproj` and
+`ChatpadTransportTests.vcxproj`, runs the native test executable, validates the
+deterministic assertion summary, prints SHA-256 values for the `.lib` and test
+executable, and confirms generated outputs stay beneath `artifacts/`.
+
+### Artifacts
+
+| Output | Path |
+| --- | --- |
+| Debug library | `artifacts\bin\x64\Debug\ChatpadTransport\ChatpadTransport.lib` |
+| Release library | `artifacts\bin\x64\Release\ChatpadTransport\ChatpadTransport.lib` |
+| Debug test executable | `artifacts\bin\x64\Debug\ChatpadTransportTests\ChatpadTransportTests.exe` |
+| Release test executable | `artifacts\bin\x64\Release\ChatpadTransportTests\ChatpadTransportTests.exe` |
+
 ## Kernel compatibility compile check
 
 This isolated static-library build compiles `ChatpadActivationRequests.c`,
 `ChatpadActivationSequence.c`, `ChatpadActivationExecutor.c`,
-`ChatpadKeyboardParser.c`, `ChatpadProtocolStateMachine.c`, and their shared
-public headers as C with the WDK kernel toolchain. It is compile-time
+`ChatpadKeyboardParser.c`, `ChatpadProtocolStateMachine.c`,
+`ChatpadTransportAdapter.c`, and their shared public headers as C with the WDK
+kernel toolchain. It is compile-time
 compatibility validation only: it has no entry point, is not referenced by
 `ChatpadFilter`, and does not install, load, sign, package, deploy, or access
 hardware. It never produces a `.sys`.

@@ -3,6 +3,7 @@
 #include "ChatpadActivationSequence.h"
 #include "ChatpadKeyboardParser.h"
 #include "ChatpadProtocolStateMachine.h"
+#include "ChatpadTransportAdapter.h"
 
 typedef char ChatpadCompileCheckByteIsEightBits[(sizeof(ChatpadUInt8) == 1) ? 1 : -1];
 typedef char ChatpadCompileCheckSizeMatchesPointer[(sizeof(ChatpadSize) == sizeof(void *)) ? 1 : -1];
@@ -90,4 +91,35 @@ ChatpadActivationExecutionResult ChatpadProtocolKernelActivationExecutorCompileC
     sink.OnDelayMetadata = ChatpadProtocolKernelActivationExecutorDelayCallback;
 
     return ChatpadExecuteActivationPlan(&sink, &summary);
+}
+
+static ChatpadTransportResult ChatpadProtocolKernelTransportOperationCallback(
+    void *context,
+    const ChatpadTransportOperation *operation)
+{
+    (void)context;
+    (void)operation;
+    return CHATPAD_TRANSPORT_OK;
+}
+
+ChatpadTransportResult ChatpadProtocolKernelTransportCompileCheck(void)
+{
+    ChatpadTransportAdapterState state;
+    ChatpadTransportOperationSink sink;
+    ChatpadActivationExecutionSummary summary;
+    ChatpadTransportResult result;
+
+    result = ChatpadTransportInitialize(&state);
+    if (result != CHATPAD_TRANSPORT_OK) {
+        return result;
+    }
+
+    result = ChatpadTransportBeginGeneration(&state, 1u);
+    if (result != CHATPAD_TRANSPORT_OK) {
+        return result;
+    }
+
+    sink.Context = 0;
+    sink.OnOperation = ChatpadProtocolKernelTransportOperationCallback;
+    return ChatpadTransportEmitActivationPlan(&state, 1u, &sink, &summary);
 }

@@ -530,3 +530,31 @@ only if necessary by a full controller reconnect—to correlate topology or inpu
 behavior. It must be explicitly authorized, define a healthy XInput baseline,
 permit only one physical change at a time, send no activation traffic unless
 separately authorized, and use the gate-6 recovery and hard-stop criteria.
+
+## 24. Transport-adapter contract checkpoint
+
+Branch `feature/transport-adapter-contract` completed the smallest safe task
+from section 22 without changing the Windows attachment decision. The new
+`src/transport/ChatpadTransport/` static library is a neutral contract and
+mockable adapter surface only:
+
+- caller-owned adapter state;
+- explicit device generation;
+- generation-bound operation tokens;
+- activation request value copies from the existing protocol descriptors;
+- delay metadata value copies from the existing activation executor;
+- cancellation, stale generation, stale completion, duplicate completion, and
+  unknown completion classification;
+- callback-based plan emission to a caller-supplied sink.
+
+The transport contract intentionally has no WDF/WDM/USB/HID/SetupAPI/
+Configuration Manager/WinUSB/IOCTL/URB/device-handle/endpoint/pipe behavior,
+does not sleep or run timers, and does not interpret responses, readiness,
+acknowledgements, retries, or hardware success. The test-only mock sink lives
+under `tests/transport/fixtures/` and records bounded operations for
+deterministic offline tests.
+
+This checkpoint satisfies Gate 5 only at the portable/mock contract level. It
+does not prove Candidate A can access default control or incoming Chatpad data,
+and it does not authorize driver installation, live hardware requests, or
+transport traffic.

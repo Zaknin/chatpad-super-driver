@@ -12,33 +12,27 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{C3D4E5F6-A7B8-4901-CDEF-012345678901}</ProjectGuid>
-    <RootNamespace>ChatpadProtocolKernelCompileCheck</RootNamespace>
-    <ProjectName>ChatpadProtocolKernelCompileCheck</ProjectName>
-    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
-    <DriverType>KMDF</DriverType>
+    <ProjectGuid>{D4E5F6A7-B8C9-4012-DEF0-123456789012}</ProjectGuid>
+    <RootNamespace>ChatpadTransport</RootNamespace>
+    <ProjectName>ChatpadTransport</ProjectName>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <DriverTargetPlatform>Universal</DriverTargetPlatform>
-    <TargetVersion>Windows10</TargetVersion>
+    <PlatformToolset>v143</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <SignMode>Off</SignMode>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <DriverTargetPlatform>Universal</DriverTargetPlatform>
-    <TargetVersion>Windows10</TargetVersion>
+    <PlatformToolset>v143</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <SignMode>Off</SignMode>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -54,22 +48,26 @@
   <PropertyGroup Label="UserMacros" />
 
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(RepoRoot)\artifacts\bin\x64\Debug\ChatpadProtocolKernelCompileCheck\</OutDir>
-    <IntDir>$(RepoRoot)\artifacts\obj\x64\Debug\ChatpadProtocolKernelCompileCheck\</IntDir>
+    <OutDir>$(RepoRoot)\artifacts\bin\x64\Debug\ChatpadTransport\</OutDir>
+    <IntDir>$(RepoRoot)\artifacts\obj\x64\Debug\ChatpadTransport\</IntDir>
+    <CompileAs>CompileAsC</CompileAs>
   </PropertyGroup>
 
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(RepoRoot)\artifacts\bin\x64\Release\ChatpadProtocolKernelCompileCheck\</OutDir>
-    <IntDir>$(RepoRoot)\artifacts\obj\x64\Release\ChatpadProtocolKernelCompileCheck\</IntDir>
+    <OutDir>$(RepoRoot)\artifacts\bin\x64\Release\ChatpadTransport\</OutDir>
+    <IntDir>$(RepoRoot)\artifacts\obj\x64\Release\ChatpadTransport\</IntDir>
+    <CompileAs>CompileAsC</CompileAs>
   </PropertyGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(RepoRoot)\src\transport\ChatpadTransport;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(RepoRoot)\src\protocol\ChatpadProtocol;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Lib>
+      <AdditionalOptions>/ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -78,28 +76,18 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(RepoRoot)\src\transport\ChatpadTransport;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(RepoRoot)\src\protocol\ChatpadProtocol;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Lib>
+      <AdditionalOptions>/ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationExecutor.h" />
-    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationRequests.h" />
-    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationSequence.h" />
-    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.h" />
-    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.h" />
-    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolTypes.h" />
-    <ClInclude Include="..\..\..\src\transport\ChatpadTransport\ChatpadTransportAdapter.h" />
+    <ClInclude Include="ChatpadTransportAdapter.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ChatpadProtocolKernelCompileCheck.c" />
-    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationExecutor.c" />
-    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationRequests.c" />
-    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationSequence.c" />
-    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.c" />
-    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.c" />
-    <ClCompile Include="..\..\..\src\transport\ChatpadTransport\ChatpadTransportAdapter.c" />
+    <ClCompile Include="ChatpadTransportAdapter.c" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

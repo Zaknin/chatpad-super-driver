@@ -6,7 +6,11 @@ Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadFilter", "src\driver
 EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocol", "src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj", "{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}"
 EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadTransport", "src\transport\ChatpadTransport\ChatpadTransport.vcxproj", "{D4E5F6A7-B8C9-4012-DEF0-123456789012}"
+EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocolTests", "tests\protocol\ChatpadProtocolTests.vcxproj", "{B2C3D4E5-F6A7-4890-BCDE-F01234567890}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadTransportTests", "tests\transport\ChatpadTransportTests.vcxproj", "{E5F6A7B8-C9D0-4123-EF01-234567890123}"
 EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocolKernelCompileCheck", "tests\kernel\ChatpadProtocolKernelCompileCheck\ChatpadProtocolKernelCompileCheck.vcxproj", "{C3D4E5F6-A7B8-4901-CDEF-012345678901}"
 EndProject
@@ -24,10 +28,18 @@ Global
 		{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}.Debug|x64.Build.0 = Debug|x64
 		{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}.Release|x64.ActiveCfg = Release|x64
 		{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}.Release|x64.Build.0 = Release|x64
+		{D4E5F6A7-B8C9-4012-DEF0-123456789012}.Debug|x64.ActiveCfg = Debug|x64
+		{D4E5F6A7-B8C9-4012-DEF0-123456789012}.Debug|x64.Build.0 = Debug|x64
+		{D4E5F6A7-B8C9-4012-DEF0-123456789012}.Release|x64.ActiveCfg = Release|x64
+		{D4E5F6A7-B8C9-4012-DEF0-123456789012}.Release|x64.Build.0 = Release|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.ActiveCfg = Debug|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.Build.0 = Debug|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Release|x64.ActiveCfg = Release|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Release|x64.Build.0 = Release|x64
+		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Debug|x64.ActiveCfg = Debug|x64
+		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Debug|x64.Build.0 = Debug|x64
+		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Release|x64.ActiveCfg = Release|x64
+		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Release|x64.Build.0 = Release|x64
 		{C3D4E5F6-A7B8-4901-CDEF-012345678901}.Debug|x64.ActiveCfg = Debug|x64
 		{C3D4E5F6-A7B8-4901-CDEF-012345678901}.Debug|x64.Build.0 = Debug|x64
 		{C3D4E5F6-A7B8-4901-CDEF-012345678901}.Release|x64.ActiveCfg = Release|x64

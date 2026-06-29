@@ -6,6 +6,12 @@ parser, activation-sequence planner, mocked activation executor contract, and
 transport-independent state machine compile as C with the
 `WindowsKernelModeDriver10.0` toolset.
 
+It also compiles the WDF-independent transport-adapter public header and
+production source. The transport check covers caller-owned state initialization,
+generation begin, callback-based activation-plan emission, and summary output
+without creating or referencing WDF requests, USB targets, handles, endpoints,
+or driver callbacks.
+
 It is a compile-time compatibility check only. The project has no entry point,
 driver object, callbacks, device or transport code, USB, HID, IOCTL, PnP,
 power, registry, service, install, package, signing, deployment, or hardware
@@ -18,6 +24,8 @@ construction. The activation-sequence check compiles sequence-count access and
 planner step construction. The activation-executor check compiles sink
 callbacks and execution-summary output. The state-machine check compiles
 initialization, reset, parser-result mapping, and abstract-event application.
+The transport check compiles the adapter's generation-bound operation emission
+surface against the same portable activation executor.
 It does not decode raw initialization/status forms and introduces no runtime
 driver integration.
 

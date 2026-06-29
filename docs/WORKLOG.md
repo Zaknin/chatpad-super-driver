@@ -880,3 +880,126 @@
   deployment, loading, capture, elevation, source/project/legacy edit, or
   external-skill modification occurred. The required Git push is the only
   authorized network action.
+
+## 2026-06-29T22:15+04:00 — Mocked transport adapter contract
+
+- **Objective:** Add a kernel-safe, WDF-independent transport-adapter contract
+  with a fully mocked deterministic implementation/test seam, validate it in
+  user mode and WDK compile-only mode, document the state, commit, and push
+  `feature/transport-adapter-contract`.
+- **Starting branch and commit:** `feature/transport-adapter-contract` /
+  `37326ec5cc9c3745ee692f9250904475de0af7dd`; clean tree; tracking
+  `origin/feature/transport-adapter-contract`; prohibited commit `6502452`
+  not an ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` still described the completed
+  `analysis/windows11-transport-architecture` branch. They were replaced for
+  this branch before final handoff.
+- **Preconditions and investigation:** Read `AGENTS.md`, continuation docs,
+  current architecture, protocol documentation, build documentation, recent
+  worklog entries, protocol production sources, protocol tests, kernel
+  compile-check project, driver skeleton sources/projects, solution, and build
+  scripts. Verified `legacy/` clean and prohibited ancestry absent before
+  editing.
+- **Files created:** `src/transport/ChatpadTransport/ChatpadTransportAdapter.h`,
+  `src/transport/ChatpadTransport/ChatpadTransportAdapter.c`,
+  `src/transport/ChatpadTransport/ChatpadTransport.vcxproj`,
+  `src/transport/ChatpadTransport/README.md`,
+  `tests/transport/ChatpadTransportTests.c`,
+  `tests/transport/ChatpadTransportTests.vcxproj`,
+  `tests/transport/fixtures/ChatpadTransportMock.h`,
+  `tests/transport/README.md`, and `tools/Test-ChatpadTransport.ps1`.
+- **Files modified:** `ChatpadWin11.sln`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.c`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.vcxproj`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/README.md`,
+  `docs/BUILDING.md`, `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`,
+  `docs/DECISIONS.md`, and this worklog.
+- **Implementation details:** `ChatpadTransport` is a native static library
+  with caller-owned state, explicit device generation, neutral operation
+  tokens, value-copied activation requests from existing protocol interfaces,
+  delay metadata emission from the existing activation executor, cancellation
+  state, stale-generation/stale-completion/duplicate/unknown completion
+  classification, and no mutable global state. The mock sink is test-only and
+  bounded.
+- **Build integration:** Added `ChatpadTransport.vcxproj` and
+  `ChatpadTransportTests.vcxproj` to `ChatpadWin11.sln` for Debug/Release x64,
+  with outputs and intermediates under `artifacts/`. The transport test
+  project references both `ChatpadTransport` and the existing `ChatpadProtocol`
+  library. The existing WDK static-library compatibility project now compiles
+  the transport public header and production source alongside protocol sources.
+- **Pre-edit validation:** `tools/Get-DriverBuildEnvironment.ps1` exit 0;
+  `tools/Test-RepositorySafety.ps1` PASS; `git diff --exit-code -- legacy`
+  exit 0; `git merge-base --is-ancestor 6502452 HEAD` exit 1 as required;
+  `tools/Test-ChatpadProtocolParser.ps1` PASS with `610/610`.
+- **During-task corrections:** The first transport wrapper run failed because
+  blank `OutDir`/`IntDir` MSBuild properties overrode project artifact paths;
+  the wrapper was corrected to let projects own their paths and pass
+  `RepoRoot`. The first C compile found an identifier collision between the
+  invalid-generation constant and result enum; the result enum was renamed to
+  `CHATPAD_TRANSPORT_INVALID_GENERATION_ID`. A test initially reused a cleared
+  failed-submit output; the test was corrected to preserve the pending token
+  before exercising cancellation completion.
+- **Transport validation:** `tools/Test-ChatpadTransport.ps1 -Configuration
+  Debug -Platform x64` PASS, `186/186`, `.lib` SHA-256
+  `37B41BF22E0AAAE3F4852CBE08E8D6B83EE301F67ED2B228553F4C5FD9AA53CA`,
+  executable SHA-256
+  `CC7386AE7ADE04A1B0108ACF6E75485AE209D727EDE55740B1C536BAAFE5479B`.
+  Release PASS, `186/186`, `.lib` SHA-256
+  `EB3EB6BC6C7983B46864B09B4774A538039AC22B1F417CAF67B51C1CBE4199D0`,
+  executable SHA-256
+  `63E7AB822B05BA7AC0FFD7A110C812F74689CEF4F43694B0B0DBDD0430A96B14`.
+- **Kernel compatibility validation:** Debug and Release
+  `tools/Test-ChatpadProtocolKernelCompatibility.ps1` PASS with the transport
+  source included. Debug compatibility library SHA-256
+  `7B8171E2B947EE12D906D0DAFC0352B8D5F24A7B038B9C834CF5AE95D3E6F2A0`;
+  Release SHA-256
+  `7FCB8B6753EE2DBC36370E50F81DDAAA23EFD6A45F2B05B2A4E4E3D7DBCD5792`.
+  Both reported no signing execution and no `.sys`, INF, CAT, certificate,
+  package, installer, or deployment output.
+- **Final validation:** `tools/Get-DriverBuildEnvironment.ps1` exit 0;
+  `tools\Test-RepositorySafety.ps1` PASS before and during validation;
+  `tools\Test-ChatpadProtocolParser.ps1` PASS, `610/610`, executable SHA-256
+  `06FF5D359854FBE663D71E92E6F56513C97438E921BEF6260205F99226E365A1`;
+  `tools\Test-ChatpadProtocol.ps1 -Configuration Debug -Platform x64` PASS,
+  `610/610`, library SHA-256
+  `5131DEEF21E5B254DA7800C5C8C7168604A69AA89238FBCE3C4F6E72319EBFFA`,
+  executable SHA-256
+  `251EB0C0A977E6A089212A16B07E625E39C8BC71E5B2196ABC6127EFD6CF341B`;
+  Release PASS, `610/610`, library SHA-256
+  `15AB8A9AD8ECEAF0DA590F2CCE13A62FF16B19B7A068BFFF32F1C86C84A7B783`,
+  executable SHA-256
+  `FEC058CF00DFF26D107F7FE534744EB1DF361418B49FA7943EC347CB290CE559`.
+  `tools\Build-Driver.ps1 -Configuration Debug -Platform x64` PASS,
+  `Authenticode.NotSigned`, no SignTool execution, driver SHA-256
+  `0e03c2cce031a79724d4d1c66abe627b396c19ec8ca784b7ebad477186f0d835`;
+  Release PASS, `Authenticode.NotSigned`, no SignTool execution, driver
+  SHA-256 `2fb451e08e5be8bbfe403e495ffdf75b6672a6b3d74bc2e1f657bd5991bf9797`.
+- **Final safety and isolation checks:** Final
+  `tools\Test-RepositorySafety.ps1` PASS; `git diff --check` exit 0;
+  `git diff --exit-code -- legacy` exit 0; prohibited-ancestor check exit 1
+  as required. `ChatpadFilter.vcxproj` has no `ProjectReference`,
+  `ChatpadProtocol`, or `ChatpadTransport` entries and lists only `driver.c`
+  and `device.c` as compile sources. `ChatpadWin11.sln` has no
+  `ProjectDependencies` section for `ChatpadFilter`. The latest Debug and
+  Release diagnostic driver-build logs contain no protocol or transport linker
+  inputs in the `ChatpadFilter` build section.
+- **Generated artifact locations:** `artifacts\bin\x64\Debug\ChatpadTransport\`,
+  `artifacts\bin\x64\Release\ChatpadTransport\`,
+  `artifacts\bin\x64\Debug\ChatpadTransportTests\`,
+  `artifacts\bin\x64\Release\ChatpadTransportTests\`,
+  `artifacts\bin\x64\<Configuration>\ChatpadProtocolKernelCompileCheck\`, and
+  timestamped logs under `artifacts\logs\`.
+- **Commit and push:** Commit exactly
+  `feat: add mocked transport adapter contract`; push only
+  `origin/feature/transport-adapter-contract`. The self-referential commit
+  hash is reported after commit and push rather than embedded here.
+- **Next task:** Non-installable KMDF lower-filter lifecycle scaffold with
+  context/generation/lifecycle bookkeeping, cancel/rundown, and logging stubs
+  only; no INF, USB/hardware behavior, install, package, sign, deploy, or load.
+- **Safety:** No `legacy/` edits; no WDF/WDM/USB/HID/SetupAPI/Configuration
+  Manager/WinUSB/IOCTL/URB/device-handle/endpoint/pipe/ETW/capture/sleep/
+  timer/thread/retry/readiness/response/driver-callback/INF/CAT/sign/package/
+  install/load/deploy behavior; no protocol/transport source linked or
+  compiled into `ChatpadFilter`.

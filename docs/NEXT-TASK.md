@@ -2,73 +2,90 @@
 
 ## Exact current state
 
-- **Completed branch:** `analysis/windows11-transport-architecture`.
+- **Completed branch:** `feature/transport-adapter-contract`.
 - **Completed task starting commit:**
-  `6881fc492af50b7f28977d306fad369a2f6a309f`.
-- **Architecture checkpoint:** commit named
-  `docs: design windows 11 chatpad transport architecture`; verify its full
-  hash against `origin/analysis/windows11-transport-architecture` before
-  beginning.
-- **Authoritative design:**
-  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`.
-- The conditional design direction is a device-specific lower filter on the
-  physical `USB\VID_045E&PID_028E`/`XnaComposite` node beneath `xusb22`.
-- No attachment candidate is preferred yet because current default-control and
-  Chatpad input-transfer access are unproven.
-- No runtime, project, INF, installation, or hardware behavior was added.
+  `37326ec5cc9c3745ee692f9250904475de0af7dd`.
+- **Completed commit message:** `feat: add mocked transport adapter contract`.
+- **Transport library:** `src/transport/ChatpadTransport/ChatpadTransport.vcxproj`.
+- **Transport tests:** `tests/transport/ChatpadTransportTests.vcxproj`.
+- **Validation checkpoint:** transport tests pass `186/186` in Debug and
+  Release; protocol direct tests pass `610/610`; kernel compatibility includes
+  protocol plus transport as a `.lib`-only WDK build; driver compile-only
+  regressions remain unsigned and disconnected from protocol/transport.
+- **Safety checkpoint:** no WDF request, USB/HID operation, IOCTL, URB, device
+  handle, endpoint/pipe assumption, INF/CAT/certificate/package/sign/install/
+  deploy/load behavior, capture, timing, retry, readiness, response, or live
+  hardware behavior exists in the transport layer.
 
 ## Next recommended objective
 
-Define a kernel-safe transport-adapter interface and fully mocked,
-WDF-independent implementation. Connect the existing portable activation
-executor to the neutral contract, model cancellation/device-generation
-outcomes, and test descriptor/result translation without creating a WDF
-request or hardware behavior.
+Create a non-installable KMDF lower-filter lifecycle scaffold with per-device
+context, generation bookkeeping, admission stop, cancellation/rundown state,
+and diagnostic logging stubs only.
+
+The scaffold must not include INF/package/signing/install/load behavior, USB
+request translation, hardware I/O, activation traffic, endpoint/pipe discovery,
+continuous readers, VHF output, or keyboard semantics.
 
 ## Required branch and starting commit
 
-- Create a new `feature/` branch from the exact pushed architecture checkpoint
-  named above.
-- Require `git rev-parse HEAD` to match
-  `origin/analysis/windows11-transport-architecture` and a clean tree before
-  editing.
+- Create the next branch from the exact pushed
+  `feature/transport-adapter-contract` commit named
+  `feat: add mocked transport adapter contract`.
+- Require a clean tree and verify:
+
+```powershell
+git status --short --branch
+git branch --show-current
+git rev-parse HEAD
+git merge-base --is-ancestor 6502452 HEAD
+```
+
+The prohibited-ancestor check must exit `1`; exit `0` is a hard stop.
 
 ## Preconditions
 
-1. Read `AGENTS.md` and all continuity documents.
-2. Read `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`, especially sections
-   11, 13, 14, 18, 20, and 22.
-3. Inspect the current executor contract and tests before designing the seam.
-4. Verify repository safety, legacy immutability, and prohibited ancestry.
+1. Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+   `docs/NEXT-TASK.md`, and the latest relevant `docs/WORKLOG.md` entries.
+2. Inspect `src/driver/ChatpadFilter/` and prove the current skeleton before
+   editing it.
+3. Inspect `src/transport/ChatpadTransport/` and
+   `tests/transport/README.md` to preserve the transport boundary.
+4. Run repository safety and legacy immutability checks before editing.
 
 ## Safety restrictions
 
-- Portable contract, mocks, and offline tests only.
-- No WDF/USB/HID/IOCTL/URB request representation or submission.
-- No device/interface handle, live enumeration, capture, descriptor query,
-  timing sleep, or hardware operation.
-- No INF, CAT, certificate, packaging, signing, installation, deployment,
-  loading, service, or Device Manager change.
-- Do not encode endpoint addresses, interface/pipe ordinals, response bytes,
-  retries, acknowledgements, readiness, or periodic-request semantics.
-- Keep `legacy/` immutable and generated outputs beneath ignored `artifacts/`.
+- Keep the task compile-only and non-installable.
+- Do not add or modify INF, CAT, certificate, package, signing, installation,
+  deployment, service, load, Device Manager, or live hardware behavior.
+- Do not send USB/HID/control/input/output requests and do not open device or
+  interface handles.
+- Do not encode endpoint addresses, interface numbers, pipe ordinals, response
+  bytes, acknowledgement, readiness, retry, timeout, or periodic-request
+  semantics.
+- Do not link `ChatpadTransport` or `ChatpadProtocol` into `ChatpadFilter`
+  unless a later task explicitly authorizes that integration.
+- Do not modify `legacy/`.
+- Keep generated outputs under ignored `artifacts/`.
 
 ## Acceptance criteria
 
-- The adapter contract uses only kernel-safe neutral value types and preserves
-  existing portable descriptor ownership.
-- The mocked implementation covers success, failure, cancellation, removal,
-  stale generation, and no-next-step-after-cancel behavior.
-- The executor remains independent of WDF and hardware.
-- No default-control or input-path capability is claimed or implemented.
-- All applicable user-mode tests and kernel compile checks pass, repository
-  safety passes, and driver/project isolation is documented.
+- The driver scaffold compiles Debug/Release as an unsigned `.sys` skeleton.
+- Per-device context/generation/cancel/rundown bookkeeping is deterministic and
+  contains no hardware I/O.
+- `ChatpadFilter` still has no protocol/transport project references or linked
+  protocol/transport sources.
+- Existing protocol tests remain `610/610`; transport tests remain `186/186`;
+  kernel compatibility remains `.lib` only; repository safety passes.
+- Continuation docs accurately record the new state and no unsupported hardware
+  capability is claimed.
 
 ## Inspect first
 
-1. `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`
-2. `src/protocol/ChatpadProtocol/`
-3. `tests/ChatpadProtocolTests/`
-4. `tests/kernel/ChatpadProtocolKernelCompileCheck/`
-5. `src/driver/ChatpadFilter/`
-6. `docs/DECISIONS.md`
+1. `src/driver/ChatpadFilter/ChatpadFilter.vcxproj`
+2. `src/driver/ChatpadFilter/driver.c`
+3. `src/driver/ChatpadFilter/device.c`
+4. `src/transport/ChatpadTransport/ChatpadTransportAdapter.h`
+5. `tests/transport/README.md`
+6. `tools/Build-Driver.ps1`
+7. `tools/Test-RepositorySafety.ps1`
