@@ -12,6 +12,12 @@ This document contains ONLY confirmed protocol evidence extracted from the immut
 - No build configurations modified
 - No binaries or generated files created
 
+The later connected-device observation is documented separately in
+`docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`. That read-only inventory does not
+change any protocol conclusion here: it identifies the Windows device stack but
+does not expose endpoint layout, activation transport, response bytes, or ready
+semantics.
+
 ---
 
 ## Evidence Sources

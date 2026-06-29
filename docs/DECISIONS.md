@@ -4,6 +4,37 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Separate raw machine inventory from stable driver-design facts
+
+**Decision:** Exact connected-device instance IDs, container GUIDs, symbolic
+interface paths, location paths, serial-like instance components, and raw
+registry/topology metadata remain only beneath ignored
+`artifacts/device-inventory/`. Committed documentation records redacted identity
+patterns and stable design facts such as VID/PID, hardware/compatible IDs,
+class, service, driver binding, interface-class GUIDs, and topology shape.
+
+**Rationale:** Exact raw values are necessary to prove one inventory run and
+compare baseline/final device state, but several values identify this machine,
+physical port, or device instance and are not required for portable design.
+
+**Alternatives rejected:**
+
+* Commit the canonical inventory JSON — would retain machine-specific paths,
+  GUIDs, and identifiers in repository history.
+* Remove exact values from generated output — would weaken auditability and
+  prevent exact local correlation.
+* Treat missing cached properties as physical-device absence — a selected
+  read-only source can be incomplete.
+
+**Consequences:**
+
+* `tools/Get-ConnectedChatpadInventory.ps1` writes all raw output only beneath
+  ignored artifacts.
+* Stable documentation distinguishes direct observation, derived relationship,
+  inference, and unresolved detail.
+* Future tasks must not promote exact raw identifiers into tracked files unless
+  they are independently proven non-unique and technically necessary.
+
 ## 2026-06-29 — Represent activation sequencing and legacy timing as declarative metadata
 
 **Decision:** The activation-sequence planner exposes exactly six steps through

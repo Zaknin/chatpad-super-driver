@@ -681,3 +681,96 @@
   transition, hardware, USB, HID, IOCTL, installation, signing, packaging,
   deployment, loading, capture, external-skill, driver runtime, service, INF,
   CAT, certificate, installer, or private-machine artifact action occurred.
+
+## 2026-06-29T18:40+04:00 — Connected Xbox 360 controller and Chatpad inventory
+
+- **Objective:** Perform and document a strictly read-only Windows device,
+  interface, driver-binding, and topology inventory for the connected original
+  Xbox 360 controller and attached original Chatpad; add a repeatable
+  cross-version collector; validate, commit, and push the requested branch.
+- **Starting branch and commit:** `analysis/connected-device-inventory` /
+  `1159adc49e50d694186da67ce105fa07d81f7987`; tree clean; prohibited commit
+  `6502452` not an ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and `docs/NEXT-TASK.md`
+  correctly described the parent activation-executor checkpoint but still
+  named `feature/mocked-activation-executor`. They were updated for the
+  dedicated inventory branch and the observed device state before being used
+  as continuation truth.
+- **Investigation:** Read all required repository, protocol, initialization,
+  build, legacy-architecture, blocker, and protocol README documents. Verified
+  the prior executor commit at HEAD, repository safety, legacy immutability,
+  prohibited ancestry, and controller presence before editing.
+- **Implementation:** Added `tools/Get-ConnectedChatpadInventory.ps1`. It finds
+  the repository from its script path; uses only PnP, CIM, and read-only
+  registry metadata; captures minimal baseline/final target snapshots; emits
+  canonical JSON plus human-readable and focused JSON files beneath a unique
+  ignored UTC directory; preserves Unicode as UTF-8; opens no device/interface
+  handle; and fails on collection errors or target-state differences.
+- **Observed controller:** exact instance ID retained in raw artifacts;
+  redacted pattern `USB\VID_045E&PID_028E\<device instance>`; hardware IDs
+  `USB\VID_045E&PID_028E&REV_0114` and
+  `USB\VID_045E&PID_028E`; class `XnaComposite` /
+  `{D61CA365-5AF4-4486-998B-9DB4734C6CA3}`; service `xusb22`; Microsoft
+  `xusb22.inf` version `10.0.26100.8521`, date 2026-05-16, signer Microsoft
+  Windows, matching ID `USB\VID_045E&PID_028E`, file `xusb22.sys`.
+- **Topology and visibility:** controller has one `IG_01` USB HID child and one
+  HID game-controller grandchild; all three share a container. A generic USB
+  hub is the direct parent. No separately Chatpad-labeled PnP node or interface
+  was observed. The related HID branch cannot be attributed to Chatpad from
+  cached inventory alone.
+- **Interfaces and filters:** controller registrations include
+  `GUID_DEVINTERFACE_USB_DEVICE` and
+  `{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}`; the HID collection registers
+  `GUID_DEVINTERFACE_HID`. No target device-level or XnaComposite/HIDClass
+  class-level upper/lower filters were observed.
+- **Transport boundary:** endpoint layout and activation transport target are
+  unavailable from cached inventory. The physical USB/XnaComposite node is a
+  plausible device-specific future filter attachment point only; no endpoint,
+  request, or safe access mechanism is proven.
+- **Files created:** `tools/Get-ConnectedChatpadInventory.ps1` and
+  `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/DECISIONS.md`, `docs/CHATPAD-PROTOCOL.md`, and append-only
+  `docs/WORKLOG.md`.
+- **Initial validation:** `tools/Test-RepositorySafety.ps1` PASS;
+  `git diff --exit-code -- legacy` exit 0; prohibited-ancestor check exit 1 as
+  required; read-only PnP presence query found the controller.
+- **Read-only prototype results:** one early `Win32_PnPSignedDriver` WQL filter
+  was rejected as an invalid query (exit 1), so the collector uses an
+  in-memory exact DeviceID match. One broad per-node property prototype was
+  terminated after repeated slow queries; the collector instead expands only
+  the controller relationship graph. An intermediate dual-version validation
+  exposed an empty-array enumeration bug and exited 1 in both shells; the
+  ordinal array helper was corrected before the final runs. None of these
+  diagnostics opened a device handle or changed device state.
+- **Collector validation:** final PowerShell 7.6.3 run exit 0 at
+  `artifacts/device-inventory/20260629T143606331Z/`; final Windows PowerShell
+  5.1.26100.8655 run exit 0 at
+  `artifacts/device-inventory/20260629T143618407Z/`. Both report unchanged
+  baseline/final status, problem code, service, INF, and present state. Stable
+  controller identity, binding, topology, HID, and interface-class fields match
+  exactly across versions.
+- **Generated artifacts:** each final directory contains `inventory.json`,
+  `inventory.txt`, `candidate-devices.json`, `relationships.json`,
+  `driver-bindings.json`, and `interfaces.json`; all remain ignored and
+  untracked.
+- **Final validation:** artifact fact assertions PASS; exact cross-version
+  stable-field comparison PASS; PowerShell AST command/API safety scan PASS;
+  tracked-file private-identifier scan PASS; artifact containment/tracking and
+  changed-file scope checks PASS; `tools/Test-RepositorySafety.ps1` PASS;
+  `git diff --check` exit 0; `git diff --exit-code -- legacy` exit 0; prohibited
+  ancestry check exit 1 as required.
+- **Builds:** not run because protocol, driver, runtime source, and project
+  files are outside scope and unchanged.
+- **Commit and push:** commit exactly
+  `docs: inventory connected xbox chatpad device stack`; push only
+  `origin/analysis/connected-device-inventory`.
+- **Remaining limitation:** a separately authorized observation capable of
+  proving USB interface/endpoint or supported interface semantics is still
+  required before real transport implementation.
+- **Safety:** no handle, USB request, HID operation, IOCTL, URB, activation,
+  input read, output write, capture, trace, state-changing device command,
+  driver install/bind/update/export/stage/sign/package/deploy/load, elevation,
+  inventory/dependency network request, source/project edit, legacy edit, or
+  external-skill modification occurred. The required Git push is the only
+  authorized network action.

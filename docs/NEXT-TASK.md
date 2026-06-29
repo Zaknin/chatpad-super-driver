@@ -2,100 +2,78 @@
 
 ## Exact current state
 
-- **Branch:** `feature/mocked-activation-executor`.
-- **Starting checkpoint for the completed task:**
-  `e1de1860e2f2ea21146e8de8aeec19892d2c9203`.
-- **Activation-executor checkpoint:** commit named
-  `feat: add mocked activation executor`; verify its full hash with
-  `git rev-parse HEAD` before editing.
-- `src/protocol/ChatpadProtocol/ChatpadActivationRequests.h` and `.c` expose
-  exactly six confirmed activation request descriptors as caller-owned values.
-- `src/protocol/ChatpadProtocol/ChatpadActivationSequence.h` and `.c` expose
-  exactly six activation sequence steps as caller-owned values. Step index and
-  request index are identical for all six steps, and each step obtains its
-  request descriptor from `ChatpadBuildActivationRequest`.
-- `src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h` and `.c` expose a
-  transport-independent activation execution contract that consumes the planner,
-  emits request and nonzero delay metadata callbacks, and records only
-  planner/callback outcomes in a caller-provided summary.
-- Current successful executor callback order is:
-  request 0, delay 0 12 ms, request 1, delay 1 12 ms, request 2, delay 2
-  12 ms, request 3, delay 3 12 ms, request 4, delay 4 12 ms, request 5,
-  delay 5 12 ms.
-- Timing metadata is declarative only:
-  `DelayBeforeMilliseconds = 0` for all six steps and
-  `DelayAfterMilliseconds = 12` for all six steps. The executor emits nonzero
-  delay metadata but never sleeps or enforces time.
-- Request/step index 4 is the only descriptor with outbound payload bytes,
-  exactly `09 00`.
-- No request descriptor, sequence step, executor fixture, or test contains an
-  unsupported `90 00` payload.
-- Device-to-host requests represent only the expected data-stage length; they
-  contain no fabricated response bytes.
-- Parser, state-machine, activation-request, activation-sequence,
-  activation-executor, user-mode Debug/Release, kernel compatibility
-  Debug/Release, and driver Debug/Release validation pass.
-- `ChatpadFilter` remains unsigned, nonfunctional, and isolated from
-  `ChatpadProtocol.lib`, activation-request source, activation-sequence planner
-  source, and activation-executor source.
+- **Completed branch:** `analysis/connected-device-inventory`.
+- **Completed task starting commit:**
+  `1159adc49e50d694186da67ce105fa07d81f7987`.
+- **Inventory checkpoint:** commit named
+  `docs: inventory connected xbox chatpad device stack`; verify its full hash
+  with `git rev-parse HEAD` before beginning the next task.
+- Authoritative result:
+  `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`.
+- The controller is USB `045E:028E`, revision `0114`, class `XnaComposite`,
+  service `xusb22`, and Microsoft `xusb22.inf` version `10.0.26100.8521` owns
+  the node.
+- No separately identifiable Chatpad node was observed. One related USB HID
+  function and HID game-controller collection are present but are not proven
+  Chatpad transports.
+- Controller interface registrations include
+  `GUID_DEVINTERFACE_USB_DEVICE` and opaque class GUID
+  `{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}`. A related HID interface is visible.
+- No target device/class filters are currently configured.
+- Endpoint layout and the activation transport target remain unresolved.
 
 ## Next recommended objective
 
-Perform a read-only Windows device/interface inventory for a connected original
-Xbox 360 controller and Chatpad.
-
-The inventory should identify device IDs, VID/PID values, compatible IDs,
-service/driver bindings, exposed interfaces, and descriptors obtainable
-without vendor control requests, replacing drivers, installing software, or
-changing device state.
+Create a documentation-only Windows 11 attachment-point and transport
+architecture design. Compare a device-specific lower filter at the
+USB/XnaComposite controller node with the HID and opaque interface boundaries,
+identify the smallest evidence gap for each option, and define hard stop gates
+before any runtime implementation.
 
 ## Required branch and starting commit
 
-- Continue from the pushed `feature/mocked-activation-executor` checkpoint or
-  create a new dedicated branch from that exact commit if the next task should
-  be isolated.
-- Require a clean working tree and record the full starting hash before any
-  read-only inventory work.
+- Create `design/windows11-attachment-architecture` from the exact pushed
+  inventory checkpoint named above.
+- Require the full `git rev-parse HEAD` value to match
+  `origin/analysis/connected-device-inventory` and require a clean tree before
+  editing.
 
 ## Preconditions
 
 1. Read `AGENTS.md` and all continuity documents.
-2. Read `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`.
-3. Read `docs/CHATPAD-PROTOCOL.md`.
-4. Read `src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h`.
-5. Re-run repository safety, legacy-diff, prohibited-ancestor, and direct
-   protocol tests before editing if documentation changes are expected.
+2. Read `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md` and the two final raw
+   inventories if they remain available locally.
+3. Read `docs/LEGACY-ARCHITECTURE.md`, `docs/WIN11-BLOCKERS.md`, and
+   `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`.
+4. Verify repository safety, legacy immutability, and prohibited ancestry.
 
 ## Safety restrictions
 
-- Keep `legacy/` immutable and do not execute it.
-- Read-only inventory only.
-- Do not install software, replace drivers, bind drivers, update drivers,
-  enable/disable devices, restart devices, write registry state, load or unload
-  drivers, send USB/HID/IOCTL/vendor control requests, capture traffic, or
-  attempt activation.
-- Do not infer initialization success, ready state, acknowledgement, timeout,
-  retry, or response semantics from inventory metadata.
-- Store any generated command output or logs under ignored `artifacts/`.
+- Documentation and source inspection only.
+- Do not open a device/interface handle or query live USB/HID descriptors.
+- Do not send USB, HID, IOCTL, URB, activation, status, or keepalive traffic.
+- Do not install, bind, replace, package, sign, deploy, load, unload, or modify
+  any driver or device.
+- Do not modify protocol/runtime/driver source or build projects.
+- Keep `legacy/` immutable and keep machine-specific inventory under ignored
+  artifacts only.
 
 ## Acceptance criteria
 
-- Inventory commands are explicitly read-only and documented.
-- The report lists discovered controller/chatpad device IDs, VID/PID,
-  compatible IDs, service/driver bindings, interfaces, and descriptor metadata
-  available from Windows without changing state.
-- The report distinguishes facts observed on the current machine from protocol
-  conclusions.
-- No driver/runtime state is changed and no hardware control request is sent.
-- Repository safety still passes if docs are updated.
+- The design compares attachment options against observed device topology and
+  explicitly rejects class-wide impact where a device-specific scope exists.
+- Every proposed boundary identifies what Windows evidence supports it and
+  what remains unproven.
+- No interface/endpoint access is assumed from service names or class GUIDs.
+- The design defines the smallest separately authorized observation required
+  before transport implementation and includes abort criteria.
+- Repository safety passes and only documentation/continuity files change.
 
 ## Inspect first
 
-1. `AGENTS.md`
-2. `docs/PROJECT-STATE.md`
-3. `docs/DECISIONS.md`
-4. `docs/NEXT-TASK.md`
-5. `docs/WORKLOG.md`
-6. `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`
-7. `docs/CHATPAD-PROTOCOL.md`
-8. `src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h`
+1. `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`
+2. `tools/Get-ConnectedChatpadInventory.ps1`
+3. `docs/LEGACY-ARCHITECTURE.md`
+4. `docs/WIN11-BLOCKERS.md`
+5. `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`
+6. `docs/DECISIONS.md`
