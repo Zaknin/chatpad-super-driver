@@ -36,3 +36,8 @@ adapter would later be owned by a per-device KMDF bridge for bounded activation
 only. The adapter's 64-operation tracking remains unsuitable for continuous
 input; future repeated input reads require separate generation-bound ownership
 and endpoint/input evidence.
+
+The adjacent `src/transport/ChatpadControlSetup/` library owns pure structural
+translation from one activation descriptor to explicit setup bytes and
+data-stage metadata. It is independent of this generation/cancellation adapter
+and is likewise not linked into `ChatpadFilter`.

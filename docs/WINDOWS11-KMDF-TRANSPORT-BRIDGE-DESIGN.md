@@ -522,3 +522,30 @@ Explicit conclusions:
 - ETW, capture, descriptor queries, hardware enumeration, controller
   disconnect/reconnect, or Chatpad detach/reattach;
 - VHF or other keyboard output implementation.
+
+## 28. Pure control-setup translation checkpoint
+
+`src/transport/ChatpadControlSetup/` now implements Gate C as an isolated
+portable static library. `ChatpadTranslateActivationRequest` accepts a
+caller-provided descriptor and writes a caller-owned value containing exactly
+eight setup bytes, explicit data-stage direction, copied outbound bytes and
+length, and expected inbound length.
+
+The translator encodes `wValue`, `wIndex`, and `wLength` little-endian without
+packing or structure overlays. It rejects null arguments, invalid direction,
+direction-bit mismatch, host-to-device length mismatch, device-to-host
+outbound data, inbound-length mismatch, and outbound capacity overflow. Every
+failure with a non-null output clears the complete output deterministically.
+
+All six confirmed descriptors are obtained through
+`ChatpadBuildActivationRequest`; no request tuple is duplicated in production.
+Native Debug and Release tests pass `141/141`. The kernel compatibility project
+compiles the same header and source as C with the installed WDK and emits only
+its existing `.lib`. `ChatpadFilter` has no reference, source, solution
+dependency, or linker input for this module.
+
+This checkpoint is not WDF request formatting or submission. It creates no
+target, request, memory object, response buffer, queue, timer, work item,
+thread, handle, or transfer. Control-IN bytes and default-control access remain
+unresolved. Confirmed request 4 preserves `09 00`; confirmed fixtures contain
+no `90 00` payload.

@@ -602,3 +602,18 @@ WDF-independent Windows control-setup representation with offline tests and
 kernel compile validation only. That task must not create targets, requests,
 queues, timers, endpoints, INF/package/signing/install behavior, or hardware
 traffic.
+
+## 26. Pure control-setup translation checkpoint
+
+`ChatpadControlSetup` now provides the architecture's pure translation seam.
+It converts one caller-provided portable activation descriptor into explicit
+eight-byte setup data and caller-owned data-stage metadata. Multibyte fields
+are little-endian, outbound payload is copied by value, device-to-host
+descriptors carry only an expected inbound length, and zero-length requests
+have no data stage.
+
+The layer has no Windows, WDF, WDM, USB-header, HID, IOCTL, URB, target,
+request, endpoint, pipe, timer, thread, or hardware dependency. It does not
+prove that Candidate A can access the default control pipe, and it is not
+linked into `ChatpadFilter`. The next boundary is an isolated compile-only WDK
+formatter value conversion, not target/request creation or submission.

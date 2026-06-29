@@ -12,6 +12,12 @@ generation begin, callback-based activation-plan emission, and summary output
 without creating or referencing WDF requests, USB targets, handles, endpoints,
 or driver callbacks.
 
+The project also compiles `ChatpadControlSetup.h` and
+`ChatpadControlSetup.c` through the kernel toolchain. That check constructs one
+portable activation descriptor and translates it into caller-owned explicit
+setup bytes. It adds no platform header, packed overlay, WDF value, request,
+target, response buffer, runtime linkage, or hardware behavior.
+
 It is a compile-time compatibility check only. The project has no entry point,
 driver object, callbacks, device or transport code, USB, HID, IOCTL, PnP,
 power, registry, service, install, package, signing, deployment, or hardware

@@ -4,6 +4,7 @@
 #include "ChatpadKeyboardParser.h"
 #include "ChatpadProtocolStateMachine.h"
 #include "ChatpadTransportAdapter.h"
+#include "ChatpadControlSetup.h"
 
 typedef char ChatpadCompileCheckByteIsEightBits[(sizeof(ChatpadUInt8) == 1) ? 1 : -1];
 typedef char ChatpadCompileCheckSizeMatchesPointer[(sizeof(ChatpadSize) == sizeof(void *)) ? 1 : -1];
@@ -122,4 +123,18 @@ ChatpadTransportResult ChatpadProtocolKernelTransportCompileCheck(void)
     sink.Context = 0;
     sink.OnOperation = ChatpadProtocolKernelTransportOperationCallback;
     return ChatpadTransportEmitActivationPlan(&state, 1u, &sink, &summary);
+}
+
+ChatpadControlSetupResult ChatpadProtocolKernelControlSetupCompileCheck(void)
+{
+    ChatpadActivationRequest request;
+    ChatpadControlSetupTranslation translation;
+    ChatpadActivationBuildResult buildResult;
+
+    buildResult = ChatpadBuildActivationRequest(4u, &request);
+    if (buildResult != CHATPAD_ACTIVATION_BUILD_OK) {
+        return CHATPAD_CONTROL_SETUP_INVALID_PAYLOAD_LENGTH;
+    }
+
+    return ChatpadTranslateActivationRequest(&request, &translation);
 }

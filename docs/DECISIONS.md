@@ -4,6 +4,46 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 — Represent control setup as explicit caller-owned bytes
+
+**Decision:** Pure activation control-setup translation uses an eight-byte
+array for setup fields plus explicit data-stage direction, fixed-capacity
+outbound value bytes, outbound length, and expected inbound length. The
+translator validates the caller-provided `ChatpadActivationRequest`, clears the
+complete non-null output before validation, encodes 16-bit setup fields
+little-endian, and has no packed or on-wire structure overlay.
+
+**Rationale:** Explicit bytes make field order and endianness inspectable in
+user-mode tests and through the kernel compile toolchain without importing
+Windows, WDF, WDM, or USB headers. Caller-owned values avoid allocation,
+pointer lifetime, mutable global state, fabricated response storage, and
+coupling to future request formatting.
+
+**Alternatives rejected:**
+
+* Packed setup structure or cast overlay — creates unnecessary layout and
+  packing assumptions.
+* Returning payload or setup pointers — introduces lifetime and aliasing
+  concerns.
+* Deferring malformed direction or length validation — permits inconsistent
+  descriptors to cross the pure boundary.
+* Creating a response buffer for control-IN descriptors — response contents
+  and semantics remain unresolved.
+* Translating directly to a WDF setup type — mixes pure evidence translation
+  with the later compile-only framework formatting boundary.
+
+**Consequences:**
+
+* The six confirmed descriptors remain owned by
+  `ChatpadBuildActivationRequest`; the translator duplicates no request tuple.
+* Host-to-device payload length must equal setup `wLength` and fit capacity;
+  device-to-host descriptors must have no outbound payload and expected inbound
+  length must equal `wLength`.
+* Zero-length requests have no data stage. `09 00` is copied only for confirmed
+  request 4; arbitrary synthetic payload content remains structurally valid.
+* A later WDK formatter may consume this value, but it must remain isolated
+  from target/request creation, formatting, submission, and `ChatpadFilter`.
+
 ## 2026-06-30 — Use a per-device KMDF transport owner for future bridge work
 
 **Decision:** Future KMDF transport bridge work will use one per-device

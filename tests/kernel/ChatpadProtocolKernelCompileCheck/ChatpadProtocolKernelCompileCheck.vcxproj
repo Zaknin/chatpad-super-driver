@@ -68,7 +68,7 @@
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(RepoRoot)\src\transport\ChatpadTransport;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(RepoRoot)\src\transport\ChatpadTransport;$(RepoRoot)\src\transport\ChatpadControlSetup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
 
@@ -79,7 +79,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>CompileAsC</CompileAs>
-      <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(RepoRoot)\src\transport\ChatpadTransport;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(RepoRoot)\src\transport\ChatpadTransport;$(RepoRoot)\src\transport\ChatpadControlSetup;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
 
@@ -91,6 +91,7 @@
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolTypes.h" />
     <ClInclude Include="..\..\..\src\transport\ChatpadTransport\ChatpadTransportAdapter.h" />
+    <ClInclude Include="..\..\..\src\transport\ChatpadControlSetup\ChatpadControlSetup.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadProtocolKernelCompileCheck.c" />
@@ -100,6 +101,7 @@
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.c" />
     <ClCompile Include="..\..\..\src\transport\ChatpadTransport\ChatpadTransportAdapter.c" />
+    <ClCompile Include="..\..\..\src\transport\ChatpadControlSetup\ChatpadControlSetup.c" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

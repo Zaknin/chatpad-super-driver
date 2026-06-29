@@ -1256,3 +1256,103 @@
   device/interface open, USB/HID/IOCTL/URB, endpoint/pipe, WDF target, WDF
   request, queue, timer, work item, continuous reader, thread, ETW, capture,
   elevation, hardware enumeration, or external-skill action occurred.
+
+## 2026-06-30T00:35+04:00 — Pure control-setup translation
+
+- **Objective:** Implement a pure, WDF-independent translator from a
+  caller-provided `ChatpadActivationRequest` to explicit setup bytes and
+  caller-owned data-stage metadata; validate in user mode and through the WDK
+  kernel toolchain; document, commit, and push the result.
+- **Starting branch and commit:** `feature/control-setup-translation` /
+  `55e84722a73ce1d65fde2af829986e9ee5d66995`; clean tree tracking
+  `origin/feature/control-setup-translation`; prohibited commit `6502452` not
+  an ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` described the completed bridge-design branch because the
+  requested feature branch had just been prepared at that design commit. Live
+  Git matched the exact task preflight, so continuity was updated to the live
+  branch and implementation and the discrepancy was not treated as code state.
+- **Investigation:** Read the required protocol, evidence, architecture,
+  bridge-design, building, porting, project, source, test, project-file, and
+  wrapper surfaces. Verified all protocol and transport source files, relevant
+  tests, solution mappings, build properties, driver project isolation, and
+  existing kernel compile-check behavior before editing.
+- **Files created:** `src/transport/ChatpadControlSetup/ChatpadControlSetup.h`,
+  `.c`, `.vcxproj`, and `README.md`;
+  `tests/transport/ChatpadControlSetupTests/ChatpadControlSetupTests.c`,
+  `.vcxproj`, `README.md`, and
+  `fixtures/ChatpadControlSetupFixtures.h`; and
+  `tools/Test-ChatpadControlSetup.ps1`.
+- **Files modified:** `ChatpadWin11.sln`, `docs/BUILDING.md`,
+  `docs/CHATPAD-PROTOCOL.md`, `docs/DECISIONS.md`, `docs/NEXT-TASK.md`,
+  `docs/PROJECT-STATE.md`, both Windows 11 architecture/design documents,
+  this worklog, `src/transport/ChatpadTransport/README.md`, and the kernel
+  compile-check source, project, and README.
+- **Implementation:** `ChatpadTranslateActivationRequest` validates nulls,
+  direction enum, `bmRequestType` direction bit, outbound/inbound length
+  consistency, and fixed payload capacity. It clears the full non-null output
+  bytewise before validation, explicitly encodes eight setup bytes
+  little-endian, copies outbound payload by value, and records expected inbound
+  length without allocating a response buffer. It has no mutable global state,
+  packing, structure overlay, retained pointer, allocation, or I/O.
+- **Confirmed translations:** exact setup arrays are
+  `40 a9 0c a3 23 44 00 00`, `40 a9 44 23 03 7f 00 00`,
+  `40 a9 39 58 32 68 00 00`, `c0 a1 00 00 16 e4 02 00`,
+  `40 a1 00 00 16 e4 02 00`, and `c0 a1 00 00 16 e4 02 00`.
+  Request 4 carries copied outbound `09 00`; requests 3 and 5 expect two
+  inbound bytes; confirmed fixtures contain no outbound `90 00`.
+- **Pre-edit baseline:** environment detector exit 0; repository safety PASS;
+  `legacy/` unchanged; prohibited-ancestor check exit 1; direct protocol
+  `610/610`; transport Debug/Release `186/186`; lifecycle Debug/Release
+  `109/109`.
+- **During-task corrections:** The first wrapper guard selected XML build
+  settings as source items and failed before compilation; its XPath was narrowed
+  to item nodes. The first native run compiled successfully but exposed
+  nondeterministic structure padding during whole-value comparisons; the
+  translator now clears the complete output bytewise. The wrapper's summary
+  regex was also made CRLF-aware for Windows PowerShell 5.1.
+- **Control-setup validation:** Windows PowerShell 5.1 Debug and Release source/
+  project guards PASS; MSBuild exit 0; tests `141/141`; artifact containment
+  PASS. Debug library SHA-256
+  `F82965C44A179DD7EE5369469524604145C27368ED069BA0223D43E1AC2B0EB4`;
+  Debug executable SHA-256
+  `8059411DFE493510AEA33AF822465D3797DD0E53B16F59082C35BE2EA407384E`;
+  Release library SHA-256
+  `6C24F82BC5C27BB849CBA02FEB59CB13865F4AB30217AA712260DCB8FEC7C5BD`;
+  Release executable SHA-256
+  `F862F8FFAFA5822C7471FF6E1A1283FA7A5046F5F7BC9EF631313B365D14F347`.
+- **Regression validation:** Integrated protocol Debug/Release `610/610`;
+  transport Debug/Release `186/186`; lifecycle Debug/Release `109/109`.
+- **Kernel compatibility:** Debug and Release WDK builds compile the translator
+  source/header and emit only
+  `artifacts\bin\x64\<Configuration>\ChatpadProtocolKernelCompileCheck\ChatpadProtocolKernelCompileCheck.lib`.
+  Debug SHA-256
+  `DD6BA30F03611E6617036C7F64D21373695B74E766776C3834768E0D940E52C2`;
+  Release SHA-256
+  `F08148853D9DAF8AC37332112B11D486B5A278633A1241A373A41076E2621F41`.
+  No signing execution or `.sys`, INF, CAT, certificate, package, installer, or
+  deployment output occurred in these checks.
+- **Driver validation and isolation:** Debug driver
+  `artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`, SHA-256
+  `fd3776f3687e9a3d1e75306ec09ca0c9c22bbcf0353bc3270248f7ff90bf115f`;
+  Release driver `artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  SHA-256
+  `c041ba7c5b8f146589afb0e0db44848434d47406ea40d047a7fdd309f0ca0f18`.
+  Both build exit 0, remain `Authenticode.NotSigned`, and show no SignTool
+  operation. `ChatpadFilter.vcxproj` has no project reference and compiles only
+  `ChatpadFilterLifecycle.c`, `driver.c`, and `device.c`; the solution has no
+  driver dependency section; Debug/Release driver log sections contain no
+  protocol, transport, or control-setup linker input.
+- **Commit and push:** Commit exactly `feat: add pure control setup translation`
+  and push only `origin/feature/control-setup-translation`. The self-referential
+  commit hash is reported after commit/push rather than embedded here.
+- **Next task:** Isolated compile-only WDK formatting from the pure value into
+  an inspectable `WDF_USB_CONTROL_SETUP_PACKET`, with no target, request,
+  memory object, formatting/submission, driver dependency, install, or hardware
+  behavior.
+- **Safety:** No `legacy/` edit; no Windows/WDF/WDM/USB/HID/IOCTL/URB runtime
+  API; no request/target/queue/interface/timer/work-item/thread/handle; no
+  device enumeration or access; no disconnect/reconnect/reset; no transfer,
+  response decode, acknowledgement, retry, timeout, readiness, endpoint, pipe,
+  capture, elevation, INF/CAT/certificate/package/service/installer, signing,
+  installation, deployment, loading, external-skill edit, or hardware action.

@@ -82,6 +82,30 @@ executable, and confirms generated outputs stay beneath `artifacts/`.
 | Debug test executable | `artifacts\bin\x64\Debug\ChatpadTransportTests\ChatpadTransportTests.exe` |
 | Release test executable | `artifacts\bin\x64\Release\ChatpadTransportTests\ChatpadTransportTests.exe` |
 
+## Chatpad Control Setup Translation (offline)
+
+`ChatpadControlSetup` is a portable C static library that accepts a
+caller-provided `ChatpadActivationRequest` and produces caller-owned explicit
+setup bytes and data-stage metadata. It has no packed overlay, platform header,
+WDF/WDM type, target, request, transfer, response buffer, allocation, I/O, or
+hardware behavior.
+
+```powershell
+.\tools\Test-ChatpadControlSetup.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadControlSetup.ps1 -Configuration Release -Platform x64
+```
+
+The wrapper runs a source/project guard, builds the native library and test
+executable, requires `141/141` assertions, prints full paths and SHA-256 hashes,
+and verifies containment beneath `artifacts/`.
+
+| Output | Path |
+| --- | --- |
+| Debug library | `artifacts\bin\x64\Debug\ChatpadControlSetup\ChatpadControlSetup.lib` |
+| Release library | `artifacts\bin\x64\Release\ChatpadControlSetup\ChatpadControlSetup.lib` |
+| Debug test executable | `artifacts\bin\x64\Debug\ChatpadControlSetupTests\ChatpadControlSetupTests.exe` |
+| Release test executable | `artifacts\bin\x64\Release\ChatpadControlSetupTests\ChatpadControlSetupTests.exe` |
+
 ## ChatpadFilter lifecycle core (offline)
 
 Portable C lifecycle core used by `ChatpadFilter` and compiled into a native
@@ -112,7 +136,8 @@ all outputs beneath `artifacts/`.
 This isolated static-library build compiles `ChatpadActivationRequests.c`,
 `ChatpadActivationSequence.c`, `ChatpadActivationExecutor.c`,
 `ChatpadKeyboardParser.c`, `ChatpadProtocolStateMachine.c`,
-`ChatpadTransportAdapter.c`, and their shared public headers as C with the WDK
+`ChatpadTransportAdapter.c`, `ChatpadControlSetup.c`, and their shared public
+headers as C with the WDK
 kernel toolchain. It is compile-time
 compatibility validation only: it has no entry point, is not referenced by
 `ChatpadFilter`, and does not install, load, sign, package, deploy, or access

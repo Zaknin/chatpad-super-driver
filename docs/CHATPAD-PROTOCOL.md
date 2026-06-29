@@ -314,6 +314,34 @@ operation. Callback rejection stops execution immediately and is reported as a
 callback/API outcome, not a USB, HID, IOCTL, driver, device, or hardware
 failure.
 
+### Pure Control-Setup Translation
+
+**Classification:** Portable structural translation of caller-provided
+activation descriptors. It is not request formatting, submission, or evidence
+of device access.
+
+`src/transport/ChatpadControlSetup/` converts one
+`ChatpadActivationRequest` into an eight-byte setup array plus explicit
+data-stage direction, copied outbound payload and length, and expected inbound
+length. Setup order is `bmRequestType`, `bRequest`, little-endian `wValue`,
+little-endian `wIndex`, and little-endian `wLength`.
+
+The six builder descriptors translate to:
+
+```text
+40 a9 0c a3 23 44 00 00
+40 a9 44 23 03 7f 00 00
+40 a9 39 58 32 68 00 00
+c0 a1 00 00 16 e4 02 00
+40 a1 00 00 16 e4 02 00
+c0 a1 00 00 16 e4 02 00
+```
+
+Request 4 copies outbound payload `09 00`. Requests 3 and 5 expect two inbound
+bytes but allocate or fabricate no response bytes. Confirmed fixtures contain
+no `90 00` outbound payload. Translation remains structural: arbitrary
+synthetic payload bytes are not rejected based on semantic content.
+
 ### Offline State-Machine Classification Boundary
 
 **Classification:** Project abstraction — not wire-format evidence.
