@@ -84,6 +84,7 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
+    <ClInclude Include="ChatpadActivationExecutor.h" />
     <ClInclude Include="ChatpadActivationSequence.h" />
     <ClInclude Include="ChatpadActivationRequests.h" />
     <ClInclude Include="ChatpadKeyboardParser.h" />
@@ -91,6 +92,7 @@
     <ClInclude Include="ChatpadProtocolTypes.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ChatpadActivationExecutor.c" />
     <ClCompile Include="ChatpadActivationSequence.c" />
     <ClCompile Include="ChatpadActivationRequests.c" />
     <ClCompile Include="ChatpadKeyboardParser.c" />

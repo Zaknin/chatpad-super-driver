@@ -84,6 +84,7 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
+    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationExecutor.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationRequests.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationSequence.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.h" />
@@ -92,6 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadProtocolKernelCompileCheck.c" />
+    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationExecutor.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationRequests.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationSequence.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.c" />

@@ -268,6 +268,46 @@ interpreted as a proven no-delay device requirement. The metadata is not an
 active sleep, timer, timeout, retry interval, response deadline,
 acknowledgement boundary, or readiness condition.
 
+### Activation Execution Contract
+
+**Classification:** Offline callback contract for emitting planned operations.
+It is not transport code and does not send, wait, retry, decode, acknowledge,
+or mark a device ready.
+
+`src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h` and `.c` expose
+`ChatpadExecuteActivationPlan`. The executor consumes the activation-sequence
+planner and calls a caller-provided sink for each planned request and each
+nonzero delay-after metadata value.
+
+For the current six-step planner, successful execution emits:
+
+| Position | Operation | Step | Value |
+|---:|---|---:|---|
+| 0 | request | 0 | planner request 0 |
+| 1 | delay metadata | 0 | `12 ms` |
+| 2 | request | 1 | planner request 1 |
+| 3 | delay metadata | 1 | `12 ms` |
+| 4 | request | 2 | planner request 2 |
+| 5 | delay metadata | 2 | `12 ms` |
+| 6 | request | 3 | planner request 3 |
+| 7 | delay metadata | 3 | `12 ms` |
+| 8 | request | 4 | planner request 4 with outbound payload `09 00` |
+| 9 | delay metadata | 4 | `12 ms` |
+| 10 | request | 5 | planner request 5 |
+| 11 | delay metadata | 5 | `12 ms` |
+
+The executor stores no caller pointers, allocates no memory, and retains no
+request data after a callback returns. `ChatpadActivationExecutionSummary`
+contains only planned step count, emitted request count, emitted delay metadata
+count, last completed step index, rejected operation kind, and rejected step
+index. It contains no response, acknowledgement, readiness, transport status,
+elapsed-time, timeout, retry, or hardware fields.
+
+Callback acceptance means only that the caller accepted the emitted planned
+operation. Callback rejection stops execution immediately and is reported as a
+callback/API outcome, not a USB, HID, IOCTL, driver, device, or hardware
+failure.
+
 ### Offline State-Machine Classification Boundary
 
 **Classification:** Project abstraction — not wire-format evidence.

@@ -265,3 +265,43 @@ runtime driver behavior.
 * ChatpadProtocol builds before ChatpadProtocolTests due to ProjectReference build ordering.
 * No hardcoded paths in the vcxproj files.
 * SolutionDependencies section in ChatpadWin11.sln removed as redundant with ProjectReference.
+
+## 2026-06-29 — Activation execution is callback-only planning emission
+
+**Decision:** `ChatpadExecuteActivationPlan` is a transport-independent
+executor contract that consumes `ChatpadGetActivationSequenceStep` output and
+emits planned operations through caller-provided callbacks only. A request
+callback means the planned request was emitted to the caller, not transmitted.
+A delay callback means nonzero delay metadata exists, not that time elapsed.
+Callback acceptance means the caller accepted the emitted operation for its own
+recording or orchestration; callback rejection is an API/callback outcome, not
+a device, USB, HID, IOCTL, driver, or hardware failure.
+
+**Rationale:** The repository has confirmed request tuples and declarative
+timing metadata, but it does not yet have confirmed transport behavior,
+response bytes, acknowledgement, readiness, timeout, retry, or hardware
+semantics. A callback-only executor lets tests validate ordering, value-copy
+request propagation, and delay metadata propagation without widening the
+evidence boundary.
+
+**Alternatives rejected:**
+
+* Sending USB/HID/IOCTL requests from the executor — outside the current safety
+  authorization and not supported by confirmed device inventory.
+* Sleeping or starting timers for delay metadata — would convert legacy
+  post-call timing evidence into runtime behavior.
+* Returning transport/device statuses — no transport has been authorized or
+  proven.
+* Retaining caller pointers or allocating execution records internally — would
+  weaken portability and deterministic testability.
+
+**Consequences:**
+
+* The executor is reusable in user-mode and kernel compile contexts without
+  Windows or WDK API calls.
+* Callers must provide both request and delay metadata callbacks and a summary
+  output.
+* Summaries contain only planned count, emitted counts, last completed step,
+  rejected operation kind, and rejected step index.
+* Future transport work must adapt this contract explicitly and cannot treat
+  callback emission as successful hardware transmission.

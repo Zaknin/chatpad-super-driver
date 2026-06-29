@@ -2,8 +2,9 @@
 
 This isolated WDK static-library project proves that the portable protocol
 headers, declarative activation request builder, complete five-byte keyboard
-parser, activation-sequence planner, and transport-independent state machine
-compile as C with the `WindowsKernelModeDriver10.0` toolset.
+parser, activation-sequence planner, mocked activation executor contract, and
+transport-independent state machine compile as C with the
+`WindowsKernelModeDriver10.0` toolset.
 
 It is a compile-time compatibility check only. The project has no entry point,
 driver object, callbacks, device or transport code, USB, HID, IOCTL, PnP,
@@ -14,10 +15,11 @@ project or its output.
 
 The activation-request check compiles request-count access and request
 construction. The activation-sequence check compiles sequence-count access and
-planner step construction. The state-machine check compiles initialization,
-reset, parser-result mapping, and abstract-event application. It does not
-decode raw initialization/status forms and introduces no runtime driver
-integration.
+planner step construction. The activation-executor check compiles sink
+callbacks and execution-summary output. The state-machine check compiles
+initialization, reset, parser-result mapping, and abstract-event application.
+It does not decode raw initialization/status forms and introduces no runtime
+driver integration.
 
 Run both supported configurations from the repository root:
 

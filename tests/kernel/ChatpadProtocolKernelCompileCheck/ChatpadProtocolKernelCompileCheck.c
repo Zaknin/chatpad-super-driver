@@ -1,4 +1,5 @@
 #include "ChatpadActivationRequests.h"
+#include "ChatpadActivationExecutor.h"
 #include "ChatpadActivationSequence.h"
 #include "ChatpadKeyboardParser.h"
 #include "ChatpadProtocolStateMachine.h"
@@ -55,4 +56,38 @@ ChatpadActivationSequenceResult ChatpadProtocolKernelActivationSequenceCompileCh
     }
 
     return ChatpadGetActivationSequenceStep(4u, &step);
+}
+
+static ChatpadActivationExecutionCallbackResult ChatpadProtocolKernelActivationExecutorRequestCallback(
+    void *context,
+    size_t stepIndex,
+    const ChatpadActivationRequest *request)
+{
+    (void)context;
+    (void)stepIndex;
+    (void)request;
+    return CHATPAD_ACTIVATION_EXECUTION_CALLBACK_ACCEPTED;
+}
+
+static ChatpadActivationExecutionCallbackResult ChatpadProtocolKernelActivationExecutorDelayCallback(
+    void *context,
+    size_t stepIndex,
+    uint16_t delayAfterMilliseconds)
+{
+    (void)context;
+    (void)stepIndex;
+    (void)delayAfterMilliseconds;
+    return CHATPAD_ACTIVATION_EXECUTION_CALLBACK_ACCEPTED;
+}
+
+ChatpadActivationExecutionResult ChatpadProtocolKernelActivationExecutorCompileCheck(void)
+{
+    ChatpadActivationExecutionSink sink;
+    ChatpadActivationExecutionSummary summary;
+
+    sink.Context = 0;
+    sink.OnRequest = ChatpadProtocolKernelActivationExecutorRequestCallback;
+    sink.OnDelayMetadata = ChatpadProtocolKernelActivationExecutorDelayCallback;
+
+    return ChatpadExecuteActivationPlan(&sink, &summary);
 }

@@ -173,6 +173,31 @@ sleep metadata. The zero before-delay means no confirmed pre-request timing
 metadata, not a proven no-delay device requirement. The planner never executes
 that timing.
 
+## Activation Execution API
+
+```c
+ChatpadActivationExecutionResult ChatpadExecuteActivationPlan(
+    const ChatpadActivationExecutionSink *sink,
+    ChatpadActivationExecutionSummary *summary);
+```
+
+The executor consumes the activation-sequence planner and emits planned
+operations through callbacks only. `OnRequest` receives each planned request
+descriptor as a pointer valid only for the callback call. `OnDelayMetadata`
+receives nonzero post-request delay metadata. Current planner data produces
+six request callbacks and six delay metadata callbacks in alternating order.
+
+Callback acceptance means the caller accepted the planned operation emission;
+it does not mean the request was transmitted. Delay metadata emission does not
+sleep or prove elapsed time. Rejection stops execution immediately and is
+reported as a callback/API outcome, not as a device, USB, HID, IOCTL, driver,
+or hardware result.
+
+The summary contains planned step count, emitted request count, emitted delay
+metadata count, last completed step index, rejected operation kind, and
+rejected step index. It contains no response, acknowledgement, readiness,
+transport status, elapsed-time, timeout, retry, allocation, or caller pointer.
+
 ## Build and Test
 
 ### Integrated build (preferred)
@@ -190,7 +215,8 @@ that timing.
 
 The direct-compiler script remains available as a lightweight regression for
 the parser, state machine, activation request builder, activation sequence
-planner, and their tests. It does not use MSBuild or the solution.
+planner, activation executor, and their tests. It does not use MSBuild or the
+solution.
 
 ### Kernel-toolchain compatibility check
 
@@ -199,8 +225,8 @@ planner, and their tests. It does not use MSBuild or the solution.
 .\tools\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Release -Platform x64
 ```
 
-This compiles the activation request, activation sequence, parser, and
-state-machine sources and public headers as C with the WDK
+This compiles the activation request, activation sequence, activation
+executor, parser, and state-machine sources and public headers as C with the WDK
 `WindowsKernelModeDriver10.0` toolset. It produces only an isolated static
 library beneath `artifacts/`; it has no runtime entry point and produces no
 `.sys`. `ChatpadFilter` neither references nor links the compatibility library
@@ -229,7 +255,7 @@ All generated files are contained beneath `artifacts/`:
 
 ## Tests
 
-The test executable runs a self-contained assertion framework with 443 assertions:
+The test executable runs a self-contained assertion framework with 610 assertions:
 
 - Argument and length validation (null inputs, truncated, oversized)
 - Valid packet parsing (no keys, boundary values, raw key0 nonzero)
@@ -249,10 +275,16 @@ The test executable runs a self-contained assertion framework with 443 assertion
   deterministic clearing, repeated construction, stateless sequencing,
   value-copy isolation, sentinel guards, and absence of acknowledgement,
   readiness, retry, timeout, response, or transport behavior
+- Activation executor null/missing callback/null summary handling, exact
+  planner-consumption order, exact six request and six delay metadata
+  callbacks, request value-copy propagation, `09 00`/`90 00` boundaries,
+  rejection stop behavior, accepted-operation counts, no retry, repeated-run
+  determinism, recorder isolation, fixed-capacity exhaustion, sentinel guards,
+  and no hardware/transport semantics
 
 ```
-Total: 443
-Passed: 443
+Total: 610
+Passed: 610
 Failed: 0
 ```
 
@@ -271,4 +303,5 @@ No third-party test framework. No device or hardware APIs. Offline only.
 - **State-machine code is not connected to the kernel driver**
 - **Activation-request code is not connected to the kernel driver**
 - **Activation-sequence code is not connected to the kernel driver**
+- **Activation-executor code is not connected to the kernel driver**
 - **Driver remains unsigned and nonfunctional**

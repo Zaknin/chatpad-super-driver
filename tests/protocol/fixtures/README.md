@@ -22,6 +22,13 @@ offline activation-sequence tests. It records zero before-delay metadata and
 sleeping, timeout policy, retry policy, acknowledgement, readiness, or a
 device-required delay.
 
+`ChatpadActivationExecutionFixtures.h` contains a fixed-capacity mocked
+execution recorder used only by offline executor tests. It copies emitted
+request values, records delay metadata values, supports deterministic rejection
+injection by operation kind/step or sequence position, and retains no caller
+operation pointers. It performs no allocation, I/O, USB, HID, IOCTL, driver,
+timer, sleep, or hardware action.
+
 ## Provenance and Naming
 
 The arrays use raw field and boundary names only. They do not label a modifier
@@ -29,7 +36,8 @@ bit as Shift, assign a key name to a raw byte, or claim a scan-code meaning.
 Activation fixtures use raw setup-field names and explicit payload length
 fields only; they do not label the sequence as successful initialization.
 Sequence fixtures use timing metadata names only and do not duplicate request
-tuples.
+tuples. Execution fixtures use operation-emission names only and do not claim
+request transmission.
 
 | Fixture | Purpose |
 | --- | --- |
@@ -60,6 +68,10 @@ tuples.
 | Activation sequence fixture | Purpose |
 | --- | --- |
 | `ConfirmedActivationSequenceTiming[0..5]` | Declarative timing metadata: before-delay `0 ms` because no pre-request delay metadata is confirmed; after-delay `12 ms` because the legacy executable path slept after each `SendControlRequest` call returned. |
+
+| Activation execution fixture | Purpose |
+| --- | --- |
+| `ChatpadActivationExecutionRecorder` | Caller-owned deterministic recorder for request and delay metadata callbacks. It stores copied request values and scalar delay metadata values only. |
 
 The fixtures contain no executable legacy code and no unsupported `90 00`
 payload. Include the headers only in offline tests and run them with:
