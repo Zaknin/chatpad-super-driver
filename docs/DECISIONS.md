@@ -4,6 +4,50 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Use a declarative extension INF for future device filtering
+
+**Decision:** A future package for the physical
+`USB\VID_045E&PID_028E` controller will be a device-specific extension INF
+that registers `ChatpadFilter` through `DDInstall.Filters` and `AddFilter` with
+`FilterPosition=Lower`. It must preserve Microsoft's `xusb22.inf` as the base
+package and `xusb22` as the function service. Package creation, signing,
+staging, attachment/loading, and device interaction remain separate explicit
+authorization gates.
+
+**Rationale:** Windows 10 version 1903 and later provide declarative
+device-filter metadata and extension INFs can add a filter service without
+claiming function-driver ownership. This is narrower and more serviceable than
+direct filter-value writes and makes removal of the exact published extension
+package the primary rollback path.
+
+**Alternatives rejected:**
+
+* Direct `LowerFilters` `AddReg` writes - legacy mechanism with weaker package
+  ownership and ordering metadata.
+* Class-wide XNA, HID, or USB filter placement - affects unrelated devices.
+* Base-package replacement or WinUSB rebinding - risks removing normal
+  `xusb22`/XInput behavior.
+* Device Manager, DevCon, custom installer, or direct registry mutation as the
+  primary workflow - creates alternate state-changing paths and weaker package
+  identity evidence.
+* Disabling Secure Boot, Memory Integrity/HVCI, or signature enforcement -
+  weakens the safety baseline instead of validating a compatible signed driver.
+
+**Consequences:**
+
+* A future INF must match only `USB\VID_045E&PID_028E`, use a stable
+  `ExtensionId`, define a non-associated demand/PnP filter service, and avoid
+  all class-key filter writes.
+* Staging must capture and verify the assigned `oem#.inf`; rollback removes
+  that exact package with PnPUtil, with offline DISM reserved for last-resort
+  recovery.
+* The extension design and recovery specification do not prove effective
+  stack ordering, default-control access, Chatpad input visibility, or runtime
+  safety.
+* Gate F remains operationally incomplete until the procedure is independently
+  reviewed against an actual signed package and demonstrated on a noncritical
+  test system.
+
 ## 2026-06-30 - Preserve exact WDF setup bytes through the public generic member
 
 **Decision:** The compile-only WDK formatter validates the pure translation's

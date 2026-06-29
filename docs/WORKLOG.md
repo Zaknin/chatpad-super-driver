@@ -1457,3 +1457,111 @@
   access, disconnect/reconnect/reset, response fabrication, capture, elevation,
   INF/CAT/certificate/package/service/installer, signing, installation,
   deployment, loading, external-skill modification, or hardware action.
+
+## 2026-06-30T01:21+04:00 - Device-specific filter installation and recovery design
+
+- **Objective:** Design, validate, document, commit, and push a reversible,
+  device-specific lower-filter installation and recovery specification for
+  `USB\VID_045E&PID_028E`, without creating an INF/package or changing the
+  machine, Driver Store, registry, boot policy, security state, or device.
+- **Starting branch and commit:**
+  `analysis/device-specific-install-recovery-design` /
+  `93cc84d94ca3a262ac1c024abd7b1affcd08a349`; clean tree tracking
+  `origin/analysis/device-specific-install-recovery-design`; local HEAD,
+  `origin/feature/wdf-control-setup-formatter`, and the current remote branch
+  matched exactly; prohibited commit `6502452` was not an ancestor.
+- **Continuity discrepancies:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` still described the completed formatter branch because
+  this design branch had been prepared at that commit. They were updated to
+  the live branch and design result. `docs/NEXT-TASK.md` also named nonexistent
+  `docs/WINDOWS11-CONNECTED-DEVICE-INVENTORY.md`; the tracked source of truth is
+  `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`, and the continuation pointer
+  was corrected.
+- **Investigation:** Read the required protocol and continuation documents,
+  current architecture/bridge/inventory/build/porting surfaces, driver project,
+  formatter README, build wrapper, and recent worklog. Verified the current
+  project, solution, and diagnostic linker isolation. Consulted current primary
+  Microsoft documentation for extension INFs, declarative `AddFilter` filter
+  placement, PnPUtil staging/removal/export, Safe Mode/Windows RE, offline DISM
+  driver removal, test signing, Secure Boot, and HVCI.
+- **Pre-edit safety:** repository safety PASS; `legacy/` diff exit 0; prohibited
+  ancestor exit 1; no tracked or untracked source change; no device inventory
+  or system query was performed.
+- **Previous-result verification:** Debug and Release
+  `Test-ChatpadWdfControlSetup.ps1` passed source/project, formatter,
+  compile-check, signing, prohibited-output, and containment guards. Current
+  formatter hashes are
+  `D7D9357B1C3E969875E51BBE7C71F367D30A7B7E72BE438D8DD2B8848DB8FE8B`
+  and `8337944B935E4323AEE8DA746BCB4E7348188C0C86448C81688B1DF23B4B0469`;
+  compile-check hashes are
+  `B4FED2BEB03DA531A307EA2B0DA2DD56450D424935A55B466C0F4A1ED22F8B1E`
+  and `D15E531F2725D081233C553A3CDB39288FE36ACBE65F1D3E6BA0BBD5B9BC7CAB`.
+- **Driver verification:** Debug and Release builds exited 0, remained
+  `Authenticode.NotSigned`, ran no signing task, and passed repository safety.
+  Current driver hashes are
+  `c3a9c65869bedfd0bd5f2231d22181100a9b1d63177c5a7c410c6be8d40f70a0`
+  and `7a6f9fd5c8fbe2699d101dc7765203a113ef7a4e8b82c2c7130035ddc6c6dd50`.
+  Debug/Release diagnostic linker inputs contain only
+  `ChatpadFilterLifecycle.obj`, `driver.obj`, `device.obj`, and WDK system
+  libraries; no formatter, control-setup, protocol, or transport library is
+  linked into the driver.
+- **Files created:**
+  `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md`.
+- **Files modified:** `docs/DECISIONS.md`, `docs/NEXT-TASK.md`,
+  `docs/PORTING-PLAN.md`, `docs/PROJECT-STATE.md`,
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`,
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`, and this worklog.
+- **Package design:** A future package is an extension INF matching only
+  `USB\VID_045E&PID_028E`, using a stable `ExtensionId` and declarative
+  `DDInstall.Filters`/`AddFilter` with `FilterPosition=Lower`. It preserves
+  `xusb22.inf`/`xusb22`, defines a non-associated demand/PnP filter service,
+  and prohibits direct filter-value writes, class filters, base binding
+  replacement, co-installers, custom actions, and executable installers.
+- **Recovery design:** The specification defines an immutable package identity
+  ledger, second-input/BitLocker/WinRE/media prerequisites, read-only PnP and
+  security baselines, third-party Driver Store export, forensic registry
+  exports, staging without `/install`, separately authorized attachment,
+  exact-`oem#.inf` PnPUtil rollback, Safe Mode command-line recovery,
+  last-resort offline DISM removal, post-recovery checks, and hard aborts.
+  Registry exports are evidence, not automatic restore scripts.
+- **Security decision:** Secure Boot, Memory Integrity/HVCI, VBS, and signature
+  enforcement remain enabled. `TESTSIGNING`, one-boot signature bypass,
+  unsigned installation, `/ForceUnsigned`, unreviewed trust changes, and
+  security weakening are rejected as installation or recovery strategies.
+- **Authorization gates:** Package creation, signing, staging, attachment/load,
+  observation, and bounded device interaction are separate gates. Passing the
+  documentation design authorizes none of them. Gate F remains operationally
+  incomplete until the plan is reviewed against an actual signed package and
+  demonstrated on a noncritical test system; Gate G transport visibility is
+  still open.
+- **Validation correction:** The first ad hoc acceptance assertion searched for
+  literal `Gate I6` and returned false because the matrix row is labeled `I6`.
+  The corrected assertion matched the actual heading/table structure and all
+  ten design acceptance checks passed. This was a check-pattern error, not a
+  document-content failure. A later compact final-check expression also let
+  PowerShell combine comma-separated `-match` operands into one invalid regex;
+  it emitted an error and an unusable `0/0` summary. The final run uses named
+  independent checks and requires every result to be true.
+- **Documentation validation:** `git diff --check` exit 0; repository safety
+  PASS; `legacy/` diff exit 0; design assertions for exact target, extension
+  INF, `AddFilter`, lower position, PnPUtil rollback, Safe Mode, offline DISM,
+  Secure Boot, HVCI, and separate gates PASS. Complete staged diff and final
+  status are inspected before commit.
+- **Commit and push:** Commit exactly
+  `docs: design device filter install recovery` and push only
+  `origin/analysis/device-specific-install-recovery-design`. The final commit
+  hash is reported after commit/push rather than embedded here.
+- **Next task:** With new explicit authorization, create and statically validate
+  an offline-only extension-INF package scaffold implementing this design;
+  stop before signing, staging, installation, loading, elevation, or device
+  interaction.
+- **Remaining risks:** No actual package has been reviewed or demonstrated;
+  effective filter ordering, Windows 11 default-control access, Chatpad input,
+  response semantics, readiness, transport runtime, and hardware behavior
+  remain unproven.
+- **Safety:** No `legacy/` edit; no INF, CAT, certificate, package project,
+  service, installer, signing, trust-store, Secure Boot, HVCI, VBS, BCD,
+  Driver Store, registry, Device Manager, PnPUtil/DISM mutation, installation,
+  deployment, load, elevation, device enumeration/query/open/restart, USB/HID/
+  IOCTL/URB request, transfer, capture, disconnect/reconnect, or hardware action
+  occurred. Only ignored compile outputs/logs and tracked documentation changed.

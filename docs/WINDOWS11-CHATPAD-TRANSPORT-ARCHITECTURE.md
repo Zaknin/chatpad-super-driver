@@ -642,3 +642,23 @@ Default-control visibility, control-IN response contents, acknowledgement, and
 readiness remain unresolved. The next task is the design-only recovery and
 installation gate for the device-specific lower-filter direction, not runtime
 transport implementation.
+
+## 28. Device-specific installation and recovery design checkpoint
+
+`docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md` now defines the
+documentation portion of Gate 6/Gate F. The future package model is an
+extension INF matching only `USB\VID_045E&PID_028E`, preserving `xusb22.inf`
+and the `xusb22` function service, and using declarative `AddFilter` metadata
+with `FilterPosition=Lower`. Class-wide filters, base-driver replacement,
+direct registry installation, and security weakening remain prohibited.
+
+The specification separates package creation, signing, staging, attachment/
+loading, and device interaction into distinct authorization gates. It defines
+package-identity evidence, baseline and backup capture, normal PnPUtil removal,
+Safe Mode command-line removal, last-resort offline DISM removal, controller-
+preservation checks, hard abort criteria, and post-recovery verification.
+
+This checkpoint creates no INF or package and performs no system or device
+action. Gate F remains operationally incomplete until the procedure is
+independently reviewed against an actual signed package and demonstrated on a
+noncritical system. Gate G default-control and input visibility remains open.

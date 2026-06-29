@@ -432,9 +432,12 @@ design does not create or authorize such a package.
 Before any future install or hardware test, the project needs a reversible,
 device-specific lower-filter installation and removal plan that restores the
 Microsoft `xusb22` binding without class-wide filter changes or security
-weakening. A later physical action may be useful only after stack visibility and
-installation recovery gates pass, and only with explicit authorization for one
-controlled experiment.
+weakening. `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md` now provides the
+documentation-only plan; Gate F remains operationally incomplete until it is
+reviewed against an actual signed package and demonstrated on a noncritical
+test system. A later physical action may be useful only after stack visibility
+and installation recovery gates pass, and only with explicit authorization
+for one controlled experiment.
 
 Potential future physical actions include a Chatpad-only detach/reattach while
 the controller remains connected, or a full controller reconnect if needed.

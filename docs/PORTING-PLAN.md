@@ -53,6 +53,11 @@ Source references:
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.
+- Use `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md` as the authoritative
+  design for a future exact-ID extension INF, declarative lower-filter
+  placement, package identity, staged authorization, and rollback. Treat its
+  documentation checkpoint as incomplete until independently reviewed against
+  an actual signed package and demonstrated on a noncritical system.
 - Keep physical transport, per-device WDF lifetime, scheduling, diagnostics,
   and keyboard presentation in separate layers with no portable-to-WDF
   dependency.
