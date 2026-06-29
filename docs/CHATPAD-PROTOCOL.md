@@ -702,7 +702,7 @@ Based on confirmed evidence, Phase 1 should handle:
 | 6 | Mouse message is 4 bytes | VIRTUAL_MOUSE_MESSAGE_NUM_BYTES, line 37 | HIGH | Explicit constant; internal virtual device, NOT wire format |
 | 7 | Control transfer is 9 bytes base | SendControlRequest, lines 799-810 | HIGH | USB control request parameters — internal, NOT chatpad wire format |
 | 8 | LED commands use interface 2, type 0x41 | Lines 1744, 1749, etc. | HIGH | Consistent pattern |
-| 9 | Initialization code is 0x90, 0x00 | CHATPAD_INIT_REQUEST, line 134 | MEDIUM | From C header struct; whether it is a complete command, partial payload, or isolated constants is unresolved |
+| 9 | `0x90, 0x00` is only a comment-only claim on unused declarations | CHATPAD_INIT_REQUEST, line 134 | HIGH | Focused audit found no assignment or use; executable activation uses confirmed payload `09 00` instead |
 | 10 | Max 2 simultaneous keys | HandleChatpadData, line 3439 | HIGH | Comment and array size |
 | 11 | Filter modes: 0=UNFILTERED, 1=FILTERED, 2=INTERCEPTED | chatpad_filter_ioctl.h, lines 80-90 | HIGH | Explicit enum |
 | 12 | Button masks for controls data | Lines 3041-3140 | MEDIUM | Bits extracted from byte2/byte3 |
@@ -732,7 +732,7 @@ The most critical findings are:
 4. **State machine handles repeated packets** via `ignoreNextRepeatedData` flag
 5. **Maximum 2 simultaneous keys** enforced by array size
 6. **Byte 4** is part of the wire packet but its purpose is unresolved
-7. **Initialization bytes 0x90, 0x00** come from a C header struct; whether they form a complete command, partial payload, or are isolated constants is unresolved
+7. **Initialization bytes 0x90, 0x00** are not confirmed initialization bytes; they are a tentative comment-only claim attached to unused declarations, and executable activation uses confirmed payload `09 00`
 
 **Recommendation:** Phase 1 parser should focus on keyboard packets (5 bytes) with validation for Byte0 type, modifier bits, and scan code ranges. Controls data and mouse messages are separate subsystems that can be implemented later. Validation choices in the parser boundary are project policy, not proven device requirements.
 

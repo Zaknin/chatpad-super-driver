@@ -1166,3 +1166,93 @@
   reader/polling loop; no protocol or transport source linked into
   `ChatpadFilter`; no driver installation, signing, packaging, deployment,
   loading, or hardware testing occurred.
+
+## 2026-06-30T00:00+04:00 — KMDF transport bridge design
+
+- **Objective:** Design, document, review, commit, and push the future KMDF
+  transport bridge between `ChatpadActivationExecutor`,
+  `ChatpadTransportAdapter`, a per-device KMDF transport owner, and later WDF
+  USB request translation/submission, without implementing runtime transport
+  behavior.
+- **Starting branch and commit:** `analysis/kmdf-transport-bridge-design` /
+  `e3729efbcdd2891bfcb3a427b82e4be7c99d8d16`; clean tree; tracking
+  `origin/analysis/kmdf-transport-bridge-design`; prohibited commit `6502452`
+  not an ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` still described the completed
+  `feature/kmdf-lifecycle-scaffold` continuation point even though the live
+  branch was `analysis/kmdf-transport-bridge-design` at the required starting
+  commit. They were updated to the live branch, bridge-design result, current
+  gates, and next translation task before finalizing. `docs/CHATPAD-PROTOCOL.md`
+  also retained an older evidence-table row treating `0x90, 0x00` as
+  medium-confidence initialization evidence; it was corrected to the focused
+  audit's current conclusion that the value is only a comment-only claim on
+  unused declarations and that executable activation uses confirmed payload
+  `09 00`.
+- **Preconditions and investigation:** Read `AGENTS.md`, continuation docs,
+  latest relevant worklog entries, Windows 11 transport architecture,
+  connected-device inventory, initialization/status evidence, protocol,
+  porting, blocker, and building docs; inspected every file under
+  `src/driver/ChatpadFilter/`, `src/transport/ChatpadTransport/`, and
+  `src/protocol/ChatpadProtocol/`; inspected relevant transport and lifecycle
+  tests, `ChatpadWin11.sln`, `Directory.Build.props`, `tools/Build-Driver.ps1`,
+  `tools/Test-ChatpadTransport.ps1`, and
+  `tools/Test-ChatpadFilterLifecycle.ps1`.
+- **Pre-edit validation:** `tools/Test-RepositorySafety.ps1` PASS;
+  `git diff --exit-code -- legacy` exit 0; prohibited-ancestor check
+  `git merge-base --is-ancestor 6502452 HEAD` exit 1; `git status --short
+  --branch` clean; `git diff` empty.
+- **Files created:** `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`.
+- **Files modified:** `docs/DECISIONS.md`, `docs/NEXT-TASK.md`,
+  `docs/CHATPAD-PROTOCOL.md`, `docs/PORTING-PLAN.md`, `docs/PROJECT-STATE.md`,
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`, this worklog,
+  `src/driver/ChatpadFilter/README.md`, and
+  `src/transport/ChatpadTransport/README.md`.
+- **Design details:** The bridge design selects one future per-device KMDF
+  transport owner under `WDFDEVICE` for bounded activation bridge state,
+  request-owner records, future target references, future delay scheduler
+  state, diagnostics, and separate continuous-input state. Future WDF requests
+  are tied to exactly one nonzero lifecycle D0 generation through a
+  request-owner record containing the portable
+  `ChatpadTransportOperationToken`; raw request pointers are not generation or
+  operation tokens.
+- **Synchronization details:** The recommended first implementation strategy is
+  a per-device `WDFSPINLOCK` for short lifecycle/bridge/request-table,
+  completion-once, cancellation, generation, scheduler-state, and diagnostics
+  transitions. KMDF automatic synchronization, `WDFWAITLOCK`, and passive
+  serialized work are documented as narrower or fallback options; unsupported
+  lock-free use is rejected.
+- **Lifecycle and completion details:** D0 entry starts one lifecycle
+  generation and initializes the bounded activation adapter for that
+  generation. D0 exit closes admission before cancellation and before delay
+  scheduling. Future completions must compare stored generation/token, reject
+  stale and duplicate completions, and release lifecycle outstanding counts
+  exactly once. Successful lower-stack completion is explicitly not Chatpad
+  readiness.
+- **Delay and input details:** The six 12 ms values remain delay metadata owned
+  by a future per-device scheduler only after prior request completion policy
+  permits progression. Blocking sleep is rejected. Continuous input is
+  separated from the activation adapter's 64-operation tracking model and
+  remains blocked on endpoint/input evidence.
+- **Stop gates:** The design defines gates for synchronization, request
+  ownership, pure translation, compile-only WDK formatting, lifecycle race
+  tests, installation recovery, stack visibility, and explicit authorization.
+  Passing documentation or compile gates does not authorize USB traffic.
+- **Next task:** Pure, WDF-independent Windows control-setup translation for
+  the six neutral activation descriptors, with offline tests and kernel compile
+  validation only; no WDF target/request/formatter/submission or hardware
+  behavior.
+- **Validation planned after documentation:** rerun repository safety, run
+  `git diff --check`, confirm `legacy/` unchanged, confirm only documentation
+  and README continuity files changed, inspect complete and staged diffs, then
+  commit exactly `docs: design kmdf transport adapter bridge` and push only
+  `origin/analysis/kmdf-transport-bridge-design`.
+- **Remaining risks or limitations:** No default-control access, input
+  endpoint, transfer ownership, response semantics, acknowledgement, readiness,
+  retry, timeout, lower-filter installation, keyboard presentation, or live
+  hardware behavior is proven or implemented.
+- **Safety:** No `legacy/` edits; no source, project, solution, INF, CAT,
+  certificate, package, service, installer, signing, deployment, load,
+  device/interface open, USB/HID/IOCTL/URB, endpoint/pipe, WDF target, WDF
+  request, queue, timer, work item, continuous reader, thread, ETW, capture,
+  elevation, hardware enumeration, or external-skill action occurred.

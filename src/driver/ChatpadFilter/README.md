@@ -56,3 +56,12 @@ operation runs. All outputs and intermediates are routed beneath repository
 root `artifacts/` by `tools/Build-Driver.ps1`.
 
 The generated `.sys` must not be installed or loaded on any Windows system.
+
+## Future bridge design reference
+
+`docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` documents the future
+documentation-only bridge from the portable activation executor and neutral
+transport adapter into a per-device KMDF request owner. It does not change this
+driver scaffold: `ChatpadFilter` still owns no transport target, WDF request,
+queue, timer, work item, endpoint, pipe, INF, package, signing, install, load,
+or hardware behavior.

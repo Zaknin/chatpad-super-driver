@@ -28,3 +28,11 @@ Run:
 .\tools\Test-ChatpadTransport.ps1 -Configuration Debug -Platform x64
 .\tools\Test-ChatpadTransport.ps1 -Configuration Release -Platform x64
 ```
+
+## Future KMDF bridge reference
+
+`docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` describes how this neutral
+adapter would later be owned by a per-device KMDF bridge for bounded activation
+only. The adapter's 64-operation tracking remains unsuitable for continuous
+input; future repeated input reads require separate generation-bound ownership
+and endpoint/input evidence.

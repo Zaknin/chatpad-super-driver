@@ -36,11 +36,17 @@ Source references:
 
 - Use `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md` as the authoritative
   attachment and lifetime design.
+- Use `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` as the authoritative
+  bridge design between the portable activation executor, the neutral transport
+  adapter, and a future per-device KMDF request owner.
 - Treat a device-specific lower filter on the physical
   `USB\VID_045E&PID_028E`/`XnaComposite` node beneath `xusb22` as a conditional
   architecture direction, not an implementation-ready capability.
 - First define a kernel-safe transport-adapter interface and fully mocked,
   WDF-independent implementation.
+- Next define pure, WDF-independent control-setup translation for the six
+  confirmed activation descriptors before any WDF request formatting or
+  submission code exists.
 - Keep physical transport, per-device WDF lifetime, scheduling, diagnostics,
   and keyboard presentation in separate layers with no portable-to-WDF
   dependency.

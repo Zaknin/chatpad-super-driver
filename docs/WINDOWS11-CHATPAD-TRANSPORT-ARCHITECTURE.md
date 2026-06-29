@@ -566,3 +566,39 @@ This checkpoint satisfies Gate 5 only at the portable/mock contract level. It
 does not prove Candidate A can access default control or incoming Chatpad data,
 and it does not authorize driver installation, live hardware requests, or
 transport traffic.
+
+## 25. KMDF transport bridge design checkpoint
+
+`docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` defines the future bridge
+between the portable activation executor, the neutral transport adapter, a
+per-device KMDF transport owner, and later WDF USB request translation. It
+keeps the selected physical-node lower-filter architecture conditional on
+future evidence and does not implement or authorize runtime transport behavior.
+
+The bridge design selects one future owner under `WDFDEVICE` for bounded
+activation bridge state, request-owner records, future target references,
+future delay scheduler state, diagnostics, and separate continuous-input state.
+Each future WDF request must be tied to one nonzero lifecycle D0 generation and
+one portable `ChatpadTransportOperationToken`; raw request pointers must not be
+used as generation or operation tokens.
+
+The recommended first synchronization model is a per-device `WDFSPINLOCK` for
+short shared-state transitions. The existing lifecycle core remains externally
+serialized and must not be treated as internally thread-safe. D0 exit closes
+admission before request cancellation and before delay scheduling; completions
+must release lifecycle outstanding counts exactly once and reject stale or
+duplicate completions without mutating the current generation.
+
+The design also preserves activation and continuous input as separate
+architectures. The existing transport adapter's 64-operation tracking is
+suitable only for bounded activation work. Continuous input still requires
+separate endpoint/input evidence, a bounded read owner, generation-bound
+cancellation, parser delivery by value, and preservation of ordinary `xusb22`
+traffic.
+
+The smallest safe next coding task is pure setup translation: map the six
+neutral `ChatpadActivationRequest` descriptors into a caller-owned,
+WDF-independent Windows control-setup representation with offline tests and
+kernel compile validation only. That task must not create targets, requests,
+queues, timers, endpoints, INF/package/signing/install behavior, or hardware
+traffic.

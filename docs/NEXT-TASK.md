@@ -2,49 +2,44 @@
 
 ## Exact current state
 
-- **Completed branch:** `feature/kmdf-lifecycle-scaffold`.
+- **Completed branch:** `analysis/kmdf-transport-bridge-design`.
 - **Completed task starting commit:**
-  `29c3fc1a55ded35c8e33f6ceb88e2a434334ef9a`.
-- **Completed commit message:** `feat: add kmdf lifecycle scaffold`.
-- **Driver scaffold:** `ChatpadFilter` is a compile-only, non-installable KMDF
-  filter-capable skeleton. It calls `WdfFdoInitSetFilter(DeviceInit)`, creates
-  a per-device context, and registers only prepare/release hardware plus D0
-  entry/exit callbacks.
-- **Lifecycle core:** `src/driver/ChatpadFilter/ChatpadFilterLifecycle.h/.c`
-  is portable C with caller-owned state, neutral phases, nonzero D0 generation
-  epochs, admission/rundown bookkeeping, stale-generation rejection, snapshots,
-  and no allocation, I/O, WDF, WDM, Windows, USB, HID, IOCTL, request, queue,
-  endpoint, pipe, timer, work item, protocol, or transport dependency.
-- **Lifecycle tests:** `tools/Test-ChatpadFilterLifecycle.ps1` builds and runs
-  `tests/driver/ChatpadFilterLifecycleTests/`; current assertion total is
-  `109/109` in Debug and Release.
-- **Validation checkpoint:** protocol direct tests pass `610/610`; protocol
-  project regressions pass `610/610` in Debug and Release; transport tests
-  pass `186/186` in Debug and Release; kernel compatibility remains `.lib`
-  only; driver builds pass Debug/Release, remain unsigned, and compile
-  lifecycle source into the driver without protocol/transport linkage.
-- **Safety checkpoint:** no INF, CAT, certificate, package, installer, service,
-  signing, deployment, load, device/interface open, USB/HID/IOCTL/URB request,
-  endpoint/pipe assumption, input reader, activation traffic, timer, work item,
-  thread, retry, response, readiness, semantic key mapping, VHF output, or live
-  hardware behavior exists.
+  `e3729efbcdd2891bfcb3a427b82e4be7c99d8d16`.
+- **Completed commit message:** `docs: design kmdf transport adapter bridge`.
+- **Authoritative design document:**
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`.
+- **Bridge decision:** a future per-device KMDF transport owner under
+  `WDFDEVICE` owns request records, bounded activation bridge state, scheduler
+  state, diagnostics, future target references, and separate continuous-input
+  state. WDF requests are tied to one nonzero D0 generation through a
+  generation-bound request-owner record and a portable
+  `ChatpadTransportOperationToken`.
+- **Synchronization decision:** first coding should assume a per-device
+  `WDFSPINLOCK` for short shared-state transitions. The existing lifecycle core
+  remains externally serialized and must not be treated as internally
+  thread-safe.
+- **Safety checkpoint:** no runtime transport behavior, source/project changes,
+  WDF request/target/queue/timer/work-item behavior, USB/HID/IOCTL/URB/device
+  access, endpoint/pipe selection, INF/CAT/package/signing/deployment/load, or
+  hardware action exists.
 
 ## Next recommended objective
 
-Create a documentation-only design for the future Windows KMDF transport
-adapter bridge between the existing neutral `ChatpadTransport` contract and a
-future per-device KMDF request owner.
+Create a pure, compile-tested Windows control-setup translation module that maps
+the six neutral `ChatpadActivationRequest` descriptors into a caller-owned
+inspectable setup representation.
 
-The next task should define object ownership, cancellation ordering,
-generation-token propagation, and compile-only boundaries. It must not submit
-or format USB requests, create queues, discover endpoints, install a driver,
-or connect the bridge to runtime hardware.
+The module must stay WDF-independent and offline-testable. It may model setup
+fields and payload metadata, but it must not create a `WDFDEVICE`,
+`WDFIOTARGET`, `WDFREQUEST`, USB target, request formatter, queue, timer, work
+item, endpoint, pipe, INF, CAT, package, signing path, install path, deployment
+path, load path, or hardware behavior.
 
 ## Required branch and starting commit
 
 - Create the next branch from the exact pushed
-  `feature/kmdf-lifecycle-scaffold` commit named
-  `feat: add kmdf lifecycle scaffold`.
+  `analysis/kmdf-transport-bridge-design` commit named
+  `docs: design kmdf transport adapter bridge`.
 - Require a clean tree and verify:
 
 ```powershell
@@ -60,45 +55,52 @@ The prohibited-ancestor check must exit `1`; exit `0` is a hard stop.
 
 1. Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
    `docs/NEXT-TASK.md`, and the latest relevant `docs/WORKLOG.md` entries.
-2. Inspect `src/driver/ChatpadFilter/ChatpadFilterLifecycle.h/.c`,
-   `src/driver/ChatpadFilter/device.c`, and `src/driver/ChatpadFilter/README.md`.
-3. Inspect `src/transport/ChatpadTransport/ChatpadTransportAdapter.h/.c` and
-   `tests/transport/README.md`.
-4. Run repository safety, lifecycle Debug/Release tests, and legacy
-   immutability checks before editing.
+2. Read `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`,
+   `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`, and `docs/CHATPAD-PROTOCOL.md`.
+3. Inspect `src/protocol/ChatpadProtocol/ChatpadActivationRequests.h/.c`,
+   `src/protocol/ChatpadProtocol/ChatpadActivationSequence.h/.c`, and the
+   protocol tests.
+4. Inspect the WDK kernel compatibility project and wrapper before deciding
+   where the new compile-only proof belongs.
+5. Run repository safety and confirm `legacy/` is unchanged before editing.
 
 ## Safety restrictions
 
-- Keep the next task documentation-only unless explicitly authorized otherwise.
-- Do not add INF, CAT, certificate, package, signing, installation,
-  deployment, service, load, Device Manager, or live hardware behavior.
-- Do not send, format, or queue USB/HID/control/input/output requests and do
-  not open device or interface handles.
-- Do not encode endpoint addresses, interface numbers, pipe ordinals, response
-  bytes, acknowledgement, readiness, retry, timeout, or periodic-request
-  semantics.
-- Do not link `ChatpadTransport` or `ChatpadProtocol` into `ChatpadFilter`
-  unless a later task explicitly authorizes runtime integration.
+- Keep the task offline and compile/test only.
+- Do not add WDF targets, WDF requests, request formatting/submission,
+  completion callbacks, queues, timers, work items, threads, USB/HID/IOCTL/URB
+  behavior, endpoint/pipe/interface discovery, device handles, SetupAPI,
+  Configuration Manager, WinUSB, ETW, capture, or hardware access.
+- Do not implement responses, readiness, acknowledgement, retries, timeouts,
+  activation success, continuous input, or key mapping.
+- Do not add INF, CAT, service, installer, package, certificate, signing,
+  deployment, loading, or recovery scripts.
 - Do not modify `legacy/`.
 - Keep generated outputs under ignored `artifacts/`.
 
 ## Acceptance criteria
 
-- The design preserves the current lifecycle generation/admission boundary.
-- The design identifies where future cancellation and completion translation
-  would occur without creating runtime behavior.
-- `ChatpadFilter` remains compile-only, unsigned, non-installable, and
-  disconnected from protocol/transport runtime linkage.
-- Existing protocol, transport, lifecycle, kernel compatibility, driver, and
-  repository safety checks remain passable.
-- Continuation docs make no unsupported hardware capability claim.
+- All six activation descriptors map to exact caller-owned setup/payload
+  representations.
+- `09 00` is present only for the confirmed host-to-device activation payload.
+- `90 00` remains absent.
+- Device-to-host descriptors expose expected inbound byte count but no
+  fabricated response bytes.
+- Translation remains WDF-independent and does not imply default-control access
+  or request submission.
+- Offline tests cover exact fields, invalid inputs, value-copy behavior,
+  payload bounds, direction, and absence of acknowledgement/readiness/retry
+  semantics.
+- Kernel compile validation remains static-library only and produces no `.sys`,
+  INF, CAT, package, signing, install, deployment, load, or hardware output.
 
 ## Inspect first
 
-1. `src/driver/ChatpadFilter/ChatpadFilterLifecycle.h`
-2. `src/driver/ChatpadFilter/ChatpadFilterLifecycle.c`
-3. `src/driver/ChatpadFilter/device.c`
-4. `src/driver/ChatpadFilter/README.md`
-5. `src/transport/ChatpadTransport/ChatpadTransportAdapter.h`
-6. `tests/driver/ChatpadFilterLifecycleTests/README.md`
-7. `tools/Test-ChatpadFilterLifecycle.ps1`
+1. `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`
+2. `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`
+3. `src/protocol/ChatpadProtocol/ChatpadActivationRequests.h`
+4. `src/protocol/ChatpadProtocol/ChatpadActivationRequests.c`
+5. `tests/protocol/ChatpadProtocolTests.c`
+6. `tests/kernel/ChatpadProtocolKernelCompileCheck/`
+7. `tools/Test-ChatpadProtocol.ps1`
+8. `tools/Test-ChatpadProtocolKernelCompatibility.ps1`

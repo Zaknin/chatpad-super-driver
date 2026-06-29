@@ -4,6 +4,78 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 — Use a per-device KMDF transport owner for future bridge work
+
+**Decision:** Future KMDF transport bridge work will use one per-device
+transport owner under `WDFDEVICE`. That owner conceptually owns bounded
+activation bridge state, generation-bound request-owner records, future target
+references, future delay scheduler state, diagnostics, and separate
+continuous-input state. WDF requests will be associated with one nonzero D0
+generation through a request-owner record containing the portable
+`ChatpadTransportOperationToken`; raw request pointers must not become
+generation or operation tokens.
+
+**Rationale:** The lifecycle scaffold already models per-device resource and
+D0 epochs, and the transport adapter already models bounded activation
+operations. A per-device owner keeps those facts aligned without recreating
+legacy global device selection or sideband raw-context lifetime hazards.
+Generation-bound request records give stale and duplicate completions a clear
+rejection point and keep lifecycle outstanding counts paired exactly once.
+
+**Alternatives rejected:**
+
+* Global transport state — repeats legacy multi-device and unplug hazards.
+* Raw WDF request pointer as a portable token — couples portable state to object
+  addresses and weakens stale-generation checks.
+* Linking portable transport directly into `ChatpadFilter` without a bridge
+  owner — hides lifetime, cancellation, and synchronization responsibilities.
+* Reusing the activation adapter's 64-operation model for continuous input —
+  continuous reads need a separate bounded owner and resubmission model.
+
+**Consequences:**
+
+* Future request creation, cancellation, and completion must pass through the
+  per-device owner.
+* D0 exit must close admission before cancellation and before delay scheduling.
+* Stale and duplicate completion handling must compare stored generation/token
+  and completion-once state before releasing lifecycle counts or scheduling
+  follow-on work.
+* Continuous input remains a separate future design and cannot reuse the
+  activation operation table as its architecture.
+
+## 2026-06-30 — Prefer a per-device spinlock for first bridge synchronization
+
+**Decision:** The first KMDF bridge implementation should use a per-device
+`WDFSPINLOCK` for short shared-state transitions covering lifecycle/bridge
+state, request-owner records, completion-once flags, cancellation flags,
+generation validation, scheduler state, and bounded diagnostics. Passive work
+may later orchestrate passive-only operations, but it must not replace the
+per-device protected state boundary.
+
+**Rationale:** Future request completions and cancellation paths may not all be
+passive-level. The lifecycle core is externally serialized and not internally
+thread-safe, so bridge state needs one explicit protection model before any
+runtime request work exists. A spinlock supports completion-path validation as
+long as no blocking, allocation, formatting, submission, waiting, or callbacks
+occur while it is held.
+
+**Alternatives rejected:**
+
+* Unsupported lock-free use — no current atomic or memory-ordering proof exists.
+* KMDF automatic synchronization alone — callback coverage can be incomplete
+  for timers, completions, and future side paths.
+* `WDFWAITLOCK` as the default — useful only for passive paths and unsuitable
+  if completions can arrive at dispatch level.
+* Passive serialized work as the only model — useful for orchestration but
+  too indirect for urgent cancellation, completion-once, and generation checks.
+
+**Consequences:**
+
+* Future code must keep spinlock critical sections tiny.
+* The lock must not be held across lower-target calls or waits.
+* Every callback that touches bridge state must be listed against the
+  synchronization model before runtime implementation progresses.
+
 ## 2026-06-29 — Use a device-specific lower-filter direction, conditional on transport evidence
 
 **Decision:** The Windows 11 attachment architecture targets the physical
