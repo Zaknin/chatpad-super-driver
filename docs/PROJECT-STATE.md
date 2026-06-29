@@ -9,7 +9,7 @@ This file is updated at every task boundary by the END-OF-TASK ROUTINE.
 | Item | Value |
 | --- | --- |
 | Branch | `build/modern-wdk` (local and remote) |
-| HEAD | `f139b218418f69907437d86735a417073fd9eb67` — `build: add modern WDK skeleton and toolchain checks` |
+| HEAD | Task commit `build: disable signing and contain WDK outputs` (parent `8ca4e2ec61210e40059238128ba81cbfce4223f8`; exact task commit is the commit containing this file) |
 | Remote | `origin` → `https://github.com/Zaknin/chatpad-super-driver.git` |
 
 ## Toolchain (verified 2026-06-29)
@@ -29,20 +29,21 @@ This file is updated at every task boundary by the END-OF-TASK ROUTINE.
 
 ## Build Status
 
-| Configuration | Compile+Link | Signing |
+| Configuration | Result | Output verification |
 | --- | --- | --- |
-| Debug x64 | Pass | `TestSign` post-build task exits 1 — `SIGNTASK` error: "No file digest algorithm specified" — signtool invoked without a certificate |
-| Release x64 | Pass | Same signing error |
+| Debug x64 | MSBuild exit 0 | `NotSigned`; SHA-256 `CAA3A0845B16FE34C1871F231E289892FB5213C45F2F425ADC2F160B2BDE2848` |
+| Release x64 | MSBuild exit 0 | `NotSigned`; SHA-256 `B7BD6DDBB036020CC36296C29148EF1E9DD1E228FCBF3C80E258EA2BC3CA8703` |
 
-Compiled artifacts are emitted to `x64\Debug\` and `x64\Release\` under the project, but `x64\` is `.gitignore`d. The `artifacts/` tree (under `.gitignore`) holds environment reports and build logs.
+Outputs are confined to `artifacts/bin/x64/<Configuration>/ChatpadFilter/`; intermediates are confined to `artifacts/obj/x64/<Configuration>/ChatpadFilter/`. Logs and environment reports are under `artifacts/logs/` and `artifacts/environment/`. The complete trees are ignored by Git.
 
 ## Implementation State
 
-* `src/driver/ChatpadFilter/` — compile-only, nonfunctional KMDF skeleton (no INF, no catalog, no signing config, no package, no deployment).
+* `src/driver/ChatpadFilter/` — compile-only, nonfunctional KMDF skeleton with `SignMode=Off` for Debug and Release (no INF, CAT, certificate, package, installer, or deployment).
 * `ChatpadWin11.sln` — references the skeleton.
-* `Directory.Build.props` — enforces Level 4 warnings, TreatWarningAsError, SDL, CompileAsC, Spectre mitigation, x64 preferred architecture, deterministic builds, outputs under `artifacts/`.
-* `tools/Build-Driver.ps1` — orchestrates env detection and MSBuild, writes logs to `artifacts/logs/`.
+* `Directory.Build.props` — enforces Level 4 warnings, TreatWarningAsError, SDL, CompileAsC, Spectre mitigation, x64 preferred architecture, and deterministic builds.
+* `tools/Build-Driver.ps1` — runs environment detection, passes absolute directory-valued output paths, builds, proves unsigned output, rejects signing execution, and runs repository safety validation.
 * `tools/Get-DriverBuildEnvironment.ps1` — read-only toolchain detector, outputs to `artifacts/environment/`.
+* `tools/Test-RepositorySafety.ps1` — rejects modern outputs outside `artifacts/` or ignored `.vs/` paths and preserves the existing legacy, ancestry, packaging, and tracked-binary gates.
 
 ## Historical Baseline
 
@@ -52,13 +53,13 @@ Compiled artifacts are emitted to `x64\Debug\` and `x64\Release\` under the proj
 
 ## Unresolved Blockers
 
-1. WDK `TestSign` post-build task fails with exit code 1 (no signing certificate configured).
-2. Windows 11 architectural blockers documented in `docs/WIN11-BLOCKERS.md` — unchecked buffer copies, null-deref risk, use-after-free patterns, etc.
+1. No chatpad protocol, IOCTL, USB, HID, keyboard, or mouse functionality exists in the modern skeleton.
+2. Windows 11 architectural blockers documented in `docs/WIN11-BLOCKERS.md` remain unresolved.
 
 ## Safety State
 
-* No driver has been installed, loaded, packaged, deployed, or executed.
+* No driver has been installed, loaded, signed, packaged, deployed, or executed.
 * No `.sys`, `.cat`, `.exe`, `.dll`, `.lib`, `.pdb`, `.bin`, or private-key file is tracked by Git.
 * `legacy/` is untouched in this branch.
-* Build outputs are under `.gitignore`d `x64/`, `artifacts/`, and `src/driver/ChatpadFilter/x64/`.
+* Modern build outputs exist only under ignored `artifacts/`; no stale output directory exists at repository root or beneath `src/driver/ChatpadFilter/`.
 * No secrets, machine-specific private information, or certificates in the repository.

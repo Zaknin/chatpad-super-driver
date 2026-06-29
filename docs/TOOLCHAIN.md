@@ -28,4 +28,4 @@ The generated report may contain local installation paths and is therefore store
 
 The validation machine is **ready** for KMDF compilation. Detection found Visual Studio 2022 version 17.14.35, MSVC v143 version 14.44.35207, Windows SDK 10.0.26100.0, and matching WDK 10.0.26100.0. KMDF headers (latest 1.35), x64 libraries, and WDK MSBuild targets are present. WDK Visual Studio integration is installed.
 
-The build compiles and links in both Debug and Release configurations, but the WDK's `TestSign` post-build task fails with exit code 1 because no signing certificate is configured. The signing failure does not prevent compilation output.
+With this toolchain, the repository wrapper completes Debug x64 and Release x64 builds with MSBuild exit code 0. The project explicitly uses WDK `SignMode=Off`; the resulting `.sys` files are intentionally unsigned and no signing task runs.

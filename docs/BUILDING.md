@@ -1,6 +1,6 @@
 # Building the Compile-Only Skeleton
 
-This build creates only an ignored `.sys` compiler output. It does not install, sign, package, deploy, start, or load a driver.
+This build creates only an ignored, intentionally unsigned `.sys` compiler output. It does not install, sign, package, deploy, start, or load a driver.
 
 ## Prerequisites
 
@@ -30,7 +30,9 @@ Release x64 clean build:
 
 Compiled files are written below `artifacts/bin/x64/`, intermediate files below `artifacts/obj/x64/`, environment reports below `artifacts/environment/`, and logs below `artifacts/logs/`. All of these paths are ignored by Git.
 
-Building does not install the driver. There is no INF, catalog, signing configuration, or usable driver package in this repository.
+`tools/Build-Driver.ps1` computes absolute output paths from the repository root and passes directory-valued `OutDir` and `IntDir` properties to MSBuild. The wrapper cleans only the selected configuration under `artifacts/`, requires MSBuild exit code 0, verifies the expected `ChatpadFilter.sys` is `NotSigned`, prints its SHA-256 hash, rejects active WDK signing tasks or SignTool execution, and runs the repository safety gate.
+
+The project sets WDK `SignMode` to `Off` for both supported configurations. No certificate is created and no SignTool operation runs. There is no INF, CAT, installer, package, or deployment configuration, so no installable driver package exists.
 
 ## Troubleshooting
 
@@ -42,4 +44,4 @@ Building does not install the driver. There is no INF, catalog, signing configur
 - **WDK integration missing:** install or repair the WDK Visual Studio extension so `WindowsKernelModeDriver10.0` is available to VS 2022 MSBuild.
 - **KMDF files or targets missing:** repair the WDK installation and rerun environment detection before attempting another build.
 
-Never load this skeleton on the main Windows installation. It is nonfunctional, has no installable package, and has not passed runtime validation.
+Never install or load the generated `.sys`. The skeleton has no chatpad protocol, IOCTL, USB, HID, keyboard, or mouse functionality, has no installable package, and has not passed runtime validation.
