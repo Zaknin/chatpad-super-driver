@@ -211,6 +211,33 @@ payload `0x09 0x00` in `InitChatpad` at
 handling, status loop, and unresolved semantics are documented in the focused
 audit.
 
+### Declarative Activation Request Builder
+
+**Classification:** Offline declarative representation of confirmed USB setup
+fields and payload bytes. It is not transport code and does not send requests.
+
+`src/protocol/ChatpadProtocol/ChatpadActivationRequests.h` and `.c` expose
+exactly six activation request descriptors reconstructed from
+`docs/CHATPAD-INIT-STATUS-EVIDENCE.md`. The descriptors preserve raw setup
+fields, direction, outbound payload length, expected device-to-host data-stage
+length, and embedded outbound payload bytes. They do not represent a complete
+initialization success condition.
+
+| Index | Direction | `bmRequestType` | `bRequest` | `wValue` | `wIndex` | `wLength` | Outbound payload | Expected inbound data |
+|---:|---|---:|---:|---:|---:|---:|---|---:|
+| 0 | host to device | `40` | `a9` | `a30c` | `4423` | `0000` | none | `0000` |
+| 1 | host to device | `40` | `a9` | `2344` | `7f03` | `0000` | none | `0000` |
+| 2 | host to device | `40` | `a9` | `5839` | `6832` | `0000` | none | `0000` |
+| 3 | device to host | `c0` | `a1` | `0000` | `e416` | `0002` | none | `0002` |
+| 4 | host to device | `40` | `a1` | `0000` | `e416` | `0002` | `09 00` | `0000` |
+| 5 | device to host | `c0` | `a1` | `0000` | `e416` | `0002` | none | `0002` |
+
+`09 00` is the only confirmed outbound payload. `90 00` is deliberately absent
+from request descriptors, fixtures, payloads, and tests. Device-to-host
+descriptors request two bytes by setup `wLength` only; no response bytes,
+acknowledgement schema, ready state, retry policy, timeout behavior, or status
+meaning is fabricated.
+
 ### Offline State-Machine Classification Boundary
 
 **Classification:** Project abstraction — not wire-format evidence.

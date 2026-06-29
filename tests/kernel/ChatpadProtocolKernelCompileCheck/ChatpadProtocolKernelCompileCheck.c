@@ -1,3 +1,4 @@
+#include "ChatpadActivationRequests.h"
 #include "ChatpadKeyboardParser.h"
 #include "ChatpadProtocolStateMachine.h"
 
@@ -31,4 +32,15 @@ ChatpadStateMachineResult ChatpadProtocolKernelStateMachineCompileCheck(void)
     }
 
     return ChatpadProtocolStateMachineApply(&stateMachine, event, &transition);
+}
+
+ChatpadActivationBuildResult ChatpadProtocolKernelActivationRequestCompileCheck(void)
+{
+    ChatpadActivationRequest request;
+
+    if (ChatpadGetActivationRequestCount() != CHATPAD_ACTIVATION_REQUEST_COUNT) {
+        return CHATPAD_ACTIVATION_BUILD_INVALID_INDEX;
+    }
+
+    return ChatpadBuildActivationRequest(4u, &request);
 }

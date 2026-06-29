@@ -1,8 +1,9 @@
 # Chatpad Protocol Kernel Compile Check
 
 This isolated WDK static-library project proves that the portable protocol
-headers, complete five-byte keyboard parser, and transport-independent state
-machine compile as C with the `WindowsKernelModeDriver10.0` toolset.
+headers, declarative activation request builder, complete five-byte keyboard
+parser, and transport-independent state machine compile as C with the
+`WindowsKernelModeDriver10.0` toolset.
 
 It is a compile-time compatibility check only. The project has no entry point,
 driver object, callbacks, device or transport code, USB, HID, IOCTL, PnP,
@@ -11,9 +12,10 @@ behavior. It produces a `.lib`, never a `.sys`, and nothing consumes that
 library at runtime. In particular, `ChatpadFilter` has no reference to this
 project or its output.
 
-The state-machine check compiles initialization, reset, parser-result mapping,
-and abstract-event application. It does not decode raw initialization/status
-forms and introduces no runtime driver integration.
+The activation-request check compiles request-count access and request
+construction. The state-machine check compiles initialization, reset,
+parser-result mapping, and abstract-event application. It does not decode raw
+initialization/status forms and introduces no runtime driver integration.
 
 Run both supported configurations from the repository root:
 

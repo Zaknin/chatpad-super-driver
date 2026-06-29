@@ -4,6 +4,46 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Represent activation requests as immutable value-copy descriptors
+
+**Decision:** The activation-request API exposes exactly six confirmed legacy
+setup descriptors through `ChatpadGetActivationRequestCount` and
+`ChatpadBuildActivationRequest`. The implementation stores a private
+`static const` table and copies one descriptor into caller-owned output. The
+public value separates raw setup fields, direction, outbound payload length,
+expected inbound data length, and embedded outbound payload bytes.
+
+**Rationale:** The audit proves six setup tuples and exactly one outbound
+payload, `09 00`, but does not prove response bytes, acknowledgement,
+readiness, retries, status decoding, or complete initialization success. A
+value-copy descriptor preserves exact evidence without exposing transport,
+static payload pointers, mutable state, or lifetime assumptions.
+
+**Alternatives rejected:**
+
+* Returning pointers into a public request table — would expose internal
+  storage and create lifetime/mutation assumptions.
+* Encoding `90 00` — the audit classifies it as a comment-only claim on an
+  unused internal structure.
+* Naming requests as ready, acknowledged, initialized, or successful — those
+  semantics remain unresolved.
+* Adding transport results, timeout statuses, retry states, or response
+  buffers — outside the confirmed evidence boundary.
+* Including MSVC `stdint.h` unconditionally under the WDK toolchain — it
+  collides with kernel CRT headers under `/W4 /WX`, so the public header uses
+  standard `<stdint.h>/<stddef.h>` for normal C callers and a primitive
+  kernel-safe fallback only when `_MSC_VER` and `_KERNEL_MODE` are both set.
+
+**Consequences:**
+
+* Callers always receive a deterministic value copy; modifying one result does
+  not affect later calls.
+* Invalid indexes clear non-null output; null output is rejected safely.
+* Device-to-host descriptors carry no fabricated outbound data or response
+  bytes.
+* The API remains portable C, allocation-free, I/O-free, transport-free, and
+  compile-compatible with the isolated WDK static-library check.
+
 ## 2026-06-29 — Model offline protocol progress as caller-supplied classifications
 
 **Decision:** The portable state machine records only the latest neutral

@@ -1,4 +1,4 @@
-# Chatpad Protocol Parser and Offline State Machine
+# Chatpad Protocol Parser, Offline State Machine, and Activation Requests
 
 This directory contains a portable C interface and parser for the documented
 five-byte Chatpad keyboard packet boundary. It allocates no memory, performs
@@ -17,6 +17,11 @@ implementation.
 caller-owned last-classification state machine. It performs no raw
 initialization/status decoding and does not claim that its abstract events are
 wire packets.
+
+`ChatpadActivationRequests.h` and `.c` add a transport-independent declarative
+request builder for the six activation control requests confirmed by
+`docs/CHATPAD-INIT-STATUS-EVIDENCE.md`. It performs no I/O, exposes no
+transport handle, retains no caller pointer, and never sends a request.
 
 ## Parser API
 
@@ -106,6 +111,33 @@ classified as protocol events and cause no transition. Invalid states/events
 are rejected, failed transition outputs are cleared deterministically, and no
 caller pointer is retained.
 
+## Activation Request API
+
+```c
+size_t ChatpadGetActivationRequestCount(void);
+
+ChatpadActivationBuildResult ChatpadBuildActivationRequest(
+    size_t requestIndex,
+    ChatpadActivationRequest *output);
+```
+
+The API returns caller-owned value copies from a private immutable table.
+Exactly six descriptors are available, in the executable legacy order:
+
+| Index | Direction | `bmRequestType` | `bRequest` | `wValue` | `wIndex` | `wLength` | Outbound payload | Expected inbound data |
+|---:|---|---:|---:|---:|---:|---:|---|---:|
+| 0 | host to device | `40` | `a9` | `a30c` | `4423` | `0000` | none | `0000` |
+| 1 | host to device | `40` | `a9` | `2344` | `7f03` | `0000` | none | `0000` |
+| 2 | host to device | `40` | `a9` | `5839` | `6832` | `0000` | none | `0000` |
+| 3 | device to host | `c0` | `a1` | `0000` | `e416` | `0002` | none | `0002` |
+| 4 | host to device | `40` | `a1` | `0000` | `e416` | `0002` | `09 00` | `0000` |
+| 5 | device to host | `c0` | `a1` | `0000` | `e416` | `0002` | none | `0002` |
+
+`09 00` is the only confirmed outbound payload. The unsupported `90 00`
+comment is not represented. Device-to-host descriptors contain no fabricated
+response bytes. Building descriptors does not imply initialization success,
+acknowledgement, readiness, retry, timeout, status, or keepalive semantics.
+
 ## Build and Test
 
 ### Integrated build (preferred)
@@ -121,8 +153,9 @@ caller pointer is retained.
 .\tools\Test-ChatpadProtocolParser.ps1
 ```
 
-The existing direct-compiler script remains available as a lightweight parser-only regression.
-It does not use MSBuild or the solution.
+The direct-compiler script remains available as a lightweight regression for
+the parser, state machine, activation request builder, and their tests. It does
+not use MSBuild or the solution.
 
 ### Kernel-toolchain compatibility check
 
@@ -131,11 +164,12 @@ It does not use MSBuild or the solution.
 .\tools\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Release -Platform x64
 ```
 
-This compiles the parser and state-machine sources and public headers as C with the WDK
+This compiles the activation request, parser, and state-machine sources and
+public headers as C with the WDK
 `WindowsKernelModeDriver10.0` toolset. It produces only an isolated static
 library beneath `artifacts/`; it has no runtime entry point and produces no
 `.sys`. `ChatpadFilter` neither references nor links the compatibility library
-or parser implementation.
+or protocol implementation.
 
 ### MSBuild directly
 
@@ -160,7 +194,7 @@ All generated files are contained beneath `artifacts/`:
 
 ## Tests
 
-The test executable runs a self-contained assertion framework with 174 assertions:
+The test executable runs a self-contained assertion framework with 300 assertions:
 
 - Argument and length validation (null inputs, truncated, oversized)
 - Valid packet parsing (no keys, boundary values, raw key0 nonzero)
@@ -171,10 +205,14 @@ The test executable runs a self-contained assertion framework with 174 assertion
 - State initialization, repeated/sequential events, and explicit reset
 - Null/invalid state-machine arguments and deterministic failure output
 - Parser-result mapping, unresolved abstract classification, and sentinels
+- Activation request count, invalid index/null output handling, exact field
+  construction, payload boundaries, `09 00` presence, `90 00` absence,
+  deterministic clearing, repeated construction, value-copy isolation, and
+  no fabricated device-to-host outbound data
 
 ```
-Total: 174
-Passed: 174
+Total: 300
+Passed: 300
 Failed: 0
 ```
 
@@ -191,4 +229,5 @@ No third-party test framework. No device or hardware APIs. Offline only.
 - **No signing, deployment, or package configuration**
 - **Parser code is not connected to the kernel driver**
 - **State-machine code is not connected to the kernel driver**
+- **Activation-request code is not connected to the kernel driver**
 - **Driver remains unsigned and nonfunctional**

@@ -84,11 +84,13 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
+    <ClInclude Include="ChatpadActivationRequests.h" />
     <ClInclude Include="ChatpadKeyboardParser.h" />
     <ClInclude Include="ChatpadProtocolStateMachine.h" />
     <ClInclude Include="ChatpadProtocolTypes.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ChatpadActivationRequests.c" />
     <ClCompile Include="ChatpadKeyboardParser.c" />
     <ClCompile Include="ChatpadProtocolStateMachine.c" />
   </ItemGroup>

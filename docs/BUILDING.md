@@ -16,11 +16,12 @@ Run `tools/Get-DriverBuildEnvironment.ps1` to verify the full toolchain.
 The current machine exposes KMDF headers and x64 libraries through version
 1.35; existing driver projects still use the WDK default KMDF target 1.15.
 
-## Chatpad Protocol Parser and State Machine (offline)
+## Chatpad Protocol Parser, State Machine, and Activation Requests (offline)
 
 Portable C parser for the Phase 1 keyboard packet boundary plus a
-transport-independent abstract state machine. Native user-mode static library.
-No hardware, elevation, transport, or driver integration.
+transport-independent abstract state machine and declarative activation request
+builder. Native user-mode static library. No hardware, elevation, transport,
+request sending, or driver integration.
 
 ### Integrated build and test (preferred)
 
@@ -32,14 +33,15 @@ No hardware, elevation, transport, or driver integration.
 Builds `ChatpadProtocol.vcxproj` and `ChatpadProtocolTests.vcxproj` via
 MSBuild, runs the test executable, and verifies artifact containment.
 
-### Direct parser-only regression
+### Direct compiler regression
 
 ```powershell
 .\tools\Test-ChatpadProtocolParser.ps1
 ```
 
-Uses `cl.exe` and `link.exe` directly. Retained as a lightweight
-parser-only check without MSBuild or solution integration.
+Uses `cl.exe` and `link.exe` directly. It compiles the parser, state machine,
+activation request builder, and offline tests without MSBuild or solution
+integration.
 
 ### Artifacts
 
@@ -52,9 +54,9 @@ parser-only check without MSBuild or solution integration.
 
 ## Kernel compatibility compile check
 
-This isolated static-library build compiles `ChatpadKeyboardParser.c`,
-`ChatpadProtocolStateMachine.c`, and their shared public headers as C with the
-WDK kernel toolchain. It is compile-time
+This isolated static-library build compiles `ChatpadActivationRequests.c`,
+`ChatpadKeyboardParser.c`, `ChatpadProtocolStateMachine.c`, and their shared
+public headers as C with the WDK kernel toolchain. It is compile-time
 compatibility validation only: it has no entry point, is not referenced by
 `ChatpadFilter`, and does not install, load, sign, package, deploy, or access
 hardware. It never produces a `.sys`.

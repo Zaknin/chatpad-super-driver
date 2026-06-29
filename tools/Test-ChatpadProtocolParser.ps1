@@ -178,8 +178,9 @@ New-Item -ItemType Directory -Path $logRoot -Force | Out-Null
 $timestamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 $buildLogPath = Join-Path $logRoot ("chatpad-protocol-parser-build-$timestamp.log")
 $testLogPath = Join-Path $logRoot ("chatpad-protocol-parser-test-$timestamp.log")
-[System.IO.File]::WriteAllText($buildLogPath, '', [System.Text.UTF8Encoding]::new($false))
-[System.IO.File]::WriteAllText($testLogPath, '', [System.Text.UTF8Encoding]::new($false))
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($buildLogPath, '', $utf8NoBom)
+[System.IO.File]::WriteAllText($testLogPath, '', $utf8NoBom)
 
 $programFilesX86 = [Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFilesX86)
 $vsWhereCandidates = @(
@@ -204,13 +205,17 @@ $linkPath = $msvcLinkCmd.Source
 $sourceRoot = [System.IO.Path]::Combine($repoRoot, 'src', 'protocol', 'ChatpadProtocol')
 $testRoot = [System.IO.Path]::Combine($repoRoot, 'tests', 'protocol')
 $fixtureRoot = [System.IO.Path]::Combine($testRoot, 'fixtures')
+$activationRequestSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadActivationRequests.c')
 $parserSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadKeyboardParser.c')
 $stateMachineSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadProtocolStateMachine.c')
 $testSource = [System.IO.Path]::Combine($testRoot, 'ChatpadProtocolParserTests.c')
+$activationRequestTestSource = [System.IO.Path]::Combine($testRoot, 'ChatpadActivationRequestsTests.c')
 $stateMachineTestSource = [System.IO.Path]::Combine($testRoot, 'ChatpadProtocolStateMachineTests.c')
+$activationRequestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadActivationRequests.obj')
 $parserObject = [System.IO.Path]::Combine($objRoot, 'ChatpadKeyboardParser.obj')
 $stateMachineObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolStateMachine.obj')
 $testObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolParserTests.obj')
+$activationRequestTestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadActivationRequestsTests.obj')
 $stateMachineTestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolStateMachineTests.obj')
 $testExecutable = [System.IO.Path]::Combine($binRoot, 'ChatpadProtocolParserTests.exe')
 $testPdb = [System.IO.Path]::Combine($binRoot, 'ChatpadProtocolParserTests.pdb')
@@ -242,6 +247,15 @@ if ($parserCompile.ExitCode -ne 0) {
 }
 Write-Output "DEBUG: After parser compile"
 
+$activationRequestCompileArguments = @($commonCompilerArguments + @("/Fo$activationRequestObject", $activationRequestSource))
+$activationRequestCompile = Invoke-NativeLoggedStep -Name 'Activation request compile' -FilePath $clPath -Arguments $activationRequestCompileArguments -LogPath $buildLogPath
+$activationRequestCompile.OutputText | Write-Output
+Write-Output "Activation request compiler exit code: $($activationRequestCompile.ExitCode)"
+if ($activationRequestCompile.ExitCode -ne 0) {
+    Write-Output "Build log: $buildLogPath"
+    exit $activationRequestCompile.ExitCode
+}
+
 $stateMachineCompileArguments = @($commonCompilerArguments + @("/Fo$stateMachineObject", $stateMachineSource))
 $stateMachineCompile = Invoke-NativeLoggedStep -Name 'State machine compile' -FilePath $clPath -Arguments $stateMachineCompileArguments -LogPath $buildLogPath
 $stateMachineCompile.OutputText | Write-Output
@@ -261,6 +275,15 @@ if ($testCompile.ExitCode -ne 0) {
 }
 Write-Output "DEBUG: After test compile"
 
+$activationRequestTestCompileArguments = @($commonCompilerArguments + @("/Fo$activationRequestTestObject", $activationRequestTestSource))
+$activationRequestTestCompile = Invoke-NativeLoggedStep -Name 'Activation request test compile' -FilePath $clPath -Arguments $activationRequestTestCompileArguments -LogPath $buildLogPath
+$activationRequestTestCompile.OutputText | Write-Output
+Write-Output "Activation request test compiler exit code: $($activationRequestTestCompile.ExitCode)"
+if ($activationRequestTestCompile.ExitCode -ne 0) {
+    Write-Output "Build log: $buildLogPath"
+    exit $activationRequestTestCompile.ExitCode
+}
+
 $stateMachineTestCompileArguments = @($commonCompilerArguments + @("/Fo$stateMachineTestObject", $stateMachineTestSource))
 $stateMachineTestCompile = Invoke-NativeLoggedStep -Name 'State machine test compile' -FilePath $clPath -Arguments $stateMachineTestCompileArguments -LogPath $buildLogPath
 $stateMachineTestCompile.OutputText | Write-Output
@@ -276,9 +299,11 @@ $linkArguments = @(
     '/INCREMENTAL:NO',
     "/OUT:$testExecutable",
     "/PDB:$testPdb",
+    $activationRequestObject,
     $parserObject,
     $stateMachineObject,
     $testObject,
+    $activationRequestTestObject,
     $stateMachineTestObject
 )
 $link = Invoke-NativeLoggedStep -Name 'Test link' -FilePath $linkPath -Arguments $linkArguments -LogPath $buildLogPath

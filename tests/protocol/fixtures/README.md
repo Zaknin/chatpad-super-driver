@@ -9,10 +9,18 @@ represented as observed hardware traffic.
 events. They are caller classifications for offline testing, not raw
 initialization/status frames, transport events, or hardware observations.
 
+`ChatpadActivationRequestFixtures.h` contains the six activation request
+descriptors reconstructed from confirmed legacy-source evidence in
+`docs/CHATPAD-INIT-STATUS-EVIDENCE.md`. They are not hardware captures and do
+not describe acknowledgement, ready-state, retry, timeout, or response
+semantics.
+
 ## Provenance and Naming
 
 The arrays use raw field and boundary names only. They do not label a modifier
 bit as Shift, assign a key name to a raw byte, or claim a scan-code meaning.
+Activation fixtures use raw setup-field names and explicit payload length
+fields only; they do not label the sequence as successful initialization.
 
 | Fixture | Purpose |
 | --- | --- |
@@ -31,8 +39,17 @@ bit as Shift, assign a key name to a raw byte, or claim a scan-code meaning.
 | `OversizedPacket` | Six-byte synthetic length boundary. |
 | `LargerOversizedPacket` | Larger synthetic oversized input. |
 
-The fixtures contain no executable legacy payload. Include the header only in
-offline tests and run them with:
+| Activation fixture | Purpose |
+| --- | --- |
+| `ConfirmedActivationRequests[0]` | First confirmed no-payload host-to-device `40 a9 a30c 4423 0000` setup tuple. |
+| `ConfirmedActivationRequests[1]` | Second confirmed no-payload host-to-device `40 a9 2344 7f03 0000` setup tuple. |
+| `ConfirmedActivationRequests[2]` | Third confirmed no-payload host-to-device `40 a9 5839 6832 0000` setup tuple. |
+| `ConfirmedActivationRequests[3]` | Confirmed device-to-host `c0 a1 0000 e416 0002` setup tuple with no outbound payload or fabricated response bytes. |
+| `ConfirmedActivationRequests[4]` | Confirmed host-to-device `40 a1 0000 e416 0002` setup tuple with the only outbound payload, `09 00`. |
+| `ConfirmedActivationRequests[5]` | Second confirmed device-to-host `c0 a1 0000 e416 0002` setup tuple with no outbound payload or fabricated response bytes. |
+
+The fixtures contain no executable legacy code and no unsupported `90 00`
+payload. Include the headers only in offline tests and run them with:
 
 ```powershell
 .\tools\Test-ChatpadProtocolParser.ps1

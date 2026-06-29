@@ -286,3 +286,120 @@
 - **Safety:** `legacy/` remained untouched. No implementation, hardware,
   driver, build-project, external-skill, installation, signing, packaging,
   deployment, loading, capture, or runtime action occurred.
+
+## 2026-06-29T16:56+04:00 — Declarative activation request builder
+
+- **Objective:** Add a transport-independent declarative representation of the
+  six activation control requests confirmed by the initialization/status audit,
+  add offline construction tests, update build integration and continuity, then
+  commit and push.
+- **Starting branch and commit:** `feature/activation-request-builder` /
+  `782e8e15037af1ec524b69ee38003977d3b99fa5`; clean and aligned with
+  `origin/feature/activation-request-builder`. Prohibited commit `6502452` was
+  not an ancestor.
+- **Continuity discrepancy:** The inherited project-state and next-task files
+  correctly described the parent audit checkpoint but named the parent audit
+  branch. They were updated to this feature branch and current implementation.
+- **Implementation:** Added `ChatpadActivationRequests.h/.c` with a private
+  immutable six-entry descriptor table, request count API, build-by-index API,
+  null-output rejection, invalid-index rejection with deterministic clearing,
+  embedded payload bytes, expected inbound data length, and caller-owned value
+  copies. The public model preserves raw setup fields and direction without
+  transport, I/O, allocation, mutable globals, caller-pointer retention,
+  retries, timeouts, acknowledgement semantics, ready states, or response
+  decoding.
+- **Confirmed six-request order:** index 0 `40 a9 a30c 4423 0000`, index 1
+  `40 a9 2344 7f03 0000`, index 2 `40 a9 5839 6832 0000`, index 3
+  `c0 a1 0000 e416 0002`, index 4 `40 a1 0000 e416 0002` with outbound
+  payload `09 00`, and index 5 `c0 a1 0000 e416 0002`.
+- **Evidence boundary:** `09 00` is the only outbound payload. `90 00` is
+  absent from descriptors, fixtures, payloads, and tests. Device-to-host
+  descriptors expose only expected inbound data length and contain no fabricated
+  response bytes.
+- **Tests:** Added evidence-derived activation fixtures and 126 focused
+  assertions covering count, null output, invalid indexes, exact order,
+  direction, setup fields, outbound payload length and bytes, `09 00`
+  placement, `90 00` absence, no fabricated device-to-host outbound data,
+  unused payload zeroing, deterministic failure clearing, repeatability,
+  stateless sequential construction, value-copy isolation, sentinel guards, and
+  absence of acknowledgement/ready/retry/timeout fields. Total assertions are
+  now 300.
+- **Build integration:** Added the source/header to `ChatpadProtocol.vcxproj`;
+  added tests and fixtures to `ChatpadProtocolTests.vcxproj`; updated
+  `Test-ChatpadProtocolParser.ps1` to compile/link the activation source and
+  tests directly; added the source/header and compile consumer to the isolated
+  WDK compatibility project. The direct script now uses a PowerShell 5.1-safe
+  UTF-8 encoding constructor for touched log writes.
+- **Kernel compatibility fix:** Unconditional MSVC `stdint.h` inclusion failed
+  under the WDK kernel toolchain with CRT macro redefinition warnings promoted
+  to errors. The activation public header uses standard `<stdint.h>` and
+  `<stddef.h>` for normal C callers and a primitive `_MSC_VER` plus
+  `_KERNEL_MODE` fallback for the isolated kernel compile path, without adding
+  Windows or WDK headers to the portable API.
+- **Files created:** `src/protocol/ChatpadProtocol/ChatpadActivationRequests.h`,
+  `src/protocol/ChatpadProtocol/ChatpadActivationRequests.c`,
+  `tests/protocol/ChatpadActivationRequestsTests.h`,
+  `tests/protocol/ChatpadActivationRequestsTests.c`, and
+  `tests/protocol/fixtures/ChatpadActivationRequestFixtures.h`.
+- **Files modified:** `src/protocol/ChatpadProtocol/ChatpadProtocol.vcxproj`,
+  `src/protocol/ChatpadProtocol/README.md`,
+  `tests/protocol/ChatpadProtocolParserTests.c`,
+  `tests/protocol/ChatpadProtocolTests.vcxproj`,
+  `tests/protocol/README.md`, `tests/protocol/fixtures/README.md`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.c`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.vcxproj`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/README.md`,
+  `tools/Test-ChatpadProtocolParser.ps1`, `docs/CHATPAD-PROTOCOL.md`,
+  `docs/BUILDING.md`, `docs/DECISIONS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, and append-only `docs/WORKLOG.md`.
+- **Initial validation:** `tools/Get-DriverBuildEnvironment.ps1` — exit 0;
+  `tools/Test-RepositorySafety.ps1` — PASS; `git diff --exit-code -- legacy`
+  — exit 0; `git merge-base --is-ancestor 6502452 HEAD` — exit 1 as required.
+- **Direct validation:** `tools/Test-ChatpadProtocolParser.ps1` — compiler
+  exits 0, linker exit 0, test exit 0, 300/300 assertions. Test executable
+  SHA-256 `F88F87BC842C72F45074F1A818F36A9C3738F60B448A0298C8D0F3FCFF9958BA`.
+- **Integrated Debug:** `tools/Test-ChatpadProtocol.ps1 -Configuration Debug
+  -Platform x64` — MSBuild exit 0, test exit 0, 300/300 assertions; library
+  `artifacts/bin/x64/Debug/ChatpadProtocol/ChatpadProtocol.lib` SHA-256
+  `4F337A31B8E3657865606423ECB2DE80510432EFA0BFFFDA2C70E6E5D8063989`; test
+  executable `artifacts/bin/x64/Debug/ChatpadProtocolTests/ChatpadProtocolTests.exe`
+  SHA-256 `A9869E027C9C1D14EB03C36CCA931207DC05F78558DD60E48D2BD5A26A5016AA`.
+- **Integrated Release:** `tools/Test-ChatpadProtocol.ps1 -Configuration
+  Release -Platform x64` — MSBuild exit 0, test exit 0, 300/300 assertions;
+  library `artifacts/bin/x64/Release/ChatpadProtocol/ChatpadProtocol.lib`
+  SHA-256 `3B82C72AD836A236B30F5067509748F0422E4657D0A931FD0177BB61A85821E4`;
+  test executable
+  `artifacts/bin/x64/Release/ChatpadProtocolTests/ChatpadProtocolTests.exe`
+  SHA-256 `2A8000A9D1EA214AE27DB477A2914DD0E511D36A385B8A43493BFD3B81172505`.
+- **Kernel compatibility Debug:** `tools/Test-ChatpadProtocolKernelCompatibility.ps1
+  -Configuration Debug -Platform x64` — MSBuild exit 0; activation source
+  compiled under WDK; only `.lib` output; SHA-256
+  `54ED65B1B7DDEE19218153D6B258CE12AA7CF8A9A76D378960FCB750AA76DB1B`.
+- **Kernel compatibility Release:** `tools/Test-ChatpadProtocolKernelCompatibility.ps1
+  -Configuration Release -Platform x64` — MSBuild exit 0; activation source
+  compiled under WDK; only `.lib` output; SHA-256
+  `925E08541617E52FEB70D9C974E49797C8FDC9E2A079D7A722345895A5245592`.
+- **Driver Debug:** `tools/Build-Driver.ps1 -Configuration Debug -Platform x64`
+  — exit 0, NotSigned, no SignTool; `ChatpadFilter.sys` SHA-256
+  `9e01f44b37c45141a6cb1f67941edd1a08cf6a66d3d663a47131e35e081bedfd`.
+- **Driver Release:** `tools/Build-Driver.ps1 -Configuration Release -Platform
+  x64` — exit 0, NotSigned, no SignTool; `ChatpadFilter.sys` SHA-256
+  `1f1a81fb5e4392ad640c97d1c6c5b11972e66b55b5773732e8a3d9c217ad7b9b`.
+- **Driver isolation proof:** `ChatpadFilter.vcxproj` lists only `driver.c`,
+  `device.c`, and `driver.h`, with no project reference or activation/protocol
+  source. The solution has no dependency section. Debug and Release driver
+  diagnostic linker inputs include only driver objects and WDK/KMDF libraries,
+  not `ChatpadProtocol.lib` or `ChatpadProtocolKernelCompileCheck.lib`.
+- **Generated artifacts:** Build outputs and logs remain under ignored
+  `artifacts/`; none are staged or tracked.
+- **Commit and push:** Commit exactly
+  `feat: add declarative activation request builder`; push only
+  `origin/feature/activation-request-builder`.
+- **Remaining risks or limitations:** The three `40/a9` requests remain
+  semantically unexplained; control-IN response bytes, `f0` packet meaning,
+  `001f`/`001e` periodic request semantics, inter-request timing policy, and
+  objective ready conditions remain unresolved.
+- **Safety:** `legacy/` remained untouched. No request was sent. No hardware,
+  USB, HID, IOCTL, installation, signing, packaging, deployment, loading,
+  capture, external-skill, driver runtime, callback, service, INF, CAT,
+  certificate, or installer action occurred.
