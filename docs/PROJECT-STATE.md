@@ -1,18 +1,18 @@
 # Project State
 
-*Last updated: 2026-06-29T11:25Z*
+*Last updated: 2026-06-29T14:30Z*
 
 ## Current state
 
 - **Branch:** `test/protocol-fixtures` (tracking `origin/test/protocol-fixtures`)
-- **HEAD:** `664aa66bfb5bfca8c8319…` (no new commit this session)
-- **Implementation:** Chatpad Protocol Phase 1 parser integrated into the build system
-  - `ChatpadProtocol.vcxproj` built as static library (x64, both Debug/Release)
-  - `ChatpadProtocolTests.vcxproj` built as test executable (x64, both Debug/Release)
-  - `ChatpadFilter.sys` driver skeleton builds with `ChatpadProtocol.lib` as dependency
-- **Parser tests:** 85/85 passed (both Debug and Release configurations)
-- **Protocol tests:** 85/85 passed (both Debug and Release configurations)
-- **Driver build:** 0 warnings, 0 errors, Spectre mitigation enabled, SignMode=Off
+- **HEAD:** `969990ca9e532643b750a3fc1820a4c31770fd44` (protocol integration committed and pushed)
+- **ChatpadProtocol static-library project:** `src/protocol/ChatpadProtocol/ChatpadProtocol.vcxproj` — builds x64 Debug and Release under `artifacts/`
+- **ChatpadProtocolTests native test project:** `tests/protocol/ChatpadProtocolTests.vcxproj` — builds x64 Debug and Release under `artifacts/`
+- **Parser direct tests:** 85/85 passed
+- **Integrated Debug tests:** 85/85 passed (MSBuild exit 0, test exit 0)
+- **Integrated Release tests:** 85/85 passed (MSBuild exit 0, test exit 0)
+- **Driver Debug build:** exit 0, NotSigned, no SignTool execution
+- **Driver Release build:** exit 0, NotSigned, no SignTool execution
 - **Build tools:** MSBuild 17.14.40, MSVC v143, KMDF 1.15, Windows SDK 10.0.26100.0
 - **Unresolved blockers:** None
 - **Safety state:** PASS
@@ -21,3 +21,15 @@
   - No SignTool execution detected
   - `legacy/` matches `origin/win11-port`
   - Prohibited commit `6502452` not an ancestor of HEAD
+
+## Dependency relationship
+
+- `ChatpadFilter` (driver) builds `ChatpadProtocol` (static library) first via explicit build order in `Build-Driver.ps1`.
+- `ChatpadFilter` does NOT link `ChatpadProtocol.lib` — it remains a nonfunctional skeleton.
+- `ChatpadProtocolTests` uses a native ProjectReference to `ChatpadProtocol` for library linkage, replacing the previous hardcoded `AdditionalDependencies`/`AdditionalLibraryDirectories` approach.
+
+## Implementation state
+
+- ChatpadProtocol: Phase 1 raw parser — neutral, policy-labeled, five-byte wire format only.
+- ChatpadFilter: Nonfunctional skeleton — `driver.c`, `device.c`, `driver.h` present. No USB/IOCTL/HID/device callback/injection wiring yet.
+- No install, load, package, signing, deployment, or hardware test has occurred.

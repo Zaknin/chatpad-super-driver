@@ -27,10 +27,6 @@ Global
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Release|x64.ActiveCfg = Release|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
-	GlobalSection(SolutionDependencies) = postSolution
-		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.ActiveCfg = Debug|x64
-		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.DependsOn = {A1B2C3D4-E5F6-4789-ABCD-EF0123456789}|Debug|x64
-	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection

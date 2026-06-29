@@ -63,10 +63,6 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(ProjectDir)fixtures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <AdditionalDependencies>ChatpadProtocol.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(RepoRoot)\artifacts\bin\x64\$(Configuration)\ChatpadProtocol\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -77,10 +73,6 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(RepoRoot)\src\protocol\ChatpadProtocol;$(ProjectDir)fixtures;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <AdditionalDependencies>ChatpadProtocol.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(RepoRoot)\artifacts\bin\x64\$(Configuration)\ChatpadProtocol\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
   </ItemDefinitionGroup>
 
   <ItemGroup>
@@ -88,6 +80,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadProtocolParserTests.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj">
+      <Project>{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}</Project>
+    </ProjectReference>
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
