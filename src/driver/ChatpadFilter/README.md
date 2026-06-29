@@ -57,6 +57,14 @@ root `artifacts/` by `tools/Build-Driver.ps1`.
 
 The generated `.sys` must not be installed or loaded on any Windows system.
 
+## Offline INF prototype reference
+
+`prototypes/inf/ChatpadFilterExtension/` contains an isolated source-only
+extension-INF prototype and its prominent installation warning. The prototype
+is not referenced by this project, the solution build, or
+`tools/Build-Driver.ps1`. Its static `InfVerif` result does not make this
+unsigned driver installable and does not prove placement beneath `xusb22`.
+
 ## Future bridge design reference
 
 `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` documents the future

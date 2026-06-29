@@ -184,6 +184,29 @@ path and SHA-256, rejects signing evidence or prohibited driver/package
 outputs, and confirms every generated compatibility file remains beneath
 `artifacts/`.
 
+## Offline extension-INF prototype
+
+`prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf` is an
+isolated AMD64 Windows 11 extension-INF prototype. It is not referenced by the
+solution, driver project, build wrapper, or a package target.
+
+Validate it without elevation using installed WDK `InfVerif`:
+
+```powershell
+.\tools\Test-ChatpadFilterInfPrototype.ps1
+```
+
+The Windows PowerShell 5.1-compatible wrapper performs semantic safety guards,
+discovers installed x64 `InfVerif`, reads its advertised options, runs primary
+declarative `/k /v` validation plus information and annotated-output passes,
+prints the INF SHA-256, and writes logs only beneath
+`artifacts\inf-validation\<UTC timestamp>\`.
+
+The INF declares future catalog identity `ChatpadFilterExtension.cat` because
+declarative validation requires `CatalogFile`, but this task creates no CAT,
+package, signature, service, Driver Store entry, registry value, or device
+action. Static validation is not installation readiness.
+
 ## Kernel driver (compile-only skeleton)
 
 The driver project compiles to a non-installable `.sys` skeleton with a KMDF

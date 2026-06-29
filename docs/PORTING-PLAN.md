@@ -58,6 +58,10 @@ Source references:
   placement, package identity, staged authorization, and rollback. Treat its
   documentation checkpoint as incomplete until independently reviewed against
   an actual signed package and demonstrated on a noncritical system.
+- Keep the validated extension INF prototype isolated under
+  `prototypes/inf/ChatpadFilterExtension/`. Static `InfVerif` success completes
+  only the source-syntax checkpoint; catalog generation, package layout,
+  signing, staging, installation, and runtime placement remain separate gates.
 - Keep physical transport, per-device WDF lifetime, scheduling, diagnostics,
   and keyboard presentation in separate layers with no portable-to-WDF
   dependency.

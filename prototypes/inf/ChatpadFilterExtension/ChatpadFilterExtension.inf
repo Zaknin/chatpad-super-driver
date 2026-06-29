@@ -1,0 +1,65 @@
+;
+; OFFLINE PROTOTYPE - DO NOT INSTALL
+;
+; Device-specific extension INF prototype for static WDK validation only.
+; It is not a signed, cataloged, staged, or installable release package.
+;
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = Extension
+ClassGuid   = {E2F84CE7-8EFA-411C-AA69-97454CA4CB57}
+Provider    = %ProviderName%
+ExtensionId = {69E7CCD7-7011-4059-95D4-618974E126DD}
+CatalogFile = ChatpadFilterExtension.cat
+DriverVer   = 06/30/2026,0.0.0.1
+PnpLockdown = 1
+
+[DestinationDirs]
+ChatpadFilter_CopyFiles = 13
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+ChatpadFilter.sys = 1,,
+
+[Manufacturer]
+%ProviderName% = Models,NTamd64.10.0...22000
+
+[Models.NTamd64.10.0...22000]
+%DeviceDescription% = ChatpadFilter_Install, USB\VID_045E&PID_028E
+
+[ChatpadFilter_Install.NT]
+CopyFiles = ChatpadFilter_CopyFiles
+
+[ChatpadFilter_CopyFiles]
+ChatpadFilter.sys
+
+[ChatpadFilter_Install.NT.Services]
+AddService = ChatpadFilter,,ChatpadFilter_Service_Install
+
+[ChatpadFilter_Service_Install]
+DisplayName   = %ServiceDescription%
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %13%\ChatpadFilter.sys
+
+[ChatpadFilter_Install.NT.Wdf]
+KmdfService = ChatpadFilter,ChatpadFilter_Wdf
+
+[ChatpadFilter_Wdf]
+KmdfLibraryVersion = 1.15
+
+[ChatpadFilter_Install.NT.Filters]
+AddFilter = ChatpadFilter,,ChatpadFilter_LowerFilter
+
+[ChatpadFilter_LowerFilter]
+FilterPosition = Lower
+
+[Strings]
+ProviderName       = "Chatpad Super Driver Project"
+DiskName           = "Chatpad Filter Offline Prototype"
+DeviceDescription  = "Chatpad Filter Extension Prototype"
+ServiceDescription = "Chatpad Filter Prototype Service"

@@ -14,9 +14,11 @@ or sending traffic. Every command below is a future-run template and must be
 executed only by a later task that names the exact package, machine, action,
 limits, and rollback owner.
 
-The current repository still contains no INF or package project. The current
-`ChatpadFilter.sys` outputs are unsigned compile-only artifacts and are not
-eligible for staging, installation, or loading.
+The repository contains one isolated source-controlled INF prototype at
+`prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf`. It is not
+part of a package project or driver build. The current `ChatpadFilter.sys`
+outputs are unsigned compile-only artifacts and are not eligible for staging,
+installation, or loading.
 
 ## 2. Fixed target and preserved base driver
 
@@ -463,7 +465,30 @@ reviewed against an actual signed package identity and demonstrated on a
 noncritical test system without weakening security. Gate G remains entirely
 open: no default-control or Chatpad-input visibility has been proven.
 
-## 19. Primary references
+## 19. Offline extension-INF prototype checkpoint
+
+The isolated prototype now statically represents the selected package model:
+
+- Extension class and stable project-owned `ExtensionId`
+  `{69E7CCD7-7011-4059-95D4-618974E126DD}`;
+- AMD64 Windows 11 build 22000 or later;
+- exact model match `USB\VID_045E&PID_028E`;
+- non-associated demand-start kernel service `ChatpadFilter`;
+- `ChatpadFilter.sys` at DIRID 13 and KMDF `1.15`;
+- declarative `AddFilter` with `FilterPosition=Lower`;
+- future catalog identity `ChatpadFilterExtension.cat`.
+
+WDK 10.0.26100.0 `InfVerif /k /v` reports the INF valid. Repository semantic
+guards independently reject broadened IDs, direct filter-registry writes,
+class filters, function-driver replacement, boot start, co-installers,
+commands, absolute paths, build/package references, and package/signing files.
+
+No catalog exists. No package, service, registry value, Driver Store entry, or
+device stack was created or changed. Static success does not prove effective
+placement beneath `xusb22`, runtime preservation, or recovery. Gate F remains
+operationally unresolved.
+
+## 20. Primary references
 
 - Microsoft Learn, [Install a filter driver](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/installing-a-filter-driver)
 - Microsoft Learn, [Device filter driver ordering](https://learn.microsoft.com/en-us/windows-hardware/drivers/develop/device-filter-driver-ordering)

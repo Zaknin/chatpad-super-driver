@@ -22,6 +22,8 @@ $repoRoot = @(Invoke-GitLines -Arguments @('rev-parse', '--show-toplevel'))[0]
 Push-Location -LiteralPath $repoRoot
 try {
     $trackedFiles = Invoke-GitLines -Arguments @('ls-files')
+    $approvedPrototypeInf = 'prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf'
+    $approvedPrototypeReadme = 'prototypes/inf/ChatpadFilterExtension/README.md'
     $generatedPattern = '(?i)\.(sys|exe|dll|cat|cab|msi|pdb|lib|obj|ilk|idb|tlog|lastbuildstate|exp|iobj|ipdb|pch|res|recipe|log|bin|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$'
     $trackedGenerated = @($trackedFiles | Where-Object { $_ -match $generatedPattern })
     if ($trackedGenerated.Count -gt 0) {
@@ -41,6 +43,63 @@ try {
     )
     if ($indexedLegacyBinaries.Count -gt 0) {
         $failures.Add("Forbidden legacy binaries are present in the index: $($indexedLegacyBinaries -join ', ')")
+    }
+
+    $modernInfFiles = @(
+        Get-ChildItem -LiteralPath $repoRoot -Recurse -File -Filter '*.inf' -ErrorAction SilentlyContinue |
+            ForEach-Object {
+                $_.FullName.Substring($repoRoot.Length).TrimStart('\', '/').Replace('\', '/')
+            } |
+            Where-Object {
+                $firstSegment = ($_ -split '/', 2)[0]
+                $firstSegment -notin @('.git', '.vs', 'artifacts', 'legacy', 'legacy-source', 'audit-output', 'Downloads', 'stage2-source-review')
+            }
+    )
+    $unexpectedModernInfFiles = @($modernInfFiles | Where-Object { $_ -ne $approvedPrototypeInf })
+    if ($unexpectedModernInfFiles.Count -gt 0) {
+        $failures.Add("INF files exist outside the single approved prototype path: $($unexpectedModernInfFiles -join ', ')")
+    }
+
+    $prototypeInfPath = Join-Path $repoRoot $approvedPrototypeInf
+    if (Test-Path -LiteralPath $prototypeInfPath -PathType Leaf) {
+        $prototypeReadmePath = Join-Path $repoRoot $approvedPrototypeReadme
+        if (-not (Test-Path -LiteralPath $prototypeReadmePath -PathType Leaf)) {
+            $failures.Add("Approved prototype INF is missing its adjacent README: $approvedPrototypeReadme")
+        }
+        else {
+            $requiredPrototypeWarning = 'OFFLINE PROTOTYPE ' + [char]0x2014 + ' DO NOT INSTALL'
+            if (-not ([System.IO.File]::ReadAllText($prototypeReadmePath).Contains($requiredPrototypeWarning))) {
+                $failures.Add("Approved prototype README is missing the exact offline warning: $approvedPrototypeReadme")
+            }
+        }
+
+        $prohibitedPrototypeCompanions = @(
+            Get-ChildItem -LiteralPath (Split-Path -Parent $prototypeInfPath) -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Extension -match '(?i)^\.(cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk|cab|msi|exe|dll|sys)$' }
+        )
+        if ($prohibitedPrototypeCompanions.Count -gt 0) {
+            $failures.Add("Approved prototype INF is accompanied by package, signing, or binary files: $($prohibitedPrototypeCompanions.FullName -join ', ')")
+        }
+
+        $allowedPrototypeReferences = @(
+            (Join-Path $repoRoot 'tools\Test-ChatpadFilterInfPrototype.ps1'),
+            (Join-Path $repoRoot 'tools\Test-RepositorySafety.ps1'))
+        $unexpectedPrototypeReferences = [System.Collections.Generic.List[string]]::new()
+        $referenceExtensions = @('.ps1', '.psm1', '.cmd', '.bat', '.sln', '.vcxproj', '.props', '.targets', '.proj', '.csproj')
+        Get-ChildItem -LiteralPath $repoRoot -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.Extension.ToLowerInvariant() -in $referenceExtensions -and
+                -not $_.FullName.StartsWith((Join-Path $repoRoot 'artifacts'), [System.StringComparison]::OrdinalIgnoreCase) -and
+                $allowedPrototypeReferences -notcontains $_.FullName
+            } |
+            ForEach-Object {
+                if ([System.IO.File]::ReadAllText($_.FullName) -match '(?i)ChatpadFilterExtension\.inf|prototypes[\\/]inf[\\/]ChatpadFilterExtension') {
+                    $unexpectedPrototypeReferences.Add($_.FullName)
+                }
+            }
+        if ($unexpectedPrototypeReferences.Count -gt 0) {
+            $failures.Add("Approved prototype INF is referenced by build, package, or install tooling: $($unexpectedPrototypeReferences -join ', ')")
+        }
     }
 
     $modernProhibitedPattern = '(?i)(\.(inf|inx|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk|deployproj|vdproj|wapproj|appxmanifest)$|(^|/)[^/]*(package|deploy|installer)[^/]*(/|$))'
@@ -130,6 +189,7 @@ Write-Output 'REPOSITORY SAFETY: PASS'
 Write-Output 'PASS: no generated outputs, logs, certificates, or private keys are tracked'
 Write-Output 'PASS: legacy/ matches origin/win11-port'
 Write-Output 'PASS: no forbidden legacy binaries are indexed'
+Write-Output 'PASS: only the exact offline prototype INF path is permitted outside legacy/ and it has required isolation guards'
 Write-Output 'PASS: modern source contains no packaging, certificate, or deployment files'
 Write-Output 'PASS: no generated build outputs exist beneath forbidden output roots'
 Write-Output 'PASS: modern generated build outputs exist only beneath artifacts/ or ignored .vs/ paths'

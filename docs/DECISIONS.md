@@ -4,6 +4,44 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Fix the offline extension prototype identity and validation floor
+
+**Decision:** The source-controlled offline prototype uses extension ID
+`{69E7CCD7-7011-4059-95D4-618974E126DD}`, AMD64 model decoration
+`NTamd64.10.0...22000`, exact hardware ID `USB\VID_045E&PID_028E`, service
+`ChatpadFilter`, KMDF `1.15`, DIRID 13, and declarative
+`AddFilter=ChatpadFilter` with `FilterPosition=Lower`. It declares future
+catalog identity `ChatpadFilterExtension.cat` but no catalog is generated or
+tracked.
+
+**Rationale:** Installed WDK 10.0.26100.0 evidence and inbox Windows INFs prove
+the Extension class, stable `ExtensionId`, DIRID 13, non-associated
+demand-start service, KMDF declaration, and position-based declarative filter
+syntax. `InfVerif` declarative mode requires `CatalogFile`; declaring its future
+identity satisfies static syntax without creating, signing, or packaging a
+catalog. Windows 11 build 22000 is the narrow supported prototype floor.
+
+**Alternatives rejected:**
+
+* Omitting `CatalogFile` - `InfVerif /k` returns error 1233 and exit 1627.
+* Naming a filter level - no reviewed `xusb22` level is available, so a level
+  would invent an ordering relationship.
+* Using a revision-specific, compatible-ID, HID, USB-class, XNA-class, root, or
+  software-device match - broadens or changes the selected physical target.
+* Associating `ChatpadFilter` as the function service - would conflict with the
+  requirement to preserve `xusb22`.
+* Adding the INF to the driver project or package output - crosses the isolated
+  offline-prototype boundary.
+
+**Consequences:**
+
+* The prototype has a stable package-family identity for later offline package
+  validation.
+* Static validation proves syntax, exact association, lower-filter role, and
+  service metadata only; it does not prove effective ordering or installation.
+* Any future catalog generation, signing, staging, installation, load, or
+  device action requires a separate explicit authorization gate.
+
 ## 2026-06-30 - Use a declarative extension INF for future device filtering
 
 **Decision:** A future package for the physical

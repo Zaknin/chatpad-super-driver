@@ -39,6 +39,18 @@ These blockers are based on source review only. No legacy driver binary was load
 - The filter globally selects the first device context from a collection for user IOCTLs at `legacy/source_release_0_0_4a/filter/chatpad_filter.cpp:2882-2894`, which is not a robust multi-device model.
 - The historical notes already mention driver-verifier pool-tracking concerns at `legacy/source_release_0_0_4a/notes.txt:4-10`.
 
+## Package and installation blockers
+
+- The offline extension INF passes WDK declarative static validation, but no
+  catalog or complete package layout has been generated or validated.
+- The declared `ChatpadFilterExtension.cat` does not exist and no package or
+  binary is signed.
+- Static `AddFilter`/`FilterPosition=Lower` metadata does not prove effective
+  placement beneath `xusb22` or preservation of ordinary controller behavior.
+- No package has been staged, installed, loaded, removed, or recovery-tested.
+- Gate F remains blocked on independent review against an actual signed package
+  and a noncritical-system recovery demonstration.
+
 ## Required Resolution Before Any Windows 11 Driver Work
 
 - Replace raw sideband context pointers with lifetime-safe references or per-file context ownership.

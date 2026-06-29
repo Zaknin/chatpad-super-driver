@@ -662,3 +662,19 @@ This checkpoint creates no INF or package and performs no system or device
 action. Gate F remains operationally incomplete until the procedure is
 independently reviewed against an actual signed package and demonstrated on a
 noncritical system. Gate G default-control and input visibility remains open.
+
+## 29. Offline extension-INF prototype checkpoint
+
+`prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf` now
+represents the selected attachment model as isolated source. It matches only
+`USB\VID_045E&PID_028E`, targets AMD64 Windows 11 build 22000 or later, uses
+the Extension class and a stable `ExtensionId`, registers non-associated
+demand-start service `ChatpadFilter`, declares KMDF 1.15 and DIRID 13, and uses
+declarative `AddFilter` with `FilterPosition=Lower`.
+
+WDK 10.0.26100.0 `InfVerif` declarative validation passes. The prototype has
+no project/solution/build/package integration and no generated catalog,
+signature, package, or installation path. This proves static device
+association and lower-filter metadata only. Effective placement beneath
+`xusb22`, ordinary-controller preservation, signed-package acceptance,
+recovery, and transport visibility remain unresolved.

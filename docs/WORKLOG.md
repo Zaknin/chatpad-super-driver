@@ -1565,3 +1565,129 @@
   deployment, load, elevation, device enumeration/query/open/restart, USB/HID/
   IOCTL/URB request, transfer, capture, disconnect/reconnect, or hardware action
   occurred. Only ignored compile outputs/logs and tracked documentation changed.
+
+## 2026-06-30T01:46+04:00 - Offline extension-INF prototype
+
+- **Objective:** Create, statically validate, document, commit, and push one
+  isolated source-controlled extension-INF prototype for a future
+  device-specific Chatpad lower filter targeting only
+  `USB\VID_045E&PID_028E`, without staging, packaging, signing, installation,
+  load, device access, or system mutation.
+- **Starting branch and commit:**
+  `feature/offline-extension-inf-prototype` /
+  `08ad46584b62ae159971529a3a965d6ed6086146`; clean tree tracking the same
+  branch on origin; exact required HEAD; prohibited commit `6502452` not an
+  ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` correctly described the completed recovery-design branch
+  and its recommendation, but did not yet describe the prepared prototype
+  branch. They were replaced with the live branch and validated result after
+  the implementation outcome was known.
+- **Required investigation:** Read all mandated continuation, architecture,
+  recovery, inventory, blocker, plan, building, driver README, safety, and
+  legacy-INF surfaces. All 18 legacy INFs form nine duplicated XP/Vista/7
+  variants. The old filter INFs prove the exact hardware ID and non-associated
+  service intent but use rejected `ClassInstall32`, direct `LowerFilters`,
+  co-installer, DIRID 12, IA64/x86, and KMDF 1.9 patterns.
+- **Installed evidence:** WDK/SDK 10.0.26100.0 and x64 KMDF toolchain readiness
+  passed. Inspected x64 `InfVerif.exe`
+  `C:\Program Files (x86)\Windows Kits\10\Tools\10.0.26100.0\x64\infverif.exe`,
+  file version `10.0.26100.6584`; `/?` help advertised `/k`, `/v`, `/info`,
+  `/l`, `/osver`, and rule-version modes. Inspected inbox
+  `C:\Windows\INF\hidgamepad.inf` for Extension class, stable `ExtensionId`,
+  DIRID 13, exact model association, service, and `AddFilter`; inbox
+  `mshidkmdf.inf` for position-based lower filtering; and the installed KMDF
+  templates for AMD64/OS decoration, service, DIRID 13, and KMDF declarations.
+- **Pre-edit gates:** environment detector exit 0; repository safety PASS;
+  `legacy/` diff exit 0; prohibited-ancestor exit 1; no controller/device query
+  or action.
+- **Files created:**
+  `prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf`,
+  its `README.md`, and `tools/Test-ChatpadFilterInfPrototype.ps1`.
+- **Files modified:** `tools/Test-RepositorySafety.ps1`, `docs/BUILDING.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/WIN11-BLOCKERS.md`,
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`,
+  `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md`,
+  `src/driver/ChatpadFilter/README.md`, and this worklog.
+- **Prototype identity:** Extension class GUID
+  `{E2F84CE7-8EFA-411C-AA69-97454CA4CB57}`, project ExtensionId
+  `{69E7CCD7-7011-4059-95D4-618974E126DD}`, AMD64 Windows 11 minimum build
+  22000, exact hardware ID `USB\VID_045E&PID_028E`, and INF SHA-256
+  `7E752EDAFDB252AF746C2AE6A9EFB3032A077A23FEB39C064D0E2C30700D11CE`.
+- **Filter/service model:** `DDInstall.Filters` uses
+  `AddFilter=ChatpadFilter` with `FilterPosition=Lower` and no invented named
+  level. `AddService` is non-associated; service `ChatpadFilter` is kernel,
+  demand start, normal error control, uses `%13%\ChatpadFilter.sys`, and
+  declares KMDF 1.15. The INF never names or replaces `xusb22`.
+- **Catalog finding:** The first direct `InfVerif /k` run returned error 1233
+  and exit 1627 because declarative validation requires `CatalogFile`.
+  Declaring future identity `ChatpadFilterExtension.cat` resolved the error
+  without creating a CAT. No catalog, signature, or package output exists.
+- **Wrapper corrections:** Initial PowerShell 5.1 runs exposed a UTF-8
+  em-dash literal mismatch, one string-to-Boolean parameter conversion, scalar
+  string indexing, strict-mode null `.Count`, and strict-mode null
+  `.FullName` access. Each was corrected and rerun. The initial combined
+  `/k /info /l` invocation preserved exit 1627 but information output hid the
+  text of error 1233; the final wrapper therefore runs primary `/k /v`
+  validation separately from `/k /info` and `/k /l`, records every exit, and
+  preserves the first nonzero result.
+- **Final InfVerif validation:** Windows PowerShell 5.1 wrapper exit 0.
+  Primary `/k /v` prints `INF is VALID`; `/k /info` exit 0 reports device
+  `Chatpad Filter Extension Prototype`, exact hardware ID, AMD64, minimum OS
+  `10.0.22000`, and `ChatpadFilter` lower filter; annotated `/k /l` exit 0.
+  Information mode reports `Service: none` because the filter service is
+  intentionally non-associated; syntax-aware semantic guards separately prove
+  the exact `AddService` and KMDF sections. No warnings or errors remain.
+- **Semantic guards:** PASS for exact sole hardware ID, no instance/revision
+  suffix, Extension class/ID, Windows 11 AMD64 decoration, declarative lower
+  filter, non-associated service, demand start, DIRID 13, KMDF 1.15, no named
+  level, no direct filter registry mutation, no class targeting, no
+  `DefaultInstall`, `ClassInstall32`, co-installer, executable/command,
+  absolute/network path, unrelated service, `xusb22` replacement, project/build
+  reference, package binary, certificate, or CAT file.
+- **Validation artifacts:** final evidence under
+  `artifacts/inf-validation/20260629T214908Z/`: `infverif-help.txt`,
+  `infverif-output.txt`, `infverif-info.txt`, `infverif-annotated.txt`,
+  `semantic-guards.txt`, and annotated HTML. All are ignored.
+- **Repository-safety change:** Modern INF discovery now permits exactly
+  `prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf`, requires
+  the adjacent exact warning, rejects prohibited companion files, and rejects
+  build/package/install references outside the validator and safety script.
+  Windows PowerShell 5.1 and PowerShell 7 safety runs both PASS.
+- **Driver regression:** Debug x64 and Release x64 builds exit 0. Debug driver
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  SHA-256
+  `f3b7123c783776b2f49296b03b5b54e66d65f14a4e71cce884a8a705d8d4c45b`,
+  `Authenticode.NotSigned`; Release driver
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  SHA-256
+  `00a9e8689114886c04b6c45e86603be1257b42e6215b76ce41d3a721f28c5f6a`,
+  `Authenticode.NotSigned`.
+- **Build isolation:** Both logs have zero prototype-path hits. Inf2Cat and
+  DrvCat are skipped; no SignTool operation; no INF or CAT under `artifacts/`;
+  linker inputs remain `ChatpadFilterLifecycle.obj`, `driver.obj`,
+  `device.obj`, and WDK system libraries. `ChatpadFilter.vcxproj` has no diff.
+- **Final validation:** `git diff --check` exit 0; `legacy/` diff exit 0;
+  prohibited-ancestor exit 1; wrapper has zero state-changing/network-tool
+  tokens; no CAT, certificate, package, installer, registry export, or
+  machine-specific identifier exists in the tracked diff. Complete and staged
+  diffs are inspected before commit.
+- **Commit and push:** Commit exactly
+  `build: add offline extension inf prototype` and push only
+  `origin/feature/offline-extension-inf-prototype`. The final commit hash is
+  reported after commit/push rather than embedded here.
+- **Next task:** With new explicit authorization, create only a disposable
+  package layout beneath ignored `artifacts/` and run installed Inf2Cat to
+  generate an unsigned/untrusted catalog for static package validation; stop
+  before signing, staging, installation, loading, elevation, network, or
+  device access.
+- **Remaining blockers:** Static validation does not prove effective placement
+  beneath `xusb22`, ordinary controller preservation, signed-package
+  acceptance, recovery, default-control access, Chatpad input, or transport
+  behavior. Gate F remains operationally unresolved.
+- **Safety:** No `legacy/` edit; no CAT, certificate, key, package, installer,
+  service, registry or Driver Store mutation, staging, installation, binding,
+  device restart, signing, loading, hardware action, USB/HID/IOCTL/URB request,
+  elevation, network request, or external-skill modification occurred. The
+  only new INF is the authorized isolated source prototype.
