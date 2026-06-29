@@ -4,6 +4,22 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Distinguish wire-format evidence from internal transport structures in protocol documentation
+
+**Decision:** The protocol evidence document (`docs/CHATPAD-PROTOCOL.md`) MUST use two separate sections: Section A for packets or bytes actually received from or sent to the Chatpad/device transport, and Section B for internal software structures (keyboard IOCTL, mouse IOCTL, control-transfer request parameters, internal state messages, user-mode mapping structures). Any structure not directly proven to be transmitted unchanged on the device endpoint must be labeled "Internal transport structure — not confirmed as Chatpad wire format."
+
+**Rationale:** The initial protocol document placed the 4-byte virtual mouse message and 9-byte control-transfer structure under "Confirmed Packet Forms," implying wire format. The virtual mouse message is constructed internally to emulate a Windows HID mouse; the control-transfer structure describes USB setup packet fields, not a serialized device wire frame. Misclassification risks the next parser implementation treating internal constructs as device protocol.
+
+**Alternatives rejected:**
+* Keeping everything under a single "Confirmed" section — loses the distinction needed for parser boundary decisions.
+* Adding inline footnotes — harder to scan than a structural section split.
+* Removing the internal structures from the document entirely — they are useful context; the fix is clearer labeling, not omission.
+
+**Consequences:**
+* The parser boundary defined in the Proposed Phase 1 section can now be read as policy rather than protocol, since the surrounding context properly distinguishes what is device evidence from what is internal.
+* The next agent (parser implementation) can safely treat Section A as the sole source of wire-format fixture data.
+* The distinction is durable and will apply to any future protocol documentation in this project.
+
 ## 2026-06-29 — Keep compile-only WDK builds unsigned and route paths through the wrapper
 
 **Decision:** Set `<SignMode>Off</SignMode>` in both supported configuration property groups in `ChatpadFilter.vcxproj`. Compute absolute `OutDir` and `IntDir` paths from the repository root in `tools/Build-Driver.ps1`, ensure each ends with the platform directory separator, and pass both as MSBuild global properties.

@@ -97,3 +97,49 @@ Append-only. New entries at the top. Corrections are new entries that explain th
 * All continuity files written per AGENTS.md format rules.
 
 **Next task:** Disable WDK signing entirely and contain all generated outputs under `artifacts/`. See `docs/NEXT-TASK.md`.
+
+---
+
+## 2026-06-29 12:00 UTC — Close protocol evidence audit
+
+**Objective:** Validate `docs/CHATPAD-PROTOCOL.md` against the 8-point classification criteria; correct where evidence did not support wire-format claims; update all continuity files; verify repository safety; commit and push `test/protocol-fixtures`.
+
+**Starting branch and commit:** `test/protocol-fixtures`, `b012f2501e9255f87baf488b0c9d0e0918e7062b`.
+
+**Investigation:**
+
+* Verified branch, HEAD, clean ancestry (`6502452` not an ancestor), and prior commit `docs: document chatpad protocol evidence`.
+* Read full `docs/CHATPAD-PROTOCOL.md` (658 lines), `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/WORKLOG.md`, `docs/DECISIONS.md`.
+* Inspected safety tools: `tools/Get-DriverBuildEnvironment.ps1` (exit 0, READY), `tools/Test-RepositorySafety.ps1` (PASS).
+
+**Classification corrections applied:**
+
+1. **Virtual Mouse Message (4 bytes)** — Moved from "Confirmed Packet Forms" (Section A, wire) to Section B (Internal Software Structures) with explicit note that this is a virtual device sent to Windows, not the chatpad itself. The document's own line 249 stated this but the header placement contradicted it.
+2. **USB Control Transfer Structure (9 bytes base)** — Relabeled from "Confirmed Packet Form" to "Internal Software Structures" with explicit note that these are USB control request parameters (setup packet fields), not a serialized wire frame from the device.
+3. **Initialization bytes 0x90/0x00** — Reclassified from "Confirmed" wire data to "C header struct" with unresolved completeness (whether a complete command, partial payload, or isolated constants).
+4. **Byte 4** — Clarified that it is part of the wire packet (present in the 5-byte form processed by `HandleChatpadData`) but its semantic purpose is unknown — moved from ambiguous "Confirmed" description to "Unresolved" with explicit classification note.
+5. **Proposed Phase 1 Parser Boundary** — Added explicit header marking these as "Project policy — not proven device requirements" to prevent policy from being read as confirmed protocol.
+
+**Files modified:**
+* `docs/CHATPAD-PROTOCOL.md` — restructured with Sections A (wire) and B (internal), corrected 4 classification issues, added policy label to Phase 1 boundary.
+* `docs/PROJECT-STATE.md` — updated branch, HEAD, implementation state, added Protocol Evidence Audit section.
+* `docs/WORKLOG.md` — appended this entry.
+
+**Commands and validation:**
+* `git branch --show-current` → `test/protocol-fixtures`
+* `git rev-parse HEAD` → `b012f2501e9255f87baf488b0c9d0e0918e7062b`
+* `git rev-parse 6502452` → `6502452b6cadaf1e7cb413e4a6662ef3d97d3e8e`; `git merge-base --is-ancestor 6502452 HEAD` → exit 1 (not an ancestor)
+* `tools/Get-DriverBuildEnvironment.ps1` → PASS, exit 0, READY
+* `tools/Test-RepositorySafety.ps1` → PASS, exit 0
+* `git diff --check` → PASS (LF→CRLF warning only, no whitespace errors)
+* `git diff --name-only -- legacy/` → empty (no legacy files modified)
+* `git diff --stat` → 1 file changed: `docs/CHATPAD-PROTOCOL.md` (+127/-169)
+
+**Safety confirmation:**
+* No file beneath `legacy/` changed.
+* Commit `6502452` is not an ancestor of HEAD.
+* `git diff --check` passes.
+* No binary, log, build output, private path, INF, CAT, certificate, package, service, or deployment file added.
+* No hardware or device access occurred.
+
+**Remaining risks and limitations:** No parser implementation exists. No protocol tests or fixtures exist. The driver remains a nonfunctional unsigned skeleton. Byte 4 purpose, exact modifier bit values, and complete initialization sequence remain unresolved.

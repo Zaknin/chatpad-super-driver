@@ -8,8 +8,8 @@ This file is updated at every task boundary by the END-OF-TASK ROUTINE.
 
 | Item | Value |
 | --- | --- |
-| Branch | `build/modern-wdk` (local and remote) |
-| HEAD | Task commit `build: disable signing and contain WDK outputs` (parent `8ca4e2ec61210e40059238128ba81cbfce4223f8`; exact task commit is the commit containing this file) |
+| Branch | `test/protocol-fixtures` (local and remote) |
+| HEAD | Task commit `docs: close protocol evidence audit` (parent `b012f2501e9255f87baf488b0c9d0e0918e7062b`; exact task commit is the commit containing this file) |
 | Remote | `origin` → `https://github.com/Zaknin/chatpad-super-driver.git` |
 
 ## Toolchain (verified 2026-06-29)
@@ -44,6 +44,7 @@ Outputs are confined to `artifacts/bin/x64/<Configuration>/ChatpadFilter/`; inte
 * `tools/Build-Driver.ps1` — runs environment detection, passes absolute directory-valued output paths, builds, proves unsigned output, rejects signing execution, and runs repository safety validation.
 * `tools/Get-DriverBuildEnvironment.ps1` — read-only toolchain detector, outputs to `artifacts/environment/`.
 * `tools/Test-RepositorySafety.ps1` — rejects modern outputs outside `artifacts/` or ignored `.vs/` paths and preserves the existing legacy, ancestry, packaging, and tracked-binary gates.
+* `docs/CHATPAD-PROTOCOL.md` — protocol evidence audit completed. Separates device/wire-format evidence (Section A: 5-byte keyboard packet) from internal transport structures (Section B: virtual mouse messages, USB control transfer parameters, IOCTL definitions, request buffer structures). No parser implementation exists yet.
 
 ## Historical Baseline
 
@@ -60,6 +61,17 @@ Outputs are confined to `artifacts/bin/x64/<Configuration>/ChatpadFilter/`; inte
 
 * No driver has been installed, loaded, signed, packaged, deployed, or executed.
 * No `.sys`, `.cat`, `.exe`, `.dll`, `.lib`, `.pdb`, `.bin`, or private-key file is tracked by Git.
-* `legacy/` is untouched in this branch.
+* `legacy/` is untouched.
 * Modern build outputs exist only under ignored `artifacts/`; no stale output directory exists at repository root or beneath `src/driver/ChatpadFilter/`.
 * No secrets, machine-specific private information, or certificates in the repository.
+
+## Protocol Evidence Audit
+
+* **Status:** Complete.
+* **Authoritative document:** `docs/CHATPAD-PROTOCOL.md`
+* **Audit commit:** `b012f2501e9255f87baf488b0c9d0e0918e7062b`
+* **Classification corrections applied:** Virtual mouse message (4 bytes) moved from "Confirmed Packet Forms" (wire) to "Internal Software Structures"; USB control transfer structure (9 bytes) relabeled from "Confirmed Packet Form" to "Internal Software Structures" as USB control request parameters; initialization bytes 0x90/0x00 reclassified from confirmed wire data to C header struct with unresolved completeness.
+* **No parser implementation exists yet.**
+* **No protocol tests or fixtures exist yet.**
+* **Driver remains a nonfunctional unsigned skeleton.**
+* **Next phase:** Offline parser implementation.

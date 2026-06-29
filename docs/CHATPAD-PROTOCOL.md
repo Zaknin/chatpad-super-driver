@@ -25,11 +25,15 @@ This document contains ONLY confirmed protocol evidence extracted from the immut
 
 ---
 
-## Confirmed Packet Forms
+## A. Device or Wire-Format Evidence
+
+Packets or bytes actually received from or sent to the Chatpad/device transport endpoint.
 
 ### 1. Chatpad Keyboard Packet (5 bytes)
 
 **Confirmed from:** `HandleChatpadData` function, lines 3370-3600
+
+This is the packet as processed by the filter driver when reading from the chatpad endpoint. The 5-byte form is the meaningful payload extracted from the 32-byte buffer.
 
 | Byte | Description | Value Range | Notes |
 |------|-------------|-------------|-------|
@@ -37,15 +41,23 @@ This document contains ONLY confirmed protocol evidence extracted from the immut
 | Byte1 | Modifier Bits | 0x00-0x0F | 4-bit field for SHIFT/GREEN/ORANGE/PEOPLE |
 | Byte2 | Raw Key Slot 1 | 0x00-0xFF | 0x00 = no key, otherwise scan code index |
 | Byte3 | Raw Key Slot 2 | 0x00-0xFF | 0x00 = no key, otherwise scan code index |
-| Byte4 | Unknown Field | 0x00-0xFF | Used in state comparison at line 3499 |
+| Byte4 | Unknown Field | 0x00-0xFF | Used in state comparison at line 3499; purpose not confirmed |
 
 **Buffer size:** 32 bytes allocated (`CHATPAD_READ_BUFFER_LENGTH`, line 73, chatpad_filter.h), but only 5 bytes are meaningful.
 
 ---
 
-### 2. Virtual Mouse Message (4 bytes)
+## B. Internal Software Structures
 
-**Confirmed from:** `mouseDataBuffer` usage, lines 1803-1839
+Data passed between legacy components. These are NOT confirmed as Chatpad wire packets unless legacy evidence directly proves they are transmitted unchanged on the device endpoint.
+
+**Label convention:** Internal transport structure — not confirmed as Chatpad wire format.
+
+### 1. Virtual Mouse Message (4 bytes)
+
+**Source:** `mouseDataBuffer` usage, lines 1803-1839
+
+**NOT a Chatpad wire packet.** This is the message constructed by the driver to emulate a virtual mouse device to Windows. The chatpad has no physical mouse. The document's own note (line 249) states: "This is a VIRTUAL mouse device sent to Windows, NOT the chatpad itself."
 
 | Byte | Description | Value Range | Notes |
 |------|-------------|-------------|-------|
@@ -62,13 +74,11 @@ This document contains ONLY confirmed protocol evidence extracted from the immut
 - Bits 8-15: Y offset
 - Bits 0-7: Unknown (cleared with `& 0xFF0000FF` at line 3010)
 
----
+### 2. USB Control Transfer Parameters (9 bytes base)
 
-## Confirmed Field Offsets and Lengths
+**Source:** `SendControlRequest` function, lines 748-839
 
-### Control Transfer Structure
-
-**Confirmed from:** `SendControlRequest` function, lines 748-839
+**NOT a Chatpad wire packet.** These are the parameters used to construct a USB control request (setup packet fields), not a serialized wire frame from the device.
 
 | Offset | Field | Size | Notes |
 |--------|-------|------|-------|
@@ -85,13 +95,81 @@ This document contains ONLY confirmed protocol evidence extracted from the immut
 
 **Total control request:** 9 bytes base + extra data length
 
+### 3. IOCTL Transport Structures
+
+**Source:** `chatpad_filter_ioctl.h`, lines 24-75
+
+Internal kernel-mode IOCTL definitions. Not wire format.
+
+| IOCTL | Code | Direction |
+|-------|------|-----------|
+| IOCTL_CHATPAD_IS_MS_INIT_DONE | CTL_CODE(41000, 2049, ...) | Read/Write |
+| IOCTL_CHATPAD_SEND_CONTROL_TRANSFER | CTL_CODE(41000, 2050, ...) | Read/Write |
+| IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT | CTL_CODE(41000, 2051, ...) | Read/Write |
+| IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT | CTL_CODE(41000, 2052, ...) | Read/Write |
+| IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT | CTL_CODE(41000, 2053, ...) | Read/Write |
+| IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS | CTL_CODE(41000, 2054, ...) | Read/Write |
+| IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE | CTL_CODE(41000, 2055, ...) | Read/Write |
+
+**Device type:** 41000 (FILE_DEVICE_CHATPAD_FILTER)
+**Transfer method:** METHOD_BUFFERED
+
+### 4. Filter Mode Enum
+
+**Source:** `chatpad_filter_ioctl.h`, lines 80-90
+
+| Mode | Value | Description |
+|------|-------|-------------|
+| FILTER_MODE_UNFILTERED | 0 | No mapping, passthrough |
+| FILTER_MODE_FILTERED | 1 | Allows guide button mapping |
+| FILTER_MODE_INTERCEPTED | 2 | Windows Mode, thumbsticks control mouse |
+
+**Usage:** Set via IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE
+
+**Windows Mode toggle:** Lines 2200-2275 show:
+- On: Set FILTER_MODE_INTERCEPTED, turn on People light
+- Off: Set FILTER_MODE_FILTERED (or UNFILTERED if disabled), turn off People light, clear all state
+
+### 5. Request Buffer Structure
+
+**Source:** `chatpad_filter_ioctl.h`, lines 127-159
+
+```c
+typedef struct _CHATPAD_REQUEST_ENTRY_HEADER {
+    REQUEST_TYPE requestType;  // 2 bytes
+} CHATPAD_REQUEST_ENTRY_HEADER, *PCHATPAD_REQUEST_ENTRY_HEADER;
+
+typedef struct _CHATPAD_INIT_REQUEST {
+    UCHAR initCode[2];  // 2 bytes (0x90, 0x00)
+} CHATPAD_INIT_REQUEST, *PCHATPAD_INIT_REQUEST;
+
+typedef struct _CHATPAD_REQUEST : CHATPAD_REQUEST_ENTRY_HEADER {
+    union {
+        CHATPAD_INIT_REQUEST initRequest;
+        // TODO: add read, write, maybe others
+    };
+} CHATPAD_REQUEST, *PCHATPAD_REQUEST;
+
+#define MAX_CHATPAD_REQUESTS_PER_BUFFER   0x0200  // 512
+
+typedef struct _CHATPAD_REQUEST_BUFFER {
+    LIST_ENTRY listEntry;
+    ULONG validRequestCount;
+    CHATPAD_REQUEST chatpadRequests[MAX_CHATPAD_REQUESTS_PER_BUFFER];
+} CHATPAD_REQUEST_BUFFER, *PCHATPAD_REQUEST_BUFFER;
+```
+
+**REQUEST_TYPE values:**
+- ControlsWriteRequest = 0x3000
+- ControlsReadRequest = 0x3001
+- ChatpadReadRequest = 0x3002
+- ChatpadMaxRequestType = 0x3003
+
 ---
 
-## Initialization and Control Frames
+## Control Request Examples
 
-### Control Request Examples
-
-**Confirmed from:** SendControlRequest calls, lines 1744, 1749, 1923, 1932, 2130, 2136, 2157, 2163, 2184, 2190, 2211, 2232
+**Source:** `SendControlRequest` calls, lines 1744, 1749, 1923, 1932, 2130, 2136, 2157, 2163, 2184, 2190, 2211, 2232
 
 | Purpose | Interface | Type | Value | Index | Length | Notes |
 |---------|-----------|------|-------|-------|--------|-------|
@@ -111,9 +189,11 @@ This document contains ONLY confirmed protocol evidence extracted from the immut
 
 ---
 
-### Initialization Code
+## Initialization Code
 
-**Confirmed from:** `CHATPAD_INIT_REQUEST` structure, line 134, chatpad_filter_ioctl.h
+**Source:** `CHATPAD_INIT_REQUEST` structure, line 134, chatpad_filter_ioctl.h
+
+From a C header struct definition in the legacy source:
 
 ```
 initCode[0] = 0x90
@@ -122,13 +202,15 @@ initCode[1] = 0x00
 
 **Comment states:** "16-bit init code for chatpad, like 0x90 0x00." (line 134)
 
+**Classification:** These bytes are from a struct definition. Whether they form a complete command, a partial payload, or are isolated constants is unresolved. Only that the legacy driver defines a 2-byte init code of 0x90 0x00 is confirmed from source. The complete initialization sequence beyond these two bytes is not documented in the source.
+
 ---
 
 ## Keyboard Data Interpretation
 
 ### Modifier Bit Mapping
 
-**Confirmed from:** `chatpadModifierMaskTable`, lines 303-309
+**Source:** `chatpadModifierMaskTable`, lines 303-309
 
 | Modifier Mask | Key Constant | LED |
 |---------------|--------------|-----|
@@ -139,11 +221,9 @@ initCode[1] = 0x00
 
 **Note:** Exact bit values not confirmed, but standard bitmask pattern (0x01, 0x02, 0x04, 0x08) strongly inferred from usage pattern at line 3455.
 
----
-
 ### Scan Code Table
 
-**Confirmed from:** `chatpadScanCodeTable`, lines 41-299
+**Source:** `chatpadScanCodeTable`, lines 41-299
 
 **Confirmed mappings (partial):**
 
@@ -182,7 +262,7 @@ initCode[1] = 0x00
 
 ### Modifier State Machine
 
-**Confirmed from:** HandleChatpadData, lines 3449-3492
+**Source:** `HandleChatpadData`, lines 3449-3492
 
 The code processes modifiers and keys in two separate loops:
 
@@ -198,11 +278,9 @@ The code processes modifiers and keys in two separate loops:
 
 **Constraint:** Maximum 2 keys held simultaneously (line 3439).
 
----
-
 ### Key State Tracking
 
-**Confirmed from:** HandleChatpadData, lines 3494-3600
+**Source:** `HandleChatpadData`, lines 3494-3600
 
 State variables:
 - `previousChatpadRawData[5]` - Previous packet (compared byte-by-byte)
@@ -219,129 +297,19 @@ State variables:
 
 ---
 
-## Mouse-Related Evidence
-
-### Virtual Mouse Message Format
-
-**Confirmed from:** mouse handling code, lines 1803-1839, 3008-3013
-
-**Message structure:**
-```
-Byte0: uVirtualMouseState >> 24 (button state)
-Byte1: nScaledXValue & 0xFF (X offset)
-Byte2: nScaledYValue & 0xFF (Y offset)
-Byte3: Wheel delta (0x01 = up, 0xFF = down)
-```
-
-**State management:**
-- `uVirtualMouseState` accumulates button state and offsets
-- X/Y offsets are masked into bits 16-23 and 8-15
-- Button state occupies bits 24-31
-- Bits 0-7 reserved for wheel delta
-
-**Mouse action bindings:**
-- MOUSE_CLICK_LEFT: Sets bit 24
-- MOUSE_CLICK_MIDDLE: Sets bit 26
-- MOUSE_CLICK_RIGHT: Sets bit 25
-- MOUSE_WHEEL_UP: Sets byte3 to 0x01
-- MOUSE_WHEEL_DOWN: Sets byte3 to 0xFF
-
-**Note:** This is a VIRTUAL mouse device sent to Windows, NOT the chatpad itself. The chatpad has no physical mouse.
-
----
-
-## IOCTL Transport Structures
-
-### IOCTL Codes
-
-**Confirmed from:** chatpad_filter_ioctl.h, lines 24-75
-
-| IOCTL | Code | Direction |
-|-------|------|-----------|
-| IOCTL_CHATPAD_IS_MS_INIT_DONE | CTL_CODE(41000, 2049, ...) | Read/Write |
-| IOCTL_CHATPAD_SEND_CONTROL_TRANSFER | CTL_CODE(41000, 2050, ...) | Read/Write |
-| IOCTL_CHATPAD_WRITE_TO_CONTROLS_ENDPOINT | CTL_CODE(41000, 2051, ...) | Read/Write |
-| IOCTL_CHATPAD_READ_FROM_CONTROLS_ENDPOINT | CTL_CODE(41000, 2052, ...) | Read/Write |
-| IOCTL_CHATPAD_READ_FROM_CHATPAD_ENDPOINT | CTL_CODE(41000, 2053, ...) | Read/Write |
-| IOCTL_CHATPAD_SET_CONTROLS_MAPPINGS | CTL_CODE(41000, 2054, ...) | Read/Write |
-| IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE | CTL_CODE(41000, 2055, ...) | Read/Write |
-
-**Device type:** 41000 (FILE_DEVICE_CHATPAD_FILTER)
-
-**Transfer method:** METHOD_BUFFERED
-
----
-
-### Filter Mode Enum
-
-**Confirmed from:** chatpad_filter_ioctl.h, lines 80-90
-
-| Mode | Value | Description |
-|------|-------|-------------|
-| FILTER_MODE_UNFILTERED | 0 | No mapping, passthrough |
-| FILTER_MODE_FILTERED | 1 | Allows guide button mapping |
-| FILTER_MODE_INTERCEPTED | 2 | Windows Mode, thumbsticks control mouse |
-
-**Usage:** Set via IOCTL_CHATPAD_SET_CONTROLS_FILTER_MODE
-
-**Windows Mode toggle:** Lines 2200-2275 show:
-- On: Set FILTER_MODE_INTERCEPTED, turn on People light
-- Off: Set FILTER_MODE_FILTERED (or UNFILTERED if disabled), turn off People light, clear all state
-
----
-
-### Request Buffer Structure
-
-**Confirmed from:** chatpad_filter_ioctl.h, lines 127-159
-
-```c
-typedef struct _CHATPAD_REQUEST_ENTRY_HEADER {
-    REQUEST_TYPE requestType;  // 2 bytes
-} CHATPAD_REQUEST_ENTRY_HEADER, *PCHATPAD_REQUEST_ENTRY_HEADER;
-
-typedef struct _CHATPAD_INIT_REQUEST {
-    UCHAR initCode[2];  // 2 bytes (0x90, 0x00)
-} CHATPAD_INIT_REQUEST, *PCHATPAD_INIT_REQUEST;
-
-typedef struct _CHATPAD_REQUEST : CHATPAD_REQUEST_ENTRY_HEADER {
-    union {
-        CHATPAD_INIT_REQUEST initRequest;
-        // TODO: add read, write, maybe others
-    };
-} CHATPAD_REQUEST, *PCHATPAD_REQUEST;
-
-#define MAX_CHATPAD_REQUESTS_PER_BUFFER   0x0200  // 512
-
-typedef struct _CHATPAD_REQUEST_BUFFER {
-    LIST_ENTRY listEntry;
-    ULONG validRequestCount;
-    CHATPAD_REQUEST chatpadRequests[MAX_CHATPAD_REQUESTS_PER_BUFFER];
-} CHATPAD_REQUEST_BUFFER, *PCHATPAD_REQUEST_BUFFER;
-```
-
-**REQUEST_TYPE values:**
-- ControlsWriteRequest = 0x3000
-- ControlsReadRequest = 0x3001
-- ChatpadReadRequest = 0x3002
-- ChatpadMaxRequestType = 0x3003
-
----
-
 ## Confirmed Validation Rules
 
 ### Packet Length Validation
 
-**Confirmed from:** Buffer definitions, lines 67-73, chatpad_filter.h
+**Source:** Buffer definitions, lines 67-73, chatpad_filter.h
 
 - All chatpad buffers are 32 bytes (`#define CONTROLS_WRITE_BUFFER_LENGTH 32`)
 - Actual data payload is smaller (5 bytes for keyboard, 4 bytes for mouse)
 - No validation checks observed—raw buffer passed to endpoint
 
----
-
 ### Repeated Packet Handling
 
-**Confirmed from:** HandleChatpadData, lines 3494-3504
+**Source:** `HandleChatpadData`, lines 3494-3504
 
 **Rule:** 
 - If current packet matches previous packet AND `ignoreNextRepeatedData == true`:
@@ -353,11 +321,9 @@ typedef struct _CHATPAD_REQUEST_BUFFER {
 
 **Purpose:** Prevent double-processing of identical packets
 
----
-
 ### Maximum Key Constraint
 
-**Confirmed from:** Line 3439 comment
+**Source:** Line 3439 comment
 
 "No more than any two keys are registered at a time by the chatpad, apparently."
 
@@ -378,8 +344,6 @@ The chatpad uses standard USB HID control transfers:
 
 **Confidence:** HIGH (based on consistent usage pattern)
 
----
-
 ### 2. Keypress Debouncing
 
 **Inferred from:** State machine at lines 3494-3600
@@ -390,8 +354,6 @@ The `ignoreNextRepeatedData` flag suggests the device sends repeated identical p
 3. New packet: Process normally
 
 **Confidence:** MEDIUM (implementation pattern is clear, but protocol specification is not explicit)
-
----
 
 ### 3. LED Control Protocol
 
@@ -426,8 +388,6 @@ The `ignoreNextRepeatedData` flag suggests the device sends repeated identical p
 
 **Required:** Reverse engineer from device behavior or find undocumented constants
 
----
-
 ### 2. Byte4 Purpose
 
 **Unresolved:** Function of Byte4 in 5-byte keyboard packet
@@ -437,14 +397,14 @@ The `ignoreNextRepeatedData` flag suggests the device sends repeated identical p
 - Never directly accessed for key processing
 - Present in `previousChatpadRawData[5]` array
 
+**Classification:** Byte 4 is part of the packet received on the wire endpoint (it occupies slot 4 in the 5-byte keyboard packet processed by `HandleChatpadData`), but its semantic purpose is unknown. It is preserved in comparison state but not interpreted.
+
 **Hypotheses:**
 - Reserved/padding
 - Secondary modifier field
 - Checksum or validation byte
 
 **Confidence:** LOW
-
----
 
 ### 3. Initialization Sequence
 
@@ -456,8 +416,6 @@ The `ignoreNextRepeatedData` flag suggests the device sends repeated identical p
 - No other init commands found in code
 
 **Confidence:** LOW (incomplete evidence)
-
----
 
 ### 4. Controls Endpoint Format
 
@@ -505,8 +463,6 @@ The following protocol forms are NOT supported by the legacy implementation:
 
 **Fix:** Use exact payload sizes (5 bytes for keyboard, 4 bytes for mouse)
 
----
-
 ### 2. Hardcoded Timing
 
 **Defect:** 12ms delay hardcoded (line 838)
@@ -514,8 +470,6 @@ The following protocol forms are NOT supported by the legacy implementation:
 **Risk:** Suboptimal performance, platform-specific behavior
 
 **Fix:** Make timing configurable or calculate dynamically
-
----
 
 ### 3. Missing Error Handling
 
@@ -525,8 +479,6 @@ The following protocol forms are NOT supported by the legacy implementation:
 
 **Fix:** Check bytesTransferred and return codes
 
----
-
 ### 4. Global State
 
 **Defect:** Many global variables (lines 320-340, chatpad_control_code.cpp)
@@ -534,8 +486,6 @@ The following protocol forms are NOT supported by the legacy implementation:
 **Risk:** Thread safety issues, difficult to test
 
 **Fix:** Use state structures, pass via parameters
-
----
 
 ### 5. Incomplete State Machine
 
@@ -549,13 +499,14 @@ The following protocol forms are NOT supported by the legacy implementation:
 
 ## Proposed Phase 1 Parser Boundary
 
+**Classification:** Project policy — not proven device requirements. These are conservative implementation choices for the first parser, clearly labeled as policy decisions rather than confirmed protocol validation rules.
+
 ### Minimum Viable Parser
 
 Based on confirmed evidence, Phase 1 should handle:
 
 **Supported Packet Types:**
 1. Keyboard packet: 5 bytes, Byte0 = 0x00
-2. Mouse message: 4 bytes (virtual device only)
 
 **Required Fields:**
 - Byte0: Packet type discriminator
@@ -564,9 +515,9 @@ Based on confirmed evidence, Phase 1 should handle:
 - Byte4: Unknown (preserve as raw)
 
 **Reject:**
-- Packets with Byte0 = 0xF0 (repeated/unknown)
-- Packets shorter than 5 bytes
-- Packets with invalid modifier values (bits 4-7 should be 0)
+- Packets with Byte0 = 0xF0 (repeated/unknown) — confirmed by source line 3419
+- Packets shorter than 5 bytes — conservative policy
+- Packets with invalid modifier values (bits 4-7 should be 0) — **Proposed Phase 1 policy**, not confirmed protocol requirement
 
 **Postpone:**
 - Controls endpoint data (thumbsticks/buttons)
@@ -622,11 +573,11 @@ Based on confirmed evidence, Phase 1 should handle:
 | 2 | Byte0 = 0x00 for data, 0xF0 for repeated | HandleChatpadData, line 3419 | HIGH | Explicit check |
 | 3 | Byte1 contains 4 modifier bits | chatpadModifierMaskTable, lines 303-309 | MEDIUM | 4 modifiers, standard bitmask pattern |
 | 4 | Byte2-3 are raw scan codes | HandleChatpadData, lines 3474-3492 | HIGH | Used in `chatpadScanCodeTable` lookup |
-| 5 | Byte4 purpose unknown | HandleChatpadData, line 3499 | LOW | Used in comparison but not interpreted |
-| 6 | Mouse message is 4 bytes | VIRTUAL_MOUSE_MESSAGE_NUM_BYTES, line 37 | HIGH | Explicit constant |
-| 7 | Control transfer is 9 bytes base | SendControlRequest, lines 799-810 | HIGH | 1 interface + 8 parameter bytes |
+| 5 | Byte4 purpose unknown | HandleChatpadData, line 3499 | LOW | Used in comparison but not interpreted; present in wire packet |
+| 6 | Mouse message is 4 bytes | VIRTUAL_MOUSE_MESSAGE_NUM_BYTES, line 37 | HIGH | Explicit constant; internal virtual device, NOT wire format |
+| 7 | Control transfer is 9 bytes base | SendControlRequest, lines 799-810 | HIGH | USB control request parameters — internal, NOT chatpad wire format |
 | 8 | LED commands use interface 2, type 0x41 | Lines 1744, 1749, etc. | HIGH | Consistent pattern |
-| 9 | Initialization code is 0x90, 0x00 | CHATPAD_INIT_REQUEST, line 134 | MEDIUM | Comment states this, but not verified in code |
+| 9 | Initialization code is 0x90, 0x00 | CHATPAD_INIT_REQUEST, line 134 | MEDIUM | From C header struct; whether it is a complete command, partial payload, or isolated constants is unresolved |
 | 10 | Max 2 simultaneous keys | HandleChatpadData, line 3439 | HIGH | Comment and array size |
 | 11 | Filter modes: 0=UNFILTERED, 1=FILTERED, 2=INTERCEPTED | chatpad_filter_ioctl.h, lines 80-90 | HIGH | Explicit enum |
 | 12 | Button masks for controls data | Lines 3041-3140 | MEDIUM | Bits extracted from byte2/byte3 |
@@ -643,15 +594,22 @@ Based on confirmed evidence, Phase 1 should handle:
 
 ## Conclusion
 
-This document captures all confirmed protocol evidence from the legacy codebase. The most critical findings are:
+This document captures all confirmed protocol evidence from the legacy codebase, clearly separated into:
 
-1. **Keyboard packets are 5 bytes** with a clear structure for modifiers and scan codes
-2. **Control transfers follow USB HID conventions** with 9-byte base structure
-3. **LED control uses interface 2, type 0x41** with predictable value encoding
+- **Section A: Device or Wire-Format Evidence** — Only the 5-byte keyboard packet processed by `HandleChatpadData` is confirmed as a chatpad wire packet.
+- **Section B: Internal Software Structures** — Virtual mouse messages, USB control transfer parameters, IOCTL definitions, filter modes, and request buffer structures. These are NOT confirmed as chatpad wire format.
+
+The most critical findings are:
+
+1. **Keyboard packets are 5 bytes** with a clear structure for modifiers and scan codes — confirmed wire evidence
+2. **Virtual mouse messages (4 bytes)** are internal software constructs, not chatpad wire data
+3. **USB control transfer parameters (9 bytes base)** are USB setup packet fields, not a chatpad wire frame
 4. **State machine handles repeated packets** via `ignoreNextRepeatedData` flag
 5. **Maximum 2 simultaneous keys** enforced by array size
+6. **Byte 4** is part of the wire packet but its purpose is unresolved
+7. **Initialization bytes 0x90, 0x00** come from a C header struct; whether they form a complete command, partial payload, or are isolated constants is unresolved
 
-**Recommendation:** Phase 1 parser should focus on keyboard packets (5 bytes) with validation for Byte0 type, modifier bits, and scan code ranges. Controls data and mouse messages are separate subsystems that can be implemented later.
+**Recommendation:** Phase 1 parser should focus on keyboard packets (5 bytes) with validation for Byte0 type, modifier bits, and scan code ranges. Controls data and mouse messages are separate subsystems that can be implemented later. Validation choices in the parser boundary are project policy, not proven device requirements.
 
 ---
 
