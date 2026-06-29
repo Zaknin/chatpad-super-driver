@@ -143,3 +143,61 @@ Append-only. New entries at the top. Corrections are new entries that explain th
 * No hardware or device access occurred.
 
 **Remaining risks and limitations:** No parser implementation exists. No protocol tests or fixtures exist. The driver remains a nonfunctional unsigned skeleton. Byte 4 purpose, exact modifier bit values, and complete initialization sequence remain unresolved.
+
+---
+
+## 2026-06-29 08:32 UTC — Add portable Phase 1 keyboard parser and offline native tests
+
+**Objective:** Complete the bounded Phase 1 portable five-byte keyboard parser, neutral synthetic fixtures, direct Debug x64 native tests, artifacts-only build runner, continuity updates, commit, and push on `test/protocol-fixtures` without Visual Studio project integration.
+
+**Starting branch and commit:** `test/protocol-fixtures`, `42236aba04b66cc4d74d15ce8520e230a9c0d595`.
+
+**Investigation:**
+
+* Confirmed the required branch, exact starting commit, remote match, clean prohibited-ancestor gate, and no tracked modifications.
+* Inspected every untracked parser, test, fixture, README, and build-helper file left by Hermes. Two competing parser APIs existed: one used unsupported `REPEATED` and `INVALID_MODIFIER` names and copied input before validation; the other had neutral results and deterministic clearing but duplicate filenames.
+* Confirmed `tests/protocol/test_parser.exe` was already absent and no generated executable, object, PDB, or log existed outside approved locations.
+* Removed untracked temporary helpers `build_test.bat`, `tools/build-protocol.bat`, `tools/build-protocol.ps1`, `tools/cl-test.ps1`, and `tools/run-cl.ps1`; none had a justified role after the canonical runner was completed.
+* Corrected four `0xF0` references in `docs/CHATPAD-PROTOCOL.md`: legacy evidence proves the form is ignored but does not prove it means repeated.
+
+**Files created or modified:**
+
+* `src/protocol/ChatpadProtocol/ChatpadKeyboardParser.h`
+* `src/protocol/ChatpadProtocol/ChatpadKeyboardParser.c`
+* `src/protocol/ChatpadProtocol/README.md`
+* `tests/protocol/ChatpadProtocolParserTests.c`
+* `tests/protocol/README.md`
+* `tests/protocol/fixtures/ChatpadKeyboardFixtures.h`
+* `tests/protocol/fixtures/README.md`
+* `tools/Test-ChatpadProtocolParser.ps1`
+* `docs/CHATPAD-PROTOCOL.md`
+* `docs/PROJECT-STATE.md`
+* `docs/DECISIONS.md`
+* `docs/WORKLOG.md`
+* `docs/NEXT-TASK.md`
+
+**Implementation details:**
+
+* Added C/C++-compatible `ChatpadParseKeyboardPacket(const uint8_t *, size_t, ChatpadKeyboardPacket *)` with no allocation, I/O, mutable global state, retained pointers, unchecked copy, or Windows/device dependency.
+* The parser requires exactly five bytes, supports only raw type `0x00`, rejects every other type as `CHATPAD_PARSE_UNSUPPORTED_TYPE`, applies a policy-labeled upper-modifier-bit rejection, preserves all five accepted bytes raw, and leaves Byte 4 uninterpreted.
+* A non-null caller output is cleared before every failure return. Input and length are checked before any read.
+* Added neutral synthetic fixtures without hardware-capture claims or unsupported key/modifier names.
+* Added 85 native assertions covering every required argument, length, type, policy, raw-preservation, clearing, repeatability, sequence, and sentinel behavior.
+* Added one canonical PowerShell runner that runs environment detection first, initializes MSVC x64 through `vcvars64.bat`, compiles as C with `/W4 /WX`, links and runs once, parses ASCII-only counts, hashes the executable, and invokes repository safety validation.
+
+**Commands and validation:**
+
+* Pre-implementation `tools/Get-DriverBuildEnvironment.ps1` — PASS, exit 0.
+* Pre-implementation `tools/Test-RepositorySafety.ps1` — PASS.
+* `git diff --name-only origin/win11-port -- legacy` — empty; `git merge-base --is-ancestor 6502452 HEAD` — exit 1 as required.
+* First canonical runner attempt — parser compile 0, test compile 0, link 0, then FAIL before test execution because the runner rejected an empty native argument array; `vcvars64.bat` also exposed a command-metacharacter PATH entry. The unhandled PowerShell error left the caller's native exit code at 0, so a top-level failure trap was added. No success claim was made from this attempt.
+* Corrected runner — allows an empty test argument array, sanitizes command metacharacters from the process-local PATH during `vcvars64.bat`, rejects vcvars error text, and exits 1 on any unhandled PowerShell failure.
+* Final `tools/Test-ChatpadProtocolParser.ps1` — PASS; parser compiler 0, test compiler 0, linker 0, native executable 0, 85 total, 85 passed, 0 failed.
+* Final executable — `artifacts/bin/x64/Debug/ChatpadProtocolParser/ChatpadProtocolParserTests.exe`; SHA-256 `88D20E1150321CD942B66F2372B636AD6420D13F333C8A4397557C8E28A857EF`.
+* Final logs — `artifacts/logs/chatpad-protocol-parser-build-20260629T083222Z.log` and `artifacts/logs/chatpad-protocol-parser-test-20260629T083222Z.log`.
+* Static scans — zero Windows, WDK, USB, HID, IOCTL, device, kernel, allocation, I/O, unchecked-copy, `REPEATED`, `INVALID_MODIFIER`, or unsupported semantic-name hits in parser/test source.
+* Final repository safety — PASS; generated files remain beneath `artifacts/` and are ignored.
+
+**Commit and push:** Commit message `feat: add portable chatpad keyboard parser`; the exact commit is the commit containing this entry and is pushed only to `origin/test/protocol-fixtures`.
+
+**Remaining risks and limitations:** The exact meaning of type `0xF0`, modifier bit meanings, and Byte 4 remain unresolved. The parser/tests have no Visual Studio project integration. The kernel driver is unchanged, nonfunctional, and has no parser integration.

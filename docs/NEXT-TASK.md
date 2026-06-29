@@ -3,59 +3,62 @@
 ## Current State
 
 * Branch: `test/protocol-fixtures`
-* HEAD: task commit `docs: close protocol evidence audit` (the commit containing this file; parent `b012f2501e9255f87baf488b0c9d0e0918e7062b`).
+* HEAD: task commit `feat: add portable chatpad keyboard parser` (the commit containing this file; parent `42236aba04b66cc4d74d15ce8520e230a9c0d595`).
 * Toolchain: VS 2022 17.14.35, MSVC 14.44.35207, SDK/WDK 10.0.26100.0, KMDF 1.35, WDK integration ready.
-* Build: Debug x64 and Release x64 both exit 0, produce `NotSigned` `.sys` files, and execute no signing task.
-* Outputs: modern generated files exist only beneath ignored `artifacts/`; repository safety passes.
-* Protocol evidence audit: complete. Authoritative document is `docs/CHATPAD-PROTOCOL.md` with Section A (wire-format evidence: 5-byte keyboard packet) and Section B (internal software structures). Classification corrections applied for virtual mouse, USB control transfer parameters, init bytes, and Byte 4.
-* No parser implementation exists. No protocol tests or fixtures exist.
-* Driver remains a nonfunctional unsigned skeleton.
-* `legacy/` untouched.
+* Driver build: Debug x64 and Release x64 exit 0, produce `NotSigned` `.sys` files, and execute no signing task.
+* Protocol parser: portable C, exactly five bytes, type `0x00` only, modifier upper bits rejected as Phase 1 policy, all accepted fields preserved raw, and output cleared on failure.
+* Offline tests: direct Debug x64 compilation and execution pass with 85/85 assertions. Fixtures are neutral and synthetic.
+* Outputs: generated parser and test files exist only beneath ignored `artifacts/`; repository safety passes.
+* No Visual Studio solution or project integration exists for the parser or tests.
+* Driver remains a nonfunctional unsigned skeleton; `legacy/` is untouched.
 
 ## Next Recommended Objective
 
-Implement the portable five-byte keyboard parser and minimal synthetic fixtures from the confirmed/proposed boundary in `docs/CHATPAD-PROTOCOL.md`, without Visual Studio solution integration yet.
+Integrate the parser and offline tests into native Debug and Release Visual Studio projects, contain all outputs under artifacts/, and run driver regression builds.
 
 Specifically:
 
-1. Read Section A of `docs/CHATPAD-PROTOCOL.md` to identify the only confirmed wire-format packet: the 5-byte keyboard packet (Byte0=0x00 data, Byte1=modifier bits, Byte2-3=scan codes, Byte4=unknown).
-2. Read the "Proposed Phase 1 Parser Boundary" section to identify the conservative validation rules (reject Byte0=0xF0, reject packets <5 bytes, reject invalid modifier bits as project policy).
-3. Implement a pure-C or C++ parser function that accepts a 5-byte buffer and returns structured keyboard state, with no dependency on kernel-mode or Windows-specific headers.
-4. Create minimal synthetic fixtures from the "Proposed Fixture Inventory" in the protocol document, each tagged with its source evidence line reference.
-5. Keep the KMDF skeleton unchanged. No Visual Studio solution integration until later.
+1. Add native Visual Studio projects for the portable parser and offline test executable with Debug x64 and Release x64 configurations.
+2. Integrate those projects into `ChatpadWin11.sln` without linking the parser into the KMDF driver.
+3. Route every parser/test output and intermediate beneath repository-root `artifacts/`.
+4. Run parser tests in both Debug and Release and report exact assertion counts and hashes.
+5. Re-run unsigned Debug x64 and Release x64 driver builds as regression checks.
 
 ## Required Branch and Starting Commit
 
-* Branch: `test/protocol-fixtures`
-* Starting commit: `b012f2501e9255f87baf488b0c9d0e0918e7062b` (current HEAD)
+* Branch: create `test/protocol-projects` from `origin/test/protocol-fixtures`.
+* Starting commit: the pushed `feat: add portable chatpad keyboard parser` commit; record its exact hash with `git rev-parse origin/test/protocol-fixtures` before editing.
 
 ## Preconditions
 
-* Confirm `origin/test/protocol-fixtures` matches the local task commit and repository safety passes.
-* Read `docs/CHATPAD-PROTOCOL.md` Section A and "Proposed Phase 1 Parser Boundary."
+* Confirm `origin/test/protocol-fixtures` matches the local parser commit and repository safety passes.
+* Read `src/protocol/ChatpadProtocol/README.md`, `tests/protocol/README.md`, and `tools/Test-ChatpadProtocolParser.ps1` before designing projects.
 * Do not modify any file under `legacy/`.
 * Do not execute any file from `legacy-source/` or any generated `.sys`.
 * Do not install, load, sign, package, deploy, or execute a driver.
-* Do not commit generated binaries, `.pdb`, `.tlog`, or build logs.
+* Do not commit generated binaries, PDBs, objects, or logs.
 
 ## Safety Restrictions
 
 * Never modify `legacy/`.
-* No device access or live USB/HID interaction.
+* Offline parser test execution only; no device access or live USB/HID interaction.
 * No INF, CAT, certificate, package, installer, deployment project, driver signing, or system configuration changes.
 * Keep generated outputs under ignored `artifacts/` and preserve all current repository safety gates.
+* Preserve the raw parser API and neutral fixture semantics unless new evidence is documented first.
 
 ## Acceptance Criteria
 
-* Parser handles valid 5-byte keyboard packets (Byte0=0x00, valid modifiers, scan codes).
-* Parser rejects invalid packets per the Proposed Phase 1 policy (Byte0=0xF0, length <5, invalid modifier bits).
-* Fixtures are traceable to source evidence and contain no executable legacy payload.
-* Existing Debug x64 and Release x64 compile-only builds still exit 0, remain `NotSigned`, and produce outputs only under `artifacts/`.
+* Native parser and test projects build in Debug x64 and Release x64 with strict warnings and warnings-as-errors.
+* All 85 assertions pass in both configurations with deterministic ASCII output.
+* All generated parser, test, and driver outputs remain beneath ignored `artifacts/`.
+* Existing Debug x64 and Release x64 driver regression builds exit 0 and remain `NotSigned`.
+* The parser is not linked into the driver and no runtime/device behavior is added.
 * Repository safety passes and no generated binary or log is tracked.
 
-## Commands the Next Agent Should Inspect First
+## Commands and Files to Inspect First
 
 1. `git branch --show-current`, `git rev-parse HEAD`, `git status --short --branch`, and `git log --oneline -5`.
-2. `tools/Test-RepositorySafety.ps1`.
-3. `docs/CHATPAD-PROTOCOL.md` Section A ("Device or Wire-Format Evidence") and "Proposed Phase 1 Parser Boundary."
-4. `docs/CHATPAD-PROTOCOL.md` "Proposed Fixture Inventory" for fixture data.
+2. `tools/Test-RepositorySafety.ps1` and `tools/Test-ChatpadProtocolParser.ps1`.
+3. `src/protocol/ChatpadProtocol/ChatpadKeyboardParser.h` and `ChatpadKeyboardParser.c`.
+4. `tests/protocol/ChatpadProtocolParserTests.c` and `fixtures/ChatpadKeyboardFixtures.h`.
+5. `ChatpadWin11.sln`, `Directory.Build.props`, and existing driver output conventions.

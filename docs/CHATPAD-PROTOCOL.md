@@ -37,7 +37,7 @@ This is the packet as processed by the filter driver when reading from the chatp
 
 | Byte | Description | Value Range | Notes |
 |------|-------------|-------------|-------|
-| Byte0 | Type/Prefix | 0x00 (data), 0xF0 (repeated/unknown) | 0xF0 packets are ignored per line 3419 |
+| Byte0 | Type/Prefix | 0x00 (data), 0xF0 (unsupported meaning) | 0xF0 packets are ignored per line 3419; exact meaning is not established |
 | Byte1 | Modifier Bits | 0x00-0x0F | 4-bit field for SHIFT/GREEN/ORANGE/PEOPLE |
 | Byte2 | Raw Key Slot 1 | 0x00-0xFF | 0x00 = no key, otherwise scan code index |
 | Byte3 | Raw Key Slot 2 | 0x00-0xFF | 0x00 = no key, otherwise scan code index |
@@ -515,7 +515,7 @@ Based on confirmed evidence, Phase 1 should handle:
 - Byte4: Unknown (preserve as raw)
 
 **Reject:**
-- Packets with Byte0 = 0xF0 (repeated/unknown) — confirmed by source line 3419
+- Packets with Byte0 = 0xF0 (unsupported; exact meaning unresolved) — legacy code ignores this form at source line 3419
 - Packets shorter than 5 bytes — conservative policy
 - Packets with invalid modifier values (bits 4-7 should be 0) — **Proposed Phase 1 policy**, not confirmed protocol requirement
 
@@ -554,7 +554,7 @@ Based on confirmed evidence, Phase 1 should handle:
 
 **Edge Cases:**
 
-7. **Repeated packet (Byte0 = 0xF0):**
+7. **Unsupported type form (Byte0 = 0xF0; exact meaning unresolved):**
    - 0xF0, 0x00, 0x00, 0x00, 0x00
 
 8. **Short packet (invalid):**
@@ -570,7 +570,7 @@ Based on confirmed evidence, Phase 1 should handle:
 | # | Evidence | Source | Confidence | Notes |
 |---|----------|--------|------------|-------|
 | 1 | Keyboard packet is 5 bytes | HandleChatpadData, line 3370-3600 | HIGH | Confirmed by buffer size and processing |
-| 2 | Byte0 = 0x00 for data, 0xF0 for repeated | HandleChatpadData, line 3419 | HIGH | Explicit check |
+| 2 | Byte0 = 0x00 for data; 0xF0 is ignored with exact meaning unresolved | HandleChatpadData, line 3419 | HIGH | Explicit check, neutral semantic classification |
 | 3 | Byte1 contains 4 modifier bits | chatpadModifierMaskTable, lines 303-309 | MEDIUM | 4 modifiers, standard bitmask pattern |
 | 4 | Byte2-3 are raw scan codes | HandleChatpadData, lines 3474-3492 | HIGH | Used in `chatpadScanCodeTable` lookup |
 | 5 | Byte4 purpose unknown | HandleChatpadData, line 3499 | LOW | Used in comparison but not interpreted; present in wire packet |

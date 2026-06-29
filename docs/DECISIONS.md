@@ -4,6 +4,26 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Keep the Phase 1 parser raw, neutral, and policy-labeled
+
+**Decision:** `ChatpadParseKeyboardPacket` accepts exactly five bytes, supports only raw type `0x00`, preserves all five accepted bytes without semantic key decoding, returns `CHATPAD_PARSE_UNSUPPORTED_TYPE` for `0xF0` and every other unsupported type, and returns `CHATPAD_PARSE_POLICY_REJECTED_MODIFIER` when modifier upper bits are set. A non-null output is cleared before every failure return.
+
+**Rationale:** The protocol audit confirms the five-byte shape and that legacy code ignores `0xF0`, but it does not establish the exact meaning of `0xF0`, modifier bit meanings, or Byte 4. Neutral names prevent project policy from being mistaken for device protocol fact. Deterministic clearing makes all failure paths safe for callers and directly testable.
+
+**Alternatives rejected:**
+
+* Naming `0xF0` as repeated — the evidence does not confirm that semantic meaning.
+* Naming upper modifier bits invalid — rejection is a conservative Phase 1 policy, not a proven device rule.
+* Decoding raw key bytes or Byte 4 — those interpretations are outside the confirmed parser boundary.
+* Copying input before validation or retaining input pointers — weakens failure determinism and caller safety.
+
+**Consequences:**
+
+* Callers receive raw fields only and must not infer key or modifier meaning from this parser API.
+* Every accepted packet is exactly five bytes with type `0x00` and modifier upper bits clear.
+* The parser remains portable C with no allocation, I/O, Windows, WDK, USB, HID, IOCTL, device, or kernel dependency.
+* Future protocol evidence may extend supported forms through an explicit API and policy decision rather than silently changing Phase 1 semantics.
+
 ## 2026-06-29 — Distinguish wire-format evidence from internal transport structures in protocol documentation
 
 **Decision:** The protocol evidence document (`docs/CHATPAD-PROTOCOL.md`) MUST use two separate sections: Section A for packets or bytes actually received from or sent to the Chatpad/device transport, and Section B for internal software structures (keyboard IOCTL, mouse IOCTL, control-transfer request parameters, internal state messages, user-mode mapping structures). Any structure not directly proven to be transmitted unchanged on the device endpoint must be labeled "Internal transport structure — not confirmed as Chatpad wire format."

@@ -1,0 +1,67 @@
+#ifndef CHATPAD_KEYBOARD_FIXTURES_H
+#define CHATPAD_KEYBOARD_FIXTURES_H
+
+#include <stdint.h>
+
+/*
+ * All fixtures are synthetic. They preserve the documented five-byte shape
+ * but are not hardware captures and do not assign key or modifier meanings.
+ */
+
+static const uint8_t ValidNoKeys[5] = {
+    0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static const uint8_t ValidRawModifierBit0[5] = {
+    0x00, 0x01, 0x00, 0x00, 0x00
+};
+
+static const uint8_t ValidRawModifierBoundary[5] = {
+    0x00, 0x0F, 0x00, 0x00, 0x00
+};
+
+static const uint8_t ValidRawKey0Nonzero[5] = {
+    0x00, 0x00, 0x37, 0x00, 0x00
+};
+
+static const uint8_t ValidTwoRawKeys[5] = {
+    0x00, 0x00, 0x37, 0x21, 0x00
+};
+
+static const uint8_t ValidRawBoundary[5] = {
+    0x00, 0x0F, 0xFF, 0xFF, 0xFF
+};
+
+static const uint8_t ValidRawByte4Nonzero[5] = {
+    0x00, 0x00, 0x00, 0x00, 0x01
+};
+
+static const uint8_t ValidRawByte4Boundary[5] = {
+    0x00, 0x00, 0x00, 0x00, 0xFF
+};
+
+static const uint8_t UnsupportedTypeF0[5] = {
+    0xF0, 0x00, 0x00, 0x00, 0x00
+};
+
+static const uint8_t UnsupportedTypeOther[5] = {
+    0x01, 0x00, 0x00, 0x00, 0x00
+};
+
+static const uint8_t PolicyRejectedModifierBit4[5] = {
+    0x00, 0x10, 0x00, 0x00, 0x00
+};
+
+static const uint8_t PolicyRejectedModifierBoundary[5] = {
+    0x00, 0xF0, 0x00, 0x00, 0x00
+};
+
+static const uint8_t OversizedPacket[6] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static const uint8_t LargerOversizedPacket[9] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+#endif
