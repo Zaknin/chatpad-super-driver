@@ -1003,3 +1003,166 @@
   timer/thread/retry/readiness/response/driver-callback/INF/CAT/sign/package/
   install/load/deploy behavior; no protocol/transport source linked or
   compiled into `ChatpadFilter`.
+
+## 2026-06-29T23:05+04:00 — KMDF lifecycle scaffold
+
+- **Objective:** Add a non-installable KMDF filter lifecycle scaffold with
+  per-device context, neutral prepare/D0/release bookkeeping, nonzero D0
+  generation epochs, operation admission/rundown state, stale-generation
+  protection, deterministic diagnostic logging, offline lifecycle-core tests,
+  validation wrapper, documentation, commit, and push.
+- **Starting branch and commit:** `feature/kmdf-lifecycle-scaffold` /
+  `29c3fc1a55ded35c8e33f6ceb88e2a434334ef9a`; clean tree; tracking
+  `origin/feature/kmdf-lifecycle-scaffold`; prohibited commit `6502452` not an
+  ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` correctly described the completed transport branch rather
+  than this prepared lifecycle branch. They were updated for the live branch,
+  starting commit, implemented scaffold, validation state, and next
+  continuation point.
+- **Preconditions and investigation:** Read `AGENTS.md`, continuation docs,
+  current architecture/inventory/porting/build documents, latest relevant
+  worklog entries, driver skeleton source/project/README, transport source and
+  test README, kernel compatibility README, solution/build properties, and
+  build/test/safety scripts. Verified branch, HEAD, clean status, recent
+  history, and prohibited ancestry before editing.
+- **Files created:** `src/driver/ChatpadFilter/ChatpadFilterLifecycle.h`,
+  `src/driver/ChatpadFilter/ChatpadFilterLifecycle.c`,
+  `tests/driver/ChatpadFilterLifecycleTests/ChatpadFilterLifecycleTests.c`,
+  `tests/driver/ChatpadFilterLifecycleTests/ChatpadFilterLifecycleTests.vcxproj`,
+  `tests/driver/ChatpadFilterLifecycleTests/README.md`, and
+  `tools/Test-ChatpadFilterLifecycle.ps1`.
+- **Files modified:** `ChatpadWin11.sln`, `docs/BUILDING.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`, this worklog,
+  `src/driver/ChatpadFilter/ChatpadFilter.vcxproj`,
+  `src/driver/ChatpadFilter/README.md`,
+  `src/driver/ChatpadFilter/device.c`, and
+  `src/driver/ChatpadFilter/driver.h`.
+- **Implementation details:** `ChatpadFilterLifecycle` is a portable C,
+  caller-owned core with neutral phases: unset, created, prepared, D0 active,
+  rundown requested, D0 stopped, and released. Generation zero is invalid;
+  first D0 entry returns generation `1`; later D0 entries after completed D0
+  exit increment generation; exhaustion returns a deterministic failure. D0
+  entry opens admission. D0 exit closes admission, starts rundown, and
+  completes only when outstanding count is zero. Stale-generation acquire,
+  release, rundown, and completion attempts reject without mutating current
+  state. The core has no allocation, I/O, global mutable state, retained caller
+  pointer, WDF/WDM/Windows/USB/HID/IOCTL/request/queue/timer/work-item/protocol
+  or transport dependency and is externally serialized by its caller.
+- **KMDF scaffold details:** `EvtDeviceAdd` validates normal KMDF arguments,
+  calls `WdfFdoInitSetFilter(DeviceInit)`, configures only PnP/power lifecycle
+  callbacks, creates a per-device context, initializes lifecycle state, and
+  marks the device-created phase. The context contains only signature/version,
+  a diagnostic sequence counter, and lifecycle core state. Prepare/release
+  callbacks mark the conceptual resource epoch without inspecting or using
+  resource lists. D0 callbacks delegate generation/admission/rundown
+  transitions to the core. `EvtDeviceD0Exit` does not wait; incomplete rundown
+  returns a busy status.
+- **Status mapping:** invalid lifecycle transitions map to
+  `STATUS_INVALID_DEVICE_STATE`; null output/state, invalid generation, and
+  stale generation map to `STATUS_INVALID_PARAMETER`; generation or outstanding
+  overflow maps to `STATUS_INTEGER_OVERFLOW`; admission closed or incomplete
+  rundown maps to `STATUS_DEVICE_BUSY`.
+- **Diagnostic logging:** the KMDF layer logs deterministic neutral values only:
+  sequence, callback name, phase, current generation, next generation,
+  outstanding count, admission flag, and lifecycle result. No WPP, manifest,
+  ETW, registry, file, network, allocation, machine identifier, raw pointer,
+  or device identifier logging was added.
+- **Filter capability caveat:** The scaffold documents that
+  `WdfFdoInitSetFilter(DeviceInit)` makes the binary filter-capable only. With
+  no INF, service binding, package, signing, installation, or load path, this
+  task does not prove the `.sys` is attached, positioned beneath `xusb22`, or
+  targeted at `USB\VID_045E&PID_028E`; those remain future installation
+  responsibilities.
+- **Pre-edit validation:** `tools/Get-DriverBuildEnvironment.ps1` exit 0;
+  `tools/Test-RepositorySafety.ps1` PASS; `git diff --exit-code -- legacy`
+  exit 0; prohibited-ancestor check exit 1; `tools/Test-ChatpadProtocolParser.ps1`
+  PASS with `610/610`; transport Debug and Release wrappers PASS with
+  `186/186`.
+- **During-task corrections:** The first lifecycle wrapper invocation failed
+  before execution because a PowerShell error string used `$file:` interpolation;
+  it was corrected to `${file}:`. The first lifecycle compile found a C
+  preprocessor collision between the invalid-generation constant and a result
+  enum member; the result enum was renamed. The first Release driver build
+  found `KdPrintEx` arguments compiled out as unreferenced under `/WX`; the
+  diagnostic parameters are now explicitly marked referenced.
+- **Lifecycle validation:** Debug Windows PowerShell 5.1
+  `tools/Test-ChatpadFilterLifecycle.ps1 -Configuration Debug -Platform x64`
+  PASS; source/project guard PASS; MSBuild exit 0; test exit 0; `109/109`;
+  executable
+  `artifacts\bin\x64\Debug\ChatpadFilterLifecycleTests\ChatpadFilterLifecycleTests.exe`;
+  SHA-256 `0D3802BBF3B0171E1223F8E066FBA4CA8D486F47CF48AD989E42706815155757`.
+  Release Windows PowerShell 5.1 PASS; source/project guard PASS; MSBuild exit 0; test exit 0;
+  `109/109`; executable
+  `artifacts\bin\x64\Release\ChatpadFilterLifecycleTests\ChatpadFilterLifecycleTests.exe`;
+  SHA-256 `8EFEF8CA2ABC2CF8330C120B439A86639034C461EEC2286F0851417C23331F04`.
+- **Driver validation:** Debug `tools/Build-Driver.ps1 -Configuration Debug
+  -Platform x64` PASS; `ChatpadFilterLifecycle.c` compiled into
+  `ChatpadFilter`; no SignTool or active signing task; output
+  `artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`;
+  `Authenticode.NotSigned`; SHA-256
+  `b7c19f4f54a91c0e172bb44a629c4ffb22359de59cb415021ffa2793c1feabff`.
+  Release PASS; no SignTool or active signing task; output
+  `artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`;
+  `Authenticode.NotSigned`; SHA-256
+  `5c27c85b1918009331f02a18f7558fb81fe47cf280a431fddde9a38f34a252e0`.
+- **Protocol regression validation:** `tools/Test-ChatpadProtocolParser.ps1`
+  PASS, `610/610`, executable SHA-256
+  `746AFF764A136C8025FED5E6A5520B718B21B532A27387841ECAC8E80482735C`.
+  Integrated Debug PASS, `610/610`, library SHA-256
+  `2945B9D411FDD21C86E9492AF75F5698D90C06EA8292CC5184F481971E907DC5`,
+  executable SHA-256
+  `21ED38B5C7C80670E63F7BAB279CE939166BD247E086AFF84ED008608F456A3A`.
+  Integrated Release PASS, `610/610`, library SHA-256
+  `200A770BE3A89E85530ECF2D510006AE972088B25632601C4AEE28D5FA962CCC`,
+  executable SHA-256
+  `4AD4F6F82D24564BA7A9BFA8535A652B489ADEBFB766026B0ACB5171ED4F878A`.
+- **Transport regression validation:** Debug PASS, `186/186`, library
+  `artifacts\bin\x64\Debug\ChatpadTransport\ChatpadTransport.lib`,
+  SHA-256 `502C9CD293D098AAE5A6953E592FEC0E81B3D7E504E84732CCD6749EF9697D7B`,
+  test executable
+  `artifacts\bin\x64\Debug\ChatpadTransportTests\ChatpadTransportTests.exe`,
+  SHA-256 `69195506272DD3FE272AFA2B2E2404872B7518BC4A73C1DCF676C94AA7667C5D`.
+  Release PASS, `186/186`, library
+  `artifacts\bin\x64\Release\ChatpadTransport\ChatpadTransport.lib`,
+  SHA-256 `5DA8FD2A2F65142E900258E56CF98DC855DDD2C0B3E3DF6BB9CA5FF4354A8DFE`,
+  test executable
+  `artifacts\bin\x64\Release\ChatpadTransportTests\ChatpadTransportTests.exe`,
+  SHA-256 `27C028A66E018897C26180DC8FD608A695AB3B2F796F3C644B110C597CAF6261`.
+- **Kernel compatibility validation:** Debug
+  `tools/Test-ChatpadProtocolKernelCompatibility.ps1` PASS; `.lib` only;
+  no signing execution; no `.sys`, INF, CAT, certificate, package, installer,
+  or deployment output; library
+  `artifacts\bin\x64\Debug\ChatpadProtocolKernelCompileCheck\ChatpadProtocolKernelCompileCheck.lib`;
+  SHA-256 `B8515FE511F085BFAEE305B0D26D247ED7F4D25D67D0DEB693FA4474EFDA1ECF`.
+  Release PASS with the same `.lib`-only/prohibited-output guarantees; library
+  `artifacts\bin\x64\Release\ChatpadProtocolKernelCompileCheck\ChatpadProtocolKernelCompileCheck.lib`;
+  SHA-256 `6E2672FB9A141CD39AFCE3D78355970E9D633BC0C5169E764CC5A5EC19D1FA23`.
+- **Final safety and isolation checks:** Final `tools/Test-RepositorySafety.ps1`
+  PASS; `git diff --check` exit 0; `git diff --exit-code -- legacy` exit 0;
+  prohibited-ancestor check exit 1. `ChatpadFilter.vcxproj` has no
+  `ProjectReference`, no `ChatpadProtocol`, and no `ChatpadTransport` text;
+  its compile items are only `ChatpadFilterLifecycle.c`, `driver.c`, and
+  `device.c`. Source/project guard found no prohibited runtime surfaces:
+  `WdfUsbTargetDevice`, `WDFUSB`, `URB`, `IOCTL_INTERNAL_USB`,
+  `WdfIoQueueCreate`, `WdfDeviceCreateDeviceInterface`, `WdfTimerCreate`,
+  `WdfWorkItemCreate`, `CreateFile`, or `DeviceIoControl`.
+- **Generated artifacts:** All build outputs and logs remain under ignored
+  `artifacts\`; none are staged or committed.
+- **Commit and push:** Commit exactly `feat: add kmdf lifecycle scaffold`;
+  push only `origin/feature/kmdf-lifecycle-scaffold`. The self-referential
+  commit hash is reported after commit and push rather than embedded here.
+- **Remaining risks or limitations:** Compile-only scaffold. No installation
+  target, lower-filter stack position, USB transport path, default-control
+  access, endpoint/input path, response semantics, readiness, retry, activation
+  traffic, input reader, keyboard presentation, or hardware behavior is proven
+  or implemented.
+- **Safety:** No `legacy/` edits; no INF/CAT/certificate/package/service/
+  installer/signing/deployment/load behavior; no device/interface open; no
+  USB/HID/WinUSB/SetupAPI/Configuration Manager/IOCTL/URB/endpoint/pipe
+  behavior; no queue/request interception/forwarding/submission/formatting; no
+  activation/input/key-mapping behavior; no timer/work item/thread/continuous
+  reader/polling loop; no protocol or transport source linked into
+  `ChatpadFilter`; no driver installation, signing, packaging, deployment,
+  loading, or hardware testing occurred.

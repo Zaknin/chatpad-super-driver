@@ -12,6 +12,8 @@ Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocolTests", "tes
 EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadTransportTests", "tests\transport\ChatpadTransportTests.vcxproj", "{E5F6A7B8-C9D0-4123-EF01-234567890123}"
 EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadFilterLifecycleTests", "tests\driver\ChatpadFilterLifecycleTests\ChatpadFilterLifecycleTests.vcxproj", "{F6A7B8C9-D0E1-4234-F012-345678901234}"
+EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocolKernelCompileCheck", "tests\kernel\ChatpadProtocolKernelCompileCheck\ChatpadProtocolKernelCompileCheck.vcxproj", "{C3D4E5F6-A7B8-4901-CDEF-012345678901}"
 EndProject
 Global
@@ -40,6 +42,10 @@ Global
 		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Debug|x64.Build.0 = Debug|x64
 		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Release|x64.ActiveCfg = Release|x64
 		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Release|x64.Build.0 = Release|x64
+		{F6A7B8C9-D0E1-4234-F012-345678901234}.Debug|x64.ActiveCfg = Debug|x64
+		{F6A7B8C9-D0E1-4234-F012-345678901234}.Debug|x64.Build.0 = Debug|x64
+		{F6A7B8C9-D0E1-4234-F012-345678901234}.Release|x64.ActiveCfg = Release|x64
+		{F6A7B8C9-D0E1-4234-F012-345678901234}.Release|x64.Build.0 = Release|x64
 		{C3D4E5F6-A7B8-4901-CDEF-012345678901}.Debug|x64.ActiveCfg = Debug|x64
 		{C3D4E5F6-A7B8-4901-CDEF-012345678901}.Debug|x64.Build.0 = Debug|x64
 		{C3D4E5F6-A7B8-4901-CDEF-012345678901}.Release|x64.ActiveCfg = Release|x64

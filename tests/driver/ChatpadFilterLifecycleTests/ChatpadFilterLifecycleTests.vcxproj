@@ -12,42 +12,32 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6DE3D9A1-571A-47F0-AEAD-8FD2D1708A0B}</ProjectGuid>
-    <Keyword>Win32Proj</Keyword>
-    <RootNamespace>ChatpadFilter</RootNamespace>
-    <ProjectName>ChatpadFilter</ProjectName>
-    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
+    <ProjectGuid>{F6A7B8C9-D0E1-4234-F012-345678901234}</ProjectGuid>
+    <RootNamespace>ChatpadFilterLifecycleTests</RootNamespace>
+    <ProjectName>ChatpadFilterLifecycleTests</ProjectName>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Driver</ConfigurationType>
-    <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Universal</DriverTargetPlatform>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <TargetVersion>Windows10</TargetVersion>
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <SignMode>Off</SignMode>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Driver</ConfigurationType>
-    <DriverType>KMDF</DriverType>
-    <DriverTargetPlatform>Universal</DriverTargetPlatform>
-    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <TargetVersion>Windows10</TargetVersion>
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <SignMode>Off</SignMode>
+    <SpectreMitigation>false</SpectreMitigation>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 
   <ImportGroup Label="ExtensionSettings" />
-  <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -57,14 +47,24 @@
 
   <PropertyGroup Label="UserMacros" />
 
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(RepoRoot)\artifacts\bin\x64\Debug\ChatpadFilterLifecycleTests\</OutDir>
+    <IntDir>$(RepoRoot)\artifacts\obj\x64\Debug\ChatpadFilterLifecycleTests\</IntDir>
+    <CompileAs>CompileAsC</CompileAs>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(RepoRoot)\artifacts\bin\x64\Release\ChatpadFilterLifecycleTests\</OutDir>
+    <IntDir>$(RepoRoot)\artifacts\obj\x64\Release\ChatpadFilterLifecycleTests\</IntDir>
+    <CompileAs>CompileAsC</CompileAs>
+  </PropertyGroup>
+
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(RepoRoot)\src\driver\ChatpadFilter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -73,22 +73,16 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(RepoRoot)\src\driver\ChatpadFilter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ClInclude Include="ChatpadFilterLifecycle.h" />
-    <ClInclude Include="driver.h" />
+    <ClInclude Include="..\..\..\src\driver\ChatpadFilter\ChatpadFilterLifecycle.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ChatpadFilterLifecycle.c" />
-    <ClCompile Include="driver.c" />
-    <ClCompile Include="device.c" />
+    <ClCompile Include="ChatpadFilterLifecycleTests.c" />
+    <ClCompile Include="..\..\..\src\driver\ChatpadFilter\ChatpadFilterLifecycle.c" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

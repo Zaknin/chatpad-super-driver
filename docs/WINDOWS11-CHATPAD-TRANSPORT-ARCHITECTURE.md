@@ -239,6 +239,14 @@ hardware ID; it must not write `LowerFilters` or `UpperFilters` on the
 not an installation restriction unless later compatibility evidence requires
 one.
 
+The current `ChatpadFilter` lifecycle scaffold calls
+`WdfFdoInitSetFilter(DeviceInit)`, but that API only makes the binary
+filter-capable. Because this repository still has no INF, service binding,
+package, signing, installation, or load path, the scaffold does not prove that
+the `.sys` is attached to any stack, positioned beneath `xusb22`, or targeted
+at `USB\VID_045E&PID_028E`. Those remain future installation and recovery
+responsibilities.
+
 This recommendation is conditional:
 
 1. The filter forwards every request it does not explicitly own without

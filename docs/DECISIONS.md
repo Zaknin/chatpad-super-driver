@@ -434,3 +434,36 @@ own a real transport.
 * `ChatpadFilter` remains disconnected from protocol and transport libraries.
 * Future KMDF work must explicitly adapt this neutral contract and still pass
   the architecture stop gates before any hardware behavior.
+
+## 2026-06-29 — Keep KMDF filter lifecycle state in a portable core
+
+**Decision:** `ChatpadFilter` owns per-device lifecycle bookkeeping through a
+portable C core compiled into both the KMDF driver and a native user-mode test
+executable. The KMDF layer registers only prepare/release hardware and D0
+entry/exit callbacks, then delegates neutral phase, D0 generation, admission,
+rundown, stale-generation, and snapshot state transitions to that core.
+
+**Rationale:** Lifecycle and generation rules are easier to validate offline
+when they are isolated from WDF objects, USB targets, request queues, timers,
+threads, and hardware. This preserves the current evidence boundary while
+giving future KMDF work a deterministic stop/admission model.
+
+**Alternatives rejected:**
+
+* Put lifecycle counters directly in WDF callbacks only — would make most
+  rules hard to validate without driver execution.
+* Link the existing transport or protocol libraries into `ChatpadFilter` now —
+  would imply runtime integration before hardware transport evidence exists.
+* Add queues, timers, work items, or USB request holders with the lifecycle
+  scaffold — outside the compile-only authorization.
+
+**Consequences:**
+
+* The lifecycle core has no WDF/WDM/Windows/USB/HID/IOCTL/runtime dependency
+  and must remain externally serialized by its caller.
+* `WdfFdoInitSetFilter(DeviceInit)` is documented as filter-capability only;
+  INF targeting and lower-filter placement remain future install
+  responsibilities.
+* Future runtime integration must acquire operation admission for the current
+  nonzero D0 generation and must handle busy D0 exit without waiting in the
+  callback.
