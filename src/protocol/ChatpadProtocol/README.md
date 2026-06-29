@@ -1,4 +1,4 @@
-# ChatpadProtocol Phase 1 Parser
+# Chatpad Protocol Phase 1 Parser
 
 This directory contains a portable C parser for the documented five-byte
 Chatpad keyboard packet boundary. It allocates no memory, performs no I/O,
@@ -58,15 +58,67 @@ failure return. Validation completes before any accepted input byte is copied.
 
 ## Build and Test
 
-Run from the repository root:
+### Integrated build (preferred)
+
+```powershell
+.\tools\Test-ChatpadProtocol.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadProtocol.ps1 -Configuration Release -Platform x64
+```
+
+### Direct compiler-only test (existing)
 
 ```powershell
 .\tools\Test-ChatpadProtocolParser.ps1
 ```
 
-The script initializes the installed MSVC x64 environment, compiles the parser
-and standalone tests as C with strict warnings and warnings-as-errors, writes
-all generated files beneath `artifacts/`, and runs the offline executable.
+The existing direct-compiler script remains available as a lightweight parser-only regression.
+It does not use MSBuild or the solution.
 
-No Visual Studio solution or project integration exists yet. Testing requires
-no hardware, device access, driver, or elevation.
+### MSBuild directly
+
+```powershell
+& msbuild src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:RepoRoot=<repo-root>
+```
+
+## Artifacts
+
+All generated files are contained beneath `artifacts/`:
+
+| Output | Path |
+| --- | --- |
+| Debug library | `artifacts\bin\x64\Debug\ChatpadProtocol\ChatpadProtocol.lib` |
+| Release library | `artifacts\bin\x64\Release\ChatpadProtocol\ChatpadProtocol.lib` |
+| Debug test executable | `artifacts\bin\x64\Debug\ChatpadProtocolTests\ChatpadProtocolTests.exe` |
+| Release test executable | `artifacts\bin\x64\Release\ChatpadProtocolTests\ChatpadProtocolTests.exe` |
+| Intermediate (Debug) | `artifacts\obj\x64\Debug\ChatpadProtocol\` |
+| Intermediate (Release) | `artifacts\obj\x64\Release\ChatpadProtocol\` |
+
+## Tests
+
+The test executable runs a self-contained assertion framework with 85 assertions:
+
+- Argument and length validation (null inputs, truncated, oversized)
+- Valid packet parsing (no keys, boundary values, raw key0 nonzero)
+- Type and modifier policy (unsupported type, policy-rejected modifier)
+- Raw byte 4 handling
+- Repeatability and sequence
+- Sentinel guards around the output packet
+
+```
+Total: 85
+Passed: 85
+Failed: 0
+```
+
+No third-party test framework. No device or hardware APIs. Offline only.
+
+## Project type
+
+- **Native user-mode static library** — no CLR, no ATL, no MFC
+- **C11**, MSVC v143, x64 only
+- **Strict warnings with warnings-as-errors**
+- **No precompiled headers**
+- **No Windows SDK, WDK, USB, HID, device, or kernel dependencies**
+- **No signing, deployment, or package configuration**
+- **Parser code is not connected to the kernel driver**
+- **Driver remains unsigned and nonfunctional**

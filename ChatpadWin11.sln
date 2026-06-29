@@ -4,6 +4,10 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadFilter", "src\driver\ChatpadFilter\ChatpadFilter.vcxproj", "{6DE3D9A1-571A-47F0-AEAD-8FD2D1708A0B}"
 EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocol", "src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj", "{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocolTests", "tests\protocol\ChatpadProtocolTests.vcxproj", "{B2C3D4E5-F6A7-4890-BCDE-F01234567890}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -14,6 +18,18 @@ Global
 		{6DE3D9A1-571A-47F0-AEAD-8FD2D1708A0B}.Debug|x64.Build.0 = Debug|x64
 		{6DE3D9A1-571A-47F0-AEAD-8FD2D1708A0B}.Release|x64.ActiveCfg = Release|x64
 		{6DE3D9A1-571A-47F0-AEAD-8FD2D1708A0B}.Release|x64.Build.0 = Release|x64
+		{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}.Debug|x64.ActiveCfg = Debug|x64
+		{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}.Debug|x64.Build.0 = Debug|x64
+		{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}.Release|x64.ActiveCfg = Release|x64
+		{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}.Release|x64.Build.0 = Release|x64
+		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.ActiveCfg = Debug|x64
+		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.Build.0 = Debug|x64
+		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Release|x64.ActiveCfg = Release|x64
+		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionDependencies) = postSolution
+		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.ActiveCfg = Debug|x64
+		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.DependsOn = {A1B2C3D4-E5F6-4789-ABCD-EF0123456789}|Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

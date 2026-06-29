@@ -126,21 +126,21 @@ function Invoke-NativeLoggedStep {
 
     $output = @(& $FilePath @Arguments 2>&1)
     $exitCode = $LASTEXITCODE
-    $outputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
-    $section = @(
-        "Step: $Name",
-        "Exit code: $exitCode",
-        $outputText,
-        ''
-    ) -join [Environment]::NewLine
+    $outputLines = @($output | ForEach-Object {
+        $item = $_
+        if ($null -eq $item) { '' }
+        else { $item.ToString() }
+    })
+    $outputText = $outputLines -join [Environment]::NewLine
+    $section = "Step: $Name`nExit code: $exitCode`n$outputText`n"
     [System.IO.File]::AppendAllText(
         $LogPath,
         $section,
-        [System.Text.UTF8Encoding]::new($false))
-
+        [System.Text.Encoding]::UTF8)
     return [pscustomobject]@{
         ExitCode = $exitCode
-        Output = $output
+        OutputLines = $outputLines
+        OutputText = $outputText
     }
 }
 
@@ -159,7 +159,7 @@ $detectorOutput = @(& $detectorPath 2>&1)
 $detectorExitCode = $LASTEXITCODE
 Write-Output "Environment detector exit code: $detectorExitCode"
 if ($detectorExitCode -ne 0) {
-    $detectorOutput | Write-Output
+    $detectorOutput | ForEach-Object { Write-Output $_.ToString() }
     exit $detectorExitCode
 }
 
@@ -196,7 +196,10 @@ if (-not $vsWherePath) {
 
 Set-MsvcX64Environment -VsWherePath $vsWherePath
 $clPath = (Get-Command cl.exe -CommandType Application -ErrorAction Stop).Source
-$linkPath = (Get-Command link.exe -CommandType Application -ErrorAction Stop).Source
+# Filter link.exe to MSVC toolchain only (Git's bin can shadow MSVC's link.exe)
+$msvcLinkCmd = Get-Command link.exe -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -match 'Microsoft Visual Studio' }
+if (-not $msvcLinkCmd) { throw 'MSVC link.exe was not found in PATH after vcvars64.bat setup.' }
+$linkPath = $msvcLinkCmd.Source
 
 $sourceRoot = [System.IO.Path]::Combine($repoRoot, 'src', 'protocol', 'ChatpadProtocol')
 $testRoot = [System.IO.Path]::Combine($repoRoot, 'tests', 'protocol')
@@ -227,21 +230,23 @@ $commonCompilerArguments = @(
 
 $parserCompileArguments = @($commonCompilerArguments + @("/Fo$parserObject", $parserSource))
 $parserCompile = Invoke-NativeLoggedStep -Name 'Parser compile' -FilePath $clPath -Arguments $parserCompileArguments -LogPath $buildLogPath
-$parserCompile.Output | Write-Output
+try { $parserCompile.OutputText | Write-Output } catch { Write-Output "FAIL at parser compile output: $($_.Exception.Message)"; exit 1 }
 Write-Output "Parser compiler exit code: $($parserCompile.ExitCode)"
 if ($parserCompile.ExitCode -ne 0) {
     Write-Output "Build log: $buildLogPath"
     exit $parserCompile.ExitCode
 }
+Write-Output "DEBUG: After parser compile"
 
 $testCompileArguments = @($commonCompilerArguments + @("/Fo$testObject", $testSource))
 $testCompile = Invoke-NativeLoggedStep -Name 'Test compile' -FilePath $clPath -Arguments $testCompileArguments -LogPath $buildLogPath
-$testCompile.Output | Write-Output
+try { $testCompile.OutputText | Write-Output } catch { Write-Output "FAIL at test compile output: $($_.Exception.Message)"; exit 1 }
 Write-Output "Test compiler exit code: $($testCompile.ExitCode)"
 if ($testCompile.ExitCode -ne 0) {
     Write-Output "Build log: $buildLogPath"
     exit $testCompile.ExitCode
 }
+Write-Output "DEBUG: After test compile"
 
 $linkArguments = @(
     '/NOLOGO',
@@ -253,7 +258,7 @@ $linkArguments = @(
     $testObject
 )
 $link = Invoke-NativeLoggedStep -Name 'Test link' -FilePath $linkPath -Arguments $linkArguments -LogPath $buildLogPath
-$link.Output | Write-Output
+try { $link.OutputText | Write-Output } catch { Write-Output "FAIL at link output: $($_.Exception.Message)"; exit 1 }
 Write-Output "Linker exit code: $($link.ExitCode)"
 if ($link.ExitCode -ne 0) {
     Write-Output "Build log: $buildLogPath"
@@ -270,10 +275,11 @@ if ($executables.Count -ne 1 -or
 }
 
 $testRun = Invoke-NativeLoggedStep -Name 'Native tests' -FilePath $testExecutable -Arguments @() -LogPath $testLogPath
-$testRun.Output | Write-Output
+$testRun.OutputText | Write-Output
 $testExitCode = $testRun.ExitCode
 
-$testLines = @($testRun.Output | ForEach-Object { [string]$_ })
+$testOutputText = $testRun.OutputText
+$testLines = @($testOutputText -split [Environment]::NewLine)
 $totalLines = @($testLines | Where-Object { $_ -match '^Total: [0-9]+$' })
 $passedLines = @($testLines | Where-Object { $_ -match '^Passed: [0-9]+$' })
 $failedLines = @($testLines | Where-Object { $_ -match '^Failed: [0-9]+$' })
@@ -285,7 +291,21 @@ if ($totalLines.Count -ne 1 -or $passedLines.Count -ne 1 -or $failedLines.Count 
 $totalCount = [int]([regex]::Match($totalLines[0], '[0-9]+').Value)
 $passedCount = [int]([regex]::Match($passedLines[0], '[0-9]+').Value)
 $failedCount = [int]([regex]::Match($failedLines[0], '[0-9]+').Value)
-$hash = (Get-FileHash -LiteralPath $testExecutable -Algorithm SHA256).Hash
+# Try to use Get-FileHash if available; fall back to .NET SHA256
+try {
+    $hash = (Get-FileHash -LiteralPath $testExecutable -Algorithm SHA256).Hash
+} catch {
+    # Fallback: use .NET SHA256 directly (works in all PowerShell versions)
+    $stream = [System.IO.File]::OpenRead($testExecutable)
+    try {
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        $bytes = $sha.ComputeHash($stream)
+        $hash = -join ($bytes | ForEach-Object { $_.ToString('x2') })
+        $sha.Dispose()
+    } finally {
+        $stream.Close()
+    }
+}
 
 Write-Output "Test executable exit code: $testExitCode"
 Write-Output "Total assertions: $totalCount"

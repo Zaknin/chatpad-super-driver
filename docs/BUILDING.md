@@ -1,47 +1,79 @@
-# Building the Compile-Only Skeleton
+# Building
 
-This build creates only an ignored, intentionally unsigned `.sys` compiler output. It does not install, sign, package, deploy, start, or load a driver.
+This document covers how to build every artifact in the repository.
+All builds produce output beneath `artifacts/`. No artifacts are placed
+in the source tree.
 
 ## Prerequisites
 
-Install the Visual Studio 2022, MSVC v143, Spectre library, Windows SDK, WDK, KMDF, and WDK integration components listed in [TOOLCHAIN.md](TOOLCHAIN.md). The SDK and WDK versions must match.
+- Visual Studio 2022 with MSVC v143 x64 build tools
+- Windows 10 SDK 10.0.26100.0
+- WDK 10.0.26100.0
+- Git
+- PowerShell 5.1+
 
-Check the environment without changing system configuration:
+Run `tools/Get-DriverBuildEnvironment.ps1` to verify the full toolchain.
+
+## Chatpad Protocol Parser (offline)
+
+Portable C parser for the Phase 1 chatpad keyboard HID packet boundary.
+Native user-mode static library. No hardware, no elevation, no driver.
+
+### Integrated build and test (preferred)
 
 ```powershell
-.\tools\Get-DriverBuildEnvironment.ps1 -OutputPath .\artifacts\environment\driver-build-environment.txt
+.\tools\Test-ChatpadProtocol.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadProtocol.ps1 -Configuration Release -Platform x64
 ```
 
-The detector exits nonzero and identifies missing components when the toolchain is incomplete.
+Builds `ChatpadProtocol.vcxproj` and `ChatpadProtocolTests.vcxproj` via
+MSBuild, runs the test executable, and verifies artifact containment.
 
-## Build Commands
+### Direct parser-only regression
 
-Debug x64 clean build:
+```powershell
+.\tools\Test-ChatpadProtocolParser.ps1
+```
+
+Uses `cl.exe` and `link.exe` directly. Retained as a lightweight
+parser-only check without MSBuild or solution integration.
+
+### Artifacts
+
+| Output | Path |
+| --- | --- |
+| Debug library | `artifacts\bin\x64\Debug\ChatpadProtocol\ChatpadProtocol.lib` |
+| Release library | `artifacts\bin\x64\Release\ChatpadProtocol\ChatpadProtocol.lib` |
+| Debug test executable | `artifacts\bin\x64\Debug\ChatpadProtocolTests\ChatpadProtocolTests.exe` |
+| Release test executable | `artifacts\bin\x64\Release\ChatpadProtocolTests\ChatpadProtocolTests.exe` |
+
+## Kernel driver (compile-only skeleton)
+
+The driver project compiles to a nonfunctional `.sys` skeleton.
+It is not installed, signed, or loaded.
 
 ```powershell
 .\tools\Build-Driver.ps1 -Configuration Debug -Platform x64
-```
-
-Release x64 clean build:
-
-```powershell
 .\tools\Build-Driver.ps1 -Configuration Release -Platform x64
 ```
 
-Compiled files are written below `artifacts/bin/x64/`, intermediate files below `artifacts/obj/x64/`, environment reports below `artifacts/environment/`, and logs below `artifacts/logs/`. All of these paths are ignored by Git.
+### Artifacts
 
-`tools/Build-Driver.ps1` computes absolute output paths from the repository root and passes directory-valued `OutDir` and `IntDir` properties to MSBuild. The wrapper cleans only the selected configuration under `artifacts/`, requires MSBuild exit code 0, verifies the expected `ChatpadFilter.sys` is `NotSigned`, prints its SHA-256 hash, rejects active WDK signing tasks or SignTool execution, and runs the repository safety gate.
+| Output | Path |
+| --- | --- |
+| Debug driver | `artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys` |
+| Release driver | `artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys` |
 
-The project sets WDK `SignMode` to `Off` for both supported configurations. No certificate is created and no SignTool operation runs. There is no INF, CAT, installer, package, or deployment configuration, so no installable driver package exists.
+Both outputs remain `Authenticode.NotSigned`.
 
-## Troubleshooting
+## Repository safety
 
-- **Visual Studio 2022 not detected:** install Visual Studio 2022 or Build Tools 2022 with MSBuild and the MSVC v143 x64/x86 tools.
-- **MSBuild not detected:** add the MSBuild component through Visual Studio Installer.
-- **SDK/WDK mismatch:** install the WDK release matching an installed Windows SDK version.
-- **WDK not detected:** install the Windows Driver Kit; the SDK alone does not provide kernel headers and libraries.
-- **Spectre libraries missing:** add the MSVC v143 Spectre-mitigated libraries for x64/x86 through Visual Studio Installer.
-- **WDK integration missing:** install or repair the WDK Visual Studio extension so `WindowsKernelModeDriver10.0` is available to VS 2022 MSBuild.
-- **KMDF files or targets missing:** repair the WDK installation and rerun environment detection before attempting another build.
+Run `tools\Test-RepositorySafety.ps1` to verify:
 
-Never install or load the generated `.sys`. The skeleton has no chatpad protocol, IOCTL, USB, HID, keyboard, or mouse functionality, has no installable package, and has not passed runtime validation.
+- No generated outputs, logs, or keys are tracked
+- `legacy/` matches `origin/win11-port`
+- No forbidden legacy binaries are indexed
+- No packaging, certificate, or deployment files in the modern source tree
+- No generated build outputs in forbidden locations
+- All generated output is beneath `artifacts/` or ignored `.vs/`
+- Prohibited commit `6502452` is not an ancestor of HEAD

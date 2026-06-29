@@ -1,41 +1,60 @@
-# Chatpad Protocol Parser Tests
+# Chatpad Protocol Test Suite
 
-These are standalone offline native C tests for the Phase 1 five-byte parser.
-They use no test framework, hardware, device API, or elevation.
+Offline tests for the portable Chatpad keyboard parser.
 
-Run from the repository root:
+## Structure
+
+- `ChatpadProtocolParserTests.c` — assertion framework and 85 offline tests
+- `fixtures/` — synthetic five-byte packet data; not hardware captures
+
+## Running the tests
+
+### Integrated (MSBuild)
+
+```powershell
+.\tools\Test-ChatpadProtocol.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadProtocol.ps1 -Configuration Release -Platform x64
+```
+
+The integrated script:
+
+1. Locates the repository root
+2. Calls `Get-DriverBuildEnvironment.ps1`
+3. Cleans only the protocol artifact directories
+4. Builds both `ChatpadProtocol` and `ChatpadProtocolTests` via MSBuild
+5. Verifies `.lib` and `.exe` exist beneath `artifacts/`
+6. Runs the test executable
+7. Reports exit codes, assertion counts, and SHA-256 hashes
+8. Verifies no generated output escaped `artifacts/`
+9. Runs `Test-RepositorySafety.ps1`
+
+### Direct compiler-only (existing)
 
 ```powershell
 .\tools\Test-ChatpadProtocolParser.ps1
 ```
 
-The runner compiles and links directly with the installed MSVC x64 tools. It
-places objects beneath
-`artifacts/obj/x64/Debug/ChatpadProtocolParser/`, the executable beneath
-`artifacts/bin/x64/Debug/ChatpadProtocolParser/`, and logs beneath
-`artifacts/logs/`. There is no Visual Studio solution or project integration.
+Uses `cl.exe` and `link.exe` directly. No MSBuild. No solution integration.
 
-The native executable prints deterministic ASCII-only `PASS`, `FAIL`, `Total`,
-`Passed`, and `Failed` lines. It exits 0 only when every assertion passes.
+## Test framework
 
-The current suite contains 85 assertions covering:
+A minimal self-contained framework with `AssertTrue`, `AssertResult`, and
+`AssertPacket` helpers. Output is deterministic ASCII suitable for machine
+parsing.
 
-1. Null output.
-2. Null input with nonzero length.
-3. Zero-length input.
-4. Truncation at lengths 1, 2, 3, and 4.
-5. Valid exact-length neutral input.
-6. Valid raw boundary input.
-7. Oversized length 6.
-8. A larger oversized input.
-9. Supported Phase 1 type `0x00`.
-10. Unsupported `0xF0` and another unsupported raw type without assigning meaning.
-11. Modifier-policy acceptance.
-12. Modifier-policy rejection.
-13. Raw Byte 4 preservation.
-14. Deterministic output clearing on every testable failure path.
-15. Repeated parsing of a valid packet.
-16. Sequential parsing of different valid packets.
-17. Unchanged sentinels surrounding the caller-owned output structure.
+```
+PASS: <test name>
+Total: 85
+Passed: 85
+Failed: 0
+```
 
-The executable itself accesses no hardware.
+## Safety
+
+- No device or hardware APIs
+- No elevation
+- No deployment configuration
+- No signing configuration
+- No third-party dependencies
+- No USB, HID, IOCTL, or kernel calls
+- No driver installation or loading

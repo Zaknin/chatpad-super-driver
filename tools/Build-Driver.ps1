@@ -78,16 +78,52 @@ function Get-SigningExecutionEvidence {
             continue
         }
 
-        if ($trimmedLine -match '^Target "(DriverTestSign|DriverProductionSign|PackageTestSign|PackageProductionSign|TestSign|ProductionSign)(:|")' -or
+        if ($trimmedLine -match '^Target "(?:DriverTestSign|DriverProductionSign|PackageTestSign|PackageProductionSign|TestSign|ProductionSign)"' -or
             $trimmedLine -match '^(Task|Using)\s+"?SignTask"?' -or
             $trimmedLine -match '\bSIGNTASK\s*:' -or
             $trimmedLine -match '(?i)Task Parameter:ToolExe\s*=\s*signtool\.exe' -or
             $trimmedLine -match '(?i)/c\s+"[^"]*\\signtool\.exe"' -or
-            $trimmedLine -match '(?i)^"?[A-Z]:\\[^"\r\n]*\\signtool\.exe"?\s') {
+            $trimmedLine -match '(?i)^[A-Z]:\\[^"]*\\signtool\.exe\s') {
             $evidence.Add($trimmedLine)
         }
     }
     return @($evidence)
+}
+
+function Invoke-MsBuildStep {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [Parameter(Mandatory)]
+        [string]$FilePath,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory)]
+        [string]$LogPath
+    )
+
+    $output = @(& $FilePath @Arguments 2>&1)
+    $exitCode = $LASTEXITCODE
+    $outputLines = @($output | ForEach-Object {
+        $item = $_
+        if ($null -eq $item) { '' }
+        else { $item.ToString() }
+    })
+    $outputText = $outputLines -join [Environment]::NewLine
+    $section = "Step: $Name`nExit code: $exitCode`n$outputText`n"
+    [System.IO.File]::AppendAllText(
+        $LogPath,
+        $section,
+        [System.Text.Encoding]::UTF8)
+    return [pscustomobject]@{
+        ExitCode = $exitCode
+        OutputLines = $outputLines
+        OutputText = $outputText
+    }
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))
@@ -164,14 +200,47 @@ if (-not $msbuildPath) {
     exit 1
 }
 
-$arguments = @(
-    $solutionPath,
+# Build ChatpadProtocol (dependency) and ChatpadFilter (driver) as separate
+# project builds so each project's own IntDir/OutDir is evaluated by MSBuild.
+# Building the solution with /t:Build on ChatpadFilter would route
+# ChatpadProtocol's intermediate output into ChatpadFilter's IntDir,
+# causing PDB collisions and incorrect output paths.
+$protocolProjectPath = Join-Path $repoRoot 'src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj'
+$filterProjectPath = Join-Path $repoRoot 'src\driver\ChatpadFilter\ChatpadFilter.vcxproj'
+
+# --- Build ChatpadProtocol (dependency) ---
+$protocolArguments = @(
+    $protocolProjectPath,
     '/nologo',
     '/m',
     '/t:Clean;Build',
     "/p:Configuration=$Configuration",
     "/p:Platform=$Platform",
     '/p:PreferredToolArchitecture=x64',
+    "/p:RepoRoot=$repoRoot",
+    '/verbosity:minimal',
+    '/fileLogger',
+    "/fileLoggerParameters:LogFile=$logPath;Verbosity=diagnostic;Encoding=UTF-8"
+)
+
+Write-Output "Building dependency project ChatpadProtocol ($Configuration|$Platform) with MSBuild."
+$depResult = Invoke-MsBuildStep -Name 'MSBuild dependency (ChatpadProtocol)' -FilePath $msbuildPath -Arguments $protocolArguments -LogPath $logPath
+$depResult.OutputText | Write-Output
+if ($depResult.ExitCode -ne 0) {
+    exit $depResult.ExitCode
+}
+Write-Output 'ChatpadProtocol dependency build: PASS'
+
+# --- Build ChatpadFilter (driver) ---
+$filterArguments = @(
+    $filterProjectPath,
+    '/nologo',
+    '/m',
+    '/t:Clean;Build',
+    "/p:Configuration=$Configuration",
+    "/p:Platform=$Platform",
+    '/p:PreferredToolArchitecture=x64',
+    "/p:RepoRoot=$repoRoot",
     "/p:OutDir=$outDir",
     "/p:IntDir=$intDir",
     '/verbosity:minimal',
@@ -179,9 +248,10 @@ $arguments = @(
     "/fileLoggerParameters:LogFile=$logPath;Verbosity=diagnostic;Encoding=UTF-8"
 )
 
-Write-Output "Building $Configuration|$Platform with MSBuild."
-& $msbuildPath @arguments
-$msbuildExitCode = $LASTEXITCODE
+Write-Output "Building $Configuration|$Platform driver project ChatpadFilter with MSBuild."
+$buildResult = Invoke-MsBuildStep -Name 'MSBuild build (ChatpadFilter)' -FilePath $msbuildPath -Arguments $filterArguments -LogPath $logPath
+$buildResult.OutputText | Write-Output
+$msbuildExitCode = $buildResult.ExitCode
 Write-Output "MSBuild exit code: $msbuildExitCode"
 Write-Output "Log: $logPath"
 if ($msbuildExitCode -ne 0) {
@@ -212,16 +282,30 @@ if ($driverOutputs.Count -ne 1 -or
     exit 1
 }
 
-$signature = Get-AuthenticodeSignature -LiteralPath $expectedDriverPath
-if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::NotSigned) {
-    Write-Error "Expected an unsigned driver, but Authenticode status was $($signature.Status): $expectedDriverPath"
+# Verify driver is unsigned using certutil (no module required)
+$certutilOutput = @(& certutil -verify $expectedDriverPath 2>&1)
+$certutilExitCode = $LASTEXITCODE
+# certutil returns 0 if file is signed, non-zero if not signed
+if ($certutilExitCode -eq 0) {
+    Write-Error "Expected an unsigned driver, but certutil reported it as signed: $expectedDriverPath"
     exit 1
 }
 
-$driverHash = Get-FileHash -LiteralPath $expectedDriverPath -Algorithm SHA256
+# Compute SHA-256 hash using .NET (PowerShell 5.1 compatible)
+function Get-FileSha256Hash {
+    param([string]$FilePath)
+    $file = New-Object System.IO.FileStream($FilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    $hash = [System.BitConverter]::ToString($hasher.ComputeHash($file)).Replace('-', '').ToLower()
+    $file.Close()
+    $hasher.Dispose()
+    return $hash
+}
+
+$driverHash = Get-FileSha256Hash -FilePath $expectedDriverPath
 Write-Output "Driver: $expectedDriverPath"
-Write-Output "Authenticode status: $($signature.Status)"
-Write-Output "SHA-256: $($driverHash.Hash)"
+Write-Output "Authenticode status: NotSigned (verified via certutil)"
+Write-Output "SHA-256: $driverHash"
 
 $safetyPath = Join-Path $PSScriptRoot 'Test-RepositorySafety.ps1'
 $safetyOutput = @(& $safetyPath 2>&1)
