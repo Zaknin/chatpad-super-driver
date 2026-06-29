@@ -221,9 +221,10 @@ binding or interface class does not prove an endpoint or control-request path.
 
 ## 19. Recommended next bounded task
 
-Produce a documentation-only Windows 11 attachment-point and transport
-architecture design. Compare a device-specific lower filter at the
-USB/XnaComposite node with the visible HID and opaque interface boundaries,
-define the evidence still required before any real transport implementation,
-and keep all runtime, installation, descriptor-query, request-sending, and
-device-handle work out of scope.
+The documentation-only design is complete at
+`docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`. It selects the physical
+USB/XnaComposite node and a device-specific lower-filter position as the
+conditional architecture direction, while leaving implementation blocked on
+proof of default-control and incoming-packet access. The next bounded task is
+the WDF-independent mocked transport-adapter seam described in that document;
+it must not create USB requests or hardware behavior.

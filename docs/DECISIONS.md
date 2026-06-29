@@ -4,6 +4,71 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Use a device-specific lower-filter direction, conditional on transport evidence
+
+**Decision:** The Windows 11 attachment architecture targets the physical
+`USB\VID_045E&PID_028E`/`XnaComposite` controller devnode with a
+device-specific lower filter beneath `xusb22`. This is a conditional design
+direction, not an implementation approval or a preferred candidate. It cannot
+become preferred until evidence proves both default-control access and a safe
+Chatpad input path at that position.
+
+**Rationale:** The current inventory proves that the controller node is owned
+by `xusb22`, that no independent Chatpad node exists, and that no relevant
+filter is installed. The legacy device-specific lower filter is the only
+candidate with historical evidence for both device-level control requests and
+a separately owned Chatpad read. Current endpoint and transport visibility
+remain unknown.
+
+**Alternatives rejected:**
+
+* `IG_01` attachment — function semantics and parent-control access are not
+  established.
+* HID-descendant attachment — the collection is not attributed to Chatpad and
+  does not prove default-control access.
+* Class-wide XNA/HID filtering — broad impact without additional capability.
+* WinUSB/binding replacement — risks removing normal Microsoft/XInput behavior.
+
+**Consequences:**
+
+* A future INF must target the exact hardware ID in a device install section
+  and must not alter XNA or HID class filter values.
+* Normal `xusb22` traffic must be forwarded unchanged; proxying ordinary reads
+  is prohibited unless separately evidenced and approved.
+* Attachment, preservation, transport-visibility, endpoint/input, lifecycle,
+  recovery, and explicit-authorization gates are hard stops.
+* Failure to prove either transport path reopens the attachment decision; it
+  does not authorize guessing legacy pipe ordinals.
+
+## 2026-06-29 — Separate physical transport from keyboard presentation
+
+**Decision:** Physical controller attachment and USB transport remain separate
+from future keyboard presentation. Transport produces portable decoded state;
+a distinct output boundary may later use an approved virtual HID mechanism.
+The installed WDK's VHF surface is a candidate, not a selected implementation.
+
+**Rationale:** Keyboard policy and presentation do not require ownership of the
+physical Xbox stack. Separation reduces blast radius, keeps `xusb22` behavior
+independent, and allows output signing, HVCI, report, and lifecycle questions
+to be validated without connected-controller traffic.
+
+**Alternatives rejected:**
+
+* Reproduce the legacy KMDF plus WDM HID-minidriver and PnP-ID spoofing stack —
+  obsolete and unnecessarily complex.
+* Treat the existing HID descendant as Chatpad output or input — unsupported by
+  inventory evidence.
+* Couple user-mode key injection directly to USB transport — mixes security,
+  session, and device-lifetime responsibilities.
+
+**Consequences:**
+
+* `ChatpadProtocol` remains free of WDF, USB, HID, timer, and handle types.
+* A future output prototype must independently validate target support,
+  signing, Memory Integrity, report semantics, cancellation, and teardown.
+* No semantic key mapping or keyboard technology is selected by the transport
+  architecture.
+
 ## 2026-06-29 — Separate raw machine inventory from stable driver-design facts
 
 **Decision:** Exact connected-device instance IDs, container GUIDs, symbolic

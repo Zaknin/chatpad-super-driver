@@ -2,78 +2,73 @@
 
 ## Exact current state
 
-- **Completed branch:** `analysis/connected-device-inventory`.
+- **Completed branch:** `analysis/windows11-transport-architecture`.
 - **Completed task starting commit:**
-  `1159adc49e50d694186da67ce105fa07d81f7987`.
-- **Inventory checkpoint:** commit named
-  `docs: inventory connected xbox chatpad device stack`; verify its full hash
-  with `git rev-parse HEAD` before beginning the next task.
-- Authoritative result:
-  `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`.
-- The controller is USB `045E:028E`, revision `0114`, class `XnaComposite`,
-  service `xusb22`, and Microsoft `xusb22.inf` version `10.0.26100.8521` owns
-  the node.
-- No separately identifiable Chatpad node was observed. One related USB HID
-  function and HID game-controller collection are present but are not proven
-  Chatpad transports.
-- Controller interface registrations include
-  `GUID_DEVINTERFACE_USB_DEVICE` and opaque class GUID
-  `{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}`. A related HID interface is visible.
-- No target device/class filters are currently configured.
-- Endpoint layout and the activation transport target remain unresolved.
+  `6881fc492af50b7f28977d306fad369a2f6a309f`.
+- **Architecture checkpoint:** commit named
+  `docs: design windows 11 chatpad transport architecture`; verify its full
+  hash against `origin/analysis/windows11-transport-architecture` before
+  beginning.
+- **Authoritative design:**
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`.
+- The conditional design direction is a device-specific lower filter on the
+  physical `USB\VID_045E&PID_028E`/`XnaComposite` node beneath `xusb22`.
+- No attachment candidate is preferred yet because current default-control and
+  Chatpad input-transfer access are unproven.
+- No runtime, project, INF, installation, or hardware behavior was added.
 
 ## Next recommended objective
 
-Create a documentation-only Windows 11 attachment-point and transport
-architecture design. Compare a device-specific lower filter at the
-USB/XnaComposite controller node with the HID and opaque interface boundaries,
-identify the smallest evidence gap for each option, and define hard stop gates
-before any runtime implementation.
+Define a kernel-safe transport-adapter interface and fully mocked,
+WDF-independent implementation. Connect the existing portable activation
+executor to the neutral contract, model cancellation/device-generation
+outcomes, and test descriptor/result translation without creating a WDF
+request or hardware behavior.
 
 ## Required branch and starting commit
 
-- Create `design/windows11-attachment-architecture` from the exact pushed
-  inventory checkpoint named above.
-- Require the full `git rev-parse HEAD` value to match
-  `origin/analysis/connected-device-inventory` and require a clean tree before
+- Create a new `feature/` branch from the exact pushed architecture checkpoint
+  named above.
+- Require `git rev-parse HEAD` to match
+  `origin/analysis/windows11-transport-architecture` and a clean tree before
   editing.
 
 ## Preconditions
 
 1. Read `AGENTS.md` and all continuity documents.
-2. Read `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md` and the two final raw
-   inventories if they remain available locally.
-3. Read `docs/LEGACY-ARCHITECTURE.md`, `docs/WIN11-BLOCKERS.md`, and
-   `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`.
+2. Read `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`, especially sections
+   11, 13, 14, 18, 20, and 22.
+3. Inspect the current executor contract and tests before designing the seam.
 4. Verify repository safety, legacy immutability, and prohibited ancestry.
 
 ## Safety restrictions
 
-- Documentation and source inspection only.
-- Do not open a device/interface handle or query live USB/HID descriptors.
-- Do not send USB, HID, IOCTL, URB, activation, status, or keepalive traffic.
-- Do not install, bind, replace, package, sign, deploy, load, unload, or modify
-  any driver or device.
-- Do not modify protocol/runtime/driver source or build projects.
-- Keep `legacy/` immutable and keep machine-specific inventory under ignored
-  artifacts only.
+- Portable contract, mocks, and offline tests only.
+- No WDF/USB/HID/IOCTL/URB request representation or submission.
+- No device/interface handle, live enumeration, capture, descriptor query,
+  timing sleep, or hardware operation.
+- No INF, CAT, certificate, packaging, signing, installation, deployment,
+  loading, service, or Device Manager change.
+- Do not encode endpoint addresses, interface/pipe ordinals, response bytes,
+  retries, acknowledgements, readiness, or periodic-request semantics.
+- Keep `legacy/` immutable and generated outputs beneath ignored `artifacts/`.
 
 ## Acceptance criteria
 
-- The design compares attachment options against observed device topology and
-  explicitly rejects class-wide impact where a device-specific scope exists.
-- Every proposed boundary identifies what Windows evidence supports it and
-  what remains unproven.
-- No interface/endpoint access is assumed from service names or class GUIDs.
-- The design defines the smallest separately authorized observation required
-  before transport implementation and includes abort criteria.
-- Repository safety passes and only documentation/continuity files change.
+- The adapter contract uses only kernel-safe neutral value types and preserves
+  existing portable descriptor ownership.
+- The mocked implementation covers success, failure, cancellation, removal,
+  stale generation, and no-next-step-after-cancel behavior.
+- The executor remains independent of WDF and hardware.
+- No default-control or input-path capability is claimed or implemented.
+- All applicable user-mode tests and kernel compile checks pass, repository
+  safety passes, and driver/project isolation is documented.
 
 ## Inspect first
 
-1. `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`
-2. `tools/Get-ConnectedChatpadInventory.ps1`
-3. `docs/LEGACY-ARCHITECTURE.md`
-4. `docs/WIN11-BLOCKERS.md`
-5. `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`
+1. `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`
+2. `src/protocol/ChatpadProtocol/`
+3. `tests/ChatpadProtocolTests/`
+4. `tests/kernel/ChatpadProtocolKernelCompileCheck/`
+5. `src/driver/ChatpadFilter/`
 6. `docs/DECISIONS.md`

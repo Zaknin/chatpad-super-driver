@@ -34,14 +34,31 @@ Source references:
 
 ## Phase 3: Windows 11 Driver Design
 
-- Design a current WDF driver from first principles.
-- Use the legacy source only as protocol evidence.
-- Resolve all blockers in `docs/WIN11-BLOCKERS.md` before kernel code is written.
-- Require explicit validation for every IOCTL input/output length and every USB transfer buffer length.
+- Use `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md` as the authoritative
+  attachment and lifetime design.
+- Treat a device-specific lower filter on the physical
+  `USB\VID_045E&PID_028E`/`XnaComposite` node beneath `xusb22` as a conditional
+  architecture direction, not an implementation-ready capability.
+- First define a kernel-safe transport-adapter interface and fully mocked,
+  WDF-independent implementation.
+- Keep physical transport, per-device WDF lifetime, scheduling, diagnostics,
+  and keyboard presentation in separate layers with no portable-to-WDF
+  dependency.
+- Resolve the attachment, stack-preservation, transport-visibility,
+  endpoint/input, lifecycle, recovery, and explicit-authorization gates before
+  any USB request can be sent.
+- Use the legacy source only as protocol and historical architecture evidence;
+  do not reproduce hard-coded pipe ordinals, proxy controller reads, global
+  device pointers, permissive sideband IOCTLs, or obsolete HID layering.
+- Require explicit validation for every request and transfer length.
 
 ## Phase 4: Build, Sign, and Device Validation Gate
 
 This phase is intentionally not part of the baseline task. It requires a separate approval gate before any driver build, signing, installation, Device Manager action, Secure Boot setting, Memory Integrity setting, BCD setting, driver store mutation, or live device validation.
+
+It also requires a tested device-specific recovery procedure that restores the
+Microsoft `xusb22` binding without changing class-wide filter state or
+disabling Secure Boot or Memory Integrity.
 
 ## Non-Goals For This Baseline
 

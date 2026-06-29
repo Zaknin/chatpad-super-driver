@@ -774,3 +774,109 @@
   inventory/dependency network request, source/project edit, legacy edit, or
   external-skill modification occurred. The required Git push is the only
   authorized network action.
+
+## 2026-06-29T18:55+04:00 — Windows 11 Chatpad transport architecture
+
+- **Objective:** Produce the documentation-only Windows 11 attachment,
+  activation transport, input acquisition, lifetime, and keyboard-output
+  architecture; define hard stop gates; update continuity; validate, commit,
+  and push the requested branch without runtime or hardware behavior.
+- **Starting branch and commit:**
+  `analysis/windows11-transport-architecture` /
+  `6881fc492af50b7f28977d306fad369a2f6a309f`; clean tree; tracking the same
+  branch on origin; prohibited commit `6502452` not an ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` correctly described the completed inventory but still
+  named `analysis/connected-device-inventory`. They were updated for the
+  dedicated architecture branch before serving as final continuation truth.
+- **Preconditions:** Read `AGENTS.md`, all required continuation, inventory,
+  evidence, protocol, architecture, blocker, plan, source-inventory, build, and
+  README documents. Inspected solution/build properties, every current
+  `src/driver/ChatpadFilter/` file, the inventory collector's evidence
+  boundary, relevant Git history, branch, HEAD, status, and complete initial
+  diff.
+- **Legacy attachment investigation:** Examined the filter `sources`, header,
+  implementation, IOCTL contract, and XP/Vista/7 INF variants beneath
+  `legacy/source_release_0_0_4a/`, including installer copies. The INFs target
+  exact hardware ID `USB\VID_045E&PID_028E` and set device-key
+  `LowerFilters=ChatpadFilter`; `EvtDeviceAdd` calls `WdfFdoInitSetFilter`;
+  `EvtDevicePrepareHardware` creates `WDFUSBDEVICE`; and the internal-control
+  queue intercepts `IOCTL_INTERNAL_USB_SUBMIT_URB` and
+  `URB_FUNCTION_SELECT_CONFIGURATION`.
+- **Legacy transport investigation:** Traced
+  `WdfUsbTargetDeviceSendControlTransferSynchronously`, setup-packet copying,
+  cached interface/pipe acquisition, the interface-0 pipe-0/1 and interface-2
+  pipe-0 ordinal assumptions, proxy controller reads, two direct Chatpad read
+  URBs, IOCTL read queues, `InitChatpad`, `ChatpadReadFunction`, and
+  `HandleChatpadData`. The six-call order and five-byte packet boundary remain
+  protocol evidence; current endpoint identity and access do not.
+- **Legacy output/lifetime investigation:** Examined keyboard/mouse INFs,
+  KMDF layers, WDM HID minidrivers, `HidRegisterMinidriver`, PnP ID spoofing,
+  global device collections/pointers, D0 callbacks, surprise-removal behavior,
+  reusable-request cleanup, cancellation handling, and user-mode worker
+  lifetime. These support rejection of the obsolete multi-driver HID design
+  and global/raw-pointer lifetime model.
+- **Installed WDK evidence:** Read-only inspection found
+  `C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\vhf.h`,
+  kernel `vhfkm.lib`, and user-mode VHF libraries. The header exposes VHF for
+  Windows 10-and-later targets and declares `VhfCreate`, `VhfStart`,
+  `VhfDelete`, and `VhfReadReportSubmit`. VHF is recorded as a candidate, not
+  selected without isolated lifecycle/signing/HVCI validation.
+- **Architecture decision:** The physical
+  `USB\VID_045E&PID_028E`/`XnaComposite` devnode and a device-specific lower
+  filter beneath `xusb22` are the conditional design direction. Candidate A is
+  explicitly unresolved, not preferred, until default-control access and a
+  safe incoming Chatpad path are both proven. Installation must never use an
+  XNA/HID class-wide filter.
+- **Candidate results:** A unresolved/selected direction; B unresolved and not
+  selected; C rejected for transport; D rejected for blast radius; E rejected
+  for the primary transport because rebinding threatens `xusb22`; F possible
+  fallback for keyboard output only.
+- **Layer/lifetime decision:** Portable descriptors/parser/executor stay free
+  of WDF types. A Windows adapter will eventually translate requests and own
+  five-byte input copies. A parented per-device context/generation blocks new
+  work, cancels scheduler/reader/requests, drains completions, and releases
+  transport resources before context deletion. Keyboard output is a separate
+  downstream component.
+- **Stop gates:** Exact attachment, unchanged `xusb22` behavior, default-control
+  and incoming-transfer visibility, current endpoint/input evidence, fully
+  mocked lifecycle safety, tested device-specific recovery, and later explicit
+  authorization are all mandatory. Gate failure stops work and does not permit
+  legacy-ordinal guesses or activation traffic.
+- **Files created:**
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`.
+- **Files modified:** `docs/PROJECT-STATE.md`, append-only
+  `docs/WORKLOG.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`,
+  `docs/PORTING-PLAN.md`, and
+  `docs/CONNECTED-CHATPAD-DEVICE-INVENTORY.md`.
+- **Pre-edit validation:** `tools/Test-RepositorySafety.ps1` PASS;
+  `git diff --exit-code -- legacy` exit 0; prohibited-ancestor check exit 1 as
+  required; source and project trees clean.
+- **Draft assertion correction:** An initial documentation assertion exited 1
+  because the table labeled the final gate `7. Explicit authorization` rather
+  than containing the literal text `Gate 7`. All seven table labels were made
+  explicit; the repeated structure/concept assertion passed with 23/23 ordered
+  sections. No runtime or repository-safety check failed.
+- **Final validation:** Complete and staged diffs inspected; staged/worktree
+  architecture blobs match; `tools/Test-RepositorySafety.ps1` PASS;
+  `git diff --cached --check` exit 0; staged and unstaged legacy diffs exit 0;
+  prohibited-ancestor check exit 1 as required; seven staged files are all
+  documentation; private-identifier and forbidden-file-type scans PASS;
+  source/project/legacy status clean; no unstaged or untracked files.
+- **Builds:** Not run because this task prohibits implementation/project edits
+  and the applicable proof is documentation/scope validation. The previous
+  protocol and compile checkpoints remain unchanged.
+- **Commit and push:** Commit exactly
+  `docs: design windows 11 chatpad transport architecture`; push only
+  `origin/analysis/windows11-transport-architecture`. The self-referential
+  commit hash is reported after commit and push rather than embedded here.
+- **Next task:** Define a kernel-safe transport-adapter interface and fully
+  mocked, WDF-independent implementation with cancellation/device-generation
+  tests and no WDF request or hardware behavior.
+- **Safety:** No device/interface handle, additional live enumeration,
+  SetupAPI/Configuration Manager runtime call, USB/HID/IOCTL/URB request,
+  activation, report read/write, detach/reconnect/reset/restart, driver or
+  service operation, INF/CAT/certificate/package change, signing, installation,
+  deployment, loading, capture, elevation, source/project/legacy edit, or
+  external-skill modification occurred. The required Git push is the only
+  authorized network action.
