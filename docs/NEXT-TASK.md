@@ -2,7 +2,7 @@
 
 ## Current state
 
-- **Branch:** `test/protocol-fixtures` / HEAD `969990ca9e532643b750a3fc1820a4c31770fd44`
+- **Branch:** `test/protocol-fixtures` / HEAD `d6a5c7e01b644871951aa3cfbb410cca92cdb01a`
 - **Protocol integration:** Committed and pushed.
 - **Working tree:** Clean.
 - **All builds verified passing:** Parser 85/85, Protocol 85/85 (Debug+Release), Driver 0/0 (Debug+Release).

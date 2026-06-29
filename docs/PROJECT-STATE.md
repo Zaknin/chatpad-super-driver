@@ -1,11 +1,11 @@
 # Project State
 
-*Last updated: 2026-06-29T14:30Z*
+*Last updated: 2026-06-29T14:35Z*
 
 ## Current state
 
 - **Branch:** `test/protocol-fixtures` (tracking `origin/test/protocol-fixtures`)
-- **HEAD:** `969990ca9e532643b750a3fc1820a4c31770fd44` (protocol integration committed and pushed)
+- **HEAD:** `d6a5c7e01b644871951aa3cfbb410cca92cdb01a` (continuity repair committed and pushed)
 - **ChatpadProtocol static-library project:** `src/protocol/ChatpadProtocol/ChatpadProtocol.vcxproj` — builds x64 Debug and Release under `artifacts/`
 - **ChatpadProtocolTests native test project:** `tests/protocol/ChatpadProtocolTests.vcxproj` — builds x64 Debug and Release under `artifacts/`
 - **Parser direct tests:** 85/85 passed
