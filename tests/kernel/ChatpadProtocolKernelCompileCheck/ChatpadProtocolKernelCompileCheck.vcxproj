@@ -85,11 +85,13 @@
 
   <ItemGroup>
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.h" />
+    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadProtocolKernelCompileCheck.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.c" />
+    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.c" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

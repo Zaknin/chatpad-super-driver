@@ -1,11 +1,19 @@
 # Chatpad Protocol Test Suite
 
-Offline tests for the portable Chatpad keyboard parser.
+Offline tests for the portable Chatpad keyboard parser and transport-independent
+protocol state machine.
 
 ## Structure
 
-- `ChatpadProtocolParserTests.c` — assertion framework and 85 offline tests
-- `fixtures/` — synthetic five-byte packet data; not hardware captures
+- `ChatpadProtocolParserTests.c` — parser tests and aggregate test entry point
+- `ChatpadProtocolStateMachineTests.c` — focused state/event and mapping tests
+- `fixtures/ChatpadKeyboardFixtures.h` — synthetic five-byte packet data
+- `fixtures/ChatpadProtocolStateMachineFixtures.h` — synthetic abstract events
+
+The suite contains 174 assertions: the original 85 parser assertions plus 89
+state-machine assertions. Abstract event fixtures are not wire packets or
+hardware captures and assign no meaning to unresolved initialization/status
+bytes.
 
 ## Running the tests
 
@@ -44,8 +52,8 @@ parsing.
 
 ```
 PASS: <test name>
-Total: 85
-Passed: 85
+Total: 174
+Passed: 174
 Failed: 0
 ```
 
@@ -58,3 +66,4 @@ Failed: 0
 - No third-party dependencies
 - No USB, HID, IOCTL, or kernel calls
 - No driver installation or loading
+- No initialization/status wire decoding or semantic key mapping

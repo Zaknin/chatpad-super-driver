@@ -205,9 +205,13 @@ $sourceRoot = [System.IO.Path]::Combine($repoRoot, 'src', 'protocol', 'ChatpadPr
 $testRoot = [System.IO.Path]::Combine($repoRoot, 'tests', 'protocol')
 $fixtureRoot = [System.IO.Path]::Combine($testRoot, 'fixtures')
 $parserSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadKeyboardParser.c')
+$stateMachineSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadProtocolStateMachine.c')
 $testSource = [System.IO.Path]::Combine($testRoot, 'ChatpadProtocolParserTests.c')
+$stateMachineTestSource = [System.IO.Path]::Combine($testRoot, 'ChatpadProtocolStateMachineTests.c')
 $parserObject = [System.IO.Path]::Combine($objRoot, 'ChatpadKeyboardParser.obj')
+$stateMachineObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolStateMachine.obj')
 $testObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolParserTests.obj')
+$stateMachineTestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolStateMachineTests.obj')
 $testExecutable = [System.IO.Path]::Combine($binRoot, 'ChatpadProtocolParserTests.exe')
 $testPdb = [System.IO.Path]::Combine($binRoot, 'ChatpadProtocolParserTests.pdb')
 
@@ -238,6 +242,15 @@ if ($parserCompile.ExitCode -ne 0) {
 }
 Write-Output "DEBUG: After parser compile"
 
+$stateMachineCompileArguments = @($commonCompilerArguments + @("/Fo$stateMachineObject", $stateMachineSource))
+$stateMachineCompile = Invoke-NativeLoggedStep -Name 'State machine compile' -FilePath $clPath -Arguments $stateMachineCompileArguments -LogPath $buildLogPath
+$stateMachineCompile.OutputText | Write-Output
+Write-Output "State machine compiler exit code: $($stateMachineCompile.ExitCode)"
+if ($stateMachineCompile.ExitCode -ne 0) {
+    Write-Output "Build log: $buildLogPath"
+    exit $stateMachineCompile.ExitCode
+}
+
 $testCompileArguments = @($commonCompilerArguments + @("/Fo$testObject", $testSource))
 $testCompile = Invoke-NativeLoggedStep -Name 'Test compile' -FilePath $clPath -Arguments $testCompileArguments -LogPath $buildLogPath
 try { $testCompile.OutputText | Write-Output } catch { Write-Output "FAIL at test compile output: $($_.Exception.Message)"; exit 1 }
@@ -248,6 +261,15 @@ if ($testCompile.ExitCode -ne 0) {
 }
 Write-Output "DEBUG: After test compile"
 
+$stateMachineTestCompileArguments = @($commonCompilerArguments + @("/Fo$stateMachineTestObject", $stateMachineTestSource))
+$stateMachineTestCompile = Invoke-NativeLoggedStep -Name 'State machine test compile' -FilePath $clPath -Arguments $stateMachineTestCompileArguments -LogPath $buildLogPath
+$stateMachineTestCompile.OutputText | Write-Output
+Write-Output "State machine test compiler exit code: $($stateMachineTestCompile.ExitCode)"
+if ($stateMachineTestCompile.ExitCode -ne 0) {
+    Write-Output "Build log: $buildLogPath"
+    exit $stateMachineTestCompile.ExitCode
+}
+
 $linkArguments = @(
     '/NOLOGO',
     '/DEBUG',
@@ -255,7 +277,9 @@ $linkArguments = @(
     "/OUT:$testExecutable",
     "/PDB:$testPdb",
     $parserObject,
-    $testObject
+    $stateMachineObject,
+    $testObject,
+    $stateMachineTestObject
 )
 $link = Invoke-NativeLoggedStep -Name 'Test link' -FilePath $linkPath -Arguments $linkArguments -LogPath $buildLogPath
 try { $link.OutputText | Write-Output } catch { Write-Output "FAIL at link output: $($_.Exception.Message)"; exit 1 }

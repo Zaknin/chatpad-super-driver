@@ -5,6 +5,10 @@ Phase 1 parser. They preserve the five-byte shape documented in
 `docs/CHATPAD-PROTOCOL.md`, Section A, but are not device captures and are not
 represented as observed hardware traffic.
 
+`ChatpadProtocolStateMachineFixtures.h` contains neutral synthetic abstract
+events. They are caller classifications for offline testing, not raw
+initialization/status frames, transport events, or hardware observations.
+
 ## Provenance and Naming
 
 The arrays use raw field and boundary names only. They do not label a modifier

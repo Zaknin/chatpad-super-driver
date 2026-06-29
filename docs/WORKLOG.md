@@ -142,3 +142,93 @@
   `origin/feature/kernel-safe-protocol-interface`.
 - **Remaining risks or limitations:** Compile compatibility only. The parser is
   not connected to runtime driver code; unresolved protocol fields remain raw.
+
+## 2026-06-29T16:14+04:00 — Offline protocol state machine
+
+- **Objective:** Add an evidence-constrained, transport-independent protocol
+  state machine using synthetic offline classifications, preserve parser
+  behavior, compile through user and WDK toolchains, prove driver isolation,
+  update continuity, commit, and push.
+- **Starting branch and commit:**
+  `feature/offline-protocol-state-machine` /
+  `804393c9c9e1c0b976c0ad73f6f1fcc5c57de5c2`; clean and aligned with origin.
+- **Continuity discrepancy:** The parent continuity files correctly described
+  the completed kernel-interface branch rather than this newly prepared branch.
+  They were updated to the live branch and current objective before handoff.
+- **Investigation:** `docs/CHATPAD-PROTOCOL.md` proves the existing five-byte
+  keyboard packet and only the presence of `0x90, 0x00` in an internal legacy
+  structure. It does not prove a complete initialization sequence, status
+  codes, readiness, retry/timeout policy, or transport behavior. Therefore the
+  state machine accepts neutral caller classifications and performs no raw
+  initialization/status decoding.
+- **Files created:**
+  - `src/protocol/ChatpadProtocol/ChatpadProtocolStateMachine.h`
+  - `src/protocol/ChatpadProtocol/ChatpadProtocolStateMachine.c`
+  - `tests/protocol/ChatpadProtocolStateMachineTests.h`
+  - `tests/protocol/ChatpadProtocolStateMachineTests.c`
+  - `tests/protocol/fixtures/ChatpadProtocolStateMachineFixtures.h`
+- **Implementation:** Caller-owned state records awaiting classification,
+  accepted keyboard data, unsupported input, policy-rejected input, or
+  unresolved control/status. Explicit events include reset. Transition output
+  records previous/current state, applied event, and whether state changed.
+  Null pointers, invalid states/events, and invalid parser enum values are
+  rejected safely; non-null failed outputs are cleared deterministically.
+  Parser argument/length failures remain unclassified and cause no transition.
+- **Build integration:** Added the state-machine source/header to
+  `ChatpadProtocol.vcxproj`; added focused tests and synthetic event fixtures to
+  `ChatpadProtocolTests.vcxproj`; added state-machine source/header and a compile
+  consumer to the isolated kernel compatibility project; extended the direct
+  compiler script to compile/link both implementation and test sources.
+- **Documentation modified:** `docs/CHATPAD-PROTOCOL.md`, `docs/BUILDING.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/WORKLOG.md`, `src/protocol/ChatpadProtocol/README.md`,
+  `tests/protocol/README.md`, `tests/protocol/fixtures/README.md`, and
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/README.md`.
+- **Test count:** 174 assertions total: original parser 85 plus state machine 89.
+- **Windows PowerShell 5.1 validation:**
+  - `tools/Get-DriverBuildEnvironment.ps1` — exit 0.
+  - `tools/Test-RepositorySafety.ps1` — PASS.
+  - `git diff --exit-code HEAD -- legacy/` — exit 0.
+  - `git merge-base --is-ancestor 6502452 HEAD` — exit 1, not ancestor.
+  - `tools/Test-ChatpadProtocolParser.ps1` — compiler/link/test exits 0,
+    174/174; executable SHA-256
+    `C24E161B14FFF0B234DAED85C411D9915B1020B95FDA3B037D3DBD5E727125A4`.
+  - `tools/Test-ChatpadProtocol.ps1 -Configuration Debug -Platform x64` —
+    MSBuild/test exits 0, 174/174; library
+    `artifacts/bin/x64/Debug/ChatpadProtocol/ChatpadProtocol.lib`
+    SHA-256 `79B4785BEF2B1A095B2CF4C6ED24872D7B2101E6B8C50F8F4078B84BAF22B5B8`;
+    test executable SHA-256
+    `361E57471EB1398AF58ECF17141DF383FF0278F2E080339CCF976651B016605F`.
+  - Integrated Release — exits 0, 174/174; library
+    `artifacts/bin/x64/Release/ChatpadProtocol/ChatpadProtocol.lib`
+    SHA-256 `23CEB0A4D4B1E1765EFAAD53ED36F28F5846205E1C2560E8FE399726D2BDE1FA`;
+    test executable SHA-256
+    `F53CBA3A17AAAA58FA0FFCFE077D4A48211F9A5F7282B4E1D552964AB511EC86`.
+  - Kernel Debug — MSBuild exit 0; state-machine source compiled; library
+    `artifacts/bin/x64/Debug/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.lib`;
+    SHA-256 `AB85938F137AEF8E0C745B6EC65F9857F3CCC0697140867E1EE999FFFC21C284`.
+  - Kernel Release — MSBuild exit 0; state-machine source compiled; library
+    `artifacts/bin/x64/Release/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.lib`;
+    SHA-256 `A2B9C6DF3FC4DC4D60F58D08C2DC9C59B36E010FBC0FF149890440E07CFF221B`.
+  - Driver Debug — exit 0, NotSigned, no SignTool; path
+    `artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys`; SHA-256
+    `75c56cbe820f38902e6fa3c0752efea162a5593ea0c6ccd05f5d39ac1c2a9998`.
+  - Driver Release — exit 0, NotSigned, no SignTool; path
+    `artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys`; SHA-256
+    `b317141364878e1c441639a56d35b97aa8fbb4f24847bd0dda0fa9e12f089f3e`.
+- **Driver isolation proof:** `ChatpadFilter.vcxproj` has no project reference,
+  parser/state-machine source, or protocol name. The solution has no dependency
+  section. Debug/Release diagnostic linker commands contain only driver objects
+  and kernel/KMDF libraries; no protocol or compatibility library is linked.
+- **Safety:** Compatibility builds produced only `.lib` artifacts; no `.sys`,
+  INF, CAT, certificate, package, service, installer, or deployment output.
+  No hardware, USB, HID, IOCTL, callback, injection, semantic key mapping,
+  installation, signing, packaging, deployment, loading, or external skill
+  action occurred. `legacy/` remained unchanged.
+- **Generated artifacts:** All binaries and logs remain beneath ignored
+  `artifacts/` and are not committed.
+- **Commit and push:** Commit exactly `feat: add offline protocol state machine`;
+  push only `origin/feature/offline-protocol-state-machine`.
+- **Remaining risks or limitations:** Raw initialization/status forms remain
+  unresolved. The state machine is an offline classification layer only and is
+  not connected to runtime driver code.

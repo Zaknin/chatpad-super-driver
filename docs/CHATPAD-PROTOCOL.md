@@ -204,6 +204,21 @@ initCode[1] = 0x00
 
 **Classification:** These bytes are from a struct definition. Whether they form a complete command, a partial payload, or are isolated constants is unresolved. Only that the legacy driver defines a 2-byte init code of 0x90 0x00 is confirmed from source. The complete initialization sequence beyond these two bytes is not documented in the source.
 
+### Offline State-Machine Classification Boundary
+
+**Classification:** Project abstraction — not wire-format evidence.
+
+The portable offline state machine does not decode initialization or status
+bytes. It accepts neutral caller-provided events for accepted keyboard data,
+unsupported input, policy-rejected input, and unresolved control/status input.
+These events are classifications supplied by a caller or derived from an
+existing keyboard parser result; they are not claimed to be packets, status
+codes, transport events, or proof that a device is initialized or ready.
+
+Parser argument/length failures remain unclassified and cause no state
+transition. The unresolved control/status event deliberately preserves the
+evidence boundary around `0x90, 0x00` and every undocumented status form.
+
 ---
 
 ## Keyboard Data Interpretation

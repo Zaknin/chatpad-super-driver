@@ -4,6 +4,43 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Model offline protocol progress as caller-supplied classifications
+
+**Decision:** The portable state machine records only the latest neutral
+classification: awaiting classification, accepted keyboard data, unsupported
+input, policy-rejected input, or unresolved control/status. Inputs are explicit
+abstract events. Existing parser results map only `OK`, unsupported type, and
+policy-rejected modifier; parser argument and length failures remain
+unclassified and cause no transition. Initialization/status forms are accepted
+only through an unresolved caller event, never decoded from raw bytes.
+
+**Rationale:** Current evidence proves the five-byte keyboard boundary but does
+not prove a complete initialization sequence, status codes, readiness meaning,
+timing, retries, or transport behavior. A caller-classified state machine adds
+deterministic offline sequencing without converting missing evidence into
+protocol claims.
+
+**Alternatives rejected:**
+
+* Decoding `0x90, 0x00` as a complete initialization command — evidence says
+  only that the legacy structure contains those bytes.
+* Naming states initialized, connected, ready, online, or authenticated — none
+  of those semantics is proven.
+* Treating malformed parser input as unsupported protocol data — argument and
+  length failures are API/boundary failures, not confirmed device forms.
+* Retaining packets or caller pointers — unnecessary for classification and
+  contrary to the portable ownership boundary.
+
+**Consequences:**
+
+* State and transition storage are caller-owned, allocation-free, and reset
+  explicitly.
+* Repeated events are deterministic and report whether the classification
+  changed.
+* Unresolved initialization/status input stays visibly unresolved until new
+  offline evidence supports a narrower classification.
+* The layer remains disconnected from `ChatpadFilter` and all runtime paths.
+
 ## 2026-06-29 — Use a protocol-owned type boundary and an isolated WDK static-library proof
 
 **Decision:** Public protocol data uses `ChatpadUInt8` and `ChatpadSize` from

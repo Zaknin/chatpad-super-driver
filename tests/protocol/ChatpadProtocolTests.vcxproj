@@ -77,9 +77,12 @@
 
   <ItemGroup>
     <ClInclude Include="fixtures\ChatpadKeyboardFixtures.h" />
+    <ClInclude Include="fixtures\ChatpadProtocolStateMachineFixtures.h" />
+    <ClInclude Include="ChatpadProtocolStateMachineTests.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadProtocolParserTests.c" />
+    <ClCompile Include="ChatpadProtocolStateMachineTests.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj">

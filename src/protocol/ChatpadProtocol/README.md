@@ -1,4 +1,4 @@
-# Chatpad Protocol Phase 1 Parser
+# Chatpad Protocol Parser and Offline State Machine
 
 This directory contains a portable C interface and parser for the documented
 five-byte Chatpad keyboard packet boundary. It allocates no memory, performs
@@ -12,6 +12,11 @@ no packing pragma: `ChatpadKeyboardPacket` is decoded output, not an on-wire
 packed structure. `ChatpadKeyboardParser.h` adds the C function declaration
 and C++ `extern "C"` linkage; `ChatpadKeyboardParser.c` is the portable parser
 implementation.
+
+`ChatpadProtocolStateMachine.h` and `.c` add a transport-independent,
+caller-owned last-classification state machine. It performs no raw
+initialization/status decoding and does not claim that its abstract events are
+wire packets.
 
 ## Parser API
 
@@ -64,6 +69,43 @@ conservative project policy, not a confirmed device-validity rule. Values
 When output is non-null, the parser clears every output field before any
 failure return. Validation completes before any accepted input byte is copied.
 
+## State-Machine API
+
+```c
+ChatpadStateMachineResult ChatpadProtocolStateMachineInitialize(
+    ChatpadProtocolStateMachine *stateMachine);
+
+ChatpadStateMachineResult ChatpadProtocolStateMachineApply(
+    ChatpadProtocolStateMachine *stateMachine,
+    ChatpadProtocolEvent event,
+    ChatpadProtocolTransition *transition);
+
+ChatpadStateMachineResult ChatpadProtocolStateMachineReset(
+    ChatpadProtocolStateMachine *stateMachine,
+    ChatpadProtocolTransition *transition);
+
+ChatpadStateMachineResult ChatpadProtocolEventFromParseResult(
+    ChatpadParseResult parseResult,
+    ChatpadProtocolEvent *event);
+```
+
+Initialization and explicit reset produce
+`CHATPAD_PROTOCOL_STATE_AWAITING_CLASSIFICATION`. Each accepted event records
+only the latest neutral classification:
+
+| Abstract input event | Resulting state | Evidence meaning |
+| --- | --- | --- |
+| `ACCEPTED_KEYBOARD_PACKET` | `ACCEPTED_KEYBOARD_DATA` | Derived from parser `OK`; no key semantics added. |
+| `UNSUPPORTED_PACKET` | `UNSUPPORTED_INPUT` | Derived from parser unsupported type; exact raw meaning remains unresolved. |
+| `POLICY_REJECTED_PACKET` | `POLICY_REJECTED` | Derived from the conservative modifier policy. |
+| `UNRESOLVED_CONTROL_STATUS` | `UNRESOLVED_CONTROL_STATUS` | Caller abstraction only; not decoded wire evidence. |
+| `EXPLICIT_RESET` | `AWAITING_CLASSIFICATION` | Caller operation, not a device event. |
+
+Parser null-argument, truncated, and oversized results are deliberately not
+classified as protocol events and cause no transition. Invalid states/events
+are rejected, failed transition outputs are cleared deterministically, and no
+caller pointer is retained.
+
 ## Build and Test
 
 ### Integrated build (preferred)
@@ -89,7 +131,7 @@ It does not use MSBuild or the solution.
 .\tools\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Release -Platform x64
 ```
 
-This compiles the same parser source and public headers as C with the WDK
+This compiles the parser and state-machine sources and public headers as C with the WDK
 `WindowsKernelModeDriver10.0` toolset. It produces only an isolated static
 library beneath `artifacts/`; it has no runtime entry point and produces no
 `.sys`. `ChatpadFilter` neither references nor links the compatibility library
@@ -118,7 +160,7 @@ All generated files are contained beneath `artifacts/`:
 
 ## Tests
 
-The test executable runs a self-contained assertion framework with 85 assertions:
+The test executable runs a self-contained assertion framework with 174 assertions:
 
 - Argument and length validation (null inputs, truncated, oversized)
 - Valid packet parsing (no keys, boundary values, raw key0 nonzero)
@@ -126,10 +168,13 @@ The test executable runs a self-contained assertion framework with 85 assertions
 - Raw byte 4 handling
 - Repeatability and sequence
 - Sentinel guards around the output packet
+- State initialization, repeated/sequential events, and explicit reset
+- Null/invalid state-machine arguments and deterministic failure output
+- Parser-result mapping, unresolved abstract classification, and sentinels
 
 ```
-Total: 85
-Passed: 85
+Total: 174
+Passed: 174
 Failed: 0
 ```
 
@@ -145,4 +190,5 @@ No third-party test framework. No device or hardware APIs. Offline only.
 - **The isolated compatibility project compiles the implementation with the WDK toolchain only as a build-time proof**
 - **No signing, deployment, or package configuration**
 - **Parser code is not connected to the kernel driver**
+- **State-machine code is not connected to the kernel driver**
 - **Driver remains unsigned and nonfunctional**

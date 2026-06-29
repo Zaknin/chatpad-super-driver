@@ -3,6 +3,7 @@
 
 #include "ChatpadKeyboardParser.h"
 #include "ChatpadKeyboardFixtures.h"
+#include "ChatpadProtocolStateMachineTests.h"
 
 static unsigned int AssertionsTotal = 0;
 static unsigned int AssertionsPassed = 0;
@@ -365,12 +366,19 @@ static void TestSentinels(void)
 
 int main(void)
 {
+    ChatpadStateMachineTestSummary stateMachineSummary;
+
     TestArgumentAndLengthValidation();
     TestValidPackets();
     TestTypeAndModifierPolicy();
     TestRawByte4();
     TestRepeatabilityAndSequence();
     TestSentinels();
+
+    stateMachineSummary = RunChatpadProtocolStateMachineTests();
+    AssertionsTotal += stateMachineSummary.Total;
+    AssertionsPassed += stateMachineSummary.Passed;
+    AssertionsFailed += stateMachineSummary.Failed;
 
     printf("Total: %u\n", AssertionsTotal);
     printf("Passed: %u\n", AssertionsPassed);
