@@ -4,6 +4,43 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-29 — Represent activation sequencing and legacy timing as declarative metadata
+
+**Decision:** The activation-sequence planner exposes exactly six steps through
+`ChatpadGetActivationSequenceStepCount` and
+`ChatpadGetActivationSequenceStep`. Each step carries a sequence index, the
+matching request-builder index, a caller-owned request descriptor obtained from
+`ChatpadBuildActivationRequest`, and declarative timing metadata. The current
+timing metadata is `DelayBeforeMilliseconds = 0` and
+`DelayAfterMilliseconds = 12` for every step.
+
+**Rationale:** The legacy evidence confirms a software call order and that
+`SendControlRequest` slept 12 ms after each call returned, including after
+failure. It does not prove a device-required inter-request minimum,
+pre-request delay, response deadline, retry policy, acknowledgement, or ready
+condition. Modeling the observed post-call delay as data preserves evidence
+without adding runtime behavior.
+
+**Alternatives rejected:**
+
+* Sleeping, waiting, enforcing deadlines, or adding retry policy in the
+  planner — would convert evidence metadata into active transport behavior.
+* Duplicating the six request tuples in a second planner table — would create
+  another source of truth and risk drift from the request builder.
+* Encoding `90 00`, response bytes, acknowledgement states, readiness states,
+  or timeout statuses — none are confirmed by the evidence.
+* Treating zero before-delay as a device no-delay requirement — zero only means
+  no confirmed pre-request timing metadata exists.
+
+**Consequences:**
+
+* Callers can inspect the confirmed order and legacy timing metadata offline.
+* The planner remains allocation-free, I/O-free, transport-free, driver-free,
+  and hardware-free.
+* Mutating a returned step cannot affect later planner calls.
+* Future executor work must consume the metadata without sleeping or claiming
+  device readiness unless a later task explicitly opens that scope.
+
 ## 2026-06-29 — Represent activation requests as immutable value-copy descriptors
 
 **Decision:** The activation-request API exposes exactly six confirmed legacy

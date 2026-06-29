@@ -1,23 +1,29 @@
 # Chatpad Protocol Test Suite
 
 Offline tests for the portable Chatpad keyboard parser, transport-independent
-protocol state machine, and declarative activation request builder.
+protocol state machine, declarative activation request builder, and
+activation-sequence planner.
 
 ## Structure
 
 - `ChatpadProtocolParserTests.c` — parser tests and aggregate test entry point
 - `ChatpadActivationRequestsTests.c` — exact activation request descriptor tests
+- `ChatpadActivationSequenceTests.c` — exact activation sequence and timing
+  metadata tests
 - `ChatpadProtocolStateMachineTests.c` — focused state/event and mapping tests
 - `fixtures/ChatpadActivationRequestFixtures.h` — evidence-derived activation
   request descriptors reconstructed from docs
+- `fixtures/ChatpadActivationSequenceFixtures.h` — evidence-derived timing
+  metadata for the activation sequence planner
 - `fixtures/ChatpadKeyboardFixtures.h` — synthetic five-byte packet data
 - `fixtures/ChatpadProtocolStateMachineFixtures.h` — synthetic abstract events
 
-The suite contains 300 assertions: the original 85 parser assertions, 89
-state-machine assertions, and 126 activation-request assertions. Activation
-request fixtures are reconstructed from confirmed source evidence, not captured
-from hardware. Abstract event fixtures are not wire packets or hardware
-captures and assign no meaning to unresolved initialization/status bytes.
+The suite contains 443 assertions: the original 85 parser assertions, 89
+state-machine assertions, 126 activation-request assertions, and 143
+activation-sequence assertions. Activation request and sequence fixtures are
+reconstructed from confirmed source evidence, not captured from hardware.
+Abstract event fixtures are not wire packets or hardware captures and assign
+no meaning to unresolved initialization/status bytes.
 
 ## Running the tests
 
@@ -56,8 +62,8 @@ parsing.
 
 ```
 PASS: <test name>
-Total: 300
-Passed: 300
+Total: 443
+Passed: 443
 Failed: 0
 ```
 
@@ -73,3 +79,5 @@ Failed: 0
 - No initialization/status wire decoding or semantic key mapping
 - No request sending, acknowledgement parsing, retry policy, ready-state
   transition, or fabricated response bytes
+- No executable sleeps, timers, response deadlines, or device-required timing
+  claims

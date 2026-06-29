@@ -16,12 +16,12 @@ Run `tools/Get-DriverBuildEnvironment.ps1` to verify the full toolchain.
 The current machine exposes KMDF headers and x64 libraries through version
 1.35; existing driver projects still use the WDK default KMDF target 1.15.
 
-## Chatpad Protocol Parser, State Machine, and Activation Requests (offline)
+## Chatpad Protocol Parser, State Machine, Activation Requests, and Activation Sequence Planner (offline)
 
 Portable C parser for the Phase 1 keyboard packet boundary plus a
 transport-independent abstract state machine and declarative activation request
-builder. Native user-mode static library. No hardware, elevation, transport,
-request sending, or driver integration.
+builder/planner. Native user-mode static library. No hardware, elevation,
+transport, request sending, executable timing, or driver integration.
 
 ### Integrated build and test (preferred)
 
@@ -55,8 +55,9 @@ integration.
 ## Kernel compatibility compile check
 
 This isolated static-library build compiles `ChatpadActivationRequests.c`,
-`ChatpadKeyboardParser.c`, `ChatpadProtocolStateMachine.c`, and their shared
-public headers as C with the WDK kernel toolchain. It is compile-time
+`ChatpadActivationSequence.c`, `ChatpadKeyboardParser.c`,
+`ChatpadProtocolStateMachine.c`, and their shared public headers as C with the
+WDK kernel toolchain. It is compile-time
 compatibility validation only: it has no entry point, is not referenced by
 `ChatpadFilter`, and does not install, load, sign, package, deploy, or access
 hardware. It never produces a `.sys`.

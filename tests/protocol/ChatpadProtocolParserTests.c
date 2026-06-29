@@ -4,6 +4,7 @@
 #include "ChatpadKeyboardParser.h"
 #include "ChatpadKeyboardFixtures.h"
 #include "ChatpadActivationRequestsTests.h"
+#include "ChatpadActivationSequenceTests.h"
 #include "ChatpadProtocolStateMachineTests.h"
 
 static unsigned int AssertionsTotal = 0;
@@ -369,6 +370,7 @@ int main(void)
 {
     ChatpadStateMachineTestSummary stateMachineSummary;
     ChatpadActivationRequestTestSummary activationRequestSummary;
+    ChatpadActivationSequenceTestSummary activationSequenceSummary;
 
     TestArgumentAndLengthValidation();
     TestValidPackets();
@@ -386,6 +388,11 @@ int main(void)
     AssertionsTotal += activationRequestSummary.Total;
     AssertionsPassed += activationRequestSummary.Passed;
     AssertionsFailed += activationRequestSummary.Failed;
+
+    activationSequenceSummary = RunChatpadActivationSequenceTests();
+    AssertionsTotal += activationSequenceSummary.Total;
+    AssertionsPassed += activationSequenceSummary.Passed;
+    AssertionsFailed += activationSequenceSummary.Failed;
 
     printf("Total: %u\n", AssertionsTotal);
     printf("Passed: %u\n", AssertionsPassed);

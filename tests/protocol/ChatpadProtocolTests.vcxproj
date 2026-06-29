@@ -77,13 +77,16 @@
 
   <ItemGroup>
     <ClInclude Include="fixtures\ChatpadActivationRequestFixtures.h" />
+    <ClInclude Include="fixtures\ChatpadActivationSequenceFixtures.h" />
     <ClInclude Include="fixtures\ChatpadKeyboardFixtures.h" />
     <ClInclude Include="fixtures\ChatpadProtocolStateMachineFixtures.h" />
     <ClInclude Include="ChatpadActivationRequestsTests.h" />
+    <ClInclude Include="ChatpadActivationSequenceTests.h" />
     <ClInclude Include="ChatpadProtocolStateMachineTests.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadActivationRequestsTests.c" />
+    <ClCompile Include="ChatpadActivationSequenceTests.c" />
     <ClCompile Include="ChatpadProtocolParserTests.c" />
     <ClCompile Include="ChatpadProtocolStateMachineTests.c" />
   </ItemGroup>

@@ -352,6 +352,14 @@ requests should remain explicitly unexplained. Do not add a response classifier
 because no confirmed response form exists. Do not add transport, live USB,
 driver integration, retries, keepalive policy, or semantic key mappings.
 
+A later offline sequence planner may also represent the confirmed legacy
+post-`SendControlRequest` 12 ms sleep from section 9 as declarative timing
+metadata. That metadata must be labeled as observed legacy executable-path
+timing only, not a device-required minimum, active delay, timeout, retry
+deadline, acknowledgement boundary, or readiness condition. If no pre-request
+delay is confirmed, a zero metadata value means no confirmed timing metadata,
+not a proven no-delay requirement.
+
 ## 19. Evidence matrix
 
 | Relative legacy path | Symbol and lines | Literal/expression | Field classification | Direction | Confidence | Explanation |

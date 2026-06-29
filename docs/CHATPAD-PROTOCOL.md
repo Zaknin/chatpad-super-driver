@@ -185,7 +185,9 @@ typedef struct _CHATPAD_REQUEST_BUFFER {
 
 **Pattern:** All LED control commands use interface 2 (CHATPAD), type 0x41, value 0x0002 for index.
 
-**Timing constraint:** 12ms delay between control requests (line 838)
+**Timing observation:** 12 ms legacy post-`SendControlRequest` delay metadata
+after each call returns (line 838). This is not a proven device-required
+inter-request minimum.
 
 ---
 
@@ -237,6 +239,34 @@ from request descriptors, fixtures, payloads, and tests. Device-to-host
 descriptors request two bytes by setup `wLength` only; no response bytes,
 acknowledgement schema, ready state, retry policy, timeout behavior, or status
 meaning is fabricated.
+
+### Activation Sequence Planner
+
+**Classification:** Offline declarative sequence and timing metadata. It is not
+transport code and does not send, wait, retry, decode, acknowledge, or mark a
+device ready.
+
+`src/protocol/ChatpadProtocol/ChatpadActivationSequence.h` and `.c` expose six
+planner steps in the same order as the activation-request builder. Each step
+stores its `SequenceIndex`, matching `RequestIndex`, a value-copy request
+descriptor obtained from `ChatpadBuildActivationRequest`, and timing metadata.
+The planner does not duplicate the request tuple table.
+
+| Step | Request index | Delay before metadata | Delay after metadata |
+|---:|---:|---:|---:|
+| 0 | 0 | `0 ms` | `12 ms` |
+| 1 | 1 | `0 ms` | `12 ms` |
+| 2 | 2 | `0 ms` | `12 ms` |
+| 3 | 3 | `0 ms` | `12 ms` |
+| 4 | 4 | `0 ms` | `12 ms` |
+| 5 | 5 | `0 ms` | `12 ms` |
+
+The `12 ms` after-delay is only the confirmed legacy executable-path behavior
+that every `SendControlRequest` call slept after returning. The `0 ms`
+before-delay means no confirmed pre-request delay metadata; it must not be
+interpreted as a proven no-delay device requirement. The metadata is not an
+active sleep, timer, timeout, retry interval, response deadline,
+acknowledgement boundary, or readiness condition.
 
 ### Offline State-Machine Classification Boundary
 
@@ -514,7 +544,7 @@ The following protocol forms are NOT supported by the legacy implementation:
 
 ### 2. Hardcoded Timing
 
-**Defect:** 12ms delay hardcoded (line 838)
+**Defect:** 12 ms post-`SendControlRequest` delay hardcoded (line 838)
 
 **Risk:** Suboptimal performance, platform-specific behavior
 
@@ -630,7 +660,7 @@ Based on confirmed evidence, Phase 1 should handle:
 | 10 | Max 2 simultaneous keys | HandleChatpadData, line 3439 | HIGH | Comment and array size |
 | 11 | Filter modes: 0=UNFILTERED, 1=FILTERED, 2=INTERCEPTED | chatpad_filter_ioctl.h, lines 80-90 | HIGH | Explicit enum |
 | 12 | Button masks for controls data | Lines 3041-3140 | MEDIUM | Bits extracted from byte2/byte3 |
-| 13 | 12ms delay between control requests | SendControlRequest, line 838 | HIGH | Hardcoded Sleep(12) |
+| 13 | 12ms post-call delay after each `SendControlRequest` | SendControlRequest, line 838 | HIGH | Hardcoded `Sleep(12)` in the legacy executable path, not a proven device minimum |
 | 14 | 32-byte buffer size | chatpad_filter.h, lines 67-73 | HIGH | Explicit #define |
 | 15 | Scan code table is 256 entries | chatpadScanCodeTable, lines 41-299 | HIGH | Array declaration |
 | 16 | QWERTY layout confirmed | chatpadScanCodeTable, lines 60-299 | HIGH | Keys mapped in QWERTY order |

@@ -15,12 +15,21 @@ descriptors reconstructed from confirmed legacy-source evidence in
 not describe acknowledgement, ready-state, retry, timeout, or response
 semantics.
 
+`ChatpadActivationSequenceFixtures.h` contains only the timing metadata used by
+offline activation-sequence tests. It records zero before-delay metadata and
+12 ms post-request metadata for each step, derived from the legacy
+`SendControlRequest` post-call sleep evidence. It does not represent active
+sleeping, timeout policy, retry policy, acknowledgement, readiness, or a
+device-required delay.
+
 ## Provenance and Naming
 
 The arrays use raw field and boundary names only. They do not label a modifier
 bit as Shift, assign a key name to a raw byte, or claim a scan-code meaning.
 Activation fixtures use raw setup-field names and explicit payload length
 fields only; they do not label the sequence as successful initialization.
+Sequence fixtures use timing metadata names only and do not duplicate request
+tuples.
 
 | Fixture | Purpose |
 | --- | --- |
@@ -47,6 +56,10 @@ fields only; they do not label the sequence as successful initialization.
 | `ConfirmedActivationRequests[3]` | Confirmed device-to-host `c0 a1 0000 e416 0002` setup tuple with no outbound payload or fabricated response bytes. |
 | `ConfirmedActivationRequests[4]` | Confirmed host-to-device `40 a1 0000 e416 0002` setup tuple with the only outbound payload, `09 00`. |
 | `ConfirmedActivationRequests[5]` | Second confirmed device-to-host `c0 a1 0000 e416 0002` setup tuple with no outbound payload or fabricated response bytes. |
+
+| Activation sequence fixture | Purpose |
+| --- | --- |
+| `ConfirmedActivationSequenceTiming[0..5]` | Declarative timing metadata: before-delay `0 ms` because no pre-request delay metadata is confirmed; after-delay `12 ms` because the legacy executable path slept after each `SendControlRequest` call returned. |
 
 The fixtures contain no executable legacy code and no unsupported `90 00`
 payload. Include the headers only in offline tests and run them with:

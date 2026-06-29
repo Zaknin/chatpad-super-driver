@@ -403,3 +403,139 @@
   USB, HID, IOCTL, installation, signing, packaging, deployment, loading,
   capture, external-skill, driver runtime, callback, service, INF, CAT,
   certificate, or installer action occurred.
+
+## 2026-06-29T17:15+04:00 — Activation sequence planner
+
+- **Objective:** Add a transport-independent activation-sequence planner that
+  exposes the six confirmed activation requests in proven order and represents
+  confirmed legacy timing only as declarative metadata. Complete validation,
+  documentation, continuity, commit, and push on the requested branch.
+- **Starting branch and commit:** `feature/activation-sequence-planner` /
+  `095772352def48a6764edd11e795745096e165dc`; clean and aligned with
+  `origin/feature/activation-sequence-planner`. Prohibited commit `6502452`
+  was not an ancestor.
+- **Continuity discrepancy:** The inherited project-state and next-task files
+  correctly described the parent activation-request-builder checkpoint but
+  named that parent branch. They were updated to the current feature branch
+  and current implementation state.
+- **Investigation:** Re-read `AGENTS.md`, continuity docs, the initialization
+  evidence audit, protocol docs, build docs, request builder, request tests,
+  fixtures, MSBuild projects, direct test runner, and kernel compile-check
+  project. Section 9 of `docs/CHATPAD-INIT-STATUS-EVIDENCE.md` confirms only
+  legacy executable-path post-`SendControlRequest` sleep behavior: 12 ms after
+  each call returns, including after failure. No pre-request delay, device
+  required inter-request minimum, timeout, retry, acknowledgement, response, or
+  readiness condition is confirmed.
+- **Implementation:** Added `ChatpadActivationSequence.h/.c` with
+  `ChatpadGetActivationSequenceStepCount` and
+  `ChatpadGetActivationSequenceStep`. The planner exposes six caller-owned
+  value-copy steps. Each step contains `SequenceIndex`, matching
+  `RequestIndex`, a request descriptor obtained from
+  `ChatpadBuildActivationRequest`, `DelayBeforeMilliseconds`, and
+  `DelayAfterMilliseconds`.
+- **Timing metadata boundary:** all six steps report
+  `DelayBeforeMilliseconds = 0` and `DelayAfterMilliseconds = 12`. The zero
+  before-delay means no confirmed pre-request timing metadata, not a proven
+  no-delay requirement. The 12 ms after-delay is metadata only for the observed
+  legacy post-call sleep; the planner does not sleep, wait, enforce a deadline,
+  retry, send, or interpret a response.
+- **Exact six-step mapping:** step 0 -> request 0
+  `40 a9 a30c 4423 0000`; step 1 -> request 1
+  `40 a9 2344 7f03 0000`; step 2 -> request 2
+  `40 a9 5839 6832 0000`; step 3 -> request 3
+  `c0 a1 0000 e416 0002`; step 4 -> request 4
+  `40 a1 0000 e416 0002` with outbound payload `09 00`; step 5 -> request 5
+  `c0 a1 0000 e416 0002`.
+- **Evidence boundary:** `09 00` remains the only outbound payload and only on
+  request/step index 4. `90 00` is absent from descriptors, sequence steps,
+  fixtures, payloads, and tests. Device-to-host steps contain expected inbound
+  length only and no fabricated response bytes.
+- **Tests:** Added `ChatpadActivationSequenceTests.c/.h` and
+  `fixtures/ChatpadActivationSequenceFixtures.h`, adding 143 focused
+  assertions. Coverage includes count six, null output, invalid index at
+  count, invalid large index, every step builds, exact sequence indexes,
+  request-builder index one-to-one mapping, setup fields matching builder,
+  payload bytes matching builder, `09 00` only in the confirmed step,
+  unsupported comment payload absence, exact timing metadata, zero timing where
+  no pre-request timing is confirmed, no response/acknowledgement data,
+  deterministic failure clearing, repeated construction, stateless sequential
+  construction, mutation isolation, sentinel protection, planner/request
+  builder count equality, and no readiness/retry/timeout claims.
+- **Build integration:** Added source/header to `ChatpadProtocol.vcxproj`;
+  added tests and timing fixture to `ChatpadProtocolTests.vcxproj`; updated
+  `Test-ChatpadProtocolParser.ps1` to compile/link planner source and tests;
+  added planner source/header and a compile consumer to the isolated WDK
+  compatibility project.
+- **Files created:** `src/protocol/ChatpadProtocol/ChatpadActivationSequence.h`,
+  `src/protocol/ChatpadProtocol/ChatpadActivationSequence.c`,
+  `tests/protocol/ChatpadActivationSequenceTests.h`,
+  `tests/protocol/ChatpadActivationSequenceTests.c`, and
+  `tests/protocol/fixtures/ChatpadActivationSequenceFixtures.h`.
+- **Files modified:** `src/protocol/ChatpadProtocol/ChatpadProtocol.vcxproj`,
+  `src/protocol/ChatpadProtocol/README.md`,
+  `tests/protocol/ChatpadProtocolParserTests.c`,
+  `tests/protocol/ChatpadProtocolTests.vcxproj`,
+  `tests/protocol/README.md`, `tests/protocol/fixtures/README.md`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.c`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/ChatpadProtocolKernelCompileCheck.vcxproj`,
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/README.md`,
+  `tools/Test-ChatpadProtocolParser.ps1`, `docs/CHATPAD-PROTOCOL.md`,
+  `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`, `docs/BUILDING.md`,
+  `docs/DECISIONS.md`, `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and
+  append-only `docs/WORKLOG.md`.
+- **Initial validation before editing:** `tools/Get-DriverBuildEnvironment.ps1`
+  — exit 0; `tools/Test-RepositorySafety.ps1` — PASS;
+  `git diff --exit-code -- legacy` — exit 0;
+  `git merge-base --is-ancestor 6502452 HEAD` — exit 1 as required;
+  `tools/Test-ChatpadProtocolParser.ps1` — compiler/link/test exits 0,
+  300/300 assertions; test executable SHA-256
+  `D9BBE4155637A2A5E3C114B73ADE09FC00FA33258388DFF6C0D9ADA5B98A94C2`.
+- **Direct validation after implementation:** `tools/Test-ChatpadProtocolParser.ps1`
+  — compiler/link/test exits 0, 443/443 assertions; test executable
+  `artifacts/bin/x64/Debug/ChatpadProtocolParser/ChatpadProtocolParserTests.exe`
+  SHA-256 `EEDB42AA640E3E8E1613DA08D9C6CA316A9989D815F364512B49F5E5A0051181`.
+- **Integrated Debug:** `tools/Test-ChatpadProtocol.ps1 -Configuration Debug
+  -Platform x64` — MSBuild exit 0, test exit 0, 443/443 assertions; library
+  `artifacts/bin/x64/Debug/ChatpadProtocol/ChatpadProtocol.lib` SHA-256
+  `10643A992FBD02F1AF309DEEEB602F0C9B37BA38B82DECBAA606C5198891EFBD`; test
+  executable `artifacts/bin/x64/Debug/ChatpadProtocolTests/ChatpadProtocolTests.exe`
+  SHA-256 `DFE983B7D444B9950AE392B4860BD5EC8B85FE21EF8291111C5DAA68C0152E57`.
+- **Integrated Release:** `tools/Test-ChatpadProtocol.ps1 -Configuration
+  Release -Platform x64` — MSBuild exit 0, test exit 0, 443/443 assertions;
+  library `artifacts/bin/x64/Release/ChatpadProtocol/ChatpadProtocol.lib`
+  SHA-256 `2AAFD4EDE9E52062BCCA117E75BC380A4313E77F6E0EEE8CFF398E0A9DD4F591`;
+  test executable
+  `artifacts/bin/x64/Release/ChatpadProtocolTests/ChatpadProtocolTests.exe`
+  SHA-256 `20F5A79284378A267F778ED99742C78D420CE600E6C5E8CB62682CCE1E18FA4B`.
+- **Kernel compatibility Debug:** `tools/Test-ChatpadProtocolKernelCompatibility.ps1
+  -Configuration Debug -Platform x64` — MSBuild exit 0; planner source
+  compiled under WDK; only `.lib` output; SHA-256
+  `4B9E9EB3EE8262EA7AB750D0B88819A5713DA2132DD5BB8FA43E38D9CE51FCEB`.
+- **Kernel compatibility Release:** `tools/Test-ChatpadProtocolKernelCompatibility.ps1
+  -Configuration Release -Platform x64` — MSBuild exit 0; planner source
+  compiled under WDK; only `.lib` output; SHA-256
+  `9FF6E8086DA53EF25A180DF56D11D6CEF6AD44CDD48F61F72F0FF19B395D3853`.
+- **Driver Debug:** `tools/Build-Driver.ps1 -Configuration Debug -Platform x64`
+  — exit 0, NotSigned, no SignTool; `ChatpadFilter.sys` SHA-256
+  `5E66DFC2BF9E83CADF4F369E7588D8E9609AB2B0D42F793B3FB9C4E411C11E2B`.
+- **Driver Release:** `tools/Build-Driver.ps1 -Configuration Release -Platform
+  x64` — exit 0, NotSigned, no SignTool; `ChatpadFilter.sys` SHA-256
+  `C7E745D94AFDFC6C058F00B56700C9401A8EAB96CB8F211B3E65AFAFBB15997D`.
+- **Driver isolation proof:** `ChatpadFilter.vcxproj` lists only driver source
+  files and has no project reference or protocol source. Debug and Release
+  diagnostic linker inputs include only driver objects and WDK/KMDF libraries,
+  not `ChatpadProtocol.lib` or `ChatpadProtocolKernelCompileCheck.lib`. The
+  driver did not compile planner or request-builder sources.
+- **Generated artifacts:** Build outputs and logs remain under ignored
+  `artifacts/`; none are staged or tracked.
+- **Commit and push:** Commit exactly `feat: add activation sequence planner`;
+  push only `origin/feature/activation-sequence-planner`.
+- **Remaining risks or limitations:** The three `40/a9` requests remain
+  semantically unexplained; control-IN response bytes, `f0` packet meaning,
+  `001f`/`001e` periodic request semantics, and objective ready conditions
+  remain unresolved.
+- **Safety:** `legacy/` remained untouched. No request was sent. No sleep,
+  timer, retry, response interpretation, acknowledgement handling, readiness
+  transition, hardware, USB, HID, IOCTL, installation, signing, packaging,
+  deployment, loading, capture, external-skill, driver runtime, callback,
+  service, INF, CAT, certificate, or installer action occurred.

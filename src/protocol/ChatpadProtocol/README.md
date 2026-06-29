@@ -1,4 +1,4 @@
-# Chatpad Protocol Parser, Offline State Machine, and Activation Requests
+# Chatpad Protocol Parser, Offline State Machine, Activation Requests, and Activation Sequence Planner
 
 This directory contains a portable C interface and parser for the documented
 five-byte Chatpad keyboard packet boundary. It allocates no memory, performs
@@ -22,6 +22,13 @@ wire packets.
 request builder for the six activation control requests confirmed by
 `docs/CHATPAD-INIT-STATUS-EVIDENCE.md`. It performs no I/O, exposes no
 transport handle, retains no caller pointer, and never sends a request.
+
+`ChatpadActivationSequence.h` and `.c` add a transport-independent activation
+sequence planner over those six request descriptors. It obtains each request
+from `ChatpadBuildActivationRequest`, adds sequence/request indexes and
+declarative timing metadata, and performs no sleep, timer, timeout, retry,
+transport access, acknowledgement parsing, response decoding, or ready-state
+transition.
 
 ## Parser API
 
@@ -138,6 +145,34 @@ comment is not represented. Device-to-host descriptors contain no fabricated
 response bytes. Building descriptors does not imply initialization success,
 acknowledgement, readiness, retry, timeout, status, or keepalive semantics.
 
+## Activation Sequence API
+
+```c
+size_t ChatpadGetActivationSequenceStepCount(void);
+
+ChatpadActivationSequenceResult ChatpadGetActivationSequenceStep(
+    size_t stepIndex,
+    ChatpadActivationSequenceStep *output);
+```
+
+Exactly six steps are available. `SequenceIndex` and `RequestIndex` both match
+the requested step index, and `Request` is a value-copy descriptor produced by
+the activation-request builder.
+
+| Step | Request index | Delay before metadata | Delay after metadata |
+|---:|---:|---:|---:|
+| 0 | 0 | `0 ms` | `12 ms` |
+| 1 | 1 | `0 ms` | `12 ms` |
+| 2 | 2 | `0 ms` | `12 ms` |
+| 3 | 3 | `0 ms` | `12 ms` |
+| 4 | 4 | `0 ms` | `12 ms` |
+| 5 | 5 | `0 ms` | `12 ms` |
+
+The 12 ms after-delay is only the confirmed legacy post-`SendControlRequest`
+sleep metadata. The zero before-delay means no confirmed pre-request timing
+metadata, not a proven no-delay device requirement. The planner never executes
+that timing.
+
 ## Build and Test
 
 ### Integrated build (preferred)
@@ -154,8 +189,8 @@ acknowledgement, readiness, retry, timeout, status, or keepalive semantics.
 ```
 
 The direct-compiler script remains available as a lightweight regression for
-the parser, state machine, activation request builder, and their tests. It does
-not use MSBuild or the solution.
+the parser, state machine, activation request builder, activation sequence
+planner, and their tests. It does not use MSBuild or the solution.
 
 ### Kernel-toolchain compatibility check
 
@@ -164,8 +199,8 @@ not use MSBuild or the solution.
 .\tools\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Release -Platform x64
 ```
 
-This compiles the activation request, parser, and state-machine sources and
-public headers as C with the WDK
+This compiles the activation request, activation sequence, parser, and
+state-machine sources and public headers as C with the WDK
 `WindowsKernelModeDriver10.0` toolset. It produces only an isolated static
 library beneath `artifacts/`; it has no runtime entry point and produces no
 `.sys`. `ChatpadFilter` neither references nor links the compatibility library
@@ -194,7 +229,7 @@ All generated files are contained beneath `artifacts/`:
 
 ## Tests
 
-The test executable runs a self-contained assertion framework with 300 assertions:
+The test executable runs a self-contained assertion framework with 443 assertions:
 
 - Argument and length validation (null inputs, truncated, oversized)
 - Valid packet parsing (no keys, boundary values, raw key0 nonzero)
@@ -209,10 +244,15 @@ The test executable runs a self-contained assertion framework with 300 assertion
   construction, payload boundaries, `09 00` presence, `90 00` absence,
   deterministic clearing, repeated construction, value-copy isolation, and
   no fabricated device-to-host outbound data
+- Activation sequence count, null/invalid handling, exact one-to-one request
+  builder mapping, setup and payload preservation, timing metadata,
+  deterministic clearing, repeated construction, stateless sequencing,
+  value-copy isolation, sentinel guards, and absence of acknowledgement,
+  readiness, retry, timeout, response, or transport behavior
 
 ```
-Total: 300
-Passed: 300
+Total: 443
+Passed: 443
 Failed: 0
 ```
 
@@ -230,4 +270,5 @@ No third-party test framework. No device or hardware APIs. Offline only.
 - **Parser code is not connected to the kernel driver**
 - **State-machine code is not connected to the kernel driver**
 - **Activation-request code is not connected to the kernel driver**
+- **Activation-sequence code is not connected to the kernel driver**
 - **Driver remains unsigned and nonfunctional**

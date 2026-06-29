@@ -1,4 +1,5 @@
 #include "ChatpadActivationRequests.h"
+#include "ChatpadActivationSequence.h"
 #include "ChatpadKeyboardParser.h"
 #include "ChatpadProtocolStateMachine.h"
 
@@ -43,4 +44,15 @@ ChatpadActivationBuildResult ChatpadProtocolKernelActivationRequestCompileCheck(
     }
 
     return ChatpadBuildActivationRequest(4u, &request);
+}
+
+ChatpadActivationSequenceResult ChatpadProtocolKernelActivationSequenceCompileCheck(void)
+{
+    ChatpadActivationSequenceStep step;
+
+    if (ChatpadGetActivationSequenceStepCount() != ChatpadGetActivationRequestCount()) {
+        return CHATPAD_ACTIVATION_SEQUENCE_INVALID_STEP_INDEX;
+    }
+
+    return ChatpadGetActivationSequenceStep(4u, &step);
 }

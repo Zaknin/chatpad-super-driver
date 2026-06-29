@@ -206,16 +206,20 @@ $sourceRoot = [System.IO.Path]::Combine($repoRoot, 'src', 'protocol', 'ChatpadPr
 $testRoot = [System.IO.Path]::Combine($repoRoot, 'tests', 'protocol')
 $fixtureRoot = [System.IO.Path]::Combine($testRoot, 'fixtures')
 $activationRequestSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadActivationRequests.c')
+$activationSequenceSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadActivationSequence.c')
 $parserSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadKeyboardParser.c')
 $stateMachineSource = [System.IO.Path]::Combine($sourceRoot, 'ChatpadProtocolStateMachine.c')
 $testSource = [System.IO.Path]::Combine($testRoot, 'ChatpadProtocolParserTests.c')
 $activationRequestTestSource = [System.IO.Path]::Combine($testRoot, 'ChatpadActivationRequestsTests.c')
+$activationSequenceTestSource = [System.IO.Path]::Combine($testRoot, 'ChatpadActivationSequenceTests.c')
 $stateMachineTestSource = [System.IO.Path]::Combine($testRoot, 'ChatpadProtocolStateMachineTests.c')
 $activationRequestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadActivationRequests.obj')
+$activationSequenceObject = [System.IO.Path]::Combine($objRoot, 'ChatpadActivationSequence.obj')
 $parserObject = [System.IO.Path]::Combine($objRoot, 'ChatpadKeyboardParser.obj')
 $stateMachineObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolStateMachine.obj')
 $testObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolParserTests.obj')
 $activationRequestTestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadActivationRequestsTests.obj')
+$activationSequenceTestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadActivationSequenceTests.obj')
 $stateMachineTestObject = [System.IO.Path]::Combine($objRoot, 'ChatpadProtocolStateMachineTests.obj')
 $testExecutable = [System.IO.Path]::Combine($binRoot, 'ChatpadProtocolParserTests.exe')
 $testPdb = [System.IO.Path]::Combine($binRoot, 'ChatpadProtocolParserTests.pdb')
@@ -256,6 +260,15 @@ if ($activationRequestCompile.ExitCode -ne 0) {
     exit $activationRequestCompile.ExitCode
 }
 
+$activationSequenceCompileArguments = @($commonCompilerArguments + @("/Fo$activationSequenceObject", $activationSequenceSource))
+$activationSequenceCompile = Invoke-NativeLoggedStep -Name 'Activation sequence compile' -FilePath $clPath -Arguments $activationSequenceCompileArguments -LogPath $buildLogPath
+$activationSequenceCompile.OutputText | Write-Output
+Write-Output "Activation sequence compiler exit code: $($activationSequenceCompile.ExitCode)"
+if ($activationSequenceCompile.ExitCode -ne 0) {
+    Write-Output "Build log: $buildLogPath"
+    exit $activationSequenceCompile.ExitCode
+}
+
 $stateMachineCompileArguments = @($commonCompilerArguments + @("/Fo$stateMachineObject", $stateMachineSource))
 $stateMachineCompile = Invoke-NativeLoggedStep -Name 'State machine compile' -FilePath $clPath -Arguments $stateMachineCompileArguments -LogPath $buildLogPath
 $stateMachineCompile.OutputText | Write-Output
@@ -284,6 +297,15 @@ if ($activationRequestTestCompile.ExitCode -ne 0) {
     exit $activationRequestTestCompile.ExitCode
 }
 
+$activationSequenceTestCompileArguments = @($commonCompilerArguments + @("/Fo$activationSequenceTestObject", $activationSequenceTestSource))
+$activationSequenceTestCompile = Invoke-NativeLoggedStep -Name 'Activation sequence test compile' -FilePath $clPath -Arguments $activationSequenceTestCompileArguments -LogPath $buildLogPath
+$activationSequenceTestCompile.OutputText | Write-Output
+Write-Output "Activation sequence test compiler exit code: $($activationSequenceTestCompile.ExitCode)"
+if ($activationSequenceTestCompile.ExitCode -ne 0) {
+    Write-Output "Build log: $buildLogPath"
+    exit $activationSequenceTestCompile.ExitCode
+}
+
 $stateMachineTestCompileArguments = @($commonCompilerArguments + @("/Fo$stateMachineTestObject", $stateMachineTestSource))
 $stateMachineTestCompile = Invoke-NativeLoggedStep -Name 'State machine test compile' -FilePath $clPath -Arguments $stateMachineTestCompileArguments -LogPath $buildLogPath
 $stateMachineTestCompile.OutputText | Write-Output
@@ -300,10 +322,12 @@ $linkArguments = @(
     "/OUT:$testExecutable",
     "/PDB:$testPdb",
     $activationRequestObject,
+    $activationSequenceObject,
     $parserObject,
     $stateMachineObject,
     $testObject,
     $activationRequestTestObject,
+    $activationSequenceTestObject,
     $stateMachineTestObject
 )
 $link = Invoke-NativeLoggedStep -Name 'Test link' -FilePath $linkPath -Arguments $linkArguments -LogPath $buildLogPath
