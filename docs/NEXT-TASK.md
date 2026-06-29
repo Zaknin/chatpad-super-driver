@@ -2,66 +2,80 @@
 
 ## Current continuation point
 
-Branch `feature/control-setup-translation` contains the pure caller-owned
-control-setup translator, native `141/141` Debug/Release tests, source/project
-guard, solution integration, and WDK kernel compile coverage. The task commit
-subject is `feat: add pure control setup translation`; use the final commit
+Branch `feature/wdf-control-setup-formatter` contains the isolated compile-only
+WDK formatter, its formatter-only kernel compile check, Debug/Release guard
+validation, unchanged native regressions, existing kernel compatibility, and
+unsigned driver regressions. The task commit subject is
+`build: add compile-only wdf control setup formatter`; use the final commit
 reported for this task and verify it equals
-`origin/feature/control-setup-translation` before branching.
+`origin/feature/wdf-control-setup-formatter` before branching.
+
+The formatter creates no WDF object and is not linked into `ChatpadFilter`.
+Default-control access and all runtime transport behavior remain unproven.
 
 ## Recommended objective
 
-Create an isolated compile-only WDK formatter library that converts a validated
-`ChatpadControlSetupTranslation` value into an inspectable
-`WDF_USB_CONTROL_SETUP_PACKET` value. This task may prove type/field formatting
-only. Do not connect it to `ChatpadFilter` and do not create, format, allocate,
-submit, cancel, or complete any WDF request.
+Design a reversible, device-specific lower-filter installation and recovery
+specification for `USB\VID_045E&PID_028E`. Cover INF placement semantics,
+driver-store and registry backup/export steps, controller-preservation checks,
+Safe Mode and command-line removal, test-signing and HVCI implications,
+rollback verification, and explicit authorization gates.
+
+This is a documentation and design task only. Do not create an INF or perform
+installation, signing, loading, device access, or hardware changes.
 
 ## Required branch and starting commit
 
-- Create a dedicated next-task branch from the final
-  `feature/control-setup-translation` commit reported and pushed by this task.
-- Require exact equality between local starting commit and the reported
-  `origin/feature/control-setup-translation` commit, with a clean tree.
+- Create a dedicated design branch from the final
+  `feature/wdf-control-setup-formatter` commit reported and pushed by this task.
+- Require exact equality between local starting commit and the reported remote
+  commit, with a clean tree.
 - Require prohibited commit `6502452` not to be an ancestor.
 
 ## Preconditions
 
-- Re-read `AGENTS.md`, continuity documents, both Windows 11 architecture
-  documents, `docs/CHATPAD-PROTOCOL.md`, and `docs/BUILDING.md`.
-- Re-run repository safety plus protocol `610/610`, transport `186/186`,
-  lifecycle `109/109`, and control-setup `141/141` baselines.
-- Inspect `ChatpadControlSetup`, its tests/guard, kernel compile check, and the
-  current `ChatpadFilter` project/source isolation.
+- Re-read `AGENTS.md`, all continuation documents, both Windows 11
+  architecture documents, `docs/BUILDING.md`, and existing safety rules.
+- Verify formatter and driver isolation from projects, solution dependencies,
+  source lists, and linker inputs.
+- Inspect current documented PnP topology and attachment evidence without
+  querying or changing the live controller.
+- Treat exact recovery and controller-preservation proof as hard gates before
+  any later implementation or live task.
 
 ## Safety restrictions
 
-- Compile-only isolated static library; output `.lib` only beneath `artifacts/`.
-- No WDFDEVICE, WDFIOTARGET, WDFREQUEST, memory object, queue, interface,
-  timer, work item, thread, target creation, request formatting/submission,
-  completion, cancellation, response buffer, USB/HID/IOCTL/URB/device access,
-  endpoint/pipe behavior, INF/CAT/certificate/package/service/installer,
-  signing, installation, deployment, loading, capture, elevation, or hardware
-  action.
-- No `ChatpadFilter` source/project/solution dependency and no `legacy/` edit.
+- Documentation/design changes only.
+- No INF, CAT, certificate, service, package, installer, deployment, signing,
+  test-signing setting, BCD setting, registry mutation, driver-store mutation,
+  installation, loading, device action, Device Manager action, Safe Mode
+  reboot, elevation, or hardware access.
+- No controller enumeration, query, reset, disable/enable, disconnect,
+  reconnect, or transfer.
+- No WDF target/request/queue/interface/timer/work-item or transport runtime
+  implementation.
+- No `legacy/` or external-skill modification.
 
 ## Acceptance criteria
 
-- Exact setup bytes and direction remain unchanged from the pure translator.
-- WDF setup value fields are inspectable in compile-only tests without a target
-  or request.
-- Debug and Release WDK builds emit only a static library, with no signing or
-  package output.
-- Existing assertion counts and unsigned driver builds remain unchanged.
-- Documentation states that formatting proves neither default-control access
-  nor transmission, acceptance, acknowledgement, or readiness.
+- The design targets only `USB\VID_045E&PID_028E` and explicitly rejects
+  class-wide filter placement.
+- Exact backup/export, install-order, rollback, Safe Mode, command-line removal,
+  and post-recovery verification procedures are specified without execution.
+- Test-signing, Secure Boot, Memory Integrity/HVCI, and unsigned-driver failure
+  implications are documented without changing system state.
+- Controller-preservation checks and hard abort criteria are explicit.
+- Separate authorization gates cover future INF creation, signing, installation,
+  loading, and any device interaction.
+- Existing compile-only formatter and unsigned driver state remain unchanged.
 
 ## Inspect first
 
-- `src/transport/ChatpadControlSetup/ChatpadControlSetup.h`
-- `src/transport/ChatpadControlSetup/ChatpadControlSetup.c`
-- `tests/transport/ChatpadControlSetupTests/`
-- `tools/Test-ChatpadControlSetup.ps1`
-- `tests/kernel/ChatpadProtocolKernelCompileCheck/`
-- `src/driver/ChatpadFilter/ChatpadFilter.vcxproj`
+- `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`
 - `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`
+- `docs/WINDOWS11-CONNECTED-DEVICE-INVENTORY.md`
+- `docs/WIN11-BLOCKERS.md`
+- `docs/PROJECT-STATE.md`
+- `src/driver/ChatpadFilter/ChatpadFilter.vcxproj`
+- `src/transport/ChatpadWdfControlSetup/README.md`
+- `tools/Build-Driver.ps1`

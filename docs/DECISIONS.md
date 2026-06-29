@@ -4,6 +4,43 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Preserve exact WDF setup bytes through the public generic member
+
+**Decision:** The compile-only WDK formatter validates the pure translation's
+direction and data-stage lengths, clears the caller-owned output, and copies
+the authoritative eight setup bytes directly into
+`WDF_USB_CONTROL_SETUP_PACKET.Generic.Bytes`. Its kernel static-library project
+has no project reference; the separate compile-check project references only
+the formatter with library linkage disabled.
+
+**Rationale:** Installed KMDF 1.15 `wdfusb.h` publicly exposes the eight-byte
+generic member. Its `WDF_USB_CONTROL_SETUP_PACKET_INIT`, `_INIT_CLASS`, and
+`_INIT_VENDOR` helpers construct or normalize type, recipient, and direction
+fields and intentionally leave `wLength` for a later request-formatting API.
+Direct byte copying is therefore the only inspected public representation that
+preserves the already validated request type, recipient, value, index, and
+length exactly without creating or formatting a request.
+
+**Alternatives rejected:**
+
+* Reconstructing the packet with class/vendor initializers - would normalize
+  fields and require separate length mutation.
+* Populating bitfields and words independently - would repeat endian and field
+  interpretation already owned by the pure translator.
+* Linking portable projects into the WDK library - unnecessary toolset coupling
+  for a representation-only compile check.
+* Linking the formatter into `ChatpadFilter` - would cross the approved
+  compile-only boundary without transport or installation authorization.
+
+**Consequences:**
+
+* The formatter is deterministic, allocation-free, and caller-owned.
+* Payload and control-IN response storage remain outside the setup packet.
+* Compile success proves installed-WDK type compatibility only; it does not
+  prove target access, transmission, completion, acknowledgement, or readiness.
+* Future request-owner work must pass separate lifecycle, installation,
+  recovery, stack-visibility, and explicit-authorization gates.
+
 ## 2026-06-30 — Represent control setup as explicit caller-owned bytes
 
 **Decision:** Pure activation control-setup translation uses an eight-byte

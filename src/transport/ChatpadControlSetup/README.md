@@ -22,3 +22,7 @@ Run native tests with:
 ```
 
 Outputs remain under `artifacts\bin\x64\<Configuration>\ChatpadControlSetup\`.
+
+The installed-WDK representation consumer is kept in the separate compile-only
+`src/transport/ChatpadWdfControlSetup/` static library. The portable translator
+does not include or depend on that WDF layer.

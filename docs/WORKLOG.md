@@ -1356,3 +1356,104 @@
   response decode, acknowledgement, retry, timeout, readiness, endpoint, pipe,
   capture, elevation, INF/CAT/certificate/package/service/installer, signing,
   installation, deployment, loading, external-skill edit, or hardware action.
+
+## 2026-06-30T00:58+04:00 - Compile-only WDF control-setup formatter
+
+- **Objective:** Implement, validate, document, commit, and push an isolated
+  WDK formatter from `ChatpadControlSetupTranslation` to a caller-owned
+  `WDF_USB_CONTROL_SETUP_PACKET`, without creating a WDF object or connecting
+  the formatter to `ChatpadFilter`.
+- **Starting branch and commit:** `feature/wdf-control-setup-formatter` /
+  `9542fdd63493a455f6de4720542a48ca22f6fa96`; clean tree tracking
+  `origin/feature/wdf-control-setup-formatter`; prohibited commit `6502452` not
+  an ancestor.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` still described the completed pure-translation branch
+  because this formatter branch had just been prepared at that commit. Live
+  Git matched every hard precondition, so the documents were corrected to the
+  live formatter task before finalization.
+- **Investigation:** Read the required continuation, protocol, evidence,
+  architecture, bridge-design, building, porting, source, test, project, and
+  wrapper surfaces. Inspected the installed KMDF 1.15 header at the stable WDK
+  relative path `Windows Kits/10/Include/wdf/kmdf/1.15/wdfusb.h` and the WDK
+  KMDF USB project template. Relevant symbols were
+  `WDF_USB_CONTROL_SETUP_PACKET`, `WDF_USB_CONTROL_SETUP_PACKET_INIT`,
+  `WDF_USB_CONTROL_SETUP_PACKET_INIT_CLASS`, and
+  `WDF_USB_CONTROL_SETUP_PACKET_INIT_VENDOR`; the template's declaration
+  include order is `wdf.h`, `usb.h`, `usbdlib.h`, then `wdfusb.h`.
+- **Files created:** `src/transport/ChatpadWdfControlSetup/` formatter header,
+  source, static-library project, and README;
+  `tests/kernel/ChatpadWdfControlSetupCompileCheck/` source, static-library
+  project, and README; and `tools/Test-ChatpadWdfControlSetup.ps1`.
+- **Files modified:** `ChatpadWin11.sln`, `docs/BUILDING.md`,
+  `docs/CHATPAD-PROTOCOL.md`, `docs/DECISIONS.md`, `docs/NEXT-TASK.md`,
+  `docs/PORTING-PLAN.md`, `docs/PROJECT-STATE.md`, both Windows 11 architecture
+  documents, this worklog, `src/transport/ChatpadControlSetup/README.md`, and
+  `tests/kernel/ChatpadProtocolKernelCompileCheck/README.md`.
+- **Implementation:** `ChatpadFormatWdfControlSetupPacket` clears its non-null
+  output, validates data direction and setup-bit agreement, enforces outbound/
+  inbound/no-data length consistency and outbound capacity, then copies all
+  eight authoritative setup bytes through the public `Generic.Bytes` member.
+  The class/vendor initializers were not used because they normalize fields and
+  leave `wLength` for later request formatting. No activation tuple is
+  duplicated; payload ownership remains outside the WDF setup value.
+- **Compile-check design:** The formatter project compiles only the formatter
+  source and has no project references. The compile-check project references
+  only the formatter with `LinkLibraryDependencies=false`; its source passes
+  all six builder translations through the pure translator and formatter and
+  includes public eight-byte representation assertions. Both outputs are
+  static libraries with no entry point.
+- **Pre-edit baseline:** environment detector exit 0; repository safety PASS;
+  `legacy/` unchanged; prohibited-ancestor check exit 1; direct protocol
+  `610/610`; transport Debug/Release `186/186`; lifecycle Debug/Release
+  `109/109`; pure control setup Debug/Release `141/141`.
+- **During-task corrections:** The first wrapper invocation failed at parse
+  time because Windows PowerShell parsed `$file:` as a scoped variable; the
+  variable was delimited. The next guard attempt failed before toolchain
+  detection because compact MSBuild XML did not expose `ConfigurationType`
+  through a property path; the guard now uses a namespace-aware XPath. The
+  first compiler attempt then showed that this installed `wdfusb.h` requires
+  USB/USBD declarations; the installed KMDF USB template confirmed the
+  supported include order, which was added without introducing runtime calls.
+- **Formatter validation:** Debug and Release source/project guards PASS;
+  MSBuild exit 0; no active signing; no `.sys`, INF, CAT, certificate, package,
+  installer, or deployment output; all output beneath `artifacts/`. Debug
+  formatter library SHA-256
+  `3C0FD775FA83FDDDEC1B1624284CE6C823A482C9FD2845CAE9476B5C767D8CAA`;
+  Debug compile-check SHA-256
+  `2D7F894568D9DB4C23EE0017C5DE6C800D9977E13469AEA882A1BD4B440CD317`;
+  Release formatter SHA-256
+  `51BDB4301D32B4A70104E7EDE4617FA3E2EA3BE1CCCB73D319964012E307145B`;
+  Release compile-check SHA-256
+  `5CFF4E956C57A748669A2DB71D95B53750B3D26F2CA7670EDF369EE82F51F3ED`.
+- **Regression validation:** protocol Debug/Release `610/610`; transport
+  Debug/Release `186/186`; lifecycle Debug/Release `109/109`; pure control
+  setup Debug/Release `141/141`.
+- **Existing kernel compatibility:** Debug and Release WDK builds PASS with
+  `.lib` only, no signing, prohibited output, or escaped artifacts. Debug
+  SHA-256 `9B6E42E4AE20EFD1A03832890BE7A1A71E08BB923EB9A827F34239B78BAD9F99`;
+  Release SHA-256
+  `482B478E2DD1C1DD81D58B554693BE1D675D34C1A87D819D6BF24D7C3E674B92`.
+- **Driver validation and isolation:** Debug driver SHA-256
+  `DC48F9F470BA6B25B218EE8CD6AA0A300D35FB92DB0F1A0BDD82852F73613593`;
+  Release driver SHA-256
+  `563610892A7E5067130FBDAF133C8DA876BAA1D6AE4B1903BDC894CC295E9E75`.
+  Both build exit 0, remain `Authenticode.NotSigned`, and show no SignTool
+  operation. The driver project has no project reference and compiles only
+  `ChatpadFilterLifecycle.c`, `driver.c`, and `device.c`; the solution has no
+  project-dependency section. Both diagnostic linker commands contain only
+  those object files and WDK system libraries, with no formatter,
+  control-setup, protocol, or transport input.
+- **Commit and push:** Commit exactly
+  `build: add compile-only wdf control setup formatter` and push only
+  `origin/feature/wdf-control-setup-formatter`. The self-referential commit
+  hash is reported after commit/push rather than embedded here.
+- **Next task:** Design only a reversible device-specific lower-filter
+  installation and recovery specification for `USB\VID_045E&PID_028E`; do not
+  create an INF, sign, install, load, query, or touch the device.
+- **Safety:** No `legacy/` edit; no WDF device, target, request, memory, queue,
+  interface, timer, work item, callback, request formatting/submission,
+  completion, transfer, USB/HID/IOCTL/URB operation, device enumeration or
+  access, disconnect/reconnect/reset, response fabrication, capture, elevation,
+  INF/CAT/certificate/package/service/installer, signing, installation,
+  deployment, loading, external-skill modification, or hardware action.

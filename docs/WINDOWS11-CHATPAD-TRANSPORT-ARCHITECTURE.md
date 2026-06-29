@@ -617,3 +617,28 @@ request, endpoint, pipe, timer, thread, or hardware dependency. It does not
 prove that Candidate A can access the default control pipe, and it is not
 linked into `ChatpadFilter`. The next boundary is an isolated compile-only WDK
 formatter value conversion, not target/request creation or submission.
+
+## 27. Compile-only WDF setup formatter checkpoint
+
+The architecture now has an isolated kernel-toolchain representation boundary:
+
+```text
+ChatpadActivationRequest
+-> ChatpadTranslateActivationRequest()
+-> ChatpadControlSetupTranslation
+-> ChatpadFormatWdfControlSetupPacket()
+-> caller-owned WDF_USB_CONTROL_SETUP_PACKET
+```
+
+The formatter copies the pure translator's exact eight bytes through the
+installed public `Generic.Bytes` member. It does not duplicate the six
+activation tuples or own outbound payload/response storage. Direction and
+length checks reject inconsistent synthetic values, but all semantic evidence
+remains owned by the portable builder and translator.
+
+This checkpoint is compile-only. It creates no WDF object, formats or submits
+no request, accesses no target or pipe, and is not linked into `ChatpadFilter`.
+Default-control visibility, control-IN response contents, acknowledgement, and
+readiness remain unresolved. The next task is the design-only recovery and
+installation gate for the device-specific lower-filter direction, not runtime
+transport implementation.

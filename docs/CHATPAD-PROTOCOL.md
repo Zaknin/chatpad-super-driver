@@ -342,6 +342,22 @@ bytes but allocate or fabricate no response bytes. Confirmed fixtures contain
 no `90 00` outbound payload. Translation remains structural: arbitrary
 synthetic payload bytes are not rejected based on semantic content.
 
+### Compile-Only WDF Setup Formatting
+
+**Classification:** Installed-WDK representation compatibility only. It is not
+request formatting, submission, or device evidence.
+
+`ChatpadFormatWdfControlSetupPacket` consumes the pure translation and copies
+its exact eight setup bytes into a caller-owned
+`WDF_USB_CONTROL_SETUP_PACKET.Generic.Bytes` value. The byte mapping preserves
+`bmRequestType`, `bRequest`, little-endian `wValue`, little-endian `wIndex`,
+and little-endian `wLength` without reinterpreting vendor semantics.
+
+The formatter checks data-stage direction and length consistency but does not
+own outbound payload or control-IN response bytes. Its compile check creates no
+WDF object and has no entry point. It proves neither default-control access nor
+transmission, acceptance, acknowledgement, readiness, retry, or timeout.
+
 ### Offline State-Machine Classification Boundary
 
 **Classification:** Project abstraction — not wire-format evidence.

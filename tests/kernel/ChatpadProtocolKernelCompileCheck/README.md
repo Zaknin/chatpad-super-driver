@@ -50,3 +50,8 @@ Generated files remain beneath:
 The wrapper prints the full `.lib` path and its SHA-256, rejects any active
 signing evidence, and fails if the build creates a driver, package,
 certificate, installer, or deployment artifact.
+
+The installed `WDF_USB_CONTROL_SETUP_PACKET` compatibility proof is deliberately
+separate under `tests/kernel/ChatpadWdfControlSetupCompileCheck/`. Keeping the
+two compile checks separate prevents the portable compatibility project from
+acquiring WDF USB headers or a formatter dependency.

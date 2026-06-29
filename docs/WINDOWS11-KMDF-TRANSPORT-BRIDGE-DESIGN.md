@@ -549,3 +549,28 @@ target, request, memory object, response buffer, queue, timer, work item,
 thread, handle, or transfer. Control-IN bytes and default-control access remain
 unresolved. Confirmed request 4 preserves `09 00`; confirmed fixtures contain
 no `90 00` payload.
+
+## 29. Compile-only WDK setup formatting checkpoint
+
+`src/transport/ChatpadWdfControlSetup/` now satisfies Gate D without opening a
+runtime bridge. `ChatpadFormatWdfControlSetupPacket` accepts the pure
+translation, conservatively checks direction and data-stage lengths, clears
+the caller-owned output, and copies the exact eight setup bytes into the public
+`WDF_USB_CONTROL_SETUP_PACKET.Generic.Bytes` member.
+
+The installed KMDF 1.15 `wdfusb.h` symbols inspected were
+`WDF_USB_CONTROL_SETUP_PACKET`, `WDF_USB_CONTROL_SETUP_PACKET_INIT`,
+`WDF_USB_CONTROL_SETUP_PACKET_INIT_CLASS`, and
+`WDF_USB_CONTROL_SETUP_PACKET_INIT_VENDOR`. The helpers normalize setup fields
+and defer `wLength` to request formatting; they are not used for this exact
+representation conversion.
+
+Debug and Release WDK builds produce isolated static libraries only. The
+compile check has no entry point, and `ChatpadFilter` has no project reference,
+source, solution dependency, or linker input for the formatter. No WDF object,
+target, request, memory, queue, interface, timer, work item, callback,
+formatting, submission, I/O, or hardware action exists.
+
+Gate D does not satisfy Gate F or Gate G. The next bounded task is a design-only
+device-specific lower-filter installation and recovery specification. It must
+not create an INF, install, sign, load, query, or touch the device.

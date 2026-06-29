@@ -106,6 +106,32 @@ and verifies containment beneath `artifacts/`.
 | Debug test executable | `artifacts\bin\x64\Debug\ChatpadControlSetupTests\ChatpadControlSetupTests.exe` |
 | Release test executable | `artifacts\bin\x64\Release\ChatpadControlSetupTests\ChatpadControlSetupTests.exe` |
 
+## WDF Control Setup Formatter (compile-only)
+
+`ChatpadWdfControlSetup` is an isolated WDK static library that converts a
+validated `ChatpadControlSetupTranslation` to a caller-owned
+`WDF_USB_CONTROL_SETUP_PACKET` value. It performs exact representation copying
+and conservative direction/length validation only. It creates no WDF object,
+formats or submits no request, owns no payload or response buffer, and is not
+linked into `ChatpadFilter`.
+
+```powershell
+.\tools\Test-ChatpadWdfControlSetup.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadWdfControlSetup.ps1 -Configuration Release -Platform x64
+```
+
+The wrapper checks production and compile-check source/project files for
+prohibited runtime surfaces, builds only the formatter compile check and its
+formatter dependency, prints both static-library paths and SHA-256 values,
+rejects active signing or prohibited output, and verifies artifact containment.
+
+| Output | Path |
+| --- | --- |
+| Debug formatter library | `artifacts\bin\x64\Debug\ChatpadWdfControlSetup\ChatpadWdfControlSetup.lib` |
+| Release formatter library | `artifacts\bin\x64\Release\ChatpadWdfControlSetup\ChatpadWdfControlSetup.lib` |
+| Debug compile-check library | `artifacts\bin\x64\Debug\ChatpadWdfControlSetupCompileCheck\ChatpadWdfControlSetupCompileCheck.lib` |
+| Release compile-check library | `artifacts\bin\x64\Release\ChatpadWdfControlSetupCompileCheck\ChatpadWdfControlSetupCompileCheck.lib` |
+
 ## ChatpadFilter lifecycle core (offline)
 
 Portable C lifecycle core used by `ChatpadFilter` and compiled into a native

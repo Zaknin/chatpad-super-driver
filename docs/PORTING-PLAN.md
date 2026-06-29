@@ -47,6 +47,12 @@ Source references:
 - Next define pure, WDF-independent control-setup translation for the six
   confirmed activation descriptors before any WDF request formatting or
   submission code exists.
+- Convert that pure value to the installed
+  `WDF_USB_CONTROL_SETUP_PACKET` only in an isolated compile-only static
+  library. Keep the formatter and its compile check out of `ChatpadFilter`.
+- Before any INF or runtime bridge work, design and review a reversible,
+  device-specific lower-filter installation and recovery procedure for
+  `USB\VID_045E&PID_028E`.
 - Keep physical transport, per-device WDF lifetime, scheduling, diagnostics,
   and keyboard presentation in separate layers with no portable-to-WDF
   dependency.
