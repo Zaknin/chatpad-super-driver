@@ -1691,3 +1691,67 @@
   device restart, signing, loading, hardware action, USB/HID/IOCTL/URB request,
   elevation, network request, or external-skill modification occurred. The
   only new INF is the authorized isolated source prototype.
+
+## 2026-06-30T07:28+04:00 - Offline Inf2Cat validation documentation checkpoint
+
+- **Objective:** Create and publish a documentation-only checkpoint for the
+  completed unsigned offline Inf2Cat package validation and its independent
+  read-only evidence audit.
+- **Starting branch and commit:**
+  `feature/offline-inf2cat-package-validation` /
+  `9de526a55d5b60a28229cedc3a2e4e9926db6473`; clean tracked tree and index;
+  no configured upstream; `origin` present.
+- **Continuity discrepancy:** `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`, `docs/WIN11-BLOCKERS.md`, and
+  the checkpoint section in
+  `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md` still described offline
+  catalog closure as pending. They were updated to the retained result without
+  rewriting historical task records.
+- **Evidence verification:** Current INF SHA-256
+  `7E752EDAFDB252AF746C2AE6A9EFB3032A077A23FEB39C064D0E2C30700D11CE`;
+  current unsigned Release SYS SHA-256
+  `00A9E8689114886C04B6C45E86603BE1257B42E6215B76CE41D3A721F28C5F6A`;
+  current unsigned 1,262-byte CAT SHA-256
+  `84CF148F8E04F41F3691B99B058BCDDE810B9EC99EB8DA4EF38DA53E11712B87`.
+  Installed Inf2Cat file/product versions `1.0.0519.24` /
+  `1.0.0519.24+3dc05997` and SHA-256
+  `B594728D38B271979367ABC8060A971B8E42422738009BE126710B1F5DD0FCBC`
+  match retained evidence.
+- **Retained result:** Inf2Cat used
+  `10_CO_X64,10_NI_X64,10_GE_X64`, exited `0`, and reported no warnings or
+  errors. `10_25H2_X64` was not advertised or passed. The catalog contains the
+  INF and SYS members, SHA-256 member digests, x64 Windows 11 21H2/22H2/24H2
+  attributes, exact hardware ID `usb\vid_045e&pid_028e`, and no signer,
+  certificate, CRL, or recipient.
+- **Files created:** `docs/OFFLINE-INF2CAT-PACKAGE-VALIDATION.md`.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/PORTING-PLAN.md`, `docs/WIN11-BLOCKERS.md`,
+  `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md`, and this worklog.
+- **Documentation boundaries:** The report distinguishes InfVerif static INF
+  validity from Inf2Cat offline package/catalog closure and distinguishes both
+  from signing trust, staging, installation, effective lower-filter placement,
+  controller preservation, and Chatpad/runtime behavior.
+- **Validation:** Introduced relative links resolve to the intended tracked
+  report; required semantic statements PASS; repository safety PASS with exit
+  `0`; `git diff --check` exit `0`. No repository documentation-link checker
+  exists, so local relative-link resolution was used without installing a
+  dependency.
+- **Validation corrections:** The first link check rejected the new report
+  because it required the pre-stage file to already be tracked; the corrected
+  check accepts that one intended new Markdown path. A semantic assertion then
+  failed to span a Markdown line break even though the lower-filter disclaimer
+  was present; the corrected assertion matched the explicit text. These were
+  check-pattern failures, not documentation-content failures.
+- **Commit and push:** Commit exactly
+  `docs: record offline inf2cat validation` and push only
+  `origin/feature/offline-inf2cat-package-validation` with upstream setup. The
+  final commit hash is reported after commit and push rather than embedded
+  here.
+- **Remaining blockers:** The package and CAT remain unsigned and untrusted.
+  Signing trust, staging, Windows acceptance, attachment beneath `xusb22`,
+  controller preservation, transport visibility, Chatpad activation/input,
+  keyboard output, and runtime lifecycle remain unproven and unauthorized.
+- **Safety:** No Inf2Cat, InfVerif, build, protocol/driver test, signing,
+  certificate, staging, installation, Driver Store, service, registry, device,
+  controller, hardware, or operating-system action occurred. Retained evidence
+  stayed ignored and unmodified; only tracked Markdown documentation changed.

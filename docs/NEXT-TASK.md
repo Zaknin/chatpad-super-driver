@@ -2,70 +2,66 @@
 
 ## Current continuation point
 
-Branch `feature/offline-extension-inf-prototype` contains the isolated
-source-controlled extension INF, PowerShell 5.1 static-validation wrapper,
-narrow repository-safety exception, documentation, and verified unsigned
-Debug/Release driver regressions. The task commit subject is
-`build: add offline extension inf prototype`; use the final commit reported for
-this task and verify it equals
-`origin/feature/offline-extension-inf-prototype` before branching.
+Branch `feature/offline-inf2cat-package-validation` records completed unsigned
+offline package/catalog closure for the exact validated extension INF and
+unsigned Release SYS. The checkpoint report is
+[Offline Inf2Cat Package Validation](OFFLINE-INF2CAT-PACKAGE-VALIDATION.md).
 
-The INF passes WDK declarative validation and semantic guards. It declares
-future catalog identity but no CAT or package exists.
+InfVerif static validation, Inf2Cat package closure, and repository safety pass.
+The independent audit result is **AUDIT PASS WITH LIMITATIONS** because it
+inspected retained evidence without rerunning historical tools. Generated
+package evidence remains ignored and untracked.
 
 ## Recommended objective
 
-Create an isolated offline package-layout validation under ignored
-`artifacts/`, copy only the validated INF and matching unsigned driver into
-that disposable layout, and run Inf2Cat to test catalog generation for the
-declared Windows 11 AMD64 target.
+Conduct an independent read-only review of the unsigned package-closure report
+and recovery prerequisites. Resolve review questions before deciding whether a
+separate signing-policy design task should be authorized.
 
-This requires new explicit authorization because it creates generated package
-content and a catalog. Stop before signing, staging, installation, loading, or
-device access.
+This continuation point does not authorize signing, certificate operations,
+staging, installation, loading, device access, or runtime integration.
 
 ## Required branch and starting commit
 
-- Create a dedicated feature branch from the final
-  `feature/offline-extension-inf-prototype` commit.
-- Require exact local/remote starting equality and a clean tree.
+- Start from the final pushed
+  `feature/offline-inf2cat-package-validation` documentation checkpoint.
+- Require local HEAD to equal
+  `origin/feature/offline-inf2cat-package-validation`.
+- Require a clean tracked tree and index.
 - Require prohibited commit `6502452` not to be an ancestor.
 
 ## Preconditions
 
-- Re-read `AGENTS.md`, continuation documents, prototype README/INF, validation
-  wrapper, recovery design, and current WDK Inf2Cat help.
-- Obtain explicit authorization for offline package-layout and CAT generation.
-- Verify `InfVerif`, semantic guards, repository safety, and both unsigned
-  driver builds still pass.
-- Resolve the exact Inf2Cat OS identifier from installed tool help; do not
-  guess it.
+- Re-read `AGENTS.md`, `docs/PROJECT-STATE.md`, this file, the package
+  validation report, and the installation/recovery design.
+- Verify retained evidence paths remain ignored and untracked.
+- Treat historical command/timing claims as retained-log evidence unless a
+  separate task explicitly authorizes repetition.
 
 ## Safety restrictions
 
-- Generated package layout and CAT only beneath ignored `artifacts/`.
-- No tracked CAT, package, certificate, key, binary, or generated output.
-- No signing, certificate creation/import, trust-store, Secure Boot/HVCI/BCD,
-  staging, PnPUtil/DevCon/DISM mutation, Driver Store, registry, service,
-  installation, load, device restart, elevation, network, or hardware action.
-- No changes to `legacy/`, `ChatpadFilter.vcxproj`, runtime driver behavior, or
-  external skills.
+- Read-only documentation and evidence review only.
+- No generated package, CAT, SYS, certificate, key, binary, or log may be
+  tracked.
+- No Inf2Cat, InfVerif, build, signing, certificate, trust-store, Secure
+  Boot/HVCI/BCD, staging, Driver Store, registry, service, installation, load,
+  device restart, elevation, network, or hardware action.
+- Do not modify `legacy/`, runtime driver behavior, or retained evidence.
 
 ## Acceptance criteria
 
-- Package input uses the exact validated INF hash and matching driver hash.
-- Inf2Cat runs from an argument array with an installed, inspected OS target.
-- Generated CAT and logs remain only beneath `artifacts/`.
-- Catalog-generation warnings/errors and exit code are reported exactly.
-- No signing occurs and generated CAT is explicitly untrusted/unsigned.
-- Repository safety, driver isolation, and clean tracked state remain intact.
+- Review distinguishes static INF validity from offline package closure.
+- Review distinguishes package closure from signing trust and Windows
+  staging/installation acceptance.
+- All runtime, attachment, controller-preservation, and Chatpad behavior claims
+  remain explicitly unproven.
+- Tracked state remains documentation-only and generated evidence remains
+  ignored.
 
 ## Inspect first
 
-- `prototypes/inf/ChatpadFilterExtension/README.md`
-- `prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf`
-- `tools/Test-ChatpadFilterInfPrototype.ps1`
-- `tools/Test-RepositorySafety.ps1`
+- `docs/OFFLINE-INF2CAT-PACKAGE-VALIDATION.md`
 - `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md`
 - `docs/PROJECT-STATE.md`
-- installed `Inf2Cat.exe /?`
+- `artifacts/inf2cat-validation/20260629T220548Z/`
+- `artifacts/inf-validation/20260629T220549Z/`

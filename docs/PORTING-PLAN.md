@@ -60,8 +60,10 @@ Source references:
   an actual signed package and demonstrated on a noncritical system.
 - Keep the validated extension INF prototype isolated under
   `prototypes/inf/ChatpadFilterExtension/`. Static `InfVerif` success completes
-  only the source-syntax checkpoint; catalog generation, package layout,
-  signing, staging, installation, and runtime placement remain separate gates.
+  the source-syntax checkpoint. The ignored offline package-layout and Inf2Cat
+  catalog-closure checkpoint is complete and recorded in
+  `docs/OFFLINE-INF2CAT-PACKAGE-VALIDATION.md`; signing, staging, installation,
+  effective runtime placement, and device behavior remain separate gates.
 - Keep physical transport, per-device WDF lifetime, scheduling, diagnostics,
   and keyboard presentation in separate layers with no portable-to-WDF
   dependency.

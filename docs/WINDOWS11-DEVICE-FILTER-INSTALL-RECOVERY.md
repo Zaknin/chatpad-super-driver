@@ -465,7 +465,7 @@ reviewed against an actual signed package identity and demonstrated on a
 noncritical test system without weakening security. Gate G remains entirely
 open: no default-control or Chatpad-input visibility has been proven.
 
-## 19. Offline extension-INF prototype checkpoint
+## 19. Offline extension-INF and package-closure checkpoints
 
 The isolated prototype now statically represents the selected package model:
 
@@ -483,10 +483,17 @@ guards independently reject broadened IDs, direct filter-registry writes,
 class filters, function-driver replacement, boot start, co-installers,
 commands, absolute paths, build/package references, and package/signing files.
 
-No catalog exists. No package, service, registry value, Driver Store entry, or
-device stack was created or changed. Static success does not prove effective
-placement beneath `xusb22`, runtime preservation, or recovery. Gate F remains
-operationally unresolved.
+Unsigned offline package/catalog closure is now complete for the exact
+validated INF and exact unsigned Release SYS. Inf2Cat returned exit `0` with no
+warnings or errors for `10_CO_X64,10_NI_X64,10_GE_X64`. The generated unsigned
+catalog remained ignored beneath `artifacts/`. See
+[Offline Inf2Cat Package Validation](OFFLINE-INF2CAT-PACKAGE-VALIDATION.md).
+
+This closure does not authorize or prove signing trust, staging, installation,
+service or registry mutation, effective placement beneath `xusb22`, controller
+preservation, recovery, transport visibility, activation, input, or runtime
+behavior. No Driver Store entry or device stack was created or changed. Gate F
+remains operationally unresolved.
 
 ## 20. Primary references
 

@@ -41,10 +41,12 @@ These blockers are based on source review only. No legacy driver binary was load
 
 ## Package and installation blockers
 
-- The offline extension INF passes WDK declarative static validation, but no
-  catalog or complete package layout has been generated or validated.
-- The declared `ChatpadFilterExtension.cat` does not exist and no package or
-  binary is signed.
+- The offline extension INF passes WDK declarative static validation, and
+  unsigned offline package/catalog closure passes for the exact validated INF
+  and Release SYS. See
+  [Offline Inf2Cat Package Validation](OFFLINE-INF2CAT-PACKAGE-VALIDATION.md).
+- The generated catalog and Release SYS remain unsigned and untrusted; signing
+  policy and Windows package acceptance are unvalidated.
 - Static `AddFilter`/`FilterPosition=Lower` metadata does not prove effective
   placement beneath `xusb22` or preservation of ordinary controller behavior.
 - No package has been staged, installed, loaded, removed, or recovery-tested.
