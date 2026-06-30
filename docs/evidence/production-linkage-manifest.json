@@ -1,6 +1,12 @@
 {
   "checkpoint": "offline-kmdf-production-linkage",
-  "manifest_statement": "This manifest is bound by the implementation commit that adds it; it intentionally does not record that final commit hash.",
+  "manifest_statement": "The Git commit containing this manifest binds its contents; the manifest intentionally does not record that containing commit hash.",
+  "evidence_correction": {
+    "starting_branch": "feature/offline-kmdf-production-linkage",
+    "starting_commit": "90ca13f8babfc0c8fd1d14c998c1719e4788a5f6",
+    "branch": "feature/offline-production-linkage-evidence-fix",
+    "scope": "Evidence retention and documentation only; no build or regression suite was rerun."
+  },
   "starting_state": {
     "branch": "feature/offline-kmdf-production-integration-design",
     "commit": "033bd4fb4deff662ee9e3c2144d10decd27c8a03",
@@ -204,6 +210,250 @@
       "wdf_control_setup_release": "82A43D6AA0B6DFE9B8B8D69378984404FFE220E672326CF693F5D6145B4F948F"
     }
   },
+  "evidence_entry_defaults": {
+    "platform": "x64",
+    "configuration": "N/A",
+    "assertion_count": null,
+    "warning_count": null,
+    "error_count": null
+  },
+  "evidence_entries": [
+    {
+      "validation_id": "context_compile_check_debug",
+      "command": ".\\tools\\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-kmdf-context-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "468F4E6E699AC3DF298AF1FA06FD3F244E25210ED600908D08E3D6B2CBB88777",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "context_compile_check_release",
+      "command": ".\\tools\\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-kmdf-context-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "3BC67A8D076A008D7BA2C65C5B28C7200DDA12085F9F9066F233896DD1B89438",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "driver_build_debug",
+      "command": ".\\tools\\Build-Driver.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/build-debug-x64-20260630T150234Z.log",
+      "sha256": "5486E0204C8A38D28BAA6C75E1BED9FD828130BED69AF691CB43ACBCB97BF278",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "driver_build_release",
+      "command": ".\\tools\\Build-Driver.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/build-release-x64-20260630T150236Z.log",
+      "sha256": "C6AB3E1068DE836851E83F9968BA9015746E9CF26491B051A64F7C75A14EFFF0",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "full_solution_debug",
+      "command": "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\" C:\\Dev\\chatpad-super-driver\\ChatpadWin11.sln /nologo /m /t:Clean;Build /p:Configuration=Debug /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:RepoRoot=C:\\Dev\\chatpad-super-driver /verbosity:minimal /fileLogger /fileLoggerParameters:LogFile=artifacts\\logs\\full-solution-production-linkage-Debug-final-20260630T185423Z.log;Verbosity=diagnostic;Encoding=UTF-8",
+      "configuration": "Debug",
+      "path": "artifacts/logs/full-solution-production-linkage-Debug-final-20260630T185423Z.log",
+      "sha256": "6889FBE859D47039EE335F1AADDF4567E77ED31E5FCBC12BA28229889720FBB4",
+      "result": "PASS",
+      "warning_count": 0,
+      "error_count": 0
+    },
+    {
+      "validation_id": "full_solution_release",
+      "command": "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\" C:\\Dev\\chatpad-super-driver\\ChatpadWin11.sln /nologo /m /t:Clean;Build /p:Configuration=Release /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:RepoRoot=C:\\Dev\\chatpad-super-driver /verbosity:minimal /fileLogger /fileLoggerParameters:LogFile=artifacts\\logs\\full-solution-production-linkage-Release-final-20260630T185423Z.log;Verbosity=diagnostic;Encoding=UTF-8",
+      "configuration": "Release",
+      "path": "artifacts/logs/full-solution-production-linkage-Release-final-20260630T185423Z.log",
+      "sha256": "C3A9998FC1B3C05D7C95037B62D3F54BE130318DEBD51D75B7B2E90A7DC4037F",
+      "result": "PASS",
+      "warning_count": 0,
+      "error_count": 0
+    },
+    {
+      "validation_id": "production_linkage_semantic_guard_debug",
+      "command": ".\\tools\\Test-ChatpadProductionLinkage.ps1 -Configuration Debug -Platform x64 -BuildLogPath artifacts\\logs\\full-solution-production-linkage-Debug-final-20260630T185423Z.log",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-semantic-Debug-post-full-solution-20260630T185423Z.transcript.log",
+      "sha256": "4EE5FCAA1865D70E8D4DB0A7720A747D649451CC77D0356147AD17CFB73E6135",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "production_linkage_semantic_guard_release",
+      "command": ".\\tools\\Test-ChatpadProductionLinkage.ps1 -Configuration Release -Platform x64 -BuildLogPath artifacts\\logs\\full-solution-production-linkage-Release-final-20260630T185423Z.log",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-semantic-Release-post-full-solution-20260630T185423Z.transcript.log",
+      "sha256": "493E88798E6EDC7C99973D04D9CE5E7132A37DC3DC906EF734A2160270201DC3",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "request_owner_model_debug",
+      "command": ".\\tools\\Test-ChatpadRequestOwnerModel.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-regression-request-owner-model-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "65A27839BE76D0CA0F44B1FEFE27CAFA0F083A146C2564EF5E820ADEE2D2FE5B",
+      "result": "5002/5002",
+      "assertion_count": 5002
+    },
+    {
+      "validation_id": "request_owner_model_release",
+      "command": ".\\tools\\Test-ChatpadRequestOwnerModel.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-regression-request-owner-model-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "734E13DED3A1B41B34CDE57C1D8B3ABD3182562D9DEFAFADFEB8EA11160752B8",
+      "result": "5002/5002",
+      "assertion_count": 5002
+    },
+    {
+      "validation_id": "protocol_debug",
+      "command": ".\\tools\\Test-ChatpadProtocol.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-regression-protocol-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "96A20C1859A5799DDA954B6CC7740AE454C04CD24E0E1EEB989A53CDE49681E5",
+      "result": "610/610",
+      "assertion_count": 610
+    },
+    {
+      "validation_id": "protocol_release",
+      "command": ".\\tools\\Test-ChatpadProtocol.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-regression-protocol-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "BC2F83447C1E360D37A58331F37FD0CAEB4835F40029E40EEC4CBA68B70CCB70",
+      "result": "610/610",
+      "assertion_count": 610
+    },
+    {
+      "validation_id": "transport_debug",
+      "command": ".\\tools\\Test-ChatpadTransport.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-regression-transport-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "9FF6E1944BC8A07461FE228A0B03F8BE1F75FDBBBC69219278981100AD5F129A",
+      "result": "186/186",
+      "assertion_count": 186
+    },
+    {
+      "validation_id": "transport_release",
+      "command": ".\\tools\\Test-ChatpadTransport.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-regression-transport-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "5C871D7E425897385DE148225708AEE923ED3701C1D89B3104F32B27D38E800A",
+      "result": "186/186",
+      "assertion_count": 186
+    },
+    {
+      "validation_id": "filter_lifecycle_debug",
+      "command": ".\\tools\\Test-ChatpadFilterLifecycle.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-regression-filter-lifecycle-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "1CED708D04AF300731A031B82AB6F3015BB4C3A931BD85E97FF8707D4DA7A7E1",
+      "result": "109/109",
+      "assertion_count": 109
+    },
+    {
+      "validation_id": "filter_lifecycle_release",
+      "command": ".\\tools\\Test-ChatpadFilterLifecycle.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-regression-filter-lifecycle-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "0841461A505C97875F91621F503AF0E712436F81766C1F6192D47D5E35DDF346",
+      "result": "109/109",
+      "assertion_count": 109
+    },
+    {
+      "validation_id": "control_setup_debug",
+      "command": ".\\tools\\Test-ChatpadControlSetup.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-regression-control-setup-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "F7117818D4A587AE5CC020D77339143E86A40F43BEEE0776EB22AB9BCA5AD2B2",
+      "result": "141/141",
+      "assertion_count": 141
+    },
+    {
+      "validation_id": "control_setup_release",
+      "command": ".\\tools\\Test-ChatpadControlSetup.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-regression-control-setup-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "B1289191B238774CCE803F8BC757BD3930E569C92CFCEBBCDD515EF86C663680",
+      "result": "141/141",
+      "assertion_count": 141
+    },
+    {
+      "validation_id": "protocol_kernel_compatibility_debug",
+      "command": ".\\tools\\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-regression-protocol-kernel-compatibility-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "02C5E059733B1A7AE744FF5CC4AC15F94A3894E29F3A749F7945E6AADAB18CBE",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "protocol_kernel_compatibility_release",
+      "command": ".\\tools\\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-regression-protocol-kernel-compatibility-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "1FD1AB422E5635FB8621923FD1A1E2EDC5C074536C31B54E0BA3313BF10F2256",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "wdf_control_setup_debug",
+      "command": ".\\tools\\Test-ChatpadWdfControlSetup.ps1 -Configuration Debug -Platform x64",
+      "configuration": "Debug",
+      "path": "artifacts/logs/production-linkage-regression-wdf-control-setup-Debug-final-20260630T185423Z.transcript.log",
+      "sha256": "EC3ED7948A6FF1D9FB7F042C49F2E3039C8F83C765896E98763C0787FCD490A5",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "wdf_control_setup_release",
+      "command": ".\\tools\\Test-ChatpadWdfControlSetup.ps1 -Configuration Release -Platform x64",
+      "configuration": "Release",
+      "path": "artifacts/logs/production-linkage-regression-wdf-control-setup-Release-final-20260630T185423Z.transcript.log",
+      "sha256": "82A43D6AA0B6DFE9B8B8D69378984404FFE220E672326CF693F5D6145B4F948F",
+      "result": "PASS"
+    },
+    {
+      "validation_id": "repository_safety",
+      "command": ".\\tools\\Test-RepositorySafety.ps1",
+      "platform": "N/A",
+      "path": "artifacts/logs/production-linkage-evidence-repository-safety.transcript.log",
+      "sha256": "81E7D980CCC45AF9E6DFDBDC6F25D072A0F4BF0FE613872DA9C90D1A2ED2AA06",
+      "result": "PASS",
+      "exit_code": 0
+    },
+    {
+      "validation_id": "markdown_links",
+      "command": "PowerShell inline tracked-Markdown relative-link validator; exact command sequence is retained in the transcript",
+      "platform": "N/A",
+      "path": "artifacts/logs/production-linkage-evidence-markdown-links.transcript.log",
+      "sha256": "DECE079888628A59FB1B50E6147F93EB0F7815838A46FF4D2C46175614B20094",
+      "result": "PASS",
+      "exit_code": 0
+    },
+    {
+      "validation_id": "manifest_json_parse",
+      "command": "Get-Content -Raw docs/evidence/production-linkage-manifest.json | ConvertFrom-Json | Out-Null",
+      "platform": "N/A",
+      "path": "artifacts/logs/production-linkage-evidence-json-parse.transcript.log",
+      "sha256": "C63977C78466266948B7CE9160539522E628FAA7D7A26C8B463C1C472FE302DD",
+      "result": "PASS",
+      "exit_code": 0
+    },
+    {
+      "validation_id": "unstaged_diff_check",
+      "command": "git diff --check",
+      "platform": "N/A",
+      "path": "artifacts/logs/production-linkage-evidence-unstaged-diff-check.transcript.log",
+      "sha256": "879CF54F2E5535E47BFC633490538DB3C9235C44A4ADF00B3EF23CCBED7823B3",
+      "result": "PASS",
+      "exit_code": 0
+    },
+    {
+      "validation_id": "staged_diff_check",
+      "command": "git diff --cached --check",
+      "platform": "N/A",
+      "path": "artifacts/logs/production-linkage-evidence-staged-diff-check.transcript.log",
+      "sha256": "A399BC4AEA5F2817A54B8874BC2037D844428042FB7EB13FA30FF30F253D092D",
+      "result": "PASS",
+      "exit_code": 0
+    }
+  ],
   "rejected_evidence": [
     {
       "attempt": "initial production linkage semantic guard",

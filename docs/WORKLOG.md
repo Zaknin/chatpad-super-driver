@@ -3410,3 +3410,49 @@
   checkpoint. Owner embedding, ordinary owner initialization, dormant
   orchestration invocation, WDF object creation, target/request operations,
   signing, installation, loading, and hardware testing remain unauthorized.
+
+## 2026-06-30 - Production-linkage evidence-retention correction
+
+- **Task title/objective:** Complete the retained-evidence record for the
+  audited project-linkage-only KMDF production checkpoint without changing the
+  linkage implementation or rerunning builds/regression suites.
+- **Starting branch/commit:** Began on
+  `feature/offline-kmdf-production-linkage` at
+  `90ca13f8babfc0c8fd1d14c998c1719e4788a5f6`, parent
+  `033bd4fb4deff662ee9e3c2144d10decd27c8a03`, subject
+  `build: link dormant request owner library`, with synchronized upstream and
+  clean worktree/index. Created
+  `feature/offline-production-linkage-evidence-fix`.
+- **Investigation:** Confirmed all 22 historical context/build/full-solution,
+  semantic, and regression retained logs exist and match the hashes already in
+  the manifest. Revalidated existing Debug/Release driver and context-library
+  artifacts by size and SHA-256 without rebuilding.
+- **Files created:** `docs/OFFLINE-PRODUCTION-LINKAGE-EVIDENCE-CORRECTION.md`.
+- **Files modified:** `docs/evidence/production-linkage-manifest.json`,
+  `docs/OFFLINE-KMDF-PRODUCTION-LINKAGE.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and `docs/WORKLOG.md`.
+- **Manifest correction:** Added a backward-compatible structured evidence
+  array with exact wrapper/command, configuration, path, SHA-256, observed
+  result, and applicable assertion or warning/error counts. Added hash-bound
+  entries for repository safety, Markdown links, final JSON parsing, and
+  unstaged/staged diff checks.
+- **Validation:** All 22 historical retained logs matched. Repository safety,
+  six-file Markdown-link validation, final JSON parsing, `git diff --check`,
+  and `git diff --cached --check` passed. The final manifest contains 27
+  evidence entries, and every path/hash pair matched after staging.
+- **Artifacts:** Newly generated deterministic transcripts remain ignored
+  under `artifacts/logs`; no artifact is staged or committed.
+- **Safety:** No build, compiler, regression wrapper, source/header,
+  project/solution, script/test, INF/signing/package/deployment/recovery,
+  helper, WDF object, target/request, installation/loading, Windows mutation,
+  hardware query, or controller/Chatpad action occurred.
+- **Remaining limitations:** The semantic wrapper remains targeted and
+  regex/text based, and historical evidence does not prove runtime execution.
+- **Commit/push:** Commit exactly
+  `docs: complete production linkage evidence` and push only
+  `origin/feature/offline-production-linkage-evidence-fix`; final hash is
+  reported after commit.
+- **Next gate:** Independent read-only audit of the corrected evidence
+  manifest. Only after PASS may the separately gated owner-embedding and
+  ordinary-initialization design slice be considered.

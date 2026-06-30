@@ -1,16 +1,18 @@
 # Project State
 
-*Last updated: 2026-06-30 (production linkage checkpoint)*
+*Last updated: 2026-06-30 (production linkage evidence correction)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-production-linkage`.
-- **Expected checkpoint commit:** `build: link dormant request owner library`,
-  created from `033bd4fb4deff662ee9e3c2144d10decd27c8a03`.
+- **Branch:** `feature/offline-production-linkage-evidence-fix`.
+- **Starting checkpoint:** `90ca13f8babfc0c8fd1d14c998c1719e4788a5f6`,
+  `build: link dormant request owner library`.
 - **Authoritative production linkage checkpoint:**
   [Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md).
 - **Evidence manifest:**
   [production-linkage-manifest.json](evidence/production-linkage-manifest.json).
+- **Evidence correction:**
+  [Offline Production Linkage Evidence Correction](OFFLINE-PRODUCTION-LINKAGE-EVIDENCE-CORRECTION.md).
 - **Implementation:** `ChatpadFilter.vcxproj` has exactly one native
   project-reference dependency on the existing
   `ChatpadKmdfRequestOwnerContext` static-library project. The dependency uses
@@ -26,10 +28,10 @@
   `0 Warning(s)` and `0 Error(s)`. Final driver images are unsigned and contain
   no retained request-owner symbols and no new WDF object-management imports
   from the unused static library.
-- **Validation state:** Repository safety, context compile-check,
-  `Build-Driver.ps1`, production-linkage semantic guard, full solution,
-  request-owner model, protocol, transport, lifecycle, control setup, protocol
-  kernel compatibility, and WDF control setup all passed in Debug and Release.
+- **Validation state:** All 22 historical build/regression retained logs exist
+  and match their manifest SHA-256 values. The correction adds deterministic
+  hash-bound transcripts for repository safety, Markdown links, JSON parsing,
+  and unstaged/staged diff checks. No build or regression suite was rerun.
 - **Safety:** Project linkage is complete only as dormant build/link
   availability. Target discovery, request formatting/submission, completion,
   cancellation, D0 rundown, INF/package/signing, staging, installation,

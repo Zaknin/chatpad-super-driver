@@ -133,6 +133,11 @@ Final validation passed:
 Evidence manifest:
 `docs/evidence/production-linkage-manifest.json`.
 
+The manifest's retained-evidence fields were completed by the
+[Offline Production Linkage Evidence Correction](OFFLINE-PRODUCTION-LINKAGE-EVIDENCE-CORRECTION.md).
+That correction adds exact command names and hash-bound paths without changing
+the linkage implementation or rerunning builds and regression suites.
+
 ## Known limitations
 
 The semantic guard uses targeted XML, text, import, and symbol checks. It
@@ -141,5 +146,5 @@ itself. The checkpoint relies on the paired MSBuild logs, linker tlogs,
 `dumpbin` import/symbol inspection, regression suite, and complete diff review
 for the proof boundary.
 
-The next safe task is an independent read-only audit of this project-linkage
-checkpoint before any owner embedding or runtime behavior change.
+The next safe task is an independent read-only audit of the corrected evidence
+manifest before any owner embedding or ordinary initialization.

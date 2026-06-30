@@ -702,8 +702,11 @@ artifact hashes, repository-safety result, Markdown-link result, and diff-check
 result. Full logs remain ignored and must not be committed.
 
 A tracked manifest cryptographically binds expected retained-log contents to
-the Git commit even though ignored log files remain mutable. This design-only
-task does not create the manifest framework.
+the Git commit even though ignored log files remain mutable. The containing
+commit supplies the final Git tree identity; a manifest does not record its own
+commit hash because doing so would be self-referential. The linkage checkpoint
+created the manifest, and the later evidence-correction checkpoint completed
+its command, path, result, and hash fields.
 
 ## 27. Future implementation decomposition
 
