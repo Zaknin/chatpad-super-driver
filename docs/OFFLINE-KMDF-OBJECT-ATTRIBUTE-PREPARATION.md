@@ -65,3 +65,7 @@ access remain absent.
 [Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
 now uses both request-parented memory attribute helpers with the exact reusable
 request. No memory context or cleanup/destroy callback was introduced.
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+relies on that parentage: deleting the request initiates deletion of both
+memory children without individual memory deletion or new callbacks.

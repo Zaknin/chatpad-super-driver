@@ -157,6 +157,11 @@ independent engineering gate is partial-creation rollback orchestration. This
 does not authorize production linkage, request execution, deployment, or
 hardware validation.
 
+The isolated rollback gate now compiles request-first/spinlock-second deletion
+without execution. The next separately authorized slice is full dormant
+creation orchestration with rollback and final non-runtime owner-ready
+publication; it still does not authorize production linkage or deployment.
+
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`
 binding without changing class-wide filter state or disabling Secure Boot or

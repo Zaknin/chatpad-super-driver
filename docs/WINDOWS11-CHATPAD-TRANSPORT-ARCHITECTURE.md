@@ -820,3 +820,10 @@ No helper is invoked by `ChatpadFilter`; runtime behavior and the active device
 context remain unchanged. Rollback, owner-ready publication, target discovery,
 request operations, installation, and hardware interaction remain separate
 gates.
+
+## 38. KMDF dormant partial-creation rollback checkpoint
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+compiles exact reverse-order rollback for pre-ready partial creation. Request
+parentage owns both memory children; the spinlock is deleted independently
+afterward. `ChatpadFilter` remains unchanged and contains no delete import.

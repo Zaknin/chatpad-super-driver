@@ -705,3 +705,10 @@ non-admitting.
 
 The helpers remain unlinked and uninvoked. No bridge target, formatting,
 submission, callback, rollback, readiness, or hardware path exists.
+
+## 37. KMDF dormant partial-creation rollback checkpoint
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+compiles request-tree then spinlock deletion and deterministic owner
+publication clearing. The pure bridge model remains non-admitting and no
+runtime bridge, target, callback, or request operation is added.

@@ -119,6 +119,37 @@ typedef enum ChatpadKmdfRequestOwnerCreationResult {
     CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_OR_INCONSISTENT_STATE
 } ChatpadKmdfRequestOwnerCreationResult;
 
+typedef enum ChatpadKmdfRequestOwnerRollbackState {
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_INVALID = 0,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_CLEAN_MODEL_READY,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_LOCK_CREATED,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_LOCK_REQUEST_CREATED,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_OUTBOUND_MEMORY_CREATED,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ALL_MEMORY_CREATED,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_OWNER_READY,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ACTIVE_OPERATION_OR_LIFECYCLE
+} ChatpadKmdfRequestOwnerRollbackState;
+
+typedef enum ChatpadKmdfRequestOwnerRollbackResult {
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK = 0,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ALREADY_CLEAN,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_NULL_OWNER,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_NULL_STATE,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_NULL_EFFECTS,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_SIGNATURE,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_UNSUPPORTED_VERSION,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_INITIALIZATION_MASK,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OWNER_READY,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ACTIVE_OPERATION_OR_LIFECYCLE,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INCONSISTENT_REQUEST_STATE,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INCONSISTENT_MEMORY_STATE,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INCONSISTENT_LOCK_STATE,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_MODEL_STATE,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_POST_ROLLBACK_INVARIANT_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_UNSUPPORTED_OR_INCONSISTENT_STATE
+} ChatpadKmdfRequestOwnerRollbackResult;
+
 typedef struct ChatpadKmdfActivationTransferStorage {
     uint8_t OutboundBytes[CHATPAD_KMDF_ACTIVATION_OUTBOUND_CAPACITY];
     uint8_t InboundBytes[CHATPAD_KMDF_ACTIVATION_INBOUND_CAPACITY];
@@ -166,6 +197,16 @@ typedef struct ChatpadKmdfRequestOwnerStorageValidation {
     ChatpadRequestOwnerInvariantResult ModelInvariantResult;
     ChatpadRequestOwnerSnapshot ModelSnapshot;
 } ChatpadKmdfRequestOwnerStorageValidation;
+
+typedef struct ChatpadKmdfRequestOwnerRollbackEffects {
+    ULONG PriorInitializationMask;
+    ULONG ResultingInitializationMask;
+    UCHAR RequestHierarchyDeletionInitiated;
+    UCHAR SpinlockDeletionInitiated;
+    UCHAR OutboundMemoryRepresented;
+    UCHAR InboundMemoryRepresented;
+    UCHAR AlreadyClean;
+} ChatpadKmdfRequestOwnerRollbackEffects;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(
     ChatpadKmdfActivationRequestContext,
@@ -225,6 +266,16 @@ ChatpadKmdfRequestOwnerCreationResult
 ChatpadKmdfRequestOwnerCreateInboundMemory(
     ChatpadKmdfActivationRequestOwner *owner,
     NTSTATUS *frameworkStatus);
+
+ChatpadKmdfRequestOwnerRollbackResult
+ChatpadKmdfRequestOwnerClassifyRollbackState(
+    const ChatpadKmdfActivationRequestOwner *owner,
+    ChatpadKmdfRequestOwnerRollbackState *state);
+
+ChatpadKmdfRequestOwnerRollbackResult
+ChatpadKmdfRequestOwnerRollbackPartialCreation(
+    ChatpadKmdfActivationRequestOwner *owner,
+    ChatpadKmdfRequestOwnerRollbackEffects *effects);
 
 #ifdef __cplusplus
 }

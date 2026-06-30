@@ -143,3 +143,7 @@ of the checkpoint.
 now compiles request-parented descriptors over the unchanged fixed arrays.
 Creation does not clear or populate the arrays, owner-ready remains unset, and
 validation executes no creation helper.
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+preserves the ordinary arrays and pure-model baseline while clearing framework
+publication and adding the existing `FAULTED` diagnostic bit.

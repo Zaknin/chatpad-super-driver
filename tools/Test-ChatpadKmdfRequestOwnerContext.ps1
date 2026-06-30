@@ -108,24 +108,26 @@ function Test-RequestOwnerContextSemanticGuards {
 
     $contextSourceText = Remove-CComments ([System.IO.File]::ReadAllText($contextSource))
     $compileSourceText = Remove-CComments ([System.IO.File]::ReadAllText($compileSource))
-    $prohibitedCalls = '(?<![A-Za-z0-9_])(?:WdfDeviceCreate|WdfMemoryCreate|WdfObjectAllocateContext|WdfObjectDelete|WdfObjectReference|WdfObjectDereference|WdfWaitLockCreate|WdfUsbTargetDeviceCreate|WdfUsbTargetDeviceCreateWithParameters|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfIoTargetFormatRequestForInternalIoctlOthers|WdfRequestReuse|WdfRequestSend|WdfRequestCancelSentRequest|WdfRequestSetCompletionRoutine|WdfIoTargetStart|WdfIoTargetStop|IoCallDriver)\s*\('
+    $prohibitedCalls = '(?<![A-Za-z0-9_])(?:WdfDeviceCreate|WdfMemoryCreate|WdfObjectAllocateContext|WdfObjectReference|WdfObjectDereference|WdfWaitLockCreate|WdfUsbTargetDeviceCreate|WdfUsbTargetDeviceCreateWithParameters|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfIoTargetFormatRequestForInternalIoctlOthers|WdfRequestReuse|WdfRequestSend|WdfRequestCancelSentRequest|WdfRequestSetCompletionRoutine|WdfIoTargetStart|WdfIoTargetStop|IoCallDriver)\s*\('
     if ($joinedCode -match $prohibitedCalls) {
         throw "Prohibited WDF/WDM runtime call exists in context code: $($Matches[0])"
     }
     $spinLockCreateCount = [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])WdfSpinLockCreate\s*\(').Count
     $requestCreateCount = [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])WdfRequestCreate\s*\(').Count
     $preallocatedMemoryCreateCount = [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])WdfMemoryCreatePreallocated\s*\(').Count
+    $objectDeleteCount = [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])WdfObjectDelete\s*\(').Count
     if ($spinLockCreateCount -ne 1 -or
         $requestCreateCount -ne 1 -or
-        $preallocatedMemoryCreateCount -ne 2) {
-        throw "Expected exactly one WdfSpinLockCreate, one WdfRequestCreate, and two WdfMemoryCreatePreallocated calls; found $spinLockCreateCount, $requestCreateCount, and $preallocatedMemoryCreateCount."
+        $preallocatedMemoryCreateCount -ne 2 -or
+        $objectDeleteCount -ne 2) {
+        throw "Expected creation/delete counts 1/1/2/2; found $spinLockCreateCount/$requestCreateCount/$preallocatedMemoryCreateCount/$objectDeleteCount."
     }
     $allWdfCalls = @(
         [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])(Wdf[A-Za-z0-9_]+)\s*\(') |
             ForEach-Object { $_.Groups[1].Value })
     $unauthorizedWdfCalls = @(
         $allWdfCalls |
-            Where-Object { $_ -notin @('WdfSpinLockCreate', 'WdfRequestCreate', 'WdfMemoryCreatePreallocated') } |
+            Where-Object { $_ -notin @('WdfSpinLockCreate', 'WdfRequestCreate', 'WdfMemoryCreatePreallocated', 'WdfObjectDelete') } |
             Sort-Object -Unique)
     if ($unauthorizedWdfCalls.Count -ne 0) {
         throw "Unauthorized WDF call exists in production context source: $($unauthorizedWdfCalls -join ', ')"
@@ -252,6 +254,8 @@ function Test-RequestOwnerContextSemanticGuards {
     $requestHelperName = 'ChatpadKmdfRequestOwnerCreateReusableRequest'
     $outboundMemoryHelperName = 'ChatpadKmdfRequestOwnerCreateOutboundMemory'
     $inboundMemoryHelperName = 'ChatpadKmdfRequestOwnerCreateInboundMemory'
+    $rollbackClassifierName = 'ChatpadKmdfRequestOwnerClassifyRollbackState'
+    $rollbackHelperName = 'ChatpadKmdfRequestOwnerRollbackPartialCreation'
     $spinLockHelperStart = $contextSourceText.IndexOf(
         $spinLockHelperName + '(',
         [System.StringComparison]::Ordinal)
@@ -264,10 +268,18 @@ function Test-RequestOwnerContextSemanticGuards {
     $inboundMemoryHelperStart = $contextSourceText.IndexOf(
         $inboundMemoryHelperName + '(',
         [System.StringComparison]::Ordinal)
+    $rollbackClassifierStart = $contextSourceText.IndexOf(
+        $rollbackClassifierName + '(',
+        [System.StringComparison]::Ordinal)
+    $rollbackHelperStart = $contextSourceText.IndexOf(
+        $rollbackHelperName + '(',
+        [System.StringComparison]::Ordinal)
     if ($spinLockHelperStart -lt 0 -or
         $requestHelperStart -le $spinLockHelperStart -or
         $outboundMemoryHelperStart -le $requestHelperStart -or
-        $inboundMemoryHelperStart -le $outboundMemoryHelperStart) {
+        $inboundMemoryHelperStart -le $outboundMemoryHelperStart -or
+        $rollbackClassifierStart -le $inboundMemoryHelperStart -or
+        $rollbackHelperStart -le $rollbackClassifierStart) {
         throw 'Independent dormant creation helper definitions are missing or out of order.'
     }
     $spinLockHelperText = $contextSourceText.Substring(
@@ -279,7 +291,13 @@ function Test-RequestOwnerContextSemanticGuards {
     $outboundMemoryHelperText = $contextSourceText.Substring(
         $outboundMemoryHelperStart,
         $inboundMemoryHelperStart - $outboundMemoryHelperStart)
-    $inboundMemoryHelperText = $contextSourceText.Substring($inboundMemoryHelperStart)
+    $inboundMemoryHelperText = $contextSourceText.Substring(
+        $inboundMemoryHelperStart,
+        $rollbackClassifierStart - $inboundMemoryHelperStart)
+    $rollbackClassifierText = $contextSourceText.Substring(
+        $rollbackClassifierStart,
+        $rollbackHelperStart - $rollbackClassifierStart)
+    $rollbackHelperText = $contextSourceText.Substring($rollbackHelperStart)
 
     if ([regex]::Matches($spinLockHelperText, 'WdfSpinLockCreate\s*\(').Count -ne 1 -or
         $spinLockHelperText -match 'WdfRequestCreate\s*\(' -or
@@ -304,6 +322,34 @@ function Test-RequestOwnerContextSemanticGuards {
         $inboundMemoryHelperText -match [regex]::Escape($spinLockHelperName) -or
         $inboundMemoryHelperText -match [regex]::Escape($requestHelperName)) {
         throw 'Inbound memory helper does not remain an independent one-object creation operation.'
+    }
+    if ($rollbackClassifierText -match '(?<![A-Za-z0-9_])Wdf[A-Za-z0-9_]+\s*\(') {
+        throw 'Rollback source-state classification calls a WDF API.'
+    }
+    if ([regex]::Matches($rollbackHelperText, 'WdfObjectDelete\s*\(\s*request\s*\)').Count -ne 1 -or
+        [regex]::Matches($rollbackHelperText, 'WdfObjectDelete\s*\(\s*spinlock\s*\)').Count -ne 1 -or
+        $rollbackHelperText -match 'WdfObjectDelete\s*\(\s*(?:owner->)?(?:OutboundMemory|InboundMemory)') {
+        throw 'Rollback must delete only the request hierarchy and spinlock exactly once.'
+    }
+    if ($rollbackHelperText.IndexOf('WdfObjectDelete(request)', [System.StringComparison]::Ordinal) -ge
+        $rollbackHelperText.IndexOf('WdfObjectDelete(spinlock)', [System.StringComparison]::Ordinal)) {
+        throw 'Rollback deletion order is not request hierarchy before spinlock.'
+    }
+    if ($rollbackHelperText -notmatch '(?s)WdfObjectDelete\s*\(\s*request\s*\).*owner->Request\s*=\s*NULL.*owner->OutboundMemory\s*=\s*NULL.*owner->InboundMemory\s*=\s*NULL' -or
+        $rollbackHelperText -notmatch '(?s)WdfObjectDelete\s*\(\s*spinlock\s*\).*owner->BookkeepingLock\s*=\s*NULL' -or
+        $rollbackHelperText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_CREATED_INIT_MASK' -or
+        $rollbackHelperText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED') {
+        throw 'Rollback publication clearing or faulted post-state is incomplete.'
+    }
+    foreach ($creationHelper in @($spinLockHelperName, $requestHelperName, $outboundMemoryHelperName, $inboundMemoryHelperName)) {
+        if ($rollbackHelperText -match ([regex]::Escape($creationHelper) + '\s*\(')) {
+            throw "Rollback invokes creation helper: $creationHelper"
+        }
+    }
+    if ($rollbackHelperText -notmatch 'RtlZeroMemory\s*\(\s*effects\s*,\s*sizeof\(\*effects\)\s*\)' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ALREADY_CLEAN') {
+        throw 'Rollback effects clearing, idempotence, or post-state surface is incomplete.'
     }
     if ($spinLockHelperText -notmatch 'ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes\s*\(' -or
         $requestHelperText -notmatch 'ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes\s*\(' -or
@@ -378,7 +424,8 @@ function Test-RequestOwnerContextSemanticGuards {
                 'CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED',
                 'CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED',
                 'CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED',
-                'CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED')) {
+                'CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED',
+                'CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED')) {
             throw "Dormant creation assigns an unauthorized initialization bit: $assignedValue"
         }
     }
@@ -391,15 +438,18 @@ function Test-RequestOwnerContextSemanticGuards {
     if ($compileSourceText -match ([regex]::Escape($spinLockHelperName) + '\s*\(') -or
         $compileSourceText -match ([regex]::Escape($requestHelperName) + '\s*\(') -or
         $compileSourceText -match ([regex]::Escape($outboundMemoryHelperName) + '\s*\(') -or
-        $compileSourceText -match ([regex]::Escape($inboundMemoryHelperName) + '\s*\(')) {
+        $compileSourceText -match ([regex]::Escape($inboundMemoryHelperName) + '\s*\(') -or
+        $compileSourceText -match ([regex]::Escape($rollbackHelperName) + '\s*\(')) {
         throw 'Compile-check invokes a dormant creation helper instead of checking its signature only.'
     }
     if ($compileSourceText -notmatch 'spinLockCreation\s*=\s*ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock' -or
         $compileSourceText -notmatch 'requestCreation\s*=\s*ChatpadKmdfRequestOwnerCreateReusableRequest' -or
         $compileSourceText -notmatch 'outboundMemoryCreation\s*=\s*ChatpadKmdfRequestOwnerCreateOutboundMemory' -or
         $compileSourceText -notmatch 'inboundMemoryCreation\s*=\s*ChatpadKmdfRequestOwnerCreateInboundMemory' -or
-        $compileSourceText -notmatch 'creationValidation\s*=\s*ChatpadKmdfRequestOwnerValidateCreationState') {
-        throw 'Compile-check does not prove the creation and partial-validation signatures without invocation.'
+        $compileSourceText -notmatch 'creationValidation\s*=\s*ChatpadKmdfRequestOwnerValidateCreationState' -or
+        $compileSourceText -notmatch 'rollbackClassification\s*=\s*ChatpadKmdfRequestOwnerClassifyRollbackState' -or
+        $compileSourceText -notmatch 'rollback\s*=\s*ChatpadKmdfRequestOwnerRollbackPartialCreation') {
+        throw 'Compile-check does not prove creation, rollback, and validation signatures without invocation.'
     }
 
     [xml]$contextXml = Get-Content -LiteralPath $contextProject -Raw
@@ -445,7 +495,7 @@ function Test-RequestOwnerContextSemanticGuards {
         throw "Active ChatpadFilter source references the context module: $($activeDriverMatches -join ', ')"
     }
 
-    Write-Output ("Semantic guard: PASS (authorized creation calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}; exact request parentage and owner-array sizes, independent dormant helpers, partial-state validation, no deletion/rollback/request-execution/runtime-driver linkage)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount)
+    Write-Output ("Semantic guard: PASS (authorized calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; request-before-spinlock rollback, parent-owned memory cleanup, deterministic clearing, no execution/runtime-driver linkage)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

@@ -306,3 +306,10 @@ exact two-byte owner arrays. The owner remains authoritative for both handles;
 the typed request context gains no duplicate fields and stays inactive.
 Validation accepts outbound-only and both-memory-created partial states without
 publishing owner-ready or executing a framework call.
+
+## Follow-on partial-creation rollback
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+compiles a non-mutating source-state classifier and request-first/spinlock-
+second rollback. It does not dereference the typed request context after
+deletion begins, add callbacks, or execute a framework call during validation.

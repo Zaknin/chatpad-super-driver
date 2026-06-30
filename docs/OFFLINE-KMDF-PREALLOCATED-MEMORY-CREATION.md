@@ -181,3 +181,8 @@ placement, or a usable driver.
 
 The next independently gated slice is rollback orchestration for partial
 creation failure. This checkpoint does not authorize it.
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+now compiles that reverse-order helper. It initiates request-tree deletion
+before spinlock deletion, clears publication, retains `MODEL_READY | FAULTED`,
+and never executes during validation.

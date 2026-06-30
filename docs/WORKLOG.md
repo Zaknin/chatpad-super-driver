@@ -2998,3 +2998,80 @@
   reported after commit rather than embedded here.
 - **Next gate:** Independently authorized reverse-order rollback orchestration
   for partial creation failure. It is not implemented or authorized here.
+
+## 2026-06-30 14:04 +04:00 - Dormant KMDF partial-creation rollback checkpoint
+
+- **Objective/start:** Implement compile-only reverse-order rollback for valid
+  pre-ready request-owner creation states. Verified exact start branch
+  `feature/offline-kmdf-memory-creation`, HEAD
+  `142f8e11bebac78cf2e10367c96d3b409d9c8db7`, parent
+  `9bd3a8e0ce6a94a5d6c7f6d45d2ca651d50ea497`, matching upstream and clean
+  worktree/index; then created `feature/offline-kmdf-creation-rollback`.
+- **Investigation:** Inspected the complete object graph/rollback design, all
+  four creation helpers, mask/handle states, pure-model baseline and active
+  markers, request context, compile target, driver dormancy, and installed
+  KMDF 1.15 `WdfObjectDelete`. The API returns `VOID`, accepts `WDFOBJECT`, and
+  is valid through `DISPATCH_LEVEL`; no contract conflict exists.
+- **Implementation:** Added typed rollback state/result/effects surfaces,
+  non-mutating `ChatpadKmdfRequestOwnerClassifyRollbackState`, and
+  `ChatpadKmdfRequestOwnerRollbackPartialCreation`. Classification rejects
+  ready/draining/active/invalid/inconsistent states without dereferencing WDF
+  handles. Effects clear before validation and contain no handle.
+- **Deletion/publication order:** Snapshot request/spinlock; initiate request
+  deletion once; clear request and memory handles/bits; initiate spinlock
+  deletion once; clear lock handle/bit; publish exact `MODEL_READY | FAULTED`.
+  Memory children are owned by request deletion and are never individually
+  deleted. No request/context access occurs after deletion begins.
+- **Post-state/idempotence:** Arrays, completion storage, and pure model remain
+  unchanged in the unavailable/non-admitting baseline. Clean `MODEL_READY` and
+  rolled-back `MODEL_READY | FAULTED` return `ALREADY_CLEAN` without a WDF
+  call. Inconsistent states receive no best-effort deletion.
+- **Compile-check/guard:** Address-only compile checks cover classifier and
+  rollback APIs. Final semantic counts are `WdfSpinLockCreate=1`,
+  `WdfRequestCreate=1`, `WdfMemoryCreatePreallocated=2`, and
+  `WdfObjectDelete=2`; guards enforce request-before-spinlock deletion, no
+  individual memory delete, deterministic clearing, no creation call from
+  rollback, and no driver linkage.
+- **Failed guard run:** The first Debug wrapper stopped before compilation
+  because the prior global bit-publication allowlist rejected rollback's
+  authorized `FAULTED` bit. The allowlist was narrowed to include only that
+  existing diagnostic bit in addition to creation bits; the repeated Debug and
+  Release runs passed.
+- **Context/full solution evidence:** Context logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Debug-20260630T100041Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Release-20260630T100050Z.log`.
+  Full solution logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-creation-rollback-Debug-20260630T100146Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-creation-rollback-Release-20260630T100150Z.log`
+  contain zero warnings/errors. Final context/compile-check hashes are Debug
+  `F4471A0130677D9537F2CA21AC7D16BC2A8ADA3C6C22B91DDD7D9DDC9E90D55E` /
+  `0A3756E170C8959D38ABC38E7AE88C3CB13C215DE2214D7F35A1079057027CB8`
+  and Release
+  `3ACBAAF95B32A33B4E853696216D2CC1B9A947D4A55799B5D2CD31DC435918BF` /
+  `E6AAFA8714A58E729A664CDC95C054A747B0E403917DA3B5729EBAEC60A2DC46`.
+- **Regressions:** Serial Debug/Release request-owner `5002/5002`, protocol
+  `610/610`, transport `186/186`, lifecycle `109/109`, control setup
+  `141/141`, kernel compatibility, WDF control setup, and driver builds all
+  passed. Logs span `20260630T100115Z` through `20260630T100134Z`.
+- **Driver evidence:** Debug
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  15,872 bytes, SHA-256
+  `88C7C43120D5C36BDE379CC1B463A9BDDEFD46A5BC1992456B6F9CF7CAC2452A`,
+  `NotSigned`; Release
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  12,288 bytes, SHA-256
+  `A75A7CEAB6536E422019B4020B3CF5D47419FECC429321B25445F98F4C45650A`,
+  `NotSigned`. Both contain zero rollback/`WdfObjectDelete` import matches.
+- **Safety:** Rollback deletion calls were compiled but never executed; no WDF
+  object was deleted. No creation helper, production linkage, normal teardown,
+  target/request operation, InfVerif/Inf2Cat executable, signing, package/driver
+  staging, installation, loading, Windows/device/controller action, elevation,
+  or network operation occurred. Generated outputs remain ignored beneath
+  `artifacts/`.
+- **Commit/push:** Commit exactly `driver: define dormant creation rollback`
+  and push only `origin/feature/offline-kmdf-creation-rollback`; final hash is
+  reported after commit.
+- **Next gate:** Full dormant creation orchestration with rollback and final
+  non-runtime `OWNER_READY` publication; not authorized here.

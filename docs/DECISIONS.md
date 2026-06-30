@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Roll back partial creation through request-parent ownership
+
+**Decision:** Pre-ready initialization rollback deletes the reusable request
+hierarchy first and the independent bookkeeping spinlock second. Deleting the
+request owns deletion of both memory children; memory objects are never deleted
+individually. Owner publication is cleared immediately after each deletion is
+initiated, and the resulting mask is exactly `MODEL_READY | FAULTED`.
+
+**Rationale:** Request-parent deletion avoids sibling-order assumptions and
+matches the selected object graph. Retaining `FAULTED` preserves diagnostic
+failure while clearing all live-object publication. The pre-ready/no-operation
+gate makes immediate handle/bit invalidation safe without synchronization.
+
+**Alternatives rejected:** Individual memory deletion duplicates parent
+ownership; best-effort cleanup of inconsistent handles guesses ownership;
+returning to plain `MODEL_READY` erases failure state; normal-cleanup callbacks
+would conflate initialization rollback with operation rundown.
+
+**Consequences:** Clean and already rolled-back owners are idempotent. Invalid,
+ready, draining, active, or inconsistent owners are rejected without deletion.
+Full creation orchestration and owner-ready publication remain separately
+gated.
+
+---
+
 ## 2026-06-30 - Keep preallocated-memory creation independent and owner-authoritative
 
 **Decision:** The isolated module compiles two independent

@@ -214,3 +214,7 @@ The next slice is now documented by
 [Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md).
 It compiles independent outbound and inbound one-object helpers without
 execution. Rollback orchestration remains the next independent gate.
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+now compiles request-first then spinlock rollback for every valid partial
+state. The helper remains uninvoked and does not implement normal teardown.

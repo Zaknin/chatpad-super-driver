@@ -647,3 +647,13 @@ remains unset.
 The checkpoint deliberately stops before this design's rollback strategy.
 Neither helper deletes another object, and no orchestrator, callback, target,
 request operation, production linkage, or live framework graph exists.
+
+## 24. Dormant partial-creation rollback checkpoint
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+implements this design's reverse-order initialization-failure rollback in the
+isolated static library. It initiates request-parent deletion before spinlock
+deletion, clears owner publication, and preserves `MODEL_READY | FAULTED`.
+
+It is not normal cleanup and cannot run for ready, draining, active, or
+inconsistent owners. No callback or production linkage is introduced.

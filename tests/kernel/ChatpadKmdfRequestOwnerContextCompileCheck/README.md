@@ -20,3 +20,8 @@ This is a static-library compile-check only. It does not create or run a
 driver, execute a WDF call, create a WDF object, delete or roll back an object,
 format or submit a request, install, package, sign, query devices, or access
 hardware.
+
+The target also takes typed addresses of the rollback classifier and partial
+creation rollback helper. Their implementations compile exact request and
+spinlock `WdfObjectDelete` calls, effects clearing, state classification, and
+post-rollback validation. Neither function is invoked by the compile-check.

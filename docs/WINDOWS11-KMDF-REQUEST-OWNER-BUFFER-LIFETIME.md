@@ -694,3 +694,10 @@ buffer contents.
 Validation compiles but never invokes either helper. No request references
 either descriptor at runtime, and rollback, ready publication, target use,
 formatting, submission, completion, and cancellation remain absent.
+
+## 27. KMDF dormant partial-creation rollback checkpoint
+
+[Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
+compiles request-parent deletion for both memory descriptors without freeing or
+clearing their ordinary backing arrays. The request context is not accessed
+after deletion begins, and no active operation/rundown path exists.

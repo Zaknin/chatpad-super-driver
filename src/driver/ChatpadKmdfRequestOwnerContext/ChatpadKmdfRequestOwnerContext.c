@@ -56,6 +56,16 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_SIGNATURE !=
 #define CHATPAD_KMDF_REQUEST_OWNER_PRE_OBJECT_INIT_MASK \
     CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY
 
+#define CHATPAD_KMDF_REQUEST_OWNER_CREATED_INIT_MASK \
+    (CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED | \
+     CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED | \
+     CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED | \
+     CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED)
+
+#define CHATPAD_KMDF_REQUEST_OWNER_ROLLED_BACK_INIT_MASK \
+    (CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY | \
+     CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED)
+
 static int ChatpadKmdfRequestOwnerModelIsMarked(
     const ChatpadActivationRequestOwner *model)
 {
@@ -1120,4 +1130,206 @@ ChatpadKmdfRequestOwnerCreateInboundMemory(
         return CHATPAD_KMDF_REQUEST_OWNER_CREATION_POST_CREATION_INVARIANT_FAILED;
     }
     return CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK;
+}
+
+ChatpadKmdfRequestOwnerRollbackResult
+ChatpadKmdfRequestOwnerClassifyRollbackState(
+    const ChatpadKmdfActivationRequestOwner *owner,
+    ChatpadKmdfRequestOwnerRollbackState *state)
+{
+    ChatpadRequestOwnerInvariantResult modelInvariantResult;
+    ChatpadRequestOwnerSnapshot modelSnapshot;
+    ChatpadRequestOwnerResult snapshotResult;
+    int lockCreated;
+    int requestCreated;
+    int outboundMemoryCreated;
+    int inboundMemoryCreated;
+
+    if (state == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_NULL_STATE;
+    }
+    *state = CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_INVALID;
+
+    if (owner == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_NULL_OWNER;
+    }
+    if (owner->Signature != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_SIGNATURE) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_SIGNATURE;
+    }
+    if (owner->Version != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_VERSION) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_UNSUPPORTED_VERSION;
+    }
+    if ((owner->InitializationMask &
+         ~CHATPAD_KMDF_REQUEST_OWNER_KNOWN_INIT_MASK) != 0u ||
+        (owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY) == 0u ||
+        (owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_DRAINING) != 0u) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_INITIALIZATION_MASK;
+    }
+    if ((owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY) != 0u) {
+        *state = CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_OWNER_READY;
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OWNER_READY;
+    }
+
+    modelInvariantResult = ChatpadRequestOwnerValidateInvariant(&owner->Model);
+    if (modelInvariantResult != CHATPAD_REQUEST_OWNER_INVARIANT_OK) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_MODEL_STATE;
+    }
+    if (ChatpadKmdfRequestOwnerModelHasActiveOperationOrLifecycle(
+            &owner->Model)) {
+        *state =
+            CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ACTIVE_OPERATION_OR_LIFECYCLE;
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ACTIVE_OPERATION_OR_LIFECYCLE;
+    }
+    RtlZeroMemory(&modelSnapshot, sizeof(modelSnapshot));
+    snapshotResult = ChatpadRequestOwnerGetSnapshot(
+        &owner->Model,
+        &modelSnapshot);
+    if (snapshotResult != CHATPAD_REQUEST_OWNER_OK ||
+        !ChatpadKmdfRequestOwnerSnapshotIsPreObjectBaseline(&modelSnapshot) ||
+        !ChatpadKmdfRequestOwnerTransferStorageIsZero(&owner->TransferStorage) ||
+        !ChatpadKmdfRequestOwnerCompletionSnapshotIsZero(
+            &owner->CompletionSnapshot)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_MODEL_STATE;
+    }
+
+    lockCreated =
+        (owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED) != 0u;
+    requestCreated =
+        (owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED) != 0u;
+    outboundMemoryCreated =
+        (owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED) != 0u;
+    inboundMemoryCreated =
+        (owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED) != 0u;
+
+    if (lockCreated != (owner->BookkeepingLock != NULL)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INCONSISTENT_LOCK_STATE;
+    }
+    if (requestCreated != (owner->Request != NULL) ||
+        (requestCreated && !lockCreated)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INCONSISTENT_REQUEST_STATE;
+    }
+    if (outboundMemoryCreated != (owner->OutboundMemory != NULL) ||
+        inboundMemoryCreated != (owner->InboundMemory != NULL) ||
+        (outboundMemoryCreated && !requestCreated) ||
+        (inboundMemoryCreated && !outboundMemoryCreated)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INCONSISTENT_MEMORY_STATE;
+    }
+    if ((owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED) != 0u) {
+        if (owner->InitializationMask !=
+                CHATPAD_KMDF_REQUEST_OWNER_ROLLED_BACK_INIT_MASK ||
+            lockCreated || requestCreated ||
+            outboundMemoryCreated || inboundMemoryCreated) {
+            return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_INVALID_INITIALIZATION_MASK;
+        }
+        *state = CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED;
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK;
+    }
+
+    switch (owner->InitializationMask) {
+    case CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY:
+        *state = CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_CLEAN_MODEL_READY;
+        break;
+    case CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED:
+        *state = CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_LOCK_CREATED;
+        break;
+    case CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED:
+        *state = CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_LOCK_REQUEST_CREATED;
+        break;
+    case CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED:
+        *state =
+            CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_OUTBOUND_MEMORY_CREATED;
+        break;
+    case CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED |
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED:
+        *state = CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ALL_MEMORY_CREATED;
+        break;
+    default:
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_UNSUPPORTED_OR_INCONSISTENT_STATE;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK;
+}
+
+ChatpadKmdfRequestOwnerRollbackResult
+ChatpadKmdfRequestOwnerRollbackPartialCreation(
+    ChatpadKmdfActivationRequestOwner *owner,
+    ChatpadKmdfRequestOwnerRollbackEffects *effects)
+{
+    ChatpadKmdfRequestOwnerRollbackResult result;
+    ChatpadKmdfRequestOwnerRollbackState state;
+    WDFREQUEST request;
+    WDFSPINLOCK spinlock;
+
+    if (effects == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_NULL_EFFECTS;
+    }
+    RtlZeroMemory(effects, sizeof(*effects));
+
+    result = ChatpadKmdfRequestOwnerClassifyRollbackState(owner, &state);
+    if (result != CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK) {
+        return result;
+    }
+
+    if (state == CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_CLEAN_MODEL_READY ||
+        state == CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED) {
+        effects->PriorInitializationMask = owner->InitializationMask;
+        effects->ResultingInitializationMask = owner->InitializationMask;
+        effects->AlreadyClean = 1u;
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ALREADY_CLEAN;
+    }
+
+    effects->PriorInitializationMask = owner->InitializationMask;
+    effects->OutboundMemoryRepresented = owner->OutboundMemory != NULL;
+    effects->InboundMemoryRepresented = owner->InboundMemory != NULL;
+    request = owner->Request;
+    spinlock = owner->BookkeepingLock;
+
+    if (request != NULL) {
+        WdfObjectDelete(request);
+        owner->Request = NULL;
+        owner->OutboundMemory = NULL;
+        owner->InboundMemory = NULL;
+        owner->InitializationMask &=
+            ~(CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED |
+              CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED |
+              CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED);
+        effects->RequestHierarchyDeletionInitiated = 1u;
+    }
+
+    if (spinlock != NULL) {
+        WdfObjectDelete(spinlock);
+        owner->BookkeepingLock = NULL;
+        owner->InitializationMask &=
+            ~CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED;
+        effects->SpinlockDeletionInitiated = 1u;
+    }
+
+    owner->InitializationMask &=
+        ~CHATPAD_KMDF_REQUEST_OWNER_CREATED_INIT_MASK;
+    owner->InitializationMask |=
+        CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED;
+    effects->ResultingInitializationMask = owner->InitializationMask;
+
+    result = ChatpadKmdfRequestOwnerClassifyRollbackState(owner, &state);
+    if (result != CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK ||
+        state != CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_POST_ROLLBACK_INVARIANT_FAILED;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK;
 }

@@ -52,6 +52,10 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_MEMORY_CREATE_PREALLOCATED_FAIL
     CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_REQUEST_CREATE_FAILED);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_OUTBOUND_MEMORY_CREATED !=
     CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_ALL_MEMORY_CREATED);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK == 0);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ALREADY_CLEAN !=
+    CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_POST_ROLLBACK_INVARIANT_FAILED);
+C_ASSERT(sizeof(ChatpadKmdfRequestOwnerRollbackEffects) != 0u);
 
 typedef ChatpadKmdfRequestOwnerCreationResult
 (*ChatpadKmdfRequestOwnerSpinLockCreationSignature)(
@@ -76,6 +80,16 @@ typedef ChatpadKmdfRequestOwnerCreationResult
     const ChatpadKmdfActivationRequestContext *,
     ChatpadKmdfRequestOwnerCreationState);
 
+typedef ChatpadKmdfRequestOwnerRollbackResult
+(*ChatpadKmdfRequestOwnerRollbackClassificationSignature)(
+    const ChatpadKmdfActivationRequestOwner *,
+    ChatpadKmdfRequestOwnerRollbackState *);
+
+typedef ChatpadKmdfRequestOwnerRollbackResult
+(*ChatpadKmdfRequestOwnerRollbackSignature)(
+    ChatpadKmdfActivationRequestOwner *,
+    ChatpadKmdfRequestOwnerRollbackEffects *);
+
 void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
 {
     ChatpadKmdfRequestOwnerSpinLockCreationSignature spinLockCreation;
@@ -83,18 +97,24 @@ void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
     ChatpadKmdfRequestOwnerMemoryCreationSignature outboundMemoryCreation;
     ChatpadKmdfRequestOwnerMemoryCreationSignature inboundMemoryCreation;
     ChatpadKmdfRequestOwnerCreationValidationSignature creationValidation;
+    ChatpadKmdfRequestOwnerRollbackClassificationSignature rollbackClassification;
+    ChatpadKmdfRequestOwnerRollbackSignature rollback;
 
     spinLockCreation = ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock;
     requestCreation = ChatpadKmdfRequestOwnerCreateReusableRequest;
     outboundMemoryCreation = ChatpadKmdfRequestOwnerCreateOutboundMemory;
     inboundMemoryCreation = ChatpadKmdfRequestOwnerCreateInboundMemory;
     creationValidation = ChatpadKmdfRequestOwnerValidateCreationState;
+    rollbackClassification = ChatpadKmdfRequestOwnerClassifyRollbackState;
+    rollback = ChatpadKmdfRequestOwnerRollbackPartialCreation;
 
     UNREFERENCED_PARAMETER(spinLockCreation);
     UNREFERENCED_PARAMETER(requestCreation);
     UNREFERENCED_PARAMETER(outboundMemoryCreation);
     UNREFERENCED_PARAMETER(inboundMemoryCreation);
     UNREFERENCED_PARAMETER(creationValidation);
+    UNREFERENCED_PARAMETER(rollbackClassification);
+    UNREFERENCED_PARAMETER(rollback);
 }
 
 void ChatpadKmdfRequestOwnerContextCompileCheckAttributes(

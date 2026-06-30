@@ -55,3 +55,15 @@ executed by the compile-check. This module still does not publish owner-ready,
 format or send requests, register completion or cancel callbacks, delete or
 roll back objects, link into `ChatpadFilter`, install/load a driver, package,
 sign, query devices, or access hardware.
+
+The module now also compiles
+`ChatpadKmdfRequestOwnerRollbackPartialCreation` and the non-mutating
+`ChatpadKmdfRequestOwnerClassifyRollbackState`. Rollback accepts only exact
+pre-ready partial states, initiates deletion of the request hierarchy before
+the independent spinlock, clears published handles/bits after each delete
+call, and leaves `MODEL_READY | FAULTED`. Clean and previously rolled-back
+owners are idempotent. The fixed arrays and pure model remain unchanged.
+
+The two `WdfObjectDelete` call sites are compile-only and never execute during
+validation. No individual memory deletion, normal teardown, active-operation
+rundown, creation orchestration, or production linkage exists.
