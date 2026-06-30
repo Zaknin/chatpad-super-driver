@@ -140,8 +140,21 @@ function Test-SourceAndProjectGuards {
     $namespace.AddNamespace('msb', 'http://schemas.microsoft.com/developer/msbuild/2003')
 
     $projectReferences = @($filterXml.SelectNodes('//msb:ProjectReference', $namespace))
-    if ($projectReferences.Count -ne 0) {
-        throw 'ChatpadFilter.vcxproj must not contain project references.'
+    if ($projectReferences.Count -ne 1 -or
+        $projectReferences[0].Include -cne '..\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj') {
+        throw 'ChatpadFilter.vcxproj must contain only the authorized request-owner context static-library project reference.'
+    }
+    $projectReferenceGuid = $projectReferences[0].SelectSingleNode('msb:Project', $namespace)
+    $projectReferenceGlobalPropertiesToRemove = $projectReferences[0].SelectSingleNode('msb:GlobalPropertiesToRemove', $namespace)
+    $projectReferenceAdditionalProperties = $projectReferences[0].SelectSingleNode('msb:AdditionalProperties', $namespace)
+    $expectedAdditionalProperties = 'OutDir=$(RepoRoot)\artifacts\bin\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\;IntDir=$(RepoRoot)\artifacts\obj\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\'
+    if ($null -eq $projectReferenceGuid -or
+        $projectReferenceGuid.InnerText -cne '{421C7E3A-5B02-4D07-A37D-4B45D3755694}' -or
+        $null -eq $projectReferenceGlobalPropertiesToRemove -or
+        $projectReferenceGlobalPropertiesToRemove.InnerText -cne 'OutDir;IntDir' -or
+        $null -eq $projectReferenceAdditionalProperties -or
+        $projectReferenceAdditionalProperties.InnerText -cne $expectedAdditionalProperties) {
+        throw 'ChatpadFilter.vcxproj request-owner context project reference metadata is not exact.'
     }
 
     $compileItems = @($filterXml.SelectNodes('//msb:ItemGroup/msb:ClCompile[@Include]', $namespace) | ForEach-Object { $_.Include })

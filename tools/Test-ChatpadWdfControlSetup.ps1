@@ -192,8 +192,21 @@ function Test-FormatterSourceAndProjects {
         @($expectedFilterCompileItems | Where-Object { $filterCompileItems -notcontains $_ }).Count -ne 0) {
         throw 'ChatpadFilter must compile only its original sources plus the exact shared activation-preparation sources.'
     }
-    if ($filterReferences.Count -ne 0) {
-        throw 'ChatpadFilter must not add project references for activation preparation.'
+    if ($filterReferences.Count -ne 1 -or
+        $filterReferences[0].Include -cne '..\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj') {
+        throw 'ChatpadFilter must contain only the authorized request-owner context static-library project reference.'
+    }
+    $filterReferenceGuid = $filterReferences[0].SelectSingleNode('msb:Project', $filterNamespace)
+    $filterReferenceGlobalPropertiesToRemove = $filterReferences[0].SelectSingleNode('msb:GlobalPropertiesToRemove', $filterNamespace)
+    $filterReferenceAdditionalProperties = $filterReferences[0].SelectSingleNode('msb:AdditionalProperties', $filterNamespace)
+    $expectedFilterReferenceAdditionalProperties = 'OutDir=$(RepoRoot)\artifacts\bin\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\;IntDir=$(RepoRoot)\artifacts\obj\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\'
+    if ($null -eq $filterReferenceGuid -or
+        $filterReferenceGuid.InnerText -cne '{421C7E3A-5B02-4D07-A37D-4B45D3755694}' -or
+        $null -eq $filterReferenceGlobalPropertiesToRemove -or
+        $filterReferenceGlobalPropertiesToRemove.InnerText -cne 'OutDir;IntDir' -or
+        $null -eq $filterReferenceAdditionalProperties -or
+        $filterReferenceAdditionalProperties.InnerText -cne $expectedFilterReferenceAdditionalProperties) {
+        throw 'ChatpadFilter request-owner context project reference metadata is not exact.'
     }
     if ((Get-Content -LiteralPath $filterProjectPath -Raw) -match '(?i)ChatpadTransport') {
         throw 'ChatpadFilter must not reference the transport adapter.'
@@ -223,7 +236,7 @@ function Test-FormatterSourceAndProjects {
     Write-Output 'Source/project prohibition guard: PASS (no prohibited runtime surfaces found).'
     Write-Output 'Formatter project guard: PASS (one source, static library, no project references).'
     Write-Output 'Compile-check project guard: PASS (exact shared activation-preparation sources; formatter dependency remains non-linking).'
-    Write-Output 'ChatpadFilter integration guard: PASS (exact shared sources, no project references, no transport adapter).'
+    Write-Output 'ChatpadFilter integration guard: PASS (exact shared sources, only authorized request-owner context project reference, no transport adapter).'
     Write-Output 'Dormancy guard: PASS (no runtime callback invokes ChatpadPrepareActivationStep).'
     Write-Output 'Authoritative API guard: PASS (sequence, translation, and WDF formatter calls present; 90 00 absent).'
 }

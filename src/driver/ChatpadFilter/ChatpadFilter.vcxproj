@@ -114,6 +114,13 @@
     <ClCompile Include="driver.c" />
     <ClCompile Include="device.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj">
+      <Project>{421C7E3A-5B02-4D07-A37D-4B45D3755694}</Project>
+      <GlobalPropertiesToRemove>OutDir;IntDir</GlobalPropertiesToRemove>
+      <AdditionalProperties>OutDir=$(RepoRoot)\artifacts\bin\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\;IntDir=$(RepoRoot)\artifacts\obj\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\</AdditionalProperties>
+    </ProjectReference>
+  </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

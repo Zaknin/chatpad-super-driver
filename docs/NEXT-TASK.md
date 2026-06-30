@@ -2,36 +2,42 @@
 
 ## Current state
 
-- Current branch: `feature/offline-kmdf-production-integration-design`.
-- Expected checkpoint: pushed `docs: define kmdf production integration`
-  commit created from `39b2356c9193ea33d10d5c689e565a88a2e586c3`.
-- The authoritative production-integration design is
-  [Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md).
-- The isolated dormant implementation is complete, but production linkage has
-  not begun.
+- Current branch: `feature/offline-kmdf-production-linkage`.
+- Expected checkpoint: pushed `build: link dormant request owner library`
+  commit created from `033bd4fb4deff662ee9e3c2144d10decd27c8a03`.
+- The authoritative production-linkage checkpoint is
+  [Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md).
+- The tracked evidence manifest is
+  [production-linkage-manifest.json](evidence/production-linkage-manifest.json).
+- `ChatpadFilter.vcxproj` has exactly one native project reference to the
+  existing `ChatpadKmdfRequestOwnerContext` static-library project. No
+  production `.c` or `.h` file changed.
 - No request-owner helper has executed. No production source embeds the owner,
   initializes it, invokes orchestration, creates a WDF request-owner object, or
   discovers a target.
 
 ## Recommended next objective
 
-Implement only the first production integration slice: project-linkage-only
-dormancy for `ChatpadKmdfRequestOwnerContext`.
+Perform an independent read-only audit of the project-linkage-only dormancy
+checkpoint.
 
 Do not embed the owner, initialize storage, invoke helpers, create WDF objects,
 change callbacks, run the driver, or touch hardware.
 
 ## Required branch and starting commit
 
-Start from the pushed `feature/offline-kmdf-production-integration-design`
-checkpoint. Verify the exact HEAD, parent, subject, upstream, and clean
-worktree/index before editing.
+Start from the pushed `feature/offline-kmdf-production-linkage` checkpoint.
+Verify the exact HEAD, parent, subject, upstream, and clean worktree/index
+before any documentation correction. The expected parent is
+`033bd4fb4deff662ee9e3c2144d10decd27c8a03` and the expected subject is
+`build: link dormant request owner library`.
 
 ## Preconditions
 
 1. Re-read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
-   `docs/NEXT-TASK.md`, the latest `docs/WORKLOG.md` entry, and
-   `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`.
+   `docs/NEXT-TASK.md`, the latest `docs/WORKLOG.md` entry,
+   `docs/OFFLINE-KMDF-PRODUCTION-LINKAGE.md`, and
+   `docs/evidence/production-linkage-manifest.json`.
 2. Inspect `ChatpadFilter.vcxproj`,
    `ChatpadKmdfRequestOwnerContext.vcxproj`, `ChatpadWin11.sln`, and current
    linker/include settings.
@@ -41,8 +47,9 @@ worktree/index before editing.
 
 ## Safety restrictions
 
-- Modify only project/solution files and directly relevant Markdown if the
-  task explicitly authorizes the linkage slice.
+- Keep the audit read-only unless documentation is demonstrably stale. If
+  correction is needed, change only directly relevant Markdown or manifest
+  text and record the correction in `docs/WORKLOG.md`.
 - Do not modify `.c` or `.h` source for linkage-only dormancy.
 - Do not invoke owner initialization, orchestration, rollback, target
   discovery, request formatting, request submission, completion, cancellation,
@@ -53,14 +60,14 @@ worktree/index before editing.
 
 ## Acceptance criteria
 
-- `ChatpadFilter` has the exact project dependency selected by the design.
-- No owner field is embedded.
-- No request-owner helper is referenced by production source.
-- No `/INCLUDE` directive is added for request-owner helpers.
-- Final driver import/symbol inspection, if build validation is authorized,
-  shows no unexpected WDF object-management imports from an unused static
-  library.
-- Runtime behavior remains unchanged.
+- The audit verifies the exact `ProjectReference` path, GUID, and metadata.
+- The audit verifies the manifest matches actual tracked files and final
+  evidence logs where practical.
+- The audit verifies no production `.c` or `.h` file changed for the linkage
+  checkpoint.
+- The audit verifies final driver import/symbol evidence still shows no
+  request-owner extraction and no new WDF object-management imports.
+- The audit produces no runtime behavior change.
 - Generated logs remain ignored beneath `artifacts\`.
 
 ## Inspect first
@@ -72,7 +79,8 @@ git log -1 --format="%H%n%P%n%s"
 git status --short --branch --untracked-files=all
 git diff --exit-code
 git diff --cached --exit-code
-Get-Content docs\WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md
+Get-Content docs\OFFLINE-KMDF-PRODUCTION-LINKAGE.md
+Get-Content docs\evidence\production-linkage-manifest.json
 Get-Content src\driver\ChatpadFilter\ChatpadFilter.vcxproj
 Get-Content src\driver\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj
 Get-Content ChatpadWin11.sln

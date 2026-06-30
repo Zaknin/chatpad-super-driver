@@ -1,0 +1,259 @@
+{
+  "checkpoint": "offline-kmdf-production-linkage",
+  "manifest_statement": "This manifest is bound by the implementation commit that adds it; it intentionally does not record that final commit hash.",
+  "starting_state": {
+    "branch": "feature/offline-kmdf-production-integration-design",
+    "commit": "033bd4fb4deff662ee9e3c2144d10decd27c8a03",
+    "parent": "39b2356c9193ea33d10d5c689e565a88a2e586c3",
+    "subject": "docs: define kmdf production integration",
+    "upstream": "origin/feature/offline-kmdf-production-integration-design"
+  },
+  "implementation_branch": "feature/offline-kmdf-production-linkage",
+  "project_reference": {
+    "consumer": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj",
+    "producer": "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj",
+    "producer_guid": "{421C7E3A-5B02-4D07-A37D-4B45D3755694}",
+    "global_properties_to_remove": "OutDir;IntDir",
+    "additional_properties": "OutDir=$(RepoRoot)\\artifacts\\bin\\$(Platform)\\$(Configuration)\\ChatpadKmdfRequestOwnerContext\\;IntDir=$(RepoRoot)\\artifacts\\obj\\$(Platform)\\$(Configuration)\\ChatpadKmdfRequestOwnerContext\\",
+    "solution_change_required": false,
+    "manual_library_dependency": false,
+    "whole_archive": false,
+    "request_owner_include_forced": false
+  },
+  "toolchain": {
+    "host": "Windows 10 Pro 25H2 build 26200.8655 x64",
+    "powershell": "7.6.3",
+    "visual_studio": "Visual Studio 2022 17.14.35",
+    "msvc_toolset": "14.44.35207",
+    "sdk": "10.0.26100.0",
+    "wdk": "10.0.26100.0",
+    "kmdf_headers_observed": "1.15 through 1.35",
+    "driver_toolset": "WindowsKernelModeDriver10.0",
+    "sign_mode": "Off"
+  },
+  "validation": {
+    "repository_safety": "PASS before implementation and after driver builds",
+    "context_compile_check": {
+      "Debug": "PASS",
+      "Release": "PASS"
+    },
+    "driver_build": {
+      "Debug": "PASS",
+      "Release": "PASS"
+    },
+    "production_linkage_semantic_guard": {
+      "Debug": "PASS",
+      "Release": "PASS",
+      "limitation": "Targeted XML/text/binary string checks cannot prove full C macro expansion or all linker extraction internals."
+    },
+    "full_solution": {
+      "Debug": {
+        "result": "PASS",
+        "warnings": 0,
+        "errors": 0
+      },
+      "Release": {
+        "result": "PASS",
+        "warnings": 0,
+        "errors": 0
+      }
+    },
+    "regressions": {
+      "request_owner_model": {
+        "Debug": "5002/5002",
+        "Release": "5002/5002"
+      },
+      "protocol": {
+        "Debug": "610/610",
+        "Release": "610/610"
+      },
+      "transport": {
+        "Debug": "186/186",
+        "Release": "186/186"
+      },
+      "filter_lifecycle": {
+        "Debug": "109/109",
+        "Release": "109/109"
+      },
+      "control_setup": {
+        "Debug": "141/141",
+        "Release": "141/141"
+      },
+      "protocol_kernel_compatibility": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "wdf_control_setup": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      }
+    }
+  },
+  "link_evidence": {
+    "Debug": {
+      "link_command_tlog": "artifacts/obj/x64/Debug/ChatpadFilter/ChatpadFilter.tlog/link.command.1.tlog",
+      "context_library_mentions": 2,
+      "prohibited_retention_matches": 0,
+      "existing_activation_preparation_include": 1
+    },
+    "Release": {
+      "link_command_tlog": "artifacts/obj/x64/Release/ChatpadFilter/ChatpadFilter.tlog/link.command.1.tlog",
+      "context_library_mentions": 2,
+      "prohibited_retention_matches": 0,
+      "existing_activation_preparation_include": 1
+    }
+  },
+  "artifacts": {
+    "context_libraries": {
+      "Debug": {
+        "path": "artifacts/bin/x64/Debug/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.lib",
+        "size": 109382,
+        "sha256": "8FCE8EB6F648ED555C22143642B4E035957E524F84422990BBC6CED053BEA72E"
+      },
+      "Release": {
+        "path": "artifacts/bin/x64/Release/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.lib",
+        "size": 93790,
+        "sha256": "CC4730A4A402079A7EA3557DEADC1E69F626F5C5892AD3FC7031308EEA234DAE"
+      }
+    },
+    "drivers": {
+      "Debug": {
+        "path": "artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys",
+        "size": 15872,
+        "sha256": "198DD46B310A041EC40C6A4B5CE97A3B851DDD95CD300D167B929103580929D2",
+        "authenticode": "NotSigned"
+      },
+      "Release": {
+        "path": "artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys",
+        "size": 12288,
+        "sha256": "040ACC31C1464320037D957777A1C092FD2030D4F2EAE0D10397016CF00F3445",
+        "authenticode": "NotSigned"
+      }
+    }
+  },
+  "symbol_and_import_results": {
+    "isolated_symbol_patterns_absent": [
+      "ChatpadKmdfRequestOwner",
+      "ChatpadKmdfActivationRequest",
+      "CreateDormantObjectGraph"
+    ],
+    "wdf_object_management_imports_absent": [
+      "WdfSpinLockCreate",
+      "WdfRequestCreate",
+      "WdfMemoryCreatePreallocated",
+      "WdfObjectDelete"
+    ],
+    "Debug": "PASS",
+    "Release": "PASS"
+  },
+  "logs": {
+    "context": {
+      "Debug": {
+        "path": "artifacts/logs/production-linkage-kmdf-context-Debug-final-20260630T185423Z.transcript.log",
+        "sha256": "468F4E6E699AC3DF298AF1FA06FD3F244E25210ED600908D08E3D6B2CBB88777"
+      },
+      "Release": {
+        "path": "artifacts/logs/production-linkage-kmdf-context-Release-final-20260630T185423Z.transcript.log",
+        "sha256": "3BC67A8D076A008D7BA2C65C5B28C7200DDA12085F9F9066F233896DD1B89438"
+      }
+    },
+    "driver_build": {
+      "Debug": {
+        "path": "artifacts/logs/build-debug-x64-20260630T150234Z.log",
+        "sha256": "5486E0204C8A38D28BAA6C75E1BED9FD828130BED69AF691CB43ACBCB97BF278"
+      },
+      "Release": {
+        "path": "artifacts/logs/build-release-x64-20260630T150236Z.log",
+        "sha256": "C6AB3E1068DE836851E83F9968BA9015746E9CF26491B051A64F7C75A14EFFF0"
+      }
+    },
+    "full_solution": {
+      "Debug": {
+        "path": "artifacts/logs/full-solution-production-linkage-Debug-final-20260630T185423Z.log",
+        "sha256": "6889FBE859D47039EE335F1AADDF4567E77ED31E5FCBC12BA28229889720FBB4"
+      },
+      "Release": {
+        "path": "artifacts/logs/full-solution-production-linkage-Release-final-20260630T185423Z.log",
+        "sha256": "C3A9998FC1B3C05D7C95037B62D3F54BE130318DEBD51D75B7B2E90A7DC4037F"
+      }
+    },
+    "semantic_post_full_solution": {
+      "Debug": {
+        "path": "artifacts/logs/production-linkage-semantic-Debug-post-full-solution-20260630T185423Z.transcript.log",
+        "sha256": "4EE5FCAA1865D70E8D4DB0A7720A747D649451CC77D0356147AD17CFB73E6135"
+      },
+      "Release": {
+        "path": "artifacts/logs/production-linkage-semantic-Release-post-full-solution-20260630T185423Z.transcript.log",
+        "sha256": "493E88798E6EDC7C99973D04D9CE5E7132A37DC3DC906EF734A2160270201DC3"
+      }
+    },
+    "regression_transcripts": {
+      "request_owner_model_debug": "65A27839BE76D0CA0F44B1FEFE27CAFA0F083A146C2564EF5E820ADEE2D2FE5B",
+      "request_owner_model_release": "734E13DED3A1B41B34CDE57C1D8B3ABD3182562D9DEFAFADFEB8EA11160752B8",
+      "protocol_debug": "96A20C1859A5799DDA954B6CC7740AE454C04CD24E0E1EEB989A53CDE49681E5",
+      "protocol_release": "BC2F83447C1E360D37A58331F37FD0CAEB4835F40029E40EEC4CBA68B70CCB70",
+      "transport_debug": "9FF6E1944BC8A07461FE228A0B03F8BE1F75FDBBBC69219278981100AD5F129A",
+      "transport_release": "5C871D7E425897385DE148225708AEE923ED3701C1D89B3104F32B27D38E800A",
+      "filter_lifecycle_debug": "1CED708D04AF300731A031B82AB6F3015BB4C3A931BD85E97FF8707D4DA7A7E1",
+      "filter_lifecycle_release": "0841461A505C97875F91621F503AF0E712436F81766C1F6192D47D5E35DDF346",
+      "control_setup_debug": "F7117818D4A587AE5CC020D77339143E86A40F43BEEE0776EB22AB9BCA5AD2B2",
+      "control_setup_release": "B1289191B238774CCE803F8BC757BD3930E569C92CFCEBBCDD515EF86C663680",
+      "protocol_kernel_compatibility_debug": "02C5E059733B1A7AE744FF5CC4AC15F94A3894E29F3A749F7945E6AADAB18CBE",
+      "protocol_kernel_compatibility_release": "1FD1AB422E5635FB8621923FD1A1E2EDC5C074536C31B54E0BA3313BF10F2256",
+      "wdf_control_setup_debug": "EC3ED7948A6FF1D9FB7F042C49F2E3039C8F83C765896E98763C0787FCD490A5",
+      "wdf_control_setup_release": "82A43D6AA0B6DFE9B8B8D69378984404FFE220E672326CF693F5D6145B4F948F"
+    }
+  },
+  "rejected_evidence": [
+    {
+      "attempt": "initial production linkage semantic guard",
+      "result": "rejected",
+      "reason": "PowerShell strict-mode optional ProjectReference metadata access failed before build evidence."
+    },
+    {
+      "attempt": "initial Build-Driver Debug after raw ProjectReference",
+      "result": "rejected",
+      "reason": "WDK project-reference pass propagated ChatpadFilter OutDir/IntDir to the context library and emitted MSB8028."
+    },
+    {
+      "attempt": "Build-Driver Debug after GlobalPropertiesToRemove only",
+      "result": "rejected",
+      "reason": "Normal build pass used context output roots, but WDK packaging pass still rebuilt the context under ChatpadFilter roots and emitted MSB8028."
+    },
+    {
+      "attempt": "initial Test-ChatpadProductionLinkage with build log",
+      "result": "rejected",
+      "reason": "Guard treated generated MSBuild artifact paths as hardcoded developer-machine library paths."
+    },
+    {
+      "attempt": "first full regression run",
+      "result": "rejected",
+      "reason": "Older lifecycle guard still prohibited the newly authorized exact ChatpadFilter project reference."
+    }
+  ],
+  "repository_safety": {
+    "legacy_modified": false,
+    "production_c_or_h_modified": false,
+    "inf_signing_package_install_modified": false,
+    "generated_outputs_tracked": false,
+    "artifacts_ignored": true,
+    "markdown_links": "PASS",
+    "diff_check": "PASS",
+    "staged_diff_check": "PASS"
+  },
+  "prohibited_actions_not_performed": [
+    "production source/header request-owner inclusion",
+    "device-context owner embedding",
+    "owner initialization",
+    "dormant orchestration invocation",
+    "WDF object create/delete execution",
+    "target discovery",
+    "request formatting/reuse/submission/completion/cancellation",
+    "D0 or removal rundown changes",
+    "INF, package, signing, staging, installation, or loading",
+    "device enumeration",
+    "controller or Chatpad interaction",
+    "Windows mutation",
+    "network access except final git push"
+  ]
+}

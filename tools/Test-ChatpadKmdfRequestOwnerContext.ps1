@@ -554,13 +554,35 @@ function Test-RequestOwnerContextSemanticGuards {
     [xml]$filterXml = Get-Content -LiteralPath $filterProject -Raw
     $filterNs = New-Object System.Xml.XmlNamespaceManager($filterXml.NameTable)
     $filterNs.AddNamespace('msb', 'http://schemas.microsoft.com/developer/msbuild/2003')
-    $filterItems = @($filterXml.SelectNodes('//*[@Include]', $filterNs) | ForEach-Object { $_.Include })
+    $filterItems = @($filterXml.SelectNodes('//msb:ClCompile[@Include] | //msb:ClInclude[@Include]', $filterNs) | ForEach-Object { $_.Include })
     $filterRefs = @($filterXml.SelectNodes('//msb:ProjectReference', $filterNs))
     $filterAdditionalOptions = @($filterXml.SelectNodes('//msb:Link/msb:AdditionalOptions', $filterNs) | ForEach-Object { $_.'#text' })
     if (($filterItems -match 'ChatpadKmdfRequestOwnerContext').Count -ne 0 -or
-        $filterRefs.Count -ne 0 -or
         (($filterAdditionalOptions -join "`n") -match 'ChatpadKmdf')) {
-        throw 'ChatpadFilter project includes, references, links, or retains the context module.'
+        throw 'ChatpadFilter project includes source/header inputs or forced retains for the context module.'
+    }
+    if ($filterRefs.Count -ne 1) {
+        throw "Expected exactly one production project reference to the context module; found $($filterRefs.Count)."
+    }
+    $filterRef = $filterRefs[0]
+    $filterRefProject = $filterRef.SelectSingleNode('msb:Project', $filterNs)
+    $filterRefLinkLibraryDependencies = $filterRef.SelectSingleNode('msb:LinkLibraryDependencies', $filterNs)
+    $filterRefUseLibraryDependencyInputs = $filterRef.SelectSingleNode('msb:UseLibraryDependencyInputs', $filterNs)
+    $filterRefReferenceOutputAssembly = $filterRef.SelectSingleNode('msb:ReferenceOutputAssembly', $filterNs)
+    $filterRefGlobalPropertiesToRemove = $filterRef.SelectSingleNode('msb:GlobalPropertiesToRemove', $filterNs)
+    $filterRefAdditionalProperties = $filterRef.SelectSingleNode('msb:AdditionalProperties', $filterNs)
+    $expectedAdditionalProperties = 'OutDir=$(RepoRoot)\artifacts\bin\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\;IntDir=$(RepoRoot)\artifacts\obj\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\'
+    if ($filterRef.Include -cne '..\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj' -or
+        $null -eq $filterRefProject -or
+        $filterRefProject.InnerText -cne '{421C7E3A-5B02-4D07-A37D-4B45D3755694}' -or
+        $null -eq $filterRefGlobalPropertiesToRemove -or
+        $filterRefGlobalPropertiesToRemove.InnerText -cne 'OutDir;IntDir' -or
+        $null -eq $filterRefAdditionalProperties -or
+        $filterRefAdditionalProperties.InnerText -cne $expectedAdditionalProperties -or
+        ($null -ne $filterRefLinkLibraryDependencies -and $filterRefLinkLibraryDependencies.InnerText -eq 'false') -or
+        ($null -ne $filterRefUseLibraryDependencyInputs -and $filterRefUseLibraryDependencyInputs.InnerText -eq 'true') -or
+        ($null -ne $filterRefReferenceOutputAssembly)) {
+        throw 'ChatpadFilter project reference is not the exact linkage-only native static-library reference.'
     }
 
     $activeDriverMatches = @(
@@ -576,7 +598,7 @@ function Test-RequestOwnerContextSemanticGuards {
         throw "Active ChatpadFilter source references the context module: $($activeDriverMatches -join ', ')"
     }
 
-    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication, no execution/runtime-driver linkage)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
+    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication, production project-linkage-only dependency present with no source/header integration)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

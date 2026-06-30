@@ -3280,3 +3280,133 @@
   `ChatpadKmdfRequestOwnerContext` static library, with no include use, no
   device-context field, no helper invocation, no source behavior change, and a
   fresh audit before any behavior-changing slice.
+
+## 2026-06-30 19:05 +04:00 - Project-linkage-only KMDF production integration checkpoint
+
+- **Task title/objective:** Implement only the production project linkage that
+  makes `ChatpadFilter` depend on and link the existing dormant
+  `ChatpadKmdfRequestOwnerContext` static-library project. Preserve dormancy:
+  no production source/header integration, no owner embedding, no helper
+  invocation, no WDF object creation/deletion, no target/request operation, and
+  no driver install/load/hardware action.
+- **Starting branch/commit:** Began on
+  `feature/offline-kmdf-production-integration-design` at
+  `033bd4fb4deff662ee9e3c2144d10decd27c8a03`, parent
+  `39b2356c9193ea33d10d5c689e565a88a2e586c3`, subject
+  `docs: define kmdf production integration`, with upstream
+  `origin/feature/offline-kmdf-production-integration-design` at the same
+  commit, clean worktree, clean index, no unstaged or staged diff, and matching
+  design/continuity docs. Created
+  `feature/offline-kmdf-production-linkage` only after the gate passed.
+- **Investigation summary:** Inspected `ChatpadFilter.vcxproj`,
+  `ChatpadKmdfRequestOwnerContext.vcxproj`, `ChatpadWin11.sln`, recent
+  decisions, the production integration design, current `ChatpadFilter`
+  source/header files, WDK project-reference behavior, linker tlogs, build
+  wrapper behavior, and existing semantic guards. Verified the context project
+  is a WDK `StaticLibrary`, already present in the solution for Debug/Release
+  x64, and that production `.c`/`.h` files contained no request-owner include,
+  owner field, initializer/orchestration call, target discovery, request
+  operation, or WDF object create/delete code.
+- **Implementation details:** Added exactly one native `ProjectReference` from
+  `src/driver/ChatpadFilter/ChatpadFilter.vcxproj` to
+  `..\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj`
+  with GUID `{421C7E3A-5B02-4D07-A37D-4B45D3755694}`. Added
+  `GlobalPropertiesToRemove=OutDir;IntDir` and explicit
+  `AdditionalProperties` for the context project's artifact `OutDir`/`IntDir`
+  so both normal MSBuild and WDK driver-packaging reference passes keep the
+  context library under `ChatpadKmdfRequestOwnerContext` artifact roots. No
+  solution-file change was required.
+- **Guard updates:** Updated
+  `tools\Test-ChatpadKmdfRequestOwnerContext.ps1` to require the exact
+  project-linkage-only reference while still rejecting production source/header
+  integration and forced request-owner retention. Added
+  `tools\Test-ChatpadProductionLinkage.ps1` to verify exact project XML,
+  absence of manual `.lib`/`/WHOLEARCHIVE`/request-owner `/INCLUDE`, absence of
+  request-owner API use in production `.c`/`.h`, absence of prohibited changed
+  files, expected build-log link evidence, and final `dumpbin` import/symbol
+  absence. Updated lifecycle and WDF-control guards to allow only the exact
+  newly authorized project reference.
+- **Rejected evidence/discrepancies:** The first context semantic guard failed
+  before build because the script accessed absent optional XML metadata under
+  strict mode; the guard was fixed. The first driver build with a raw
+  `ProjectReference` succeeded but was rejected because WDK propagated the
+  driver `OutDir`/`IntDir` into the context project and emitted `MSB8028`.
+  Adding only `GlobalPropertiesToRemove` fixed the normal build pass but not
+  the WDK packaging pass, so that evidence was also rejected. The first
+  production-linkage guard run against build logs rejected generated MSBuild
+  artifact paths as if they were hardcoded developer paths; the guard was
+  narrowed to reject hardcoded project paths and prohibited retention while
+  requiring the expected generated context-library artifact path. The first
+  full regression run reached the lifecycle suite and exposed an older guard
+  that still prohibited all `ChatpadFilter` project references; lifecycle and
+  WDF-control guards were updated to allow only the exact linkage reference.
+- **Validation commands/results:** Pre-change and post-build
+  `tools\Test-RepositorySafety.ps1` passed. Final
+  `tools\Test-ChatpadKmdfRequestOwnerContext.ps1` passed in Debug and Release.
+  Final `tools\Build-Driver.ps1` passed in Debug and Release. Post-full
+  solution `tools\Test-ChatpadProductionLinkage.ps1` passed in Debug and
+  Release. Full-solution Debug and Release builds passed with `0 Warning(s)`
+  and `0 Error(s)` in
+  `artifacts\logs\full-solution-production-linkage-Debug-final-20260630T185423Z.log`
+  and
+  `artifacts\logs\full-solution-production-linkage-Release-final-20260630T185423Z.log`.
+- **Regression results:** Serial final wrappers all exited `0`: request-owner
+  model Debug/Release `5002/5002`; protocol Debug/Release `610/610`;
+  transport Debug/Release `186/186`; filter lifecycle Debug/Release
+  `109/109`; control setup Debug/Release `141/141`; protocol kernel
+  compatibility Debug/Release PASS; WDF control setup Debug/Release PASS.
+- **Link/binary evidence:** Final linker tlogs show
+  `ChatpadKmdfRequestOwnerContext.lib` in both Debug and Release link inputs,
+  with zero request-owner `/INCLUDE`, `/WHOLEARCHIVE`, or `/FORCE` matches.
+  The only `/INCLUDE` remains the pre-existing
+  `ChatpadPrepareActivationStep`. Final `dumpbin` import/symbol checks found
+  no retained request-owner symbols and no imports of `WdfSpinLockCreate`,
+  `WdfRequestCreate`, `WdfMemoryCreatePreallocated`, or `WdfObjectDelete`.
+- **Artifact hashes:** Final full-solution context libraries: Debug
+  `artifacts\bin\x64\Debug\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.lib`,
+  109,382 bytes, SHA-256
+  `8FCE8EB6F648ED555C22143642B4E035957E524F84422990BBC6CED053BEA72E`;
+  Release
+  `artifacts\bin\x64\Release\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.lib`,
+  93,790 bytes, SHA-256
+  `CC4730A4A402079A7EA3557DEADC1E69F626F5C5892AD3FC7031308EEA234DAE`.
+  Final driver images: Debug
+  `artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`, 15,872 bytes,
+  SHA-256
+  `198DD46B310A041EC40C6A4B5CE97A3B851DDD95CD300D167B929103580929D2`,
+  `NotSigned`; Release
+  `artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`, 12,288 bytes,
+  SHA-256
+  `040ACC31C1464320037D957777A1C092FD2030D4F2EAE0D10397016CF00F3445`,
+  `NotSigned`.
+- **Files created:** `docs/OFFLINE-KMDF-PRODUCTION-LINKAGE.md`,
+  `docs/evidence/production-linkage-manifest.json`, and
+  `tools\Test-ChatpadProductionLinkage.ps1`.
+- **Files modified:** `src/driver/ChatpadFilter/ChatpadFilter.vcxproj`,
+  `tools\Test-ChatpadKmdfRequestOwnerContext.ps1`,
+  `tools\Test-ChatpadFilterLifecycle.ps1`,
+  `tools\Test-ChatpadWdfControlSetup.ps1`, `docs/PROJECT-STATE.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/OFFLINE-KMDF-CREATION-ORCHESTRATION.md`, and `docs/WORKLOG.md`.
+- **Evidence manifest:** Tracked manifest
+  `docs/evidence/production-linkage-manifest.json` records the checkpoint name,
+  starting commit, implementation branch, exact project-reference metadata,
+  toolchain identity, command/log hashes, final artifact paths/sizes/hashes,
+  final import/symbol results, rejected evidence, repository safety, Markdown
+  link status, and prohibited actions not performed. The manifest intentionally
+  omits the final commit hash; the commit binds the manifest.
+- **Safety:** No production `.c` or `.h` file changed. No owner field was
+  embedded; no request-owner header was included; no owner initializer,
+  orchestration helper, creation helper, rollback helper, target discovery,
+  request formatting/reuse/submission/completion/cancellation, D0/removal path,
+  signing, packaging, staging, installation, driver load, Windows/device
+  mutation, device enumeration, controller/Chatpad interaction, elevation, or
+  network operation occurred before the final authorized push.
+- **Commit/push:** Commit exactly `build: link dormant request owner library`
+  and push only `origin/feature/offline-kmdf-production-linkage`; final hash is
+  reported after commit.
+- **Next gate:** Independent read-only audit of this project-linkage
+  checkpoint. Owner embedding, ordinary owner initialization, dormant
+  orchestration invocation, WDF object creation, target/request operations,
+  signing, installation, loading, and hardware testing remain unauthorized.

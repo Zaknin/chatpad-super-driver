@@ -4,7 +4,10 @@ This is the authoritative documentation-only design for introducing the
 dormant KMDF activation request-owner object graph into the production
 `ChatpadFilter` codebase through separately gated steps.
 
-No integration is implemented by this document.
+This document was created before production linkage. The first implementation
+slice is now recorded in
+[Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md);
+only project linkage is complete.
 
 ## 1. Purpose and non-scope
 
@@ -49,10 +52,10 @@ filter-capable lifecycle scaffold:
 - `ChatpadActivationPreparation` is currently compiled directly into
   `ChatpadFilter` and retained by `/INCLUDE:ChatpadPrepareActivationStep`, but
   no production callback calls it.
-- `ChatpadFilter.vcxproj` does not reference
-  `ChatpadKmdfRequestOwnerContext.vcxproj`, does not include
-  `ChatpadKmdfRequestOwnerContext.h`, and does not compile or link the isolated
-  request-owner module.
+- `ChatpadFilter.vcxproj` now references
+  `ChatpadKmdfRequestOwnerContext.vcxproj` through the project-linkage-only
+  checkpoint. It still does not include `ChatpadKmdfRequestOwnerContext.h` or
+  compile isolated request-owner source directly into production.
 - The production device context has no `ChatpadKmdfActivationRequestOwner`
   field.
 - No production code calls `ChatpadKmdfRequestOwnerInitializeStorage`,
@@ -61,8 +64,8 @@ filter-capable lifecycle scaffold:
 - The driver remains unsigned and not installable as a validated production
   package.
 
-This section is current reality. Later sections describe proposed integration
-only.
+This section is current reality for source/runtime behavior. Later sections
+describe proposed integration beyond the completed project-linkage slice only.
 
 ## 3. Current `EvtDeviceAdd` sequence
 

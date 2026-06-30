@@ -110,6 +110,13 @@ Source references:
   `EvtDeviceAdd` point before lifecycle initialization, framework cleanup for
   later post-ready `EvtDeviceAdd` failure, JSON evidence manifests, and
   project-linkage-only dormancy as the next implementation gate.
+- The project-linkage-only dormant production checkpoint is complete in
+  `docs/OFFLINE-KMDF-PRODUCTION-LINKAGE.md`, with tracked evidence in
+  `docs/evidence/production-linkage-manifest.json`. `ChatpadFilter` now has
+  one native static-library project reference to
+  `ChatpadKmdfRequestOwnerContext`; no production source/header integration,
+  owner embedding, helper invocation, WDF object creation, or runtime behavior
+  change occurred.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.
@@ -162,10 +169,11 @@ The offline request-owner preparation path now includes compile-only,
 uninvoked helpers for device-parented lock/request creation, request-parented
 outbound/inbound preallocated-memory creation, request-first/spinlock-second
 rollback, all-or-nothing structural-ready orchestration, and a
-documentation-only production-integration design. The next independent gate is
-project-linkage-only dormancy for the existing static-library context module.
-This does not authorize owner embedding, helper invocation, WDF object
-creation, request execution, deployment, or hardware validation.
+documentation-only production-integration design. The project-linkage-only
+dormancy gate for the existing static-library context module is complete. The
+next independent gate is read-only audit of that linkage evidence before any
+owner embedding. This does not authorize owner embedding, helper invocation,
+WDF object creation, request execution, deployment, or hardware validation.
 
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`

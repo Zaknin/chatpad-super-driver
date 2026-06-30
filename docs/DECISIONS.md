@@ -4,6 +4,41 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Link dormant KMDF request-owner through an exact native project reference
+
+**Decision:** The project-linkage-only production slice links
+`ChatpadFilter` to `ChatpadKmdfRequestOwnerContext` with one native
+`ProjectReference` and no solution-file dependency change. The reference keeps
+native library dependency propagation enabled, removes inherited
+`OutDir`/`IntDir` globals, and supplies explicit `AdditionalProperties` so WDK
+driver-packaging project-reference passes rebuild the context library under
+`artifacts\bin|obj\x64\<Configuration>\ChatpadKmdfRequestOwnerContext\`.
+
+**Rationale:** A plain native project reference proved sufficient for ordinary
+MSBuild dependency ordering and link-input propagation, but the WDK packaging
+reference pass reused the consumer driver's output/intermediate directories and
+emitted `MSB8028`. `GlobalPropertiesToRemove` fixed the ordinary reference
+pass, while the WDK packaging target also required explicit
+`AdditionalProperties` because it constructs the referenced build from item
+metadata. Keeping the dependency as a project reference avoids hardcoded
+library paths and keeps Debug/Release resolution configuration-correct.
+
+**Alternatives rejected:** Directly compiling isolated request-owner sources
+into `ChatpadFilter` would bypass the static-library boundary; adding a manual
+`.lib` path in linker settings would be configuration- and machine-path prone;
+adding `/WHOLEARCHIVE` or request-owner `/INCLUDE` would hide whether unused
+library members are naturally extracted; relying on solution dependency alone
+would not prove linker input propagation; accepting the WDK shared-output
+warning would leave evidence ambiguous.
+
+**Consequences:** The final driver sees the context library as a link input,
+but unused request-owner object members are not extracted and no request-owner
+symbols or WDF object-management imports appear in the final driver image.
+Future production slices must not remove the exact output metadata unless they
+replace it with equivalent WDK-packaging proof.
+
+---
+
 ## 2026-06-30 - Gate production request-owner integration through linkage-first slices
 
 **Decision:** Production integration of the dormant KMDF activation

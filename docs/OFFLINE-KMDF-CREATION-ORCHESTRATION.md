@@ -20,11 +20,13 @@ It proves only:
 
 It does not prove orchestration execution, actual WDF object creation or
 deletion, actual framework parentage, runtime synchronization, safe concurrent
-publication, production linkage, `EvtDeviceAdd` integration, target discovery,
-request formatting, request submission, completion, cancellation, D0 rundown,
-USB visibility, controller preservation, activation effectiveness, Chatpad
-input, signing, staging, installation, loading, lower-filter placement, or a
-usable driver.
+publication, `EvtDeviceAdd` integration, target discovery, request formatting,
+request submission, completion, cancellation, D0 rundown, USB visibility,
+controller preservation, activation effectiveness, Chatpad input, signing,
+staging, installation, loading, lower-filter placement, or a usable driver.
+Production project linkage was completed later in
+[Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md)
+without source/header integration or helper invocation.
 
 ## Starting and branch state
 
