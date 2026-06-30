@@ -91,11 +91,17 @@ Source references:
   device parentage for the lock/request, request parentage for both memory
   descriptors, typed context only for the request, inherited execution level,
   no automatic synchronization, and no cleanup/destroy callback.
+- The compile-only dormant lock/request creation checkpoint is complete in
+  `docs/OFFLINE-KMDF-LOCK-REQUEST-CREATION.md`. The isolated module contains
+  exactly one spinlock create call and one targetless request create call,
+  deterministic typed-context initialization, and partial-state validation.
+  Static-library validation never invokes either helper.
 - No WDF activation-owner object currently exists. If separately authorized,
-  the next smallest slice is isolated dormant spinlock and targetless request
-  creation, without memory creation or `ChatpadFilter` linkage. Do not add
-  runtime request formatting, submission, completion, cancellation, target
-  discovery, installation, or hardware access unless explicitly authorized.
+  the next smallest slice is isolated request-parented outbound/inbound
+  preallocated-memory creation, without rollback or `ChatpadFilter` linkage.
+  Do not add runtime request formatting, submission, completion, cancellation,
+  target discovery, installation, or hardware access unless explicitly
+  authorized.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.

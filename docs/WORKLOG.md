@@ -2730,3 +2730,181 @@
   production-driver linkage, target discovery, formatting, submission,
   completion, cancellation, D0 rundown, signing, staging, installation,
   loading, and hardware validation remain separate authorization gates.
+
+## 2026-06-30 13:19 +04:00 - Dormant KMDF lock/request creation checkpoint
+
+- **Task title and objective:** Implement isolated, dormant KMDF creation
+  helpers for one future device-parented bookkeeping spinlock and one future
+  device-parented reusable targetless activation request. Compile the exact
+  WDF calls and deterministic typed request-context initialization without
+  executing either helper, creating any object, adding memory/rollback, or
+  changing `ChatpadFilter`.
+- **Starting-state verification:** Confirmed
+  `feature/offline-kmdf-object-attributes` at
+  `8b5a5b8b376568c063d521e76693a4067cc579a2`, parent
+  `eee073e093ca10545ff6638044763653d5148487`, subject
+  `driver: prepare dormant object attributes`, upstream
+  `origin/feature/offline-kmdf-object-attributes` at the same commit, and clean
+  tracked worktree/index. `git diff --exit-code` and
+  `git diff --cached --exit-code` both exited `0`.
+- **Working branch:** Created
+  `feature/offline-kmdf-lock-request-creation` from the exact verified start.
+- **Documentation filename clarification:** The task text referenced
+  `docs/OFFLINE-KMDF-OBJECT-ATTRIBUTES-PREPARATION.md`, which does not exist.
+  The repository's existing authoritative file, linked consistently by all
+  continuation documents, is
+  `docs/OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md`; that singular filename
+  was inspected and updated without introducing a duplicate alias.
+- **Architecture and WDK investigation:** Inspected the object-lifecycle,
+  buffer-lifetime, context, storage, and attribute checkpoints; initialization
+  masks; pure-model invalid identity values; current compile-check projects;
+  `ChatpadFilter` source/project inputs; and installed KMDF 1.15 headers.
+  `WdfSpinLockCreate` and `WdfRequestCreate` are both annotated for maximum
+  `DISPATCH_LEVEL`. The installed `WdfRequestCreate` declaration marks its
+  `WDFIOTARGET` argument `_In_opt_`, confirming `WDF_NO_HANDLE` is valid for
+  targetless creation. Both isolated projects are static libraries, so
+  compiling the calls does not link or execute a driver.
+- **Files created:** `docs/OFFLINE-KMDF-LOCK-REQUEST-CREATION.md`.
+- **Files modified:** `docs/DECISIONS.md`; `docs/NEXT-TASK.md`;
+  `docs/OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md`;
+  `docs/OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md`;
+  `docs/OFFLINE-KMDF-REQUEST-OWNER-CONTEXT-DEFINITION.md`;
+  `docs/PORTING-PLAN.md`; `docs/PROJECT-STATE.md`;
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`;
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/README.md`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/ChatpadKmdfRequestOwnerContextCompileCheck.c`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/README.md`;
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1`; this worklog.
+- **Creation APIs:** Added
+  `ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock` and
+  `ChatpadKmdfRequestOwnerCreateReusableRequest`, both returning
+  `ChatpadKmdfRequestOwnerCreationResult` and separately preserving exact WDF
+  `NTSTATUS`. A non-null framework-status output is initialized to the stable
+  local sentinel `STATUS_INVALID_DEVICE_STATE` before validation.
+- **Spinlock helper behavior:** Validates owner identity, known mask, exact
+  ordinary pre-object baseline, null handles, zero fixed storage, and
+  unavailable/non-admitting pure model. It rejects repeated lock creation or a
+  pre-existing request before the WDF call, reuses the device-parented
+  attributes helper, calls `WdfSpinLockCreate` once, publishes the handle
+  before OR-ing only `LOCK_CREATED`, and validates the lock-created state.
+- **Request helper behavior:** Requires the valid lock-created partial state,
+  rejects missing/repeated request state before the WDF call, reuses the typed
+  device-parented request attributes, and calls
+  `WdfRequestCreate(&attributes, WDF_NO_HANDLE, &request)` exactly once. After
+  hypothetical success it retrieves the typed context, clears it, assigns the
+  owner and authoritative invalid identities/inactive defaults, publishes the
+  handle before OR-ing only `REQUEST_CREATED`, and validates the
+  lock/request-created state.
+- **Partial-state validation:** Added
+  `ChatpadKmdfRequestOwnerValidateCreationState` for exact pre-object,
+  lock-created, and lock/request-created states. It verifies pure-model
+  invariants/snapshot, no operation/lifecycle obligation, zero owner transfer
+  and completion storage, absent memory state, absent ready/fault/draining
+  state, exact handles, and exact dormant request context. Fully ready is
+  explicitly invalid and unreachable.
+- **Failure/repeated-call boundary:** WDF failure leaves local handles
+  unpublished and created bits absent while preserving the exact framework
+  failure status. The helpers do not call one another, retry, delete,
+  dereference, roll back, create memory, publish owner-ready, discover a
+  target, or operate a request. A hypothetical post-creation invariant failure
+  retains the handle/bit for a future separately authorized orchestrator to
+  roll back.
+- **Compile-check and semantic guards:** The compile-check takes typed
+  addresses of both creation APIs and the partial validator but never calls
+  them. The PowerShell 5.1-compatible guard requires exactly
+  `WdfSpinLockCreate=1` and `WdfRequestCreate=1`, no other direct `Wdf*` call,
+  exact helper independence/parentage, `WDF_NO_HANDLE`, generated typed-context
+  access, deterministic inactive context fields, complete typed result/state
+  surfaces, only lock/request bit publication, and no memory/deletion/
+  request-execution/runtime-driver linkage. Exact project counts remain one
+  production context C source and three compile-check C inputs; creation-helper
+  invocation count is zero.
+- **Defensive postcondition correction:** Complete-diff review found that a
+  hypothetical WDF success paired with a null returned handle could otherwise
+  reach the context accessor or publish a created bit. Explicit non-null
+  handle postconditions were added before any accessor, handle publication, or
+  bit publication. The affected Debug/Release context and full-solution builds
+  were rerun successfully.
+- **Inspection command failures:** An initial bare `dumpbin` command failed
+  because `dumpbin.exe` was not on `PATH`; the exact VS 2022 x64 path was
+  located and symbol inspection then succeeded. A separate read attempted the
+  nonexistent `src/transport/ChatpadTransport/ChatpadTransport.h`; `rg` located
+  the authoritative constants in `ChatpadTransportAdapter.h`. A final audit
+  invocation supplied a nonexistent `-SkipBuild` parameter to
+  `Test-ChatpadKmdfRequestOwnerContext.ps1`; PowerShell rejected the parameter
+  before the script ran, after which the supported Debug and Release
+  invocations both passed. None of these failed inspection or invocation
+  attempts changed tracked repository or system state.
+- **Final context validation:** Debug and Release
+  `Test-ChatpadKmdfRequestOwnerContext.ps1` runs exited `0`. Each semantic
+  guard reported the exact authorized call counts `1` and `1`; signing,
+  prohibited-output, artifact-containment, and compile checks passed. Logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Debug-20260630T092442Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Release-20260630T092443Z.log`.
+  Debug context/compile-check SHA-256:
+  `1A5883D30FCDF93D41182A5B09A13B2EA73A1E56024DDC1C86D216BC6D40AB92`
+  and
+  `C0C6D9F3745BB5FF58B3B36D77FBA27C022FA9089B8035BCF6DE2DCB79FA4FA2`.
+  Release values:
+  `12697F6C4D0D1610664357234DFA3DD34E803A46E1B7809C1561B24FB92833B5`
+  and
+  `CD19C22DD462A80A84FEB1FC96B4E349E00C86717EEC06F070BCE9E602B22E65`.
+- **Regression validation:** Serial Debug and Release runs all exited `0`:
+  request-owner model `5002/5002`; integrated protocol `610/610`; transport
+  `186/186`; lifecycle `109/109`; control setup `141/141`; protocol kernel
+  compatibility; and WDF control setup. Logs are beneath
+  `C:\Dev\chatpad-super-driver\artifacts\logs\` with timestamps
+  `20260630T091529Z` through `20260630T091545Z`.
+- **Driver and full-solution validation:** Sequential Debug/Release
+  `Build-Driver.ps1` runs exited `0`; logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\build-debug-x64-20260630T091551Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\build-release-x64-20260630T091554Z.log`.
+  Full-solution Debug/Release builds exited `0` with zero warnings and zero
+  errors; logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-lock-request-creation-final-Debug-20260630T092141Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-lock-request-creation-final-Release-20260630T092142Z.log`.
+- **Driver artifacts:** Debug
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  15,872 bytes, SHA-256
+  `54D039D1A99872BF3C0466B192A57A6738917080326D3001A19A934B4C937870`,
+  `Authenticode.NotSigned`; Release
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  12,288 bytes, SHA-256
+  `4E33D23642B3CE26179C96305B1AEF291F64A1BB0BA74526FFCC455E5E95B852`,
+  `Authenticode.NotSigned`. Import inspection found zero
+  `WdfSpinLockCreate`, `WdfRequestCreate`, or isolated-helper matches in both
+  driver images.
+- **Symbol inspection:** The isolated Debug library contained public helper
+  and validator symbols plus `WdfSpinLockCreate`, `WdfRequestCreate`, and the
+  typed-context worker. Release optimization retained the public helper and
+  validator symbols while inlining the framework wrappers. This is consistent
+  with compile-only static libraries and does not execute a creation call.
+- **Generated artifact containment:** All build outputs, logs, libraries,
+  executables, driver images, and environment reports remained ignored beneath
+  `C:\Dev\chatpad-super-driver\artifacts\`.
+- **Safety:** Creation calls were compiled but never executed; no WDF object
+  was created during this checkpoint. No `ChatpadFilter` source/project/device
+  context or active callback was changed. No memory creation, deletion,
+  rollback, target discovery, request formatting/reuse/send/completion/
+  cancellation, InfVerif, Inf2Cat executable invocation, CAT, certificate,
+  signing, packaging, staging, installation, driver load, Driver Store,
+  registry, service, device enumeration, controller/Chatpad interaction,
+  elevation, Windows mutation, or network operation occurred before the final
+  authorized push.
+- **Commit and push:** Commit exactly
+  `driver: define dormant lock request creation` and push only
+  `origin/feature/offline-kmdf-lock-request-creation`. The final commit hash is
+  reported after commit and push rather than embedded here.
+- **Remaining blockers:** Actual creation execution, request-parented
+  outbound/inbound memory creation, rollback/deletion orchestration,
+  production linkage, target discovery, request execution/completion/
+  cancellation, D0 rundown, signing, installation, loading, and hardware
+  validation remain separately gated.

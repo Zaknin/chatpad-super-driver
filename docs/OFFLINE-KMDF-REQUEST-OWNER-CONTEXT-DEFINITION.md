@@ -284,3 +284,16 @@ is disabled, and no cleanup or destroy callback is registered.
 The helpers initialize caller-owned attributes only. No framework object,
 handle publication, runtime callback, production-driver linkage, request
 operation, installation path, or hardware access is added.
+
+## Follow-on dormant lock/request creation
+
+[Offline KMDF Lock and Request Creation Checkpoint](OFFLINE-KMDF-LOCK-REQUEST-CREATION.md)
+compiles independent device-parented spinlock and targetless reusable-request
+creation helpers. Hypothetical successful request creation retrieves this
+document's typed request context and initializes it to exact inactive defaults.
+Partial-state validation accepts only pre-object, lock-created, and
+lock/request-created states; fully ready remains invalid.
+
+The static-library compile-check does not call either helper. No WDF object,
+memory descriptor, rollback path, owner-ready publication, production linkage,
+target, request execution, installation, or hardware action exists.

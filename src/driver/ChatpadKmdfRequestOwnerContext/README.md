@@ -28,6 +28,22 @@ All four reject null output or parent arguments, leave execution level
 inherited, select no automatic synchronization, and register no cleanup or
 destroy callback.
 
-It does not create WDF objects, format or send requests, register completion or
+The isolated module also compiles two independent dormant creation helpers:
+
+- `ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock` can create at most one
+  device-parented bookkeeping `WDFSPINLOCK`;
+- `ChatpadKmdfRequestOwnerCreateReusableRequest` can create at most one
+  device-parented targetless `WDFREQUEST`, retrieve its typed context, and
+  initialize that context to inactive authoritative defaults.
+
+`ChatpadKmdfRequestOwnerValidateCreationState` distinguishes the pre-object,
+lock-created, and lock/request-created partial states. Fully ready remains
+invalid. The creation helpers preserve exact framework `NTSTATUS`, reject
+repeated calls before a WDF creation call, publish only the corresponding
+created bit, and implement no deletion or rollback.
+
+The two WDF creation calls are compiled into static libraries but are never
+executed by the compile-check. This module still does not create memory
+objects, publish owner-ready, format or send requests, register completion or
 cancel callbacks, link into `ChatpadFilter`, install/load a driver, package,
 sign, query devices, or access hardware.

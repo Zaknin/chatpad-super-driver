@@ -133,3 +133,8 @@ The owner remains a valid pre-object ordinary-storage record only.
 now implements caller-owned attribute builders for the future device-parented
 lock/request and request-parented memory objects. That follow-on creates no WDF
 object, does not publish owner-ready, and does not link into `ChatpadFilter`.
+
+[Offline KMDF Lock and Request Creation Checkpoint](OFFLINE-KMDF-LOCK-REQUEST-CREATION.md)
+now compiles isolated lock/request creation against that baseline. Validation
+never executes either creation helper, so no framework object exists because
+of the checkpoint.

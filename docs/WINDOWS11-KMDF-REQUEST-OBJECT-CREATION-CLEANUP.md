@@ -553,7 +553,9 @@ Smallest implementation slices, each requiring explicit authorization:
    [Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md).
 2. Compile-only attribute builders. Complete in
    [Offline KMDF Object-Attribute Preparation Checkpoint](OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md).
-3. Dormant spinlock and request creation.
+3. Dormant spinlock and request creation. Complete as a compile-only,
+   never-executed checkpoint in
+   [Offline KMDF Lock and Request Creation Checkpoint](OFFLINE-KMDF-LOCK-REQUEST-CREATION.md).
 4. Dormant preallocated outbound and inbound memory creation.
 5. Partial-failure rollback and device cleanup.
 6. Offline semantic and compile validation.

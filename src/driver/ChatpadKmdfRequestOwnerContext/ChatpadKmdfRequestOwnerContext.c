@@ -39,6 +39,7 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_INIT_DRAINING !=
     CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK == 0);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK == 0);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK == 0);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_SIGNATURE !=
     CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_PRE_OBJECT_READY);
 
@@ -450,4 +451,395 @@ ChatpadKmdfRequestOwnerPrepareInboundMemoryAttributes(
     return ChatpadKmdfRequestOwnerPrepareMemoryAttributes(
         request,
         attributes);
+}
+
+static int ChatpadKmdfRequestOwnerBufferIsZero(
+    const void *buffer,
+    size_t length)
+{
+    const uint8_t *bytes;
+    size_t index;
+
+    bytes = (const uint8_t *)buffer;
+    for (index = 0u; index < length; ++index) {
+        if (bytes[index] != 0u) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void ChatpadKmdfRequestOwnerInitializeDormantRequestContext(
+    ChatpadKmdfActivationRequestContext *requestContext,
+    ChatpadKmdfActivationRequestOwner *owner)
+{
+    RtlZeroMemory(requestContext, sizeof(*requestContext));
+    requestContext->Owner = owner;
+    requestContext->OperationToken.DeviceGeneration =
+        CHATPAD_REQUEST_OWNER_INVALID_GENERATION;
+    requestContext->OperationToken.OperationSequence =
+        CHATPAD_REQUEST_OWNER_INVALID_OPERATION_SEQUENCE;
+    requestContext->LifecycleGeneration =
+        CHATPAD_REQUEST_OWNER_INVALID_GENERATION;
+    requestContext->ActivationStepIndex =
+        CHATPAD_REQUEST_OWNER_INVALID_STEP;
+    requestContext->DataDirection =
+        CHATPAD_CONTROL_DATA_DIRECTION_NONE;
+    requestContext->TransferDirection =
+        CHATPAD_KMDF_REQUEST_OWNER_TRANSFER_NONE;
+    requestContext->TransferLength = 0u;
+    requestContext->ExpectedInboundLength = 0u;
+    requestContext->ActiveTransferMemory = NULL;
+    RtlZeroMemory(
+        &requestContext->SetupPacket,
+        sizeof(requestContext->SetupPacket));
+    RtlZeroMemory(
+        &requestContext->CompletionSnapshot,
+        sizeof(requestContext->CompletionSnapshot));
+    requestContext->CompletionSnapshot.CompletionClass =
+        CHATPAD_REQUEST_OWNER_COMPLETION_NONE;
+}
+
+static int ChatpadKmdfRequestOwnerDormantRequestContextIsValid(
+    const ChatpadKmdfActivationRequestContext *requestContext,
+    const ChatpadKmdfActivationRequestOwner *owner)
+{
+    return requestContext != NULL &&
+        requestContext->Owner == owner &&
+        requestContext->OperationToken.DeviceGeneration ==
+            CHATPAD_REQUEST_OWNER_INVALID_GENERATION &&
+        requestContext->OperationToken.OperationSequence ==
+            CHATPAD_REQUEST_OWNER_INVALID_OPERATION_SEQUENCE &&
+        requestContext->LifecycleGeneration ==
+            CHATPAD_REQUEST_OWNER_INVALID_GENERATION &&
+        requestContext->ActivationStepIndex ==
+            CHATPAD_REQUEST_OWNER_INVALID_STEP &&
+        requestContext->DataDirection ==
+            CHATPAD_CONTROL_DATA_DIRECTION_NONE &&
+        requestContext->TransferDirection ==
+            CHATPAD_KMDF_REQUEST_OWNER_TRANSFER_NONE &&
+        requestContext->TransferLength == 0u &&
+        requestContext->ExpectedInboundLength == 0u &&
+        requestContext->ActiveTransferMemory == NULL &&
+        ChatpadKmdfRequestOwnerBufferIsZero(
+            &requestContext->SetupPacket,
+            sizeof(requestContext->SetupPacket)) &&
+        ChatpadKmdfRequestOwnerCompletionSnapshotIsZero(
+            &requestContext->CompletionSnapshot);
+}
+
+static ChatpadKmdfRequestOwnerCreationResult
+ChatpadKmdfRequestOwnerValidateCreationCommon(
+    const ChatpadKmdfActivationRequestOwner *owner)
+{
+    ChatpadRequestOwnerInvariantResult modelInvariantResult;
+    ChatpadRequestOwnerSnapshot modelSnapshot;
+    ChatpadRequestOwnerResult snapshotResult;
+
+    if (owner == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_OWNER;
+    }
+    if (owner->Signature != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_SIGNATURE) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_SIGNATURE;
+    }
+    if (owner->Version != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_VERSION) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_VERSION;
+    }
+    if ((owner->InitializationMask &
+         ~CHATPAD_KMDF_REQUEST_OWNER_KNOWN_INIT_MASK) != 0u) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_INITIALIZATION_MASK;
+    }
+    if ((owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY) != 0u) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_OWNER_READY_PREMATURE;
+    }
+    if ((owner->InitializationMask &
+         (CHATPAD_KMDF_REQUEST_OWNER_INIT_DRAINING |
+          CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED)) != 0u) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_OR_INCONSISTENT_STATE;
+    }
+    if ((owner->InitializationMask &
+         (CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED |
+          CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED)) != 0u ||
+        owner->OutboundMemory != NULL ||
+        owner->InboundMemory != NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_MEMORY_STATE_PRESENT;
+    }
+    if (!ChatpadKmdfRequestOwnerTransferStorageIsZero(&owner->TransferStorage) ||
+        !ChatpadKmdfRequestOwnerCompletionSnapshotIsZero(
+            &owner->CompletionSnapshot)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_OR_INCONSISTENT_STATE;
+    }
+
+    modelInvariantResult = ChatpadRequestOwnerValidateInvariant(&owner->Model);
+    if (modelInvariantResult != CHATPAD_REQUEST_OWNER_INVARIANT_OK) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_OR_INCONSISTENT_STATE;
+    }
+    if (ChatpadKmdfRequestOwnerModelHasActiveOperationOrLifecycle(
+            &owner->Model)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_ACTIVE_OPERATION_OR_LIFECYCLE;
+    }
+
+    RtlZeroMemory(&modelSnapshot, sizeof(modelSnapshot));
+    snapshotResult = ChatpadRequestOwnerGetSnapshot(
+        &owner->Model,
+        &modelSnapshot);
+    if (snapshotResult != CHATPAD_REQUEST_OWNER_OK ||
+        !ChatpadKmdfRequestOwnerSnapshotIsPreObjectBaseline(&modelSnapshot)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_OR_INCONSISTENT_STATE;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK;
+}
+
+ChatpadKmdfRequestOwnerCreationResult
+ChatpadKmdfRequestOwnerValidateCreationState(
+    const ChatpadKmdfActivationRequestOwner *owner,
+    const ChatpadKmdfActivationRequestContext *requestContext,
+    ChatpadKmdfRequestOwnerCreationState expectedState)
+{
+    ChatpadKmdfRequestOwnerCreationResult commonResult;
+    ULONG expectedMask;
+
+    commonResult = ChatpadKmdfRequestOwnerValidateCreationCommon(owner);
+    if (commonResult != CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK) {
+        return commonResult;
+    }
+
+    switch (expectedState) {
+    case CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_PRE_OBJECT:
+        expectedMask = CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY;
+        if (owner->BookkeepingLock != NULL ||
+            owner->Request != NULL ||
+            requestContext != NULL) {
+            return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNEXPECTED_FRAMEWORK_HANDLE;
+        }
+        break;
+
+    case CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_LOCK_CREATED:
+        expectedMask =
+            CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY |
+            CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED;
+        if (owner->BookkeepingLock == NULL) {
+            return CHATPAD_KMDF_REQUEST_OWNER_CREATION_SPINLOCK_REQUIRED;
+        }
+        if (owner->Request != NULL || requestContext != NULL) {
+            return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNEXPECTED_FRAMEWORK_HANDLE;
+        }
+        break;
+
+    case CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_LOCK_REQUEST_CREATED:
+        expectedMask =
+            CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY |
+            CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED |
+            CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED;
+        if (owner->BookkeepingLock == NULL) {
+            return CHATPAD_KMDF_REQUEST_OWNER_CREATION_SPINLOCK_REQUIRED;
+        }
+        if (owner->Request == NULL) {
+            return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNEXPECTED_FRAMEWORK_HANDLE;
+        }
+        if (!ChatpadKmdfRequestOwnerDormantRequestContextIsValid(
+                requestContext,
+                owner)) {
+            return CHATPAD_KMDF_REQUEST_OWNER_CREATION_REQUEST_CONTEXT_INVALID;
+        }
+        break;
+
+    case CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_FULLY_READY:
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_OWNER_READY_PREMATURE;
+
+    default:
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_OR_INCONSISTENT_STATE;
+    }
+
+    if (owner->InitializationMask != expectedMask) {
+        if (expectedState ==
+            CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_PRE_OBJECT) {
+            return CHATPAD_KMDF_REQUEST_OWNER_CREATION_PRE_OBJECT_STATE_INVALID;
+        }
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_INITIALIZATION_MASK;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK;
+}
+
+ChatpadKmdfRequestOwnerCreationResult
+ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock(
+    WDFDEVICE parentDevice,
+    ChatpadKmdfActivationRequestOwner *owner,
+    NTSTATUS *frameworkStatus)
+{
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDFSPINLOCK spinlock;
+    NTSTATUS status;
+    ChatpadKmdfRequestOwnerAttributeResult attributeResult;
+    ChatpadKmdfRequestOwnerCreationResult validationResult;
+
+    if (frameworkStatus == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_FRAMEWORK_STATUS;
+    }
+    *frameworkStatus = STATUS_INVALID_DEVICE_STATE;
+
+    if (owner == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_OWNER;
+    }
+    if (parentDevice == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_PARENT_DEVICE;
+    }
+    if (owner->Signature != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_SIGNATURE) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_SIGNATURE;
+    }
+    if (owner->Version != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_VERSION) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_VERSION;
+    }
+    if ((owner->InitializationMask &
+         ~CHATPAD_KMDF_REQUEST_OWNER_KNOWN_INIT_MASK) != 0u) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_INITIALIZATION_MASK;
+    }
+    if ((owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED) != 0u ||
+        owner->BookkeepingLock != NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_SPINLOCK_ALREADY_CREATED;
+    }
+    if ((owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED) != 0u ||
+        owner->Request != NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_REQUEST_ALREADY_CREATED;
+    }
+
+    validationResult = ChatpadKmdfRequestOwnerValidateCreationState(
+        owner,
+        NULL,
+        CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_PRE_OBJECT);
+    if (validationResult != CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK) {
+        return validationResult;
+    }
+
+    attributeResult =
+        ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes(
+            parentDevice,
+            &attributes);
+    if (attributeResult != CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_ATTRIBUTE_PREPARATION_FAILED;
+    }
+
+    spinlock = NULL;
+    status = WdfSpinLockCreate(&attributes, &spinlock);
+    *frameworkStatus = status;
+    if (!NT_SUCCESS(status)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_SPINLOCK_CREATE_FAILED;
+    }
+    if (spinlock == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_POST_CREATION_INVARIANT_FAILED;
+    }
+
+    owner->BookkeepingLock = spinlock;
+    owner->InitializationMask |=
+        CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED;
+
+    validationResult = ChatpadKmdfRequestOwnerValidateCreationState(
+        owner,
+        NULL,
+        CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_LOCK_CREATED);
+    if (validationResult != CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_POST_CREATION_INVARIANT_FAILED;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK;
+}
+
+ChatpadKmdfRequestOwnerCreationResult
+ChatpadKmdfRequestOwnerCreateReusableRequest(
+    WDFDEVICE parentDevice,
+    ChatpadKmdfActivationRequestOwner *owner,
+    NTSTATUS *frameworkStatus)
+{
+    WDF_OBJECT_ATTRIBUTES attributes;
+    WDFREQUEST request;
+    ChatpadKmdfActivationRequestContext *requestContext;
+    NTSTATUS status;
+    ChatpadKmdfRequestOwnerAttributeResult attributeResult;
+    ChatpadKmdfRequestOwnerCreationResult validationResult;
+
+    if (frameworkStatus == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_FRAMEWORK_STATUS;
+    }
+    *frameworkStatus = STATUS_INVALID_DEVICE_STATE;
+
+    if (owner == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_OWNER;
+    }
+    if (parentDevice == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_PARENT_DEVICE;
+    }
+    if (owner->Signature != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_SIGNATURE) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_SIGNATURE;
+    }
+    if (owner->Version != CHATPAD_KMDF_REQUEST_OWNER_CONTEXT_VERSION) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_VERSION;
+    }
+    if ((owner->InitializationMask &
+         ~CHATPAD_KMDF_REQUEST_OWNER_KNOWN_INIT_MASK) != 0u) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_INITIALIZATION_MASK;
+    }
+    if ((owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED) != 0u ||
+        owner->Request != NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_REQUEST_ALREADY_CREATED;
+    }
+    if ((owner->InitializationMask &
+         CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED) == 0u ||
+        owner->BookkeepingLock == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_SPINLOCK_REQUIRED;
+    }
+
+    validationResult = ChatpadKmdfRequestOwnerValidateCreationState(
+        owner,
+        NULL,
+        CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_LOCK_CREATED);
+    if (validationResult != CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK) {
+        return validationResult;
+    }
+
+    attributeResult =
+        ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes(
+            parentDevice,
+            &attributes);
+    if (attributeResult != CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_ATTRIBUTE_PREPARATION_FAILED;
+    }
+
+    request = NULL;
+    status = WdfRequestCreate(
+        &attributes,
+        WDF_NO_HANDLE,
+        &request);
+    *frameworkStatus = status;
+    if (!NT_SUCCESS(status)) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_REQUEST_CREATE_FAILED;
+    }
+    if (request == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_POST_CREATION_INVARIANT_FAILED;
+    }
+
+    requestContext = ChatpadKmdfGetActivationRequestContext(request);
+    if (requestContext != NULL) {
+        ChatpadKmdfRequestOwnerInitializeDormantRequestContext(
+            requestContext,
+            owner);
+    }
+
+    owner->Request = request;
+    owner->InitializationMask |=
+        CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED;
+
+    if (requestContext == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_REQUEST_CONTEXT_INVALID;
+    }
+    validationResult = ChatpadKmdfRequestOwnerValidateCreationState(
+        owner,
+        requestContext,
+        CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_LOCK_REQUEST_CREATED);
+    if (validationResult != CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK) {
+        return CHATPAD_KMDF_REQUEST_OWNER_CREATION_POST_CREATION_INVARIANT_FAILED;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK;
 }

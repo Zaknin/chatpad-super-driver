@@ -670,3 +670,15 @@ the typed activation context only for the request.
 The helpers create no object and do not alter transfer-buffer lifetime. The
 fixed two-byte arrays remain ordinary owner storage, no memory descriptor
 exists, and no request can reference either array.
+
+## 25. KMDF dormant lock/request creation checkpoint
+
+[Offline KMDF Lock and Request Creation Checkpoint](OFFLINE-KMDF-LOCK-REQUEST-CREATION.md)
+compiles isolated creation for the device-parented lock and targetless reusable
+request. After hypothetical request creation, the typed context is cleared and
+bound to the owner with invalid identity, inactive transfer direction, null
+active memory, zero lengths, and zero completion metadata.
+
+No memory object is created or compiled in this slice. The fixed arrays remain
+unreferenced ordinary owner storage, and the creation helpers are never
+executed by validation.

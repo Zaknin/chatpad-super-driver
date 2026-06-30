@@ -796,3 +796,15 @@ is disabled, and no cleanup/destroy callback exists.
 This checkpoint initializes caller-owned attributes only. It creates no
 framework object, publishes no handle or owner-ready state, and remains absent
 from `ChatpadFilter`.
+
+## 36. KMDF dormant lock/request creation checkpoint
+
+[Offline KMDF Lock and Request Creation Checkpoint](OFFLINE-KMDF-LOCK-REQUEST-CREATION.md)
+compiles isolated one-object helpers for the future device-parented bookkeeping
+lock and targetless reusable request. It initializes the typed request context
+to inactive defaults and validates pre-object, lock-created, and
+lock/request-created states.
+
+The compile-check takes helper addresses but never invokes them. No framework
+object, memory descriptor, rollback, target, request operation, callback,
+production linkage, installation, or hardware interaction exists.

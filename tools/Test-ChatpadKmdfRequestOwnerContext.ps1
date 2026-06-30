@@ -106,9 +106,26 @@ function Test-RequestOwnerContextSemanticGuards {
         $joinedCode += "`n" + (Remove-CComments ([System.IO.File]::ReadAllText($file)))
     }
 
-    $prohibitedCalls = '(?<![A-Za-z0-9_])(?:WdfDeviceCreate|WdfRequestCreate|WdfMemoryCreate|WdfMemoryCreatePreallocated|WdfObjectAllocateContext|WdfObjectDelete|WdfObjectReference|WdfObjectDereference|WdfSpinLockCreate|WdfWaitLockCreate|WdfUsbTargetDeviceCreate|WdfUsbTargetDeviceCreateWithParameters|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfIoTargetFormatRequestForInternalIoctlOthers|WdfRequestReuse|WdfRequestSend|WdfRequestCancelSentRequest|WdfRequestSetCompletionRoutine|WdfIoTargetStart|WdfIoTargetStop|IoCallDriver)\s*\('
+    $contextSourceText = Remove-CComments ([System.IO.File]::ReadAllText($contextSource))
+    $compileSourceText = Remove-CComments ([System.IO.File]::ReadAllText($compileSource))
+    $prohibitedCalls = '(?<![A-Za-z0-9_])(?:WdfDeviceCreate|WdfMemoryCreate|WdfMemoryCreatePreallocated|WdfObjectAllocateContext|WdfObjectDelete|WdfObjectReference|WdfObjectDereference|WdfWaitLockCreate|WdfUsbTargetDeviceCreate|WdfUsbTargetDeviceCreateWithParameters|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfIoTargetFormatRequestForInternalIoctlOthers|WdfRequestReuse|WdfRequestSend|WdfRequestCancelSentRequest|WdfRequestSetCompletionRoutine|WdfIoTargetStart|WdfIoTargetStop|IoCallDriver)\s*\('
     if ($joinedCode -match $prohibitedCalls) {
         throw "Prohibited WDF/WDM runtime call exists in context code: $($Matches[0])"
+    }
+    $spinLockCreateCount = [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])WdfSpinLockCreate\s*\(').Count
+    $requestCreateCount = [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])WdfRequestCreate\s*\(').Count
+    if ($spinLockCreateCount -ne 1 -or $requestCreateCount -ne 1) {
+        throw "Expected exactly one WdfSpinLockCreate and one WdfRequestCreate call; found $spinLockCreateCount and $requestCreateCount."
+    }
+    $allWdfCalls = @(
+        [regex]::Matches($contextSourceText, '(?<![A-Za-z0-9_])(Wdf[A-Za-z0-9_]+)\s*\(') |
+            ForEach-Object { $_.Groups[1].Value })
+    $unauthorizedWdfCalls = @(
+        $allWdfCalls |
+            Where-Object { $_ -notin @('WdfSpinLockCreate', 'WdfRequestCreate') } |
+            Sort-Object -Unique)
+    if ($unauthorizedWdfCalls.Count -ne 0) {
+        throw "Unauthorized WDF call exists in production context source: $($unauthorizedWdfCalls -join ', ')"
     }
 
     $prohibitedRuntimeSurface = '(?<![A-Za-z0-9_])(?:IoBuildDeviceIoControlRequest|URB|IOCTL|HidD_[A-Za-z0-9_]+|SetupDi[A-Za-z0-9_]+|CM_[A-Za-z0-9_]+|CreateFile|DeviceIoControl|malloc|calloc|realloc|free|HeapAlloc|LocalAlloc|VirtualAlloc|ExAllocatePool|ExAllocatePool2|ExFreePool|KeDelayExecutionThread|KeWaitForSingleObject)\b'
@@ -211,7 +228,6 @@ function Test-RequestOwnerContextSemanticGuards {
     if ($joinedCode -match 'InitializationMask\s*(?:=|\|=)\s*[^;\r\n]*CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY') {
         throw 'Storage initialization sets owner-ready before any WDF object creation checkpoint exists.'
     }
-    $contextSourceText = Remove-CComments ([System.IO.File]::ReadAllText($contextSource))
     $maskAssignments = [regex]::Matches($contextSourceText, 'InitializationMask\s*=\s*(CHATPAD_KMDF_REQUEST_OWNER_INIT_[A-Z_]+)')
     $allowedMaskAssignments = @(
         'CHATPAD_KMDF_REQUEST_OWNER_INIT_NONE',
@@ -227,6 +243,103 @@ function Test-RequestOwnerContextSemanticGuards {
         $joinedCode -notmatch 'CHATPAD_REQUEST_OWNER_INVALID_OPERATION_SEQUENCE' -or
         $joinedCode -notmatch 'CHATPAD_REQUEST_OWNER_INVALID_STEP') {
         throw 'Pre-object validation does not use authoritative invalid identity constants.'
+    }
+
+    $spinLockHelperName = 'ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock'
+    $requestHelperName = 'ChatpadKmdfRequestOwnerCreateReusableRequest'
+    $spinLockHelperStart = $contextSourceText.IndexOf(
+        $spinLockHelperName + '(',
+        [System.StringComparison]::Ordinal)
+    $requestHelperStart = $contextSourceText.IndexOf(
+        $requestHelperName + '(',
+        [System.StringComparison]::Ordinal)
+    if ($spinLockHelperStart -lt 0 -or
+        $requestHelperStart -le $spinLockHelperStart) {
+        throw 'Independent dormant creation helper definitions are missing or out of order.'
+    }
+    $spinLockHelperText = $contextSourceText.Substring(
+        $spinLockHelperStart,
+        $requestHelperStart - $spinLockHelperStart)
+    $requestHelperText = $contextSourceText.Substring($requestHelperStart)
+
+    if ([regex]::Matches($spinLockHelperText, 'WdfSpinLockCreate\s*\(').Count -ne 1 -or
+        $spinLockHelperText -match 'WdfRequestCreate\s*\(' -or
+        $spinLockHelperText -match [regex]::Escape($requestHelperName)) {
+        throw 'Spinlock helper does not remain an independent one-object creation operation.'
+    }
+    if ([regex]::Matches($requestHelperText, 'WdfRequestCreate\s*\(').Count -ne 1 -or
+        $requestHelperText -match 'WdfSpinLockCreate\s*\(' -or
+        $requestHelperText -match [regex]::Escape($spinLockHelperName)) {
+        throw 'Request helper does not remain an independent one-object creation operation.'
+    }
+    if ($spinLockHelperText -notmatch 'ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes\s*\(' -or
+        $requestHelperText -notmatch 'ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes\s*\(') {
+        throw 'Creation helpers do not reuse the authoritative object-attribute helpers.'
+    }
+    if ($requestHelperText -notmatch '(?s)WdfRequestCreate\s*\(\s*&attributes\s*,\s*WDF_NO_HANDLE\s*,\s*&request\s*\)' -or
+        $requestHelperText -notmatch 'ChatpadKmdfGetActivationRequestContext\s*\(') {
+        throw 'Reusable request creation is not targetless or does not retrieve the typed request context.'
+    }
+    if ([regex]::Matches($requestHelperText, 'ChatpadKmdfGetActivationRequestContext\s*\(').Count -ne 1) {
+        throw 'Typed request context must be retrieved exactly once after request creation.'
+    }
+    if ($joinedCode -notmatch 'ChatpadKmdfRequestOwnerInitializeDormantRequestContext' -or
+        $joinedCode -notmatch 'CHATPAD_CONTROL_DATA_DIRECTION_NONE' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_TRANSFER_NONE' -or
+        $joinedCode -notmatch 'ActiveTransferMemory\s*=\s*NULL') {
+        throw 'Deterministic dormant request-context initialization is incomplete.'
+    }
+    if ($joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_PRE_OBJECT' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_LOCK_CREATED' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_LOCK_REQUEST_CREATED' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_FULLY_READY') {
+        throw 'Partial creation-state validation coverage is incomplete.'
+    }
+    $requiredCreationResults = @(
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_OWNER',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_PARENT_DEVICE',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_NULL_FRAMEWORK_STATUS',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_SIGNATURE',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_VERSION',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_INVALID_INITIALIZATION_MASK',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_PRE_OBJECT_STATE_INVALID',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_SPINLOCK_ALREADY_CREATED',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_REQUEST_ALREADY_CREATED',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_SPINLOCK_REQUIRED',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNEXPECTED_FRAMEWORK_HANDLE',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_ATTRIBUTE_PREPARATION_FAILED',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_SPINLOCK_CREATE_FAILED',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_REQUEST_CREATE_FAILED',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_REQUEST_CONTEXT_INVALID',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_POST_CREATION_INVARIANT_FAILED',
+        'CHATPAD_KMDF_REQUEST_OWNER_CREATION_UNSUPPORTED_OR_INCONSISTENT_STATE')
+    foreach ($resultName in $requiredCreationResults) {
+        if ($joinedCode -notmatch [regex]::Escape($resultName)) {
+            throw "Typed creation result is missing: $resultName"
+        }
+    }
+    if ($contextSourceText -match 'InitializationMask\s*(?:=|\|=)\s*[^;\r\n]*CHATPAD_KMDF_REQUEST_OWNER_INIT_(?:OWNER_READY|OUTBOUND_MEMORY_CREATED|INBOUND_MEMORY_CREATED)') {
+        throw 'Dormant lock/request creation publishes owner-ready or a memory-created bit.'
+    }
+    $createdBitAssignments = [regex]::Matches(
+        $contextSourceText,
+        'InitializationMask\s*\|=\s*(CHATPAD_KMDF_REQUEST_OWNER_INIT_[A-Z_]+)')
+    foreach ($assignment in $createdBitAssignments) {
+        $assignedValue = $assignment.Groups[1].Value
+        if ($assignedValue -notin @(
+                'CHATPAD_KMDF_REQUEST_OWNER_INIT_LOCK_CREATED',
+                'CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED')) {
+            throw "Dormant creation assigns an unauthorized initialization bit: $assignedValue"
+        }
+    }
+    if ($compileSourceText -match ([regex]::Escape($spinLockHelperName) + '\s*\(') -or
+        $compileSourceText -match ([regex]::Escape($requestHelperName) + '\s*\(')) {
+        throw 'Compile-check invokes a dormant creation helper instead of checking its signature only.'
+    }
+    if ($compileSourceText -notmatch 'spinLockCreation\s*=\s*ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock' -or
+        $compileSourceText -notmatch 'requestCreation\s*=\s*ChatpadKmdfRequestOwnerCreateReusableRequest' -or
+        $compileSourceText -notmatch 'creationValidation\s*=\s*ChatpadKmdfRequestOwnerValidateCreationState') {
+        throw 'Compile-check does not prove the creation and partial-validation signatures without invocation.'
     }
 
     [xml]$contextXml = Get-Content -LiteralPath $contextProject -Raw
@@ -272,7 +385,7 @@ function Test-RequestOwnerContextSemanticGuards {
         throw "Active ChatpadFilter source references the context module: $($activeDriverMatches -join ', ')"
     }
 
-    Write-Output 'Semantic guard: PASS (exact object parentage attributes, typed request context, no callbacks/automatic synchronization, storage initialization, pre-object validation, no WDF object creation/submission, no runtime driver linkage).'
+    Write-Output ("Semantic guard: PASS (authorized creation calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}; exact parentage, targetless request, dormant context, partial-state validation, no memory/deletion/request-execution/runtime-driver linkage)." -f $spinLockCreateCount, $requestCreateCount)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

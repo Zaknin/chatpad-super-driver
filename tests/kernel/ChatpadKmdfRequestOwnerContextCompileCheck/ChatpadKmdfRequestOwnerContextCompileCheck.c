@@ -45,6 +45,42 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_PRE_OBJECT_READY >
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK == 0);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_DEVICE_PARENT !=
     CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_REQUEST_PARENT);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK == 0);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_SPINLOCK_CREATE_FAILED !=
+    CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_REQUEST_CREATE_FAILED);
+
+typedef ChatpadKmdfRequestOwnerCreationResult
+(*ChatpadKmdfRequestOwnerSpinLockCreationSignature)(
+    WDFDEVICE,
+    ChatpadKmdfActivationRequestOwner *,
+    NTSTATUS *);
+
+typedef ChatpadKmdfRequestOwnerCreationResult
+(*ChatpadKmdfRequestOwnerRequestCreationSignature)(
+    WDFDEVICE,
+    ChatpadKmdfActivationRequestOwner *,
+    NTSTATUS *);
+
+typedef ChatpadKmdfRequestOwnerCreationResult
+(*ChatpadKmdfRequestOwnerCreationValidationSignature)(
+    const ChatpadKmdfActivationRequestOwner *,
+    const ChatpadKmdfActivationRequestContext *,
+    ChatpadKmdfRequestOwnerCreationState);
+
+void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
+{
+    ChatpadKmdfRequestOwnerSpinLockCreationSignature spinLockCreation;
+    ChatpadKmdfRequestOwnerRequestCreationSignature requestCreation;
+    ChatpadKmdfRequestOwnerCreationValidationSignature creationValidation;
+
+    spinLockCreation = ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock;
+    requestCreation = ChatpadKmdfRequestOwnerCreateReusableRequest;
+    creationValidation = ChatpadKmdfRequestOwnerValidateCreationState;
+
+    UNREFERENCED_PARAMETER(spinLockCreation);
+    UNREFERENCED_PARAMETER(requestCreation);
+    UNREFERENCED_PARAMETER(creationValidation);
+}
 
 void ChatpadKmdfRequestOwnerContextCompileCheckAttributes(
     WDFDEVICE device,

@@ -56,7 +56,8 @@ object-creation API, publish `OWNER_READY`, change `DriverEntry`,
 `EvtDeviceAdd`, the live device context, INF/package/signing/install paths, or
 access any device or hardware.
 
-The next implementation gate is dormant spinlock and targetless reusable
-request creation in the isolated context module, with no memory creation,
-production-driver linkage, request formatting, submission, completion,
-cancellation, installation, or hardware access.
+[Offline KMDF Lock and Request Creation Checkpoint](OFFLINE-KMDF-LOCK-REQUEST-CREATION.md)
+now compiles the two independent dormant creation helpers using these exact
+attributes. The creation calls are never executed, and memory creation,
+rollback, production linkage, request execution, installation, and hardware
+access remain absent.

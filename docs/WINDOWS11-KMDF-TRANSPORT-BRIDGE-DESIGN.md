@@ -684,3 +684,13 @@ attribute builders, attaches typed context only to the request, and selects no
 automatic synchronization or object callbacks.
 
 No bridge object or runtime path exists because of this checkpoint.
+
+## 35. KMDF dormant lock/request creation checkpoint
+
+[Offline KMDF Lock and Request Creation Checkpoint](OFFLINE-KMDF-LOCK-REQUEST-CREATION.md)
+compiles exactly one spinlock-creation call and one targetless request-creation
+call in the isolated context module. It also defines deterministic typed
+request-context initialization and validates the two partial created states.
+
+The helpers remain unlinked and uninvoked by `ChatpadFilter`; no bridge target,
+memory, formatting, submission, callback, rollback, or hardware path exists.

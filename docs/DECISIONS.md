@@ -4,6 +4,50 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Keep dormant lock and request creation independent
+
+**Decision:** The isolated KMDF request-owner module compiles two independent
+creation helpers: one device-parented bookkeeping `WDFSPINLOCK`, and one
+device-parented reusable `WDFREQUEST` created with `WDF_NO_HANDLE` as its
+initial target. Each helper calls at most one WDF creation API and never calls
+the other. Successful creation publishes the handle before its corresponding
+created bit. The request helper initializes its typed context before validating
+the lock/request-created partial state. Neither helper performs deletion,
+rollback, readiness publication, or production-driver linkage.
+
+**Rationale:** Independent one-object helpers keep failure ownership explicit:
+lock failure leaves no object, request failure leaves the already valid lock
+unchanged, and a later orchestrator can own reverse-order rollback without
+hidden cleanup inside a creation primitive. Targetless request creation
+preserves the no-hardware boundary, while deterministic context initialization
+establishes stable inactive identity before any future memory or formatting
+work.
+
+**Alternatives rejected:**
+
+* One helper creating both objects - would require rollback inside the helper
+  when the second creation fails.
+* Assign an I/O target during request creation - would require target discovery
+  and hardware visibility before that design gate.
+* Delete an object after post-creation validation failure - deletion and
+  rollback are explicitly deferred to a later orchestration slice.
+* Publish owner-ready after request creation - memory objects do not exist and
+  the complete owner invariant is not satisfied.
+* Execute the helpers through fake handles or a fake WDF runtime - would test a
+  non-production framework model and risk actual invalid WDF calls.
+
+**Consequences:**
+
+* The initialization mask can now represent compile-defined lock-created and
+  lock/request-created partial states, but validation never executes those
+  transitions.
+* Exact WDF `NTSTATUS` remains separately visible from the typed project result;
+  local rejection uses the stable `STATUS_INVALID_DEVICE_STATE` sentinel.
+* A later request-parented memory-creation slice may build on the partial-state
+  validator, but rollback remains separately gated after that slice.
+
+---
+
 ## 2026-06-30 - Prepare exact KMDF parentage without object creation
 
 **Decision:** The compile-only context module exposes four typed
