@@ -4,6 +4,49 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Define KMDF request-owner contexts without production linkage
+
+**Decision:** The future activation request-owner KMDF storage is defined in
+an isolated WDK static-library module,
+`ChatpadKmdfRequestOwnerContext`, with a separate kernel compile-check target.
+The per-device owner embeds the pure `ChatpadActivationRequestOwner` model and
+declares future `WDFREQUEST`, outbound `WDFMEMORY`, inbound `WDFMEMORY`, and
+`WDFSPINLOCK` handles. The reusable request receives a typed context with an
+owner pointer, immutable operation token, lifecycle generation, activation
+step, transfer metadata, setup packet, active transfer-memory handle, and
+bounded completion snapshot.
+
+**Rationale:** The next risk after the pure state model is type placement:
+which state belongs to the device owner, which facts must be stable in the
+request context, and which transfer bytes have request lifetime. Isolating
+these declarations under the WDK compiler proves KMDF context/type
+compatibility while avoiding object creation, callback registration, or
+production-driver behavior.
+
+**Alternatives rejected:**
+
+* Embed the owner directly in the current `ChatpadFilter` device context - would
+  alter the live driver context before creation, cleanup, and D0-rundown rules
+  are authorized.
+* Duplicate the pure state machine in a WDF-only structure - would create two
+  ownership authorities for generation, operation token, terminal ownership,
+  and exact-once lifecycle release.
+* Add a WDF memory context now - no per-memory metadata is currently justified
+  beyond the owner and request context fields.
+* Define arbitrary or large transfer buffers - the authoritative activation
+  sequence needs exactly two-byte outbound and inbound storage.
+
+**Consequences:**
+
+* Future object-creation work has a single intended storage layout to use.
+* The new module remains absent from `ChatpadFilter` compile and link inputs.
+* WDF context declarations and object-attribute initialization are compile
+  checked, but no WDF object is created and no runtime behavior changes.
+* The pure model gained a narrow kernel-mode `UINT32_MAX` fallback so its source
+  can compile under the WDK C path.
+
+---
+
 ## 2026-06-30 - Keep request-owner races in a pure effect-emitting model first
 
 **Decision:** The first request-owner implementation is a portable,

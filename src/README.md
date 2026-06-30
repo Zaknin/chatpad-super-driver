@@ -18,5 +18,8 @@ Current source layers:
   behavior.
 - `transport/ChatpadControlSetup`: portable control-setup translation.
 - `transport/ChatpadWdfControlSetup`: compile-only WDK value formatter.
+- `driver/ChatpadKmdfRequestOwnerContext`: compile-only KMDF context and
+  future owner layout declarations for the activation request owner. It is not
+  linked into `ChatpadFilter` and creates no WDF object.
 - `driver/ChatpadFilter`: non-installable KMDF driver scaffold with dormant
   activation preparation compiled in and uncalled by runtime callbacks.

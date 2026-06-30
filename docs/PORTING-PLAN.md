@@ -67,9 +67,16 @@ Source references:
   under `src/transport/ChatpadRequestOwnerModel/` with exhaustive offline
   race/accounting tests. It emits effects only and creates no WDF objects or
   production-driver behavior.
-- If separately authorized, implement the next slice as compile-only KMDF
-  request-owner context definitions that host the model shape without object
-  creation, formatting, submission, callbacks, or runtime behavior.
+- The compile-only KMDF request-owner context-definition checkpoint is complete
+  under `src/driver/ChatpadKmdfRequestOwnerContext/`. It defines the future
+  owner and request-context layouts, exact two-byte transfer storage, WDF
+  handle fields, context declaration, and attribute compile checks without
+  object creation, formatting, submission, callbacks, or runtime behavior.
+- If separately authorized, design the next slice as dormant WDF object
+  creation and cleanup sequencing for the request, two memory objects, and
+  spinlock. Do not add runtime request formatting, submission, completion,
+  cancellation, target discovery, installation, or hardware access in that
+  slice unless explicitly authorized.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.

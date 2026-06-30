@@ -169,6 +169,34 @@ output, and verifies artifact containment.
 | Debug compile-check library | `artifacts\bin\x64\Debug\ChatpadWdfControlSetupCompileCheck\ChatpadWdfControlSetupCompileCheck.lib` |
 | Release compile-check library | `artifacts\bin\x64\Release\ChatpadWdfControlSetupCompileCheck\ChatpadWdfControlSetupCompileCheck.lib` |
 
+## KMDF Request-Owner Context Definitions (compile-only)
+
+`ChatpadKmdfRequestOwnerContext` is an isolated WDK static library that defines
+the future activation request-owner storage, typed reusable-request context,
+future WDF handle fields, exact two-byte outbound/inbound storage, and
+compile-time invariants. It embeds the pure `ChatpadActivationRequestOwner`
+model and reuses authoritative transport and activation-preparation types. It
+is not linked into `ChatpadFilter` and creates no WDF object.
+
+```powershell
+.\tools\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Release -Platform x64
+```
+
+The wrapper performs semantic guards against WDF object creation, request
+reuse/format/send/cancel/completion registration, dynamic allocation, global
+owner instances, duplicated setup/sequence data, `90 00` payload introduction,
+and production-driver linkage. It builds the compile-check project and the
+context dependency, prints static-library hashes, rejects signing/package
+outputs, and verifies artifact containment.
+
+| Output | Path |
+| --- | --- |
+| Debug context library | `artifacts\bin\x64\Debug\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.lib` |
+| Release context library | `artifacts\bin\x64\Release\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.lib` |
+| Debug compile-check library | `artifacts\bin\x64\Debug\ChatpadKmdfRequestOwnerContextCompileCheck\ChatpadKmdfRequestOwnerContextCompileCheck.lib` |
+| Release compile-check library | `artifacts\bin\x64\Release\ChatpadKmdfRequestOwnerContextCompileCheck\ChatpadKmdfRequestOwnerContextCompileCheck.lib` |
+
 ## ChatpadFilter lifecycle core (offline)
 
 Portable C lifecycle core used by `ChatpadFilter` and compiled into a native

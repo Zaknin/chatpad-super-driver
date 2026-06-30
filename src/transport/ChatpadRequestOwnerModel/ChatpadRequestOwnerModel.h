@@ -3,6 +3,10 @@
 
 #include "ChatpadTransportAdapter.h"
 
+#if defined(_MSC_VER) && defined(_KERNEL_MODE) && !defined(UINT32_MAX)
+#define UINT32_MAX ((uint32_t)0xffffffffu)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

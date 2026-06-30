@@ -2172,3 +2172,204 @@
   service, driver load, PnP/device query, USB/controller/Chatpad access,
   elevation, or network operation before the final authorized Git push
   occurred. Generated outputs and logs remained ignored beneath `artifacts/`.
+
+## 2026-06-30 - Compile-only KMDF request-owner context definitions
+
+- **Task title and objective:** Implement the compile-only KMDF request-owner
+  context-definition checkpoint. Define WDK/KMDF-visible owner and request
+  context storage for the future activation reusable request without linking it
+  into `ChatpadFilter` runtime behavior.
+- **Starting branch and commit:** Started from
+  `feature/offline-request-owner-state-model` at
+  `7f5ff4264d3171a1067a3eb0090f48b9979fe609`, parent
+  `8444c0199144a6ccb24e8463a1778befe05736ec`, subject
+  `model: add request owner state machine`. The local branch, remote
+  `origin/feature/offline-request-owner-state-model`, and upstream all matched
+  `7f5ff4264d3171a1067a3eb0090f48b9979fe609`; `git diff --exit-code` and
+  `git diff --cached --exit-code` both exited `0`.
+- **Working branch:** Created
+  `feature/offline-kmdf-request-owner-context` from the verified starting
+  commit.
+- **Investigation summary:** Reviewed the request-owner buffer-lifetime design,
+  pure request-owner state model, activation preparation/builders, existing
+  transport token type, WDF control-setup formatter pattern, WDK KMDF 1.15
+  context/object-attribute declarations, and current `ChatpadFilter` project
+  boundaries. No unresolved placement ambiguity remained for this checkpoint:
+  the future device-owned owner embeds the pure model, the future reusable
+  request receives a typed request context, and transfer bytes stay in fixed
+  owner storage.
+- **Files created:**
+  `docs/OFFLINE-KMDF-REQUEST-OWNER-CONTEXT-DEFINITION.md`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/README.md`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/ChatpadKmdfRequestOwnerContextCompileCheck.c`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/ChatpadKmdfRequestOwnerContextCompileCheck.vcxproj`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/README.md`;
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1`.
+- **Files modified:** `ChatpadWin11.sln`; `docs/BUILDING.md`;
+  `docs/DECISIONS.md`; `docs/NEXT-TASK.md`; `docs/PORTING-PLAN.md`;
+  `docs/PROJECT-STATE.md`;
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`;
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`; `src/README.md`;
+  `src/transport/ChatpadRequestOwnerModel/ChatpadRequestOwnerModel.h`;
+  `tests/README.md`; this worklog.
+- **Implementation details:** Added isolated static-library project
+  `ChatpadKmdfRequestOwnerContext` and compile-check project
+  `ChatpadKmdfRequestOwnerContextCompileCheck`. The owner type stores
+  signature/version, initialization mask, embedded
+  `ChatpadActivationRequestOwner`, future `WDFREQUEST`, outbound/inbound
+  `WDFMEMORY`, future `WDFSPINLOCK`, exact two-byte outbound and inbound
+  transfer arrays, and a bounded completion snapshot. The request context is
+  declared with `WDF_DECLARE_CONTEXT_TYPE_WITH_NAME` and stores owner pointer,
+  immutable `ChatpadTransportOperationToken`, lifecycle generation, activation
+  step, direction, transfer lengths, active transfer memory, copied
+  `WDF_USB_CONTROL_SETUP_PACKET`, and completion snapshot. The only functions
+  initialize ordinary `WDF_OBJECT_ATTRIBUTES` structures. No WDF object
+  creation, request formatting, send, cancel, completion, callback, runtime
+  linkage, or driver behavior was added.
+- **Pure-model portability correction:** Added a narrow kernel-mode MSVC
+  fallback for `UINT32_MAX` in `ChatpadRequestOwnerModel.h`, because compiling
+  `ChatpadRequestOwnerModel.c` through the WDK compile-check path exposed that
+  the kernel include chain did not provide `UINT32_MAX`.
+- **Intermediate failures corrected:** The first context Debug wrapper failed
+  because `wdfusb.h` was included before required USB/USBD prerequisites; the
+  context header now includes `usb.h` and `usbdlib.h` before `wdfusb.h`. The
+  next Debug wrapper failed on missing `UINT32_MAX`; the WDK fallback above
+  fixed it. A later wrapper review found the active-driver source scan used a
+  brittle PowerShell `-Include` form; it was tightened to enumerate files and
+  filter `.c`/`.h` extensions explicitly before final validation.
+- **New semantic guard:** `tools\Test-ChatpadKmdfRequestOwnerContext.ps1`
+  verifies no prohibited WDF/WDM runtime creation/format/send/cancel/completion
+  calls, no allocation/device-query/wait/IOCTL/HID/USB runtime surfaces, no
+  `90 00` payload, no global mutable owner, no flexible arrays, authoritative
+  pure-model and token reuse, exact two-byte capacity invariants, no activation
+  sequence/setup duplication, typed request context/object-attribute usage,
+  no `ChatpadFilter` include/reference/link/retention, and artifact containment.
+  Final Debug and Release semantic guards printed PASS.
+- **Context validation:** `.\tools\Test-ChatpadKmdfRequestOwnerContext.ps1
+  -Configuration Debug -Platform x64` exited `0`; semantic guard PASS;
+  environment detector exit `0`; MSBuild exit `0`; signing execution scan PASS;
+  prohibited output scan PASS; artifact containment PASS. Log:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Debug-20260630T062311Z.log`.
+  Wrapper-run context library:
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.lib`,
+  SHA-256 `439159749F5E04B48A187CF916EA962BD83BFE3F831E6D675DEA08C1F9902E32`.
+  Wrapper-run compile-check library:
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadKmdfRequestOwnerContextCompileCheck\ChatpadKmdfRequestOwnerContextCompileCheck.lib`,
+  SHA-256 `22062A0FD3E2F1BE75A4324FCC4E528F43341C15A1281111B20C333B884BFBCA`.
+- **Context validation, Release:** `.\tools\Test-ChatpadKmdfRequestOwnerContext.ps1
+  -Configuration Release -Platform x64` exited `0`; semantic guard PASS;
+  environment detector exit `0`; MSBuild exit `0`; signing execution scan PASS;
+  prohibited output scan PASS; artifact containment PASS. Log:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Release-20260630T062312Z.log`.
+  Wrapper-run context library:
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.lib`,
+  SHA-256 `A7B81AE8FDD3127A99915A29496698E948C0BDD562BC5829A79989E23FCB6888`.
+  Wrapper-run compile-check library:
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadKmdfRequestOwnerContextCompileCheck\ChatpadKmdfRequestOwnerContextCompileCheck.lib`,
+  SHA-256 `8AFBD956CE1FA67AEC1BFC9920F798705BDF428AA055942CDAB3FCC7882E1361`.
+- **Request-owner model regression:** `.\tools\Test-ChatpadRequestOwnerModel.ps1`
+  Debug and Release both exited `0`. Semantic guard PASS; environment detector
+  exit `0`; MSBuild exit `0`; test executable exit `0`; transition states
+  `14`; event classes `19`; combinations `266`; accepted `41`; idempotent
+  `12`; rejected `206`; faulting `7`; scenarios `30`; exploration depth `10`;
+  attempts `1273`; unique snapshots `74`; assertions `5002/5002`; failures
+  `0`; output containment PASS. Logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-request-owner-model-build-Debug-20260630T062313Z.log`;
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-request-owner-model-test-Debug-20260630T062313Z.log`;
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-request-owner-model-build-Release-20260630T062314Z.log`;
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-request-owner-model-test-Release-20260630T062314Z.log`.
+- **Existing offline regression validation:** `.\tools\Test-ChatpadProtocol.ps1`
+  Debug/Release exited `0` with `610/610` assertions and failure `0`; logs
+  `chatpad-protocol-integrated-*-20260630T062316Z.log` and
+  `chatpad-protocol-integrated-*-20260630T062317Z.log`.
+  `.\tools\Test-ChatpadTransport.ps1` Debug/Release exited `0` with
+  `186/186`; logs `chatpad-transport-*-20260630T062319Z.log` and
+  `chatpad-transport-*-20260630T062320Z.log`.
+  `.\tools\Test-ChatpadFilterLifecycle.ps1` Debug/Release exited `0` with
+  `109/109`; logs `chatpad-filter-lifecycle-*-20260630T062321Z.log` and
+  `chatpad-filter-lifecycle-*-20260630T062322Z.log`.
+  `.\tools\Test-ChatpadControlSetup.ps1` Debug/Release exited `0` with
+  `141/141`; logs `chatpad-control-setup-*-20260630T062323Z.log` and
+  `chatpad-control-setup-*-20260630T062324Z.log`.
+- **Kernel/driver validation:** `.\tools\Test-ChatpadProtocolKernelCompatibility.ps1`
+  Debug/Release exited `0`; logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-protocol-kernel-compatibility-Debug-20260630T062325Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-protocol-kernel-compatibility-Release-20260630T062326Z.log`.
+  `.\tools\Test-ChatpadWdfControlSetup.ps1` Debug/Release exited `0`; source,
+  formatter, compile-check, integration, dormancy, and authoritative API guards
+  PASS; logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-wdf-control-setup-Debug-20260630T062327Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-wdf-control-setup-Release-20260630T062328Z.log`.
+  `.\tools\Build-Driver.ps1` Debug/Release exited `0`; signing execution scan
+  PASS; repository safety PASS inside the wrapper; Inf2Cat and DrvCat were
+  skipped because there were no INF/catalog inputs; logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\build-debug-x64-20260630T062329Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\build-release-x64-20260630T062331Z.log`.
+- **Full solution validation:** WDK-capable MSBuild
+  `C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe`
+  built `ChatpadWin11.sln` Debug and Release with `/m /restore`. Both exited
+  `0` and logs contain `Build succeeded.`, `0 Warning(s)`, and `0 Error(s)`.
+  Logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-request-owner-context-final-Debug-20260630T062333Z.log`;
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-request-owner-context-final-Release-20260630T062335Z.log`.
+- **Direct parser validation:** `.\tools\Test-ChatpadProtocolParser.ps1`
+  exited `0` with `610/610` assertions and failure `0`; logs
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-protocol-parser-build-20260630T062359Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-protocol-parser-test-20260630T062359Z.log`.
+- **Driver artifacts after final full-solution build:** Debug
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  15,872 bytes, SHA-256
+  `973D8DE52B72C56E238CEB3A4A32485AD0747A4E35585B1315F1904DAFD491EA`,
+  `Authenticode.NotSigned`; Release
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  12,288 bytes, SHA-256
+  `BEA5CECD1F6B601AEA2E89A535E3A54234B3295372523D60EF8FE031DCD378F6`,
+  `Authenticode.NotSigned`.
+- **Final rebuilt context artifacts after full-solution build:** Debug context
+  library SHA-256
+  `BB8331A553232BEA7445334E3800462A56077D09561009C9BAC1D6D8FA66E696`;
+  Debug compile-check library SHA-256
+  `F5088A5CEE37B6BDFFF86F4CC36EB34BED3B75F4A8C0D69B8DAA00135AD88BAD`;
+  Release context library SHA-256
+  `2B0435F7FEF43DC441E50C30F567D6E8AEC4D3AC1193836E2E8CED2D45DD4ADB`;
+  Release compile-check library SHA-256
+  `3726748DBE9E8842EBD20A2C0E9BFF611160D6F76A7CF315AFA0EA4F55BAD5DB`.
+- **Runtime-linkage proof:** A source/project scan of
+  `src\driver\ChatpadFilter\*.c`, `src\driver\ChatpadFilter\*.h`, and
+  `src\driver\ChatpadFilter\ChatpadFilter.vcxproj` for
+  `ChatpadKmdfRequestOwnerContext`,
+  `ChatpadKmdfActivationRequestOwner`,
+  `ChatpadKmdfGetActivationRequestContext`, and `ChatpadKmdf` returned count
+  `0`. `ChatpadWin11.sln` includes only the isolated context library project
+  and the compile-check project.
+- **Direct safety validation:** `.\tools\Test-RepositorySafety.ps1` exited `0`
+  with `REPOSITORY SAFETY: PASS`. `git diff --check` exited `0`.
+- **Commit and push:** Commit exactly
+  `driver: define compile-only request contexts` and push only
+  `origin/feature/offline-kmdf-request-owner-context` with upstream setup.
+  The final commit hash is reported after commit and push rather than embedded
+  here.
+- **Remaining blockers:** WDF request creation, memory creation, lock creation,
+  target discovery, request formatting, request reuse/send/cancel/completion,
+  completion/cancellation callbacks, D0-exit rundown, cleanup integration,
+  executable timing, default-control visibility, lower-filter placement proof,
+  controller preservation, activation effectiveness, continuous input, signing,
+  trust, staging, installation, loading, and hardware behavior remain
+  unimplemented and unauthorized. No usable production driver exists.
+- **Safety:** No DriverEntry/runtime callback change, no ChatpadFilter runtime
+  linkage, no WDF object creation, no request formatting/submission, no request
+  reuse/cancel/completion, no timer/queue/work-item/device/USB object creation,
+  no InfVerif, no Inf2Cat execution, no CAT/catalog creation, no certificate,
+  no package, no signing, no staging, no install, no Driver Store/registry/
+  service mutation, no driver load, no PnP/device/USB/controller/Chatpad query
+  or access, no elevation, and no network operation before the final authorized
+  Git push occurred. Generated outputs and logs remained ignored beneath
+  `artifacts/`.

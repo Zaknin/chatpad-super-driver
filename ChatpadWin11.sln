@@ -28,6 +28,10 @@ Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadWdfControlSetup", "s
 EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadWdfControlSetupCompileCheck", "tests\kernel\ChatpadWdfControlSetupCompileCheck\ChatpadWdfControlSetupCompileCheck.vcxproj", "{BF34E671-2970-4389-9460-449D6988525E}"
 EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadKmdfRequestOwnerContext", "src\driver\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj", "{421C7E3A-5B02-4D07-A37D-4B45D3755694}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadKmdfRequestOwnerContextCompileCheck", "tests\kernel\ChatpadKmdfRequestOwnerContextCompileCheck\ChatpadKmdfRequestOwnerContextCompileCheck.vcxproj", "{8C59C45A-3A31-47F3-9D6F-A898D3B2051C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -86,6 +90,14 @@ Global
 		{BF34E671-2970-4389-9460-449D6988525E}.Debug|x64.Build.0 = Debug|x64
 		{BF34E671-2970-4389-9460-449D6988525E}.Release|x64.ActiveCfg = Release|x64
 		{BF34E671-2970-4389-9460-449D6988525E}.Release|x64.Build.0 = Release|x64
+		{421C7E3A-5B02-4D07-A37D-4B45D3755694}.Debug|x64.ActiveCfg = Debug|x64
+		{421C7E3A-5B02-4D07-A37D-4B45D3755694}.Debug|x64.Build.0 = Debug|x64
+		{421C7E3A-5B02-4D07-A37D-4B45D3755694}.Release|x64.ActiveCfg = Release|x64
+		{421C7E3A-5B02-4D07-A37D-4B45D3755694}.Release|x64.Build.0 = Release|x64
+		{8C59C45A-3A31-47F3-9D6F-A898D3B2051C}.Debug|x64.ActiveCfg = Debug|x64
+		{8C59C45A-3A31-47F3-9D6F-A898D3B2051C}.Debug|x64.Build.0 = Debug|x64
+		{8C59C45A-3A31-47F3-9D6F-A898D3B2051C}.Release|x64.ActiveCfg = Release|x64
+		{8C59C45A-3A31-47F3-9D6F-A898D3B2051C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

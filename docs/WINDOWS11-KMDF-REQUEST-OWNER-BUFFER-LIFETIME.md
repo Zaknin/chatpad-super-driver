@@ -592,3 +592,26 @@ cancellation, executable delay, D0-exit rundown, installation, loading, or
 hardware behavior. The next safe slice is compile-only context-definition work
 that adapts these state/effect names into future KMDF-owned storage without
 creating framework objects or registering callbacks.
+
+## 21. Compile-only KMDF context-definition checkpoint
+
+[Offline KMDF Request-Owner Context Definition](OFFLINE-KMDF-REQUEST-OWNER-CONTEXT-DEFINITION.md)
+defines the future WDK-visible storage layout for this design without adding it
+to the production driver. The isolated `ChatpadKmdfRequestOwnerContext` module
+declares:
+
+- one device-owned owner structure embedding the pure request-owner model;
+- future `WDFREQUEST`, outbound `WDFMEMORY`, inbound `WDFMEMORY`, and
+  `WDFSPINLOCK` handle fields;
+- exact two-byte outbound and inbound transfer storage;
+- a typed reusable-request context with owner pointer, immutable token,
+  lifecycle generation, step, setup packet, active transfer-memory handle, and
+  bounded completion snapshot;
+- a bounded initialization mask for partial creation, ready, draining, and
+  faulted states.
+
+No memory context is selected because no per-memory metadata is currently
+justified beyond the owner and request context. The compile-check target proves
+KMDF 1.15 context declaration and object-attribute compatibility only. It does
+not create a request, memory object, lock, target, callback, transfer, package,
+installation, or hardware action.

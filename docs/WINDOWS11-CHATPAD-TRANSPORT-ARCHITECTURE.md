@@ -726,3 +726,23 @@ This checkpoint still creates no KMDF request, transfer memory, target,
 completion/cancel callback, live formatting, submission, installation, driver
 load, or hardware behavior. The next smallest safe slice is compile-only KMDF
 request-owner context-definition work, not runtime request integration.
+
+## 32. Compile-only KMDF request-owner context checkpoint
+
+`src/driver/ChatpadKmdfRequestOwnerContext/` now defines the WDK/KMDF-visible
+future owner and request-context layouts for activation request ownership. The
+owner embeds the pure `ChatpadActivationRequestOwner` model, declares future
+request, memory, and spinlock handles, carries exact two-byte outbound and
+inbound storage, and uses a bounded initialization mask. The request context is
+declared with `WDF_DECLARE_CONTEXT_TYPE_WITH_NAME` and stores immutable
+operation identity, generation, step, setup, transfer, and completion snapshot
+fields.
+
+The companion compile-check target builds the context source and the pure model
+source under the WDK toolchain. The semantic guard verifies that `ChatpadFilter`
+does not include, compile, link, retain, embed, or invoke the new module.
+
+This checkpoint does not create WDF objects, attach contexts to real objects,
+format or submit a request, register callbacks, discover targets, install,
+load, sign, package, query devices, or access hardware. The next smallest
+safe slice is the separately gated dormant object-creation and cleanup design.
