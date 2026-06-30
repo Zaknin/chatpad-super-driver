@@ -17,8 +17,9 @@ hardware-facing work remains behind the stop gates in section 20.
 
 The repository already contains portable, hardware-free implementations of the
 packet parser, state machine, six-request builder, activation planner, and
-mocked executor. `src/driver/ChatpadFilter/` is only a compile-validated KMDF
-filter skeleton. It has no USB target, transport adapter, input reader, INF,
+mocked executor. `src/driver/ChatpadFilter/` is a compile-validated KMDF filter
+skeleton with lifecycle bookkeeping and one dormant activation-step preparation
+API. It has no USB target, transport adapter, request path, input reader, INF,
 installation path, or keyboard output.
 
 The connected-device inventory is the current Windows 11 evidence baseline.

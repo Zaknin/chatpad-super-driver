@@ -22,7 +22,9 @@ Portable C parser for the Phase 1 keyboard packet boundary plus a
 transport-independent abstract state machine and declarative activation request
 builder/planner/executor. Native user-mode static library. No hardware,
 elevation, transport, request sending, executable timing, or driver
-integration.
+runtime invocation. The authoritative request and sequence sources are also
+compiled directly by `ChatpadFilter` under the WDK toolchain for the dormant
+preparation layer; the user-mode library itself is not linked into the driver.
 
 ### Integrated build and test (preferred)
 
@@ -113,7 +115,8 @@ validated `ChatpadControlSetupTranslation` to a caller-owned
 `WDF_USB_CONTROL_SETUP_PACKET` value. It performs exact representation copying
 and conservative direction/length validation only. It creates no WDF object,
 formats or submits no request, owns no payload or response buffer, and is not
-linked into `ChatpadFilter`.
+linked as its standalone library into `ChatpadFilter`. The same authoritative
+formatter source is compiled directly by the driver preparation layer.
 
 ```powershell
 .\tools\Test-ChatpadWdfControlSetup.ps1 -Configuration Debug -Platform x64
@@ -121,9 +124,10 @@ linked into `ChatpadFilter`.
 ```
 
 The wrapper checks production and compile-check source/project files for
-prohibited runtime surfaces, builds only the formatter compile check and its
-formatter dependency, prints both static-library paths and SHA-256 values,
-rejects active signing or prohibited output, and verifies artifact containment.
+prohibited runtime surfaces, validates the exact dormant driver integration,
+builds the formatter compile check and its formatter dependency, prints both
+static-library paths and SHA-256 values, rejects active signing or prohibited
+output, and verifies artifact containment.
 
 | Output | Path |
 | --- | --- |
@@ -166,8 +170,10 @@ This isolated static-library build compiles `ChatpadActivationRequests.c`,
 headers as C with the WDK
 kernel toolchain. It is compile-time
 compatibility validation only: it has no entry point, is not referenced by
-`ChatpadFilter`, and does not install, load, sign, package, deploy, or access
-hardware. It never produces a `.sys`.
+`ChatpadFilter` as a project, and does not install, load, sign, package, deploy,
+or access hardware. Some authoritative sources are independently compiled by
+the driver preparation layer. This compatibility project never produces a
+`.sys`.
 
 ```powershell
 .\tools\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Debug -Platform x64
@@ -207,11 +213,14 @@ declarative validation requires `CatalogFile`, but this task creates no CAT,
 package, signature, service, Driver Store entry, registry value, or device
 action. Static validation is not installation readiness.
 
-## Kernel driver (compile-only skeleton)
+## Kernel driver (compile-only dormant preparation)
 
-The driver project compiles to a non-installable `.sys` skeleton with a KMDF
-filter-capable device object and lifecycle bookkeeping only. It is not
-installed, signed, packaged, deployed, or loaded.
+The driver project compiles to a non-installable `.sys` with a KMDF
+filter-capable device object, lifecycle bookkeeping, and one dormant
+activation-step preparation API. The API is retained but not called from any
+runtime callback. It creates no WDF object and performs no request formatting
+against a target, submission, wait, delay, or hardware action. The driver is
+not installed, signed, packaged, deployed, or loaded.
 
 ```powershell
 .\tools\Build-Driver.ps1 -Configuration Debug -Platform x64
@@ -225,9 +234,12 @@ installed, signed, packaged, deployed, or loaded.
 | Debug driver | `artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys` |
 | Release driver | `artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys` |
 
-Both outputs remain `Authenticode.NotSigned`. The driver project compiles
-`ChatpadFilterLifecycle.c` but still has no project reference or link to
-`ChatpadProtocol` or `ChatpadTransport`.
+Both outputs remain `Authenticode.NotSigned`. The driver project has no project
+references. It compiles the exact authoritative activation-request, sequence,
+control-setup, and WDF formatter sources directly under the WDK toolchain; it
+does not link the user-mode `ChatpadProtocol` library or `ChatpadTransport`.
+Project defaults and the wrapper keep outputs and intermediates beneath
+`artifacts/`.
 
 ## Repository safety
 

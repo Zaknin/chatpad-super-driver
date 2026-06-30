@@ -4,6 +4,41 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Compile authoritative activation preparation directly into the driver
+
+**Decision:** `ChatpadFilter` compiles the existing activation-request,
+activation-sequence, pure control-setup, and WDF formatter `.c` files directly
+under the WDK toolchain. `ChatpadActivationPreparation` consumes those APIs and
+is retained as a dormant linker input; it is not called by any runtime
+callback. The driver adds no project reference and does not link the user-mode
+libraries or `ChatpadTransport`.
+
+**Rationale:** The portable projects use the v143 user-mode toolset, while the
+same sources already pass kernel compile checks. Shared-source compilation
+preserves one authoritative implementation and gives the driver exact WDK ABI
+and warning validation without copying constants or linking user-mode library
+artifacts.
+
+**Alternatives rejected:**
+
+* Copy request/setup constants into the driver - creates a second source of
+  truth.
+* Link the v143 user-mode static libraries - weakens kernel-toolchain proof.
+* Create WDF requests or a USB target to exercise the path - crosses the
+  offline preparation boundary.
+* Invoke preparation from a PnP/power callback - changes runtime behavior
+  before ownership, cancellation, visibility, and recovery gates pass.
+
+**Consequences:**
+
+* The production driver contains a deterministic six-step preparation seam.
+* The same authoritative source files compile independently in portable,
+  kernel-compatibility, compile-check, and driver contexts.
+* Build logs and `/INCLUDE:ChatpadPrepareActivationStep` prove compilation and
+  linkage while the API remains dormant.
+* Request creation, target access, submission, completion, timing execution,
+  installation, loading, and hardware behavior remain separate future gates.
+
 ## 2026-06-30 - Fix the offline extension prototype identity and validation floor
 
 **Decision:** The source-controlled offline prototype uses extension ID

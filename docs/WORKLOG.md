@@ -1830,3 +1830,96 @@
   final authorized Git push occurred. No other network action is authorized.
   Retained evidence stayed ignored and unmodified; only authorized tracked
   Markdown changed.
+
+## 2026-06-30T08:09+04:00 - Offline driver activation-plan integration
+
+- **Objective:** Compile the authoritative six-step activation model, pure
+  control-setup translation, and WDF setup formatter into one dormant
+  production-driver preparation layer without creating requests, changing
+  runtime callbacks, loading the driver, or accessing hardware.
+- **Starting branch and commit:**
+  `feature/offline-inf2cat-package-validation` /
+  `fad671d5d1ede2eda6f0a5defb0b0495c80cc39e`; upstream synchronized; tracked
+  tree and index clean. Created
+  `feature/offline-driver-activation-plan-integration` only after the exact
+  preflight passed.
+- **Architecture investigation:** The authoritative graph was
+  `ChatpadActivationSequence` -> `ChatpadActivationRequests` ->
+  `ChatpadControlSetup` -> `ChatpadWdfControlSetupFormatter`. Portable
+  libraries use v143, while existing kernel checks already compile the same
+  sources with the WDK. The narrow integration therefore compiles the exact
+  authoritative `.c` files directly into `ChatpadFilter`; no constant,
+  payload, table, or implementation was copied.
+- **Production implementation:** Added
+  `ChatpadActivationPreparation.h/.c` with
+  `ChatpadPrepareActivationStep`. Output contains only the caller-owned WDF
+  setup value, direction/length/payload metadata, sequence/request identity,
+  and delay metadata. Typed results distinguish null output, invalid index,
+  model, translation, formatter, capacity, and consistency failures. Every
+  non-null failure output is fully cleared.
+- **Dormancy and linkage:** The project has no new project reference and does
+  not link user-mode libraries or `ChatpadTransport`. It compiles the exact
+  authoritative sources under KMDF 1.15 and uses
+  `/INCLUDE:ChatpadPrepareActivationStep` to retain the API. `driver.c`,
+  `device.c`, and `driver.h` have no diff and no call to the API.
+- **Compile validation:** The existing WDF compile check now compiles the
+  production module and exact shared sources. Its compile-only paths cover all
+  six steps, authoritative metadata comparison, deterministic repetition,
+  null output, boundary and large indexes, and successful output followed by
+  clearing failure. All authoritative steps are valid, so translator/formatter
+  failure cannot be induced without fabricating an invalid model; typed
+  fail-closed mappings remain in production, but no constant was modified and
+  no fake WDF runtime or target was introduced.
+- **Six-step result:** Exact setup fixtures remain
+  `40 a9 0c a3 23 44 00 00`,
+  `40 a9 44 23 03 7f 00 00`,
+  `40 a9 39 58 32 68 00 00`,
+  `c0 a1 00 00 16 e4 02 00`,
+  `40 a1 00 00 16 e4 02 00`, and
+  `c0 a1 00 00 16 e4 02 00`. Model-supplied `09 00` remains the only confirmed
+  outbound payload; `90 00` remains absent. Before/after delay metadata remains
+  `0/12 ms` for every step and is never executed.
+- **Validation results:** Full solution Debug/Release exit `0`; canonical
+  driver Debug/Release exit `0`; protocol `610/610` each; transport `186/186`
+  each; lifecycle `109/109` each; pure control setup `141/141` each; direct
+  protocol regression `610/610`; kernel compatibility Debug/Release PASS; WDF
+  formatter/integration Debug/Release PASS; repository safety before and after
+  PASS.
+- **Validation failures and corrections:** The first full-solution build
+  succeeded but emitted driver outputs and intermediates into ignored
+  repository/source `x64` paths. An initial project-property fix corrected
+  output location but was evaluated too early for the intermediates; the
+  containment rerun therefore failed again. Moving both properties to
+  post-import configuration groups fixed evaluation. The verified generated
+  directories were removed, solution Debug/Release reran successfully with
+  all outputs beneath `artifacts/`, and protocol containment reran PASS. These
+  were output-containment failures, not compiler or assertion failures.
+- **Driver artifacts:** Debug
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  15,872 bytes, SHA-256
+  `83C7D82BD77FA6F05690F0F4F610CF246042160D9E4A10D9032C44221B0A4AD6`,
+  `Authenticode.NotSigned`; Release
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  12,288 bytes, SHA-256
+  `22D7A1DF6F051DBFB1AB835A08354391CDEDA7BC88F27BC6EB7CAACBD4A90139`,
+  `Authenticode.NotSigned`.
+- **Files created:** production preparation header/source and
+  `docs/OFFLINE-DRIVER-ACTIVATION-PLAN-INTEGRATION.md`.
+- **Files modified:** driver project/README; WDF compile-check source, project,
+  and README; build/lifecycle/WDF wrappers; directly contradictory build,
+  architecture, bridge, roadmap, decision, current-state, next-task, and
+  worklog documentation.
+- **Commit and push:** Commit exactly
+  `driver: integrate offline activation plan` and push with upstream only to
+  `origin/feature/offline-driver-activation-plan-integration`. The final commit
+  hash is reported after commit and push rather than embedded here.
+- **Remaining blockers:** No request/target/memory owner, live formatting,
+  submission, completion, cancellation, executable timing, default-control
+  visibility, activation proof, input path, installation, signing, loading, or
+  hardware behavior exists. No usable driver exists.
+- **Safety:** No WDF object was created and no request was formatted against a
+  target or submitted. No signing, certificate, package, staging,
+  installation, Driver Store, registry, service, driver load, Windows
+  mutation, PnP/device query, USB/controller/Chatpad interaction, elevation, or
+  network action before the final authorized Git push occurred. Generated
+  outputs and logs remained ignored.

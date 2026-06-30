@@ -49,7 +49,11 @@ Source references:
   submission code exists.
 - Convert that pure value to the installed
   `WDF_USB_CONTROL_SETUP_PACKET` only in an isolated compile-only static
-  library. Keep the formatter and its compile check out of `ChatpadFilter`.
+  library. This checkpoint is complete.
+- Compile the authoritative activation sequence, pure translator, and WDF
+  formatter into one dormant `ChatpadFilter` preparation module. This offline
+  integration checkpoint is complete: all six steps produce caller-owned data,
+  and no runtime callback invokes the API.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.

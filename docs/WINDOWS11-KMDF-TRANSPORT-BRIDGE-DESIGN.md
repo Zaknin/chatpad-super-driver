@@ -506,8 +506,8 @@ Explicit conclusions:
    never aliases a pointer.
 11. Activation remains bounded and separate from continuous input.
 12. Default-control and input access remain unproven on Windows 11.
-13. The exact next task is pure control-setup translation with offline tests and
-   kernel compile validation only.
+13. Pure translation, WDF representation formatting, and dormant production
+   driver activation-step preparation are complete offline.
 14. Future physical actions may be useful only after recovery, stack visibility,
    and explicit authorization gates pass.
 
@@ -544,8 +544,8 @@ All six confirmed descriptors are obtained through
 `ChatpadBuildActivationRequest`; no request tuple is duplicated in production.
 Native Debug and Release tests pass `141/141`. The kernel compatibility project
 compiles the same header and source as C with the installed WDK and emits only
-its existing `.lib`. `ChatpadFilter` has no reference, source, solution
-dependency, or linker input for this module.
+its existing `.lib`. The authoritative source is now also an exact shared
+compile input to the dormant `ChatpadFilter` activation preparation layer.
 
 This checkpoint is not WDF request formatting or submission. It creates no
 target, request, memory object, response buffer, queue, timer, work item,
@@ -568,12 +568,26 @@ The installed KMDF 1.15 `wdfusb.h` symbols inspected were
 and defer `wLength` to request formatting; they are not used for this exact
 representation conversion.
 
-Debug and Release WDK builds produce isolated static libraries only. The
-compile check has no entry point, and `ChatpadFilter` has no project reference,
-source, solution dependency, or linker input for the formatter. No WDF object,
-target, request, memory, queue, interface, timer, work item, callback,
-formatting, submission, I/O, or hardware action exists.
+Debug and Release WDK formatter checks produce isolated static libraries. The
+compile check has no entry point. `ChatpadFilter` does not link the standalone
+library; it compiles the exact formatter source into its dormant preparation
+layer. No WDF object, target, request, memory, queue, interface, timer, work
+item, callback, target formatting, submission, I/O, or hardware action exists.
 
-Gate D does not satisfy Gate F or Gate G. The next bounded task is a design-only
-device-specific lower-filter installation and recovery specification. It must
-not create an INF, install, sign, load, query, or touch the device.
+Gate D does not satisfy Gate F or Gate G.
+
+## 30. Offline production-driver activation preparation checkpoint
+
+`ChatpadActivationPreparation` now compiles into `ChatpadFilter` and calls the
+authoritative sequence, pure translation, and WDF setup formatter APIs. It
+returns only caller-owned setup and transfer metadata. The driver project
+compiles the existing authoritative sources directly under the WDK toolchain
+and retains `ChatpadPrepareActivationStep` without invoking it.
+
+The WDK compile check covers all six steps, deterministic repetition, invalid
+indexes, and failure clearing. Portable protocol and setup tests remain
+`610/610` and `141/141` in Debug and Release.
+
+This checkpoint creates no target, request, memory object, queue, timer, work
+item, completion, cancellation, wait, delay, submission, I/O, or hardware
+path. DriverEntry and every device/PnP/power callback remain unchanged.

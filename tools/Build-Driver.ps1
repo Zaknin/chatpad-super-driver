@@ -200,15 +200,15 @@ if (-not $msbuildPath) {
     exit 1
 }
 
-# Build ChatpadProtocol (dependency) and ChatpadFilter (driver) as separate
-# project builds so each project's own IntDir/OutDir is evaluated by MSBuild.
-# Building the solution with /t:Build on ChatpadFilter would route
-# ChatpadProtocol's intermediate output into ChatpadFilter's IntDir,
-# causing PDB collisions and incorrect output paths.
+# Build the standalone ChatpadProtocol regression library and ChatpadFilter
+# as separate project builds so each project's own IntDir/OutDir is evaluated
+# by MSBuild. ChatpadFilter compiles its authorized protocol/control-setup
+# implementation files directly under the WDK toolchain; it does not link the
+# user-mode ChatpadProtocol library.
 $protocolProjectPath = Join-Path $repoRoot 'src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj'
 $filterProjectPath = Join-Path $repoRoot 'src\driver\ChatpadFilter\ChatpadFilter.vcxproj'
 
-# --- Build ChatpadProtocol (dependency) ---
+# --- Build standalone ChatpadProtocol regression library ---
 $protocolArguments = @(
     $protocolProjectPath,
     '/nologo',
@@ -223,13 +223,13 @@ $protocolArguments = @(
     "/fileLoggerParameters:LogFile=$logPath;Verbosity=diagnostic;Encoding=UTF-8"
 )
 
-Write-Output "Building dependency project ChatpadProtocol ($Configuration|$Platform) with MSBuild."
-$depResult = Invoke-MsBuildStep -Name 'MSBuild dependency (ChatpadProtocol)' -FilePath $msbuildPath -Arguments $protocolArguments -LogPath $logPath
+Write-Output "Building standalone regression project ChatpadProtocol ($Configuration|$Platform) with MSBuild."
+$depResult = Invoke-MsBuildStep -Name 'MSBuild standalone regression library (ChatpadProtocol)' -FilePath $msbuildPath -Arguments $protocolArguments -LogPath $logPath
 $depResult.OutputText | Write-Output
 if ($depResult.ExitCode -ne 0) {
     exit $depResult.ExitCode
 }
-Write-Output 'ChatpadProtocol dependency build: PASS'
+Write-Output 'ChatpadProtocol standalone regression-library build: PASS'
 
 # --- Build ChatpadFilter (driver) ---
 $filterArguments = @(

@@ -1,10 +1,16 @@
-# ChatpadFilter lifecycle scaffold
+# ChatpadFilter offline integration scaffold
 
 `ChatpadFilter` is a compile-only, non-installable x64 KMDF filter-capable
 skeleton for the Windows 11 port. `EvtDeviceAdd` calls
 `WdfFdoInitSetFilter(DeviceInit)`, creates a per-device context, and registers
 only the PnP/power lifecycle callbacks needed for offline lifetime
 bookkeeping.
+
+The project also compiles the dormant `ChatpadActivationPreparation` module.
+That module selects one authoritative activation step, translates its portable
+request into explicit setup metadata, and formats the setup bytes into a
+caller-owned `WDF_USB_CONTROL_SETUP_PACKET`. It is not called by DriverEntry,
+device-add, PnP/power, cleanup, or any other runtime callback.
 
 The per-device context contains only:
 
@@ -50,10 +56,15 @@ catalog, certificate, signing, deployment, or load path. It does not prove this
 targeted at `USB\VID_045E&PID_028E`; those remain future installation
 responsibilities.
 
+The preparation module compiles the authoritative activation-request,
+activation-sequence, pure control-setup, and WDF formatter sources directly
+under the WDK toolchain. No constants or payloads are duplicated, no user-mode
+library is linked, and `ChatpadTransport` remains disconnected.
+
 The project sets WDK `SignMode` to `Off` for Debug x64 and Release x64. Builds
 are intentionally unsigned: no certificate is created and no SignTool
-operation runs. All outputs and intermediates are routed beneath repository
-root `artifacts/` by `tools/Build-Driver.ps1`.
+operation runs. Project defaults and `tools/Build-Driver.ps1` route all outputs
+and intermediates beneath repository-root `artifacts/`.
 
 The generated `.sys` must not be installed or loaded on any Windows system.
 
@@ -70,6 +81,6 @@ unsigned driver installable and does not prove placement beneath `xusb22`.
 `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` documents the future
 documentation-only bridge from the portable activation executor and neutral
 transport adapter into a per-device KMDF request owner. It does not change this
-driver scaffold: `ChatpadFilter` still owns no transport target, WDF request,
-queue, timer, work item, endpoint, pipe, INF, package, signing, install, load,
-or hardware behavior.
+driver's runtime behavior: `ChatpadFilter` still owns no transport target, WDF
+request, queue, timer, work item, endpoint, pipe, INF, package, signing,
+install, load, or hardware behavior.

@@ -120,6 +120,8 @@ function Test-SourceAndProjectGuards {
 
     $filterFiles = @(
         (Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\ChatpadFilter.vcxproj'),
+        (Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\ChatpadActivationPreparation.h'),
+        (Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\ChatpadActivationPreparation.c'),
         (Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\driver.h'),
         (Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\driver.c'),
         (Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\device.c')
@@ -142,9 +144,26 @@ function Test-SourceAndProjectGuards {
         throw 'ChatpadFilter.vcxproj must not contain project references.'
     }
 
+    $compileItems = @($filterXml.SelectNodes('//msb:ItemGroup/msb:ClCompile[@Include]', $namespace) | ForEach-Object { $_.Include })
+    $requiredSharedItems = @(
+        'ChatpadActivationPreparation.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadActivationSequence.c',
+        '..\..\transport\ChatpadControlSetup\ChatpadControlSetup.c',
+        '..\..\transport\ChatpadWdfControlSetup\ChatpadWdfControlSetupFormatter.c')
+    if (@($requiredSharedItems | Where-Object { $compileItems -notcontains $_ }).Count -ne 0) {
+        throw 'ChatpadFilter.vcxproj is missing an exact authorized activation-preparation shared source.'
+    }
+
     $filterText = [System.IO.File]::ReadAllText($filterProject)
-    if ($filterText -match '(?i)ChatpadProtocol|ChatpadTransport') {
-        throw 'ChatpadFilter.vcxproj must not reference ChatpadProtocol or ChatpadTransport.'
+    if ($filterText -match '(?i)ChatpadTransport') {
+        throw 'ChatpadFilter.vcxproj must not reference ChatpadTransport.'
+    }
+    foreach ($runtimeFileName in @('driver.h', 'driver.c', 'device.c')) {
+        $runtimePath = Join-Path $RepositoryRoot "src\driver\ChatpadFilter\$runtimeFileName"
+        if ((Get-Content -LiteralPath $runtimePath -Raw) -match '\bChatpadPrepareActivationStep\b') {
+            throw "Runtime callback surface invokes dormant activation preparation: $runtimePath"
+        }
     }
 
     $modernDriverProhibited = @(

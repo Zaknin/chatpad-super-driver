@@ -1,50 +1,45 @@
 # Project State
 
-*Last updated: 2026-06-30T07:48+04:00*
+*Last updated: 2026-06-30T08:09+04:00*
 
 ## Current state
 
-- **Branch:** `feature/offline-inf2cat-package-validation`.
-- **Reviewed package-validation documentation baseline:**
-  `946f6feeb920e096663f757725ddb51ddd18a84d`
-  (`docs: record offline inf2cat validation`).
-- **Correction branch:** remains
-  `feature/offline-inf2cat-package-validation`; the correction commit is
-  reported by the external handoff rather than self-embedded here.
-- **Authoritative report:**
-  [Offline Inf2Cat Package Validation](OFFLINE-INF2CAT-PACKAGE-VALIDATION.md).
-- **Independent review:**
-  [Offline Inf2Cat Checkpoint Review](OFFLINE-INF2CAT-CHECKPOINT-REVIEW.md),
-  verdict **REVIEW PASS WITH FINDINGS**.
-- **Inputs:** exact extension INF SHA-256
-  `7E752EDAFDB252AF746C2AE6A9EFB3032A077A23FEB39C064D0E2C30700D11CE`;
-  exact unsigned Release SYS SHA-256
-  `00A9E8689114886C04B6C45E86603BE1257B42E6215B76CE41D3A721F28C5F6A`.
-- **Static INF validation:** `InfVerif` and semantic guards PASS.
-- **Offline package closure:** Inf2Cat exit `0`, no warnings or errors, for
-  `10_CO_X64,10_NI_X64,10_GE_X64`.
-- **Unsigned catalog:** ignored `ChatpadFilterExtension.cat`, 1,262 bytes,
-  SHA-256
-  `84CF148F8E04F41F3691B99B058BCDDE810B9EC99EB8DA4EF38DA53E11712B87`,
+- **Branch:** `feature/offline-driver-activation-plan-integration`.
+- **Starting checkpoint:**
+  `fad671d5d1ede2eda6f0a5defb0b0495c80cc39e`.
+- **Checkpoint subject:** `driver: integrate offline activation plan`; the
+  final commit hash is recorded by the external handoff rather than embedded
+  in its own commit.
+- **Milestone report:**
+  [Offline Driver Activation-Plan Integration](OFFLINE-DRIVER-ACTIVATION-PLAN-INTEGRATION.md).
+- **Production integration:** dormant
+  `ChatpadPrepareActivationStep` compiles and links into `ChatpadFilter`, using
+  the authoritative activation sequence, pure control-setup translator, and
+  WDF setup formatter.
+- **Runtime state:** no driver callback invokes the preparation API. No WDF
+  target, request, memory, queue, timer, work item, wait, submission, or
+  hardware path exists.
+- **Offline verification:** full solution and driver builds PASS in Debug and
+  Release; protocol `610/610`, transport `186/186`, lifecycle `109/109`, and
+  pure control setup `141/141` pass in both configurations; WDK compatibility
+  and integration compile guards PASS.
+- **Debug driver:** 15,872 bytes, SHA-256
+  `83C7D82BD77FA6F05690F0F4F610CF246042160D9E4A10D9032C44221B0A4AD6`,
   `Authenticode.NotSigned`.
-- **Review:** package identities, retained evidence, links, containment, and
-  Git state passed. Documentation authorization/recovery findings are addressed
-  by this correction checkpoint; historical tools were not rerun.
-- **Containment:** package copies, CAT, and logs remain ignored beneath
+- **Release driver:** 12,288 bytes, SHA-256
+  `22D7A1DF6F051DBFB1AB835A08354391CDEDA7BC88F27BC6EB7CAACBD4A90139`,
+  `Authenticode.NotSigned`.
+- **Containment:** project defaults and wrappers route outputs beneath ignored
   `artifacts/`; no generated evidence is tracked.
 
 ## Unresolved blockers
 
-- Neither InfVerif nor Inf2Cat proves signing trust, staging, installation, or
-  effective lower-filter placement beneath `xusb22`.
-- Controller preservation, default-control visibility, Chatpad activation and
-  input, continuous acquisition, keyboard output, and runtime lifecycle remain
-  unproven.
-- Gate F is not operationally passed: no signed package has been independently
-  reviewed or recovery-demonstrated on a noncritical system.
-- No signing, staging, Driver Store, registry, service, installation, loading,
-  device, input, or transport authorization exists.
-- Windows-assigned `oem#.inf` identity does not exist until staging. Staging,
-  post-staging identity verification, target matching, attachment/load,
-  passive observation, and active hardware interaction remain distinct future
-  gates.
+- WDF request ownership, target discovery, request creation/formatting,
+  submission, completion, cancellation, and executable delay scheduling are
+  not implemented or authorized.
+- Default-control visibility, effective placement beneath `xusb22`, controller
+  preservation, activation effectiveness, Chatpad input, continuous
+  acquisition, and keyboard output remain unproven.
+- Signing, trust, staging, Windows acceptance, installation, loading, and
+  every hardware interaction remain incomplete and unauthorized.
+- No usable production driver exists.

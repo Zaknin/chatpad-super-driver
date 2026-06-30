@@ -98,22 +98,33 @@ function Test-FormatterSourceAndProjects {
     param([Parameter(Mandatory)][string]$RepositoryRoot)
 
     $formatterRoot = Join-Path $RepositoryRoot 'src\transport\ChatpadWdfControlSetup'
+    $filterRoot = Join-Path $RepositoryRoot 'src\driver\ChatpadFilter'
     $compileCheckRoot = Join-Path $RepositoryRoot 'tests\kernel\ChatpadWdfControlSetupCompileCheck'
     $formatterProjectPath = Join-Path $formatterRoot 'ChatpadWdfControlSetup.vcxproj'
+    $filterProjectPath = Join-Path $filterRoot 'ChatpadFilter.vcxproj'
+    $preparationHeaderPath = Join-Path $filterRoot 'ChatpadActivationPreparation.h'
+    $preparationSourcePath = Join-Path $filterRoot 'ChatpadActivationPreparation.c'
     $compileCheckProjectPath = Join-Path $compileCheckRoot 'ChatpadWdfControlSetupCompileCheck.vcxproj'
     $guardedFiles = @(
         (Join-Path $formatterRoot 'ChatpadWdfControlSetupFormatter.h'),
         (Join-Path $formatterRoot 'ChatpadWdfControlSetupFormatter.c'),
+        $preparationHeaderPath,
+        $preparationSourcePath,
         $formatterProjectPath,
         (Join-Path $compileCheckRoot 'ChatpadWdfControlSetupCompileCheck.c'),
         $compileCheckProjectPath)
     $prohibitedNames = @(
         'WDFDEVICE', 'WDFIOTARGET', 'WDFUSBDEVICE', 'WDFREQUEST', 'WDFMEMORY',
-        'WdfUsbTargetDeviceCreate', 'WdfRequestCreate', 'WdfRequestSend',
-        'WdfUsbTargetDeviceFormatRequest', 'WdfIoQueueCreate',
-        'WdfDeviceCreateDeviceInterface', 'WdfTimerCreate', 'WdfWorkItemCreate',
-        'IOCTL', 'URB', 'DriverEntry')
-    $prohibitedPattern = '(?i)\b(?:WDFDEVICE|WDFIOTARGET|WDFUSBDEVICE|WDFREQUEST|WDFMEMORY|WdfUsbTargetDeviceCreate|WdfRequestCreate|WdfRequestSend|WdfUsbTargetDeviceFormatRequest[A-Za-z]*|WdfIoQueueCreate|WdfDeviceCreateDeviceInterface|WdfTimerCreate|WdfWorkItemCreate|IOCTL[A-Za-z0-9_]*|URB[A-Za-z0-9_]*|DriverEntry)\b'
+        'WdfRequestCreate', 'WdfMemoryCreate', 'WdfUsbTargetDeviceCreate',
+        'WdfUsbTargetDeviceFormatRequestForControlTransfer',
+        'WdfIoTargetFormatRequestForInternalIoctlOthers', 'WdfRequestSend',
+        'WdfRequestSetCompletionRoutine', 'WdfRequestReuse',
+        'WdfRequestCancelSentRequest', 'WdfIoTargetStart', 'WdfIoTargetStop',
+        'WdfIoQueueCreate', 'WdfDeviceCreateDeviceInterface', 'WdfTimerCreate',
+        'WdfWorkItemCreate', 'IoCallDriver', 'IoBuildDeviceIoControlRequest',
+        'KeDelayExecutionThread', 'KeWaitForSingleObject', 'IOCTL', 'URB',
+        'DriverEntry')
+    $prohibitedPattern = '(?i)\b(?:WDFDEVICE|WDFIOTARGET|WDFUSBDEVICE|WDFREQUEST|WDFMEMORY|WdfRequestCreate|WdfMemoryCreate|WdfUsbTargetDeviceCreate|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfIoTargetFormatRequestForInternalIoctlOthers|WdfRequestSend|WdfRequestSetCompletionRoutine|WdfRequestReuse|WdfRequestCancelSentRequest|WdfIoTargetStart|WdfIoTargetStop|WdfIoQueueCreate|WdfDeviceCreateDeviceInterface|WdfTimerCreate|WdfWorkItemCreate|IoCallDriver|IoBuildDeviceIoControlRequest|KeDelayExecutionThread|KeWaitForSingleObject|IOCTL[A-Za-z0-9_]*|URB[A-Za-z0-9_]*|DriverEntry)\b'
 
     foreach ($file in $guardedFiles) {
         if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
@@ -146,8 +157,16 @@ function Test-FormatterSourceAndProjects {
     $compileCheckNamespace.AddNamespace('msb', 'http://schemas.microsoft.com/developer/msbuild/2003')
     $compileCheckItems = @($compileCheckProject.SelectNodes('//msb:ItemGroup/msb:ClCompile[@Include]', $compileCheckNamespace) | ForEach-Object { $_.Include })
     $compileCheckReferences = @($compileCheckProject.SelectNodes('//msb:ItemGroup/msb:ProjectReference[@Include]', $compileCheckNamespace))
-    if ($compileCheckItems.Count -ne 1 -or $compileCheckItems[0] -ne 'ChatpadWdfControlSetupCompileCheck.c') {
-        throw 'Compile-check project must compile only ChatpadWdfControlSetupCompileCheck.c.'
+    $expectedCompileCheckItems = @(
+        'ChatpadWdfControlSetupCompileCheck.c',
+        '..\..\..\src\driver\ChatpadFilter\ChatpadActivationPreparation.c',
+        '..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationRequests.c',
+        '..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationSequence.c',
+        '..\..\..\src\transport\ChatpadControlSetup\ChatpadControlSetup.c',
+        '..\..\..\src\transport\ChatpadWdfControlSetup\ChatpadWdfControlSetupFormatter.c')
+    if ($compileCheckItems.Count -ne $expectedCompileCheckItems.Count -or
+        @($expectedCompileCheckItems | Where-Object { $compileCheckItems -notcontains $_ }).Count -ne 0) {
+        throw 'Compile-check project must compile only the integration check and exact shared activation-preparation sources.'
     }
     if ($compileCheckReferences.Count -ne 1 -or
         $compileCheckReferences[0].Include -notmatch 'ChatpadWdfControlSetup\.vcxproj$' -or
@@ -155,16 +174,58 @@ function Test-FormatterSourceAndProjects {
         throw 'Compile-check project must reference only the formatter with library linkage disabled.'
     }
 
-    $filterProjectPath = Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\ChatpadFilter.vcxproj'
-    if ((Get-Content -LiteralPath $filterProjectPath -Raw) -match '(?i)ChatpadWdfControlSetup|ChatpadControlSetup|ChatpadProtocol|ChatpadTransport') {
-        throw 'ChatpadFilter project references a prohibited formatter, control-setup, protocol, or transport component.'
+    [xml]$filterProject = Get-Content -LiteralPath $filterProjectPath -Raw
+    $filterNamespace = New-Object System.Xml.XmlNamespaceManager($filterProject.NameTable)
+    $filterNamespace.AddNamespace('msb', 'http://schemas.microsoft.com/developer/msbuild/2003')
+    $filterCompileItems = @($filterProject.SelectNodes('//msb:ItemGroup/msb:ClCompile[@Include]', $filterNamespace) | ForEach-Object { $_.Include })
+    $filterReferences = @($filterProject.SelectNodes('//msb:ItemGroup/msb:ProjectReference[@Include]', $filterNamespace))
+    $expectedFilterCompileItems = @(
+        'ChatpadActivationPreparation.c',
+        'ChatpadFilterLifecycle.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadActivationSequence.c',
+        '..\..\transport\ChatpadControlSetup\ChatpadControlSetup.c',
+        '..\..\transport\ChatpadWdfControlSetup\ChatpadWdfControlSetupFormatter.c',
+        'driver.c',
+        'device.c')
+    if ($filterCompileItems.Count -ne $expectedFilterCompileItems.Count -or
+        @($expectedFilterCompileItems | Where-Object { $filterCompileItems -notcontains $_ }).Count -ne 0) {
+        throw 'ChatpadFilter must compile only its original sources plus the exact shared activation-preparation sources.'
+    }
+    if ($filterReferences.Count -ne 0) {
+        throw 'ChatpadFilter must not add project references for activation preparation.'
+    }
+    if ((Get-Content -LiteralPath $filterProjectPath -Raw) -match '(?i)ChatpadTransport') {
+        throw 'ChatpadFilter must not reference the transport adapter.'
+    }
+
+    $preparationSource = Get-Content -LiteralPath $preparationSourcePath -Raw
+    foreach ($requiredCall in @(
+        'ChatpadGetActivationSequenceStep',
+        'ChatpadTranslateActivationRequest',
+        'ChatpadFormatWdfControlSetupPacket')) {
+        if ($preparationSource -notmatch [regex]::Escape($requiredCall)) {
+            throw "Activation preparation does not call required authoritative API: $requiredCall"
+        }
+    }
+    if ($preparationSource -match '(?i)0x90|90\s*,\s*00') {
+        throw 'Unconfirmed 90 00 data appeared in activation preparation.'
+    }
+
+    foreach ($runtimeFileName in @('driver.c', 'device.c', 'driver.h')) {
+        $runtimePath = Join-Path $filterRoot $runtimeFileName
+        if ((Get-Content -LiteralPath $runtimePath -Raw) -match '\bChatpadPrepareActivationStep\b') {
+            throw "Runtime callback surface invokes dormant activation preparation: $runtimePath"
+        }
     }
 
     Write-Output "Prohibition guard tokens: $($prohibitedNames -join ', ')"
     Write-Output 'Source/project prohibition guard: PASS (no prohibited runtime surfaces found).'
     Write-Output 'Formatter project guard: PASS (one source, static library, no project references).'
-    Write-Output 'Compile-check project guard: PASS (one source; formatter-only non-linking project reference).'
-    Write-Output 'ChatpadFilter isolation guard: PASS (no formatter, control-setup, protocol, or transport reference).'
+    Write-Output 'Compile-check project guard: PASS (exact shared activation-preparation sources; formatter dependency remains non-linking).'
+    Write-Output 'ChatpadFilter integration guard: PASS (exact shared sources, no project references, no transport adapter).'
+    Write-Output 'Dormancy guard: PASS (no runtime callback invokes ChatpadPrepareActivationStep).'
+    Write-Output 'Authoritative API guard: PASS (sequence, translation, and WDF formatter calls present; 90 00 absent).'
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))
