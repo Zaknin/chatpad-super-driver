@@ -3456,3 +3456,82 @@
 - **Next gate:** Independent read-only audit of the corrected evidence
   manifest. Only after PASS may the separately gated owner-embedding and
   ordinary-initialization design slice be considered.
+
+## 2026-06-30 - Production owner embedding and ordinary initialization
+
+- **Task title/objective:** Embed exactly one authoritative KMDF request owner
+  in each production device context, initialize ordinary storage once, and
+  immediately validate the clean pre-object baseline before lifecycle
+  initialization. Keep dormant orchestration and every WDF object/target/
+  request operation absent.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-production-linkage-evidence-fix` at
+  `41172d7f2877509a16f3b58abf0f81d231cbabaf`, parent
+  `90ca13f8babfc0c8fd1d14c998c1719e4788a5f6`, subject
+  `docs: complete production linkage evidence`, then created
+  `feature/offline-kmdf-owner-embedding-init`.
+- **Preflight:** Debug and Release context libraries each contained only
+  `ChatpadKmdfRequestOwnerContext.obj`. Initializer, pre-object validator,
+  creation helpers, rollback, orchestration, and WDF thunks occupy separate
+  `/Gy` COMDATs. Driver links use `/OPT:REF`, `/OPT:ICF`, and
+  `/INCREMENTAL:NO`, with no request-owner `/INCLUDE` or `/WHOLEARCHIVE`.
+  Referencing only the two WDF-free functions was therefore safe in both
+  configurations.
+- **Implementation:** `driver.h` includes the authoritative context header and
+  embeds exactly
+  `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
+  `ChatpadEvtDeviceAdd` calls
+  `ChatpadKmdfRequestOwnerInitializeStorage`, maps its typed result, calls
+  `ChatpadKmdfRequestOwnerValidatePreObjectState`, and proceeds to
+  `ChatpadFilterLifecycleInitialize` only after both succeed. The exact
+  insertion is after `context->DiagnosticSequence = 0u;`.
+- **Project integration:** Kept the existing context-library project
+  reference unchanged. Added only the required context/model/transport include
+  roots and compiled the portable `ChatpadRequestOwnerModel.c` directly as a
+  WDK object. The user-mode model library was rejected because it carries
+  `MSVCRT`/`MSVCRTD` default-library metadata.
+- **Status mapping:** `OK` maps to `STATUS_SUCCESS`; impossible null owner or
+  validation inputs map to `STATUS_INVALID_PARAMETER`; repeated initialization
+  and invariant failures map to `STATUS_INVALID_DEVICE_STATE`; every
+  pre-object validation failure returns `STATUS_INVALID_DEVICE_STATE`.
+- **Guard changes:** Added
+  `tools/Test-ChatpadProductionOwnerInitialization.ps1`; updated production
+  linkage, context, model, lifecycle, and WDF formatter guards to permit only
+  the exact embedded-owner/portable-model integration while retaining
+  creation/orchestration/target/request prohibitions.
+- **Validation:** Repository safety passed before changes. Debug and Release
+  context checks, driver builds, owner-initialization guards, linkage guards,
+  and Visual Studio Community full-solution builds passed. Successful solution
+  logs contain zero warning/error diagnostics. An earlier solution attempt
+  selected Build Tools MSBuild without WDK integration and failed with
+  `MSB8020`; that log is retained as rejected evidence.
+- **Regressions:** Debug and Release request-owner model `5002/5002`, protocol
+  `610/610`, transport `186/186`, lifecycle `109/109`, control setup
+  `141/141`; protocol kernel compatibility and WDF control setup PASS in both.
+- **Binary evidence:** Debug driver is 20,992 bytes, SHA-256
+  `FB9E9DD550BEF64B99BFAA74810A953A5B0DC12BB455869D7787FB657B565B8F`;
+  Release is 14,336 bytes, SHA-256
+  `9EA24A8B6BEB2796B9A1FF55A04486C8E3EB59B94A191AEA6F50B322531CBCE3`.
+  Both are `NotSigned`; no creation/rollback/orchestration symbols and no
+  forbidden WDF object-management or target/request imports are exposed.
+- **Evidence:** Full ignored logs are under `artifacts/logs`; the tracked
+  manifest is
+  `docs/evidence/production-owner-initialization-manifest.json`.
+- **Files changed:** Production `driver.h`, `device.c`, and
+  `ChatpadFilter.vcxproj`; six semantic/build guards; directly relevant
+  README/build/continuity documents; new checkpoint document and evidence
+  manifest. No isolated context/model semantics, `legacy/`, INF, signing,
+  package, deployment, recovery, D0, cleanup, removal, or hardware file
+  changed.
+- **Safety:** No orchestration, WDF object creation/deletion, rollback, target
+  discovery, request operation, signing, packaging, staging, installation,
+  loading, Windows mutation, device enumeration, elevation, or controller/
+  Chatpad interaction occurred. Network access is reserved for the final
+  authorized Git push.
+- **Commit/push:** Commit exactly
+  `driver: initialize production request owner` and push only
+  `origin/feature/offline-kmdf-owner-embedding-init`; final hash is reported
+  after commit.
+- **Next gate:** Independent read-only audit of this production owner
+  embedding and ordinary-initialization checkpoint. Dormant orchestration
+  invocation remains unauthorized.

@@ -152,3 +152,10 @@ validation executes no creation helper.
 [Offline KMDF Partial-Creation Rollback Checkpoint](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md)
 preserves the ordinary arrays and pure-model baseline while clearing framework
 publication and adding the existing `FAULTED` diagnostic bit.
+
+[Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md)
+now embeds this authoritative owner and calls
+`ChatpadKmdfRequestOwnerInitializeStorage` followed immediately by
+`ChatpadKmdfRequestOwnerValidatePreObjectState` once per device context. The
+initializer semantics in this document are unchanged; creation, rollback,
+orchestration, and `OWNER_READY` publication remain dormant.

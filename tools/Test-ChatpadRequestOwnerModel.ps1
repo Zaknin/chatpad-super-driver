@@ -136,13 +136,29 @@ function Test-RequestOwnerSemanticGuards {
     }
 
     $filterRoot = Join-Path $RepositoryRoot 'src\driver\ChatpadFilter'
-    $filterReferences = @(
-        Get-ChildItem -LiteralPath $filterRoot -File -ErrorAction Stop |
-            Select-String -Pattern 'ChatpadRequestOwner' -SimpleMatch)
-    if ($filterReferences.Count -ne 0) {
-        throw 'ChatpadFilter source/project invokes or embeds the request-owner model.'
+    [xml]$filterProject = Get-Content -LiteralPath (
+        Join-Path $filterRoot 'ChatpadFilter.vcxproj') -Raw
+    $filterNamespace = New-Object System.Xml.XmlNamespaceManager(
+        $filterProject.NameTable)
+    $filterNamespace.AddNamespace(
+        'msb',
+        'http://schemas.microsoft.com/developer/msbuild/2003')
+    $linkedModelSources = @($filterProject.SelectNodes(
+        '//msb:ClCompile[@Include="..\..\transport\ChatpadRequestOwnerModel\ChatpadRequestOwnerModel.c"]',
+        $filterNamespace))
+    if ($linkedModelSources.Count -ne 1) {
+        throw 'ChatpadFilter must link exactly one portable request-owner model source object.'
     }
-    Write-Output 'Semantic guard: PASS (pure model, complete state/event surface, atomic rejection, driver dormancy).'
+    $filterSourceText = (
+        Get-ChildItem -LiteralPath $filterRoot -File |
+            Where-Object { $_.Extension -in @('.c', '.h') } |
+            ForEach-Object { [System.IO.File]::ReadAllText($_.FullName) }
+    ) -join [Environment]::NewLine
+    if ($filterSourceText -match
+        'ChatpadRequestOwner(?:EventInitialize|Initialize|Dispatch|GetSnapshot|ValidateInvariant|GetExpectedTransitionClass|ClassifyResult)\s*\(') {
+        throw "ChatpadFilter directly invokes the pure request-owner model: $($Matches[0])"
+    }
+    Write-Output 'Semantic guard: PASS (pure model, complete state/event surface, atomic rejection, one linked portable model object, no direct production model call).'
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

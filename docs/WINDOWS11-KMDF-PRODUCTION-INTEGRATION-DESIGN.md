@@ -786,3 +786,25 @@ Stop conditions:
 
 Fundamental production integration decisions are selected here; implementation
 remains separately gated.
+
+## Implemented ordinary-initialization checkpoint
+
+The `feature/offline-kmdf-owner-embedding-init` checkpoint implements only
+the design's header, embedded-storage, ordinary-initialization, and immediate
+pre-object-validation slice:
+
+- `driver.h` includes `ChatpadKmdfRequestOwnerContext.h`;
+- `CHATPAD_FILTER_DEVICE_CONTEXT` embeds exactly one
+  `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`;
+- `EvtDeviceAdd` initializes and validates it after
+  `context->DiagnosticSequence = 0u;` and before
+  `ChatpadFilterLifecycleInitialize(&context->Lifecycle)`;
+- the portable model source is compiled directly as a WDK object because the
+  existing user-mode model library has user-mode default-library metadata;
+- no orchestration, creation, rollback, ready publication, target, request,
+  D0, cleanup, or removal slice is implemented.
+
+The checkpoint record is
+[Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
+The next gate is an independent read-only audit. Dormant orchestration remains
+unauthorized.

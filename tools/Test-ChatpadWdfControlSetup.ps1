@@ -185,12 +185,13 @@ function Test-FormatterSourceAndProjects {
         '..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c',
         '..\..\protocol\ChatpadProtocol\ChatpadActivationSequence.c',
         '..\..\transport\ChatpadControlSetup\ChatpadControlSetup.c',
+        '..\..\transport\ChatpadRequestOwnerModel\ChatpadRequestOwnerModel.c',
         '..\..\transport\ChatpadWdfControlSetup\ChatpadWdfControlSetupFormatter.c',
         'driver.c',
         'device.c')
     if ($filterCompileItems.Count -ne $expectedFilterCompileItems.Count -or
         @($expectedFilterCompileItems | Where-Object { $filterCompileItems -notcontains $_ }).Count -ne 0) {
-        throw 'ChatpadFilter must compile only its original sources plus the exact shared activation-preparation sources.'
+        throw 'ChatpadFilter must compile only its original sources, exact shared activation-preparation sources, and the portable request-owner model.'
     }
     if ($filterReferences.Count -ne 1 -or
         $filterReferences[0].Include -cne '..\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj') {
@@ -208,8 +209,8 @@ function Test-FormatterSourceAndProjects {
         $filterReferenceAdditionalProperties.InnerText -cne $expectedFilterReferenceAdditionalProperties) {
         throw 'ChatpadFilter request-owner context project reference metadata is not exact.'
     }
-    if ((Get-Content -LiteralPath $filterProjectPath -Raw) -match '(?i)ChatpadTransport') {
-        throw 'ChatpadFilter must not reference the transport adapter.'
+    if ((Get-Content -LiteralPath $filterProjectPath -Raw) -match '(?i)ChatpadTransportAdapter\.c|ChatpadTransport\.vcxproj') {
+        throw 'ChatpadFilter must not compile or reference the transport adapter.'
     }
 
     $preparationSource = Get-Content -LiteralPath $preparationSourcePath -Raw

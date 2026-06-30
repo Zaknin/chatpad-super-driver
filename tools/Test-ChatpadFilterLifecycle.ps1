@@ -163,14 +163,15 @@ function Test-SourceAndProjectGuards {
         '..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c',
         '..\..\protocol\ChatpadProtocol\ChatpadActivationSequence.c',
         '..\..\transport\ChatpadControlSetup\ChatpadControlSetup.c',
+        '..\..\transport\ChatpadRequestOwnerModel\ChatpadRequestOwnerModel.c',
         '..\..\transport\ChatpadWdfControlSetup\ChatpadWdfControlSetupFormatter.c')
     if (@($requiredSharedItems | Where-Object { $compileItems -notcontains $_ }).Count -ne 0) {
         throw 'ChatpadFilter.vcxproj is missing an exact authorized activation-preparation shared source.'
     }
 
     $filterText = [System.IO.File]::ReadAllText($filterProject)
-    if ($filterText -match '(?i)ChatpadTransport') {
-        throw 'ChatpadFilter.vcxproj must not reference ChatpadTransport.'
+    if ($filterText -match '(?i)ChatpadTransportAdapter\.c|ChatpadTransport\.vcxproj') {
+        throw 'ChatpadFilter.vcxproj must not compile or reference the transport adapter.'
     }
     foreach ($runtimeFileName in @('driver.h', 'driver.c', 'device.c')) {
         $runtimePath = Join-Path $RepositoryRoot "src\driver\ChatpadFilter\$runtimeFileName"

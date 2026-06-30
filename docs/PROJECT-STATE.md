@@ -1,49 +1,57 @@
 # Project State
 
-*Last updated: 2026-06-30 (production linkage evidence correction)*
+*Last updated: 2026-06-30 (production owner ordinary initialization)*
 
 ## Current state
 
-- **Branch:** `feature/offline-production-linkage-evidence-fix`.
-- **Starting checkpoint:** `90ca13f8babfc0c8fd1d14c998c1719e4788a5f6`,
-  `build: link dormant request owner library`.
-- **Authoritative production linkage checkpoint:**
-  [Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md).
+- **Branch:** `feature/offline-kmdf-owner-embedding-init`.
+- **Starting checkpoint:** `41172d7f2877509a16f3b58abf0f81d231cbabaf`,
+  `docs: complete production linkage evidence`.
+- **Expected commit:** the commit containing this state uses subject
+  `driver: initialize production request owner`.
+- **Checkpoint record:**
+  [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
 - **Evidence manifest:**
-  [production-linkage-manifest.json](evidence/production-linkage-manifest.json).
-- **Evidence correction:**
-  [Offline Production Linkage Evidence Correction](OFFLINE-PRODUCTION-LINKAGE-EVIDENCE-CORRECTION.md).
-- **Implementation:** `ChatpadFilter.vcxproj` has exactly one native
-  project-reference dependency on the existing
-  `ChatpadKmdfRequestOwnerContext` static-library project. The dependency uses
-  explicit WDK-safe output metadata so Debug/Release builds keep the context
-  library under its own artifact roots.
-- **Solution state:** No solution-file change was required. The referenced
-  context project already existed in `ChatpadWin11.sln` for Debug/Release x64.
-- **Production source state:** No production `.c` or `.h` file includes the
-  request-owner context header, embeds the owner, initializes owner storage,
-  invokes orchestration, registers new callbacks, creates or deletes WDF
-  objects, discovers targets, or formats/sends/completes/cancels requests.
-- **Binary state:** Full-solution Debug and Release builds passed with
-  `0 Warning(s)` and `0 Error(s)`. Final driver images are unsigned and contain
-  no retained request-owner symbols and no new WDF object-management imports
-  from the unused static library.
-- **Validation state:** All 22 historical build/regression retained logs exist
-  and match their manifest SHA-256 values. The correction adds deterministic
-  hash-bound transcripts for repository safety, Markdown links, JSON parsing,
-  and unstaged/staged diff checks. No build or regression suite was rerun.
-- **Safety:** Project linkage is complete only as dormant build/link
-  availability. Target discovery, request formatting/submission, completion,
-  cancellation, D0 rundown, INF/package/signing, staging, installation,
-  loading, Windows mutation, device enumeration, and controller/Chatpad
-  interaction remain unauthorized.
+  [production-owner-initialization-manifest.json](evidence/production-owner-initialization-manifest.json).
+- **Production context:** `driver.h` includes the authoritative KMDF
+  request-owner header and embeds exactly one
+  `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
+- **Initialization:** `ChatpadEvtDeviceAdd` calls the ordinary initializer and
+  immediate pre-object validator exactly once after scalar context setup and
+  before lifecycle initialization. Failures stop before lifecycle state is
+  initialized.
+- **Project linkage:** the existing context static-library project reference
+  is unchanged. `ChatpadFilter.vcxproj` compiles the portable request-owner
+  model source directly as a WDK object and adds only the required include
+  roots.
+- **Owner baseline:** signature/version and pure model are initialized;
+  initialization mask is exactly `MODEL_READY`; fixed two-byte arrays are
+  zero; all WDF handles are null; `OWNER_READY`, `FAULTED`, creation bits,
+  lifecycle obligations, and active operation state are absent.
+- **Build/toolchain:** Visual Studio Community 2022 17.14.35, MSVC
+  14.44.35207, SDK/WDK 10.0.26100.0, KMDF 1.15. Debug and Release context,
+  driver, full-solution, semantic, kernel compatibility, and WDF formatter
+  checks pass.
+- **Regressions:** request-owner model `5002/5002`, protocol `610/610`,
+  transport `186/186`, lifecycle `109/109`, and control setup `141/141` in
+  Debug and Release.
+- **Binary state:** Debug driver is 20,992 bytes, SHA-256
+  `FB9E9DD550BEF64B99BFAA74810A953A5B0DC12BB455869D7787FB657B565B8F`;
+  Release is 14,336 bytes, SHA-256
+  `9EA24A8B6BEB2796B9A1FF55A04486C8E3EB59B94A191AEA6F50B322531CBCE3`.
+  Both are `NotSigned`. No creation/rollback/orchestration symbols or
+  forbidden object-management/target/request imports are exposed.
+- **Safety:** no orchestration, WDF object creation/deletion, target/request
+  operation, D0/removal change, signing, package, staging, installation,
+  loading, Windows mutation, device enumeration, or hardware interaction was
+  performed.
 
 ## Unresolved blockers
 
-- Device-context owner embedding has not begun.
-- Ordinary owner initialization is not connected to production code.
-- Dormant orchestration is not connected to production code.
-- Normal teardown, active-operation rundown, target and request operations,
-  sequencing, D0 coordination, signing, staging, installation, loading,
-  USB/controller validation, and Chatpad input remain separate gates.
+- The production owner-initialization checkpoint still requires an
+  independent read-only audit.
+- Dormant orchestration invocation remains unauthorized.
+- Normal teardown, active-operation rundown, target discovery, request
+  operations, D0 coordination, signing, staging, installation, loading, and
+  hardware validation remain separate gates.
 - No usable production driver exists.

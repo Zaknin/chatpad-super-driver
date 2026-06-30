@@ -146,5 +146,8 @@ itself. The checkpoint relies on the paired MSBuild logs, linker tlogs,
 `dumpbin` import/symbol inspection, regression suite, and complete diff review
 for the proof boundary.
 
-The next safe task is an independent read-only audit of the corrected evidence
-manifest before any owner embedding or ordinary initialization.
+The corrected evidence was independently audited before the later
+owner-embedding/ordinary-initialization checkpoint recorded in
+[Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
+This linkage document remains the baseline for the unchanged native context
+project reference and does not authorize dormant orchestration.

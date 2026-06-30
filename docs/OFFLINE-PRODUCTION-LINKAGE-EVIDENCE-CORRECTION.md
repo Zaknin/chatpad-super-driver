@@ -97,6 +97,8 @@ commands recorded at the linkage checkpoint. This correction did not execute
 the driver, invoke the dormant helper, create or delete WDF objects, or prove
 runtime behavior on Windows or hardware.
 
-The next task is an independent read-only audit of the corrected evidence
-manifest. Owner embedding and ordinary initialization remain separately gated
-and may proceed only after that audit passes.
+The corrected evidence was independently audited before the separately
+authorized owner-embedding and ordinary-initialization checkpoint recorded in
+[Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
+This correction remains historical evidence and does not authorize dormant
+orchestration.

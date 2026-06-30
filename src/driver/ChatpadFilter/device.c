@@ -1,6 +1,22 @@
 #include "driver.h"
 
 static NTSTATUS
+ChatpadOwnerInitializationResultToStatus(
+    ChatpadKmdfRequestOwnerStorageResult result
+    )
+{
+    switch (result) {
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK:
+        return STATUS_SUCCESS;
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_OWNER:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_VALIDATION:
+        return STATUS_INVALID_PARAMETER;
+    default:
+        return STATUS_INVALID_DEVICE_STATE;
+    }
+}
+
+static NTSTATUS
 ChatpadLifecycleResultToStatus(
     ChatpadFilterLifecycleResult result
     )
@@ -75,6 +91,9 @@ ChatpadEvtDeviceAdd(
     WDF_OBJECT_ATTRIBUTES objectAttributes;
     WDF_PNPPOWER_EVENT_CALLBACKS pnpPowerCallbacks;
     PCHATPAD_FILTER_DEVICE_CONTEXT context;
+    ChatpadKmdfRequestOwnerStorageResult ownerStorageResult;
+    ChatpadKmdfRequestOwnerStorageValidation ownerStorageValidation;
+    ChatpadKmdfRequestOwnerStorageResult ownerValidationResult;
     ChatpadFilterLifecycleResult lifecycleResult;
     NTSTATUS status;
 
@@ -109,6 +128,19 @@ ChatpadEvtDeviceAdd(
     context->Signature = CHATPAD_FILTER_DEVICE_CONTEXT_SIGNATURE;
     context->Version = CHATPAD_FILTER_DEVICE_CONTEXT_VERSION;
     context->DiagnosticSequence = 0u;
+
+    ownerStorageResult =
+        ChatpadKmdfRequestOwnerInitializeStorage(&context->ActivationRequestOwner);
+    if (ownerStorageResult != CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK) {
+        return ChatpadOwnerInitializationResultToStatus(ownerStorageResult);
+    }
+
+    ownerValidationResult = ChatpadKmdfRequestOwnerValidatePreObjectState(
+        &context->ActivationRequestOwner,
+        &ownerStorageValidation);
+    if (ownerValidationResult != CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK) {
+        return STATUS_INVALID_DEVICE_STATE;
+    }
 
     lifecycleResult = ChatpadFilterLifecycleInitialize(&context->Lifecycle);
     if (lifecycleResult == CHATPAD_FILTER_LIFECYCLE_OK) {

@@ -170,10 +170,15 @@ uninvoked helpers for device-parented lock/request creation, request-parented
 outbound/inbound preallocated-memory creation, request-first/spinlock-second
 rollback, all-or-nothing structural-ready orchestration, and a
 documentation-only production-integration design. The project-linkage-only
-dormancy gate for the existing static-library context module is complete. The
-next independent gate is read-only audit of that linkage evidence before any
-owner embedding. This does not authorize owner embedding, helper invocation,
-WDF object creation, request execution, deployment, or hardware validation.
+dormancy gate for the existing static-library context module is complete. Its
+evidence was audited, and the production context now embeds one authoritative
+owner and calls only ordinary initialization and pre-object validation before
+lifecycle initialization. The portable model source is linked as a WDK object;
+the isolated KMDF context source still comes only from its static-library
+project. The next gate is an independent read-only audit of
+[that checkpoint](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md). This does
+not authorize dormant orchestration, WDF object creation, request execution,
+deployment, or hardware validation.
 
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`

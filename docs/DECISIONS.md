@@ -1211,3 +1211,31 @@ giving future KMDF work a deterministic stop/admission model.
 * Future runtime integration must acquire operation admission for the current
   nonzero D0 generation and must handle busy D0 exit without waiting in the
   callback.
+
+## 2026-06-30 - Link the portable owner model as a production WDK object
+
+**Decision:** Compile `ChatpadRequestOwnerModel.c` directly in
+`ChatpadFilter.vcxproj` for Debug and Release x64. Keep the existing
+`ChatpadKmdfRequestOwnerContext` project reference as the only source of the
+authoritative KMDF context implementation.
+
+**Rationale:** The ordinary KMDF owner initializer and validator depend on the
+pure model. The existing user-mode model static library carries
+`MSVCRT`/`MSVCRTD` default-library metadata and is not an appropriate
+kernel-driver link input. The source is already portable and is compiled
+directly by the WDK compatibility project.
+
+**Alternatives rejected:**
+
+* Link the user-mode model library into the driver - imports user-mode runtime
+  link assumptions into a kernel binary.
+* Compile `ChatpadKmdfRequestOwnerContext.c` directly in `ChatpadFilter` -
+  duplicates the authoritative context project and violates the established
+  project-linkage boundary.
+* Duplicate the model implementation - creates a second source of truth.
+
+**Consequences:** Production links one WDK-compiled pure-model object, adds
+only the context/model/transport include roots, and remains independent of the
+user-mode model library. The production source calls only the authoritative
+KMDF ordinary initializer and pre-object validator; dormant orchestration and
+WDF object creation remain unreferenced.

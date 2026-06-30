@@ -557,9 +557,15 @@ function Test-RequestOwnerContextSemanticGuards {
     $filterItems = @($filterXml.SelectNodes('//msb:ClCompile[@Include] | //msb:ClInclude[@Include]', $filterNs) | ForEach-Object { $_.Include })
     $filterRefs = @($filterXml.SelectNodes('//msb:ProjectReference', $filterNs))
     $filterAdditionalOptions = @($filterXml.SelectNodes('//msb:Link/msb:AdditionalOptions', $filterNs) | ForEach-Object { $_.'#text' })
-    if (($filterItems -match 'ChatpadKmdfRequestOwnerContext').Count -ne 0 -or
+    $filterCompileItems = @($filterXml.SelectNodes('//msb:ClCompile[@Include]', $filterNs) | ForEach-Object { $_.Include })
+    if (@($filterCompileItems | Where-Object {
+            $_ -ceq '..\..\transport\ChatpadRequestOwnerModel\ChatpadRequestOwnerModel.c'
+        }).Count -ne 1 -or
+        @($filterItems | Where-Object {
+            $_ -match 'ChatpadKmdfRequestOwnerContext\.c$'
+        }).Count -ne 0 -or
         (($filterAdditionalOptions -join "`n") -match 'ChatpadKmdf')) {
-        throw 'ChatpadFilter project includes source/header inputs or forced retains for the context module.'
+        throw 'ChatpadFilter must compile one portable model source, no isolated context source, and no forced request-owner retain.'
     }
     if ($filterRefs.Count -ne 1) {
         throw "Expected exactly one production project reference to the context module; found $($filterRefs.Count)."
@@ -585,20 +591,21 @@ function Test-RequestOwnerContextSemanticGuards {
         throw 'ChatpadFilter project reference is not the exact linkage-only native static-library reference.'
     }
 
-    $activeDriverMatches = @(
-        Get-ChildItem -LiteralPath $driverRoot -File -ErrorAction Stop |
-            Where-Object { $_.Extension -in @('.c', '.h') } |
-            ForEach-Object {
-                $stripped = Remove-CComments ([System.IO.File]::ReadAllText($_.FullName))
-                if ($stripped -match 'ChatpadKmdfRequestOwnerContext|ChatpadKmdfActivationRequestOwner|ChatpadKmdfGetActivationRequestContext') {
-                    $_.FullName
-                }
-            })
-    if ($activeDriverMatches.Count -ne 0) {
-        throw "Active ChatpadFilter source references the context module: $($activeDriverMatches -join ', ')"
+    $activeDriverSource = ''
+    Get-ChildItem -LiteralPath $driverRoot -File -ErrorAction Stop |
+        Where-Object { $_.Extension -in @('.c', '.h') } |
+        ForEach-Object {
+            $activeDriverSource += "`n" + (Remove-CComments ([System.IO.File]::ReadAllText($_.FullName)))
+        }
+    if ([regex]::Matches($activeDriverSource, '#include\s+"ChatpadKmdfRequestOwnerContext\.h"').Count -ne 1 -or
+        [regex]::Matches($activeDriverSource, 'ChatpadKmdfActivationRequestOwner\s+ActivationRequestOwner\s*;').Count -ne 1 -or
+        [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerInitializeStorage\s*\(').Count -ne 1 -or
+        [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerValidatePreObjectState\s*\(').Count -ne 1 -or
+        $activeDriverSource -match 'ChatpadKmdfRequestOwner(?:Create|Rollback|Prepare|Classify)') {
+        throw 'Active ChatpadFilter source is not limited to exact ordinary owner initialization integration.'
     }
 
-    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication, production project-linkage-only dependency present with no source/header integration)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
+    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication; production integration is limited to one embedded owner, ordinary initialization, and pre-object validation)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

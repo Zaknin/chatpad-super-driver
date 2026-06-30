@@ -12,11 +12,19 @@ request into explicit setup metadata, and formats the setup bytes into a
 caller-owned `WDF_USB_CONTROL_SETUP_PACKET`. It is not called by DriverEntry,
 device-add, PnP/power, cleanup, or any other runtime callback.
 
-The per-device context contains only:
+The per-device context contains:
 
 - a fixed context signature/version;
 - a deterministic diagnostic sequence counter;
-- the caller-owned portable lifecycle state from `ChatpadFilterLifecycle`.
+- the caller-owned portable lifecycle state from `ChatpadFilterLifecycle`;
+- one directly embedded `ChatpadKmdfActivationRequestOwner`.
+
+`EvtDeviceAdd` ordinarily initializes that owner exactly once after scalar
+context setup, validates the clean pre-object baseline exactly once, and only
+then initializes lifecycle state. This creates no WDF object and leaves only
+`MODEL_READY` set: all framework handles remain null, `OWNER_READY` remains
+clear, and the owner remains targetless, non-admitting, and request-inactive.
+Dormant creation, rollback, and orchestration helpers are not called.
 
 The lifecycle core is portable C and is compiled into both the driver and the
 native lifecycle test executable. It has no WDF, WDM, Windows, USB, HID, IOCTL,
@@ -55,6 +63,11 @@ catalog, certificate, signing, deployment, or load path. It does not prove this
 `.sys` is attached to any device stack, positioned beneath `xusb22`, or
 targeted at `USB\VID_045E&PID_028E`; those remain future installation
 responsibilities.
+
+The project compiles the portable request-owner model directly as a WDK
+object so the context initializer's WDF-free model dependencies resolve
+without linking the user-mode model library. The existing request-owner
+context static-library project remains the authoritative KMDF implementation.
 
 The preparation module compiles the authoritative activation-request,
 activation-sequence, pure control-setup, and WDF formatter sources directly

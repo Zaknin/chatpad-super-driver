@@ -2,60 +2,54 @@
 
 ## Current state
 
-- Current branch: `feature/offline-production-linkage-evidence-fix`.
-- Starting linkage commit:
-  `90ca13f8babfc0c8fd1d14c998c1719e4788a5f6`.
-- The evidence-only correction is documented in
-  [Offline Production Linkage Evidence Correction](OFFLINE-PRODUCTION-LINKAGE-EVIDENCE-CORRECTION.md).
-- The corrected tracked manifest is
-  [production-linkage-manifest.json](evidence/production-linkage-manifest.json).
-- All historical retained log paths resolve and match their recorded hashes.
-- No linkage implementation, source, project, solution, script, test, or
-  generated binary changed. No build or regression suite was rerun.
+- Current branch: `feature/offline-kmdf-owner-embedding-init`.
+- Required starting commit: the pushed commit with exact subject
+  `driver: initialize production request owner`.
+- Required parent:
+  `41172d7f2877509a16f3b58abf0f81d231cbabaf`.
+- Checkpoint record:
+  [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
+- Evidence manifest:
+  [production-owner-initialization-manifest.json](evidence/production-owner-initialization-manifest.json).
 
-## Recommended next objective
+## Recommended objective
 
-Perform an independent read-only audit of the corrected evidence manifest,
-followed only after PASS by the separately gated owner-embedding and
-ordinary-initialization design slice selected in the production-integration
-plan.
-
-## Required branch and starting commit
-
-Start from the pushed
-`feature/offline-production-linkage-evidence-fix` checkpoint. Verify its exact
-HEAD, parent, subject, upstream, and clean worktree/index. The required parent
-is `90ca13f8babfc0c8fd1d14c998c1719e4788a5f6` and the required subject is
-`docs: complete production linkage evidence`.
+Perform an independent read-only audit of production device-context owner
+embedding and ordinary initialization evidence.
 
 ## Preconditions
 
-1. Re-read the repository protocol and current continuity documents.
-2. Parse the corrected manifest and enumerate all `evidence_entries`.
-3. Verify each retained path exists and each SHA-256 matches.
-4. Verify the containing commit changed only the authorized JSON and Markdown.
-5. Revalidate artifact size/hash/signature without rebuilding.
+1. Verify exact branch, HEAD, parent, subject, upstream, clean worktree, and
+   clean index.
+2. Read the repository protocol and current continuity documents.
+3. Parse the manifest and verify every retained path and SHA-256.
+4. Inspect the complete containing commit diff.
+5. Revalidate existing driver hashes, signatures, symbols, and imports without
+   rebuilding.
 
 ## Safety restrictions
 
 - Keep the audit strictly read-only.
-- Do not regenerate historical build or regression evidence.
-- Do not modify source, headers, projects, solutions, scripts, tests, INF,
-  signing, packaging, deployment, or recovery files.
-- Do not embed or initialize the owner unless a later task separately
-  authorizes that design slice after audit PASS.
-- Do not invoke helpers, create/delete WDF objects, build, install, load,
-  mutate Windows, query hardware, or interact with the controller/Chatpad.
+- Do not build, edit, regenerate evidence, or invoke an implementation helper.
+- Do not invoke dormant orchestration or any creation/rollback helper.
+- Do not create/delete a WDF object or perform a target/request operation.
+- Do not modify D0, cleanup, removal, INF, signing, package, deployment, or
+  recovery behavior.
+- Do not sign, stage, install, load, mutate Windows, enumerate hardware, or
+  interact with a controller or Chatpad.
 
 ## Acceptance criteria
 
-- Every manifest evidence entry has an exact command, configuration or explicit
-  `N/A`, path, SHA-256, result, and applicable counts.
-- Every retained path and hash matches.
-- The five evidence-correction transcripts are deterministic and hash-bound.
-- Artifact sizes, hashes, and Authenticode states match the manifest.
-- The correction commit contains only authorized JSON and Markdown.
-- The audit states PASS or FAIL before any owner-embedding work is considered.
+- Exactly one authoritative owner is embedded directly in the device context.
+- Exactly one ordinary initializer and one immediate pre-object validator call
+  occur after scalar setup and before lifecycle initialization.
+- Status mappings match the production-integration design.
+- The portable model source is linked once; isolated context source is not
+  compiled into `ChatpadFilter`.
+- Debug and Release evidence paths/hashes match.
+- Creation, rollback, orchestration, object-management imports, and
+  target/request behavior are absent.
+- The audit reports PASS or FAIL without changing repository or machine state.
 
 ## Inspect first
 
@@ -64,7 +58,7 @@ git branch --show-current
 git rev-parse HEAD
 git log -1 --format="%H%n%P%n%s"
 git status --short --branch --untracked-files=all
-Get-Content docs\evidence\production-linkage-manifest.json
-Get-Content docs\OFFLINE-PRODUCTION-LINKAGE-EVIDENCE-CORRECTION.md
-git diff 90ca13f8babfc0c8fd1d14c998c1719e4788a5f6..HEAD --name-status
+Get-Content docs\evidence\production-owner-initialization-manifest.json
+Get-Content docs\OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md
+git show --stat --oneline HEAD
 ```

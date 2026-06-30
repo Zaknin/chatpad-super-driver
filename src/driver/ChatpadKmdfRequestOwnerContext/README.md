@@ -53,11 +53,13 @@ out-of-order calls before a WDF creation call, publish only the corresponding
 created bit, and implement no deletion or rollback. Memory handles remain
 authoritative in the owner; the request context does not duplicate them.
 
-The four WDF creation calls are compiled into static libraries but are never
-executed by the compile-check. This module still does not publish owner-ready,
-format or send requests, register completion or cancel callbacks, delete or
-roll back objects, link into `ChatpadFilter`, install/load a driver, package,
-sign, query devices, or access hardware.
+The ordinary initializer and pre-object validator are now referenced by
+`ChatpadFilter`; the per-device context embeds the authoritative owner. The
+four WDF creation calls remain dormant and are never executed by validation or
+production. Production still does not publish owner-ready, format or send
+requests, register completion or cancel callbacks, delete or roll back
+objects, install/load a driver, package, sign, query devices, or access
+hardware.
 
 The module now also compiles
 `ChatpadKmdfRequestOwnerRollbackPartialCreation` and the non-mutating
@@ -74,7 +76,8 @@ outbound-memory, inbound-memory order, validates after each step, publishes
 `OWNER_READY` last, validates the final ready-but-non-admitting state, and uses
 the rollback helper exactly once after any object-published failure.
 
-The two `WdfObjectDelete` call sites and the orchestration path are compile-only
-and never execute during validation. No individual memory deletion, normal
-teardown, active-operation rundown, production linkage, target discovery,
-request formatting, send, completion, or cancellation exists.
+The two `WdfObjectDelete` call sites and the orchestration path remain
+compile-only and never execute during validation or production. No individual
+memory deletion, normal teardown, active-operation rundown, production
+orchestration linkage, target discovery, request formatting, send, completion,
+or cancellation exists.

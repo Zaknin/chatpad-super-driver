@@ -171,24 +171,25 @@ output, and verifies artifact containment.
 
 ## KMDF Request-Owner Context Definitions (compile-only)
 
-`ChatpadKmdfRequestOwnerContext` is an isolated WDK static library that defines
-the future activation request-owner storage, typed reusable-request context,
+`ChatpadKmdfRequestOwnerContext` is the authoritative WDK static library that
+defines the activation request-owner storage, typed reusable-request context,
 future WDF handle fields, exact two-byte outbound/inbound storage, and
 compile-time invariants. It embeds the pure `ChatpadActivationRequestOwner`
 model and reuses authoritative transport and activation-preparation types. It
-is not linked into `ChatpadFilter` and creates no WDF object.
+is linked into `ChatpadFilter`; only ordinary initialization and pre-object
+validation are referenced. Those calls create no WDF object.
 
 ```powershell
 .\tools\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Debug -Platform x64
 .\tools\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Release -Platform x64
 ```
 
-The wrapper performs semantic guards against WDF object creation, request
+The wrapper permits the exact production embedded-owner initialization
+integration while guarding against WDF object creation, request
 reuse/format/send/cancel/completion registration, dynamic allocation, global
-owner instances, duplicated setup/sequence data, `90 00` payload introduction,
-and production-driver linkage. It builds the compile-check project and the
-context dependency, prints static-library hashes, rejects signing/package
-outputs, and verifies artifact containment.
+owner instances, duplicated setup/sequence data, and `90 00` payload
+introduction. It builds the compile-check project and context dependency,
+prints hashes, rejects signing/package outputs, and verifies containment.
 
 | Output | Path |
 | --- | --- |
@@ -277,11 +278,13 @@ action. Static validation is not installation readiness.
 ## Kernel driver (compile-only dormant preparation)
 
 The driver project compiles to a non-installable `.sys` with a KMDF
-filter-capable device object, lifecycle bookkeeping, and one dormant
-activation-step preparation API. The API is retained but not called from any
-runtime callback. It creates no WDF object and performs no request formatting
-against a target, submission, wait, delay, or hardware action. The driver is
-not installed, signed, packaged, deployed, or loaded.
+filter-capable device object, lifecycle bookkeeping, one embedded
+request-owner, and one dormant activation-step preparation API. `EvtDeviceAdd`
+ordinarily initializes and validates the owner before lifecycle
+initialization. No orchestration or creation helper is called, so the driver
+creates no WDF object and performs no target discovery, request formatting,
+submission, wait, delay, or hardware action. It is not installed, signed,
+packaged, deployed, or loaded.
 
 ```powershell
 .\tools\Build-Driver.ps1 -Configuration Debug -Platform x64
@@ -295,12 +298,20 @@ not installed, signed, packaged, deployed, or loaded.
 | Debug driver | `artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys` |
 | Release driver | `artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys` |
 
-Both outputs remain `Authenticode.NotSigned`. The driver project has no project
-references. It compiles the exact authoritative activation-request, sequence,
-control-setup, and WDF formatter sources directly under the WDK toolchain; it
-does not link the user-mode `ChatpadProtocol` library or `ChatpadTransport`.
-Project defaults and the wrapper keep outputs and intermediates beneath
-`artifacts/`.
+Both outputs remain `Authenticode.NotSigned`. The driver project has one
+request-owner context project reference. It compiles the exact authoritative
+activation-request, sequence, control-setup, WDF formatter, and portable
+request-owner model sources directly under the WDK toolchain; it does not link
+the user-mode `ChatpadProtocol`, request-owner model, or `ChatpadTransport`
+libraries. Project defaults and the wrapper keep outputs and intermediates
+beneath `artifacts/`.
+
+The production initialization guards are:
+
+```powershell
+.\tools\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Release -Platform x64
+```
 
 ## Repository safety
 
