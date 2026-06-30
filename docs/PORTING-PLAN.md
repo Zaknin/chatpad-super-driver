@@ -63,9 +63,13 @@ Source references:
   WDF object definitions or runtime code. This documentation checkpoint is
   complete and selects one reusable device-parented activation request plus
   separate request-parented two-byte outbound and inbound memory objects.
-- If separately authorized, implement the next slice as a pure,
-  WDF-independent request-owner state model and offline race/accounting tests.
-  Do not create WDF objects or add production-driver behavior in that slice.
+- The pure, WDF-independent request-owner state model checkpoint is complete
+  under `src/transport/ChatpadRequestOwnerModel/` with exhaustive offline
+  race/accounting tests. It emits effects only and creates no WDF objects or
+  production-driver behavior.
+- If separately authorized, implement the next slice as compile-only KMDF
+  request-owner context definitions that host the model shape without object
+  creation, formatting, submission, callbacks, or runtime behavior.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.

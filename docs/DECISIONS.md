@@ -4,6 +4,49 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Keep request-owner races in a pure effect-emitting model first
+
+**Decision:** The first request-owner implementation is a portable,
+WDF-independent C state model that owns no framework object and performs no I/O.
+It consumes value events, validates lifecycle generation and operation identity,
+and emits caller-visible effects for future lifecycle admission/release,
+preparation, formatting, send/cancel call boundaries, terminal ownership,
+sequence advance/abort, reuse, stale completion, and diagnostic faults.
+
+**Rationale:** The request-owner problem is primarily exact-once ownership and
+race accounting. Modeling it before KMDF integration makes send-return,
+immediate completion, cancellation, stale generation, duplicate completion,
+draining, and reuse rules deterministic and exhaustively testable without
+creating a request, target, transfer memory, or callback.
+
+**Alternatives rejected:**
+
+* Implement the rules directly inside future KMDF callbacks - would combine
+  object lifetime, framework call ordering, and race semantics before the state
+  contract is testable in isolation.
+* Extend the existing transport adapter to own request state - would mix
+  portable operation planning with one specific reusable request slot and its
+  lifecycle-release obligations.
+* Add a WDF compile scaffold immediately - would prove type compatibility
+  before proving the transition/accounting contract.
+* Treat cancellation as terminal release ownership - unsafe because a cancel
+  request is only an attempt to cause completion and does not itself retire an
+  accepted asynchronous send.
+
+**Consequences:**
+
+* Future KMDF code must adapt the model effects behind explicit framework
+  calls rather than inventing separate request-owner rules.
+* The pure model and tests remain usable by user-mode validation and cannot
+  include WDF/WDM/USB/HID/PnP headers or symbols.
+* Completion remains the terminal owner after a successful send; a false send
+  return retires through the initiator; cancellation alone never releases the
+  lifecycle obligation.
+* This checkpoint still creates no production request, transfer memory, target,
+  callback, or runtime driver path.
+
+---
+
 ## 2026-06-30 - Preallocate one activation request with request-parented transfer memory
 
 **Decision:** A future per-device KMDF activation owner will contain exactly

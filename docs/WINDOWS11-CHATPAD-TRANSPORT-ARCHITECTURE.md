@@ -705,3 +705,24 @@ completion/cancellation integration, executable timing, USB access, driver
 load, installation, or hardware behavior exists or is authorized. The next
 smallest implementation slice is a portable request-owner state model with
 offline race and accounting tests, subject to a separate task.
+
+## 31. Pure request-owner state model checkpoint
+
+`src/transport/ChatpadRequestOwnerModel/` now implements the portable state
+model selected by the request-owner design. It owns a caller-provided
+`ChatpadActivationRequestOwner`, validates one lifecycle generation and one
+`ChatpadTransportOperationToken`, and emits effects for future admission,
+preparation, formatting, send/cancel call boundaries, terminal retirement,
+sequence decisions, reuse, stale completion, and diagnostic faults.
+
+The model covers 14 states and 19 event classes. Offline tests classify all
+266 state/event pairs, run 30 targeted race/accounting scenarios, and perform
+bounded deterministic exploration to depth 10. The wrapper also guards against
+WDF/WDM/kernel/USB/HID/PnP symbols, dynamic allocation, file-scope mutable
+state, project references, unconfirmed `90 00` payload text, and any
+`ChatpadFilter` reference to the model.
+
+This checkpoint still creates no KMDF request, transfer memory, target,
+completion/cancel callback, live formatting, submission, installation, driver
+load, or hardware behavior. The next smallest safe slice is compile-only KMDF
+request-owner context-definition work, not runtime request integration.

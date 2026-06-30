@@ -1,91 +1,81 @@
 # Next Task
 
-## Current continuation point
+## Current state
 
-Branch `feature/offline-kmdf-request-owner-design` defines the authoritative
-future request and buffer ownership model in
-[Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md).
-It selects one reusable device-parented activation request, a typed request
-context, separate request-parented two-byte outbound/inbound memory objects,
-and exact send/completion/cancellation/lifecycle race rules.
-
-This checkpoint is documentation only. No WDF object, callback, request,
-target, memory, format, send, cancel, delay, USB access, or runtime behavior was
-added.
+- Current branch after this checkpoint:
+  `feature/offline-request-owner-state-model`.
+- Required starting commit for the next task:
+  the pushed `model: add request owner state machine` commit on
+  `origin/feature/offline-request-owner-state-model`.
+- The repository contains a pure, WDF-independent request-owner state model and
+  offline tests. `ChatpadFilter` does not reference or invoke that model.
+- The model emits effects for future lifecycle, preparation, formatting,
+  send/cancel call pins, terminal retirement, sequence advance/abort, reuse,
+  stale completion, and diagnostic fault decisions. It performs no framework
+  or device action.
 
 ## Recommended next objective
 
-Implement only a pure, WDF-independent request-owner state model and exhaustive
-offline unit tests for reservation, preparation, send publication, immediate
-completion, cancellation call pinning, exact-once terminal retirement,
-generation staleness, draining, and buffer-validity metadata.
+Create the compile-only KMDF request-owner context-definition checkpoint.
 
-This file identifies that bounded future slice; it does not authorize it.
-Request context/WDF type definitions, object creation, memory creation,
-formatting, submission, cancellation calls, completion callbacks, driver
-loading, installation, network access, and hardware interaction remain outside
-that slice.
-
-## Required branch and starting commit
-
-- Start from the exact externally reported final commit of
-  `feature/offline-kmdf-request-owner-design`.
-- Require that commit's parent to be
-  `b814822a540f84b93b1a02809fd1bdb0a61ac02d`.
-- Require local HEAD and
-  `origin/feature/offline-kmdf-request-owner-design` to match with a clean
-  tracked tree and index.
-- Use a new branch such as `feature/offline-request-owner-state-model` only if
-  a later task explicitly authorizes the implementation.
-- Do not reset, clean, stash, pull, merge, rebase, amend, or repair a mismatch.
+The next slice should define the future typed request-owner/context shapes and
+compile-time wiring needed to host the pure model behind KMDF-owned storage,
+without creating WDF objects, formatting a request, submitting a request,
+registering callbacks, or changing runtime behavior.
 
 ## Preconditions
 
-- Re-read `AGENTS.md`, `docs/PROJECT-STATE.md`, this file, the authoritative
-  request-owner document, and the newest worklog entry.
-- Verify the dormant preparation API remains uncalled and runtime callbacks are
-  unchanged.
-- Translate every binding state, transition, call pin, generation check,
-  exact-once marker, and matrix case into a portable model/test requirement
-  before editing.
-- Keep the existing lifecycle and transport cores authoritative; do not
-  duplicate generation or token semantics.
+1. Start from `origin/feature/offline-request-owner-state-model` at the exact
+   pushed `model: add request owner state machine` commit.
+2. Confirm the worktree and index are clean.
+3. Read, in order:
+   - `AGENTS.md`;
+   - `docs/PROJECT-STATE.md`;
+   - `docs/DECISIONS.md`;
+   - this file;
+   - the latest `docs/WORKLOG.md` entry;
+   - `docs/OFFLINE-REQUEST-OWNER-STATE-MODEL.md`;
+   - `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`.
+4. Verify `tools\Test-ChatpadRequestOwnerModel.ps1 -Configuration Debug -Platform x64`
+   still passes before relying on the model.
 
 ## Safety restrictions
 
-- Offline portable model and tests only, if separately authorized.
-- No WDF/WDK header dependency in the portable state model.
-- No `WDFDEVICE`, target, request, memory, lock, queue, timer, work item, event,
-  thread, completion, cancellation call, formatting, submission, wait, or
-  delay execution.
-- No production driver callback or project integration.
-- No INF, CAT, package, certificate, signing, staging, installation, Driver
-  Store, registry, service, driver load, PnP/device query, USB/Chatpad action,
-  operating-system mutation, or hardware interaction.
-- Do not modify `legacy/` or retained evidence.
+- Do not create `WDFREQUEST`, `WDFMEMORY`, `WDFIOTARGET`, queues, timers, work
+  items, or USB targets.
+- Do not add or register completion, cancel, PnP, power, queue, or timer
+  callbacks.
+- Do not format, send, cancel, complete, wait for, or reuse a live request.
+- Do not call the new context code from `DriverEntry`, `EvtDeviceAdd`,
+  D0-entry, D0-exit, cleanup, self-managed I/O, queue, or any runtime path.
+- Do not change the INF, catalog/package/signing scripts, staging/install
+  paths, registry/service state, Driver Store state, or any hardware/device
+  state.
+- Keep generated outputs under ignored `artifacts/`.
+- Do not modify `legacy/`.
 
 ## Acceptance criteria
 
-- The pure model has no Windows/WDF dependency and allocates no unbounded
-  request records.
-- Tests cover every state transition and failure-matrix row in the
-  authoritative design, including completion-before-send-return and
-  completion-during-cancel-call.
-- One successful admission maps to one release in every terminal permutation;
-  duplicate/stale observations cannot release current-generation accounting or
-  advance sequencing.
-- Buffer-validity tests prove capacities remain two bytes and stale success
-  data cannot survive a later failure.
-- Activation ownership remains separate from continuous input.
-- No runtime WDF or hardware capability is claimed or implied.
+- Any new KMDF-facing definitions are compile-only, dormant, and guarded by
+  tests or wrappers that prove no runtime callback references them.
+- The pure model remains WDF-independent and its Debug/Release wrapper runs
+  still pass.
+- Full solution Debug/Release builds still pass with the WDK-capable MSBuild
+  path.
+- Existing protocol, transport, lifecycle, control-setup, kernel
+  compatibility, WDF formatter, driver build, repository safety, and
+  `git diff --check` validations still pass.
+- Continuation docs and worklog precisely state that no WDF object or live
+  request behavior was created.
 
-## Inspect first
+## Files and commands to inspect first
 
-- `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`
-- `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`
-- `src/driver/ChatpadFilter/ChatpadFilterLifecycle.h`
-- `src/driver/ChatpadFilter/ChatpadFilterLifecycle.c`
-- `src/transport/ChatpadTransport/ChatpadTransportAdapter.h`
-- `src/transport/ChatpadTransport/ChatpadTransportAdapter.c`
-- `tests/driver/ChatpadFilterLifecycleTests/ChatpadFilterLifecycleTests.c`
-- `tests/transport/ChatpadTransportTests.c`
+```powershell
+git branch --show-current
+git rev-parse HEAD
+git status --short --branch
+git log -5 --oneline --decorate
+Get-Content docs\OFFLINE-REQUEST-OWNER-STATE-MODEL.md
+Get-Content docs\WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md
+.\tools\Test-ChatpadRequestOwnerModel.ps1 -Configuration Debug -Platform x64
+```

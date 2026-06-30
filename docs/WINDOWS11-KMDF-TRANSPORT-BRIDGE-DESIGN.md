@@ -216,6 +216,8 @@ acquire attempts reject without mutating current state.
 
 The exact future model is defined by
 [Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md).
+The first pure implementation of that model is recorded in
+[Offline Request-Owner State Model](OFFLINE-REQUEST-OWNER-STATE-MODEL.md).
 One device owns one reusable activation request slot. Its operation values
 contain:
 

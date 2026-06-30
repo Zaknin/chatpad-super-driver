@@ -8,9 +8,13 @@ Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocol", "src\prot
 EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadTransport", "src\transport\ChatpadTransport\ChatpadTransport.vcxproj", "{D4E5F6A7-B8C9-4012-DEF0-123456789012}"
 EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadRequestOwnerModel", "src\transport\ChatpadRequestOwnerModel\ChatpadRequestOwnerModel.vcxproj", "{8A4F7261-6C7E-4C17-A82F-16D8850C5329}"
+EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadProtocolTests", "tests\protocol\ChatpadProtocolTests.vcxproj", "{B2C3D4E5-F6A7-4890-BCDE-F01234567890}"
 EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadTransportTests", "tests\transport\ChatpadTransportTests.vcxproj", "{E5F6A7B8-C9D0-4123-EF01-234567890123}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadRequestOwnerModelTests", "tests\transport\ChatpadRequestOwnerModelTests\ChatpadRequestOwnerModelTests.vcxproj", "{B5E6A2C4-234C-4F22-9A1A-CC9D8DA5C8F1}"
 EndProject
 Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ChatpadFilterLifecycleTests", "tests\driver\ChatpadFilterLifecycleTests\ChatpadFilterLifecycleTests.vcxproj", "{F6A7B8C9-D0E1-4234-F012-345678901234}"
 EndProject
@@ -42,6 +46,10 @@ Global
 		{D4E5F6A7-B8C9-4012-DEF0-123456789012}.Debug|x64.Build.0 = Debug|x64
 		{D4E5F6A7-B8C9-4012-DEF0-123456789012}.Release|x64.ActiveCfg = Release|x64
 		{D4E5F6A7-B8C9-4012-DEF0-123456789012}.Release|x64.Build.0 = Release|x64
+		{8A4F7261-6C7E-4C17-A82F-16D8850C5329}.Debug|x64.ActiveCfg = Debug|x64
+		{8A4F7261-6C7E-4C17-A82F-16D8850C5329}.Debug|x64.Build.0 = Debug|x64
+		{8A4F7261-6C7E-4C17-A82F-16D8850C5329}.Release|x64.ActiveCfg = Release|x64
+		{8A4F7261-6C7E-4C17-A82F-16D8850C5329}.Release|x64.Build.0 = Release|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.ActiveCfg = Debug|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Debug|x64.Build.0 = Debug|x64
 		{B2C3D4E5-F6A7-4890-BCDE-F01234567890}.Release|x64.ActiveCfg = Release|x64
@@ -50,6 +58,10 @@ Global
 		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Debug|x64.Build.0 = Debug|x64
 		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Release|x64.ActiveCfg = Release|x64
 		{E5F6A7B8-C9D0-4123-EF01-234567890123}.Release|x64.Build.0 = Release|x64
+		{B5E6A2C4-234C-4F22-9A1A-CC9D8DA5C8F1}.Debug|x64.ActiveCfg = Debug|x64
+		{B5E6A2C4-234C-4F22-9A1A-CC9D8DA5C8F1}.Debug|x64.Build.0 = Debug|x64
+		{B5E6A2C4-234C-4F22-9A1A-CC9D8DA5C8F1}.Release|x64.ActiveCfg = Release|x64
+		{B5E6A2C4-234C-4F22-9A1A-CC9D8DA5C8F1}.Release|x64.Build.0 = Release|x64
 		{F6A7B8C9-D0E1-4234-F012-345678901234}.Debug|x64.ActiveCfg = Debug|x64
 		{F6A7B8C9-D0E1-4234-F012-345678901234}.Debug|x64.Build.0 = Debug|x64
 		{F6A7B8C9-D0E1-4234-F012-345678901234}.Release|x64.ActiveCfg = Release|x64

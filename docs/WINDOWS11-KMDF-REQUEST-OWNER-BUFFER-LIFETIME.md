@@ -566,3 +566,29 @@ would send traffic before recovery and explicit authorization gates pass.
 This checkpoint is documentation only. No request, memory object, target,
 completion, cancellation, delay, USB access, or runtime path exists because of
 this document.
+
+## 20. Pure request-owner state model checkpoint
+
+[Offline Request-Owner State Model](OFFLINE-REQUEST-OWNER-STATE-MODEL.md)
+implements this design's first state/accounting slice as a portable,
+WDF-independent C model. The model uses one caller-owned
+`ChatpadActivationRequestOwner`, binds a lifecycle generation to a neutral
+`ChatpadTransportOperationToken`, and emits effects for future lifecycle
+admission/release, preparation, formatting, send/cancel call boundaries,
+terminal retirement, sequence advance/abort, owner reuse, stale completion, and
+diagnostic fault recording.
+
+The model covers the 14 design states and 19 event classes. Its offline tests
+classify all 266 state/event pairs, validate immediate-completion and
+send/cancel call-pin races, verify stale/duplicate completion and generation
+mismatch handling, and require exact-once lifecycle release. The wrapper guards
+against WDF/WDM/kernel/USB/HID/PnP dependencies, dynamic allocation,
+file-scope mutable state, project references, unconfirmed `90 00` payload text,
+and any `ChatpadFilter` reference to the model.
+
+This checkpoint does not implement KMDF request context storage, object
+creation, transfer memory, target discovery, live formatting, send, completion,
+cancellation, executable delay, D0-exit rundown, installation, loading, or
+hardware behavior. The next safe slice is compile-only context-definition work
+that adapts these state/effect names into future KMDF-owned storage without
+creating framework objects or registering callbacks.

@@ -84,6 +84,39 @@ executable, and confirms generated outputs stay beneath `artifacts/`.
 | Debug test executable | `artifacts\bin\x64\Debug\ChatpadTransportTests\ChatpadTransportTests.exe` |
 | Release test executable | `artifacts\bin\x64\Release\ChatpadTransportTests\ChatpadTransportTests.exe` |
 
+## Chatpad Request-Owner Model (offline)
+
+Portable C state model for one future activation request-owner slot. It models
+generation-bound operation identity, lifecycle admission/release effects,
+send/cancel framework-call pins, immediate completion before call return,
+terminal ownership, stale/duplicate completion, draining, reuse, and faulted
+ownership. It has no WDF, WDM, NTDDK, USB, HID, SetupAPI, Configuration
+Manager, WinUSB, IOCTL, URB, handle, allocation, sleep, thread, timer, target,
+request, endpoint, INF, package, signing, install, deploy, load, or hardware
+behavior.
+
+```powershell
+.\tools\Test-ChatpadRequestOwnerModel.ps1 -Configuration Debug -Platform x64
+.\tools\Test-ChatpadRequestOwnerModel.ps1 -Configuration Release -Platform x64
+```
+
+The wrapper runs semantic source/project guards, builds
+`ChatpadRequestOwnerModel.vcxproj` and
+`ChatpadRequestOwnerModelTests.vcxproj`, runs the native test executable,
+requires all 14 states and 19 event classes to be covered, verifies 266
+state/event classifications, 30 scenario tests, bounded exploration depth 10,
+and zero failed assertions, prints SHA-256 values, and confirms generated
+outputs stay beneath `artifacts/`.
+
+### Artifacts
+
+| Output | Path |
+| --- | --- |
+| Debug library | `artifacts\bin\x64\Debug\ChatpadRequestOwnerModel\ChatpadRequestOwnerModel.lib` |
+| Release library | `artifacts\bin\x64\Release\ChatpadRequestOwnerModel\ChatpadRequestOwnerModel.lib` |
+| Debug test executable | `artifacts\bin\x64\Debug\ChatpadRequestOwnerModelTests\ChatpadRequestOwnerModelTests.exe` |
+| Release test executable | `artifacts\bin\x64\Release\ChatpadRequestOwnerModelTests\ChatpadRequestOwnerModelTests.exe` |
+
 ## Chatpad Control Setup Translation (offline)
 
 `ChatpadControlSetup` is a portable C static library that accepts a
