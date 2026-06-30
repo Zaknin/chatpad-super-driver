@@ -16,6 +16,8 @@ recorded in
 The later audit-corrections checkpoint clarified evidence and validation-count
 wording in
 [Offline KMDF Owner Initialization Audit Corrections](OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md).
+The production orchestration-invocation binding is now documented in
+[Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md).
 
 ## 1. Purpose and non-scope
 
@@ -27,10 +29,12 @@ retention.
 
 This design does not itself authorize implementation. Separately completed
 checkpoints implemented project linkage, owner embedding, ordinary storage
-initialization, and one additional explicit pre-object validation. WDF object
-creation or deletion, dormant orchestration, target discovery, request
-formatting or submission, completion or cancellation, D0 rundown, signing,
-staging, installation, loading, and hardware interaction remain unauthorized.
+initialization, and one additional explicit pre-object validation. A later
+documentation-only checkpoint now designs the future dormant orchestration
+invocation, but source implementation, WDF object creation or deletion,
+dormant orchestration execution, target discovery, request formatting or
+submission, completion or cancellation, D0 rundown, signing, staging,
+installation, loading, and hardware interaction remain unauthorized.
 
 The dormant object graph remains one device-parented spinlock, one
 device-parented targetless request, and two request-parented preallocated
@@ -637,6 +641,14 @@ that slice.
 
 ## 21. Dormant orchestration invocation
 
+The documentation-only production orchestration-invocation design is complete
+in
+[Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md).
+It selects the exact future binding point after explicit pre-object validation
+and before lifecycle initialization, defines status mapping and failure
+cleanup, and requires an independent read-only audit before source
+implementation.
+
 The later dormant orchestration slice shall:
 
 - invoke `ChatpadKmdfRequestOwnerCreateDormantObjectGraph`;
@@ -650,9 +662,10 @@ The later dormant orchestration slice shall:
 - rely on the selected framework device-parent cleanup strategy for later
   post-ready `EvtDeviceAdd` failure.
 
-This is the first slice that changes runtime WDF object creation behavior. It
-requires a fresh independent audit before any loading or installation. This
-document does not authorize that slice.
+This will be the first implementation slice that changes runtime WDF object
+creation behavior if loaded. It requires a fresh independent audit before any
+source implementation and another independent audit before any loading or
+installation. This document does not authorize that slice.
 
 ## 22. Normal removal boundary
 
@@ -810,10 +823,11 @@ Binding decisions:
     observers require renewed IRQL proof.
 12. Evidence-retention format: tracked JSON manifests under `docs/evidence/`
     plus ignored hashed logs under `artifacts\logs`.
-13. Next unaudited implementation slice after the completed owner
-    initialization state: dormant object-graph orchestration. The immediate
-    next repository task after this documentation correction is an independent
-    read-only documentation-consistency audit, not orchestration.
+13. Production orchestration-invocation binding: documented in
+    `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`;
+    implementation remains unauthorized.
+14. Next repository task after the documentation-only orchestration design:
+    independent read-only audit of that design, not source implementation.
 
 Stop conditions:
 
@@ -854,5 +868,6 @@ pre-object-validation slice:
 The checkpoint record is
 [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
 The audit-correction checkpoint is complete, and this document now records the
-current state consistently. The next gate is an independent read-only
-documentation-consistency audit. Dormant orchestration remains unauthorized.
+current state consistently. The production orchestration-invocation design is
+complete and requires an independent read-only audit. Dormant orchestration
+implementation and execution remain unauthorized.

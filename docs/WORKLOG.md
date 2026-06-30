@@ -3662,3 +3662,76 @@
 - **Next gate:** Independent read-only documentation-consistency audit of the
   owner-initialization current-state corrections. Dormant orchestration remains
   unauthorized.
+
+## 2026-06-30 23:36 +04:00 - Production orchestration invocation design
+
+- **Task title/objective:** Create the documentation-only design for invoking
+  the existing dormant KMDF request-owner object-graph orchestrator from the
+  production `ChatpadFilter` `EvtDeviceAdd` path. Correct the stale
+  `docs/PROJECT-STATE.md` current checkpoint subject and keep the task
+  Markdown-only.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-owner-init-doc-consistency` at
+  `8b91eaf939252e038bd0970db261cc14b1089613`, parent
+  `a08ea1f5e4431893bc84e459957a3a63509d0c2f`, subject
+  `docs: align owner initialization state`, then created
+  `feature/offline-kmdf-production-orchestration-design`.
+- **Investigation:** Inspected the repository protocol, project state,
+  decisions, next task, recent worklog, current `driver.h`, current
+  `device.c`, current `ChatpadFilter.vcxproj`, the request-owner context
+  header and implementation, existing production integration design,
+  orchestration, rollback, owner-initialization, context-definition,
+  object-lifecycle, buffer-lifetime, and transport-bridge documents. Inspected
+  installed KMDF 1.15 headers under
+  `C:\Program Files (x86)\Windows Kits\10\Include\wdf\kmdf\1.15` for the
+  relevant IRQL and object-attribute contracts.
+- **Files created:**
+  `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/DECISIONS.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`, and
+  `docs/WORKLOG.md`.
+- **Design details:** Selected the future insertion point immediately after
+  the explicit production
+  `ChatpadKmdfRequestOwnerValidatePreObjectState` check and before
+  `ChatpadFilterLifecycleInitialize`. The design defines one future
+  orchestrator call, caller-owned report storage, complete result-to-status
+  mapping, no-object failure behavior, partial-object rollback behavior,
+  final-ready validation failure behavior, rollback-failure behavior, later
+  `EvtDeviceAdd` failure cleanup by WDF parent hierarchy, exact WDF parentage,
+  callback visibility, concurrency assumptions, IRQL assumptions, future
+  implementation scope, semantic-guard expectations, validation plan,
+  evidence contract, independent audit gate, runtime observation gate, and
+  normal removal boundary.
+- **Metadata correction:** `docs/PROJECT-STATE.md` now records current
+  implementation checkpoint commit
+  `8b91eaf939252e038bd0970db261cc14b1089613` with subject
+  `docs: align owner initialization state`. The earlier
+  `test: tighten owner initialization audit` subject remains only historical
+  in existing worklog and decision context.
+- **Safety:** The task is documentation-only. It does not implement or invoke
+  dormant orchestration, create or delete WDF objects, execute rollback,
+  publish `OWNER_READY` at runtime, discover targets, format/reuse/submit/
+  complete/cancel requests, change D0/removal behavior, build, run
+  regressions, sign, package, stage, install, load, mutate Windows state,
+  query hardware, or interact with a controller or Chatpad.
+- **Validation:** Starting-state verification passed. Source count checks
+  confirmed one production header include, one embedded owner, one ordinary
+  initializer call, one explicit pre-object validator call, zero production
+  orchestrator references, zero production rollback references, zero
+  production `OWNER_READY` references, and one context project reference. The
+  new design contains exactly 28 numbered sections. Modified/new Markdown-link
+  validation passed. Repository safety passed through the documented
+  non-building `tools\Test-RepositorySafety.ps1` path. `git diff --check`
+  reported only Git line-ending conversion warnings from `core.autocrlf=true`.
+  Line-ending inspection found LF-only working-tree content for the six
+  changed Markdown files and no lone carriage returns. Changed-path checks
+  found only Markdown files.
+- **Commit/push:** Commit exactly `docs: design production owner orchestration`
+  and push only
+  `origin/feature/offline-kmdf-production-orchestration-design`; final hash is
+  reported after commit.
+- **Next gate:** Independent read-only audit of the production
+  orchestration-invocation design. Source implementation, driver loading,
+  signing, installation, target discovery, request execution, and hardware
+  observation remain unauthorized.

@@ -1,14 +1,18 @@
 # Project State
 
-*Last updated: 2026-06-30 (owner-initialization documentation consistency)*
+*Last updated: 2026-06-30 (production orchestration invocation design)*
 
 ## Current state
 
-- **Branch:** `feature/offline-owner-init-doc-consistency`.
-- **Starting checkpoint:** `a25d5637487ec6e4e7583a64dcec6c5192e06092`,
+- **Branch:** `feature/offline-kmdf-production-orchestration-design`.
+- **Current implementation checkpoint:**
+  `8b91eaf939252e038bd0970db261cc14b1089613`,
+  `docs: align owner initialization state`.
+- **Expected design commit:** the commit containing this design update uses
+  subject `docs: design production owner orchestration`.
+- **Historical owner-initialization checkpoint:**
+  `a25d5637487ec6e4e7583a64dcec6c5192e06092`,
   `driver: initialize production request owner`.
-- **Expected commit:** the commit containing this state uses subject
-  `test: tighten owner initialization audit`.
 - **Checkpoint record:**
   [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
 - **Correction record:**
@@ -19,6 +23,11 @@
   plan now distinguish original pre-integration design history, completed
   linkage/owner-embedding/ordinary-initialization slices, current production
   reality, and remaining future integration.
+- **Orchestration invocation design:**
+  [Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md)
+  defines the future binding for invoking the existing dormant object-graph
+  orchestrator after explicit pre-object validation and before lifecycle
+  initialization. It is documentation-only; orchestration is not implemented.
 - **Production context:** `driver.h` includes the authoritative KMDF
   request-owner header and embeds exactly one
   `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
@@ -54,13 +63,14 @@
 - **Safety:** no production `.c/.h`, project/solution file, owner model,
   request-owner implementation, build output, INF, signing, package,
   deployment, recovery, D0, cleanup, removal, Windows state, device state, or
-  hardware state was changed by the correction.
+  hardware state was changed by the correction or this design task.
 
 ## Unresolved blockers
 
-- The documentation-consistency correction requires an independent read-only
-  documentation-consistency audit.
-- Dormant orchestration invocation remains unauthorized.
+- The production orchestration invocation design requires an independent
+  read-only documentation audit.
+- Dormant orchestration invocation is designed but not implemented and remains
+  unauthorized.
 - Normal teardown, active-operation rundown, target discovery, request
   operations, D0 coordination, signing, staging, installation, loading, and
   hardware validation remain separate gates.

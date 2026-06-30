@@ -2,39 +2,36 @@
 
 ## Current state
 
-- Current branch: `feature/offline-owner-init-doc-consistency`.
+- Current branch: `feature/offline-kmdf-production-orchestration-design`.
 - Required starting commit: the documentation-only commit with exact subject
+  `docs: design production owner orchestration`.
+- Required parent: `8b91eaf939252e038bd0970db261cc14b1089613`.
+- Previous branch: `feature/offline-owner-init-doc-consistency`.
+- Current implementation checkpoint:
+  `8b91eaf939252e038bd0970db261cc14b1089613`,
   `docs: align owner initialization state`.
-- Required parent: `a08ea1f5e4431893bc84e459957a3a63509d0c2f`.
-- Starting correction branch:
-  `feature/offline-owner-init-audit-corrections`.
-- Completed correction branch:
-  `feature/offline-owner-init-doc-consistency`.
-- Checkpoint record:
-  [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
-- Audit-corrections record:
-  [Offline KMDF Owner Initialization Audit Corrections](OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md).
-- Evidence manifest:
-  [production-owner-initialization-manifest.json](evidence/production-owner-initialization-manifest.json).
+- New design record:
+  [Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md).
+- Existing production integration design:
+  [Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md).
 
 ## Recommended objective
 
-Perform an independent read-only documentation-consistency audit of the
-owner-initialization current-state corrections.
+Perform an independent read-only documentation audit of the production
+orchestration-invocation design.
 
 ## Preconditions
 
 1. Verify exact branch, HEAD, parent, subject, upstream, clean worktree, and
    clean index.
-2. Inspect only tracked documentation and Git metadata.
-3. Confirm the documentation-only commit changed only Markdown files.
-4. Confirm `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md` and
-   `docs/PORTING-PLAN.md` no longer present completed linkage, owner
-   embedding, ordinary initialization, or explicit pre-object validation as
-   future work.
-5. Confirm current-state validation wording distinguishes initializer-internal
-   validation from one additional explicit `EvtDeviceAdd` pre-object
-   validation.
+2. Inspect tracked documentation, tracked source, project metadata, and Git
+   metadata only as needed to audit the design.
+3. Confirm the design task changed only Markdown files.
+4. Confirm `docs/PROJECT-STATE.md` records the current implementation
+   checkpoint subject as `docs: align owner initialization state` and commit
+   `8b91eaf939252e038bd0970db261cc14b1089613`.
+5. Confirm the new design contains exactly 28 numbered sections and leaves no
+   fundamental orchestration-invocation decision unresolved.
 
 ## Safety restrictions
 
@@ -52,22 +49,25 @@ owner-initialization current-state corrections.
 
 ## Acceptance criteria
 
-- The current production state is documented consistently:
-  project reference present, authoritative header included, exactly one
-  embedded owner, one ordinary initializer call, initializer-internal
-  validation, one additional explicit pre-object validation, lifecycle
-  initialization only after both steps succeed, and no request-owner WDF object
-  graph or target/request activity.
-- Historical design passages are clearly labeled as historical, completed, or
-  superseded where they describe completed slices.
-- Remaining future integration is limited to dormant orchestration, live WDF
-  parentage/runtime creation proof, target discovery, request formatting,
-  submission/completion/cancellation, D0/removal rundown, signing/deployment,
-  and hardware observation.
-- `docs/NEXT-TASK.md` authorizes only this read-only documentation audit and
-  does not authorize dormant orchestration.
-- No implementation, guard, manifest, evidence, binary, project, or script
-  change is present.
+- The design starts from the current production state: project reference,
+  authoritative header include, exactly one embedded owner, one ordinary
+  initializer call, initializer-internal validation, one additional explicit
+  pre-object validation, lifecycle initialization only after both steps
+  succeed, and no current request-owner WDF object graph or target/request
+  activity.
+- The selected future insertion point is immediately after explicit
+  pre-object validation and before `ChatpadFilterLifecycleInitialize`.
+- Result/status mapping, no-object failure, partial rollback, final-ready
+  validation failure, rollback failure, and later `EvtDeviceAdd` failure
+  cleanup are fully specified.
+- Parentage, callback visibility, concurrency assumptions, IRQL assumptions,
+  future implementation scope, semantic-guard expectations, validation plan,
+  evidence contract, and future gates are documented consistently.
+- The design does not authorize source implementation, driver loading,
+  signing, staging, installation, target discovery, request execution, Windows
+  mutation, hardware query, or controller/Chatpad interaction.
+- No implementation, project, script, manifest, evidence, artifact, binary, or
+  non-Markdown change is present.
 
 ## Inspect first
 
@@ -77,6 +77,7 @@ git rev-parse HEAD
 git log -1 --format="%H%n%P%n%s"
 git status --short --branch --untracked-files=all
 git show --stat --oneline HEAD
+Get-Content docs\WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md
+Get-Content docs\PROJECT-STATE.md
 Get-Content docs\WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md
-Get-Content docs\PORTING-PLAN.md
 ```

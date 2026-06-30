@@ -4,6 +4,42 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Bind production dormant orchestration after pre-object validation
+
+**Decision:** The first future production invocation of
+`ChatpadKmdfRequestOwnerCreateDormantObjectGraph` will be inserted in
+`ChatpadEvtDeviceAdd` after successful ordinary owner initialization and the
+additional explicit `ChatpadKmdfRequestOwnerValidatePreObjectState` check, and
+before `ChatpadFilterLifecycleInitialize`. Production `device.c` will call the
+orchestrator exactly once, map its result to `NTSTATUS`, and continue to
+lifecycle initialization only after orchestration success. The future dormant
+graph remains device-parented spinlock, device-parented targetless request,
+and request-parented outbound/inbound preallocated memory.
+
+**Rationale:** At this point the production `WDFDEVICE` and device context
+exist, scalar context fields are initialized, the embedded owner is in the
+validated clean `MODEL_READY` pre-object baseline, and no callback currently
+observes the owner. Placing orchestration before lifecycle initialization lets
+object-graph failure fail `EvtDeviceAdd` without admitting an operation or
+creating lifecycle obligations. The existing orchestrator already owns
+pre-ready rollback, final ready validation, and rollback-failure reporting.
+
+**Alternatives rejected:** Invoking orchestration before ordinary validation
+would duplicate baseline checks and risk creating objects from unproven
+storage; invoking it after lifecycle initialization would require reasoning
+about lifecycle unwind after object-graph failure; invoking helpers directly
+from production `device.c` would duplicate orchestration and rollback
+ownership; using prepare-hardware, D0 entry, or lazy activation would mix
+device-lifetime object creation with hardware, power, or first-use state.
+
+**Consequences:** The next gate is an independent read-only audit of the
+documentation-only orchestration-invocation design. A later implementation
+will be the first production slice that intentionally retains WDF
+object-management helper code and changes request-owner WDF object-creation
+behavior if the driver is loaded. Target discovery, request formatting,
+submission, completion, cancellation, D0/removal rundown, signing,
+installation, loading, and hardware observation remain separately gated.
+
 ## 2026-06-30 - Link dormant KMDF request-owner through an exact native project reference
 
 **Decision:** The project-linkage-only production slice links
