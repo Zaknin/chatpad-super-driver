@@ -3075,3 +3075,115 @@
   reported after commit.
 - **Next gate:** Full dormant creation orchestration with rollback and final
   non-runtime `OWNER_READY` publication; not authorized here.
+
+## 2026-06-30 16:09 +04:00 - Dormant KMDF creation orchestration checkpoint
+
+- **Objective/start:** Implement the isolated, dormant all-or-nothing KMDF
+  activation request-owner object-graph orchestration helper. Verified exact
+  start branch `feature/offline-kmdf-creation-rollback`, HEAD
+  `9d5301e3c18deffbf4f90b5d3c2f058b00fe5b46`, parent
+  `142f8e11bebac78cf2e10367c96d3b409d9c8db7`, subject
+  `driver: define dormant creation rollback`, matching upstream
+  `origin/feature/offline-kmdf-creation-rollback`, clean worktree/index, and
+  no tracked/cached diff. Created
+  `feature/offline-kmdf-creation-orchestration` only after the gate passed.
+- **Investigation:** Inspected the request-owner context APIs, ordinary storage
+  initialization, pre-object validation, all four one-object creation helpers,
+  creation-state validation, rollback classification/effects, `OWNER_READY` and
+  `FAULTED` masks, pure request-owner model invariants, compile-check target,
+  semantic guard, and `ChatpadFilter` dormancy. The proposed call graph is
+  orchestration -> baseline validation -> spinlock -> request -> outbound
+  memory -> inbound memory -> pre-ready validation -> `OWNER_READY` publication
+  -> final ready validation, with centralized rollback on failure.
+- **Implementation:** Added
+  `ChatpadKmdfRequestOwnerCreateDormantObjectGraph`, orchestration stage/result
+  enums, and deterministic report structure. The helper clears the report,
+  rejects invalid, ready, faulted, or partial baselines before helper calls,
+  calls existing helpers exactly in spinlock/request/outbound-memory/
+  inbound-memory order, validates each partial state, publishes only
+  `OWNER_READY` after complete pre-ready validation, validates the final
+  ready-but-non-admitting state, and returns complete stage/result evidence.
+- **Failure behavior:** Object-published failures clear `OWNER_READY`, call
+  `ChatpadKmdfRequestOwnerRollbackPartialCreation` exactly once, preserve the
+  original creation/validation result and framework `NTSTATUS`, record rollback
+  result/effects, and require the final state to classify as rolled-back
+  `MODEL_READY | FAULTED`. No-object failure uses a narrow ordinary-state
+  helper to mark `MODEL_READY | FAULTED` without invoking rollback. Rollback
+  failure returns a dedicated rollback-failure result without direct
+  best-effort deletion.
+- **Ready-state validation:** Extended creation-state validation so fully ready
+  requires exact `MODEL_READY | LOCK_CREATED | REQUEST_CREATED |
+  OUTBOUND_MEMORY_CREATED | INBOUND_MEMORY_CREATED | OWNER_READY`, no
+  `FAULTED`, all four handles, inactive typed request context, exact two-byte
+  fixed storage, and the pure model in its non-admitting baseline. `OWNER_READY`
+  remains structural only and does not admit activation.
+- **Compile-check/guard:** The compile-check takes the orchestration function
+  address and validates enum/report shapes without invocation. The semantic
+  guard now enforces exact direct WDF counts, no direct WDF call from the
+  orchestrator, one source call to each creation helper, helper order,
+  centralized rollback call count, no retry loop, ready/faulted/partial
+  rejection before helper calls, final ready validation, `OWNER_READY` single
+  assignment, and no `ChatpadFilter` linkage. Final semantic output:
+  `Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate=1, WdfRequestCreate=1, WdfMemoryCreatePreallocated=2, WdfObjectDelete=2; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication, no execution/runtime-driver linkage).`
+- **Validation-wrapper correction:** The first attempted Debug
+  `tools\Test-ChatpadRequestOwnerModel.ps1` run failed before compilation
+  because PowerShell rejected C-style unsigned integer literals such as `14u`.
+  `tools\Test-ChatpadRequestOwnerModel.ps1` was corrected narrowly to use
+  ordinary PowerShell integer literals in wrapper comparisons. The same Debug
+  model wrapper then passed.
+- **Context validation:** Debug and Release
+  `tools\Test-ChatpadKmdfRequestOwnerContext.ps1` exited `0`; logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Debug-20260630T115118Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Release-20260630T115206Z.log`.
+- **Regression validation:** Serial Debug/Release wrappers all exited `0`:
+  request-owner model `5002/5002`; protocol `610/610`; transport `186/186`;
+  lifecycle `109/109`; control setup `141/141`; protocol kernel
+  compatibility; WDF control setup; and `Build-Driver.ps1`. Logs span
+  `20260630T120035Z` through `20260630T120118Z` beneath
+  `C:\Dev\chatpad-super-driver\artifacts\logs\`.
+- **Full solution:** Debug and Release full-solution builds exited `0` with
+  zero warning/error text in
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-orchestration-Debug-20260630T120133Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-orchestration-Release-20260630T120133Z.log`.
+- **Library evidence:** Final full-solution context/compile-check library
+  hashes are Debug
+  `60AE6D7EC60B336E50D75AB9F3D75CE004886F68A86D811BE8C91759F8D4490B` /
+  `0078CC1AADA7BE980B1E1B122DBF017F7958C46A475F4496FA8E0ADDED003795`
+  and Release
+  `ACF9F72EBFDB90C313B3A364AA8FA746781B80C1C275E664B14E3347F40A0621` /
+  `9746F112ED68C83FA2780D0B4516033E635A19E40515AFA3ED970E4EC86C3714`.
+- **Driver evidence:** Debug
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  15,872 bytes, SHA-256
+  `2D42065CAF76B003FAB6C59A69775FD089F2390C7E0BBB26EB61A97B227EF0A3`,
+  `NotSigned`; Release
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  12,288 bytes, SHA-256
+  `CB677048F1F601C4A150E1EE3749CA802DE2D5D81AAED0894EAB38EEFE00F478`,
+  `NotSigned`. `dumpbin /imports` found zero orchestration/helper or WDF
+  object-management imports in both driver images.
+- **Files changed:** Source/header
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`
+  and `.h`; compile-check
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/ChatpadKmdfRequestOwnerContextCompileCheck.c`;
+  semantic/model wrappers; context and compile-check READMEs; and directly
+  relevant documentation including
+  `docs/OFFLINE-KMDF-CREATION-ORCHESTRATION.md`.
+- **Safety:** The orchestration and its creation/rollback calls were compiled
+  but never executed; no WDF object was created or deleted during this
+  checkpoint. No `ChatpadFilter` source/project/device context or active
+  callback changed. No production linkage, target discovery, request
+  formatting/reuse/send/completion/cancellation, D0 rundown, InfVerif, Inf2Cat
+  executable invocation, CAT, certificate, signing, packaging, staging,
+  installation, driver load, Driver Store mutation, registry/service mutation,
+  device enumeration, controller/Chatpad interaction, elevation, or network
+  operation occurred before the final authorized push.
+- **Commit/push:** Commit exactly `driver: compose dormant object creation` and
+  push only `origin/feature/offline-kmdf-creation-orchestration`; final hash is
+  reported after commit.
+- **Next gate:** Independent read-only audit of this orchestration checkpoint.
+  Production linkage, `EvtDeviceAdd` integration, target discovery, request
+  formatting, request submission, signing, installation, loading, and hardware
+  testing remain unauthorized.

@@ -712,3 +712,17 @@ submission, callback, rollback, readiness, or hardware path exists.
 compiles request-tree then spinlock deletion and deterministic owner
 publication clearing. The pure bridge model remains non-admitting and no
 runtime bridge, target, callback, or request operation is added.
+
+## 38. KMDF dormant creation orchestration checkpoint
+
+[Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+compiles the bridge's dormant all-or-nothing object-graph composition in the
+isolated context module. It calls the existing spinlock, request,
+outbound-memory, and inbound-memory helpers in order, validates each partial
+state, publishes structural `OWNER_READY` only after the complete graph
+validates, and routes object-published failure through the existing rollback
+helper.
+
+The orchestrator remains unlinked from and uninvoked by `ChatpadFilter`. No
+bridge target, request formatting, submission, completion, cancellation,
+runtime callback, production linkage, installation, or hardware path exists.

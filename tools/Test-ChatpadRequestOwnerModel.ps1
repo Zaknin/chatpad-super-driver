@@ -228,15 +228,15 @@ foreach ($entry in $requiredLines.GetEnumerator()) {
     if ($matches.Count -ne 1) { throw "Test output does not contain exactly one '$($entry.Key)' line." }
     $values[$entry.Key] = [uint32]$matches[0].Groups[1].Value
 }
-if ($values['Transition states'] -ne 14u -or $values['Transition event classes'] -ne 19u -or
-    $values['Transition combinations'] -ne 266u -or $values['Scenario count'] -ne 30u -or
-    $values['Exploration depth'] -ne 10u) {
+if ($values['Transition states'] -ne 14 -or $values['Transition event classes'] -ne 19 -or
+    $values['Transition combinations'] -ne 266 -or $values['Scenario count'] -ne 30 -or
+    $values['Exploration depth'] -ne 10) {
     throw 'Test coverage statistics do not match the required bounded model.'
 }
 if (($values['Transition accepted'] + $values['Transition idempotent'] + $values['Transition rejected'] + $values['Transition faulting']) -ne $values['Transition combinations']) {
     throw 'Transition classification statistics do not sum to all combinations.'
 }
-if ($test.ExitCode -ne 0 -or $values['Failed'] -ne 0u -or $values['Total'] -ne $values['Passed']) {
+if ($test.ExitCode -ne 0 -or $values['Failed'] -ne 0 -or $values['Total'] -ne $values['Passed']) {
     throw 'Request-owner model tests failed or reported inconsistent counts.'
 }
 

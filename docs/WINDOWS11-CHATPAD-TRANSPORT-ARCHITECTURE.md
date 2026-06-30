@@ -827,3 +827,16 @@ gates.
 compiles exact reverse-order rollback for pre-ready partial creation. Request
 parentage owns both memory children; the spinlock is deleted independently
 afterward. `ChatpadFilter` remains unchanged and contains no delete import.
+
+## 39. KMDF dormant creation orchestration checkpoint
+
+[Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+compiles the all-or-nothing dormant object-graph helper for the future
+activation owner. The helper validates the clean ordinary baseline, composes
+the existing creation helpers in order, publishes structural `OWNER_READY`
+last, and records rollback/failure details without executing any WDF call.
+
+This checkpoint does not change the transport architecture's runtime boundary:
+no production driver linkage, target discovery, request formatting, request
+submission, completion, cancellation, signing, installation, loading, USB
+query, controller interaction, or Chatpad input path is authorized or proven.

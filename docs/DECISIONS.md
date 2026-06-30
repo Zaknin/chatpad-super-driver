@@ -4,6 +4,36 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Compose dormant object creation as one all-or-nothing helper
+
+**Decision:** The isolated KMDF request-owner module exposes one dormant
+orchestration helper that validates a clean `MODEL_READY` owner, calls the
+existing one-object helpers exactly in spinlock/request/outbound-memory/
+inbound-memory order, validates each partial state, publishes `OWNER_READY`
+only after complete pre-ready validation, and uses the existing rollback helper
+exactly once for any object-published failure.
+
+**Rationale:** Keeping orchestration as a single composition point preserves
+helper independence while giving initialization one deterministic all-or-
+nothing boundary. Reports carry stage, creation result, framework status, and
+rollback result separately, so production linkage can later reason about
+failure without guessing which object exists.
+
+**Alternatives rejected:** Calling creation helpers from `EvtDeviceAdd` now
+would execute framework object creation before the audit/linkage gate; resuming
+pre-existing partial states would hide ownership ambiguity; best-effort direct
+deletion from orchestration would duplicate rollback ownership; setting
+`OWNER_READY` before complete validation would expose an incomplete dormant
+graph.
+
+**Consequences:** `OWNER_READY` now means only that the dormant structural
+object graph is complete and non-admitting. Ready, faulted, and partial owners
+are classified before helper invocation. The helper remains unlinked and
+uninvoked; the next safe step is an independent read-only audit, not production
+linkage.
+
+---
+
 ## 2026-06-30 - Roll back partial creation through request-parent ownership
 
 **Decision:** Pre-ready initialization rollback deletes the reusable request

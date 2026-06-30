@@ -4,6 +4,12 @@ This is the authoritative design-only checkpoint for future dormant creation,
 partial-initialization rollback, and cleanup of the Chatpad activation request
 owner's KMDF objects. It creates no object and changes no source code.
 
+Checkpoint update: the compile-only implementation milestone
+[Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+now compiles the all-or-nothing creation composition described here, but it
+remains unlinked from `ChatpadFilter` and unexecuted. Production linkage and
+`EvtDeviceAdd` integration are still not authorized.
+
 ## 1. Purpose and non-scope
 
 This design covers the future dormant object-creation and cleanup rules for:

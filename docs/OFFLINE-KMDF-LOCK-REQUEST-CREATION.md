@@ -1,5 +1,10 @@
 # Offline KMDF Lock and Request Creation Checkpoint
 
+Follow-up checkpoint: [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+now calls the lock helper before the request helper as part of the compile-only
+all-or-nothing composition. These helpers remain independent and were not
+executed during validation.
+
 ## Purpose and scope
 
 This checkpoint compiles isolated dormant creation code for one future

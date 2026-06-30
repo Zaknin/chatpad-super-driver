@@ -1,5 +1,10 @@
 # Offline KMDF Owner Storage Initialization Checkpoint
 
+Follow-up checkpoint: [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+now requires this clean `MODEL_READY` baseline before calling any creation
+helper. No storage initializer, creation helper, rollback helper, or
+orchestrator is invoked by `ChatpadFilter`.
+
 This checkpoint implements the first source slice after the dormant object
 lifecycle design: ordinary C storage initialization and pre-object validation
 for the future activation request owner. It creates no framework object and

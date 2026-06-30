@@ -1,5 +1,9 @@
 # Offline KMDF Object-Attribute Preparation Checkpoint
 
+Follow-up checkpoint: [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+now compiles the full dormant object-graph composition that relies on these
+parentage helpers. No production driver path invokes the composition.
+
 This checkpoint implements compile-only `WDF_OBJECT_ATTRIBUTES` preparation
 for the future dormant activation request-owner objects. It initializes
 caller-owned attribute structures and creates no framework object.

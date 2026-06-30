@@ -150,6 +150,40 @@ typedef enum ChatpadKmdfRequestOwnerRollbackResult {
     CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_UNSUPPORTED_OR_INCONSISTENT_STATE
 } ChatpadKmdfRequestOwnerRollbackResult;
 
+typedef enum ChatpadKmdfRequestOwnerOrchestrationStage {
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_NONE = 0,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_VALIDATE_BASELINE,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_SPINLOCK,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_REQUEST,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_OUTBOUND_MEMORY,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_INBOUND_MEMORY,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_VALIDATE_PRE_READY,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_PUBLISH_READY,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_VALIDATE_READY,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_ROLLBACK
+} ChatpadKmdfRequestOwnerOrchestrationStage;
+
+typedef enum ChatpadKmdfRequestOwnerOrchestrationResult {
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK = 0,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_OWNER,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_PARENT_DEVICE,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_REPORT,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_SIGNATURE,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_UNSUPPORTED_VERSION,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_BASELINE,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_READY,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_FAULTED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PARTIAL_STATE_PRESENT,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_SPINLOCK_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_REQUEST_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OUTBOUND_MEMORY_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INBOUND_MEMORY_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PRE_READY_VALIDATION_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_READY_VALIDATION_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ROLLBACK_FAILED,
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVARIANT_FAILED
+} ChatpadKmdfRequestOwnerOrchestrationResult;
+
 typedef struct ChatpadKmdfActivationTransferStorage {
     uint8_t OutboundBytes[CHATPAD_KMDF_ACTIVATION_OUTBOUND_CAPACITY];
     uint8_t InboundBytes[CHATPAD_KMDF_ACTIVATION_INBOUND_CAPACITY];
@@ -207,6 +241,28 @@ typedef struct ChatpadKmdfRequestOwnerRollbackEffects {
     UCHAR InboundMemoryRepresented;
     UCHAR AlreadyClean;
 } ChatpadKmdfRequestOwnerRollbackEffects;
+
+typedef struct ChatpadKmdfRequestOwnerOrchestrationReport {
+    ChatpadKmdfRequestOwnerOrchestrationResult Result;
+    ChatpadKmdfRequestOwnerOrchestrationStage LastStageEntered;
+    ChatpadKmdfRequestOwnerOrchestrationStage LastCompletedStage;
+    ChatpadKmdfRequestOwnerOrchestrationStage FailedStage;
+    ChatpadKmdfRequestOwnerStorageResult BaselineValidationResult;
+    ChatpadKmdfRequestOwnerCreationResult CreationResult;
+    ChatpadKmdfRequestOwnerCreationResult ValidationResult;
+    NTSTATUS FrameworkStatus;
+    ChatpadKmdfRequestOwnerRollbackResult RollbackResult;
+    ChatpadKmdfRequestOwnerRollbackEffects RollbackEffects;
+    ULONG InitialInitializationMask;
+    ULONG HighestPartialInitializationMask;
+    ULONG FinalInitializationMask;
+    UCHAR CreationHelperCalled;
+    UCHAR ReadyPublicationAttempted;
+    UCHAR ReadyPublished;
+    UCHAR RollbackAttempted;
+    UCHAR RollbackSucceeded;
+    UCHAR ObjectGraphComplete;
+} ChatpadKmdfRequestOwnerOrchestrationReport;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(
     ChatpadKmdfActivationRequestContext,
@@ -276,6 +332,12 @@ ChatpadKmdfRequestOwnerRollbackResult
 ChatpadKmdfRequestOwnerRollbackPartialCreation(
     ChatpadKmdfActivationRequestOwner *owner,
     ChatpadKmdfRequestOwnerRollbackEffects *effects);
+
+ChatpadKmdfRequestOwnerOrchestrationResult
+ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
+    WDFDEVICE parentDevice,
+    ChatpadKmdfActivationRequestOwner *owner,
+    ChatpadKmdfRequestOwnerOrchestrationReport *report);
 
 #ifdef __cplusplus
 }

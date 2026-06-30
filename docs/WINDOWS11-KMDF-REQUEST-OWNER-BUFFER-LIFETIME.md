@@ -1,5 +1,10 @@
 # Windows 11 KMDF Request Owner and Buffer Lifetime
 
+Checkpoint update: [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+now compiles a dormant all-or-nothing owner graph helper that preserves this
+document's request-parented memory and fixed two-byte storage rules. It does
+not format, submit, complete, cancel, or reuse a request.
+
 This document is the authoritative ownership and lifetime design for the first
 future asynchronous Chatpad activation control request. It refines the broader
 [KMDF transport bridge design](WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md)

@@ -96,12 +96,12 @@ Source references:
   exactly one spinlock create call and one targetless request create call,
   deterministic typed-context initialization, and partial-state validation.
   Static-library validation never invokes either helper.
-- No WDF activation-owner object currently exists. If separately authorized,
-  the next smallest slice is isolated request-parented outbound/inbound
-  preallocated-memory creation, without rollback or `ChatpadFilter` linkage.
-  Do not add runtime request formatting, submission, completion, cancellation,
-  target discovery, installation, or hardware access unless explicitly
-  authorized.
+- The compile-only dormant creation orchestration checkpoint is complete in
+  `docs/OFFLINE-KMDF-CREATION-ORCHESTRATION.md`. It composes the existing
+  lock, request, outbound-memory, inbound-memory, validation, and rollback
+  helpers into one all-or-nothing helper and publishes structural
+  `OWNER_READY` only after complete validation. The helper remains unlinked
+  from `ChatpadFilter` and unexecuted.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.
@@ -151,16 +151,12 @@ Each stage requires its own reviewed evidence, explicit authorization, stop
 conditions, and recovery boundary.
 
 The offline request-owner preparation path now includes compile-only,
-uninvoked helpers for device-parented lock/request creation and
-request-parented outbound/inbound preallocated-memory creation. The next
-independent engineering gate is partial-creation rollback orchestration. This
+uninvoked helpers for device-parented lock/request creation, request-parented
+outbound/inbound preallocated-memory creation, request-first/spinlock-second
+rollback, and all-or-nothing structural-ready orchestration. The next
+independent gate is a read-only audit of that orchestration checkpoint. This
 does not authorize production linkage, request execution, deployment, or
 hardware validation.
-
-The isolated rollback gate now compiles request-first/spinlock-second deletion
-without execution. The next separately authorized slice is full dormant
-creation orchestration with rollback and final non-runtime owner-ready
-publication; it still does not authorize production linkage or deployment.
 
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`

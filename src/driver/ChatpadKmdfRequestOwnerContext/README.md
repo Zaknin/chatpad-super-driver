@@ -43,12 +43,15 @@ The isolated module also compiles four independent dormant creation helpers:
   two-byte inbound array, after outbound memory exists.
 
 `ChatpadKmdfRequestOwnerValidateCreationState` distinguishes the pre-object,
-lock-created, lock/request-created, outbound-memory-created, and
-both-memory-created partial states. Fully ready remains invalid. The creation
-helpers preserve exact framework `NTSTATUS`, reject repeated or out-of-order
-calls before a WDF creation call, publish only the corresponding created bit,
-and implement no deletion or rollback. Memory handles remain authoritative in
-the owner; the request context does not duplicate them.
+lock-created, lock/request-created, outbound-memory-created,
+both-memory-created, and fully ready structural states. Fully ready requires
+all four object handles and bits, exact fixed storage, inactive request
+context, non-admitting pure model state, and `OWNER_READY`.
+
+The creation helpers preserve exact framework `NTSTATUS`, reject repeated or
+out-of-order calls before a WDF creation call, publish only the corresponding
+created bit, and implement no deletion or rollback. Memory handles remain
+authoritative in the owner; the request context does not duplicate them.
 
 The four WDF creation calls are compiled into static libraries but are never
 executed by the compile-check. This module still does not publish owner-ready,
@@ -64,6 +67,14 @@ the independent spinlock, clears published handles/bits after each delete
 call, and leaves `MODEL_READY | FAULTED`. Clean and previously rolled-back
 owners are idempotent. The fixed arrays and pure model remain unchanged.
 
-The two `WdfObjectDelete` call sites are compile-only and never execute during
-validation. No individual memory deletion, normal teardown, active-operation
-rundown, creation orchestration, or production linkage exists.
+The module now also compiles
+`ChatpadKmdfRequestOwnerCreateDormantObjectGraph`. It validates a clean
+`MODEL_READY` baseline, calls the four creation helpers in spinlock, request,
+outbound-memory, inbound-memory order, validates after each step, publishes
+`OWNER_READY` last, validates the final ready-but-non-admitting state, and uses
+the rollback helper exactly once after any object-published failure.
+
+The two `WdfObjectDelete` call sites and the orchestration path are compile-only
+and never execute during validation. No individual memory deletion, normal
+teardown, active-operation rundown, production linkage, target discovery,
+request formatting, send, completion, or cancellation exists.

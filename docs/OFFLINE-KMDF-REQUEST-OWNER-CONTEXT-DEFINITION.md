@@ -1,5 +1,9 @@
 # Offline KMDF Request-Owner Context Definition
 
+Follow-up checkpoint: [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+now adds the compile-only all-or-nothing orchestration API to this isolated
+context module. The production driver still does not link or call the module.
+
 This checkpoint defines the compile-only KMDF-facing context layouts for the
 future Chatpad activation request owner. It proves WDK/KMDF compilation of the
 intended storage and context declarations only.

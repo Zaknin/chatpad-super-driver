@@ -1,5 +1,10 @@
 # Offline KMDF Partial-Creation Rollback Checkpoint
 
+Follow-up checkpoint: [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+now composes this rollback helper into a dormant all-or-nothing helper. The
+rollback helper remains the only deletion owner for partial object publication
+and still was not executed during validation.
+
 ## Purpose and scope
 
 This checkpoint compiles one isolated dormant helper that can reverse any

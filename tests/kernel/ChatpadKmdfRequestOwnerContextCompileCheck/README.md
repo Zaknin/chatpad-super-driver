@@ -25,3 +25,9 @@ The target also takes typed addresses of the rollback classifier and partial
 creation rollback helper. Their implementations compile exact request and
 spinlock `WdfObjectDelete` calls, effects clearing, state classification, and
 post-rollback validation. Neither function is invoked by the compile-check.
+
+The target now also takes a typed address of
+`ChatpadKmdfRequestOwnerCreateDormantObjectGraph` and compiles the
+orchestration report/stage/result surface. The compile-check proves type and
+linkage compatibility only; it still does not invoke orchestration, creation,
+or rollback helpers.

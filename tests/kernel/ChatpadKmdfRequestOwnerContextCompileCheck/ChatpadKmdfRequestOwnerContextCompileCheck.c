@@ -56,6 +56,16 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK == 0);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ALREADY_CLEAN !=
     CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_POST_ROLLBACK_INVARIANT_FAILED);
 C_ASSERT(sizeof(ChatpadKmdfRequestOwnerRollbackEffects) != 0u);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK == 0);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_READY !=
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_FAULTED);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_SPINLOCK <
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_REQUEST);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_REQUEST <
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_OUTBOUND_MEMORY);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_OUTBOUND_MEMORY <
+    CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_INBOUND_MEMORY);
+C_ASSERT(sizeof(ChatpadKmdfRequestOwnerOrchestrationReport) != 0u);
 
 typedef ChatpadKmdfRequestOwnerCreationResult
 (*ChatpadKmdfRequestOwnerSpinLockCreationSignature)(
@@ -90,6 +100,12 @@ typedef ChatpadKmdfRequestOwnerRollbackResult
     ChatpadKmdfActivationRequestOwner *,
     ChatpadKmdfRequestOwnerRollbackEffects *);
 
+typedef ChatpadKmdfRequestOwnerOrchestrationResult
+(*ChatpadKmdfRequestOwnerOrchestrationSignature)(
+    WDFDEVICE,
+    ChatpadKmdfActivationRequestOwner *,
+    ChatpadKmdfRequestOwnerOrchestrationReport *);
+
 void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
 {
     ChatpadKmdfRequestOwnerSpinLockCreationSignature spinLockCreation;
@@ -99,6 +115,7 @@ void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
     ChatpadKmdfRequestOwnerCreationValidationSignature creationValidation;
     ChatpadKmdfRequestOwnerRollbackClassificationSignature rollbackClassification;
     ChatpadKmdfRequestOwnerRollbackSignature rollback;
+    ChatpadKmdfRequestOwnerOrchestrationSignature orchestration;
 
     spinLockCreation = ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock;
     requestCreation = ChatpadKmdfRequestOwnerCreateReusableRequest;
@@ -107,6 +124,7 @@ void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
     creationValidation = ChatpadKmdfRequestOwnerValidateCreationState;
     rollbackClassification = ChatpadKmdfRequestOwnerClassifyRollbackState;
     rollback = ChatpadKmdfRequestOwnerRollbackPartialCreation;
+    orchestration = ChatpadKmdfRequestOwnerCreateDormantObjectGraph;
 
     UNREFERENCED_PARAMETER(spinLockCreation);
     UNREFERENCED_PARAMETER(requestCreation);
@@ -115,6 +133,7 @@ void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
     UNREFERENCED_PARAMETER(creationValidation);
     UNREFERENCED_PARAMETER(rollbackClassification);
     UNREFERENCED_PARAMETER(rollback);
+    UNREFERENCED_PARAMETER(orchestration);
 }
 
 void ChatpadKmdfRequestOwnerContextCompileCheckAttributes(

@@ -230,9 +230,6 @@ function Test-RequestOwnerContextSemanticGuards {
         $joinedCode -notmatch 'RtlZeroMemory\(&owner->CompletionSnapshot') {
         throw 'Storage initialization does not explicitly clear transfer storage and completion snapshot storage.'
     }
-    if ($joinedCode -match 'InitializationMask\s*(?:=|\|=)\s*[^;\r\n]*CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY') {
-        throw 'Storage initialization sets owner-ready before any WDF object creation checkpoint exists.'
-    }
     $maskAssignments = [regex]::Matches($contextSourceText, 'InitializationMask\s*=\s*(CHATPAD_KMDF_REQUEST_OWNER_INIT_[A-Z_]+)')
     $allowedMaskAssignments = @(
         'CHATPAD_KMDF_REQUEST_OWNER_INIT_NONE',
@@ -256,6 +253,9 @@ function Test-RequestOwnerContextSemanticGuards {
     $inboundMemoryHelperName = 'ChatpadKmdfRequestOwnerCreateInboundMemory'
     $rollbackClassifierName = 'ChatpadKmdfRequestOwnerClassifyRollbackState'
     $rollbackHelperName = 'ChatpadKmdfRequestOwnerRollbackPartialCreation'
+    $orchestrationBaselineName = 'ChatpadKmdfRequestOwnerValidateOrchestrationBaseline'
+    $orchestrationFaultName = 'ChatpadKmdfRequestOwnerMarkFaultedWithoutObjects'
+    $orchestrationHelperName = 'ChatpadKmdfRequestOwnerCreateDormantObjectGraph'
     $spinLockHelperStart = $contextSourceText.IndexOf(
         $spinLockHelperName + '(',
         [System.StringComparison]::Ordinal)
@@ -274,12 +274,24 @@ function Test-RequestOwnerContextSemanticGuards {
     $rollbackHelperStart = $contextSourceText.IndexOf(
         $rollbackHelperName + '(',
         [System.StringComparison]::Ordinal)
+    $orchestrationBaselineStart = $contextSourceText.IndexOf(
+        $orchestrationBaselineName + '(',
+        [System.StringComparison]::Ordinal)
+    $orchestrationFaultStart = $contextSourceText.IndexOf(
+        $orchestrationFaultName + '(',
+        [System.StringComparison]::Ordinal)
+    $orchestrationHelperStart = $contextSourceText.IndexOf(
+        $orchestrationHelperName + '(',
+        [System.StringComparison]::Ordinal)
     if ($spinLockHelperStart -lt 0 -or
         $requestHelperStart -le $spinLockHelperStart -or
         $outboundMemoryHelperStart -le $requestHelperStart -or
         $inboundMemoryHelperStart -le $outboundMemoryHelperStart -or
         $rollbackClassifierStart -le $inboundMemoryHelperStart -or
-        $rollbackHelperStart -le $rollbackClassifierStart) {
+        $rollbackHelperStart -le $rollbackClassifierStart -or
+        $orchestrationBaselineStart -le $rollbackHelperStart -or
+        $orchestrationFaultStart -le $orchestrationBaselineStart -or
+        $orchestrationHelperStart -le $orchestrationFaultStart) {
         throw 'Independent dormant creation helper definitions are missing or out of order.'
     }
     $spinLockHelperText = $contextSourceText.Substring(
@@ -297,7 +309,13 @@ function Test-RequestOwnerContextSemanticGuards {
     $rollbackClassifierText = $contextSourceText.Substring(
         $rollbackClassifierStart,
         $rollbackHelperStart - $rollbackClassifierStart)
-    $rollbackHelperText = $contextSourceText.Substring($rollbackHelperStart)
+    $rollbackHelperText = $contextSourceText.Substring(
+        $rollbackHelperStart,
+        $orchestrationBaselineStart - $rollbackHelperStart)
+    $orchestrationBaselineText = $contextSourceText.Substring(
+        $orchestrationBaselineStart,
+        $orchestrationFaultStart - $orchestrationBaselineStart)
+    $orchestrationHelperText = $contextSourceText.Substring($orchestrationHelperStart)
 
     if ([regex]::Matches($spinLockHelperText, 'WdfSpinLockCreate\s*\(').Count -ne 1 -or
         $spinLockHelperText -match 'WdfRequestCreate\s*\(' -or
@@ -350,6 +368,60 @@ function Test-RequestOwnerContextSemanticGuards {
         $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED' -or
         $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ALREADY_CLEAN') {
         throw 'Rollback effects clearing, idempotence, or post-state surface is incomplete.'
+    }
+    if ($orchestrationHelperText -match '(?<![A-Za-z0-9_])Wdf[A-Za-z0-9_]+\s*\(') {
+        throw 'Dormant orchestration contains a direct WDF call.'
+    }
+    foreach ($creationHelper in @($spinLockHelperName, $requestHelperName, $outboundMemoryHelperName, $inboundMemoryHelperName)) {
+        if ([regex]::Matches(
+                $orchestrationHelperText,
+                [regex]::Escape($creationHelper) + '\s*\(').Count -ne 1) {
+            throw "Dormant orchestration must call creation helper exactly once in source: $creationHelper"
+        }
+    }
+    $orchestrationSpinLockCall = $orchestrationHelperText.IndexOf(
+        $spinLockHelperName + '(',
+        [System.StringComparison]::Ordinal)
+    $orchestrationRequestCall = $orchestrationHelperText.IndexOf(
+        $requestHelperName + '(',
+        [System.StringComparison]::Ordinal)
+    $orchestrationOutboundCall = $orchestrationHelperText.IndexOf(
+        $outboundMemoryHelperName + '(',
+        [System.StringComparison]::Ordinal)
+    $orchestrationInboundCall = $orchestrationHelperText.IndexOf(
+        $inboundMemoryHelperName + '(',
+        [System.StringComparison]::Ordinal)
+    if ($orchestrationSpinLockCall -lt 0 -or
+        $orchestrationRequestCall -le $orchestrationSpinLockCall -or
+        $orchestrationOutboundCall -le $orchestrationRequestCall -or
+        $orchestrationInboundCall -le $orchestrationOutboundCall) {
+        throw 'Dormant orchestration helper order is not spinlock, request, outbound memory, inbound memory.'
+    }
+    if ([regex]::Matches(
+            $orchestrationHelperText,
+            [regex]::Escape($rollbackHelperName) + '\s*\(').Count -ne 1) {
+        throw 'Dormant orchestration must have exactly one centralized rollback call site.'
+    }
+    if ($orchestrationHelperText -match '(?m)\b(?:for|while)\s*\(' -or
+        $orchestrationHelperText -match '(?m)\bdo\s*\{') {
+        throw 'Dormant orchestration contains a retry-capable loop.'
+    }
+    if ($orchestrationBaselineText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_READY' -or
+        $orchestrationBaselineText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_FAULTED' -or
+        $orchestrationBaselineText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PARTIAL_STATE_PRESENT' -or
+        $orchestrationHelperText.IndexOf($orchestrationBaselineName + '(', [System.StringComparison]::Ordinal) -ge
+            $orchestrationSpinLockCall) {
+        throw 'Repeated ready, faulted, and partial-state rejection is not ahead of helper invocation.'
+    }
+    if ($orchestrationHelperText -notmatch 'RtlZeroMemory\s*\(\s*report\s*,\s*sizeof\(\*report\)\s*\)' -or
+        $orchestrationHelperText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_FULLY_READY' -or
+        $orchestrationHelperText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_READY_VALIDATION_FAILED' -or
+        $orchestrationHelperText -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ROLLBACK_FAILED') {
+        throw 'Orchestration report clearing, ready validation, or rollback-failure classification is incomplete.'
+    }
+    if ($orchestrationHelperText -notmatch '(?s)InitializationMask\s*\|=\s*CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY.*CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_FULLY_READY' -or
+        $orchestrationHelperText -notmatch '(?s)InitializationMask\s*&=\s*~CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY.*ChatpadKmdfRequestOwnerRollbackPartialCreation') {
+        throw 'OWNER_READY publication/validation/rollback clearing order is incomplete.'
     }
     if ($spinLockHelperText -notmatch 'ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes\s*\(' -or
         $requestHelperText -notmatch 'ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes\s*\(' -or
@@ -412,8 +484,14 @@ function Test-RequestOwnerContextSemanticGuards {
             throw "Typed creation result is missing: $resultName"
         }
     }
-    if ($contextSourceText -match 'InitializationMask\s*(?:=|\|=)\s*[^;\r\n]*CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY') {
-        throw 'Dormant creation publishes owner-ready.'
+    $ownerReadyAssignments = [regex]::Matches(
+        $contextSourceText,
+        'InitializationMask\s*\|=\s*CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY')
+    if ($ownerReadyAssignments.Count -ne 1 -or
+        [regex]::Matches(
+            $orchestrationHelperText,
+            'InitializationMask\s*\|=\s*CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY').Count -ne 1) {
+        throw 'OWNER_READY must be published exactly once and only by dormant orchestration.'
     }
     $createdBitAssignments = [regex]::Matches(
         $contextSourceText,
@@ -425,6 +503,7 @@ function Test-RequestOwnerContextSemanticGuards {
                 'CHATPAD_KMDF_REQUEST_OWNER_INIT_REQUEST_CREATED',
                 'CHATPAD_KMDF_REQUEST_OWNER_INIT_OUTBOUND_MEMORY_CREATED',
                 'CHATPAD_KMDF_REQUEST_OWNER_INIT_INBOUND_MEMORY_CREATED',
+                'CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY',
                 'CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED')) {
             throw "Dormant creation assigns an unauthorized initialization bit: $assignedValue"
         }
@@ -439,7 +518,8 @@ function Test-RequestOwnerContextSemanticGuards {
         $compileSourceText -match ([regex]::Escape($requestHelperName) + '\s*\(') -or
         $compileSourceText -match ([regex]::Escape($outboundMemoryHelperName) + '\s*\(') -or
         $compileSourceText -match ([regex]::Escape($inboundMemoryHelperName) + '\s*\(') -or
-        $compileSourceText -match ([regex]::Escape($rollbackHelperName) + '\s*\(')) {
+        $compileSourceText -match ([regex]::Escape($rollbackHelperName) + '\s*\(') -or
+        $compileSourceText -match ([regex]::Escape($orchestrationHelperName) + '\s*\(')) {
         throw 'Compile-check invokes a dormant creation helper instead of checking its signature only.'
     }
     if ($compileSourceText -notmatch 'spinLockCreation\s*=\s*ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock' -or
@@ -448,7 +528,8 @@ function Test-RequestOwnerContextSemanticGuards {
         $compileSourceText -notmatch 'inboundMemoryCreation\s*=\s*ChatpadKmdfRequestOwnerCreateInboundMemory' -or
         $compileSourceText -notmatch 'creationValidation\s*=\s*ChatpadKmdfRequestOwnerValidateCreationState' -or
         $compileSourceText -notmatch 'rollbackClassification\s*=\s*ChatpadKmdfRequestOwnerClassifyRollbackState' -or
-        $compileSourceText -notmatch 'rollback\s*=\s*ChatpadKmdfRequestOwnerRollbackPartialCreation') {
+        $compileSourceText -notmatch 'rollback\s*=\s*ChatpadKmdfRequestOwnerRollbackPartialCreation' -or
+        $compileSourceText -notmatch 'orchestration\s*=\s*ChatpadKmdfRequestOwnerCreateDormantObjectGraph') {
         throw 'Compile-check does not prove creation, rollback, and validation signatures without invocation.'
     }
 
@@ -495,7 +576,7 @@ function Test-RequestOwnerContextSemanticGuards {
         throw "Active ChatpadFilter source references the context module: $($activeDriverMatches -join ', ')"
     }
 
-    Write-Output ("Semantic guard: PASS (authorized calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; request-before-spinlock rollback, parent-owned memory cleanup, deterministic clearing, no execution/runtime-driver linkage)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
+    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication, no execution/runtime-driver linkage)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

@@ -1,29 +1,31 @@
 # Project State
 
-*Last updated: 2026-06-30 (dormant partial-creation rollback checkpoint)*
+*Last updated: 2026-06-30 (dormant creation orchestration checkpoint)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-creation-rollback`.
-- **Expected checkpoint commit:** `driver: define dormant creation rollback`,
-  created from `142f8e11bebac78cf2e10367c96d3b409d9c8db7`.
-- **Authoritative rollback checkpoint:**
-  [Offline KMDF Partial-Creation Rollback](OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md).
+- **Branch:** `feature/offline-kmdf-creation-orchestration`.
+- **Expected checkpoint commit:** `driver: compose dormant object creation`,
+  created from `9d5301e3c18deffbf4f90b5d3c2f058b00fe5b46`.
+- **Authoritative orchestration checkpoint:**
+  [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md).
 - **Implementation:** The isolated static library compiles four independent
-  creation helpers, a non-mutating rollback-state classifier, and one dormant
-  reverse-order partial-creation rollback helper.
-- **Rollback:** Valid pre-ready partial states delete the request hierarchy
-  first and spinlock second. Memory children are deleted only through request
-  parentage. Owner handles/bits clear immediately after deletion initiation;
-  the result is `MODEL_READY | FAULTED`.
-- **Idempotence:** Clean `MODEL_READY` and rolled-back
-  `MODEL_READY | FAULTED` states initiate no deletion. Ready, draining, active,
-  invalid-model, or handle/bit-inconsistent states are rejected unchanged.
+  creation helpers, a non-mutating rollback-state classifier, one dormant
+  reverse-order partial-creation rollback helper, and one dormant
+  all-or-nothing orchestration helper.
+- **Orchestration:** A clean `MODEL_READY` owner is validated, then helpers are
+  composed in order: spinlock, targetless request, outbound preallocated
+  memory, inbound preallocated memory. `OWNER_READY` is published only after
+  the complete pre-ready graph validates, and final ready validation must pass.
+- **Rollback/idempotence:** Any partial object publication on orchestration
+  failure uses the existing rollback helper exactly once. Valid ready,
+  faulted, or partial owners are classified before helper invocation; partial
+  state is not resumed.
 - **Storage/model:** Fixed arrays and pure-model state are preserved. No
   context access occurs after request deletion begins.
-- **Execution:** Static compile checks take helper addresses only. Exact call
-  counts are one spinlock create, one request create, two preallocated-memory
-  creates, and two object deletes; none executes.
+- **Execution:** Static compile checks take helper addresses only. Exact direct
+  WDF call counts remain one spinlock create, one request create, two
+  preallocated-memory creates, and two object deletes; none executes.
 - **Dormancy:** `ChatpadFilter`, active callbacks, live device context, INF,
   package/signing, installation, and runtime behavior remain unchanged and do
   not link the isolated module.
@@ -33,9 +35,8 @@
 
 ## Unresolved blockers
 
-- No creation or rollback helper has executed; no live WDF graph exists.
-- Full creation orchestration and final owner-ready publication are not
-  implemented or authorized.
+- No orchestration, creation, or rollback helper has executed; no live WDF graph
+  exists.
 - Production linkage, normal teardown, active-operation rundown, target and
   request operations, sequencing, and D0 coordination remain separate gates.
 - Signing, staging, installation, loading, USB/controller validation, and
