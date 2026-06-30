@@ -1923,3 +1923,76 @@
   mutation, PnP/device query, USB/controller/Chatpad interaction, elevation, or
   network action before the final authorized Git push occurred. Generated
   outputs and logs remained ignored.
+
+## 2026-06-30T09:07+04:00 - KMDF request-owner and buffer-lifetime design
+
+- **Objective:** Define the authoritative ownership, stable transfer-memory,
+  state, send/completion/cancellation race, lifecycle, cleanup, and sequencing
+  rules for the first future asynchronous activation control request without
+  adding production or runtime behavior.
+- **Starting branch and commit:**
+  `feature/offline-driver-activation-plan-integration` /
+  `b814822a540f84b93b1a02809fd1bdb0a61ac02d`; upstream
+  `origin/feature/offline-driver-activation-plan-integration` at the same
+  commit; tracked tree and index clean. Created
+  `feature/offline-kmdf-request-owner-design` only after the exact branch,
+  HEAD, upstream, local/remote equality, and clean-diff gate passed.
+- **Investigation:** Inspected the complete `ChatpadFilter` project inputs,
+  dormant activation preparation, authoritative six-step request/sequence
+  model, pure setup/WDF formatter, transport adapter, lifecycle scaffold,
+  device context and PnP/power callbacks, stale/duplicate/cancel/generation/
+  outstanding test models, bridge and transport architecture, and installed
+  KMDF 1.15 `wdfrequest.h`, `wdfmemory.h`, `wdfusb.h`, and `wdfobject.h`.
+  The asynchronous USB formatter accepts `WDFMEMORY`; the inspected
+  `WDF_MEMORY_DESCRIPTOR` forms belong to the synchronous control-transfer
+  boundary and were not selected.
+- **Binding design:** Selected one reusable, device-parented activation
+  `WDFREQUEST` with typed context and separate request-parented two-byte
+  outbound/inbound `WDFMEMORY` children. Outbound capacity is the existing
+  maximum payload constant; inbound capacity is the exact maximum expected by
+  the six authoritative steps and requires a future semantic guard. The
+  state machine publishes send/cancel call pins before outside-lock framework
+  calls, handles completion before call return, gives completion terminal
+  ownership after successful send, and maps one lifecycle acquire to one
+  release obligation.
+- **Files created:**
+  `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`.
+- **Files modified:** `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`,
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`, `docs/DECISIONS.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`, and
+  this worklog. No other file was changed.
+- **Documentation validation:** All 19 required sections are present. Semantic
+  guards for ownership hierarchy, selected request/buffer strategies, state
+  transition table, send-return race, cancellation, generation integration,
+  failure/recovery matrix, implementation decomposition, continuous-input
+  separation, stack-lifetime prohibition, and design-only boundary passed.
+  Every new or modified relative Markdown link resolved to the exact intended
+  tracked path (with the one intended new document admitted before staging).
+  Contradiction searches found no active implementation claim; matches were
+  limited to negative or explicitly future conceptual state descriptions.
+  `git diff --check` exited `0`.
+- **Repository safety:** `tools\Test-RepositorySafety.ps1` exited `0` with
+  `REPOSITORY SAFETY: PASS`. It created no evidence file. No build, protocol,
+  transport, lifecycle, setup, kernel compile, InfVerif, Inf2Cat, driver, or
+  hardware test was run, as required by the documentation-only scope.
+- **Artifacts:** None generated. Existing ignored artifacts were not modified
+  or staged.
+- **Commit and push:** Commit exactly
+  `docs: define kmdf request ownership` and push only
+  `origin/feature/offline-kmdf-request-owner-design` with upstream setup. The
+  final commit hash is reported after commit and push rather than embedded in
+  this entry.
+- **Next recommended slice:** A separately authorized pure, WDF-independent
+  request-owner state model and exhaustive offline race/accounting tests. No
+  WDF type/object or production driver integration belongs in that slice.
+- **Remaining blockers:** No request-owner model code, request context, WDF
+  object, target, transfer memory, formatting, submission, completion,
+  cancellation, executable delay, D0-exit deferral mechanism, default-control
+  visibility, activation proof, continuous input, signing, loading,
+  installation, or hardware behavior exists or is authorized.
+- **Safety:** No source/header/project/solution/INF/script/test file was
+  modified. No WDF object/callback was created; no request was reused,
+  formatted, sent, or cancelled. No build, signing, certificate, packaging,
+  staging, installation, Driver Store, registry, service, driver load,
+  operating-system mutation, PnP/device query, USB/controller/Chatpad access,
+  elevation, or network action before the final authorized Git push occurred.

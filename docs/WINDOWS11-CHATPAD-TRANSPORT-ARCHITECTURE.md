@@ -575,9 +575,11 @@ between the portable activation executor, the neutral transport adapter, a
 per-device KMDF transport owner, and later WDF USB request translation. It
 keeps the selected physical-node lower-filter architecture conditional on
 future evidence and does not implement or authorize runtime transport behavior.
+The exact first-request ownership and buffer rules are refined by
+[Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md).
 
 The bridge design selects one future owner under `WDFDEVICE` for bounded
-activation bridge state, request-owner records, future target references,
+activation bridge state, one request-owner slot, future target references,
 future delay scheduler state, diagnostics, and separate continuous-input state.
 Each future WDF request must be tied to one nonzero lifecycle D0 generation and
 one portable `ChatpadTransportOperationToken`; raw request pointers must not be
@@ -679,3 +681,27 @@ signature, package, or installation path. This proves static device
 association and lower-filter metadata only. Effective placement beneath
 `xusb22`, ordinary-controller preservation, signed-package acceptance,
 recovery, and transport visibility remain unresolved.
+
+## 30. KMDF request-owner and buffer-lifetime design checkpoint
+
+[Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md)
+is now authoritative for the first future asynchronous activation control
+request. It selects one reusable device-parented request per device and
+separate request-parented two-byte outbound and inbound memory objects. The
+request slot binds one nonzero lifecycle generation, one portable operation
+token, and one activation step to one exact outstanding-operation release.
+
+Its finite state machine handles preparation, reuse, formatting, send
+publication, immediate completion, in-flight cancellation, terminal
+completion, call-return pinning, draining, and faulted ownership. The existing
+per-device spinlock remains the only selected lock and protects short
+bookkeeping only. Activation step N+1 cannot reserve the slot until step N is
+terminal; delay metadata belongs to separate future sequencing, and continuous
+input must use a separate owner and buffers.
+
+This is documentation only. The dormant production preparation seam remains
+uncalled, and no target, request, memory object, live formatting, submission,
+completion/cancellation integration, executable timing, USB access, driver
+load, installation, or hardware behavior exists or is authorized. The next
+smallest implementation slice is a portable request-owner state model with
+offline race and accounting tests, subject to a separate task.

@@ -4,6 +4,54 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Preallocate one activation request with request-parented transfer memory
+
+**Decision:** A future per-device KMDF activation owner will contain exactly
+one reusable `WDFREQUEST`, explicitly parented to its `WDFDEVICE`. The request
+will own a typed context and two distinct nonpaged `WDFMEMORY` children: one
+two-byte outbound object and one two-byte inbound object. One per-device
+`WDFSPINLOCK` will protect only short lifecycle, identity, state, exact-once,
+and send/cancel call-pin transitions. Completion is the terminal owner after a
+successful send; a send that returns false is retired by the initiating path.
+
+**Rationale:** The activation model permits exactly one control operation at a
+time and defines a fixed two-byte maximum for both confirmed outbound payloads
+and expected inbound responses. Preallocation bounds resources and makes
+cancellation, generation binding, immediate completion, and request reuse
+deterministic. KMDF 1.15's asynchronous USB control formatter accepts
+`WDFMEMORY`, so request-parented memory gives the transfer storage the same
+effective lifetime boundary as the reusable request. Send/cancel call pins
+prevent a fast completion from returning the slot to idle while a framework
+call still has the request on its caller's stack.
+
+**Alternatives rejected:**
+
+* Allocate one request per activation step - adds allocation/unwind paths and
+  can become unbounded without supporting required concurrency.
+* Use a request pool or global request - weakens the one-in-flight invariant or
+  violates per-device isolation.
+* Use stack, raw context arrays, or `WDF_MEMORY_DESCRIPTOR` as the asynchronous
+  transfer lifetime - the selected asynchronous formatter requires stable
+  `WDFMEMORY`, and stack-backed transfer storage is invalid.
+* Use one shared bidirectional or device-parented memory object - makes
+  direction and stale-data ownership less explicit and can outlive request
+  reuse independently.
+* Hold the spinlock across send/cancel or use synchronous blocking transfer -
+  creates completion, cancellation, and D0-rundown hazards.
+
+**Consequences:**
+
+* Request reuse is legal only after terminal completion, return of send/cancel
+  call pins, exact-once lifecycle retirement, and buffer invalidation.
+* Separate outbound/inbound capacities remain exactly two bytes; no `90 00`
+  payload or arbitrary response capacity is introduced.
+* Failed, cancelled, stale, malformed, or duplicate terminal observations do
+  not advance the six-step activation sequence.
+* Activation and continuous input require separate requests, buffers, state,
+  and cancellation ownership.
+* This design creates no WDF object or runtime path. Each implementation slice
+  requires separate authorization.
+
 ## 2026-06-30 - Compile authoritative activation preparation directly into the driver
 
 **Decision:** `ChatpadFilter` compiles the existing activation-request,

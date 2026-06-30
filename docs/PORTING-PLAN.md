@@ -39,6 +39,11 @@ Source references:
 - Use `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` as the authoritative
   bridge design between the portable activation executor, the neutral transport
   adapter, and a future per-device KMDF request owner.
+- Use `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md` as the
+  authoritative design for the first future asynchronous activation request,
+  its reusable per-device slot, request-parented two-byte outbound/inbound
+  memory, exact-once lifecycle ownership, and send/completion/cancellation
+  races.
 - Treat a device-specific lower filter on the physical
   `USB\VID_045E&PID_028E`/`XnaComposite` node beneath `xusb22` as a conditional
   architecture direction, not an implementation-ready capability.
@@ -54,6 +59,13 @@ Source references:
   formatter into one dormant `ChatpadFilter` preparation module. This offline
   integration checkpoint is complete: all six steps produce caller-owned data,
   and no runtime callback invokes the API.
+- Complete the request-owner and transfer-buffer lifetime design before adding
+  WDF object definitions or runtime code. This documentation checkpoint is
+  complete and selects one reusable device-parented activation request plus
+  separate request-parented two-byte outbound and inbound memory objects.
+- If separately authorized, implement the next slice as a pure,
+  WDF-independent request-owner state model and offline race/accounting tests.
+  Do not create WDF objects or add production-driver behavior in that slice.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.
@@ -71,6 +83,8 @@ Source references:
 - Keep physical transport, per-device WDF lifetime, scheduling, diagnostics,
   and keyboard presentation in separate layers with no portable-to-WDF
   dependency.
+- Keep activation request ownership separate from future continuous input;
+  neither request handles nor transfer buffers may be shared.
 - Resolve the attachment, stack-preservation, transport-visibility,
   endpoint/input, lifecycle, recovery, and explicit-authorization gates before
   any USB request can be sent.

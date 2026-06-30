@@ -1,45 +1,54 @@
 # Project State
 
-*Last updated: 2026-06-30T08:09+04:00*
+*Last updated: 2026-06-30 (documentation-only request-owner checkpoint)*
 
 ## Current state
 
-- **Branch:** `feature/offline-driver-activation-plan-integration`.
+- **Branch:** `feature/offline-kmdf-request-owner-design`.
 - **Starting checkpoint:**
-  `fad671d5d1ede2eda6f0a5defb0b0495c80cc39e`.
-- **Checkpoint subject:** `driver: integrate offline activation plan`; the
-  final commit hash is recorded by the external handoff rather than embedded
-  in its own commit.
-- **Milestone report:**
-  [Offline Driver Activation-Plan Integration](OFFLINE-DRIVER-ACTIVATION-PLAN-INTEGRATION.md).
-- **Production integration:** dormant
-  `ChatpadPrepareActivationStep` compiles and links into `ChatpadFilter`, using
-  the authoritative activation sequence, pure control-setup translator, and
-  WDF setup formatter.
-- **Runtime state:** no driver callback invokes the preparation API. No WDF
-  target, request, memory, queue, timer, work item, wait, submission, or
-  hardware path exists.
-- **Offline verification:** full solution and driver builds PASS in Debug and
-  Release; protocol `610/610`, transport `186/186`, lifecycle `109/109`, and
-  pure control setup `141/141` pass in both configurations; WDK compatibility
-  and integration compile guards PASS.
-- **Debug driver:** 15,872 bytes, SHA-256
-  `83C7D82BD77FA6F05690F0F4F610CF246042160D9E4A10D9032C44221B0A4AD6`,
-  `Authenticode.NotSigned`.
-- **Release driver:** 12,288 bytes, SHA-256
-  `22D7A1DF6F051DBFB1AB835A08354391CDEDA7BC88F27BC6EB7CAACBD4A90139`,
-  `Authenticode.NotSigned`.
-- **Containment:** project defaults and wrappers route outputs beneath ignored
-  `artifacts/`; no generated evidence is tracked.
+  `b814822a540f84b93b1a02809fd1bdb0a61ac02d`
+  (`driver: integrate offline activation plan`).
+- **Authoritative request design:**
+  [Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md).
+- **Selected future request strategy:** one reusable activation `WDFREQUEST`
+  per device, explicitly parented to `WDFDEVICE`, with one typed request
+  context and one operation slot.
+- **Selected future buffer strategy:** separate request-parented two-byte
+  outbound and inbound `WDFMEMORY` objects. Outbound capacity is the existing
+  `CHATPAD_ACTIVATION_MAX_PAYLOAD_LENGTH`; inbound capacity is the exact
+  maximum expected by the six authoritative operations. No per-step allocation
+  or arbitrary buffer size is selected.
+- **Race/lifecycle design:** send intent and framework-call pins are published
+  before outside-lock send/cancel calls. Completion owns terminal retirement
+  after a successful send; immediate completion cannot make the slot reusable
+  until the initiating framework call returns. One lifecycle acquire maps to
+  one exact release obligation for the captured generation.
+- **Synchronization:** the existing future per-device `WDFSPINLOCK` decision
+  is preserved for short bookkeeping only. WDF calls, waits, delays, and
+  lengthy logging remain outside it.
+- **Production integration:** dormant `ChatpadPrepareActivationStep` remains
+  compiled into `ChatpadFilter` and uncalled by every runtime callback.
+- **Runtime state:** no WDF target, request, transfer memory, completion,
+  cancellation, queue, timer, work item, wait, submission, executable delay,
+  USB access, or hardware path exists.
+- **Verification basis:** previous Debug/Release build and offline test results
+  remain recorded in the integration checkpoint. This documentation-only task
+  did not rebuild or rerun source, driver, or kernel tests.
+- **Containment:** only tracked Markdown documentation is changed. Generated
+  outputs and evidence remain ignored.
 
 ## Unresolved blockers
 
-- WDF request ownership, target discovery, request creation/formatting,
-  submission, completion, cancellation, and executable delay scheduling are
-  not implemented or authorized.
+- The pure request-owner state model and race/accounting tests are not
+  implemented or authorized.
+- KMDF request context definitions, object creation, memory creation, target
+  discovery, formatting, submission, completion, cancellation, and executable
+  delay scheduling are not implemented or authorized.
+- The exact framework-approved D0-exit deferral/rundown mechanism remains to be
+  selected before completion/cancellation integration.
 - Default-control visibility, effective placement beneath `xusb22`, controller
-  preservation, activation effectiveness, Chatpad input, continuous
-  acquisition, and keyboard output remain unproven.
-- Signing, trust, staging, Windows acceptance, installation, loading, and
-  every hardware interaction remain incomplete and unauthorized.
+  preservation, activation effectiveness, Chatpad input, continuous input,
+  and keyboard output remain unproven.
+- Signing, trust, staging, Windows acceptance, installation, loading, and all
+  hardware interaction remain incomplete and unauthorized.
 - No usable production driver exists.

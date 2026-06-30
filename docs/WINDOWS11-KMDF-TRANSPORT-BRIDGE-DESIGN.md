@@ -87,8 +87,8 @@ A future per-device context should conceptually separate these fields:
 | --- | --- | --- |
 | Existing lifecycle core state | `WDFDEVICE` context | Resource and D0 generation phases, admission, rundown count. |
 | Existing transport-adapter state | `WDFDEVICE` context | Bounded activation operation tokens for the current D0 generation. |
-| Future KMDF request-owner table | `WDFDEVICE` context | Generation-bound records for owned activation requests. |
-| Future synchronization object | `WDFDEVICE` context | Serializes lifecycle, bridge, request table, scheduler, and diagnostics state. |
+| Future KMDF activation request owner | `WDFDEVICE` context | One reusable request slot with generation-bound operation values. |
+| Future synchronization object | `WDFDEVICE` context | Serializes lifecycle, bridge, request slot, scheduler, and diagnostics state. |
 | Future USB target reference | `WDFDEVICE` child object or context field | Holds an authorized lower target only after a later gate. |
 | Future delay scheduler | `WDFDEVICE` child object | Owns cancelable delay metadata interpretation if a timer/work item is selected. |
 | Diagnostics | `WDFDEVICE` context | Bounded neutral counters and event sequence IDs. |
@@ -99,11 +99,13 @@ device by collection order.
 
 Future object parenting should follow this model:
 
-- `WDFDEVICE`: bridge state, lock, transport adapter state, request-owner table,
+- `WDFDEVICE`: bridge state, lock, transport adapter state, request-owner slot,
   target reference, scheduler object, continuous-input owner, diagnostics.
-- Individual `WDFREQUEST`: one request-owner record or request context that
-  carries generation, portable operation token, activation step, operation type,
-  cancellation flag, and completion-once state.
+- Activation `WDFREQUEST`: one device-parented reusable request with a typed
+  context and separate request-parented two-byte outbound and inbound
+  `WDFMEMORY` objects. Operation values carry generation, portable token,
+  activation step, operation type, call pins, cancellation, and
+  completion-once state.
 - Timer or work item, if later selected: parented to `WDFDEVICE`; callbacks
   must carry or validate the originating generation before touching bridge
   state.
@@ -172,7 +174,7 @@ state.
 
 The existing lifecycle core is not internally thread-safe. The following fields
 require protection as one per-device unit: lifecycle state, transport adapter
-state, request-owner table, target reference, scheduler state, cancellation
+state, request-owner slot, target reference, scheduler state, cancellation
 flags, completion-once flags, continuous-input owner state, and diagnostics
 counters.
 
@@ -201,7 +203,8 @@ start path.
 
 Every future WDF request operation must first acquire a lifecycle operation for
 the current nonzero generation. Acquisition creates an abstract outstanding
-operation count, not a WDF request. If request allocation, formatting, or
+operation count; it does not create or transfer ownership of the preallocated
+request. If preparation, request reuse, memory preparation, formatting, or
 submission fails after acquisition, the same generation must be released exactly
 once.
 
@@ -211,25 +214,30 @@ acquire attempts reject without mutating current state.
 
 ## 11. WDF request ownership model
 
-A future request-owner record should conceptually contain:
+The exact future model is defined by
+[Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md).
+One device owns one reusable activation request slot. Its operation values
+contain:
 
 - D0 generation;
 - portable `ChatpadTransportOperationToken`;
 - activation step index;
 - operation type;
-- owned WDF request handle;
+- the device-owned reusable WDF request handle and typed request context;
+- separate request-parented two-byte outbound and inbound memory handles;
 - cancellation requested flag;
-- submitted flag;
+- submitted flag plus send/cancel call-return pins;
 - completion-once flag;
 - lifecycle operation acquired flag;
 - final neutral completion classification.
 
-The per-device KMDF transport owner creates the request after lifecycle
-admission succeeds. The request is parented so that the device owns lifetime,
-and the record is discoverable by completion through request context or a
-device-owned table. The future formatter owns translating inspected setup data
-into a WDF representation. The future submitter owns sending to the lower
-target only after an explicit authorization gate.
+The per-device KMDF transport owner creates the dormant request and its two
+memory children before publishing the slot as available. A later operation
+binds the already-created request to one lifecycle admission, generation,
+portable token, and step. The request context makes that binding discoverable
+by completion. The future formatter owns translating inspected setup data into
+a WDF representation. The future submitter owns sending to the lower target
+only after an explicit authorization gate.
 
 Only the per-device owner may request cancellation. Completion owns the request
 long enough to atomically mark completion-once, classify stale/duplicate/current
@@ -591,3 +599,30 @@ indexes, and failure clearing. Portable protocol and setup tests remain
 This checkpoint creates no target, request, memory object, queue, timer, work
 item, completion, cancellation, wait, delay, submission, I/O, or hardware
 path. DriverEntry and every device/PnP/power callback remain unchanged.
+
+## 31. Request-owner and transfer-buffer lifetime design checkpoint
+
+[Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md)
+now provides the binding detail for the bridge's first future asynchronous
+activation request. It selects one reusable `WDFREQUEST` per device, explicitly
+parented to `WDFDEVICE`, with a typed request context and separate
+request-parented two-byte outbound and inbound `WDFMEMORY` objects. The
+outbound capacity comes from `CHATPAD_ACTIVATION_MAX_PAYLOAD_LENGTH`, and the
+inbound capacity is the exact maximum expected by the six authoritative
+operations; no per-step or unbounded allocation is required.
+
+The state machine publishes send intent before `WdfRequestSend`, pins the slot
+until send and cancellation calls return, and gives completion terminal
+ownership after a successful send. Immediate completion, cancellation races,
+no-completion send failures, stale generations, duplicate observations, and
+exact-once lifecycle release have explicit transitions. The existing
+per-device `WDFSPINLOCK` decision remains limited to short bookkeeping; no WDF
+request, target, memory, send, cancel, wait, delay, or lengthy logging call may
+occur while it is held.
+
+This checkpoint is design-only. No request, memory object, target, formatting,
+submission, completion callback, cancellation call, executable delay, runtime
+driver path, or hardware access was added or authorized. Activation ownership
+remains separate from continuous input. The smallest future slice is a pure,
+WDF-independent request-owner state model and race/accounting tests; that slice
+requires separate authorization.
