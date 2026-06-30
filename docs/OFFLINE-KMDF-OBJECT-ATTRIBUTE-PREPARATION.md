@@ -61,3 +61,7 @@ now compiles the two independent dormant creation helpers using these exact
 attributes. The creation calls are never executed, and memory creation,
 rollback, production linkage, request execution, installation, and hardware
 access remain absent.
+
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
+now uses both request-parented memory attribute helpers with the exact reusable
+request. No memory context or cleanup/destroy callback was introduced.

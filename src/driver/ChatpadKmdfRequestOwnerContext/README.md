@@ -28,22 +28,30 @@ All four reject null output or parent arguments, leave execution level
 inherited, select no automatic synchronization, and register no cleanup or
 destroy callback.
 
-The isolated module also compiles two independent dormant creation helpers:
+The isolated module also compiles four independent dormant creation helpers:
 
 - `ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock` can create at most one
   device-parented bookkeeping `WDFSPINLOCK`;
 - `ChatpadKmdfRequestOwnerCreateReusableRequest` can create at most one
   device-parented targetless `WDFREQUEST`, retrieve its typed context, and
-  initialize that context to inactive authoritative defaults.
+  initialize that context to inactive authoritative defaults;
+- `ChatpadKmdfRequestOwnerCreateOutboundMemory` can create at most one
+  request-parented preallocated `WDFMEMORY` descriptor over the owner's exact
+  two-byte outbound array;
+- `ChatpadKmdfRequestOwnerCreateInboundMemory` can create at most one
+  request-parented preallocated `WDFMEMORY` descriptor over the owner's exact
+  two-byte inbound array, after outbound memory exists.
 
 `ChatpadKmdfRequestOwnerValidateCreationState` distinguishes the pre-object,
-lock-created, and lock/request-created partial states. Fully ready remains
-invalid. The creation helpers preserve exact framework `NTSTATUS`, reject
-repeated calls before a WDF creation call, publish only the corresponding
-created bit, and implement no deletion or rollback.
+lock-created, lock/request-created, outbound-memory-created, and
+both-memory-created partial states. Fully ready remains invalid. The creation
+helpers preserve exact framework `NTSTATUS`, reject repeated or out-of-order
+calls before a WDF creation call, publish only the corresponding created bit,
+and implement no deletion or rollback. Memory handles remain authoritative in
+the owner; the request context does not duplicate them.
 
-The two WDF creation calls are compiled into static libraries but are never
-executed by the compile-check. This module still does not create memory
-objects, publish owner-ready, format or send requests, register completion or
-cancel callbacks, link into `ChatpadFilter`, install/load a driver, package,
+The four WDF creation calls are compiled into static libraries but are never
+executed by the compile-check. This module still does not publish owner-ready,
+format or send requests, register completion or cancel callbacks, delete or
+roll back objects, link into `ChatpadFilter`, install/load a driver, package,
 sign, query devices, or access hardware.

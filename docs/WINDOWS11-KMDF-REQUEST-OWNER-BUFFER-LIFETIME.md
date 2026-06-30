@@ -682,3 +682,15 @@ active memory, zero lengths, and zero completion metadata.
 No memory object is created or compiled in this slice. The fixed arrays remain
 unreferenced ordinary owner storage, and the creation helpers are never
 executed by validation.
+
+## 26. KMDF dormant preallocated-memory creation checkpoint
+
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
+compiles exact request-parented descriptors over the separate owner-backed
+outbound and inbound arrays. The owner remains authoritative for both handles,
+the request context duplicates neither handle, and creation does not modify
+buffer contents.
+
+Validation compiles but never invokes either helper. No request references
+either descriptor at runtime, and rollback, ready publication, target use,
+formatting, submission, completion, and cancellation remain absent.

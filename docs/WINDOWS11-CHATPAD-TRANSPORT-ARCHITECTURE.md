@@ -808,3 +808,15 @@ lock/request-created states.
 The compile-check takes helper addresses but never invokes them. No framework
 object, memory descriptor, rollback, target, request operation, callback,
 production linkage, installation, or hardware interaction exists.
+
+## 37. KMDF dormant preallocated-memory creation checkpoint
+
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
+compiles one outbound and one inbound request-parented preallocated-memory
+creation call over the exact two-byte owner arrays. Handles are authoritative
+in the owner, and the typed request context stays inactive.
+
+No helper is invoked by `ChatpadFilter`; runtime behavior and the active device
+context remain unchanged. Rollback, owner-ready publication, target discovery,
+request operations, installation, and hardware interaction remain separate
+gates.

@@ -210,6 +210,7 @@ D0 rundown, USB visibility, controller preservation, activation, Chatpad
 input, signing, staging, installation, loading, lower-filter placement, or a
 usable driver.
 
-The next separately gated slice is request-parented outbound and inbound
-preallocated-memory creation. Rollback orchestration remains a later,
-independent gate.
+The next slice is now documented by
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md).
+It compiles independent outbound and inbound one-object helpers without
+execution. Rollback orchestration remains the next independent gate.

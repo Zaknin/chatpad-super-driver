@@ -694,3 +694,14 @@ request-context initialization and validates the two partial created states.
 
 The helpers remain unlinked and uninvoked by `ChatpadFilter`; no bridge target,
 memory, formatting, submission, callback, rollback, or hardware path exists.
+
+## 36. KMDF dormant preallocated-memory creation checkpoint
+
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
+compiles two independent request-parented descriptor-creation helpers over the
+bridge's fixed two-byte owner arrays. Partial validation distinguishes
+outbound-only and both-memory states while the pure owner remains
+non-admitting.
+
+The helpers remain unlinked and uninvoked. No bridge target, formatting,
+submission, callback, rollback, readiness, or hardware path exists.

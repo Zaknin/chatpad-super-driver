@@ -2908,3 +2908,93 @@
   production linkage, target discovery, request execution/completion/
   cancellation, D0 rundown, signing, installation, loading, and hardware
   validation remain separately gated.
+
+## 2026-06-30 13:47 +04:00 - Dormant KMDF preallocated-memory creation checkpoint
+
+- **Objective:** Compile two isolated, independent request-parented
+  preallocated-memory creation helpers over the activation owner's exact
+  outbound/inbound two-byte arrays without executing a framework call,
+  implementing rollback, publishing owner-ready, or changing `ChatpadFilter`.
+- **Starting gate:** Verified branch
+  `feature/offline-kmdf-lock-request-creation`, HEAD
+  `9bd3a8e0ce6a94a5d6c7f6d45d2ca651d50ea497`, parent
+  `8b5a5b8b376568c063d521e76693a4067cc579a2`, matching upstream
+  `origin/feature/offline-kmdf-lock-request-creation`, and clean worktree/index.
+  Created `feature/offline-kmdf-memory-creation` only after every gate passed.
+- **Architecture/WDK inspection:** Confirmed KMDF 1.15 declares
+  `WdfMemoryCreatePreallocated` with optional attributes, caller-owned nonzero
+  buffer/size, `WDFMEMORY` output, and maximum `DISPATCH_LEVEL`. Existing
+  request-parented attribute helpers and device-owner arrays satisfy the
+  contract. Both context projects remain static libraries and `ChatpadFilter`
+  has no context-module link/reference.
+- **Implementation:** Added
+  `ChatpadKmdfRequestOwnerCreateOutboundMemory` and
+  `ChatpadKmdfRequestOwnerCreateInboundMemory`. Each validates the exact
+  predecessor state, retrieves the existing inactive request context, prepares
+  attributes with `owner->Request`, calls
+  `WdfMemoryCreatePreallocated` once over its exact array and `sizeof` value,
+  publishes the handle, ORs only its own created bit, and validates the new
+  partial state. Outbound must precede inbound.
+- **Authority and failure behavior:** Owner memory fields remain authoritative;
+  no duplicate context handles were added. Local rejection sets
+  `STATUS_INVALID_DEVICE_STATE`; framework failures preserve exact `NTSTATUS`
+  and publish no new handle/bit. Inbound failure preserves outbound state.
+  Neither helper changes array/model/context contents, calls another creation
+  helper, retries, deletes, dereferences, rolls back, or sets owner-ready.
+- **Validation model:** `ChatpadKmdfRequestOwnerValidateCreationState` now
+  accepts exact model-only, lock, lock/request, outbound-memory, and
+  both-memory states while requiring inactive context, zero dormant storage,
+  non-admitting pure model, and no lifecycle obligation. Fully ready remains
+  invalid.
+- **Compile-check/guard:** Compile-check takes typed addresses of both new
+  helpers without invocation. The semantic guard passes with exact counts
+  `WdfSpinLockCreate=1`, `WdfRequestCreate=1`, and
+  `WdfMemoryCreatePreallocated=2`, exact request parentage/array sizes, helper
+  independence, and no deletion, rollback, request execution, or driver
+  linkage.
+- **Failed proving command:** The first Debug compile at
+  `20260630T094052Z` failed with warning-as-error `C4127` because direct
+  fixed-capacity comparisons were constant expressions. The checks were moved
+  into a parameterized ordinary capacity validator, preserving typed capacity
+  rejection. The same Debug command and Release command then passed.
+- **Final context evidence:** Debug log
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Debug-20260630T094922Z.log`;
+  Release log
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Release-20260630T094924Z.log`.
+  Final full-solution context/compile-check library hashes were Debug
+  `F8496928976EDCFB0D1E7E3363BCEA60332337B766E0392BE128F55ECBB267C0` /
+  `CBD2256E7C2F4194CD1ED7172F42D48C7798F1674DFADCD21D2A941DFDD78F53`
+  and Release
+  `3D2BB19C0A3D832BE2A602D53D6CD5EFFF7A3D908857E8959649EFC86C7E83B6` /
+  `9C11FA5E3F3B00E106681C49B30FA0E1DE46F9DF7AED2C4C686FE24C6B911319`.
+- **Regression results:** Serial Debug/Release wrappers all exited `0`:
+  request-owner `5002/5002`, protocol `610/610`, transport `186/186`,
+  lifecycle `109/109`, control setup `141/141`, protocol kernel compatibility,
+  WDF control setup, and `Build-Driver.ps1`. Logs span
+  `20260630T094201Z` through `20260630T094220Z` beneath `artifacts\logs`.
+- **Full solution:** Debug/Release exited `0` with zero warnings/errors. Logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-preallocated-memory-final-Debug-20260630T094933Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-preallocated-memory-final-Release-20260630T094935Z.log`.
+- **Driver evidence:** Debug
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  15,872 bytes, SHA-256
+  `AC5EB131736F97DE573F297EB450C9D449665E13A6BF3A622401FD433C521DF3`,
+  `NotSigned`; Release
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  12,288 bytes, SHA-256
+  `871B616DD761B7C678391249A54DC908A153651B91A9011ABA47E70D37B45613`,
+  `NotSigned`. Import inspection found zero memory-creation/helper matches.
+- **Safety/containment:** Memory-creation calls were compiled but never
+  executed; no WDF memory object was created. No rollback, target, request
+  operation, production linkage, InfVerif/Inf2Cat executable invocation,
+  signing, package/driver staging, installation, loading, registry/service/
+  Driver Store mutation, device enumeration, controller/Chatpad interaction,
+  elevation, or network operation occurred. MSBuild only reported Inf2Cat and
+  DrvCat skipped because no inputs existed. Generated outputs remain ignored
+  beneath `artifacts\`.
+- **Commit/push:** Commit exactly `driver: define dormant memory creation` and
+  push only `origin/feature/offline-kmdf-memory-creation`; final hash is
+  reported after commit rather than embedded here.
+- **Next gate:** Independently authorized reverse-order rollback orchestration
+  for partial creation failure. It is not implemented or authorized here.

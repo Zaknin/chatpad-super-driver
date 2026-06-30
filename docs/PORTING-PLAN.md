@@ -150,6 +150,13 @@ Completion or authorization of one stage does not authorize the next stage.
 Each stage requires its own reviewed evidence, explicit authorization, stop
 conditions, and recovery boundary.
 
+The offline request-owner preparation path now includes compile-only,
+uninvoked helpers for device-parented lock/request creation and
+request-parented outbound/inbound preallocated-memory creation. The next
+independent engineering gate is partial-creation rollback orchestration. This
+does not authorize production linkage, request execution, deployment, or
+hardware validation.
+
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`
 binding without changing class-wide filter state or disabling Secure Boot or

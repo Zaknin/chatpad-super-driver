@@ -138,3 +138,8 @@ object, does not publish owner-ready, and does not link into `ChatpadFilter`.
 now compiles isolated lock/request creation against that baseline. Validation
 never executes either creation helper, so no framework object exists because
 of the checkpoint.
+
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
+now compiles request-parented descriptors over the unchanged fixed arrays.
+Creation does not clear or populate the arrays, owner-ready remains unset, and
+validation executes no creation helper.

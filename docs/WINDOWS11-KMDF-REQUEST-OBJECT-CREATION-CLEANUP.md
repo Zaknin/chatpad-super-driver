@@ -635,3 +635,15 @@ Stop conditions requiring another design review:
   input.
 - Any implementation would need hardware access, signing, staging,
   installation, or request submission before the corresponding design gate.
+
+## 23. Dormant preallocated-memory creation checkpoint
+
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
+implements only the independent compile-time outbound and inbound creation
+steps from this design. Both descriptors are request-parented and describe the
+exact owner arrays. Outbound creation precedes inbound creation; owner-ready
+remains unset.
+
+The checkpoint deliberately stops before this design's rollback strategy.
+Neither helper deletes another object, and no orchestrator, callback, target,
+request operation, production linkage, or live framework graph exists.

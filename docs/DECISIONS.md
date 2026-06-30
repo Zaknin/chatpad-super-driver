@@ -4,6 +4,36 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Keep preallocated-memory creation independent and owner-authoritative
+
+**Decision:** The isolated module compiles two independent
+`WdfMemoryCreatePreallocated` helpers over the exact two-byte owner arrays.
+Each creates at most one request-parented `WDFMEMORY`; outbound creation must
+precede inbound creation. The owner's memory fields are authoritative, and the
+request context does not duplicate them. Neither helper performs rollback,
+deletion, readiness publication, or another creation step.
+
+**Rationale:** One-object helpers preserve the failure boundary: outbound
+failure leaves no memory state, while inbound failure leaves a valid outbound
+partial state for a future orchestrator. Request parentage couples descriptor
+lifetime to the reusable request, while device-owner storage keeps the arrays
+alive longer than the descriptors.
+
+**Alternatives rejected:**
+
+* One helper creating both memory objects - would require rollback on the
+  second failure.
+* Dynamic memory or device-parented memory - contradicts the selected fixed
+  storage and request-tree lifetime.
+* Duplicate context handles - adds mutable synchronization without a consumer.
+* Publish `OWNER_READY` - readiness and rollback remain separately gated.
+
+**Consequences:** Partial validation accepts outbound-only and both-memory
+states while the pure model remains unavailable/non-admitting. A future
+authorized orchestrator must own reverse-order rollback.
+
+---
+
 ## 2026-06-30 - Keep dormant lock and request creation independent
 
 **Decision:** The isolated KMDF request-owner module compiles two independent

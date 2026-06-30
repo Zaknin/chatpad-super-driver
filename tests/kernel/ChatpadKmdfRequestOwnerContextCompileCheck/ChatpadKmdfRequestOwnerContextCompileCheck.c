@@ -48,6 +48,10 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_DEVICE_PARENT !=
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK == 0);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_SPINLOCK_CREATE_FAILED !=
     CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_REQUEST_CREATE_FAILED);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_MEMORY_CREATE_PREALLOCATED_FAILED !=
+    CHATPAD_KMDF_REQUEST_OWNER_CREATION_WDF_REQUEST_CREATE_FAILED);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_OUTBOUND_MEMORY_CREATED !=
+    CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_ALL_MEMORY_CREATED);
 
 typedef ChatpadKmdfRequestOwnerCreationResult
 (*ChatpadKmdfRequestOwnerSpinLockCreationSignature)(
@@ -62,6 +66,11 @@ typedef ChatpadKmdfRequestOwnerCreationResult
     NTSTATUS *);
 
 typedef ChatpadKmdfRequestOwnerCreationResult
+(*ChatpadKmdfRequestOwnerMemoryCreationSignature)(
+    ChatpadKmdfActivationRequestOwner *,
+    NTSTATUS *);
+
+typedef ChatpadKmdfRequestOwnerCreationResult
 (*ChatpadKmdfRequestOwnerCreationValidationSignature)(
     const ChatpadKmdfActivationRequestOwner *,
     const ChatpadKmdfActivationRequestContext *,
@@ -71,14 +80,20 @@ void ChatpadKmdfRequestOwnerContextCompileCheckCreationSignatures(void)
 {
     ChatpadKmdfRequestOwnerSpinLockCreationSignature spinLockCreation;
     ChatpadKmdfRequestOwnerRequestCreationSignature requestCreation;
+    ChatpadKmdfRequestOwnerMemoryCreationSignature outboundMemoryCreation;
+    ChatpadKmdfRequestOwnerMemoryCreationSignature inboundMemoryCreation;
     ChatpadKmdfRequestOwnerCreationValidationSignature creationValidation;
 
     spinLockCreation = ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock;
     requestCreation = ChatpadKmdfRequestOwnerCreateReusableRequest;
+    outboundMemoryCreation = ChatpadKmdfRequestOwnerCreateOutboundMemory;
+    inboundMemoryCreation = ChatpadKmdfRequestOwnerCreateInboundMemory;
     creationValidation = ChatpadKmdfRequestOwnerValidateCreationState;
 
     UNREFERENCED_PARAMETER(spinLockCreation);
     UNREFERENCED_PARAMETER(requestCreation);
+    UNREFERENCED_PARAMETER(outboundMemoryCreation);
+    UNREFERENCED_PARAMETER(inboundMemoryCreation);
     UNREFERENCED_PARAMETER(creationValidation);
 }
 

@@ -297,3 +297,12 @@ lock/request-created states; fully ready remains invalid.
 The static-library compile-check does not call either helper. No WDF object,
 memory descriptor, rollback path, owner-ready publication, production linkage,
 target, request execution, installation, or hardware action exists.
+
+## Follow-on dormant preallocated-memory creation
+
+[Offline KMDF Preallocated-Memory Creation Checkpoint](OFFLINE-KMDF-PREALLOCATED-MEMORY-CREATION.md)
+compiles independent outbound and inbound request-parented creation over the
+exact two-byte owner arrays. The owner remains authoritative for both handles;
+the typed request context gains no duplicate fields and stays inactive.
+Validation accepts outbound-only and both-memory-created partial states without
+publishing owner-ready or executing a framework call.
