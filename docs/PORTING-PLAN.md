@@ -102,6 +102,14 @@ Source references:
   helpers into one all-or-nothing helper and publishes structural
   `OWNER_READY` only after complete validation. The helper remains unlinked
   from `ChatpadFilter` and unexecuted.
+- The documentation-only production-integration design checkpoint is complete
+  in `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`. It selects native
+  static-library project linkage as the first production slice, one embedded
+  owner in the future device context, ordinary storage initialization after
+  current context scalar setup, dormant orchestration at the same
+  `EvtDeviceAdd` point before lifecycle initialization, framework cleanup for
+  later post-ready `EvtDeviceAdd` failure, JSON evidence manifests, and
+  project-linkage-only dormancy as the next implementation gate.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.
@@ -153,10 +161,11 @@ conditions, and recovery boundary.
 The offline request-owner preparation path now includes compile-only,
 uninvoked helpers for device-parented lock/request creation, request-parented
 outbound/inbound preallocated-memory creation, request-first/spinlock-second
-rollback, and all-or-nothing structural-ready orchestration. The next
-independent gate is a read-only audit of that orchestration checkpoint. This
-does not authorize production linkage, request execution, deployment, or
-hardware validation.
+rollback, all-or-nothing structural-ready orchestration, and a
+documentation-only production-integration design. The next independent gate is
+project-linkage-only dormancy for the existing static-library context module.
+This does not authorize owner embedding, helper invocation, WDF object
+creation, request execution, deployment, or hardware validation.
 
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`

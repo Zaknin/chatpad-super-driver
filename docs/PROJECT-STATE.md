@@ -1,44 +1,40 @@
 # Project State
 
-*Last updated: 2026-06-30 (dormant creation orchestration checkpoint)*
+*Last updated: 2026-06-30 (production integration design checkpoint)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-creation-orchestration`.
-- **Expected checkpoint commit:** `driver: compose dormant object creation`,
-  created from `9d5301e3c18deffbf4f90b5d3c2f058b00fe5b46`.
-- **Authoritative orchestration checkpoint:**
-  [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md).
-- **Implementation:** The isolated static library compiles four independent
-  creation helpers, a non-mutating rollback-state classifier, one dormant
-  reverse-order partial-creation rollback helper, and one dormant
-  all-or-nothing orchestration helper.
-- **Orchestration:** A clean `MODEL_READY` owner is validated, then helpers are
-  composed in order: spinlock, targetless request, outbound preallocated
-  memory, inbound preallocated memory. `OWNER_READY` is published only after
-  the complete pre-ready graph validates, and final ready validation must pass.
-- **Rollback/idempotence:** Any partial object publication on orchestration
-  failure uses the existing rollback helper exactly once. Valid ready,
-  faulted, or partial owners are classified before helper invocation; partial
-  state is not resumed.
-- **Storage/model:** Fixed arrays and pure-model state are preserved. No
-  context access occurs after request deletion begins.
-- **Execution:** Static compile checks take helper addresses only. Exact direct
-  WDF call counts remain one spinlock create, one request create, two
-  preallocated-memory creates, and two object deletes; none executes.
-- **Dormancy:** `ChatpadFilter`, active callbacks, live device context, INF,
-  package/signing, installation, and runtime behavior remain unchanged and do
-  not link the isolated module.
-- **Verification:** Required Debug/Release builds, regressions, semantic guards,
-  symbol/import inspection, repository safety, containment, and whitespace
-  checks pass. Generated outputs remain ignored beneath `artifacts/`.
+- **Branch:** `feature/offline-kmdf-production-integration-design`.
+- **Expected checkpoint commit:** `docs: define kmdf production integration`,
+  created from `39b2356c9193ea33d10d5c689e565a88a2e586c3`.
+- **Authoritative production integration design:**
+  [Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md).
+- **Implementation:** No production integration has begun. The isolated
+  dormant request-owner implementation is complete and audited through
+  documentation here, but remains unlinked from `ChatpadFilter`.
+- **Selected integration strategy:** Use the existing
+  `ChatpadKmdfRequestOwnerContext` static-library project as the production
+  dependency, add the owner to the `WDFDEVICE` context only in a later slice,
+  initialize ordinary owner storage after current context scalar setup, and
+  invoke dormant orchestration at that same `EvtDeviceAdd` point only in a
+  later separately authorized slice.
+- **Execution:** No helper has executed. No lock, request, memory object, or
+  rollback deletion has been created or deleted at runtime.
+- **Evidence contract:** Future implementation checkpoints should retain
+  ignored logs under `artifacts\logs` and bind them to commits through tracked
+  JSON manifests under `docs/evidence/`.
+- **Safety:** Target discovery, request formatting/submission, completion,
+  cancellation, D0 rundown, INF/package/signing, staging, installation,
+  loading, Windows mutation, device enumeration, and controller/Chatpad
+  interaction remain unauthorized.
 
 ## Unresolved blockers
 
-- No orchestration, creation, or rollback helper has executed; no live WDF graph
-  exists.
-- Production linkage, normal teardown, active-operation rundown, target and
-  request operations, sequencing, and D0 coordination remain separate gates.
-- Signing, staging, installation, loading, USB/controller validation, and
-  Chatpad input remain unproven and unauthorized.
+- Production project linkage has not begun.
+- Device-context owner embedding has not begun.
+- Ordinary owner initialization is not connected to production code.
+- Dormant orchestration is not connected to production code.
+- Normal teardown, active-operation rundown, target and request operations,
+  sequencing, D0 coordination, signing, staging, installation, loading,
+  USB/controller validation, and Chatpad input remain separate gates.
 - No usable production driver exists.

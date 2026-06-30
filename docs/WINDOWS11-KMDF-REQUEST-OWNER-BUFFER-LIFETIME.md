@@ -5,6 +5,13 @@ now compiles a dormant all-or-nothing owner graph helper that preserves this
 document's request-parented memory and fixed two-byte storage rules. It does
 not format, submit, complete, cancel, or reuse a request.
 
+Production integration update:
+[Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md)
+now defines how the dormant owner can later enter `ChatpadFilter` without
+changing request behavior. It preserves this document's no-target,
+unformatted, unsubmitted, non-admitting owner boundary and keeps active
+operation rundown separate from dormant object creation.
+
 This document is the authoritative ownership and lifetime design for the first
 future asynchronous Chatpad activation control request. It refines the broader
 [KMDF transport bridge design](WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md)

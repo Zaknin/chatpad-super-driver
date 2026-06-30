@@ -840,3 +840,15 @@ This checkpoint does not change the transport architecture's runtime boundary:
 no production driver linkage, target discovery, request formatting, request
 submission, completion, cancellation, signing, installation, loading, USB
 query, controller interaction, or Chatpad input path is authorized or proven.
+
+## 40. KMDF production integration design checkpoint
+
+[Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md)
+documents the production-only path for introducing the dormant request-owner
+module into `ChatpadFilter`. It selects static-library linkage first, then
+owner embedding, then ordinary initialization, then dormant orchestration, with
+fresh audits between behavior-changing slices.
+
+This architecture remains transport-neutral. The design does not authorize
+target discovery, USB requests, controller or Chatpad interaction, signing,
+installation, loading, or hardware validation.

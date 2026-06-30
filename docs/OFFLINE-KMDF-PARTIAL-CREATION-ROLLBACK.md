@@ -175,3 +175,16 @@ staging, installation, loading, lower-filter placement, or a usable driver.
 The next independently gated slice is full dormant creation orchestration with
 rollback and final non-runtime `OWNER_READY` publication. This checkpoint does
 not authorize it.
+
+## Production integration design follow-up
+
+[Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md)
+now binds this rollback helper as pre-ready initialization-failure cleanup
+only. The production design explicitly forbids using this helper after
+structural `OWNER_READY` has been published; a later `EvtDeviceAdd` failure
+after ready publication relies on framework cleanup of the failed device
+instance and parented children, subject to implementation audit.
+
+The helper remains unexecuted and unlinked from `ChatpadFilter`. Normal
+removal, active-operation rundown, target/request operations, signing,
+installation, loading, and hardware access remain separate gates.

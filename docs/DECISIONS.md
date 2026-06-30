@@ -4,6 +4,50 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Gate production request-owner integration through linkage-first slices
+
+**Decision:** Production integration of the dormant KMDF activation
+request-owner graph will proceed through separately authorized slices:
+project-linkage-only dormancy first, device-context embedding second, ordinary
+owner-storage initialization third, and dormant orchestration invocation only
+after independent audit. The production linkage mechanism is a native
+`ChatpadFilter` project reference to the existing
+`ChatpadKmdfRequestOwnerContext` static-library project, with required native
+dependency resolution for the pure request-owner model. The future owner field
+is one embedded `ChatpadKmdfActivationRequestOwner ActivationRequestOwner` in
+the per-device context. Ordinary initialization and later orchestration both
+belong in `ChatpadEvtDeviceAdd` after current context scalar setup and before
+`ChatpadFilterLifecycleInitialize`.
+
+**Rationale:** The isolated dormant implementation is complete, but production
+linkage, storage placement, ordinary initialization, and framework object
+creation have distinct binary and runtime effects. Slicing them preserves proof
+that unused static-library linkage contributes no behavior, embedding ordinary
+storage contributes no WDF object-management imports, ordinary initialization
+creates no WDF objects, and orchestration is the first slice that creates the
+dormant graph. Placing integration before lifecycle initialization keeps the
+owner one-per-device and allows `EvtDeviceAdd` failure propagation before any
+current callback can observe the owner.
+
+**Alternatives rejected:** Compiling isolated sources directly into
+`ChatpadFilter` would duplicate project ownership and bypass the existing
+static-library boundary; adding `/INCLUDE` for request-owner helpers would hide
+whether production calls naturally retain symbols; heap-allocating or globally
+storing the owner would weaken per-device lifetime; invoking orchestration in
+prepare-hardware, D0 entry, or lazy activation would mix device-lifetime
+objects with hardware or power-cycle state; using partial rollback after
+structural ready state would violate the rollback helper's pre-ready contract.
+
+**Consequences:** The next implementation gate is project-linkage-only
+dormancy, not owner embedding or helper invocation. Later ready-state
+`EvtDeviceAdd` failures rely on framework cleanup of the failed device
+instance and parented children, subject to an implementation audit proving the
+framework cleanup contract. Future evidence manifests should be tracked as
+JSON under `docs/evidence/` while full logs remain ignored under
+`artifacts\logs`.
+
+---
+
 ## 2026-06-30 - Compose dormant object creation as one all-or-nothing helper
 
 **Decision:** The isolated KMDF request-owner module exposes one dormant

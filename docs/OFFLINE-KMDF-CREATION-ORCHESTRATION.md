@@ -250,9 +250,23 @@ No INF, CAT, certificate, package, staging, installation, driver load, Driver
 Store mutation, registry/service mutation, device query, USB/controller/Chatpad
 interaction, elevation, or hardware access occurred during this checkpoint.
 
+## Production integration design follow-up
+
+[Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md)
+now defines how this dormant helper may later be introduced into
+`ChatpadFilter` through separately gated production slices. It selects native
+static-library project linkage first, then device-context embedding, then
+ordinary owner-storage initialization, and only later dormant orchestration
+invocation in `EvtDeviceAdd`.
+
+This checkpoint remains unchanged: the helper is still unlinked from
+`ChatpadFilter`, uninvoked, and not represented by any live WDF object graph.
+Target discovery, request formatting, submission, completion, cancellation,
+signing, staging, installation, loading, and hardware testing remain
+unauthorized.
+
 ## Next gate
 
-The next task is an independent read-only audit of this orchestration
-checkpoint. Production linkage, `EvtDeviceAdd` integration, target discovery,
-request formatting, submission, completion, cancellation, signing, staging,
-installation, loading, and hardware testing remain unauthorized.
+The next task is project-linkage-only dormancy for the existing
+`ChatpadKmdfRequestOwnerContext` static-library project. It must not embed the
+owner, invoke helpers, create WDF objects, or change runtime behavior.

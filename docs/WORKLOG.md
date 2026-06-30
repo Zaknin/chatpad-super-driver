@@ -3187,3 +3187,96 @@
   Production linkage, `EvtDeviceAdd` integration, target discovery, request
   formatting, request submission, signing, installation, loading, and hardware
   testing remain unauthorized.
+
+## 2026-06-30 18:43:04 +04:00 - Documentation-only KMDF production integration design checkpoint
+
+- **Task title/objective:** Create the documentation-only production-integration
+  design for the dormant KMDF activation request-owner graph. The objective was
+  to select the future production linkage, header boundary, device-context owner
+  placement, ordinary initialization location, dormant orchestration call
+  sequence, cleanup semantics, concurrency/IRQL boundary, evidence contract, and
+  next implementation slices without changing driver behavior.
+- **Starting branch/commit:** Began on
+  `feature/offline-kmdf-creation-orchestration` at
+  `39b2356c9193ea33d10d5c689e565a88a2e586c3`, parent
+  `9d5301e3c18deffbf4f90b5d3c2f058b00fe5b46`, subject
+  `driver: compose dormant object creation`; upstream was
+  `origin/feature/offline-kmdf-creation-orchestration` at the same commit, with
+  clean worktree, clean index, and no unstaged or staged diff. Created and
+  worked on `feature/offline-kmdf-production-integration-design`.
+- **Investigation summary:** Re-read `AGENTS.md`, current project state,
+  durable decisions, next task, and the latest worklog. Verified that
+  `ChatpadEvtDeviceAdd` currently prints diagnostics, marks the FDO as a filter,
+  assigns PnP/power callbacks, creates the WDF device, initializes only
+  ordinary context fields and lifecycle state, and returns the lifecycle result.
+  Verified that the PnP/power callbacks only retrieve the existing device
+  context and update lifecycle state. Confirmed `ChatpadFilter.vcxproj` still
+  has no production reference to `ChatpadKmdfRequestOwnerContext`, while the
+  dormant static-library project and compile-check projects exist separately.
+  Inspected installed KMDF headers for the relevant IRQL contracts and
+  `WDF_OBJECT_ATTRIBUTES` parent/context semantics.
+- **Files created:** `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+  `docs/NEXT-TASK.md`, `docs/WORKLOG.md`, `docs/PORTING-PLAN.md`,
+  `docs/OFFLINE-KMDF-CREATION-ORCHESTRATION.md`,
+  `docs/OFFLINE-KMDF-PARTIAL-CREATION-ROLLBACK.md`,
+  `docs/WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md`,
+  `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`,
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`, and
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`.
+- **Implementation details:** Added a 28-section production-integration design.
+  The selected path is static-library project linkage first, then a later
+  `driver.h` include and embedded per-device
+  `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`, then ordinary
+  storage initialization immediately after existing device-context scalar
+  initialization and before lifecycle initialization, then dormant orchestration
+  immediately after ordinary owner validation and before lifecycle
+  initialization. The design preserves exact WDF failure status where available,
+  maps local invariant failures to `STATUS_INVALID_DEVICE_STATE`, keeps
+  rollback limited to pre-ready partial publication, relies on framework
+  device-parent cleanup for later failed `EvtDeviceAdd` returns after structural
+  readiness, and requires a future proof checkpoint before implementing that
+  behavior. It records that sequential publication is sufficient only while no
+  observer exists, and that D0/target/operation/completion/cancel/cleanup
+  observers require stronger synchronization in later slices.
+- **Commands and validation run:** Preflight commands were
+  `git branch --show-current`, `git rev-parse HEAD`,
+  `git log -1 --format="%H%n%P%n%s"`, `git status --short --untracked-files=all`,
+  `git diff --exit-code`, `git diff --cached --exit-code`,
+  `git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}'`, and
+  `git rev-parse '@{upstream}'`; all matched the required start state. Ran
+  read-only source/project/header inspection with PowerShell `Get-Content`,
+  `Select-String`, and Git diff commands. Ran `git diff --stat`,
+  `git diff --name-only`, section-count validation for the new design, and
+  `git diff --check`. Inspected `tools\Test-RepositorySafety.ps1` before
+  execution, then ran `.\tools\Test-RepositorySafety.ps1`.
+- **Validation results:** `git diff --check` exited `0`.
+  `.\tools\Test-RepositorySafety.ps1` exited `0` with `REPOSITORY SAFETY: PASS`.
+  The new production-integration design contains exactly 28 numbered sections.
+  Markdown link validation initially failed before inspecting files because the
+  inline PowerShell validation command used `$file:` inside an interpolated
+  string; the command was corrected to `${file}:...` and rerun. Corrected
+  Markdown link validation exited `0` with `MARKDOWN LINKS: PASS` across 11
+  changed Markdown files. No builds, compile tests, driver tests, InfVerif,
+  Inf2Cat, signing, packaging, staging, installation, driver loading, or
+  hardware validation were run.
+- **Generated artifacts:** None.
+- **Commit/push:** Commit exactly `docs: define kmdf production integration`
+  and push only `origin/feature/offline-kmdf-production-integration-design`;
+  final hash is reported after commit.
+- **Safety:** Changed only tracked or new Markdown documentation. Did not modify
+  source, headers, project files, solution files, scripts, tests, INF files, or
+  files under `legacy/`. Did not execute or invoke the dormant creation helper,
+  did not create or delete any WDF object, did not install, load, sign, package,
+  stage, or deploy a driver, did not mutate Windows/device/hardware state, and
+  did not use network access before the final authorized Git push.
+- **Remaining risks/limitations:** This is design-only. Production linkage,
+  owner embedding, ordinary owner initialization, dormant orchestration
+  invocation, target discovery, request formatting, request submission,
+  completion, cancellation, D0/removal rundown, signing, packaging,
+  installation, loading, and hardware validation remain future gated tasks.
+- **Next gate:** Project-linkage-only dormancy: add only the production project
+  dependency needed for `ChatpadFilter` to link the existing dormant
+  `ChatpadKmdfRequestOwnerContext` static library, with no include use, no
+  device-context field, no helper invocation, no source behavior change, and a
+  fresh audit before any behavior-changing slice.

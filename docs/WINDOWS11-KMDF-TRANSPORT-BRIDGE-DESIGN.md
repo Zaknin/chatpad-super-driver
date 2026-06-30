@@ -726,3 +726,16 @@ helper.
 The orchestrator remains unlinked from and uninvoked by `ChatpadFilter`. No
 bridge target, request formatting, submission, completion, cancellation,
 runtime callback, production linkage, installation, or hardware path exists.
+
+## 39. KMDF production integration design checkpoint
+
+[Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md)
+selects the bridge's production introduction path without implementing it. The
+first slice is project-linkage-only dormancy for the existing
+`ChatpadKmdfRequestOwnerContext` static library. Later slices separately gate
+device-context owner embedding, ordinary storage initialization, and dormant
+orchestration invocation before any target discovery or request operation.
+
+The design preserves the bridge boundaries in this document: no target,
+formatting, submission, completion, cancellation, D0 rundown, installation, or
+hardware action is authorized by production linkage alone.

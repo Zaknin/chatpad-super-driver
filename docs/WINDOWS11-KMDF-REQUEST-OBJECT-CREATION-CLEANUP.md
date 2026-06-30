@@ -10,6 +10,13 @@ now compiles the all-or-nothing creation composition described here, but it
 remains unlinked from `ChatpadFilter` and unexecuted. Production linkage and
 `EvtDeviceAdd` integration are still not authorized.
 
+Production integration follow-up:
+[Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md)
+now defines the separately gated path from this dormant object graph into
+`ChatpadFilter`. It keeps the object graph and pre-ready rollback decisions
+from this document, selects static-library project linkage as the first
+production slice, and makes project-linkage-only dormancy the next gate.
+
 ## 1. Purpose and non-scope
 
 This design covers the future dormant object-creation and cleanup rules for:

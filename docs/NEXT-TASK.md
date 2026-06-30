@@ -2,60 +2,66 @@
 
 ## Current state
 
-- Current branch: `feature/offline-kmdf-creation-orchestration`.
-- Expected checkpoint: pushed `driver: compose dormant object creation` commit
-  created from `9d5301e3c18deffbf4f90b5d3c2f058b00fe5b46`.
-- The isolated context module compiles ordinary storage initialization,
-  attribute preparation, four one-object creation helpers, rollback
-  classification, partial-creation rollback, and dormant all-or-nothing
-  creation orchestration.
-- The orchestrator validates a clean `MODEL_READY` baseline, calls helpers in
-  spinlock/request/outbound-memory/inbound-memory order, validates partial
-  states, publishes `OWNER_READY` only after full pre-ready validation, and
-  rolls back exactly once after object-published failure.
-- No orchestration, creation, or rollback helper has executed. No production
-  driver code references or links the isolated module.
+- Current branch: `feature/offline-kmdf-production-integration-design`.
+- Expected checkpoint: pushed `docs: define kmdf production integration`
+  commit created from `39b2356c9193ea33d10d5c689e565a88a2e586c3`.
+- The authoritative production-integration design is
+  [Windows 11 KMDF Production Integration Design](WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md).
+- The isolated dormant implementation is complete, but production linkage has
+  not begun.
+- No request-owner helper has executed. No production source embeds the owner,
+  initializes it, invokes orchestration, creates a WDF request-owner object, or
+  discovers a target.
 
 ## Recommended next objective
 
-Perform an independent read-only audit of the completed dormant KMDF creation
-orchestration checkpoint.
+Implement only the first production integration slice: project-linkage-only
+dormancy for `ChatpadKmdfRequestOwnerContext`.
 
-Do not implement production linkage in the audit task.
+Do not embed the owner, initialize storage, invoke helpers, create WDF objects,
+change callbacks, run the driver, or touch hardware.
+
+## Required branch and starting commit
+
+Start from the pushed `feature/offline-kmdf-production-integration-design`
+checkpoint. Verify the exact HEAD, parent, subject, upstream, and clean
+worktree/index before editing.
 
 ## Preconditions
 
-1. Start from the exact pushed orchestration checkpoint with matching upstream
-   and clean worktree/index.
-2. Re-read `AGENTS.md`, current continuity docs, and
-   `docs/OFFLINE-KMDF-CREATION-ORCHESTRATION.md`.
-3. Verify that the final commit parent is
-   `9d5301e3c18deffbf4f90b5d3c2f058b00fe5b46`.
-4. Verify `ChatpadFilter` still has no isolated context link, include, helper
-   call, `/INCLUDE`, or new object-management import.
+1. Re-read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+   `docs/NEXT-TASK.md`, the latest `docs/WORKLOG.md` entry, and
+   `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`.
+2. Inspect `ChatpadFilter.vcxproj`,
+   `ChatpadKmdfRequestOwnerContext.vcxproj`, `ChatpadWin11.sln`, and current
+   linker/include settings.
+3. Confirm current production code still has no owner field, no context header
+   include, no initializer call, no orchestration call, and no request-owner
+   WDF object-management imports.
 
 ## Safety restrictions
 
-- Read-only audit only: do not edit, rebuild, commit, push, package, sign,
-  install, load, stage, query devices, or mutate Windows.
-- Do not execute orchestration, creation, or rollback helpers.
-- Do not run InfVerif or Inf2Cat.
-- Keep any observation of existing artifacts non-mutating.
+- Modify only project/solution files and directly relevant Markdown if the
+  task explicitly authorizes the linkage slice.
+- Do not modify `.c` or `.h` source for linkage-only dormancy.
+- Do not invoke owner initialization, orchestration, rollback, target
+  discovery, request formatting, request submission, completion, cancellation,
+  signing, packaging, staging, installation, loading, device enumeration, or
+  hardware interaction.
+- Do not run source, driver, kernel, InfVerif, Inf2Cat, package, installation,
+  or hardware tests unless the next task explicitly authorizes exact commands.
 
 ## Acceptance criteria
 
-- Report exact branch, HEAD, parent, upstream, and clean status.
-- Confirm changed files are limited to isolated context source/header,
-  compile-check, semantic/test wrappers, and documentation.
-- Confirm direct WDF counts remain `WdfSpinLockCreate=1`,
-  `WdfRequestCreate=1`, `WdfMemoryCreatePreallocated=2`,
-  `WdfObjectDelete=2`.
-- Confirm orchestrator helper order, single centralized rollback call site,
-  final-only `OWNER_READY`, ready/faulted/partial pre-helper rejection, and no
-  retry loop.
-- Confirm validation evidence and artifact containment from the checkpoint.
-- Confirm no production linkage, target discovery, request operation, signing,
-  staging, installation, loading, Windows mutation, or hardware access.
+- `ChatpadFilter` has the exact project dependency selected by the design.
+- No owner field is embedded.
+- No request-owner helper is referenced by production source.
+- No `/INCLUDE` directive is added for request-owner helpers.
+- Final driver import/symbol inspection, if build validation is authorized,
+  shows no unexpected WDF object-management imports from an unused static
+  library.
+- Runtime behavior remains unchanged.
+- Generated logs remain ignored beneath `artifacts\`.
 
 ## Inspect first
 
@@ -66,7 +72,9 @@ git log -1 --format="%H%n%P%n%s"
 git status --short --branch --untracked-files=all
 git diff --exit-code
 git diff --cached --exit-code
-Get-Content docs\OFFLINE-KMDF-CREATION-ORCHESTRATION.md
-Select-String -Path src\driver\ChatpadKmdfRequestOwnerContext\* -Pattern 'CreateDormantObjectGraph|CreateBookkeeping|CreateReusable|CreateOutbound|CreateInbound|RollbackPartialCreation|OWNER_READY'
-Select-String -Path src\driver\ChatpadFilter\* -Pattern 'ChatpadKmdfRequestOwner|CreateDormantObjectGraph'
+Get-Content docs\WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md
+Get-Content src\driver\ChatpadFilter\ChatpadFilter.vcxproj
+Get-Content src\driver\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj
+Get-Content ChatpadWin11.sln
+Select-String -Path src\driver\ChatpadFilter\* -Pattern 'ChatpadKmdfRequestOwner|CreateDormantObjectGraph|ActivationRequestOwner'
 ```
