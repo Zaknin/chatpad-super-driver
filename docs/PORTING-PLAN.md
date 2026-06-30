@@ -80,9 +80,15 @@ Source references:
   request-parented outbound/inbound preallocated memory, explicit
   initialization-failure rollback, no cleanup/destroy callbacks, and no target
   at request creation.
+- The ordinary KMDF request-owner storage initialization checkpoint is complete
+  in `docs/OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md`. It initializes only
+  ordinary owner storage, embeds the pure model baseline, clears fixed
+  two-byte transfer/completion storage, leaves future WDF handles null, and
+  sets only `MODEL_READY`; it creates no WDF object and remains absent from
+  `ChatpadFilter`.
 - No WDF activation-owner object currently exists. If separately authorized,
-  the next smallest slice is a pure owner-structure initialization and
-  validation helper with no WDF object creation. Do not add runtime request
+  the next smallest slice is compile-only object-attribute/parentage
+  preparation with no WDF object creation. Do not add runtime request
   formatting, submission, completion, cancellation, target discovery,
   installation, or hardware access in that slice unless explicitly authorized.
 - Before any INF or runtime bridge work, design and review a reversible,

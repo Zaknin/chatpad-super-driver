@@ -256,3 +256,17 @@ The context module remains compile-only and absent from `ChatpadFilter`
 runtime behavior. No live WDF object, context attachment, target, formatting,
 submission, completion registration, cancellation, device action, signing,
 staging, installation, or hardware access exists because of either document.
+
+## Follow-on owner storage initialization
+
+[Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md)
+implements the first source slice that uses these declarations. It adds
+ordinary storage initialization and pre-object validation inside the same
+isolated context module. The helper initializes the embedded pure model,
+clears the fixed two-byte transfer storage and completion snapshot, explicitly
+leaves all future WDF handle fields null, and sets only `MODEL_READY`.
+
+The helper still does not create a WDF object, attach framework context to a
+live object, publish `OWNER_READY`, link into `ChatpadFilter`, format or send
+a request, register completion, cancel, install, load, package, sign, query a
+device, or access hardware.

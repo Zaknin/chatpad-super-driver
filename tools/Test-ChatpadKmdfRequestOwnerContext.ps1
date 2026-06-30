@@ -106,7 +106,7 @@ function Test-RequestOwnerContextSemanticGuards {
         $joinedCode += "`n" + (Remove-CComments ([System.IO.File]::ReadAllText($file)))
     }
 
-    $prohibitedCalls = '(?<![A-Za-z0-9_])(?:WdfRequestCreate|WdfMemoryCreate|WdfMemoryCreatePreallocated|WdfObjectAllocateContext|WdfSpinLockCreate|WdfWaitLockCreate|WdfUsbTargetDeviceCreate|WdfUsbTargetDeviceCreateWithParameters|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfIoTargetFormatRequestForInternalIoctlOthers|WdfRequestReuse|WdfRequestSend|WdfRequestCancelSentRequest|WdfRequestSetCompletionRoutine|WdfIoTargetStart|WdfIoTargetStop|IoCallDriver)\s*\('
+    $prohibitedCalls = '(?<![A-Za-z0-9_])(?:WdfDeviceCreate|WdfRequestCreate|WdfMemoryCreate|WdfMemoryCreatePreallocated|WdfObjectAllocateContext|WdfObjectDelete|WdfObjectReference|WdfObjectDereference|WdfSpinLockCreate|WdfWaitLockCreate|WdfUsbTargetDeviceCreate|WdfUsbTargetDeviceCreateWithParameters|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfIoTargetFormatRequestForInternalIoctlOthers|WdfRequestReuse|WdfRequestSend|WdfRequestCancelSentRequest|WdfRequestSetCompletionRoutine|WdfIoTargetStart|WdfIoTargetStop|IoCallDriver)\s*\('
     if ($joinedCode -match $prohibitedCalls) {
         throw "Prohibited WDF/WDM runtime call exists in context code: $($Matches[0])"
     }
@@ -143,6 +143,55 @@ function Test-RequestOwnerContextSemanticGuards {
         $joinedCode -notmatch 'WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE' -or
         $joinedCode -notmatch 'WDF_OBJECT_ATTRIBUTES_INIT') {
         throw 'Typed context declaration or ordinary attribute initialization is missing.'
+    }
+    if ($joinedCode -notmatch 'ChatpadKmdfRequestOwnerInitializeStorage' -or
+        $joinedCode -notmatch 'ChatpadKmdfRequestOwnerValidatePreObjectState' -or
+        $joinedCode -notmatch 'ChatpadRequestOwnerInitialize\s*\(' -or
+        $joinedCode -notmatch 'ChatpadRequestOwnerValidateInvariant\s*\(' -or
+        $joinedCode -notmatch 'ChatpadRequestOwnerGetSnapshot\s*\(') {
+        throw 'Storage initialization and pre-object validation do not reuse the authoritative pure owner model.'
+    }
+    if ($joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_OWNER' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_VALIDATION' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_FRAMEWORK_HANDLE_PRESENT' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_ACTIVE_OPERATION_OR_LIFECYCLE' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_ALREADY_INITIALIZED') {
+        throw 'Typed storage initialization/validation result coverage is incomplete.'
+    }
+    if ($joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_PRE_OBJECT_READY' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_NO_FRAMEWORK_HANDLES' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_MODEL_BASELINE') {
+        throw 'Pre-object validation invariant mask coverage is incomplete.'
+    }
+    if ($joinedCode -notmatch 'owner->Request\s*=\s*NULL' -or
+        $joinedCode -notmatch 'owner->OutboundMemory\s*=\s*NULL' -or
+        $joinedCode -notmatch 'owner->InboundMemory\s*=\s*NULL' -or
+        $joinedCode -notmatch 'owner->BookkeepingLock\s*=\s*NULL') {
+        throw 'Storage initialization does not explicitly leave every WDF handle null.'
+    }
+    if ($joinedCode -notmatch 'RtlZeroMemory\(&owner->TransferStorage' -or
+        $joinedCode -notmatch 'RtlZeroMemory\(&owner->CompletionSnapshot') {
+        throw 'Storage initialization does not explicitly clear transfer storage and completion snapshot storage.'
+    }
+    if ($joinedCode -match 'InitializationMask\s*(?:=|\|=)\s*[^;\r\n]*CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY') {
+        throw 'Storage initialization sets owner-ready before any WDF object creation checkpoint exists.'
+    }
+    $contextSourceText = Remove-CComments ([System.IO.File]::ReadAllText($contextSource))
+    $maskAssignments = [regex]::Matches($contextSourceText, 'InitializationMask\s*=\s*(CHATPAD_KMDF_REQUEST_OWNER_INIT_[A-Z_]+)')
+    $allowedMaskAssignments = @(
+        'CHATPAD_KMDF_REQUEST_OWNER_INIT_NONE',
+        'CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY',
+        'CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED')
+    foreach ($assignment in $maskAssignments) {
+        $assignedValue = $assignment.Groups[1].Value
+        if ($allowedMaskAssignments -notcontains $assignedValue) {
+            throw "Storage initialization assigns a non-pre-object initialization state: $assignedValue"
+        }
+    }
+    if ($joinedCode -notmatch 'CHATPAD_REQUEST_OWNER_INVALID_GENERATION' -or
+        $joinedCode -notmatch 'CHATPAD_REQUEST_OWNER_INVALID_OPERATION_SEQUENCE' -or
+        $joinedCode -notmatch 'CHATPAD_REQUEST_OWNER_INVALID_STEP') {
+        throw 'Pre-object validation does not use authoritative invalid identity constants.'
     }
 
     [xml]$contextXml = Get-Content -LiteralPath $contextProject -Raw
@@ -188,7 +237,7 @@ function Test-RequestOwnerContextSemanticGuards {
         throw "Active ChatpadFilter source references the context module: $($activeDriverMatches -join ', ')"
     }
 
-    Write-Output 'Semantic guard: PASS (compile-only context types, exact transfer capacities, pure-model reuse, no runtime driver linkage).'
+    Write-Output 'Semantic guard: PASS (storage initialization, pre-object validation, exact transfer capacities, pure-model reuse, no WDF object creation/submission, no runtime driver linkage).'
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

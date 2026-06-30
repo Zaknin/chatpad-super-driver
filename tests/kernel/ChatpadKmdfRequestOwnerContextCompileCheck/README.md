@@ -5,6 +5,10 @@ definitions.
 
 The target includes the context header, compiles the shared context source,
 compiles the pure request-owner model source under the WDK toolchain, validates
-compile-time invariants, and compiles request/context attribute declarations.
-It does not create or run a driver, create WDF objects, call WDF runtime APIs,
-install, package, sign, query devices, or access hardware.
+compile-time invariants, compiles request/context attribute declarations, and
+compiles the ordinary storage initializer/pre-object validator against the
+exact production helper.
+
+This is a compile-check only. It does not create or run a driver, create WDF
+objects, call WDF object-creation or request-submission APIs, install, package,
+sign, query devices, or access hardware.

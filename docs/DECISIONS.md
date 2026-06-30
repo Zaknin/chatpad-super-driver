@@ -4,6 +4,52 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Initialize KMDF request-owner ordinary storage before object creation
+
+**Decision:** The first implementation slice after the object-lifecycle design
+initializes only ordinary `ChatpadKmdfActivationRequestOwner` storage in the
+isolated `ChatpadKmdfRequestOwnerContext` module. The initializer clears owner
+storage, writes the context signature/version, initializes the embedded pure
+`ChatpadActivationRequestOwner` model, explicitly leaves all future WDF handle
+fields null, clears fixed transfer storage and completion snapshots, and sets
+only `CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY`. A separate pre-object
+validator reports typed failures and proves the model-ready-only baseline
+before any framework object can be created.
+
+**Rationale:** This gives future dormant object creation a deterministic
+ordinary-storage baseline without publishing owner-ready state or introducing
+framework object lifetime. It also preserves the pure model as the sole
+operation/lifecycle accounting authority and keeps the production driver
+unchanged until a later explicit linkage gate.
+
+**Alternatives rejected:**
+
+* Set `OWNER_READY` during storage initialization - would falsely represent
+  lock/request/memory objects that do not exist.
+* Create a fake host-side WDF runtime to execute the helper outside WDK/KMDF -
+  risks duplicating opaque handle layout and testing a different contract than
+  the production helper.
+* Add the helper to `ChatpadFilter` immediately - would alter runtime code
+  before object creation, parentage, rollback, and D0-rundown gates are
+  authorized.
+* Introduce a second request-owner state machine in the KMDF layer - would
+  split ownership from the already tested pure model.
+
+**Consequences:**
+
+* `MODEL_READY` now means ordinary storage and the embedded pure model are
+  initialized, but no WDF object exists.
+* Validation can reject repeated initialization, non-null handles, active model
+  state, unexpected initialization-mask bits, premature owner-ready state,
+  nonzero transfer storage, and nonzero completion snapshots before object
+  creation starts.
+* Verification remains WDK compile-check plus semantic guard; host execution of
+  the exact helper remains intentionally absent.
+* The next safe slice is compile-only object-attribute/parentage preparation,
+  still without object creation or production-driver linkage.
+
+---
+
 ## 2026-06-30 - Select dormant KMDF object creation and cleanup ownership
 
 **Decision:** Future dormant activation request-owner object creation will run

@@ -2465,3 +2465,131 @@
   target discovery, request formatting, submission, completion, cancellation,
   D0 rundown, signing, staging, installation, loading, and hardware validation
   all remain separate authorization gates.
+
+## 2026-06-30 11:34 +04:00 - KMDF owner storage initialization checkpoint
+
+- **Task title and objective:** Implement the ordinary KMDF request-owner
+  storage initialization and pre-object validation helper without WDF object
+  creation, production-driver linkage, host fake-WDF execution, installation,
+  signing, packaging, InfVerif, Inf2Cat, or hardware/system action.
+- **Starting branch and commit:** Verified
+  `feature/offline-kmdf-request-object-lifecycle-design` at
+  `91f645b983140b38c2985c67ea51020934bee515`, parent
+  `1be4637aa91fa675bc9b45caddd41e40279c1252`, upstream
+  `origin/feature/offline-kmdf-request-object-lifecycle-design` at the same
+  commit, with clean worktree/index.
+- **Working branch:** Created
+  `feature/offline-kmdf-owner-storage-init` from the verified starting commit.
+- **Investigation summary:** Re-read the repository protocol documents and
+  inspected the context module, pure request-owner model, compile-check target,
+  semantic wrapper, and active `ChatpadFilter` project/source boundaries. The
+  exact production helper can be compiled under WDK, but host execution without
+  a fake WDF layer is not a safe validation target because the owner type
+  contains opaque WDF handle types. Validation therefore uses WDK compile-checks
+  plus semantic guards.
+- **Files created:**
+  `docs/OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md`.
+- **Files modified:** `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/ChatpadKmdfRequestOwnerContextCompileCheck.c`;
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/README.md`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/README.md`;
+  `docs/PROJECT-STATE.md`; `docs/NEXT-TASK.md`; `docs/DECISIONS.md`;
+  `docs/OFFLINE-KMDF-REQUEST-OWNER-CONTEXT-DEFINITION.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`;
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`;
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`;
+  `docs/PORTING-PLAN.md`; this worklog.
+- **Implementation details:** Added
+  `ChatpadKmdfRequestOwnerStorageResult`,
+  `ChatpadKmdfRequestOwnerStorageValidationFlag`, and
+  `ChatpadKmdfRequestOwnerStorageValidation`. Added
+  `ChatpadKmdfRequestOwnerInitializeStorage` to clear ordinary owner storage,
+  set context signature/version, leave `Request`, `OutboundMemory`,
+  `InboundMemory`, and `BookkeepingLock` null, clear fixed transfer storage
+  and completion snapshot storage, initialize the embedded pure
+  `ChatpadActivationRequestOwner` model, and publish only
+  `CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY`.
+  Added `ChatpadKmdfRequestOwnerValidatePreObjectState` to clear validation
+  output and validate signature/version, model-ready-only mask, no
+  owner-ready bit, null framework handles, zero transfer storage, zero
+  completion snapshot, pure-model invariant success, no active
+  operation/lifecycle, and unavailable baseline snapshot using authoritative
+  invalid generation, operation-sequence, and step constants.
+- **Semantic guard details:** Extended
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1` to forbid
+  `WdfDeviceCreate`, WDF object creation/deletion/reference calls, request
+  reuse/format/send/cancel/completion registration, target start/stop,
+  `IoCallDriver`, dynamic allocation, wait/delay, install/device-query, USB,
+  HID, IOCTL, and unconfirmed payload surfaces in the context code. The guard
+  also proves the helper APIs exist, reuse the pure model initializer,
+  invariant validator, and snapshot, expose typed error results, explicitly
+  null all future WDF handles, explicitly clear transfer/completion storage,
+  never assign `OWNER_READY`, and only assign initialization-mask states
+  `NONE`, `MODEL_READY`, and `FAULTED`.
+- **Important failed attempts:** The first Debug context compile-check failed
+  with MSBuild exit code `1` because a runtime `if` compared compile-time
+  `sizeof` constants and triggered `warning C4127` under `/WX`; log:
+  `artifacts/logs/chatpad-kmdf-request-owner-context-Debug-20260630T072801Z.log`.
+  The fix removed the constant conditional and relies on existing `C_ASSERT`
+  capacity proofs. A parallel `Build-Driver.ps1` Debug/Release run caused the
+  Debug process to fail before build because both processes attempted to write
+  `artifacts/environment/driver-build-environment.txt`; Release completed, and
+  Debug was rerun by itself successfully.
+- **Validation commands and results:**
+  - `.\tools\Test-RepositorySafety.ps1` exited `0` before implementation and
+    after final changes with `REPOSITORY SAFETY: PASS`.
+  - `.\tools\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Debug -Platform x64`
+    exited `0`; semantic guard PASS; log
+    `artifacts/logs/chatpad-kmdf-request-owner-context-Debug-20260630T072816Z.log`.
+  - `.\tools\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Release -Platform x64`
+    exited `0`; semantic guard PASS; log
+    `artifacts/logs/chatpad-kmdf-request-owner-context-Release-20260630T072816Z.log`.
+  - `.\tools\Test-ChatpadRequestOwnerModel.ps1` Debug and Release exited `0`;
+    each reported `5002` assertions passed and `0` failed.
+  - `.\tools\Test-ChatpadProtocol.ps1` Debug and Release exited `0`.
+  - `.\tools\Test-ChatpadTransport.ps1` Debug and Release exited `0`.
+  - `.\tools\Test-ChatpadControlSetup.ps1` Debug and Release exited `0`; each
+    reported `141` assertions passed and `0` failed.
+  - `.\tools\Test-ChatpadFilterLifecycle.ps1` Debug and Release exited `0`;
+    each reported `109` assertions passed and `0` failed.
+  - `.\tools\Test-ChatpadProtocolKernelCompatibility.ps1` Debug and Release
+    exited `0` with signing/prohibited-output/artifact-containment PASS.
+  - `.\tools\Test-ChatpadWdfControlSetup.ps1` Debug and Release exited `0`
+    with signing/prohibited-output/artifact-containment PASS.
+  - `.\tools\Build-Driver.ps1 -Configuration Release -Platform x64` exited
+    `0`; log `artifacts/logs/build-release-x64-20260630T073348Z.log`;
+    driver SHA-256
+    `e3b830f05563925bac38201ace79f1b4955b792abdf5588ed09c7a15e0a52a66`;
+    Authenticode `NotSigned`.
+  - `.\tools\Build-Driver.ps1 -Configuration Debug -Platform x64` exited `0`;
+    log `artifacts/logs/build-debug-x64-20260630T073356Z.log`; driver
+    SHA-256 `473fe1b1b46166cb902250d4ee7a739cafcdde1c9ded28323c0f59d34b887a48`;
+    Authenticode `NotSigned`.
+  - Full solution `ChatpadWin11.sln` Debug and Release MSBuild invocations
+    exited `0`; logs
+    `artifacts/logs/full-solution-debug-x64-20260630T073416Z.log` and
+    `artifacts/logs/full-solution-release-x64-20260630T073417Z.log`.
+  - `git diff --check` exited `0`.
+- **Generated artifact locations:** Build outputs and logs were generated only
+  beneath ignored `artifacts/`, including `artifacts/bin/x64/...`,
+  `artifacts/obj/x64/...`, `artifacts/logs/...`, and
+  `artifacts/environment/driver-build-environment.txt`.
+- **Scope validation:** `ChatpadFilter` runtime source, project linkage,
+  `DriverEntry`, active KMDF callbacks, live device context, INF/CAT/signing
+  scripts, package/install/recovery paths, and `legacy/` were not modified.
+  No WDF object was created; no request was formatted, sent, cancelled, reused,
+  completed, or deleted; no target was discovered; no InfVerif or Inf2Cat was
+  run; no catalog, certificate, package, installer, installation, registry,
+  service, Driver Store, device, USB, or hardware action occurred.
+- **Commit and push:** Commit exactly
+  `driver: initialize dormant request owner` and push only
+  `origin/feature/offline-kmdf-owner-storage-init`. The final commit hash is
+  reported after commit and push rather than embedded here.
+- **Remaining blockers:** WDF spinlock/request/memory creation, object
+  parentage helpers, rollback helpers, production-driver linkage, target
+  discovery, request formatting, submission, completion, cancellation, D0
+  rundown, signing, staging, installation, loading, and hardware validation
+  remain separate authorization gates.

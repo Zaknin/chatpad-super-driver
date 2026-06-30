@@ -164,11 +164,11 @@ D0-exit rundown, and cancellation behavior.
 
 Future creation order:
 
-1. Zero the ordinary owner structure.
-2. Set owner signature and version.
-3. Clear the initialization mask to `CHATPAD_KMDF_REQUEST_OWNER_INIT_NONE`.
-4. Initialize fixed transfer storage and completion snapshot to safe defaults.
-5. Initialize the embedded pure model and mark the model-ready bit.
+1. Initialize and validate ordinary owner storage with
+   `ChatpadKmdfRequestOwnerInitializeStorage`; this zeroes the owner, sets
+   signature/version, clears future handle fields, clears fixed transfer
+   storage and completion snapshots, initializes the embedded pure model, and
+   marks only the model-ready bit.
 6. Prepare spinlock object attributes with `ParentObject = WDFDEVICE`.
 7. Create the per-device bookkeeping spinlock and set the lock-created bit.
 8. Prepare request object attributes with request context type and
@@ -439,7 +439,12 @@ unavailable or faulted and returns failure from `EvtDeviceAdd`.
 Cleanup does not call a pure-model completion transition unless a real
 operation exists. Future D0 generations reuse already-created device-lifetime
 objects; operation-lifetime reset is distinct from device-lifetime object
-creation. This task does not change the pure model.
+creation.
+
+The ordinary-storage portion of this ordering is now implemented in
+[Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md).
+It stops before any spinlock, request, memory object, target, callback,
+formatting, submission, cancellation, installation, or hardware access exists.
 
 ## 17. IRQL and execution constraints
 
@@ -541,10 +546,11 @@ After future dormant creation succeeds:
 
 ## 21. Implementation decomposition
 
-Smallest future slices, each requiring explicit authorization:
+Smallest implementation slices, each requiring explicit authorization:
 
 1. Pure helper for owner-structure initialization and validation, with no WDF
-   call.
+   object-creation call. Complete in
+   [Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md).
 2. Compile-only attribute builders.
 3. Dormant spinlock and request creation.
 4. Dormant preallocated outbound and inbound memory creation.

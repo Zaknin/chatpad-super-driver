@@ -744,8 +744,10 @@ does not include, compile, link, retain, embed, or invoke the new module.
 
 This checkpoint does not create WDF objects, attach contexts to real objects,
 format or submit a request, register callbacks, discover targets, install,
-load, sign, package, query devices, or access hardware. The next smallest
-safe slice is the separately gated dormant object-creation and cleanup design.
+load, sign, package, query devices, or access hardware. Later checkpoints
+added the dormant object-creation and cleanup design and the ordinary
+storage-only owner initialization helper while preserving this offline
+boundary.
 
 ## 33. Dormant KMDF object creation and cleanup design checkpoint
 
@@ -769,3 +771,17 @@ This design preserves the architecture split:
   checkpoints.
 
 No WDF activation-owner object currently exists in `ChatpadFilter`.
+
+## 34. KMDF owner storage initialization checkpoint
+
+[Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md)
+implements the first ordinary-storage source slice for the future activation
+owner. The helper initializes the embedded pure model, clears fixed
+outbound/inbound two-byte transfer storage and completion snapshots, leaves
+future WDF handle fields null, and sets only `MODEL_READY`.
+
+This checkpoint does not publish `OWNER_READY`, create a lock, request, memory
+object, target, callback, runtime driver path, install/load path, signing path,
+or hardware interaction. The next smallest implementation slice is
+compile-only object-attribute/parentage preparation, still without WDF object
+creation.

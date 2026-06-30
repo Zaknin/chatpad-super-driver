@@ -37,6 +37,11 @@ C_ASSERT(sizeof(((ChatpadKmdfActivationRequestContext *)0)->ActiveTransferMemory
 C_ASSERT(sizeof(((ChatpadKmdfActivationCompletionSnapshot *)0)->TransferredLength) >=
     sizeof(uint16_t));
 C_ASSERT(sizeof(((ChatpadKmdfActivationCompletionSnapshot *)0)->CapturedInboundBytes) == 2u);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK == 0);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_OWNER !=
+    CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_VALIDATION);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_PRE_OBJECT_READY >
+    CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_MODEL_BASELINE);
 
 void ChatpadKmdfRequestOwnerContextCompileCheckAttributes(void)
 {
@@ -51,14 +56,50 @@ void ChatpadKmdfRequestOwnerContextCompileCheckTypes(void)
 {
     ChatpadKmdfActivationRequestOwner owner;
     ChatpadKmdfActivationRequestContext requestContext;
+    ChatpadKmdfRequestOwnerStorageValidation validation;
     ChatpadActivationPreparation preparation;
     ChatpadRequestOwnerEvent event;
+    ChatpadKmdfRequestOwnerStorageResult storageResult;
 
-    UNREFERENCED_PARAMETER(owner);
     UNREFERENCED_PARAMETER(requestContext);
     UNREFERENCED_PARAMETER(preparation);
+
+    RtlZeroMemory(&owner, sizeof(owner));
+    storageResult = ChatpadKmdfRequestOwnerInitializeStorage(&owner);
+    if (storageResult == CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK) {
+        storageResult = ChatpadKmdfRequestOwnerValidatePreObjectState(
+            &owner,
+            &validation);
+    }
+    UNREFERENCED_PARAMETER(storageResult);
+    UNREFERENCED_PARAMETER(validation);
 
     ChatpadRequestOwnerEventInitialize(
         &event,
         CHATPAD_REQUEST_OWNER_EVENT_MAKE_AVAILABLE);
+}
+
+void ChatpadKmdfRequestOwnerContextCompileCheckStorageResults(
+    ChatpadKmdfRequestOwnerStorageResult result)
+{
+    switch (result) {
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_OWNER:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_VALIDATION:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_INVALID_SIGNATURE:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_UNSUPPORTED_VERSION:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_INVALID_INITIALIZATION_MASK:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_MODEL_INITIALIZATION_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_INVALID_MODEL_STATE:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_FRAMEWORK_HANDLE_PRESENT:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OWNER_READY_PREMATURE:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_ACTIVE_OPERATION_OR_LIFECYCLE:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_INVALID_COMPLETION_SNAPSHOT:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_INVALID_TRANSFER_STORAGE:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_INVARIANT_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_STORAGE_ALREADY_INITIALIZED:
+        break;
+    default:
+        break;
+    }
 }

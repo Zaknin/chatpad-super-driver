@@ -627,9 +627,10 @@ occur while it is held.
 This checkpoint is design-only. No request, memory object, target, formatting,
 submission, completion callback, cancellation call, executable delay, runtime
 driver path, or hardware access was added or authorized. Activation ownership
-remains separate from continuous input. The smallest future slice is a pure,
-WDF-independent request-owner state model and race/accounting tests; that slice
-requires separate authorization.
+remains separate from continuous input. Later checkpoints implemented the pure
+request-owner state model, compile-only KMDF context definitions, dormant
+object-lifecycle design, and ordinary storage initialization; all remain
+offline and absent from production runtime paths.
 
 ## 32. Dormant KMDF object lifecycle design checkpoint
 
@@ -661,3 +662,15 @@ dormant objects.
 This checkpoint is documentation-only. No lock, request, memory object, target,
 formatting, send, completion registration, cancellation, runtime callback
 change, installation, or hardware access exists.
+
+## 33. KMDF owner storage initialization checkpoint
+
+[Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md)
+implements the bridge's ordinary-storage-only owner baseline inside the
+isolated context module. It initializes the embedded pure model, clears exact
+two-byte transfer storage and completion snapshots, leaves all future WDF
+handle fields null, and sets only `MODEL_READY`.
+
+This checkpoint creates no lock, request, memory object, target, callback, or
+runtime driver path. It is validated by WDK compile-checks and semantic guards
+and remains absent from `ChatpadFilter`.

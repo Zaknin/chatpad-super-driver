@@ -644,3 +644,17 @@ memory descriptors. No WDF object currently exists, and this design checkpoint
 does not authorize source implementation, request formatting, request
 submission, completion, cancellation, target discovery, signing, staging,
 installation, or hardware access.
+
+## 23. KMDF owner storage initialization checkpoint
+
+[Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md)
+implements the ordinary-storage-only slice for the future activation owner.
+The helper initializes the embedded pure model, clears the fixed outbound and
+inbound two-byte arrays, clears completion snapshot storage, leaves all future
+WDF handle fields null, and sets only `MODEL_READY`.
+
+This checkpoint does not publish `OWNER_READY`, create the future lock,
+request, or memory objects, link into `ChatpadFilter`, format or send a
+request, register completion, cancel, discover a target, install, load, sign,
+stage, or access hardware. It is validated by WDK compile-checks and semantic
+guards rather than a fake host-side WDF runtime.
