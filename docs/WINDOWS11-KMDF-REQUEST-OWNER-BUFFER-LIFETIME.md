@@ -615,3 +615,32 @@ justified beyond the owner and request context. The compile-check target proves
 KMDF 1.15 context declaration and object-attribute compatibility only. It does
 not create a request, memory object, lock, target, callback, transfer, package,
 installation, or hardware action.
+
+## 22. Dormant object-creation and cleanup design checkpoint
+
+[Windows 11 KMDF Request Object Creation and Cleanup Design](WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md)
+is now authoritative for the future dormant creation and cleanup ordering of
+the request-owner framework objects selected by this design.
+
+The selected future creation location is immediately after successful
+`WdfDeviceCreate` in `EvtDeviceAdd`, before owner-ready publication. The exact
+object graph is ordinary owner storage in the future device context, a
+device-parented `WDFSPINLOCK`, a device-parented reusable `WDFREQUEST`, typed
+request context, and request-parented outbound/inbound preallocated
+`WDFMEMORY` descriptors over the existing two-byte owner arrays. The request is
+created without an initial target; target discovery and formatting remain
+separate design gates.
+
+The selected rollback strategy is explicit reverse-order rollback during
+initialization failure: delete the request first so its memory children are
+deleted through request parentage, then delete the spinlock, clear ordinary
+handle fields, keep owner-ready unset, and fail `EvtDeviceAdd`. Normal cleanup
+after successful creation relies on framework parent hierarchy deletion only
+after separately designed operation rundown proves no submitted operation or
+callback can use the owner.
+
+No cleanup or destroy callback is selected for the dormant lock, request, or
+memory descriptors. No WDF object currently exists, and this design checkpoint
+does not authorize source implementation, request formatting, request
+submission, completion, cancellation, target discovery, signing, staging,
+installation, or hardware access.

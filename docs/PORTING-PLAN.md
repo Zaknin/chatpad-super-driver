@@ -72,11 +72,19 @@ Source references:
   owner and request-context layouts, exact two-byte transfer storage, WDF
   handle fields, context declaration, and attribute compile checks without
   object creation, formatting, submission, callbacks, or runtime behavior.
-- If separately authorized, design the next slice as dormant WDF object
-  creation and cleanup sequencing for the request, two memory objects, and
-  spinlock. Do not add runtime request formatting, submission, completion,
-  cancellation, target discovery, installation, or hardware access in that
-  slice unless explicitly authorized.
+- The design-only dormant KMDF object-creation and cleanup checkpoint is
+  complete in
+  `docs/WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md`. It selects future
+  creation immediately after successful `WdfDeviceCreate` in `EvtDeviceAdd`,
+  with a device-parented spinlock, device-parented reusable request,
+  request-parented outbound/inbound preallocated memory, explicit
+  initialization-failure rollback, no cleanup/destroy callbacks, and no target
+  at request creation.
+- No WDF activation-owner object currently exists. If separately authorized,
+  the next smallest slice is a pure owner-structure initialization and
+  validation helper with no WDF object creation. Do not add runtime request
+  formatting, submission, completion, cancellation, target discovery,
+  installation, or hardware access in that slice unless explicitly authorized.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.

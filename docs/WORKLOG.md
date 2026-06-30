@@ -2373,3 +2373,95 @@
   or access, no elevation, and no network operation before the final authorized
   Git push occurred. Generated outputs and logs remained ignored beneath
   `artifacts/`.
+
+## 2026-06-30 - Design-only dormant KMDF object creation and cleanup
+
+- **Task title and objective:** Create the design-only dormant KMDF
+  object-creation and cleanup checkpoint for the activation request owner.
+  Define future parentage, creation order, rollback, cleanup, callback, IRQL,
+  scenario, and stop-condition rules without source implementation.
+- **Starting branch and commit:** Verified
+  `feature/offline-kmdf-request-owner-context` at
+  `1be4637aa91fa675bc9b45caddd41e40279c1252`, parent
+  `7f5ff4264d3171a1067a3eb0090f48b9979fe609`, subject
+  `driver: define compile-only request contexts`. Upstream was
+  `origin/feature/offline-kmdf-request-owner-context` at the same commit.
+  `git status --short --untracked-files=all` was empty;
+  `git diff --exit-code` and `git diff --cached --exit-code` both exited `0`.
+- **Working branch:** Created
+  `feature/offline-kmdf-request-object-lifecycle-design` from the verified
+  starting commit.
+- **Investigation summary:** Inspected the compile-only context module, pure
+  request-owner model, current `ChatpadFilter` device context and callbacks,
+  current project dormancy/linkage boundaries, request-owner buffer-lifetime
+  design, activation-preparation structures, and installed KMDF 1.15 headers.
+  The current driver context contains only signature, version, diagnostic
+  sequence, and lifecycle state; it contains no activation request owner. The
+  current callbacks are `EvtDeviceAdd`, prepare-hardware, release-hardware,
+  D0-entry, and D0-exit. No activation cleanup, destroy, completion,
+  cancellation, target, queue, timer, work item, request, memory, or spinlock
+  code exists.
+- **Installed WDK evidence:** KMDF 1.15 headers show `WdfDeviceCreate` is
+  annotated for `PASSIVE_LEVEL`; `WdfRequestCreate`,
+  `WdfMemoryCreatePreallocated`, `WdfSpinLockCreate`, `WdfObjectDelete`, and
+  `WdfRequestReuse` are annotated for maximum `DISPATCH_LEVEL`;
+  `WDF_OBJECT_ATTRIBUTES` contains cleanup callback, destroy callback,
+  execution level, synchronization scope, optional `ParentObject`, and context
+  type fields; cleanup and destroy callbacks are annotated for maximum
+  `DISPATCH_LEVEL`; `WdfRequestCreate` accepts an optional `WDFIOTARGET`.
+- **Files created:** `docs/WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md`.
+- **Files modified:** `docs/DECISIONS.md`; `docs/NEXT-TASK.md`;
+  `docs/OFFLINE-KMDF-REQUEST-OWNER-CONTEXT-DEFINITION.md`;
+  `docs/PORTING-PLAN.md`; `docs/PROJECT-STATE.md`;
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`;
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`; this worklog.
+- **Design details:** Selected future dormant creation immediately after
+  successful `WdfDeviceCreate` in `EvtDeviceAdd`. The exact future graph is
+  ordinary owner storage in the future device context, device-parented
+  `WDFSPINLOCK`, device-parented reusable `WDFREQUEST`, typed request context,
+  and request-parented outbound/inbound preallocated `WDFMEMORY` descriptors
+  over fixed two-byte owner arrays. The request is created without an initial
+  target; target discovery and formatting remain separate future gates.
+- **Rollback and cleanup decisions:** Initialization failure uses explicit
+  reverse-order rollback: delete the request first so request-parented memory
+  children are removed through parentage, then delete the spinlock, clear
+  ordinary handle fields, keep owner-ready unset, and fail `EvtDeviceAdd`.
+  Normal teardown relies on framework parent hierarchy deletion only after a
+  separately designed operation rundown/cancellation path has proven no active
+  operation or callback can use the owner. No cleanup or destroy callback is
+  selected for the dormant lock, request, or memory objects.
+- **Documentation validation:** `git diff --check` exited `0`. The new design
+  document contains all 22 required numbered sections and the required object
+  graph, selected creation location, exact creation order, parentage table,
+  initialization-state model, partial-failure matrix, rollback decision,
+  cleanup callback decision, IRQL analysis, success invariants, scenario
+  matrix, implementation decomposition, binding decisions, and stop
+  conditions.
+- **Link validation:** The first ad hoc Markdown link-validation command failed
+  because it normalized backslashes incorrectly and treated the new untracked
+  Markdown file as unavailable before staging. The corrected validation included
+  intended new Markdown files, resolved every relative Markdown link from its
+  containing file, and passed for 9 changed Markdown files.
+- **Contradiction scan:** Searches for `request created`, `memory created`,
+  `lock created`, `request submitted`, `completion active`, `target acquired`,
+  `controller verified`, and `installation authorized` found only contextual
+  future/failure-scenario or negated invariant text, not current-state claims.
+- **Repository safety:** `.\tools\Test-RepositorySafety.ps1` exited `0` with
+  `REPOSITORY SAFETY: PASS`.
+- **Scope validation:** Changed files were Markdown only. No source, header,
+  project, solution, script, test, INF, SYS, CAT, certificate, key, package,
+  binary, generated log, or `artifacts/` file was staged or modified. No build,
+  source test, driver test, InfVerif, Inf2Cat, hardware query, device query,
+  signing, staging, installation, driver load, registry/service/Driver Store
+  mutation, or operating-system mutation was performed.
+- **Commit and push:** Commit exactly
+  `docs: define kmdf object lifecycle` and push only
+  `origin/feature/offline-kmdf-request-object-lifecycle-design` with upstream
+  setup. The final commit hash is reported after commit and push rather than
+  embedded here.
+- **Remaining blockers:** No WDF activation-owner object currently exists.
+  Future owner-structure helper, dormant WDF object creation, rollback helper,
+  target discovery, request formatting, submission, completion, cancellation,
+  D0 rundown, signing, staging, installation, loading, and hardware validation
+  all remain separate authorization gates.

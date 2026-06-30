@@ -1,19 +1,21 @@
 # Project State
 
-*Last updated: 2026-06-30 (compile-only KMDF request-owner context checkpoint)*
+*Last updated: 2026-06-30 (design-only KMDF request object lifecycle checkpoint)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-request-owner-context`.
+- **Branch:** `feature/offline-kmdf-request-object-lifecycle-design`.
 - **Expected checkpoint commit:** this documentation is part of the
-  `driver: define compile-only request contexts` commit created from
-  `7f5ff4264d3171a1067a3eb0090f48b9979fe609`.
+  `docs: define kmdf object lifecycle` commit created from
+  `1be4637aa91fa675bc9b45caddd41e40279c1252`.
 - **Authoritative request design:**
   [Windows 11 KMDF Request Owner and Buffer Lifetime](WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md).
 - **Pure model checkpoint:**
   [Offline Request-Owner State Model](OFFLINE-REQUEST-OWNER-STATE-MODEL.md).
 - **KMDF context checkpoint:**
   [Offline KMDF Request-Owner Context Definition](OFFLINE-KMDF-REQUEST-OWNER-CONTEXT-DEFINITION.md).
+- **KMDF object lifecycle design:**
+  [Windows 11 KMDF Request Object Creation and Cleanup Design](WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md).
 - **Implementation state:** `ChatpadKmdfRequestOwnerContext` is an isolated
   compile-only WDK static-library module. It defines the future per-device
   request-owner storage, typed reusable-request context, exact two-byte
@@ -21,23 +23,33 @@
   mask, and compile-time invariants. It embeds the pure
   `ChatpadActivationRequestOwner` model and reuses the authoritative transport
   operation token and activation preparation types.
+- **Object-lifecycle design state:** the future dormant creation location is
+  selected as immediately after successful `WdfDeviceCreate` in
+  `EvtDeviceAdd`. The future object graph is device-owned activation-owner
+  ordinary storage, device-parented `WDFSPINLOCK`, device-parented reusable
+  `WDFREQUEST`, and request-parented outbound/inbound `WDFMEMORY` objects over
+  fixed two-byte owner arrays. The selected rollback strategy is explicit
+  reverse-order deletion during initialization failure, then framework parent
+  hierarchy cleanup during normal device teardown after separately designed
+  operation rundown.
 - **Dormancy:** `ChatpadFilter` does not include, compile, link, retain, embed,
-  or invoke the new context module. Runtime callbacks remain unchanged.
-- **Verification basis:** final validation is recorded in `docs/WORKLOG.md`.
-  The new Debug/Release context compile-check wrapper, existing offline
-  regressions, full solution builds, driver builds, repository safety, and
-  `git diff --check` are the required evidence set.
+  invoke the context module, create request-owner WDF objects, format a
+  request, register completion, send/cancel a request, discover a target, or
+  access hardware. Runtime callbacks remain unchanged.
+- **Verification basis:** final documentation validation is recorded in
+  `docs/WORKLOG.md`. This checkpoint used repository inspection, installed
+  KMDF 1.15 header inspection, Markdown link validation, required-section
+  validation, contradiction searches, repository safety, and `git diff --check`.
 - **Containment:** generated outputs and logs remain ignored beneath
-  `artifacts/`. Source-controlled changes are limited to compile-only context
-  declarations, compile-check project/wrapper, solution inclusion, pure-model
-  kernel compile fallback, and directly relevant documentation.
+  `artifacts/`. Source-controlled changes are limited to tracked Markdown
+  design and continuity documentation.
 
 ## Unresolved blockers
 
 - WDF object creation, request creation, transfer-memory creation, spinlock
   creation, target discovery, live formatting, submission, completion callback,
-  cancel callback, executable delay scheduling, cleanup, and D0-exit rundown
-  integration are not implemented or authorized.
+  cancel callback, executable delay scheduling, source cleanup integration, and
+  D0-exit rundown implementation are not implemented or authorized.
 - The exact framework-approved D0-exit deferral/rundown mechanism remains to be
   selected before completion/cancellation integration.
 - Default-control visibility, effective placement beneath `xusb22`, controller

@@ -235,3 +235,24 @@ formatting, request submission, completion behavior, cancellation behavior,
 D0-exit rundown, target discovery, USB visibility, controller preservation,
 activation effectiveness, Chatpad input, signing, staging, installation,
 loading, actual lower-filter placement, or a usable driver.
+
+## Follow-on object-lifecycle design
+
+[Windows 11 KMDF Request Object Creation and Cleanup Design](WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md)
+is the follow-on design-only checkpoint for using these declarations in a
+future dormant object-creation slice. It selects:
+
+- creation immediately after successful `WdfDeviceCreate` in `EvtDeviceAdd`;
+- ordinary owner storage in the future device context;
+- a device-parented `WDFSPINLOCK`;
+- a device-parented reusable `WDFREQUEST`;
+- request-parented outbound and inbound preallocated `WDFMEMORY` descriptors
+  over the existing fixed two-byte arrays;
+- no initial request target;
+- no cleanup or destroy callbacks for the dormant objects;
+- explicit reverse-order rollback during initialization failure.
+
+The context module remains compile-only and absent from `ChatpadFilter`
+runtime behavior. No live WDF object, context attachment, target, formatting,
+submission, completion registration, cancellation, device action, signing,
+staging, installation, or hardware access exists because of either document.

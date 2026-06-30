@@ -4,6 +4,59 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Select dormant KMDF object creation and cleanup ownership
+
+**Decision:** Future dormant activation request-owner object creation will run
+immediately after successful `WdfDeviceCreate` in `EvtDeviceAdd`. The future
+object graph is one ordinary per-device owner structure in the device context,
+one device-parented `WDFSPINLOCK`, one device-parented reusable `WDFREQUEST`
+with typed request context, and two request-parented preallocated `WDFMEMORY`
+objects over fixed two-byte owner arrays. The request will be created without
+an initial I/O target; target discovery, formatting, submission, completion,
+and cancellation remain separate gates. No cleanup or destroy callback is
+selected for these dormant objects. Initialization failure will use explicit
+reverse-order rollback, deleting the request before the lock; normal teardown
+will rely on framework parent hierarchy deletion only after separately
+designed operation rundown.
+
+**Rationale:** Creating immediately after `WdfDeviceCreate` gives one
+device-lifetime allocation path, requires no hardware or USB target, allows
+failure to propagate from `EvtDeviceAdd` before owner-ready publication, and
+avoids repeated allocation across D0 cycles. Device-parenting the request and
+lock gives stable device lifetime. Request-parenting both memory objects keeps
+transfer descriptors tied to request lifetime while ordinary owner storage
+owns the fixed arrays. Explicit rollback prevents stale ordinary handle fields
+after initialization failure; parent hierarchy cleanup remains sufficient for
+normal no-operation teardown.
+
+**Alternatives rejected:**
+
+* Create in prepare-hardware - closer to hardware-resource transitions than
+  needed and can repeat across resource rebalance.
+* Create in first D0 entry - mixes device-lifetime allocation with power-cycle
+  transitions and may repeat.
+* Lazy-create before first activation - complicates first-use errors and races
+  operation admission.
+* Parent the request to a future target - requires target discovery before
+  dormant creation and weakens the no-hardware boundary.
+* Device-parent the memory objects - lets transfer descriptors outlive request
+  reuse independently.
+* Use cleanup/destroy callbacks for operation retirement - operation terminal
+  ownership belongs to the pure model and future completion/cancellation/
+  rundown paths.
+
+**Consequences:**
+
+* Future implementation slices have exact parentage, creation order, rollback,
+  callback, and stop-condition rules.
+* No current WDF object exists; this is documentation-only.
+* The next safe slice is a pure owner-structure initialization and validation
+  helper with no WDF object-creation call.
+* Future completion and D0-rundown work must separately prove IRQL correctness
+  and exact lifecycle-release ownership before any request can be submitted.
+
+---
+
 ## 2026-06-30 - Define KMDF request-owner contexts without production linkage
 
 **Decision:** The future activation request-owner KMDF storage is defined in

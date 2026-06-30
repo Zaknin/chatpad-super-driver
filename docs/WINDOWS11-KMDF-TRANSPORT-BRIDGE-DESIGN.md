@@ -630,3 +630,34 @@ driver path, or hardware access was added or authorized. Activation ownership
 remains separate from continuous input. The smallest future slice is a pure,
 WDF-independent request-owner state model and race/accounting tests; that slice
 requires separate authorization.
+
+## 32. Dormant KMDF object lifecycle design checkpoint
+
+[Windows 11 KMDF Request Object Creation and Cleanup Design](WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md)
+now defines the bridge's future dormant framework object graph and cleanup
+ownership before any creation call is implemented. It selects creation
+immediately after successful `WdfDeviceCreate` in `EvtDeviceAdd`, with no USB
+target required at request creation.
+
+The selected graph is:
+
+```text
+WDFDEVICE
+└── future device context owner storage
+    ├── device-parented WDFSPINLOCK
+    └── device-parented reusable WDFREQUEST
+        ├── typed request context
+        ├── request-parented outbound WDFMEMORY over OutboundBytes[2]
+        └── request-parented inbound WDFMEMORY over InboundBytes[2]
+```
+
+Initialization failure uses explicit reverse-order rollback, deleting the
+request before the spinlock and relying on request parentage to delete memory
+children. Normal device teardown relies on framework parent hierarchy deletion
+only after the separately designed rundown/cancellation path has proven no
+active operation remains. No cleanup or destroy callback is selected for the
+dormant objects.
+
+This checkpoint is documentation-only. No lock, request, memory object, target,
+formatting, send, completion registration, cancellation, runtime callback
+change, installation, or hardware access exists.

@@ -746,3 +746,26 @@ This checkpoint does not create WDF objects, attach contexts to real objects,
 format or submit a request, register callbacks, discover targets, install,
 load, sign, package, query devices, or access hardware. The next smallest
 safe slice is the separately gated dormant object-creation and cleanup design.
+
+## 33. Dormant KMDF object creation and cleanup design checkpoint
+
+[Windows 11 KMDF Request Object Creation and Cleanup Design](WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md)
+is now authoritative for the future dormant framework object graph. It selects
+future creation immediately after successful `WdfDeviceCreate` in
+`EvtDeviceAdd`, with a device-parented spinlock, device-parented reusable
+request, request-parented outbound/inbound memory descriptors, fixed owner
+backing arrays, no target at creation, explicit initialization-failure
+rollback, and no cleanup/destroy callbacks for the dormant objects.
+
+This design preserves the architecture split:
+
+- compile-checked type definitions exist today;
+- future object creation is a separate implementation slice;
+- future target discovery is a separate design gate;
+- future request formatting is separate from target discovery;
+- future request submission is separate from formatting;
+- future completion, cancellation, and D0 rundown are separate gates;
+- hardware validation remains separate from all offline design and compile
+  checkpoints.
+
+No WDF activation-owner object currently exists in `ChatpadFilter`.
