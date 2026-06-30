@@ -3599,3 +3599,66 @@
   `origin/feature/offline-owner-init-audit-corrections`; final hash is reported
   after commit.
 - **Next gate:** Independent read-only audit of this correction checkpoint.
+
+## 2026-06-30 23:11 +04:00 - Owner initialization documentation consistency correction
+
+- **Task title/objective:** Perform a narrow documentation-only consistency
+  correction for the completed production request-owner initialization phase,
+  ensuring current-state wording no longer presents completed linkage,
+  owner-embedding, ordinary-initialization, or explicit pre-object validation
+  as future work.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-owner-init-audit-corrections` at
+  `a08ea1f5e4431893bc84e459957a3a63509d0c2f`, parent
+  `a25d5637487ec6e4e7583a64dcec6c5192e06092`, subject
+  `test: tighten owner initialization audit`, then created
+  `feature/offline-owner-init-doc-consistency`.
+- **Investigation:** Confirmed the primary stale wording was in
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md` and
+  `docs/PORTING-PLAN.md`, where historical design slices still used future
+  language for project linkage, owner embedding, and ordinary initialization.
+  Confirmed continuity handoff files still pointed at the already completed
+  owner-initialization audit rather than the requested documentation
+  consistency audit.
+- **Files modified:** `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PORTING-PLAN.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`, and
+  `docs/WORKLOG.md`.
+- **Documentation correction:** Relabeled the original production-integration
+  design baseline as historical pre-integration state, marked project linkage,
+  owner embedding, ordinary initialization, explicit pre-object validation,
+  audits, and evidence corrections as completed, and kept dormant
+  orchestration, WDF object graph creation, target discovery, request
+  operations, D0/removal rundown, signing, staging, installation, loading, and
+  hardware validation as future unauthorized work.
+- **Validation-count wording:** Current-state wording distinguishes initializer
+  internal validation from one additional explicit `EvtDeviceAdd` pre-object
+  integration-boundary validation. The correction does not describe the state
+  as one total validation, two validator calls, duplicate validation, or an
+  initializer invoked twice.
+- **Continuity:** Replaced `docs/NEXT-TASK.md` with the exact next gate:
+  independent read-only documentation-consistency audit of the
+  owner-initialization current-state corrections. Updated
+  `docs/PROJECT-STATE.md` only to remove direct stale branch/next-gate
+  contradictions.
+- **Validation:** Complete diff review performed. `git diff --check` passed
+  with only Git line-ending warnings. Modified relative Markdown-link
+  validation passed for five modified Markdown files. Stale-current-state
+  searches in the two primary documents found no remaining unqualified claims
+  that project linkage, owner embedding, ordinary initialization, or explicit
+  pre-object validation are future work. Non-building repository safety passed.
+  Changed-path checks confirmed only Markdown files changed and no source,
+  project, script, manifest, evidence, artifact, or generated path changed.
+- **Safety:** No source, header, project, solution, script, test, manifest,
+  evidence, artifact, binary, INF, package, signing, recovery, deployment, D0,
+  removal, USB, or hardware file was intentionally changed. No build,
+  regression suite, compile check, driver load, helper invocation, WDF object
+  creation/deletion, target/request operation, signing, staging, installation,
+  Windows mutation, hardware query, controller/Chatpad interaction, merge, or
+  force-push is authorized.
+- **Commit/push:** Commit exactly
+  `docs: align owner initialization state` and push only
+  `origin/feature/offline-owner-init-doc-consistency`; final hash is reported
+  after commit.
+- **Next gate:** Independent read-only documentation-consistency audit of the
+  owner-initialization current-state corrections. Dormant orchestration remains
+  unauthorized.

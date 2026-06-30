@@ -4,12 +4,18 @@ This is the authoritative documentation-only design for introducing the
 dormant KMDF activation request-owner object graph into the production
 `ChatpadFilter` codebase through separately gated steps.
 
-This document was created before production linkage. The linkage-only history
-is recorded in
+This document was created before production linkage. Its original baseline was
+the pre-integration state where `ChatpadFilter` did not yet link the request
+owner, include the authoritative owner header, embed owner storage, or call
+ordinary owner initialization. That historical linkage-only checkpoint is
+recorded in
 [Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md).
 Production now also embeds and ordinarily initializes one request owner as
 recorded in
 [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
+The later audit-corrections checkpoint clarified evidence and validation-count
+wording in
+[Offline KMDF Owner Initialization Audit Corrections](OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md).
 
 ## 1. Purpose and non-scope
 
@@ -125,9 +131,9 @@ Every invoked helper and failure order is:
    creation.
 10. `ChatpadLifecycleResultToStatus`: final return mapping.
 
-## 4. Proposed production dependency graph
+## 4. Production dependency graph
 
-The future production dependency graph is:
+The current production dependency graph is:
 
 ```text
 ChatpadFilter
@@ -142,22 +148,18 @@ ChatpadFilter
   -> ChatpadFilterLifecycle
 ```
 
-Binding decision: `ChatpadFilter` will reference and link the existing
-`ChatpadKmdfRequestOwnerContext.vcxproj` static-library project. It must not
-compile selected isolated sources directly unless native project evidence later
-proves the static-library route impossible.
+Completed production mechanics:
 
-Required future project mechanics:
-
-- Add a native `ProjectReference` from `ChatpadFilter.vcxproj` to
+- `ChatpadFilter.vcxproj` has a native `ProjectReference` to
   `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj`.
-- Add any required native `ProjectReference` or source/link dependency for
-  `ChatpadRequestOwnerModel`, because the context implementation calls the
-  pure request-owner model APIs when actual context-library objects are linked.
-- Add `$(RepoRoot)\src\driver\ChatpadKmdfRequestOwnerContext`,
+- `ChatpadFilter.vcxproj` compiles the portable
+  `ChatpadRequestOwnerModel.c` source directly as a WDK object because the
+  user-mode model library carries user-mode default-library metadata.
+- `ChatpadFilter.vcxproj` includes
+  `$(RepoRoot)\src\driver\ChatpadKmdfRequestOwnerContext`,
   `$(RepoRoot)\src\transport\ChatpadRequestOwnerModel`, and
-  `$(RepoRoot)\src\transport\ChatpadTransport` to production include paths
-  when the context header is included by `driver.h`.
+  `$(RepoRoot)\src\transport\ChatpadTransport` for the current production
+  owner integration.
 - Keep Debug/Release x64 configuration compatibility with the current
   `WindowsKernelModeDriver10.0` KMDF toolset and `SignMode=Off`.
 - Let native project references define build ordering.
@@ -166,10 +168,11 @@ Required future project mechanics:
   library member. `/INCLUDE` is only a dormant-retention mechanism and would
   obscure proof of actual production reachability.
 
-The first implementation slice is linkage-only. If the static library is
-unused, the linker is expected not to extract unused library members into the
-final driver image. That expectation must be validated by import/symbol
-inspection for the slice.
+Historical plan recorded before production owner integration: the first
+implementation slice was linkage-only. That slice was completed and audited
+before owner embedding and ordinary initialization. Linker extraction behavior
+for the current checkpoint is now interpreted through source, object, COMDAT,
+linker-option, final-image, and manifest evidence.
 
 ## 5. Header and ownership boundaries
 
@@ -200,15 +203,14 @@ into portable model headers is a stop condition.
 
 ## 6. Device-context placement
 
-Future production context field:
+Current production context field:
 
 ```c
 ChatpadKmdfActivationRequestOwner ActivationRequestOwner;
 ```
 
-Conceptual placement is inside `CHATPAD_FILTER_DEVICE_CONTEXT`, after the
-existing lifecycle state unless implementation evidence favors another
-alignment-only location:
+The field is embedded directly in `CHATPAD_FILTER_DEVICE_CONTEXT` with the
+other per-device state:
 
 ```c
 typedef struct _CHATPAD_FILTER_DEVICE_CONTEXT {
@@ -238,7 +240,7 @@ to the same `WDFDEVICE`.
 
 ## 7. Exact ordinary initialization location
 
-The future ordinary owner-storage initializer shall be called in
+The completed ordinary owner-storage initializer is called in
 `ChatpadEvtDeviceAdd` after these current statements:
 
 ```c
@@ -271,6 +273,10 @@ observe uninitialized owner state, no target or hardware is required,
 initialization occurs once per device instance, initialization failure can fail
 `EvtDeviceAdd`, and no D0-cycle reconstruction occurs.
 
+The initializer validates the newly initialized storage internally, after which
+`EvtDeviceAdd` performs one additional explicit pre-object
+integration-boundary validation.
+
 ## 8. Exact dormant orchestration location
 
 `ChatpadKmdfRequestOwnerCreateDormantObjectGraph` shall eventually be called
@@ -286,6 +292,13 @@ ownerStorageResult =
     ChatpadKmdfRequestOwnerInitializeStorage(&context->ActivationRequestOwner);
 if (ownerStorageResult != CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK) {
     return ChatpadKmdfStorageResultToStatus(ownerStorageResult);
+}
+
+ownerValidationResult = ChatpadKmdfRequestOwnerValidatePreObjectState(
+    &context->ActivationRequestOwner,
+    &ownerStorageValidation);
+if (ownerValidationResult != CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK) {
+    return STATUS_INVALID_DEVICE_STATE;
 }
 
 orchestrationResult = ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
@@ -306,8 +319,10 @@ Existing initialization that must precede orchestration:
 - `WdfDeviceCreate` succeeded.
 - `ChatpadFilterGetDeviceContext(device)` returned the production context.
 - `Signature`, `Version`, and `DiagnosticSequence` were set.
-- Ordinary activation owner storage was initialized and validated to a clean
-  `MODEL_READY` baseline.
+- Ordinary activation owner storage was initialized and internally validated by
+  the initializer; `EvtDeviceAdd` then performed one additional explicit
+  pre-object integration-boundary validation to prove a clean `MODEL_READY`
+  baseline.
 
 Current operations that follow orchestration:
 
@@ -323,21 +338,25 @@ only once per device instance.
 
 ## 9. Production integration call sequence
 
-The intended future call sequence is:
+The current completed call sequence is:
 
 1. Retrieve the device context with `ChatpadFilterGetDeviceContext(device)`.
 2. Initialize current context scalar fields.
 3. Initialize ordinary owner storage with
    `ChatpadKmdfRequestOwnerInitializeStorage`.
-4. Validate the clean baseline with
-   `ChatpadKmdfRequestOwnerValidatePreObjectState` if not already proven by
-   the initializer result.
-5. Invoke `ChatpadKmdfRequestOwnerCreateDormantObjectGraph`.
-6. Require structural `OWNER_READY` through the orchestration success result
-   and final ready validation report.
-7. Continue existing lifecycle setup.
-8. Return success only after all existing required `EvtDeviceAdd` steps
+4. Rely on the initializer's internal validation of the newly initialized
+   storage.
+5. Perform one additional explicit pre-object integration-boundary validation
+   with `ChatpadKmdfRequestOwnerValidatePreObjectState`.
+6. Continue existing lifecycle setup only after both owner steps succeed.
+7. Return success only after all existing required `EvtDeviceAdd` steps
    complete.
+
+The remaining future orchestration sequence begins after step 5 and before
+lifecycle initialization: invoke
+`ChatpadKmdfRequestOwnerCreateDormantObjectGraph`, require structural
+`OWNER_READY` through the orchestration success result and final ready
+validation report, then continue existing lifecycle setup.
 
 Status behavior:
 
@@ -551,9 +570,11 @@ Unresolved IRQL assumptions are stop conditions before implementation if any
 future observer, cleanup path, completion path, cancellation path, or rundown
 path would run above the level required by its operations.
 
-## 18. Project-linkage-only dormancy
+## 18. Completed project-linkage-only dormancy
 
-The smallest future implementation slice shall:
+Historical plan recorded before production owner integration. This slice was
+completed by the project-linkage checkpoint before commit
+`a25d5637487ec6e4e7583a64dcec6c5192e06092`. The completed slice:
 
 - add `ChatpadKmdfRequestOwnerContext.vcxproj` as a production dependency of
   `ChatpadFilter`;
@@ -567,37 +588,42 @@ The smallest future implementation slice shall:
   import is unavoidable;
 - preserve runtime behavior.
 
-An unused static library is expected to contribute no object members to the
-final image because no production symbol references it. The slice must prove
-that expectation by symbol/import inspection. This is the first implementation
-slice after this design unless project-system evidence proves it meaningless or
-impossible.
+At that completed historical checkpoint, the unused static library was expected
+not to contribute object members to the final image because no production
+symbol referenced it. The completed checkpoint proved that expectation by
+symbol/import inspection. Later owner embedding and ordinary initialization
+supersede only the no-owner/no-helper portions of this historical boundary.
 
-## 19. Device-context embedding without invocation
+## 19. Completed device-context embedding
 
-The second separately gated slice shall:
+Historical plan recorded before production owner integration. The owner
+embedding portion is complete. The completed production checkpoint:
 
 - include `ChatpadKmdfRequestOwnerContext.h` from `driver.h`;
 - embed one `ChatpadKmdfActivationRequestOwner ActivationRequestOwner` in
   `CHATPAD_FILTER_DEVICE_CONTEXT`;
-- avoid initialization and helper invocation;
+- initialized ordinary owner storage in the same completed checkpoint rather
+  than leaving it observable as uninitialized storage;
+- avoided dormant orchestration and WDF object creation;
 - avoid callback changes;
 - compile the production driver;
 - confirm no object-management imports are introduced merely by embedding
   ordinary storage.
 
-Leaving embedded storage uninitialized is acceptable only while no production
-code can observe it. If the compiler, static analysis, or code review shows a
-current observer could read it, combine embedding with ordinary initialization
-in the next authorized slice and document why the separation is unsafe.
+Leaving embedded storage uninitialized remains a rejected future pattern if any
+production observer could read it.
 
-## 20. Ordinary initialization without WDF creation
+## 20. Completed ordinary initialization without WDF creation
 
-The next separately gated slice shall:
+Historical plan recorded before production owner integration. The ordinary
+initialization slice is complete. The completed production checkpoint:
 
-- call only `ChatpadKmdfRequestOwnerInitializeStorage`;
+- calls `ChatpadKmdfRequestOwnerInitializeStorage` exactly once;
+- relies on the initializer's internal validation;
+- performs one additional explicit pre-object integration-boundary validation
+  with `ChatpadKmdfRequestOwnerValidatePreObjectState`;
 - perform no WDF object creation;
-- validate the clean baseline;
+- validates the clean baseline without publishing `OWNER_READY`;
 - run from the selected post-scalar context initialization point;
 - return failure on invariant violation;
 - remain externally behavior-neutral.
@@ -727,29 +753,28 @@ commit hash because doing so would be self-referential. The linkage checkpoint
 created the manifest, and the later evidence-correction checkpoint completed
 its command, path, result, and hash fields.
 
-## 27. Future implementation decomposition
+## 27. Implementation decomposition
 
 Separately authorized slices:
 
-1. Production project-reference and include-path integration only. Prohibited:
-   owner embedding, helper invocation, callback changes, object creation,
-   target/request behavior, signing, installation, loading, hardware access.
-2. Independent audit of project linkage. Prohibited: edits unless the audit
-   task explicitly permits documentation updates.
-3. Device-context embedding, combined with ordinary initialization only if
-   uninitialized embedding cannot be safely isolated. Prohibited: WDF object
-   creation and helper orchestration.
-4. Independent audit of device-context and initialization integration.
-5. Dormant orchestration invocation at the selected `EvtDeviceAdd` location.
+1. Completed: production project-reference and include-path integration only.
+2. Completed: independent audit of project linkage and evidence correction.
+3. Completed: device-context owner embedding plus ordinary initialization.
+4. Completed: independent audit and evidence correction for owner
+   initialization, followed by this documentation consistency correction.
+5. Remaining future integration: dormant orchestration invocation at the
+   selected `EvtDeviceAdd` location.
    Prohibited: target discovery, formatting, submission, completion,
    cancellation, D0/removal observer changes, signing, loading, hardware.
-6. Independent read-only audit of executable production integration.
-7. Separately designed target discovery after the dormant owner is audited.
-8. Request-formatting design.
-9. Submission, completion, and cancellation implementation.
-10. D0 and removal rundown.
-11. Signing and package validation.
-12. Separately authorized installation and hardware observation.
+6. Remaining: independent read-only audit of executable dormant orchestration
+   integration if that future slice is implemented.
+7. Remaining: separately designed target discovery after the dormant owner is
+   audited.
+8. Remaining: request-formatting design.
+9. Remaining: submission, completion, and cancellation implementation.
+10. Remaining: D0 and removal rundown.
+11. Remaining: signing and package validation.
+12. Remaining: separately authorized installation and hardware observation.
 
 No implementation slice is authorized by this document.
 
@@ -760,8 +785,8 @@ Binding decisions:
 1. Linkage mechanism: native production `ProjectReference` to the existing
    `ChatpadKmdfRequestOwnerContext` static library, plus required native
    dependency resolution for `ChatpadRequestOwnerModel`.
-2. Header boundary: `driver.h` includes the authoritative context header only
-   when owner embedding is authorized; no type duplication.
+2. Header boundary: `driver.h` includes the authoritative context header; no
+   type duplication.
 3. Owner placement: one embedded
    `ChatpadKmdfActivationRequestOwner ActivationRequestOwner` in the
    per-device context.
@@ -785,7 +810,10 @@ Binding decisions:
     observers require renewed IRQL proof.
 12. Evidence-retention format: tracked JSON manifests under `docs/evidence/`
     plus ignored hashed logs under `artifacts\logs`.
-13. Next smallest implementation slice: project-linkage-only dormancy.
+13. Next unaudited implementation slice after the completed owner
+    initialization state: dormant object-graph orchestration. The immediate
+    next repository task after this documentation correction is an independent
+    read-only documentation-consistency audit, not orchestration.
 
 Stop conditions:
 
@@ -825,5 +853,6 @@ pre-object-validation slice:
 
 The checkpoint record is
 [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
-The next gate is an independent read-only audit. Dormant orchestration remains
-unauthorized.
+The audit-correction checkpoint is complete, and this document now records the
+current state consistently. The next gate is an independent read-only
+documentation-consistency audit. Dormant orchestration remains unauthorized.

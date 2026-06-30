@@ -1,10 +1,10 @@
 # Project State
 
-*Last updated: 2026-06-30 (owner-initialization audit corrections)*
+*Last updated: 2026-06-30 (owner-initialization documentation consistency)*
 
 ## Current state
 
-- **Branch:** `feature/offline-owner-init-audit-corrections`.
+- **Branch:** `feature/offline-owner-init-doc-consistency`.
 - **Starting checkpoint:** `a25d5637487ec6e4e7583a64dcec6c5192e06092`,
   `driver: initialize production request owner`.
 - **Expected commit:** the commit containing this state uses subject
@@ -15,6 +15,10 @@
   [Offline KMDF Owner Initialization Audit Corrections](OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md).
 - **Evidence manifest:**
   [production-owner-initialization-manifest.json](evidence/production-owner-initialization-manifest.json).
+- **Documentation consistency:** the production integration design and porting
+  plan now distinguish original pre-integration design history, completed
+  linkage/owner-embedding/ordinary-initialization slices, current production
+  reality, and remaining future integration.
 - **Production context:** `driver.h` includes the authoritative KMDF
   request-owner header and embeds exactly one
   `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
@@ -54,8 +58,8 @@
 
 ## Unresolved blockers
 
-- The corrected owner-initialization audit evidence requires an independent
-  read-only audit.
+- The documentation-consistency correction requires an independent read-only
+  documentation-consistency audit.
 - Dormant orchestration invocation remains unauthorized.
 - Normal teardown, active-operation rundown, target discovery, request
   operations, D0 coordination, signing, staging, installation, loading, and

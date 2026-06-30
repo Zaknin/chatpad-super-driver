@@ -80,12 +80,12 @@ Source references:
   request-parented outbound/inbound preallocated memory, explicit
   initialization-failure rollback, no cleanup/destroy callbacks, and no target
   at request creation.
-- The ordinary KMDF request-owner storage initialization checkpoint is complete
+- The isolated ordinary KMDF request-owner storage initialization checkpoint is complete
   in `docs/OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md`. It initializes only
   ordinary owner storage, embeds the pure model baseline, clears fixed
   two-byte transfer/completion storage, leaves future WDF handles null, and
-  sets only `MODEL_READY`; it creates no WDF object and remains absent from
-  `ChatpadFilter`.
+  sets only `MODEL_READY`; it creates no WDF object. At that historical
+  isolated checkpoint, the helper remained absent from `ChatpadFilter`.
 - The compile-only KMDF object-attribute preparation checkpoint is complete in
   `docs/OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md`. Four exact helpers encode
   device parentage for the lock/request, request parentage for both memory
@@ -100,23 +100,40 @@ Source references:
   `docs/OFFLINE-KMDF-CREATION-ORCHESTRATION.md`. It composes the existing
   lock, request, outbound-memory, inbound-memory, validation, and rollback
   helpers into one all-or-nothing helper and publishes structural
-  `OWNER_READY` only after complete validation. The helper remains unlinked
-  from `ChatpadFilter` and unexecuted.
+  `OWNER_READY` only after complete validation. The orchestration helper
+  remains uncalled by production `ChatpadFilter` and unexecuted.
 - The documentation-only production-integration design checkpoint is complete
   in `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`. It selects native
   static-library project linkage as the first production slice, one embedded
-  owner in the future device context, ordinary storage initialization after
-  current context scalar setup, dormant orchestration at the same
-  `EvtDeviceAdd` point before lifecycle initialization, framework cleanup for
-  later post-ready `EvtDeviceAdd` failure, JSON evidence manifests, and
-  project-linkage-only dormancy as the next implementation gate.
+  owner in the device context, ordinary storage initialization after current
+  context scalar setup, dormant orchestration at the same `EvtDeviceAdd` point
+  before lifecycle initialization, framework cleanup for later post-ready
+  `EvtDeviceAdd` failure, JSON evidence manifests, and independently gated
+  implementation slices.
 - The project-linkage-only dormant production checkpoint is complete in
   `docs/OFFLINE-KMDF-PRODUCTION-LINKAGE.md`, with tracked evidence in
-  `docs/evidence/production-linkage-manifest.json`. `ChatpadFilter` now has
-  one native static-library project reference to
-  `ChatpadKmdfRequestOwnerContext`; no production source/header integration,
-  owner embedding, helper invocation, WDF object creation, or runtime behavior
-  change occurred.
+  `docs/evidence/production-linkage-manifest.json`. At that historical
+  checkpoint, `ChatpadFilter` gained one native static-library project
+  reference to `ChatpadKmdfRequestOwnerContext`; no production source/header
+  integration, owner embedding, helper invocation, WDF object creation, or
+  runtime behavior change occurred.
+- The production owner embedding and ordinary-initialization checkpoint is
+  complete in `docs/OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md`, with
+  tracked evidence in
+  `docs/evidence/production-owner-initialization-manifest.json`. Current
+  production `driver.h` includes the authoritative request-owner context
+  header, the per-device context embeds exactly one
+  `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`, and
+  `EvtDeviceAdd` calls the ordinary initializer exactly once. The initializer
+  validates the newly initialized storage internally, after which
+  `EvtDeviceAdd` performs one additional explicit pre-object
+  integration-boundary validation before lifecycle initialization.
+- The owner-initialization audit-corrections checkpoint is complete in
+  `docs/OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md`. It corrected
+  documentation, guard wording, and retained evidence without changing
+  production implementation. This documentation-consistency correction cleans
+  up stale current-state wording left in the production integration design and
+  porting roadmap.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.
@@ -169,18 +186,18 @@ The offline request-owner preparation path now includes compile-only,
 uninvoked helpers for device-parented lock/request creation, request-parented
 outbound/inbound preallocated-memory creation, request-first/spinlock-second
 rollback, all-or-nothing structural-ready orchestration, and a
-documentation-only production-integration design. The project-linkage-only
-dormancy gate for the existing static-library context module is complete. Its
-evidence was audited, and the production context now embeds one authoritative
-owner and calls only ordinary initialization and one additional explicit
-pre-object validation before lifecycle initialization. The portable model
-source is linked as a WDK object; the isolated KMDF context source still comes
-only from its static-library project. The owner-initialization evidence was
-corrected in
-[the audit-corrections record](OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md).
-The next gate is an independent read-only audit of that correction. This does
-not authorize dormant orchestration, WDF object creation, request execution,
-deployment, or hardware validation.
+documentation-only production-integration design. Production project linkage,
+owner embedding, ordinary initializer integration, explicit pre-object
+validation, independent audits, and evidence corrections are complete. The
+production context now embeds one authoritative owner and calls only ordinary
+initialization and one additional explicit pre-object validation before
+lifecycle initialization. The portable model source is linked as a WDK object;
+the isolated KMDF context source still comes only from its static-library
+project. This documentation-only consistency correction does not authorize
+dormant orchestration, actual request-owner WDF object creation during driver
+loading, target discovery, request formatting/submission/completion/
+cancellation, D0/removal rundown, signing, staging, installation, loading, or
+hardware validation.
 
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`
