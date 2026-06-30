@@ -782,6 +782,17 @@ future WDF handle fields null, and sets only `MODEL_READY`.
 
 This checkpoint does not publish `OWNER_READY`, create a lock, request, memory
 object, target, callback, runtime driver path, install/load path, signing path,
-or hardware interaction. The next smallest implementation slice is
-compile-only object-attribute/parentage preparation, still without WDF object
-creation.
+or hardware interaction.
+
+## 35. KMDF object-attribute preparation checkpoint
+
+[Offline KMDF Object-Attribute Preparation Checkpoint](OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md)
+implements four compile-only builders for the selected future object graph.
+Lock/request attributes encode device parentage; outbound/inbound memory
+attributes encode request parentage; only request attributes attach the typed
+request context. Execution level remains inherited, automatic synchronization
+is disabled, and no cleanup/destroy callback exists.
+
+This checkpoint initializes caller-owned attributes only. It creates no
+framework object, publishes no handle or owner-ready state, and remains absent
+from `ChatpadFilter`.

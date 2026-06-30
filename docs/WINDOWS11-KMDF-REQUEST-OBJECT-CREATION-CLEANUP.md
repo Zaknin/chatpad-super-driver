@@ -551,7 +551,8 @@ Smallest implementation slices, each requiring explicit authorization:
 1. Pure helper for owner-structure initialization and validation, with no WDF
    object-creation call. Complete in
    [Offline KMDF Owner Storage Initialization Checkpoint](OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md).
-2. Compile-only attribute builders.
+2. Compile-only attribute builders. Complete in
+   [Offline KMDF Object-Attribute Preparation Checkpoint](OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md).
 3. Dormant spinlock and request creation.
 4. Dormant preallocated outbound and inbound memory creation.
 5. Partial-failure rollback and device cleanup.

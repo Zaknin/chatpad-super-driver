@@ -42,14 +42,33 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_OWNER !=
     CHATPAD_KMDF_REQUEST_OWNER_STORAGE_NULL_VALIDATION);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_PRE_OBJECT_READY >
     CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_MODEL_BASELINE);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK == 0);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_DEVICE_PARENT !=
+    CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_REQUEST_PARENT);
 
-void ChatpadKmdfRequestOwnerContextCompileCheckAttributes(void)
+void ChatpadKmdfRequestOwnerContextCompileCheckAttributes(
+    WDFDEVICE device,
+    WDFREQUEST request)
 {
+    WDF_OBJECT_ATTRIBUTES lockAttributes;
     WDF_OBJECT_ATTRIBUTES requestAttributes;
-    WDF_OBJECT_ATTRIBUTES memoryAttributes;
+    WDF_OBJECT_ATTRIBUTES outboundMemoryAttributes;
+    WDF_OBJECT_ATTRIBUTES inboundMemoryAttributes;
+    ChatpadKmdfRequestOwnerAttributeResult attributeResult;
 
-    ChatpadKmdfRequestOwnerInitializeRequestAttributes(&requestAttributes);
-    ChatpadKmdfRequestOwnerInitializePlainMemoryAttributes(&memoryAttributes);
+    attributeResult = ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes(
+        device,
+        &lockAttributes);
+    attributeResult = ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes(
+        device,
+        &requestAttributes);
+    attributeResult = ChatpadKmdfRequestOwnerPrepareOutboundMemoryAttributes(
+        request,
+        &outboundMemoryAttributes);
+    attributeResult = ChatpadKmdfRequestOwnerPrepareInboundMemoryAttributes(
+        request,
+        &inboundMemoryAttributes);
+    UNREFERENCED_PARAMETER(attributeResult);
 }
 
 void ChatpadKmdfRequestOwnerContextCompileCheckTypes(void)

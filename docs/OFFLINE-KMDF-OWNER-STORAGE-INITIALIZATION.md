@@ -126,9 +126,10 @@ pre-object invariants.
 
 The guard passes in Debug and Release context compile-check runs.
 
-## Relationship to the next slice
+## Follow-on attribute preparation
 
-The owner is now a valid pre-object ordinary-storage record only. The next
-safe slice is compile-only attribute builders and parentage preparation for
-the future device-parented lock/request and request-parented memory objects,
-still without object creation or production-driver linkage.
+The owner remains a valid pre-object ordinary-storage record only.
+[Offline KMDF Object-Attribute Preparation Checkpoint](OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md)
+now implements caller-owned attribute builders for the future device-parented
+lock/request and request-parented memory objects. That follow-on creates no WDF
+object, does not publish owner-ready, and does not link into `ChatpadFilter`.

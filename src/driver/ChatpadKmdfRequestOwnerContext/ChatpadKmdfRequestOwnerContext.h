@@ -72,6 +72,13 @@ typedef enum ChatpadKmdfRequestOwnerStorageValidationFlag {
     CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_PRE_OBJECT_READY = 0x00000400u
 } ChatpadKmdfRequestOwnerStorageValidationFlag;
 
+typedef enum ChatpadKmdfRequestOwnerAttributeResult {
+    CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK = 0,
+    CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_ATTRIBUTES,
+    CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_DEVICE_PARENT,
+    CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_REQUEST_PARENT
+} ChatpadKmdfRequestOwnerAttributeResult;
+
 typedef struct ChatpadKmdfActivationTransferStorage {
     uint8_t OutboundBytes[CHATPAD_KMDF_ACTIVATION_OUTBOUND_CAPACITY];
     uint8_t InboundBytes[CHATPAD_KMDF_ACTIVATION_INBOUND_CAPACITY];
@@ -131,10 +138,24 @@ ChatpadKmdfRequestOwnerStorageResult ChatpadKmdfRequestOwnerValidatePreObjectSta
     const ChatpadKmdfActivationRequestOwner *owner,
     ChatpadKmdfRequestOwnerStorageValidation *validation);
 
-void ChatpadKmdfRequestOwnerInitializeRequestAttributes(
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes(
+    WDFDEVICE device,
     WDF_OBJECT_ATTRIBUTES *attributes);
 
-void ChatpadKmdfRequestOwnerInitializePlainMemoryAttributes(
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes(
+    WDFDEVICE device,
+    WDF_OBJECT_ATTRIBUTES *attributes);
+
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareOutboundMemoryAttributes(
+    WDFREQUEST request,
+    WDF_OBJECT_ATTRIBUTES *attributes);
+
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareInboundMemoryAttributes(
+    WDFREQUEST request,
     WDF_OBJECT_ATTRIBUTES *attributes);
 
 #ifdef __cplusplus

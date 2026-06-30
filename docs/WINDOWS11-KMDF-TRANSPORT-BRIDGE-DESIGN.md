@@ -674,3 +674,13 @@ handle fields null, and sets only `MODEL_READY`.
 This checkpoint creates no lock, request, memory object, target, callback, or
 runtime driver path. It is validated by WDK compile-checks and semantic guards
 and remains absent from `ChatpadFilter`.
+
+## 34. KMDF object-attribute preparation checkpoint
+
+[Offline KMDF Object-Attribute Preparation Checkpoint](OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md)
+implements the bridge's compile-only parentage preparation. It provides exact
+device-parented lock/request and request-parented outbound/inbound memory
+attribute builders, attaches typed context only to the request, and selects no
+automatic synchronization or object callbacks.
+
+No bridge object or runtime path exists because of this checkpoint.

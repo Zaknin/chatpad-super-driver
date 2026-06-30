@@ -658,3 +658,15 @@ request, or memory objects, link into `ChatpadFilter`, format or send a
 request, register completion, cancel, discover a target, install, load, sign,
 stage, or access hardware. It is validated by WDK compile-checks and semantic
 guards rather than a fake host-side WDF runtime.
+
+## 24. KMDF object-attribute preparation checkpoint
+
+[Offline KMDF Object-Attribute Preparation Checkpoint](OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md)
+implements exact caller-owned attribute preparation for the future lock,
+request, outbound memory, and inbound memory objects. It encodes device
+parentage for lock/request, request parentage for both memory descriptors, and
+the typed activation context only for the request.
+
+The helpers create no object and do not alter transfer-buffer lifetime. The
+fixed two-byte arrays remain ordinary owner storage, no memory descriptor
+exists, and no request can reference either array.

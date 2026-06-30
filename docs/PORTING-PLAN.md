@@ -86,11 +86,16 @@ Source references:
   two-byte transfer/completion storage, leaves future WDF handles null, and
   sets only `MODEL_READY`; it creates no WDF object and remains absent from
   `ChatpadFilter`.
+- The compile-only KMDF object-attribute preparation checkpoint is complete in
+  `docs/OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md`. Four exact helpers encode
+  device parentage for the lock/request, request parentage for both memory
+  descriptors, typed context only for the request, inherited execution level,
+  no automatic synchronization, and no cleanup/destroy callback.
 - No WDF activation-owner object currently exists. If separately authorized,
-  the next smallest slice is compile-only object-attribute/parentage
-  preparation with no WDF object creation. Do not add runtime request
-  formatting, submission, completion, cancellation, target discovery,
-  installation, or hardware access in that slice unless explicitly authorized.
+  the next smallest slice is isolated dormant spinlock and targetless request
+  creation, without memory creation or `ChatpadFilter` linkage. Do not add
+  runtime request formatting, submission, completion, cancellation, target
+  discovery, installation, or hardware access unless explicitly authorized.
 - Before any INF or runtime bridge work, design and review a reversible,
   device-specific lower-filter installation and recovery procedure for
   `USB\VID_045E&PID_028E`.

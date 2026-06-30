@@ -38,6 +38,7 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY >
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_INIT_DRAINING !=
     CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK == 0);
+C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK == 0);
 C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_SIGNATURE !=
     CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_PRE_OBJECT_READY);
 
@@ -341,16 +342,112 @@ ChatpadKmdfRequestOwnerStorageResult ChatpadKmdfRequestOwnerInitializeStorage(
     return validationResult;
 }
 
-void ChatpadKmdfRequestOwnerInitializeRequestAttributes(
+static ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerValidateDeviceAttributeArguments(
+    WDFDEVICE device,
     WDF_OBJECT_ATTRIBUTES *attributes)
 {
+    if (attributes == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_ATTRIBUTES;
+    }
+    if (device == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_DEVICE_PARENT;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK;
+}
+
+static ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerValidateRequestAttributeArguments(
+    WDFREQUEST request,
+    WDF_OBJECT_ATTRIBUTES *attributes)
+{
+    if (attributes == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_ATTRIBUTES;
+    }
+    if (request == NULL) {
+        return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_REQUEST_PARENT;
+    }
+    return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK;
+}
+
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes(
+    WDFDEVICE device,
+    WDF_OBJECT_ATTRIBUTES *attributes)
+{
+    ChatpadKmdfRequestOwnerAttributeResult result;
+
+    result = ChatpadKmdfRequestOwnerValidateDeviceAttributeArguments(
+        device,
+        attributes);
+    if (result != CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK) {
+        return result;
+    }
+
+    WDF_OBJECT_ATTRIBUTES_INIT(attributes);
+    attributes->ParentObject = device;
+    attributes->SynchronizationScope = WdfSynchronizationScopeNone;
+    return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK;
+}
+
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes(
+    WDFDEVICE device,
+    WDF_OBJECT_ATTRIBUTES *attributes)
+{
+    ChatpadKmdfRequestOwnerAttributeResult result;
+
+    result = ChatpadKmdfRequestOwnerValidateDeviceAttributeArguments(
+        device,
+        attributes);
+    if (result != CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK) {
+        return result;
+    }
+
     WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE(
         attributes,
         ChatpadKmdfActivationRequestContext);
+    attributes->ParentObject = device;
+    attributes->SynchronizationScope = WdfSynchronizationScopeNone;
+    return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK;
 }
 
-void ChatpadKmdfRequestOwnerInitializePlainMemoryAttributes(
+static ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareMemoryAttributes(
+    WDFREQUEST request,
     WDF_OBJECT_ATTRIBUTES *attributes)
 {
+    ChatpadKmdfRequestOwnerAttributeResult result;
+
+    result = ChatpadKmdfRequestOwnerValidateRequestAttributeArguments(
+        request,
+        attributes);
+    if (result != CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK) {
+        return result;
+    }
+
     WDF_OBJECT_ATTRIBUTES_INIT(attributes);
+    attributes->ParentObject = request;
+    attributes->SynchronizationScope = WdfSynchronizationScopeNone;
+    return CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_OK;
+}
+
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareOutboundMemoryAttributes(
+    WDFREQUEST request,
+    WDF_OBJECT_ATTRIBUTES *attributes)
+{
+    return ChatpadKmdfRequestOwnerPrepareMemoryAttributes(
+        request,
+        attributes);
+}
+
+ChatpadKmdfRequestOwnerAttributeResult
+ChatpadKmdfRequestOwnerPrepareInboundMemoryAttributes(
+    WDFREQUEST request,
+    WDF_OBJECT_ATTRIBUTES *attributes)
+{
+    return ChatpadKmdfRequestOwnerPrepareMemoryAttributes(
+        request,
+        attributes);
 }

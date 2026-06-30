@@ -1,0 +1,62 @@
+# Offline KMDF Object-Attribute Preparation Checkpoint
+
+This checkpoint implements compile-only `WDF_OBJECT_ATTRIBUTES` preparation
+for the future dormant activation request-owner objects. It initializes
+caller-owned attribute structures and creates no framework object.
+
+## Implemented helpers
+
+`ChatpadKmdfRequestOwnerContext` now exposes four exact helpers:
+
+- `ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes`;
+- `ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes`;
+- `ChatpadKmdfRequestOwnerPrepareOutboundMemoryAttributes`;
+- `ChatpadKmdfRequestOwnerPrepareInboundMemoryAttributes`.
+
+The lock and activation-request helpers require a non-null `WDFDEVICE` and set
+it as `ParentObject`. The outbound and inbound memory helpers require a
+non-null `WDFREQUEST` and set it as `ParentObject`. The request helper uses
+`WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE` with
+`ChatpadKmdfActivationRequestContext`; the other helpers use ordinary
+`WDF_OBJECT_ATTRIBUTES_INIT`.
+
+All four helpers:
+
+- reject a null attribute output;
+- reject a null required parent through a typed result;
+- leave execution level inherited from the parent;
+- explicitly select `WdfSynchronizationScopeNone`;
+- register no cleanup or destroy callback;
+- initialize only caller-owned attributes.
+
+The two memory helpers intentionally share the same internal plain-memory
+preparation path while remaining separate public APIs so outbound and inbound
+intent is explicit at future call sites.
+
+## Validation
+
+The WDK compile-check calls all four exact signatures with typed `WDFDEVICE`
+and `WDFREQUEST` arguments. The semantic wrapper proves:
+
+- exactly two device-parent assignments exist;
+- one shared request-parent assignment serves both memory builders;
+- only the activation request receives the typed request context;
+- no helper overrides inherited execution level;
+- no helper registers cleanup or destroy callbacks;
+- no WDF object-creation, deletion, reference, target, formatting, send,
+  cancellation, completion, installation, signing, or hardware surface exists;
+- the ordinary storage baseline remains model-ready only;
+- `ChatpadFilter` remains unlinked from the context module.
+
+## Explicit non-scope
+
+This checkpoint does not create a lock, request, memory object, device, target,
+queue, timer, work item, callback, thread, or event. It does not call any WDF
+object-creation API, publish `OWNER_READY`, change `DriverEntry`,
+`EvtDeviceAdd`, the live device context, INF/package/signing/install paths, or
+access any device or hardware.
+
+The next implementation gate is dormant spinlock and targetless reusable
+request creation in the isolated context module, with no memory creation,
+production-driver linkage, request formatting, submission, completion,
+cancellation, installation, or hardware access.

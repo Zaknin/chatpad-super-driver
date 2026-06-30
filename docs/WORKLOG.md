@@ -2593,3 +2593,140 @@
   discovery, request formatting, submission, completion, cancellation, D0
   rundown, signing, staging, installation, loading, and hardware validation
   remain separate authorization gates.
+
+## 2026-06-30 12:35 +04:00 - KMDF object-attribute preparation checkpoint
+
+- **Task title and objective:** Implement only compile-only
+  `WDF_OBJECT_ATTRIBUTES` preparation for the future dormant activation-owner
+  bookkeeping lock, reusable request, outbound memory, and inbound memory,
+  without creating a WDF object or changing production-driver behavior.
+- **Starting branch and commit:** Verified
+  `feature/offline-kmdf-owner-storage-init` at
+  `eee073e093ca10545ff6638044763653d5148487`, parent
+  `91f645b983140b38c2985c67ea51020934bee515`, with
+  `origin/feature/offline-kmdf-owner-storage-init` at the same commit and a
+  clean worktree/index.
+- **Previous checkpoint verification:** Before editing,
+  `.\tools\Test-RepositorySafety.ps1` passed and
+  `.\tools\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Debug
+  -Platform x64` passed its semantic guard and WDK compile-check.
+- **Working branch:** Created `feature/offline-kmdf-object-attributes` from the
+  verified starting commit.
+- **Investigation summary:** Re-read the repository protocol and continuation
+  documents, inspected the ordinary storage helper, existing generic attribute
+  initializers, compile-check source, semantic wrapper, dormant object graph,
+  and installed KMDF 1.15 `WDF_OBJECT_ATTRIBUTES` definition. The old generic
+  initializers attached request context or initialized plain attributes but
+  did not encode or validate the selected parent object.
+- **Files created:** `docs/OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md`.
+- **Files modified:** `docs/DECISIONS.md`; `docs/NEXT-TASK.md`;
+  `docs/OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md`;
+  `docs/OFFLINE-KMDF-REQUEST-OWNER-CONTEXT-DEFINITION.md`;
+  `docs/PORTING-PLAN.md`; `docs/PROJECT-STATE.md`;
+  `docs/WINDOWS11-CHATPAD-TRANSPORT-ARCHITECTURE.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OBJECT-CREATION-CLEANUP.md`;
+  `docs/WINDOWS11-KMDF-REQUEST-OWNER-BUFFER-LIFETIME.md`;
+  `docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h`;
+  `src/driver/ChatpadKmdfRequestOwnerContext/README.md`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/ChatpadKmdfRequestOwnerContextCompileCheck.c`;
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/README.md`;
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1`; this worklog.
+- **Implementation details:** Replaced the two generic attribute initializers
+  with four exact typed APIs:
+  `ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes`,
+  `ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes`,
+  `ChatpadKmdfRequestOwnerPrepareOutboundMemoryAttributes`, and
+  `ChatpadKmdfRequestOwnerPrepareInboundMemoryAttributes`. Added
+  `ChatpadKmdfRequestOwnerAttributeResult` for null output, null device parent,
+  and null request parent failures. Lock/request attributes set
+  `ParentObject` to the caller's `WDFDEVICE`; both memory APIs use one internal
+  plain-memory builder that sets `ParentObject` to the caller's `WDFREQUEST`.
+  Only request attributes use
+  `WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE` with
+  `ChatpadKmdfActivationRequestContext`. All helpers leave execution level
+  inherited, explicitly set `WdfSynchronizationScopeNone`, and register no
+  cleanup or destroy callback.
+- **Semantic guard details:** The context wrapper now requires all four public
+  APIs and typed failures, exactly two device-parent assignments, exactly one
+  shared request-parent assignment, exactly three explicit no-automatic-
+  synchronization assignments, typed request context only through the request
+  initializer, no execution-level override, no cleanup/destroy callback
+  assignment, and compile-check invocation of every exact helper. Existing
+  object-creation, formatting, submission, cancellation, target, installation,
+  and runtime-linkage prohibitions remain active.
+- **Important failed validation harness attempts:** The first combined
+  regression harness invocation failed before running a test because an
+  argument array was passed positionally and supplied `-Configuration` as the
+  configuration value. The same checks were rerun with explicit named
+  parameters and passed. A later combined audit used the reserved PowerShell
+  variable `$Error` for an MSBuild-summary match, so that portion emitted
+  `Cannot overwrite variable Error`; the summary check was rerun with
+  `$errorSummary` and proved both logs had zero warnings and zero errors.
+- **Context validation:** Final Debug and Release
+  `Test-ChatpadKmdfRequestOwnerContext.ps1` runs exited `0`; semantic,
+  signing-execution, prohibited-output, artifact-containment, and compile
+  guards passed. Logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Debug-20260630T083441Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\chatpad-kmdf-request-owner-context-Release-20260630T083443Z.log`.
+  Final Debug context/compile-check library SHA-256 values were
+  `6F15AF77AC79C553E5FF7647C4B532D281551E5C551A237C3471A4D2A9E6DE8B`
+  and
+  `8F352D2AD9D2AED185C4D3A1949A1426EDB9EC59AE4AC1F7707132E4431B18D6`;
+  Release values were
+  `E99958BB49DD4BF8B1D02E2BBF5973C1D3AA7AB7F493BBFB5845D194567E98B9`
+  and
+  `011AAD7089063AA9124295CE7DC458DA52827A7D777EBAC8C680EA9E24ACDC94`.
+- **Offline regression validation:** Debug and Release runs all exited `0`:
+  request-owner model `5002/5002`; integrated protocol `610/610`; transport
+  `186/186`; control setup `141/141`; filter lifecycle `109/109`; protocol
+  kernel compatibility; and WDF control-setup compile-check. Their build/test
+  logs are under
+  `C:\Dev\chatpad-super-driver\artifacts\logs\` with timestamps
+  `20260630T083351Z` through `20260630T083407Z`.
+- **Driver and solution validation:** Sequential Debug and Release
+  `Build-Driver.ps1` runs exited `0`; logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\build-debug-x64-20260630T083413Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\build-release-x64-20260630T083416Z.log`.
+  Direct full-solution Debug and Release builds exited `0` with zero warnings
+  and zero errors; logs:
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-object-attributes-Debug-20260630T083429Z.log`
+  and
+  `C:\Dev\chatpad-super-driver\artifacts\logs\full-solution-object-attributes-Release-20260630T083431Z.log`.
+  Final full-solution driver artifacts were Debug
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Debug\ChatpadFilter\ChatpadFilter.sys`,
+  15,872 bytes, SHA-256
+  `3251631E3DEB5A6A944B99686E79067F416D3C2E14C6708E6CF97072AFCD2267`,
+  `Authenticode.NotSigned`; and Release
+  `C:\Dev\chatpad-super-driver\artifacts\bin\x64\Release\ChatpadFilter\ChatpadFilter.sys`,
+  12,288 bytes, SHA-256
+  `74A88F7DEAEE609A9B0824576F27A5403DE59100B6F2325340F9E266C8CC2F8F`,
+  `Authenticode.NotSigned`.
+- **Final static validation:** Changed-Markdown link validation passed for 14
+  files; `.\tools\Test-RepositorySafety.ps1` exited `0` with
+  `REPOSITORY SAFETY: PASS`; the prohibited WDF/WDM call scan returned no
+  matches; and `git diff --check` exited `0`.
+- **Generated artifact locations:** All generated libraries, executables,
+  driver binaries, environment reports, and logs remained ignored beneath
+  `C:\Dev\chatpad-super-driver\artifacts\`.
+- **Scope and safety:** `ChatpadFilter`, `DriverEntry`, active callbacks, the
+  live device context, INF/CAT/package/signing/install paths, and `legacy/`
+  were not modified. No WDF object was created, referenced, deleted, formatted,
+  sent, reused, cancelled, or completed. No target was discovered. No InfVerif
+  or Inf2Cat executable was invoked; MSBuild reported its Inf2Cat and DrvCat
+  tasks skipped because no INF/catalog inputs existed. No catalog,
+  certificate, signature, package, staging, installation, registry, service,
+  Driver Store, device, USB, controller, hardware, elevation, or network
+  action occurred before the final authorized push.
+- **Commit and push:** Commit exactly
+  `driver: prepare dormant object attributes` and push only
+  `origin/feature/offline-kmdf-object-attributes`. The final commit hash is
+  reported after commit and push rather than embedded here.
+- **Remaining blockers:** Dormant spinlock/request/memory creation, typed
+  request-context runtime initialization, partial-failure rollback,
+  production-driver linkage, target discovery, formatting, submission,
+  completion, cancellation, D0 rundown, signing, staging, installation,
+  loading, and hardware validation remain separate authorization gates.

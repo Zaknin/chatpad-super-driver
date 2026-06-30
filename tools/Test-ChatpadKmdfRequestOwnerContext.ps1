@@ -144,6 +144,41 @@ function Test-RequestOwnerContextSemanticGuards {
         $joinedCode -notmatch 'WDF_OBJECT_ATTRIBUTES_INIT') {
         throw 'Typed context declaration or ordinary attribute initialization is missing.'
     }
+    $requiredAttributeHelpers = @(
+        'ChatpadKmdfRequestOwnerPrepareBookkeepingLockAttributes',
+        'ChatpadKmdfRequestOwnerPrepareActivationRequestAttributes',
+        'ChatpadKmdfRequestOwnerPrepareOutboundMemoryAttributes',
+        'ChatpadKmdfRequestOwnerPrepareInboundMemoryAttributes')
+    foreach ($helper in $requiredAttributeHelpers) {
+        if ($joinedCode -notmatch [regex]::Escape($helper)) {
+            throw "Required object-attribute preparation helper is missing: $helper"
+        }
+    }
+    if ($joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_ATTRIBUTES' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_DEVICE_PARENT' -or
+        $joinedCode -notmatch 'CHATPAD_KMDF_REQUEST_OWNER_ATTRIBUTES_NULL_REQUEST_PARENT') {
+        throw 'Typed attribute-preparation argument failures are incomplete.'
+    }
+    if ([regex]::Matches($joinedCode, 'attributes->ParentObject\s*=\s*device').Count -ne 2 -or
+        [regex]::Matches($joinedCode, 'attributes->ParentObject\s*=\s*request').Count -ne 1) {
+        throw 'Attribute helpers do not encode exactly two device-parented builders and one shared request-parented memory builder.'
+    }
+    if ([regex]::Matches($joinedCode, 'attributes->SynchronizationScope\s*=\s*WdfSynchronizationScopeNone').Count -ne 3) {
+        throw 'Attribute helpers do not explicitly disable automatic synchronization for lock, request, and shared memory preparation.'
+    }
+    if ($joinedCode -match 'attributes->ExecutionLevel\s*=' -or
+        $joinedCode -match 'attributes->Evt(?:Cleanup|Destroy)Callback\s*=') {
+        throw 'Attribute helpers override inherited execution level or register a cleanup/destroy callback.'
+    }
+    if ($joinedCode -notmatch '(?s)WDF_OBJECT_ATTRIBUTES_INIT_CONTEXT_TYPE\s*\(\s*attributes\s*,\s*ChatpadKmdfActivationRequestContext\s*\)') {
+        throw 'Activation-request attributes do not attach the typed request context.'
+    }
+    foreach ($helper in $requiredAttributeHelpers) {
+        $compileInvocation = [regex]::Escape($helper) + '\s*\('
+        if ((Remove-CComments ([System.IO.File]::ReadAllText($compileSource))) -notmatch $compileInvocation) {
+            throw "Compile-check does not exercise the attribute helper signature: $helper"
+        }
+    }
     if ($joinedCode -notmatch 'ChatpadKmdfRequestOwnerInitializeStorage' -or
         $joinedCode -notmatch 'ChatpadKmdfRequestOwnerValidatePreObjectState' -or
         $joinedCode -notmatch 'ChatpadRequestOwnerInitialize\s*\(' -or
@@ -237,7 +272,7 @@ function Test-RequestOwnerContextSemanticGuards {
         throw "Active ChatpadFilter source references the context module: $($activeDriverMatches -join ', ')"
     }
 
-    Write-Output 'Semantic guard: PASS (storage initialization, pre-object validation, exact transfer capacities, pure-model reuse, no WDF object creation/submission, no runtime driver linkage).'
+    Write-Output 'Semantic guard: PASS (exact object parentage attributes, typed request context, no callbacks/automatic synchronization, storage initialization, pre-object validation, no WDF object creation/submission, no runtime driver linkage).'
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

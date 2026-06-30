@@ -4,6 +4,43 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Prepare exact KMDF parentage without object creation
+
+**Decision:** The compile-only context module exposes four typed
+`WDF_OBJECT_ATTRIBUTES` preparation helpers: device-parented bookkeeping lock,
+device-parented activation request with
+`ChatpadKmdfActivationRequestContext`, request-parented outbound memory, and
+request-parented inbound memory. Each helper rejects null output and parent
+arguments, leaves execution level inherited, explicitly selects
+`WdfSynchronizationScopeNone`, and registers no cleanup or destroy callback.
+
+**Rationale:** Exact public helpers make parentage and context intent
+compile-checkable before object creation is authorized. Disabling automatic
+synchronization preserves the separate design rule that the future spinlock,
+not WDF callback serialization, owns short request bookkeeping transitions.
+
+**Alternatives rejected:**
+
+* Keep generic request/plain-memory initializers without parent arguments -
+  would not encode or validate the selected object graph.
+* Use one public memory helper for both directions - would obscure outbound
+  versus inbound intent at future creation call sites.
+* Inherit automatic synchronization scope - could silently bind future object
+  callbacks to parent serialization despite no such callback design.
+* Register cleanup or destroy callbacks now - no independent resource or
+  authorized operation-rundown behavior exists for those callbacks.
+
+**Consequences:**
+
+* Future creation code must supply the selected device or request parent and
+  check the typed preparation result.
+* Attribute preparation remains side-effect free with respect to the WDF
+  object graph; no handle or owner-ready state is published.
+* The next safe implementation slice is dormant lock and targetless request
+  creation in isolation, without memory creation or production linkage.
+
+---
+
 ## 2026-06-30 - Initialize KMDF request-owner ordinary storage before object creation
 
 **Decision:** The first implementation slice after the object-lifecycle design

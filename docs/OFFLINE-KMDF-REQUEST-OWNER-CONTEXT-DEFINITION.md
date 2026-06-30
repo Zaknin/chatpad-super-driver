@@ -270,3 +270,17 @@ The helper still does not create a WDF object, attach framework context to a
 live object, publish `OWNER_READY`, link into `ChatpadFilter`, format or send
 a request, register completion, cancel, install, load, package, sign, query a
 device, or access hardware.
+
+## Follow-on object-attribute preparation
+
+[Offline KMDF Object-Attribute Preparation Checkpoint](OFFLINE-KMDF-OBJECT-ATTRIBUTE-PREPARATION.md)
+replaces the generic attribute compile checks with four exact parentage-aware
+helpers for the future bookkeeping lock, activation request, outbound memory,
+and inbound memory. The lock and request attributes are device-parented; both
+memory attribute sets are request-parented; only the request receives the typed
+request context. Execution level remains inherited, automatic synchronization
+is disabled, and no cleanup or destroy callback is registered.
+
+The helpers initialize caller-owned attributes only. No framework object,
+handle publication, runtime callback, production-driver linkage, request
+operation, installation path, or hardware access is added.
