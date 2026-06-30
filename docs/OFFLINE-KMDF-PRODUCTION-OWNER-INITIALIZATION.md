@@ -28,10 +28,11 @@ use `/OPT:REF`, `/OPT:ICF`, and `/INCREMENTAL:NO`, with no request-owner
 
 That function-level separation permits the linker to retain the referenced
 WDF-free initializer and validator without retaining dormant creation,
-rollback, orchestration, or their WDF object-management thunks. Final Debug
-and Release import inspection confirms that none of `WdfSpinLockCreate`,
-`WdfRequestCreate`, `WdfMemoryCreatePreallocated`, or `WdfObjectDelete` is
-present.
+rollback, orchestration, or their WDF object-management thunks. The retained
+conclusion combines source checks, production-object references, context
+object COMDATs, compiler/linker tracking, final PE sections, and observable
+symbols/imports. Ordinary PE import-table absence alone is not proof of no
+KMDF call because KMDF APIs dispatch through the WDF function table.
 
 ## Production integration
 
@@ -56,9 +57,11 @@ context->DiagnosticSequence = 0u;
 
 The code then calls
 `ChatpadKmdfRequestOwnerInitializeStorage(&context->ActivationRequestOwner)`
-exactly once and immediately calls
-`ChatpadKmdfRequestOwnerValidatePreObjectState` exactly once with caller-owned
-validation storage. Only after both return
+exactly once. That authoritative initializer performs internal baseline
+validation. `EvtDeviceAdd` immediately calls
+`ChatpadKmdfRequestOwnerValidatePreObjectState` exactly once more with
+caller-owned validation storage as a separate production integration-boundary
+invariant check. Only after both return
 `CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK` does execution reach:
 
 ```c
@@ -99,12 +102,14 @@ callback reads the owner.
 | Debug | `artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys` | 20,992 | `FB9E9DD550BEF64B99BFAA74810A953A5B0DC12BB455869D7787FB657B565B8F` | `NotSigned` |
 | Release | `artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys` | 14,336 | `9EA24A8B6BEB2796B9A1FF55A04486C8E3EB59B94A191AEA6F50B322531CBCE3` | `NotSigned` |
 
-The Debug `device.obj` contains undefined references to the initializer and
-pre-object validator. Release uses an anonymous `/GL` object, so those calls
-are represented as LTCG input and may be inlined. Final PE symbol tables
-expose no request-owner names. In both images, creation, rollback, and
-orchestration symbols are absent, and forbidden object-management and
-target/request imports are absent.
+The Debug `device.obj` contains undefined references only to the two allowed
+request-owner entry points. Release uses anonymous `/GL` inputs, so allowed
+calls are proven through source, compiler input, context-object, and linker
+evidence and may be inlined. Final PE symbol tables expose no request-owner
+names, which is expected and is not treated as stand-alone proof. Combined
+evidence finds no forbidden production reference or forced retention and no
+forbidden retained code or observable import/table-reference evidence. KMDF
+function-table dispatch limits what ordinary import inspection can prove.
 
 ## Validation
 
@@ -129,10 +134,13 @@ Visual Studio Community MSBuild rerun passed in both configurations.
 ## Proof limit
 
 This checkpoint proves only that one ordinary owner exists per production
-device context, storage is initialized once, the pre-object baseline is
-validated once, initialization precedes lifecycle initialization, no dormant
-framework object graph is created, and production remains targetless and
-request-inactive.
+device context, storage is initialized once with initializer-internal
+validation, one additional explicit pre-object integration-boundary check
+succeeds before lifecycle initialization, no dormant framework object graph is
+created, and production remains targetless and request-inactive.
+
+The audit corrections and guard limitations are recorded in
+[Owner Initialization Audit Corrections](OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md).
 
 It does not prove orchestration execution, spinlock/request/memory creation,
 runtime object parentage, rollback execution, target discovery, request

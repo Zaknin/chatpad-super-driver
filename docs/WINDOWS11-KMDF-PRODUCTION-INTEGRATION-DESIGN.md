@@ -4,10 +4,12 @@ This is the authoritative documentation-only design for introducing the
 dormant KMDF activation request-owner object graph into the production
 `ChatpadFilter` codebase through separately gated steps.
 
-This document was created before production linkage. The first implementation
-slice is now recorded in
-[Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md);
-only project linkage is complete.
+This document was created before production linkage. The linkage-only history
+is recorded in
+[Offline KMDF Production Linkage Checkpoint](OFFLINE-KMDF-PRODUCTION-LINKAGE.md).
+Production now also embeds and ordinarily initializes one request owner as
+recorded in
+[Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
 
 ## 1. Purpose and non-scope
 
@@ -17,10 +19,12 @@ propagation, successful and failed `EvtDeviceAdd` cleanup, publication and
 concurrency assumptions, implementation decomposition, and validation/evidence
 retention.
 
-It does not authorize or implement source integration, project linkage, owner
-embedding, helper invocation, WDF object creation or deletion, target
-discovery, request formatting or submission, completion or cancellation, D0
-rundown, signing, staging, installation, loading, or hardware interaction.
+This design does not itself authorize implementation. Separately completed
+checkpoints implemented project linkage, owner embedding, ordinary storage
+initialization, and one additional explicit pre-object validation. WDF object
+creation or deletion, dormant orchestration, target discovery, request
+formatting or submission, completion or cancellation, D0 rundown, signing,
+staging, installation, loading, and hardware interaction remain unauthorized.
 
 The dormant object graph remains one device-parented spinlock, one
 device-parented targetless request, and two request-parented preallocated
@@ -29,12 +33,16 @@ admit an operation.
 
 ## 2. Current production reality
 
-Current `ChatpadFilter` production code is limited to a compile-validated KMDF
-filter-capable lifecycle scaffold:
+Current `ChatpadFilter` production code is a compile-validated KMDF
+filter-capable lifecycle scaffold with one ordinarily initialized, still
+dormant request owner:
 
-- `src/driver/ChatpadFilter/driver.h` declares
+- `src/driver/ChatpadFilter/driver.h` includes the authoritative
+  `ChatpadKmdfRequestOwnerContext.h` and declares
   `CHATPAD_FILTER_DEVICE_CONTEXT` with `Signature`, `Version`,
-  `DiagnosticSequence`, and `ChatpadFilterLifecycleState Lifecycle`.
+  `DiagnosticSequence`, one
+  `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`, and
+  `ChatpadFilterLifecycleState Lifecycle`.
 - `driver.h` declares the device context accessor with
   `WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CHATPAD_FILTER_DEVICE_CONTEXT,
   ChatpadFilterGetDeviceContext)`.
@@ -42,9 +50,10 @@ filter-capable lifecycle scaffold:
   `WDF_DRIVER_CONFIG` with `ChatpadEvtDeviceAdd` and calls `WdfDriverCreate`.
 - `ChatpadEvtDeviceAdd` in `src/driver/ChatpadFilter/device.c` marks the
   device as filter-capable, registers prepare/release/D0 callbacks, creates the
-  `WDFDEVICE`, initializes scalar context fields, initializes the lifecycle
-  core, marks the device created, logs the lifecycle snapshot, and returns the
-  mapped lifecycle status.
+  `WDFDEVICE`, initializes scalar context fields, calls ordinary owner storage
+  initialization once, performs one additional explicit pre-object validation,
+  initializes the lifecycle core only after both steps succeed, marks the
+  device created, logs the lifecycle snapshot, and returns the mapped status.
 - Current callbacks are `ChatpadEvtDevicePrepareHardware`,
   `ChatpadEvtDeviceReleaseHardware`, `ChatpadEvtDeviceD0Entry`, and
   `ChatpadEvtDeviceD0Exit`. Each retrieves the current device context and
@@ -52,20 +61,23 @@ filter-capable lifecycle scaffold:
 - `ChatpadActivationPreparation` is currently compiled directly into
   `ChatpadFilter` and retained by `/INCLUDE:ChatpadPrepareActivationStep`, but
   no production callback calls it.
-- `ChatpadFilter.vcxproj` now references
-  `ChatpadKmdfRequestOwnerContext.vcxproj` through the project-linkage-only
-  checkpoint. It still does not include `ChatpadKmdfRequestOwnerContext.h` or
-  compile isolated request-owner source directly into production.
-- The production device context has no `ChatpadKmdfActivationRequestOwner`
-  field.
-- No production code calls `ChatpadKmdfRequestOwnerInitializeStorage`,
-  `ChatpadKmdfRequestOwnerValidatePreObjectState`,
-  `ChatpadKmdfRequestOwnerCreateDormantObjectGraph`, or rollback helpers.
+- `ChatpadFilter.vcxproj` references
+  `ChatpadKmdfRequestOwnerContext.vcxproj` and compiles the portable
+  `ChatpadRequestOwnerModel.c` as a WDK object. It does not compile the
+  isolated KMDF context source directly into production.
+- `ChatpadKmdfRequestOwnerInitializeStorage` performs its authoritative
+  internal baseline validation. `EvtDeviceAdd` then calls
+  `ChatpadKmdfRequestOwnerValidatePreObjectState` once more as a separate
+  production integration-boundary invariant check.
+- No production code calls dormant orchestration, creation, rollback,
+  ready-publication, target, or request-execution helpers. No request-owner WDF
+  object is created.
 - The driver remains unsigned and not installable as a validated production
   package.
 
-This section is current reality for source/runtime behavior. Later sections
-describe proposed integration beyond the completed project-linkage slice only.
+This section is current source and offline-artifact reality. It does not claim
+driver loading or runtime execution. Later sections describe still-proposed
+integration beyond the completed owner ordinary-initialization slice.
 
 ## 3. Current `EvtDeviceAdd` sequence
 
@@ -84,10 +96,12 @@ The current `ChatpadEvtDeviceAdd` implementation in
 | 8 | `ChatpadEvtDeviceAdd` | Call `WdfDeviceCreate(&DeviceInit, &objectAttributes, &device)`. | Creates `WDFDEVICE` with current device context. | On failed `NTSTATUS`, logs and returns the exact `WdfDeviceCreate` status. | Yes only on success. | No current production callback is invoked before `EvtDeviceAdd` returns. | No. |
 | 9 | `ChatpadEvtDeviceAdd` | Retrieve context with `ChatpadFilterGetDeviceContext(device)`. | Typed pointer to current context storage. | No local null check. | Yes. | No current observer before return. | No. |
 | 10 | `ChatpadEvtDeviceAdd` | Write `Signature`, `Version`, and `DiagnosticSequence = 0`. | Ordinary context scalar state. | None. | Yes. | No current observer before return. | No. |
-| 11 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleInitialize` | Initialize lifecycle state. | Ordinary `Lifecycle` state. | Result is mapped later; no immediate return. | Yes. | No current observer before return. | No. |
-| 12 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleMarkDeviceCreated` | If initialization passed, mark lifecycle phase created. | Ordinary lifecycle phase. | Result is mapped later; no immediate return. | Yes. | No current observer before return. | No. |
-| 13 | `ChatpadEvtDeviceAdd` -> `ChatpadLogLifecycle` | Retrieve context again, increment `DiagnosticSequence`, snapshot lifecycle, and log. | Diagnostic sequence and bounded snapshot. | Snapshot failure is converted to an unset diagnostic snapshot; no return failure. | Yes. | Still inside `EvtDeviceAdd`. | No. |
-| 14 | `ChatpadEvtDeviceAdd` -> `ChatpadLifecycleResultToStatus` | Map lifecycle result to `NTSTATUS` and return. | None. | Returns `STATUS_SUCCESS`, `STATUS_INVALID_PARAMETER`, `STATUS_INTEGER_OVERFLOW`, `STATUS_DEVICE_BUSY`, or `STATUS_INVALID_DEVICE_STATE` by current mapping. | Yes if success path reached. | After success, registered PnP/power callbacks may later retrieve context. | No. |
+| 11 | `ChatpadEvtDeviceAdd` -> `ChatpadKmdfRequestOwnerInitializeStorage` | Initialize ordinary owner storage once; the initializer performs its internal validation. | Embedded owner reaches clean `MODEL_READY` pre-object state. | A non-OK typed result is mapped and returned immediately. | Yes. | No current observer before return. | No. |
+| 12 | `ChatpadEvtDeviceAdd` -> `ChatpadKmdfRequestOwnerValidatePreObjectState` | Perform one additional explicit production integration-boundary invariant check. | Caller-owned validation record only. | Any non-OK result returns `STATUS_INVALID_DEVICE_STATE` immediately. | Yes. | No current observer before return. | No. |
+| 13 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleInitialize` | Initialize lifecycle state only after both owner steps succeed. | Ordinary `Lifecycle` state. | Result is mapped later; no immediate return. | Yes. | No current observer before return. | No. |
+| 14 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleMarkDeviceCreated` | If lifecycle initialization passed, mark lifecycle phase created. | Ordinary lifecycle phase. | Result is mapped later; no immediate return. | Yes. | No current observer before return. | No. |
+| 15 | `ChatpadEvtDeviceAdd` -> `ChatpadLogLifecycle` | Retrieve context again, increment `DiagnosticSequence`, snapshot lifecycle, and log. | Diagnostic sequence and bounded snapshot. | Snapshot failure is converted to an unset diagnostic snapshot; no return failure. | Yes. | Still inside `EvtDeviceAdd`. | No. |
+| 16 | `ChatpadEvtDeviceAdd` -> `ChatpadLifecycleResultToStatus` | Map lifecycle result to `NTSTATUS` and return. | None. | Returns `STATUS_SUCCESS`, `STATUS_INVALID_PARAMETER`, `STATUS_INTEGER_OVERFLOW`, `STATUS_DEVICE_BUSY`, or `STATUS_INVALID_DEVICE_STATE` by current mapping. | Yes if success path reached. | After success, registered PnP/power callbacks may later retrieve context. | No. |
 
 Current code creates no queue, device interface, symbolic link, timer, work
 item, target, USB object, request, memory object, completion callback, cancel
@@ -99,12 +113,17 @@ Every invoked helper and failure order is:
 2. `WdfDeviceInitSetPnpPowerEventCallbacks`: no local failure return.
 3. `WdfDeviceCreate`: immediate return on failed framework `NTSTATUS`.
 4. `ChatpadFilterGetDeviceContext`: no local failure branch.
-5. `ChatpadFilterLifecycleInitialize`: result captured.
-6. `ChatpadFilterLifecycleMarkDeviceCreated`: called only if initialize
+5. `ChatpadKmdfRequestOwnerInitializeStorage`: immediate mapped return on a
+   non-OK result; successful initialization includes internal validation.
+6. `ChatpadKmdfRequestOwnerValidatePreObjectState`: one additional explicit
+   boundary check; immediate `STATUS_INVALID_DEVICE_STATE` return on failure.
+7. `ChatpadFilterLifecycleInitialize`: result captured only after both owner
+   steps succeed.
+8. `ChatpadFilterLifecycleMarkDeviceCreated`: called only if initialize
    returned `CHATPAD_FILTER_LIFECYCLE_OK`.
-7. `ChatpadLogLifecycle`: called regardless of lifecycle result after device
+9. `ChatpadLogLifecycle`: called regardless of lifecycle result after device
    creation.
-8. `ChatpadLifecycleResultToStatus`: final return mapping.
+10. `ChatpadLifecycleResultToStatus`: final return mapping.
 
 ## 4. Proposed production dependency graph
 

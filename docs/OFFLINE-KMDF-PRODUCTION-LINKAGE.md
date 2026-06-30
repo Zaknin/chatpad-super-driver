@@ -50,13 +50,15 @@ output directories, the WDK pass rebuilt the context library under the
 `ChatpadFilter` output/intermediate roots and emitted `MSB8028`; that evidence
 was rejected.
 
-## Production boundary
+## Production boundary at the linkage-only checkpoint
 
-No production `.c` or `.h` source was changed. `ChatpadFilter` still does not
-include `ChatpadKmdfRequestOwnerContext.h`, does not embed
-`ChatpadKmdfActivationRequestOwner`, does not initialize owner storage, does
-not call the dormant orchestration helper, and does not create, delete, format,
-send, complete, cancel, or reuse any request-owner WDF object.
+At this historical checkpoint, no production `.c` or `.h` source was changed.
+`ChatpadFilter` did not include `ChatpadKmdfRequestOwnerContext.h`, embed
+`ChatpadKmdfActivationRequestOwner`, initialize owner storage, call the dormant
+orchestration helper, or create, delete, format, send, complete, cancel, or
+reuse any request-owner WDF object. The later ordinary-initialization
+checkpoint supersedes only the include, embedding, and storage-initialization
+parts of that boundary.
 
 No `/INCLUDE` or `/WHOLEARCHIVE` directive was added for request-owner symbols.
 The only retained forced symbol remains the pre-existing

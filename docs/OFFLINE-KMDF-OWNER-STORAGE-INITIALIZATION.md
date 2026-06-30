@@ -1,14 +1,15 @@
 # Offline KMDF Owner Storage Initialization Checkpoint
 
-Follow-up checkpoint: [Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
-now requires this clean `MODEL_READY` baseline before calling any creation
-helper. No storage initializer, creation helper, rollback helper, or
-orchestrator is invoked by `ChatpadFilter`.
+At this original isolated-storage checkpoint,
+[Offline KMDF Creation Orchestration](OFFLINE-KMDF-CREATION-ORCHESTRATION.md)
+required this clean `MODEL_READY` baseline before calling any creation helper,
+and `ChatpadFilter` invoked no storage initializer, creation helper, rollback
+helper, or orchestrator. The current production state is described below.
 
-This checkpoint implements the first source slice after the dormant object
+This historical checkpoint implemented the first source slice after the dormant object
 lifecycle design: ordinary C storage initialization and pre-object validation
 for the future activation request owner. It creates no framework object and
-does not connect the helper to `ChatpadFilter`.
+did not connect the helper to `ChatpadFilter` at that checkpoint.
 
 ## Scope
 
@@ -127,7 +128,8 @@ pre-object invariants.
   registration, cancellation, target discovery, dynamic allocation, install,
   load, package, signing, device-query, USB/HID/IOCTL, wait, or delay runtime
   surface exists in the context code;
-- `ChatpadFilter` remains unlinked and unmodified by the context module.
+- at this historical checkpoint, `ChatpadFilter` remained unlinked and
+  unmodified by the context module.
 
 The guard passes in Debug and Release context compile-check runs.
 
@@ -155,7 +157,9 @@ publication and adding the existing `FAULTED` diagnostic bit.
 
 [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md)
 now embeds this authoritative owner and calls
-`ChatpadKmdfRequestOwnerInitializeStorage` followed immediately by
-`ChatpadKmdfRequestOwnerValidatePreObjectState` once per device context. The
-initializer semantics in this document are unchanged; creation, rollback,
-orchestration, and `OWNER_READY` publication remain dormant.
+`ChatpadKmdfRequestOwnerInitializeStorage` once per device context. The
+initializer performs its authoritative internal validation. `EvtDeviceAdd`
+then calls `ChatpadKmdfRequestOwnerValidatePreObjectState` once more as a
+separate production integration-boundary invariant check. The initializer
+semantics in this document are unchanged; creation, rollback, orchestration,
+and `OWNER_READY` publication remain dormant.

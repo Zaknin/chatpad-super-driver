@@ -3535,3 +3535,67 @@
 - **Next gate:** Independent read-only audit of this production owner
   embedding and ordinary-initialization checkpoint. Dormant orchestration
   invocation remains unauthorized.
+
+## 2026-06-30 - Owner initialization audit corrections
+
+- **Task title/objective:** Complete the narrow documentation, semantic-guard,
+  and evidence-retention correction for the audited production request-owner
+  initialization checkpoint without changing production implementation.
+- **Starting branch/commit:** Began from clean synchronized
+  `feature/offline-kmdf-owner-embedding-init` at
+  `a25d5637487ec6e4e7583a64dcec6c5192e06092`, parent
+  `41172d7f2877509a16f3b58abf0f81d231cbabaf`, subject
+  `driver: initialize production request owner`; created
+  `feature/offline-owner-init-audit-corrections`.
+- **Investigation:** Verified the existing Debug and Release driver binaries,
+  request-owner context libraries, device/model objects, linker tlogs, manifest
+  path/hash pairs, and clean branch/upstream baseline before editing. Found
+  stale documentation that still treated linkage-only as the current boundary
+  and over-compressed the distinction between initializer-internal validation
+  and the explicit production boundary validation.
+- **Files created:** `docs/OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md`.
+- **Files modified:** `tools/Test-ChatpadProductionOwnerInitialization.ps1`,
+  `docs/evidence/production-owner-initialization-manifest.json`,
+  `docs/OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md`,
+  `docs/OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md`,
+  `docs/OFFLINE-KMDF-PRODUCTION-LINKAGE.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`,
+  `docs/PORTING-PLAN.md`, and `docs/WORKLOG.md`.
+- **Guard correction:** The production owner-initialization guard now supports
+  `SourceOnly` and `Full` inspection modes, validates exact project/source
+  semantics, rejects forbidden owner/WDF/target/request behavior, checks
+  manifest evidence paths for ignored artifact containment, inspects retained
+  Debug/Release objects, libraries, linker tlogs, PE sections, symbols, and
+  signature/hash state, and reports direct observations separately from
+  inferred evidence and proof limits.
+- **Documentation correction:** Current docs now state that owner embedding and
+  ordinary initialization supersede the linkage-only boundary; the initializer
+  internal baseline validation and the one explicit `EvtDeviceAdd` pre-object
+  boundary validation are recorded as distinct checks; KMDF function-table
+  dispatch is documented as a limit of ordinary import inspection.
+- **Validation:** Corrected non-building validation passed after the manifest
+  update: Debug and Release guard `Full` mode, binary/member inspection through
+  the corrected guard, Markdown links, JSON parsing, repository safety, and
+  unstaged/staged diff checks. The manifest retains exact commands, working
+  directories, paths, hashes, configurations, modes, and results for the
+  corrected entries. Final evidence path/hash verification is rerun before
+  commit.
+- **Artifacts:** New ignored correction transcripts are retained under
+  `artifacts/logs` and hash-bound in
+  `docs/evidence/production-owner-initialization-manifest.json`.
+- **Safety:** No production `.c/.h`, project/solution file, owner model,
+  request-owner implementation, build/regression wrapper, `legacy/` file, INF,
+  signing, package, deployment, recovery, D0, cleanup, removal, Windows state,
+  device state, or hardware state was changed. No build, regression suite,
+  driver loading, helper invocation through a driver, WDF object creation,
+  target/request operation, device query, or hardware interaction occurred.
+- **Remaining limitations:** This correction still proves only the offline
+  retained evidence and semantic guard boundary. It does not prove runtime
+  execution, orchestration, WDF object creation, request execution, deployment,
+  or hardware behavior.
+- **Commit/push:** Commit exactly
+  `test: tighten owner initialization audit` and push only
+  `origin/feature/offline-owner-init-audit-corrections`; final hash is reported
+  after commit.
+- **Next gate:** Independent read-only audit of this correction checkpoint.

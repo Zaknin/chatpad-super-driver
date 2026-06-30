@@ -1239,3 +1239,32 @@ only the context/model/transport include roots, and remains independent of the
 user-mode model library. The production source calls only the authoritative
 KMDF ordinary initializer and pre-object validator; dormant orchestration and
 WDF object creation remain unreferenced.
+
+## 2026-06-30 - Treat production owner-initialization evidence as combined proof
+
+**Decision:** The production owner-initialization checkpoint is audited through
+combined source, project, object, COMDAT, linker-tlog, PE section, symbol, and
+manifest-containment evidence. The guard and manifest must report direct
+observations separately from inferences, and the retained manifest entries for
+the corrected evidence must include exact commands and working directories.
+
+**Rationale:** Debug object references can show the two allowed owner calls
+directly, while Release `/GL` inputs may inline them before final PE
+inspection. Also, KMDF named imports alone cannot prove absence of framework
+calls because KMDF APIs dispatch through the WDF function table. A combined
+evidence rule prevents the audit from over-claiming what ordinary import or
+final-symbol inspection can prove.
+
+**Alternatives rejected:**
+
+* Treat final PE import absence as standalone proof - misses the WDF
+  function-table dispatch limitation.
+* Require Release final symbols to expose allowed owner calls - incompatible
+  with the existing `/GL`/LTCG evidence path.
+* Keep manifest commands as summaries only - insufficient for independent
+  reproduction of a documentation/evidence correction.
+
+**Consequences:** Future owner-initialization audits must verify the retained
+artifact chain and proof limits, not just search final driver imports. Evidence
+manifests for corrected retained logs should preserve exact command text,
+working directory, path, hash, configuration, mode, and result.

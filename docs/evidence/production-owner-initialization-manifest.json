@@ -105,7 +105,7 @@
     "production_owner_guard": {
       "Debug": "PASS",
       "Release": "PASS",
-      "limitation": "XML and targeted text/regex checks do not prove complete macro expansion or call-graph reachability."
+      "limitation": "Source matching is narrowly scoped text/regex inspection, not a full C parser. Full mode combines direct source/object evidence with inferred retention evidence and reports KMDF function-table import-inspection limits; it does not execute the driver or any request-owner helper."
     },
     "production_linkage_guard": {
       "Debug": "PASS",
@@ -268,19 +268,25 @@
     },
     {
       "id": "production_owner_guard_debug",
-      "command": ".\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Debug -Platform x64",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Debug -Platform x64 -InspectionMode Full",
       "configuration": "Debug",
-      "path": "artifacts/logs/production-owner-init-guard-Debug-20260630T164924Z.transcript.log",
-      "sha256": "029CAD4C9C64E5A30EB507D86C24343DC5DDE90CFEC18BA7FCB3FFE45F732572",
-      "result": "PASS"
+      "path": "artifacts\\logs\\production-owner-init-guard-Debug-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "E447D8BFE71DAC513309721E3C8706A596A3A6A856FDE30F6C88B4F85B519626",
+      "result": "PASS",
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "source, project, manifest containment, object, library, linker tlog, PE, symbol, hash, signature",
+      "inspection_mode": "Full"
     },
     {
       "id": "production_owner_guard_release",
-      "command": ".\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Release -Platform x64",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Release -Platform x64 -InspectionMode Full",
       "configuration": "Release",
-      "path": "artifacts/logs/production-owner-init-guard-Release-20260630T164924Z.transcript.log",
-      "sha256": "8C877C4D30F6888E8333928C45426DEABF645DB39F67BA79D198148BB7260E91",
-      "result": "PASS"
+      "path": "artifacts\\logs\\production-owner-init-guard-Release-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "BC176D987AF2C1DF4A79C2E0D2B2B4024F9E913C7868B7F30CA9E30DA2D3D2B9",
+      "result": "PASS",
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "source, project, manifest containment, object, library, linker tlog, PE, symbol, hash, signature",
+      "inspection_mode": "Full"
     },
     {
       "id": "production_linkage_guard_debug",
@@ -442,54 +448,67 @@
     },
     {
       "id": "binary_and_member_inspection",
-      "command": "lib.exe /LIST and dumpbin.exe /LINKERMEMBER:2, /SYMBOLS, and /IMPORTS for Debug and Release context libraries and drivers",
+      "command": "powershell.exe -NoProfile -Command \"& .\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Debug -Platform x64 -InspectionMode Full; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & .\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Release -Platform x64 -InspectionMode Full; exit $LASTEXITCODE\"",
       "configuration": "Debug,Release",
-      "path": "artifacts/logs/production-owner-init-binary-inspection-20260630T164924Z.transcript.log",
-      "sha256": "CB03A7A1FA5A5F80BC5D89959A51EC39A90F1ECE9CC3515FAF512C37E41EB64C",
-      "result": "PASS"
+      "path": "artifacts\\logs\\production-owner-init-binary-inspection-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "0695BE0F50F2F4D62F0680F63911A355E4474C0B1292966DC16E33C69F7EE697",
+      "result": "PASS",
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "lib.exe /LIST plus dumpbin symbols, headers, imports, linker tlogs, driver hashes, and signatures via corrected guard",
+      "inspection_mode": "Full"
     },
     {
       "id": "markdown_links",
-      "command": "PowerShell inline relative-link validation for every changed Markdown file",
+      "command": "powershell.exe -NoProfile -Command \"$files = @('docs\\WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md', 'docs\\OFFLINE-KMDF-OWNER-STORAGE-INITIALIZATION.md', 'docs\\OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md', 'docs\\OFFLINE-KMDF-PRODUCTION-LINKAGE.md', 'docs\\OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md', 'docs\\PROJECT-STATE.md', 'docs\\NEXT-TASK.md', 'docs\\DECISIONS.md', 'docs\\PORTING-PLAN.md', 'docs\\WORKLOG.md'); $missing = @(); foreach ($file in $files) {;   $text = Get-Content -Raw -LiteralPath $file;   foreach ($match in [regex]::Matches($text, '\\[[^\\]]+\\]\\((?!https?:|#)([^)]+\\.md(?:#[^)]+)?)\\)')) {;     $target = $match.Groups[1].Value -replace '#.*$', '';     $path = Join-Path (Split-Path -Parent $file) $target;     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { $missing += \\\"$file -> $target\\\" };   }; }; if ($missing.Count -ne 0) { $missing; exit 1 }; 'PASS markdown links'; 'Checked files: ' + $files.Count; exit 0\"",
       "configuration": "N/A",
-      "path": "artifacts/logs/production-owner-init-markdown-links-20260630T164924Z.transcript.log",
-      "sha256": "22ECFB747020259DECF77376A200737EEC177C587622EC16E836CD9F434F3DC6",
+      "path": "artifacts\\logs\\production-owner-init-markdown-links-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "A54B112C0C567E89BAEB41CF18723887B0A9514EFF6B95C90B2C0783B0E9D543",
       "result": "PASS",
-      "unresolved_count": 0
+      "unresolved_count": 0,
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "changed Markdown relative links"
     },
     {
       "id": "manifest_json_parse",
-      "command": "Get-Content -Raw docs\\evidence\\production-owner-initialization-manifest.json | ConvertFrom-Json",
+      "command": "powershell.exe -NoProfile -Command \"$manifest = Get-Content -Raw -LiteralPath 'docs\\evidence\\production-owner-initialization-manifest.json' | ConvertFrom-Json; 'PASS manifest JSON parse'; 'Evidence entries: ' + @($manifest.evidence_entries).Count; exit 0\"",
       "configuration": "N/A",
-      "path": "artifacts/logs/production-owner-init-json-parse-20260630T164924Z.transcript.log",
-      "sha256": "6FB1A531972E7EAACDB994A9E2A1DD5F08A17E2A219E8E75D6C872E3A02DE2CD",
-      "result": "PASS"
+      "path": "artifacts\\logs\\production-owner-init-json-parse-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "231BB8E2019A24353595FD5A7B23706443B534D328DF4601EFC967AEB9212A70",
+      "result": "PASS",
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "JSON parse"
     },
     {
       "id": "repository_safety_after",
-      "command": ".\\tools\\Test-RepositorySafety.ps1",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\tools\\Test-RepositorySafety.ps1",
       "configuration": "N/A",
-      "path": "artifacts/logs/production-owner-init-repository-safety-post-20260630T164924Z.transcript.log",
-      "sha256": "64866BA35456B0FEE23B8703777AF2EAC2CA6F38D26A1082E865FD421DD33F37",
-      "result": "PASS"
+      "path": "artifacts\\logs\\production-owner-init-repository-safety-post-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "53D41078A5190D03129A0A819BBF6E2AB6279993EADADABD73E26F2545BA9742",
+      "result": "PASS",
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "repository safety after correction"
     },
     {
       "id": "unstaged_diff_check",
       "command": "git diff --check",
       "configuration": "N/A",
-      "path": "artifacts/logs/production-owner-init-unstaged-diff-check-20260630T164924Z.transcript.log",
-      "sha256": "47CB28EDF1E653D4762F5551978833BB572B087CB7FDC8FE2BA73B265DEC078D",
+      "path": "artifacts\\logs\\production-owner-init-unstaged-diff-check-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "3DB704B89B6BD7D02111706E6BD5837234B2FE4489C3979E439D1375B7A9E814",
       "result": "PASS",
-      "exit_code": 0
+      "exit_code": 0,
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "unstaged whitespace/error diff check"
     },
     {
       "id": "staged_diff_check",
       "command": "git diff --cached --check",
       "configuration": "N/A",
-      "path": "artifacts/logs/production-owner-init-staged-diff-check-20260630T164924Z.transcript.log",
-      "sha256": "DF113788F1366C0736BC19AAD5F91FC5A376939D62C871E24493987917FC08F4",
+      "path": "artifacts\\logs\\production-owner-init-staged-diff-check-audit-corrections-20260630T200000Z.transcript.log",
+      "sha256": "E679BE5D827E5C424B0285AB800BBEF979D13F3B815CBF55FFB74D28DF3FE9B2",
       "result": "PASS",
-      "exit_code": 0
+      "exit_code": 0,
+      "working_directory": "C:\\Dev\\chatpad-super-driver",
+      "evidence_scope": "staged whitespace/error diff check"
     }
   ],
   "prohibited_actions_not_performed": [
@@ -505,5 +524,7 @@
     "device enumeration",
     "controller or Chatpad interaction",
     "network access except the final authorized Git push"
-  ]
+  ],
+  "correction_branch": "feature/offline-owner-init-audit-corrections",
+  "corrected_from_commit": "a25d5637487ec6e4e7583a64dcec6c5192e06092"
 }
