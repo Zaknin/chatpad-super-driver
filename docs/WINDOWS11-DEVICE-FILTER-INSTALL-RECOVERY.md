@@ -85,31 +85,37 @@ the approved stack expectation before any transport experiment.
 
 ## 4. Package identity ledger
 
-A future package task must produce an immutable local recovery ledger before
-staging. The ledger stays outside Git under a restricted local recovery
-directory and contains:
+A future package task must produce the pre-staging portion of an immutable
+local recovery ledger before staging. The ledger stays outside Git under a
+restricted local recovery directory. Before staging, it must contain:
 
-- original INF filename and SHA-256;
-- catalog filename and SHA-256;
+- exact original INF identity, filename, and SHA-256;
+- declared catalog identity, filename, and SHA-256;
 - driver binary filename, version, and SHA-256;
 - signer subject, certificate thumbprint, chain result, and signing policy;
 - provider, class, `DriverVer`, `ExtensionId`, service name, and KMDF version;
 - exact hardware ID list extracted from the package;
+- intended architecture and target-OS scope;
 - package validation results;
-- the published `oem#.inf` assigned after staging;
 - the exact target instance ID selected at authorization time;
-- baseline and post-action timestamps in UTC;
+- pre-staging timestamps in UTC;
 - operator, authorization reference, and rollback owner.
 
-The published name is the removal identity. Never guess it from sequence,
-reuse an `oem#.inf` from an older run, or infer it from a friendly name. The
-future staging step must correlate provider, original name, version, date,
-signer, and package file hashes to the newly assigned published name.
+Windows assigns the published `oem#.inf` identity only during staging. A
+separately authorized staging-only task must immediately capture that identity,
+record it with a post-staging UTC timestamp, and correlate provider, original
+name, version, date, signer, and package file hashes to the exact source
+package. The published name is the removal identity. Never guess it from
+sequence, reuse an `oem#.inf` from an older run, or infer it from a friendly
+name. If the published identity cannot be determined or does not match, stop
+without device matching, attachment, restart, load, or hardware observation.
 
 ## 5. Recovery prerequisites
 
-All prerequisites are hard gates. A future installation task must stop before
-staging if any item is missing:
+All prerequisites are hard gates. Items required before staging must be
+satisfied before the separately authorized staging-only operation. Items that
+depend on a Windows-assigned published identity must be satisfied immediately
+after staging and before any later checkpoint:
 
 1. A second input method independent of the target controller is connected
    and verified.
@@ -121,7 +127,9 @@ staging if any item is missing:
    cannot start.
 6. The recovery ledger and command sheet are available offline, not only on a
    network share or the affected machine.
-7. The exact package and published name are recorded before any restart.
+7. The exact source package identity is recorded before staging. The exact
+   published name is captured and verified immediately after staging and
+   before device matching, attachment, restart, load, or observation.
 8. `xusb22` is healthy, the target problem code is zero, and the controller's
    baseline input behavior is verified by a later explicitly authorized check.
 9. No unexpected device-level or class-level filter is present.
@@ -213,8 +221,10 @@ pnputil /export-driver <verified-oem#.inf> "$RecoveryRoot\project-package-export
 
 ## 8. Future staged installation sequence
 
-The sequence deliberately separates package creation, signing, staging,
-attachment, loading, and hardware interaction.
+The sequence deliberately separates source-package review, signing, staging,
+post-staging identity verification, exact target matching, attachment/loading,
+post-load observation, and hardware interaction. Completion or authorization
+of one gate never authorizes the next gate.
 
 ### Gate I1 - package creation authorization
 
@@ -229,23 +239,42 @@ Store, or device changes.
 
 ### Gate I3 - staging authorization
 
-After baseline capture and package identity verification, stage without
-`/install`:
+After baseline capture and pre-staging source-package identity verification, a
+separately authorized staging-only task may stage without `/install`:
 
 ```powershell
 pnputil /add-driver '<absolute path to verified INF>'
 ```
 
-Capture the output, identify the assigned `oem#.inf`, update the ledger, export
-that exact package, and rerun the complete target and Driver Store inventory.
 Staging must not change the effective device stack. Any device restart,
 service load, new filter, base binding change, or ambiguous package identity is
-a hard stop followed by removal of the staged package.
+a hard stop followed by the separately authorized recovery path.
 
-### Gate I4 - attachment and load authorization
+### Gate I3A - post-staging published-package identity verification
 
-Only a later task that explicitly names the verified published package and
-target instance may request installation on existing matching devices:
+Immediately after staging, capture the Windows-assigned `oem#.inf`, update the
+ledger, export that exact package, and verify it maps to the intended source
+INF, catalog, SYS, provider, version, signer, hashes, service, hardware ID, and
+architecture/OS scope. If that identity is missing, ambiguous, or mismatched,
+stop and do not continue. Recovery must use this captured exact name and must
+never guess an `oem#.inf`.
+
+This identity checkpoint authorizes no device query, matching, attachment,
+restart, binding, load, or observation.
+
+### Gate I4 - exact target-match checkpoint
+
+A later, separately authorized task may compare the verified published package
+target definition with one exact intended device instance and the preserved
+`xusb22` baseline. It must stop on multiple, missing, unhealthy, or ambiguous
+matches. Target-match evidence is review input only; it is not standing
+authorization to attach, restart, bind, or load the driver.
+
+### Gate I5 - attachment, restart, and load authorization
+
+Only another later task, explicitly authorized after review of the I4 evidence
+and naming the verified published package and exact target instance, may request
+installation on existing matching devices:
 
 ```powershell
 pnputil /add-driver '<absolute path to verified INF>' /install
@@ -260,10 +289,19 @@ Installation must occur with the controller idle and all nonessential software
 closed. It must never be combined with transport requests, descriptor access,
 activation, input capture, Driver Verifier changes, or unrelated driver work.
 
-### Gate I5 - device interaction authorization
+### Gate I6 - post-load observation authorization
 
-Package attachment and load do not authorize opening a device or sending a
-request. Transport visibility and any later USB action remain separate gates.
+Post-load stack, preservation, and health observation requires its own later
+authorized task. It does not authorize transport requests, descriptor access,
+activation, input capture, or other USB or Chatpad interaction.
+
+### Gate I7 - USB or Chatpad hardware-interaction authorization
+
+Package attachment, load, and passive observation do not authorize opening a
+device or sending a request. Transport visibility and every later USB or
+Chatpad action remain separate, explicitly authorized gates. Every actual
+device query or operating-system mutation requires its own later authorized
+task.
 
 ## 9. Immediate post-install verification
 
@@ -446,10 +484,12 @@ reader, or key presentation belongs in this checklist.
 | --- | --- | --- | --- |
 | I1 | Create and statically validate package source | Reviewed exact-ID extension-INF design | Signing, staging, install, load |
 | I2 | Sign one named package | Package hashes, signer policy, clean I1 result | Trust/security changes, staging |
-| I3 | Stage one verified package | Recovery bundle, exact hashes, rollback owner | `/install`, restart, load, device access |
-| I4 | Attach/load on one exact instance | Healthy baseline, verified `oem#.inf`, signed authorization | USB traffic, activation, input capture |
-| I5 | Observation-only stack visibility | Post-install preservation PASS and separate experiment plan | Activation or unbounded requests |
-| I6 | Bounded device interaction | Gates F/G/H and exact request/abort budget | Any action beyond the named experiment |
+| I3 | Stage one verified package only | Pre-staging source identity, recovery bundle, rollback owner, separate authorization | `/install`, target matching, restart, load, device access |
+| I3A | Capture and verify the assigned `oem#.inf` | Staging output and exact source-to-published-package correlation | Target matching, attachment, restart, load, device access |
+| I4 | Review one exact package-to-target match | Verified published package, exact intended instance, healthy preserved baseline | Attachment, binding, restart, load, device access |
+| I5 | Attach/restart/load on one exact instance | Reviewed I4 evidence and another explicit authorization | USB traffic, activation, input capture |
+| I6 | Observation-only post-load stack visibility | Post-install preservation plan and separate authorization | Activation or any USB/Chatpad request |
+| I7 | Bounded device interaction | Gates F/G/H and exact request/abort budget | Any action beyond the named experiment |
 
 Authorization for a later gate does not imply authorization for an earlier
 unfinished gate or a later action.
@@ -476,7 +516,9 @@ The isolated prototype now statically represents the selected package model:
 - non-associated demand-start kernel service `ChatpadFilter`;
 - `ChatpadFilter.sys` at DIRID 13 and KMDF `1.15`;
 - declarative `AddFilter` with `FilterPosition=Lower`;
-- future catalog identity `ChatpadFilterExtension.cat`.
+- declared catalog identity `ChatpadFilterExtension.cat`, validated by the
+  completed offline package-closure checkpoint but still unsigned and
+  untrusted.
 
 WDK 10.0.26100.0 `InfVerif /k /v` reports the INF valid. Repository semantic
 guards independently reject broadened IDs, direct filter-registry writes,

@@ -1755,3 +1755,78 @@
   certificate, staging, installation, Driver Store, service, registry, device,
   controller, hardware, or operating-system action occurred. Retained evidence
   stayed ignored and unmodified; only tracked Markdown documentation changed.
+
+## 2026-06-30T07:48+04:00 - Package-checkpoint documentation corrections
+
+- **Objective:** Correct the independent review findings in the offline
+  Inf2Cat documentation, add a durable sanitized review record, validate the
+  documentation-only scope, commit, and push the current feature branch.
+- **Starting branch and commit:**
+  `feature/offline-inf2cat-package-validation` /
+  `946f6feeb920e096663f757725ddb51ddd18a84d`; upstream
+  `origin/feature/offline-inf2cat-package-validation` at the same commit;
+  tracked tree and index clean.
+- **Reviewed result:** The independent verdict is **REVIEW PASS WITH
+  FINDINGS**. Package identities, catalog structure, documentation facts,
+  links, ignored-output containment, and Git synchronization passed. The
+  findings concerned recovery sequencing and continuity, not the unsigned
+  offline package result.
+- **Recovery corrections:** Source-package identity now precedes staging;
+  Windows-assigned `oem#.inf` capture and exact source correlation follow only
+  a separately authorized staging-only operation. Target matching,
+  attachment/restart/load, passive observation, and active USB/Chatpad
+  interaction are separate gates, and authorization never carries forward.
+  The validated `ChatpadFilterExtension.cat` declaration is recorded as an
+  unsigned and untrusted completed offline package-closure result.
+- **Roadmap and continuity corrections:** Phase 4 is split into independent
+  package, trust, staging, identity/matching, load, observation, hardware, and
+  release stages. `PROJECT-STATE.md` records `946f6fe...` as the reviewed
+  baseline without a self-referential correction hash. `NEXT-TASK.md` records
+  machine-local evidence behavior and separates future signing/recovery design
+  from continued offline KMDF work; neither path is authorized.
+- **Historical evidence correction:** The final
+  `20260629T214908Z` InfVerif `/k /l` invocation exited `0`. Its retained
+  `infverif-annotated.txt` contains only encoding/newline bytes and therefore
+  no substantive text output; the final timestamped `annotated/` directory
+  contains no generated HTML file. The earlier prototype worklog statement
+  that final evidence contained annotated HTML was inaccurate. INF validation
+  remains PASS. No historical artifact was invented or reconstructed to fill
+  the gap.
+- **File created:** `docs/OFFLINE-INF2CAT-CHECKPOINT-REVIEW.md`.
+- **Files modified:** `docs/WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md`,
+  `docs/PORTING-PLAN.md`, `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/OFFLINE-INF2CAT-PACKAGE-VALIDATION.md`, and this worklog.
+- **Validation:** Complete diff reviewed; `git diff --check` exit `0`;
+  changed-document contradiction searches found no active conflicting claim;
+  all modified repository-relative Markdown links resolved with exact tracked
+  path case (the new review file was the single intended pre-stage path);
+  all 16 final semantic requirements passed after whitespace-normalized
+  checking;
+  repository safety exit `0`, `REPOSITORY SAFETY: PASS`.
+- **Validation correction:** The first changed-path policy expression retained
+  the tracked and untracked path lists as two nested arrays, so it printed the
+  seven correct paths but falsely reported one unexpected value and exited
+  `1`. The corrected flat, unique path-list check passed with seven changed
+  files, zero unexpected paths, and zero non-Markdown paths. This was a
+  check-expression error, not a repository-scope failure.
+- **Semantic-check correction:** A later semantic pass initially reported four
+  false failures because those regular expressions did not span Markdown line
+  breaks. Normalizing whitespace before matching produced 16/16 PASS,
+  including signing/staging authorization, Windows-acceptance, and runtime
+  `xusb22` proof boundaries. This was also a check-pattern error, not a
+  documentation-content failure.
+- **Commit and push:** Commit exactly
+  `docs: tighten recovery authorization gates` and push normally only to
+  `origin/feature/offline-inf2cat-package-validation`. The final commit hash is
+  reported after commit and push rather than embedded here.
+- **Remaining blockers:** Signing and trust, staging, Windows acceptance,
+  published-package identity, target matching, effective lower-filter
+  placement, `xusb22` preservation, controller and Chatpad behavior, and a
+  usable production driver remain unproven and unauthorized.
+- **Safety:** No Inf2Cat, InfVerif, build, protocol/driver test, signing,
+  certificate, package regeneration, staging, installation, Driver Store,
+  service, registry, driver load, operating-system mutation, device query,
+  controller/Chatpad interaction, elevation, or network action before the
+  final authorized Git push occurred. No other network action is authorized.
+  Retained evidence stayed ignored and unmodified; only authorized tracked
+  Markdown changed.

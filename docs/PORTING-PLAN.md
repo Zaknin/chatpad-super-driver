@@ -75,13 +75,31 @@ Source references:
   device pointers, permissive sideband IOCTLs, or obsolete HID layering.
 - Require explicit validation for every request and transfer length.
 
-## Phase 4: Build, Sign, and Device Validation Gate
+## Phase 4: Independent Package, Trust, Deployment, and Runtime Gates
 
-This phase is intentionally not part of the baseline task. It requires a separate approval gate before any driver build, signing, installation, Device Manager action, Secure Boot setting, Memory Integrity setting, BCD setting, driver store mutation, or live device validation.
+Phase 4 is outside the baseline task and is divided into independent bounded
+stages:
 
-It also requires a tested device-specific recovery procedure that restores the
-Microsoft `xusb22` binding without changing class-wide filter state or
-disabling Secure Boot or Memory Integrity.
+1. build and package preparation;
+2. signing and trust preparation;
+3. package staging only;
+4. post-staging package-identity capture and exact package/target matching;
+5. attachment, restart, or driver loading;
+6. passive post-load stack and preservation observation;
+7. active USB or Chatpad interaction;
+8. production and release qualification.
+
+Only unsigned offline package/catalog closure is complete. Signing, staging,
+Windows acceptance, effective lower-filter placement, `xusb22` preservation,
+controller behavior, and Chatpad behavior remain incomplete and unauthorized.
+Completion or authorization of one stage does not authorize the next stage.
+Each stage requires its own reviewed evidence, explicit authorization, stop
+conditions, and recovery boundary.
+
+Before any deployment stage, the project also requires a tested
+device-specific recovery procedure that restores the Microsoft `xusb22`
+binding without changing class-wide filter state or disabling Secure Boot or
+Memory Integrity.
 
 ## Non-Goals For This Baseline
 

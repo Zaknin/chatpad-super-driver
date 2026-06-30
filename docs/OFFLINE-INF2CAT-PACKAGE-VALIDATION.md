@@ -84,12 +84,18 @@ The final package manifest contained exactly the INF, SYS, and CAT.
 - Repository safety before catalog generation: PASS.
 - Repository safety after catalog generation: PASS.
 - Offline Inf2Cat validation: PASS.
-- Independent evidence audit: **AUDIT PASS WITH LIMITATIONS**.
-- The audit found that the current files and retained evidence matched the
+- Later independent read-only checkpoint review:
+  **REVIEW PASS WITH FINDINGS**. See
+  [Offline Inf2Cat Checkpoint Review](OFFLINE-INF2CAT-CHECKPOINT-REVIEW.md).
+- The review found that the current files and retained evidence matched the
   recorded hashes, sizes, signatures, command, results, package manifest, and
   catalog structure.
-- The audit did not independently rerun historical Inf2Cat, InfVerif, or
+- The review did not independently rerun historical Inf2Cat, InfVerif, or
   repository-safety execution.
+
+This report is the authoritative record of the original package validation.
+The linked checkpoint-review report records the later independent read-only
+review. Neither report means Inf2Cat was rerun during documentation work.
 
 ## 8. Evidence limitations
 

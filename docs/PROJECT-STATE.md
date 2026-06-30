@@ -1,14 +1,21 @@
 # Project State
 
-*Last updated: 2026-06-30T07:28+04:00*
+*Last updated: 2026-06-30T07:48+04:00*
 
 ## Current state
 
 - **Branch:** `feature/offline-inf2cat-package-validation`.
-- **Starting checkpoint:** `9de526a55d5b60a28229cedc3a2e4e9926db6473`.
-- **Expected checkpoint commit:** `docs: record offline inf2cat validation`.
+- **Reviewed package-validation documentation baseline:**
+  `946f6feeb920e096663f757725ddb51ddd18a84d`
+  (`docs: record offline inf2cat validation`).
+- **Correction branch:** remains
+  `feature/offline-inf2cat-package-validation`; the correction commit is
+  reported by the external handoff rather than self-embedded here.
 - **Authoritative report:**
   [Offline Inf2Cat Package Validation](OFFLINE-INF2CAT-PACKAGE-VALIDATION.md).
+- **Independent review:**
+  [Offline Inf2Cat Checkpoint Review](OFFLINE-INF2CAT-CHECKPOINT-REVIEW.md),
+  verdict **REVIEW PASS WITH FINDINGS**.
 - **Inputs:** exact extension INF SHA-256
   `7E752EDAFDB252AF746C2AE6A9EFB3032A077A23FEB39C064D0E2C30700D11CE`;
   exact unsigned Release SYS SHA-256
@@ -20,8 +27,9 @@
   SHA-256
   `84CF148F8E04F41F3691B99B058BCDDE810B9EC99EB8DA4EF38DA53E11712B87`,
   `Authenticode.NotSigned`.
-- **Audit:** **AUDIT PASS WITH LIMITATIONS**. Current identities and retained
-  evidence matched; historical command execution was not independently rerun.
+- **Review:** package identities, retained evidence, links, containment, and
+  Git state passed. Documentation authorization/recovery findings are addressed
+  by this correction checkpoint; historical tools were not rerun.
 - **Containment:** package copies, CAT, and logs remain ignored beneath
   `artifacts/`; no generated evidence is tracked.
 
@@ -36,3 +44,7 @@
   reviewed or recovery-demonstrated on a noncritical system.
 - No signing, staging, Driver Store, registry, service, installation, loading,
   device, input, or transport authorization exists.
+- Windows-assigned `oem#.inf` identity does not exist until staging. Staging,
+  post-staging identity verification, target matching, attachment/load,
+  passive observation, and active hardware interaction remain distinct future
+  gates.
