@@ -3798,3 +3798,76 @@
 - **Next gate:** Independent read-only audit of the corrected production
   orchestration-invocation design. Production orchestration remains
   unimplemented and unauthorized.
+
+## 2026-07-01 00:53 +04:00 - Report-aware orchestration design correction
+
+- **Task title/objective:** Correct the documentation-only production KMDF
+  orchestration-invocation design so caller-owned report handling and the
+  complete per-category report/status taxonomy match the existing dormant
+  orchestrator.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-orchestration-design-fix` at
+  `8ec45055b3608ae917fa05e762ce37f73424ab63`, parent
+  `eb0a9e90f7adc424ae7e5c471a0c8977a71b6efe`, subject
+  `docs: correct production orchestration failures`, then created
+  `feature/offline-kmdf-orchestration-report-design-fix`.
+- **Investigation:** Re-read the repository protocol and continuity files,
+  inspected the complete authoritative orchestration report definition and
+  every report assignment/reset in
+  `ChatpadKmdfRequestOwnerContext.c`, and built an uncommitted internal matrix
+  covering early returns, each creation/validation stage, ready publication,
+  no-object faulting, rollback success/failure, and success.
+- **Audit findings corrected:** The second independent audit found that the
+  report/status taxonomy omitted mandatory report and mask behavior, the
+  future C fragment described an uninitialized declaration as initialized, and
+  LTCG limitations were not explicit. The earlier correction of null-parent,
+  invalid-baseline, and post-baseline no-object semantics remains unchanged.
+- **Design correction:** Section 6 now binds exactly one local
+  `ChatpadKmdfRequestOwnerOrchestrationReport orchestrationReport = { 0 };`,
+  documents the orchestrator's own `RtlZeroMemory`, synchronous non-escaping
+  report lifetime, one call, deterministic status mapping, and lifecycle only
+  after success. Section 10 now contains 22 explicit categories with stages,
+  helper/validator/framework results, highest/final masks, ready flags,
+  rollback result/effects, final owner state, production status, lifecycle,
+  and final `EvtDeviceAdd` outcome.
+- **Mask and rollback semantics:** Documented that early rejection retains the
+  incoming non-null-owner mask; after a clean accepted baseline,
+  `HighestPartialInitializationMask` records the pre-ready published prefix,
+  excludes tentative `OWNER_READY` and later `FAULTED`, and is unchanged by
+  rollback. `FinalInitializationMask` records the actual non-null-owner return
+  state and can contain `FAULTED` or `OWNER_READY`. Rollback failure preserves
+  the original stage/helper/validator/framework evidence and records exact
+  rollback effects.
+- **LTCG correction:** Future retention proof now combines source, object,
+  COMDAT/function-level-linking, linker/LTCG, WDF function-table, and final
+  image evidence without requiring LTCG to be disabled or treating one named
+  PE symbol as decisive.
+- **Files modified:**
+  `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and
+  `docs/WORKLOG.md`.
+- **Validation:** The main design contains exactly 28 sequential numbered
+  sections and exactly 22 required taxonomy rows. Markdown table pipe counts
+  are consistent. The zero-initialized report declaration occurs exactly once;
+  highest/final masks and LTCG are explicit. Relative Markdown-link validation
+  passed for 11 links with zero broken/untracked/case-mismatched targets.
+  `tools\Test-RepositorySafety.ps1` passed in its non-building, non-mutating
+  mode. `git diff --check` passed with only `core.autocrlf` conversion notices.
+  All six working-tree files are LF-only and no generated/tracked output
+  appeared. Two initial combined inline validation commands did not execute
+  because of PowerShell parser errors; they changed nothing, and the checks
+  were split into smaller commands that completed successfully.
+- **Safety:** Documentation-only. No source/header, project/solution,
+  script/test, manifest/evidence, artifact/binary, INF, signing, package,
+  deployment, recovery, D0/removal, USB, or hardware file changed. No build,
+  regression, compile check, helper, orchestration, rollback, WDF object
+  action, driver load, Windows mutation, hardware query, or controller/Chatpad
+  interaction occurred.
+- **Commit/push:** Commit exactly
+  `docs: complete orchestration report design` without amend and push only
+  `origin/feature/offline-kmdf-orchestration-report-design-fix`; final hash is
+  reported after commit.
+- **Next gate:** Independent read-only audit of the corrected report-aware
+  production orchestration-invocation design. Source implementation and every
+  runtime action remain unauthorized.

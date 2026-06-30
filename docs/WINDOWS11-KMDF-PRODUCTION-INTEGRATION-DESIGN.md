@@ -641,14 +641,18 @@ that slice.
 
 ## 21. Dormant orchestration invocation
 
-The corrected documentation-only production orchestration-invocation design is
-complete in
+The report-aware documentation-only production orchestration-invocation design
+is complete in
 [Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md).
 It selects the exact future binding point after explicit pre-object validation
 and before lifecycle initialization, distinguishes early rejection from
-post-baseline no-object stage failure, defines status mapping and failure
-cleanup, and requires an independent read-only audit before source
-implementation.
+post-baseline no-object stage failure, defines deterministic local report
+initialization/lifetime, documents every supported result/report/mask/rollback
+category, and binds production status selection. The second independent design
+audit failed only because the prior report/status taxonomy and report
+initialization wording were incomplete; the corrected early-rejection
+semantics remain accepted, and the dormant implementation is unchanged.
+Another independent read-only audit is required before source implementation.
 
 The later dormant orchestration slice shall:
 
@@ -824,11 +828,12 @@ Binding decisions:
     observers require renewed IRQL proof.
 12. Evidence-retention format: tracked JSON manifests under `docs/evidence/`
     plus ignored hashed logs under `artifacts\logs`.
-13. Production orchestration-invocation binding: documented in
+13. Production orchestration-invocation binding: documented, including the
+    report-aware correction, in
     `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`;
     implementation remains unauthorized.
-14. Next repository task after the documentation-only orchestration design:
-    independent read-only audit of that design, not source implementation.
+14. Next repository task: independent read-only audit of the corrected
+    report-aware design, not source implementation.
 
 Stop conditions:
 
@@ -868,7 +873,8 @@ pre-object-validation slice:
 
 The checkpoint record is
 [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
-The audit-correction checkpoint is complete, and this document now records the
-current state consistently. The corrected production orchestration-invocation
-design requires an independent read-only audit. Dormant orchestration
-implementation and execution remain unauthorized.
+The second design audit found incomplete report/status taxonomy and ambiguous
+caller report initialization wording, not a dormant implementation defect.
+The report-aware documentation correction is complete and requires an
+independent read-only audit. Dormant orchestration implementation and execution
+remain unauthorized.

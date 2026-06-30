@@ -1,15 +1,16 @@
 # Project State
 
-*Last updated: 2026-06-30 (production orchestration invocation design correction)*
+*Last updated: 2026-07-01 (report-aware orchestration design correction)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-orchestration-design-fix`.
+- **Branch:** `feature/offline-kmdf-orchestration-report-design-fix`.
 - **Current implementation checkpoint:**
   `8b91eaf939252e038bd0970db261cc14b1089613`,
   `docs: align owner initialization state`.
-- **Expected design-correction commit:** the commit containing this correction
-  uses subject `docs: correct production orchestration failures`.
+- **Expected report-design correction commit:** the commit containing this
+  correction uses subject `docs: complete orchestration report design` and has
+  parent `8ec45055b3608ae917fa05e762ce37f73424ab63`.
 - **Historical owner-initialization checkpoint:**
   `a25d5637487ec6e4e7583a64dcec6c5192e06092`,
   `driver: initialize production request owner`.
@@ -30,10 +31,13 @@
   initialization. The first design failed independent audit because it
   overgeneralized early no-object failure semantics. The corrected design now
   distinguishes early argument/baseline rejection from post-baseline no-object
-  stage failure, documents partial-state validation mapping through the
-  existing stage result/report fields, and explicitly includes no
-  sequence-advance eligibility in the clean baseline. It is documentation-only;
-  orchestration is not implemented.
+  stage failure. A second independent audit then found that the report/status
+  taxonomy and caller report initialization wording were incomplete. The
+  report-aware correction now binds `{ 0 }` caller initialization, synchronous
+  local report lifetime, all supported result/report/mask/rollback categories,
+  deterministic production status selection, and LTCG inspection limits. It is
+  documentation-only; orchestration is not implemented and the dormant source
+  is unchanged.
 - **Production context:** `driver.h` includes the authoritative KMDF
   request-owner header and embeds exactly one
   `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
@@ -69,12 +73,14 @@
 - **Safety:** no production `.c/.h`, project/solution file, owner model,
   request-owner implementation, build output, INF, signing, package,
   deployment, recovery, D0, cleanup, removal, Windows state, device state, or
-  hardware state was changed by the correction or this design task.
+  hardware state was changed by this report-design correction. No build, test,
+  helper, orchestration, rollback, WDF object action, driver load, or hardware
+  query ran.
 
 ## Unresolved blockers
 
-- The corrected production orchestration invocation design requires an
-  independent read-only documentation audit.
+- The corrected report-aware production orchestration invocation design
+  requires an independent read-only documentation audit.
 - Dormant orchestration invocation is designed but not implemented and remains
   unauthorized.
 - Normal teardown, active-operation rundown, target discovery, request

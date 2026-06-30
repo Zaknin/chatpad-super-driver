@@ -4,6 +4,40 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Bind orchestration report initialization and field semantics
+
+**Decision:** Future production `EvtDeviceAdd` code will use exactly one local
+`ChatpadKmdfRequestOwnerOrchestrationReport orchestrationReport = { 0 };`,
+pass it to the single synchronous orchestration call, and inspect it only after
+return. The orchestrator's internal `RtlZeroMemory` remains authoritative API
+behavior. Early rejection retains the incoming non-null-owner mask; after an
+accepted clean baseline, `HighestPartialInitializationMask` records the
+greatest published pre-ready prefix before recovery and excludes tentative
+`OWNER_READY` and later `FAULTED`. `FinalInitializationMask` records the
+actual non-null-owner return state.
+Production status selection preserves a failing framework status only for a
+creation-stage failure and maps all local validation/rollback failures to the
+existing stable local status.
+
+**Rationale:** The second independent design audit found that the prior
+documentation omitted mandatory per-category report and mask behavior and
+described an uninitialized C declaration as initialized. The source already
+provides the required report fields and deterministic writes; the defect was
+documentation completeness, not dormant implementation behavior.
+
+**Alternatives rejected:** Leaving caller initialization implicit would keep
+the future call shape ambiguous. Persisting the report in device context would
+create an unnecessary observer and lifetime. Inferring cleanup from only the
+top-level result would discard rollback effects and original failure evidence.
+Requiring named final PE symbols would misstate COMDAT and LTCG behavior.
+
+**Consequences:** The report remains stack-local, handle-free, synchronous,
+and non-escaping. The corrected 22-category taxonomy is the binding source for
+future status mapping and offline guards. The insertion point, early-rejection
+semantics, one-call/no-retry rule, orchestrator-owned rollback, WDF parentage,
+and separate implementation/runtime gates remain unchanged. The next gate is
+an independent read-only audit of the corrected report-aware design.
+
 ## 2026-06-30 - Distinguish early rejection from no-object stage failure
 
 **Decision:** The production orchestration-invocation design treats null
