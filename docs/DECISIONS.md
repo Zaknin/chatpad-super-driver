@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-06-30 - Distinguish early rejection from no-object stage failure
+
+**Decision:** The production orchestration-invocation design treats null
+parent-device rejection, invalid-baseline rejection, and post-baseline
+no-object stage failure as separate failure categories. Null parent-device and
+invalid-baseline rejections return before the common orchestration failure
+label, perform no rollback, and do not receive the post-baseline no-object
+fault transition. Only a post-baseline staged creation failure before any
+object publication uses the existing no-object fault helper. Partial-state
+validation failures are represented through the existing failed stage result,
+`FailedStage`, and `ValidationResult`, not through a new orchestration enum.
+
+**Rationale:** The independent audit found that the first invocation design
+overgeneralized no-object behavior by implying every pre-publication failure
+entered `MODEL_READY | FAULTED`. The existing dormant orchestrator returns
+invalid-baseline and null-parent results before common failure handling, while
+the no-object fault helper is reached only after baseline acceptance and
+staged creation entry.
+
+**Alternatives rejected:** Treating early rejection and post-baseline
+no-publication stage failure alike would keep a known source/design
+contradiction. Adding a new partial-validation enum would misrepresent the
+current implementation. Asking future production code to repair, reinitialize,
+fault, or roll back invalid baseline state would move ownership outside the
+existing orchestrator contract.
+
+**Consequences:** The corrected design keeps the accepted insertion point,
+single orchestration call, no-retry rule, production no-direct-WDF/no-direct-
+rollback boundary, WDF parentage, and separate implementation/audit/runtime
+gates, but the next gate returns to an independent read-only audit of the
+corrected documentation before source implementation.
+
 ## 2026-06-30 - Bind production dormant orchestration after pre-object validation
 
 **Decision:** The first future production invocation of

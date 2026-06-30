@@ -1,15 +1,15 @@
 # Project State
 
-*Last updated: 2026-06-30 (production orchestration invocation design)*
+*Last updated: 2026-06-30 (production orchestration invocation design correction)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-production-orchestration-design`.
+- **Branch:** `feature/offline-kmdf-orchestration-design-fix`.
 - **Current implementation checkpoint:**
   `8b91eaf939252e038bd0970db261cc14b1089613`,
   `docs: align owner initialization state`.
-- **Expected design commit:** the commit containing this design update uses
-  subject `docs: design production owner orchestration`.
+- **Expected design-correction commit:** the commit containing this correction
+  uses subject `docs: correct production orchestration failures`.
 - **Historical owner-initialization checkpoint:**
   `a25d5637487ec6e4e7583a64dcec6c5192e06092`,
   `driver: initialize production request owner`.
@@ -27,7 +27,13 @@
   [Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md)
   defines the future binding for invoking the existing dormant object-graph
   orchestrator after explicit pre-object validation and before lifecycle
-  initialization. It is documentation-only; orchestration is not implemented.
+  initialization. The first design failed independent audit because it
+  overgeneralized early no-object failure semantics. The corrected design now
+  distinguishes early argument/baseline rejection from post-baseline no-object
+  stage failure, documents partial-state validation mapping through the
+  existing stage result/report fields, and explicitly includes no
+  sequence-advance eligibility in the clean baseline. It is documentation-only;
+  orchestration is not implemented.
 - **Production context:** `driver.h` includes the authoritative KMDF
   request-owner header and embeds exactly one
   `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
@@ -67,8 +73,8 @@
 
 ## Unresolved blockers
 
-- The production orchestration invocation design requires an independent
-  read-only documentation audit.
+- The corrected production orchestration invocation design requires an
+  independent read-only documentation audit.
 - Dormant orchestration invocation is designed but not implemented and remains
   unauthorized.
 - Normal teardown, active-operation rundown, target discovery, request

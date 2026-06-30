@@ -388,9 +388,9 @@ Production integration shall map:
 | --- | --- |
 | Ordinary initialization result | `STATUS_SUCCESS` for OK; `STATUS_INVALID_PARAMETER` for impossible null integration inputs; `STATUS_INVALID_DEVICE_STATE` for invariant or repeated-initialization failures. |
 | Pre-object validation result | `STATUS_SUCCESS` for OK; `STATUS_INVALID_DEVICE_STATE` for any non-OK state. |
-| Orchestration result | `STATUS_SUCCESS` for OK; exact failed `FrameworkStatus` for WDF create failures; `STATUS_INVALID_DEVICE_STATE` for local baseline, already-ready, already-faulted, partial-state, validation, rollback, or invariant failures. |
+| Orchestration result | `STATUS_SUCCESS` for OK; `STATUS_INVALID_PARAMETER` for null production/orchestrator arguments; exact failed `FrameworkStatus` for WDF create failures; `STATUS_INVALID_DEVICE_STATE` for local baseline, already-ready, already-faulted, pre-existing partial-state, validation, rollback-failure, or invariant failures. |
 | Underlying framework `NTSTATUS` | Preserve the exact failed status when it caused the failing creation result. |
-| Rollback result | Rollback success does not convert a creation failure into success. Rollback failure returns a local invariant failure and records the original status separately. |
+| Rollback result | Rollback success does not convert a creation failure into success. Rollback failure maps to the stable local failure status and records the original failed stage/status plus rollback result separately. |
 | Final ready validation result | Non-OK returns `STATUS_INVALID_DEVICE_STATE`. |
 | Existing lifecycle result | Preserve current `ChatpadLifecycleResultToStatus` mapping. |
 
@@ -427,7 +427,7 @@ object graph to delete and no ownership proof for unexpected partial states.
 | Inbound-memory creation failure | Lock, request, outbound memory created. | Exact WDF status if available. | Delete request tree, then spinlock. | `MODEL_READY | FAULTED`, handles null. | Exact WDF failure unless rollback fails. | Rollback rejection/failure. |
 | Partial-state validation failure | Most recent successful object state. | Local validation result. | Delete request tree if request exists, then spinlock. | `MODEL_READY | FAULTED`, handles null. | `STATUS_INVALID_DEVICE_STATE` unless rollback fails. | Any validation failure after rollback. |
 | Ready validation failure | Full pre-ready graph briefly existed; `OWNER_READY` was cleared before rollback. | Local validation result. | Delete request tree, then spinlock. | `MODEL_READY | FAULTED`, handles null. | `STATUS_INVALID_DEVICE_STATE` unless rollback fails. | Any retained ready bit. |
-| Rollback rejection or failure | Unknown or produced partial state. | Preserved in report. | No best-effort direct deletion. | `OWNER_READY` absent; state preserved for failure evidence. | `STATUS_INVALID_DEVICE_STATE`. | Implementation must stop and audit before loading. |
+| Rollback rejection or failure | Unknown or produced partial state. | Preserved in report with original failed stage/status. | No best-effort direct deletion. | `OWNER_READY` absent; state preserved for failure evidence. | `STATUS_INVALID_DEVICE_STATE`. | Implementation must stop and audit before loading. |
 
 No path returns success with a partial or faulted owner.
 
@@ -641,11 +641,12 @@ that slice.
 
 ## 21. Dormant orchestration invocation
 
-The documentation-only production orchestration-invocation design is complete
-in
+The corrected documentation-only production orchestration-invocation design is
+complete in
 [Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md).
 It selects the exact future binding point after explicit pre-object validation
-and before lifecycle initialization, defines status mapping and failure
+and before lifecycle initialization, distinguishes early rejection from
+post-baseline no-object stage failure, defines status mapping and failure
 cleanup, and requires an independent read-only audit before source
 implementation.
 
@@ -868,6 +869,6 @@ pre-object-validation slice:
 The checkpoint record is
 [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
 The audit-correction checkpoint is complete, and this document now records the
-current state consistently. The production orchestration-invocation design is
-complete and requires an independent read-only audit. Dormant orchestration
+current state consistently. The corrected production orchestration-invocation
+design requires an independent read-only audit. Dormant orchestration
 implementation and execution remain unauthorized.

@@ -3735,3 +3735,66 @@
   orchestration-invocation design. Source implementation, driver loading,
   signing, installation, target discovery, request execution, and hardware
   observation remain unauthorized.
+
+## 2026-06-30 23:55 +04:00 - Production orchestration invocation design correction
+
+- **Task title/objective:** Correct the documentation-only production KMDF
+  request-owner orchestration-invocation design so it exactly matches the
+  existing dormant orchestrator's early-rejection, post-baseline no-object
+  stage failure, and partial-state validation behavior.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-production-orchestration-design` at
+  `eb0a9e90f7adc424ae7e5c471a0c8977a71b6efe`, parent
+  `8b91eaf939252e038bd0970db261cc14b1089613`, subject
+  `docs: design production owner orchestration`, then created
+  `feature/offline-kmdf-orchestration-design-fix`.
+- **Failed-audit finding:** The first orchestration-invocation design
+  incorrectly treated no-object/pre-publication failures as one category that
+  reaches the common failure path and transitions the owner to
+  `MODEL_READY | FAULTED`.
+- **Source behavior:** Current
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`
+  returns invalid-baseline and null-parent results before common
+  `OrchestrationFailure` handling. Those paths call no creation helper,
+  publish no object, call no rollback helper, and perform no automatic fault
+  transition. Only a post-baseline staged creation failure before object
+  publication reaches common failure handling and uses the existing no-object
+  fault helper.
+- **Files modified:** `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and
+  `docs/WORKLOG.md`.
+- **Documentation correction:** The corrected design now distinguishes null
+  production input, null parent-device rejection, invalid baseline,
+  already-ready, already-faulted, pre-existing partial state, post-baseline
+  spinlock no-publication failure, request/outbound/inbound failures,
+  partial-state validation failures, pre-ready validation failure, final-ready
+  validation failure, rollback failure, and later `EvtDeviceAdd` failure after
+  successful structural readiness. The clean baseline explicitly includes
+  `SequenceAdvanceEligible == 0u`.
+- **Partial-state validation mapping:** The design records that these failures
+  use the actual stage failure result plus `FailedStage` and
+  `ValidationResult`, not a dedicated orchestration enum. In the current
+  source, staged partial-state validation runs after the relevant helper has
+  returned OK and published the stage object, so rollback is selected for those
+  validation failures. The post-baseline no-object fault helper owns the
+  separate spinlock-stage no-publication failure path.
+- **Validation to retain:** Complete diff review; changed-path containment;
+  28-section check; searches for overgeneralized no-object wording; relative
+  Markdown-link validation; repository safety through the non-building
+  documented path; line-ending inspection; unstaged/staged diff checks; and
+  staged diff review.
+- **Safety:** Documentation-only. No source/header, project/solution, script,
+  test, manifest, evidence, artifact, binary, INF, signing, package,
+  deployment, recovery, D0, removal, USB, or hardware file is changed. No
+  build, regression, compile check, semantic guard that generates evidence,
+  helper invocation, WDF object creation/deletion, rollback execution, driver
+  loading, target/request operation, Windows mutation, hardware query,
+  controller/Chatpad interaction, merge, or force-push is authorized.
+- **Commit/push:** Commit exactly
+  `docs: correct production orchestration failures` and push only
+  `origin/feature/offline-kmdf-orchestration-design-fix`; final hash is
+  reported after commit.
+- **Next gate:** Independent read-only audit of the corrected production
+  orchestration-invocation design. Production orchestration remains
+  unimplemented and unauthorized.
