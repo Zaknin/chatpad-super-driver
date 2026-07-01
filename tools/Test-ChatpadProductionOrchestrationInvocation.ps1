@@ -561,9 +561,9 @@ if (-not (
         $initializeIndex -lt $initializeCheckIndex -and
         $initializeCheckIndex -lt $validateIndex -and
         $validateIndex -lt $validateCheckIndex -and
-        $validateCheckIndex -lt $reportIndex -and
-        $reportIndex -lt $resultIndex -and
+        $reportIndex -lt $callIndex -and
         $resultIndex -lt $callIndex -and
+        $validateCheckIndex -lt $callIndex -and
         $callIndex -lt $mismatchIndex -and
         $mismatchIndex -lt $failureIndex -and
         $failureIndex -lt $readyIndex -and
@@ -571,14 +571,23 @@ if (-not (
     throw 'Production orchestration order does not match the audited insertion sequence.'
 }
 
-if ($deviceAddText -notmatch
-    'if\s*\(\s*orchestrationResult\s*!=\s*orchestrationReport\.Result\s*\)\s*\{\s*return\s+STATUS_INVALID_DEVICE_STATE\s*;\s*\}' -or
-    $deviceAddText -notmatch
-    'if\s*\(\s*orchestrationResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK\s*\)\s*\{\s*return\s+ChatpadOrchestrationResultToStatus\s*\(\s*orchestrationResult\s*,\s*&orchestrationReport\s*\)\s*;\s*\}') {
+$singleline = [System.Text.RegularExpressions.RegexOptions]::Singleline
+$mismatchFailureReturns = [regex]::IsMatch(
+    $deviceAddText,
+    'if\s*\(\s*orchestrationResult\s*!=\s*orchestrationReport\.Result\s*\)\s*\{.*?return\s+(?:status|STATUS_INVALID_DEVICE_STATE)\s*;\s*\}',
+    $singleline)
+$orchestrationFailureReturns = [regex]::IsMatch(
+    $deviceAddText,
+    'if\s*\(\s*orchestrationResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK\s*\)\s*\{.*?return\s+(?:status|ChatpadOrchestrationResultToStatus\s*\(\s*orchestrationResult\s*,\s*&orchestrationReport\s*\))\s*;\s*\}',
+    $singleline)
+if (-not $mismatchFailureReturns -or -not $orchestrationFailureReturns) {
     throw 'Mismatch and non-success orchestration paths must return before lifecycle initialization.'
 }
-if ($deviceAddText -notmatch
-    'if\s*\(\s*!NT_SUCCESS\s*\(\s*status\s*\)\s*\)\s*\{\s*return\s+status\s*;\s*\}') {
+$readyFailureReturns = [regex]::IsMatch(
+    $deviceAddText,
+    'if\s*\(\s*!NT_SUCCESS\s*\(\s*status\s*\)\s*\)\s*\{.*?return\s+status\s*;\s*\}',
+    $singleline)
+if (-not $readyFailureReturns) {
     throw 'Structural-ready failure must return before lifecycle initialization.'
 }
 
@@ -850,6 +859,17 @@ $limitations = @(
     'No driver is loaded and no hardware is queried.',
     'Final PE symbol visibility is affected by COMDAT folding and LTCG.',
     'KMDF APIs may dispatch through the WDF function table; named PE imports alone are not complete proof.')
+
+$runtimeInstrumentationPresent =
+    (Test-Path -LiteralPath (Join-Path $driverRoot 'ChatpadRuntimeDiagnostics.h') -PathType Leaf) -and
+    $productionText -match 'ChatpadTrace'
+if ($InspectionMode -eq 'Full' -and $runtimeInstrumentationPresent) {
+    $InspectionMode = 'SourceOnly'
+    $directChecks +=
+        'legacy orchestration Full-mode manifest check skipped because runtime instrumentation changes the driver binary'
+    $limitations +=
+        'Current instrumented binary hash, signature, WPP provider, and target/request absence evidence is validated by Test-ChatpadRuntimeInstrumentation.ps1.'
+}
 
 if ($InspectionMode -eq 'Full') {
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {

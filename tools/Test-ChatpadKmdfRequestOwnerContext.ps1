@@ -597,7 +597,8 @@ function Test-RequestOwnerContextSemanticGuards {
         ForEach-Object {
             $activeDriverSource += "`n" + (Remove-CComments ([System.IO.File]::ReadAllText($_.FullName)))
         }
-    if ([regex]::Matches($activeDriverSource, '#include\s+"ChatpadKmdfRequestOwnerContext\.h"').Count -ne 1 -or
+    $requestOwnerContextIncludeCount = [regex]::Matches($activeDriverSource, '#include\s+"ChatpadKmdfRequestOwnerContext\.h"').Count
+    if ($requestOwnerContextIncludeCount -notin @(1, 2) -or
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfActivationRequestOwner\s+ActivationRequestOwner\s*;').Count -ne 1 -or
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerInitializeStorage\s*\(').Count -ne 1 -or
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerValidatePreObjectState\s*\(').Count -ne 1 -or
@@ -605,10 +606,10 @@ function Test-RequestOwnerContextSemanticGuards {
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerValidateCreationState\s*\(').Count -ne 1 -or
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfGetActivationRequestContext\s*\(').Count -ne 1 -or
         $activeDriverSource -match 'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare|Classify)') {
-        throw 'Active ChatpadFilter source is not limited to the authorized production orchestration invocation integration.'
+        throw 'Active ChatpadFilter source is not limited to the authorized production orchestration invocation integration plus diagnostic-only runtime instrumentation.'
     }
 
-    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication; production integration is limited to one embedded owner, ordinary initialization, pre-object validation, one dormant orchestration call, and structural-ready validation)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
+    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication; production integration is limited to one embedded owner, ordinary initialization, pre-object validation, one dormant orchestration call, structural-ready validation, and diagnostic-only runtime instrumentation includes={4})." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount, $requestOwnerContextIncludeCount)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

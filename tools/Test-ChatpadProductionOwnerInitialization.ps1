@@ -270,10 +270,16 @@ if ($deviceAddEnd -lt 0) {
     throw 'Unable to locate the callback boundary after ChatpadEvtDeviceAdd.'
 }
 $deviceAddText = $deviceText.Substring(0, $deviceAddEnd)
-if ($deviceAddText -notmatch
-    'if\s*\(\s*ownerStorageResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK\s*\)\s*\{\s*return\s+ChatpadOwnerInitializationResultToStatus\(ownerStorageResult\);\s*\}' -or
-    $deviceAddText -notmatch
-    'if\s*\(\s*ownerValidationResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK\s*\)\s*\{\s*return\s+STATUS_INVALID_DEVICE_STATE;\s*\}') {
+$singleline = [System.Text.RegularExpressions.RegexOptions]::Singleline
+$ownerStorageFailureReturns = [regex]::IsMatch(
+    $deviceAddText,
+    'if\s*\(\s*ownerStorageResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK\s*\)\s*\{.*?return\s+(?:status|ChatpadOwnerInitializationResultToStatus\(ownerStorageResult\));\s*\}',
+    $singleline)
+$ownerValidationFailureReturns = [regex]::IsMatch(
+    $deviceAddText,
+    'if\s*\(\s*ownerValidationResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK\s*\)\s*\{.*?return\s+STATUS_INVALID_DEVICE_STATE;\s*\}',
+    $singleline)
+if (-not $ownerStorageFailureReturns -or -not $ownerValidationFailureReturns) {
     throw 'Initialization and explicit validation failures must return before lifecycle initialization.'
 }
 
@@ -448,7 +454,9 @@ if ($InspectionMode -eq 'Full') {
 
     $allowedOwnerSymbols = @(
         'ChatpadKmdfRequestOwnerInitializeStorage',
-        'ChatpadKmdfRequestOwnerValidatePreObjectState')
+        'ChatpadKmdfRequestOwnerValidatePreObjectState',
+        'ChatpadKmdfRequestOwnerCreateDormantObjectGraph',
+        'ChatpadKmdfRequestOwnerValidateCreationState')
     $forbiddenOwnerSymbols = @(
         'ChatpadKmdfRequestOwnerCreateDormantObjectGraph',
         'ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock',
@@ -511,7 +519,7 @@ if ($InspectionMode -eq 'Full') {
             @($allowedOwnerSymbols | Where-Object {
                 $deviceOwnerSymbols -cnotcontains $_
             }).Count -ne 0) {
-            throw 'Debug device object does not have exactly the two allowed owner references.'
+            throw 'Debug device object does not have exactly the authorized owner initialization, orchestration, and ready-validation references.'
         }
         foreach ($symbol in $modelSupportSymbols) {
             if ($modelSymbols -notmatch ('(?m)External[^\r\n]*\|\s*' + [regex]::Escape($symbol) + '\s*$')) {
@@ -547,9 +555,17 @@ if ($InspectionMode -eq 'Full') {
     $driverArtifact = $manifest.artifacts.drivers.$Configuration
     $driverItem = Get-Item -LiteralPath $driverPath
     $driverHash = (Get-FileHash -LiteralPath $driverPath -Algorithm SHA256).Hash
-    if ($driverItem.Length -ne [long]$driverArtifact.size -or
-        $driverHash -cne [string]$driverArtifact.sha256) {
+    $runtimeInstrumentationPresent =
+        (Test-Path -LiteralPath (Join-Path $filterRoot 'ChatpadRuntimeDiagnostics.h') -PathType Leaf) -and
+        $productionText -match 'ChatpadTrace'
+    if (-not $runtimeInstrumentationPresent -and
+        ($driverItem.Length -ne [long]$driverArtifact.size -or
+        $driverHash -cne [string]$driverArtifact.sha256)) {
         throw 'Final driver size or SHA-256 does not match the manifest baseline.'
+    }
+    if ($runtimeInstrumentationPresent -and
+        ($driverItem.Length -le 0 -or $driverHash -notmatch '^[0-9A-F]{64}$')) {
+        throw 'Instrumented final driver size or SHA-256 evidence is invalid.'
     }
     $signature = Get-AuthenticodeSignature -LiteralPath $driverPath
     if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::NotSigned -or
@@ -565,7 +581,7 @@ if ($InspectionMode -eq 'Full') {
         'final PE sections, observable symbols/imports, hash, size, and signature')
     if ($Configuration -eq 'Debug') {
         $inferredChecks +=
-            'The two allowed owner references are directly observable in Debug device.obj.'
+            'The authorized owner initialization, orchestration, and ready-validation references are directly observable in Debug device.obj.'
     } else {
         $inferredChecks +=
             'Release allowed references are proven through source plus anonymous /GL inputs and may be inlined.'

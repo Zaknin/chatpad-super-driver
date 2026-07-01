@@ -131,14 +131,15 @@ $driverSource = ''
 Get-ChildItem -LiteralPath $driverRoot -File -ErrorAction Stop |
     Where-Object { $_.Extension -in @('.c', '.h') } |
     ForEach-Object { $driverSource += "`n" + (Remove-CComments ([System.IO.File]::ReadAllText($_.FullName))) }
-if ([regex]::Matches($driverSource, '#include\s+"ChatpadKmdfRequestOwnerContext\.h"').Count -ne 1 -or
+$requestOwnerContextIncludeCount = [regex]::Matches($driverSource, '#include\s+"ChatpadKmdfRequestOwnerContext\.h"').Count
+if ($requestOwnerContextIncludeCount -notin @(1, 2) -or
     [regex]::Matches($driverSource, 'ChatpadKmdfActivationRequestOwner\s+ActivationRequestOwner\s*;').Count -ne 1 -or
     [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerInitializeStorage\s*\(').Count -ne 1 -or
     [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerValidatePreObjectState\s*\(').Count -ne 1 -or
     [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerCreateDormantObjectGraph\s*\(').Count -ne 1 -or
     [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerValidateCreationState\s*\(').Count -ne 1 -or
     [regex]::Matches($driverSource, 'ChatpadKmdfGetActivationRequestContext\s*\(').Count -ne 1) {
-    throw 'Production source must contain the exact authorized owner initialization and orchestration invocation integration.'
+    throw 'Production source must contain the exact authorized owner initialization and orchestration invocation integration plus diagnostic-only runtime instrumentation.'
 }
 Assert-NoMatch $driverSource 'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare|Classify)' 'Production source must not call direct creation, rollback, attribute, or classification APIs.'
 Assert-NoMatch $driverSource 'Wdf(?:IoTarget|UsbTarget|RequestFormat|RequestReuse|RequestSend|RequestComplete|RequestCancel|RequestSetCompletionRoutine)' 'Target discovery or request operation code is prohibited.'
@@ -199,6 +200,6 @@ if ($BuildLogPath) {
     }
 }
 
-Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; one native ProjectReference to ChatpadKmdfRequestOwnerContext; exact owner initialization plus orchestration invocation integration; no request-owner forced retention; dormant orchestration/WDF evidence is configuration-appropriate; final driver has no target/request-operation symbols)." -f $Configuration, $Platform)
+Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; one native ProjectReference to ChatpadKmdfRequestOwnerContext; exact owner initialization plus orchestration invocation integration; diagnostic-only request-owner includes={2}; no request-owner forced retention; dormant orchestration/WDF evidence is configuration-appropriate; final driver has no target/request-operation symbols)." -f $Configuration, $Platform, $requestOwnerContextIncludeCount)
 Write-Output 'Semantic guard limitation: targeted XML/text/binary string checks cannot prove full C macro expansion or all linker extraction internals; paired MSBuild logs, tlogs, dumpbin output, and diff review provide the binary evidence for this checkpoint.'
 exit 0

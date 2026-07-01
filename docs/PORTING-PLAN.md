@@ -1,6 +1,6 @@
 # Porting Plan
 
-## Current runtime-observation planning gate (2026-07-01)
+## Current runtime-observation planning gate (2026-07-02)
 
 The offline production-orchestration evidence is accepted at commit
 `4c84891ca24ef969664f53fd5e9ec2a697f2edb9` after `AUDIT PASS WITH
@@ -17,20 +17,22 @@ observation, target discovery, request execution, signing, packaging,
 installation, loading, device query, and hardware testing remain prohibited
 future gates.
 
-Current phase: **Offline runtime instrumentation design - independent
-acceptance pending**.
+Current phase: **Offline runtime instrumentation implementation - independent
+implementation audit pending**.
 
 The original offline runtime instrumentation design was committed at
 `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`. Its independent audit returned
-`AUDIT FAIL` for documentation-only defects: incomplete per-event metadata and
-premature continuity advancement to implementation. The remediated design is in
-`docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`. It preserves WPP
-software tracing as the primary first-load diagnostic mechanism, keeps existing
-`KdPrintEx` statements as fallback only, preserves the 73-event catalogue, and
-requires Release-capable diagnostic evidence before any runtime gate can open.
-The next task is independent read-only audit of the remediated design. Source
-implementation is not authorized; signing, packaging, staging, installation,
-loading, device query, and hardware testing remain closed.
+`AUDIT FAIL` for documentation-only defects, which were remediated at
+`526f6bb055b485fdb459a9d303fc3f814da15e48`. The independently accepted
+WPP-based implementation now exists on
+`feature/offline-runtime-instrumentation-implementation`, with provider GUID
+`{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, schema `1`, and 73 accepted events.
+The implementation is documented in
+`docs/OFFLINE-RUNTIME-INSTRUMENTATION-IMPLEMENTATION.md`, with manifest
+`docs/evidence/runtime-instrumentation-implementation-manifest.json`.
+The next task is independent implementation audit. Signing, packaging,
+staging, installation, loading, trace collection, device query, and hardware
+testing remain closed.
 
 This plan starts from the preserved source-only baseline. It intentionally does not load, install, execute, or test any legacy binary.
 
@@ -182,6 +184,16 @@ Source references:
   binary comparison with a retained source-identical A/B rebuild. It remains
   evidence-only; runtime, target/request, signing, installation, and hardware
   gates are closed.
+- The offline runtime instrumentation implementation checkpoint is complete
+  locally in
+  `docs/OFFLINE-RUNTIME-INSTRUMENTATION-IMPLEMENTATION.md`, with tracked
+  evidence in
+  `docs/evidence/runtime-instrumentation-implementation-manifest.json`.
+  `ChatpadFilter` and `ChatpadKmdfRequestOwnerContext` now share one WPP
+  provider, schema `1`, and the 73-event accepted catalogue. This is still an
+  offline compile/static-validation checkpoint until an independent
+  implementation audit accepts it; signing, packaging, staging, installation,
+  loading, trace collection, device query, and hardware testing remain closed.
 - The owner-initialization audit-corrections checkpoint is complete in
   `docs/OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md`. It corrected
   documentation, guard wording, and retained evidence without changing

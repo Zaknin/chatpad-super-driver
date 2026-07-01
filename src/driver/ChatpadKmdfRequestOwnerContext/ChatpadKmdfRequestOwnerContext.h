@@ -202,6 +202,8 @@ typedef struct ChatpadKmdfActivationRequestOwner {
     ULONG Signature;
     ULONG Version;
     ULONG InitializationMask;
+    uint64_t DiagnosticAttemptId;
+    uint64_t DiagnosticTraceSequence;
     ChatpadActivationRequestOwner Model;
     WDFREQUEST Request;
     WDFMEMORY OutboundMemory;

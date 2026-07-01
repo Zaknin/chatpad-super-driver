@@ -1,58 +1,65 @@
 # Project State
 
-*Last updated: 2026-07-01 (offline runtime instrumentation design remediation)*
+*Last updated: 2026-07-02 (offline runtime instrumentation implementation)*
 
 ## Current State
 
-- **Branch:** `feature/documentation-offline-runtime-instrumentation-design-remediation`.
-- **Starting commit:** `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`,
-  `docs: define offline runtime instrumentation design`.
-- **Required parent for remediation:** `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`.
+- **Branch:** `feature/offline-runtime-instrumentation-implementation`.
+- **Base commit:** `526f6bb055b485fdb459a9d303fc3f814da15e48`,
+  `docs: remediate runtime instrumentation design audit`.
+- **Base parent:** `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`.
+- **Expected implementation commit:** the commit containing this file, with
+  subject `driver: implement offline runtime instrumentation`.
 - **Accepted first-runtime recovery plan:**
   `fbca8852e47300d4f483968b23e42ee82e88b972`.
-- **Frozen accepted baseline:** `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`.
-- **Frozen implementation:** `efb729502a0527ac70e2d20fa31a323c3beb2920`,
+- **Frozen accepted production orchestration evidence baseline:**
+  `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`.
+- **Frozen production orchestration implementation:**
+  `efb729502a0527ac70e2d20fa31a323c3beb2920`,
   `driver: invoke production request owner orchestration`.
-- **Original offline instrumentation design commit:**
-  `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`.
-- **Independent audit result for original instrumentation design:** `AUDIT FAIL`.
-- **Original audit blockers:** incomplete per-event metadata and premature
-  continuity advancement to implementation.
-- **Remediated instrumentation design:**
-  `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`.
-- **Remediated design status:** independent acceptance pending.
-- **Offline evidence checkpoint:**
-  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-FINAL-REMEDIATION.md`.
-- **Manifest:** schema `1.6.0`, 102 mandatory evidence IDs and 102 entries.
+- **Runtime instrumentation provider:**
+  `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`.
+- **Runtime instrumentation schema:** `1`.
+- **Runtime instrumentation event count:** 73 accepted IDs and names.
 
 ## Current Implementation State
 
-- Offline production WDF-object integration is closed and accepted.
-- Current production source would create a dormant object graph if loaded:
-  one spinlock, one targetless reusable request, and outbound/inbound
-  preallocated memory objects.
-- The current build is **not sufficiently observable for first controlled
-  load** because orchestration result, structural-ready reachability, cleanup,
-  and target/request absence are not emitted as durable runtime evidence.
-- Offline runtime instrumentation design exists and selects WPP software
-  tracing as the primary first-load diagnostic mechanism.
-- The remediated design has not yet passed independent audit.
-- No diagnostic instrumentation source exists.
-- No source implementation authorization exists.
-- Selected next task: independently audit the remediated offline runtime
-  instrumentation design.
+- Offline production WDF-object integration remains closed and accepted.
+- WPP-based offline runtime diagnostic instrumentation is implemented in
+  `ChatpadFilter` and `ChatpadKmdfRequestOwnerContext`.
+- Instrumentation covers driver entry, `EvtDeviceAdd`, owner initialization,
+  orchestration stages, readiness validation, lifecycle initialization,
+  rollback, cleanup, prohibited-operation counters, invariant events, and
+  terminal summaries.
+- Debug and Release driver builds pass.
+- Debug and Release solution builds pass.
+- Runtime instrumentation guard passes in Debug and Release with 73 accepted
+  events, 73 header events, 73 inventory events, 19/19 pure-model checks, equal
+  Debug/Release catalogue, and safety guard PASS.
+- Final driver identities:
+  - Debug: 59904 bytes, SHA-256
+    `AEE0D684800FC15BF77F233BEB125FBB65B1702E597BFB6B87BA6FBE9C1A6E36`,
+    Authenticode `NotSigned`.
+  - Release: 36864 bytes, SHA-256
+    `C25F72AA43647906EA1C9685B66251546E6EBE03E832972A5C37B24BA24C8461`,
+    Authenticode `NotSigned`.
+- Static PE/import inspection found x64 Native images and no prohibited
+  target/request-operation symbols.
+- The implementation is not independently accepted until a separate audit
+  starts from the final commit.
 
 ## Safety and Limitations
 
-- Production source, headers, project files, solution files, shared props,
-  INF files, signing, packaging, guards, tests, scripts, generated evidence,
-  and `legacy/` are unchanged by the current documentation-only remediation.
 - The driver remains unsigned, unpackaged, unstaged, uninstalled, unloaded, and
   unexecuted.
-- No hardware identity has been queried.
-- No runtime authorization exists.
+- No trace session was started.
+- No hardware identity was queried.
 - No signing, certificate/key creation, package/catalog construction, Driver
   Store staging, installation, service mutation, registry mutation, verifier
   mutation, boot-setting mutation, device query, USB/HID/XUSB/controller/
-  Chatpad interaction, target discovery, request formatting/submission/
-  completion/cancellation, D0/removal observation, or hardware action occurred.
+  Chatpad interaction, target discovery/open, request formatting/submission/
+  reuse/completion/cancellation, D0/removal runtime observation, Windows
+  mutation, or hardware action occurred.
+- Next task: independent audit of the offline runtime instrumentation
+  implementation from the final commit on
+  `feature/offline-runtime-instrumentation-implementation`.

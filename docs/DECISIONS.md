@@ -1726,3 +1726,30 @@ final-symbol inspection can prove.
 artifact chain and proof limits, not just search final driver imports. Evidence
 manifests for corrected retained logs should preserve exact command text,
 working directory, path, hash, configuration, mode, and result.
+
+## 2026-07-02 - Use one WPP provider for offline runtime diagnostics
+
+**Decision:** Implement offline runtime diagnostics with one WPP software
+tracing provider, GUID `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, schema
+version `1`, and the accepted 73-event catalogue shared by `ChatpadFilter` and
+`ChatpadKmdfRequestOwnerContext`.
+
+**Rationale:** The first controlled load needs Release-capable, structured,
+per-attempt evidence for driver entry, device creation, owner initialization,
+orchestration, readiness, lifecycle, rollback, cleanup, invariant, prohibited
+counter, and terminal outcomes. A single provider keeps correlation and static
+validation simple while preserving existing `KdPrintEx` as a fallback.
+
+**Alternatives rejected:**
+
+* `KdPrintEx` only - not sufficiently structured or independently auditable.
+* Multiple providers - unnecessary correlation complexity for one driver
+  checkpoint.
+* TraceLogging or event-log writes - broader runtime surface than required for
+  this offline instrumentation gate.
+
+**Consequences:** WPP preprocessing is enabled for the driver, request-owner
+context, and direct compile-check project; generated trace outputs stay under
+ignored `artifacts/`. The implementation remains offline-only and does not
+authorize signing, packaging, installation, driver loading, trace collection,
+target discovery, request execution, or hardware interaction.

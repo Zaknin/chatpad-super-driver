@@ -4936,3 +4936,109 @@
 - **Next task:** Independently audit the remediated offline runtime
   instrumentation design. Only after that audit passes may an offline
   implementation prompt be prepared.
+
+## 2026-07-02 01:12 +04:00 - Offline runtime instrumentation implementation
+
+- **Objective:** Implement the independently accepted WPP-based offline runtime
+  diagnostic instrumentation design for `ChatpadFilter` and the KMDF
+  request-owner context, with no signing, packaging, installation, loading,
+  trace collection, device query, or hardware action.
+- **Starting state:** Verified exact clean synchronized branch
+  `feature/documentation-offline-runtime-instrumentation-design-remediation`
+  at `526f6bb055b485fdb459a9d303fc3f814da15e48`, parent
+  `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`, subject
+  `docs: remediate runtime instrumentation design audit`, upstream
+  `origin/feature/documentation-offline-runtime-instrumentation-design-remediation`,
+  upstream hash `526f6bb055b485fdb459a9d303fc3f814da15e48`, ahead/behind
+  `0/0`, clean worktree and index. Then created
+  `feature/offline-runtime-instrumentation-implementation`.
+- **Documentation discrepancy corrected:** Continuity docs still described the
+  remediated design as audit-pending and implementation unauthorized. The task
+  attachment superseded that state by authorizing implementation from the exact
+  remediation commit; the current continuity docs now record implementation
+  complete and independent implementation audit pending.
+- **Files created, modified, or removed:** Added
+  `src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h`,
+  `tools/Test-ChatpadRuntimeInstrumentation.ps1`,
+  `docs/OFFLINE-RUNTIME-INSTRUMENTATION-IMPLEMENTATION.md`,
+  `docs/evidence/runtime-instrumentation-event-sites.csv`, and
+  `docs/evidence/runtime-instrumentation-implementation-manifest.json`.
+  Modified `src/driver/ChatpadFilter/ChatpadFilter.vcxproj`,
+  `src/driver/ChatpadFilter/driver.c`, `src/driver/ChatpadFilter/device.c`,
+  `src/driver/ChatpadFilter/driver.h`,
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`,
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h`,
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj`,
+  `tests/kernel/ChatpadKmdfRequestOwnerContextCompileCheck/ChatpadKmdfRequestOwnerContextCompileCheck.vcxproj`,
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1`,
+  `tools/Test-ChatpadProductionLinkage.ps1`,
+  `tools/Test-ChatpadProductionOwnerInitialization.ps1`,
+  `tools/Test-ChatpadProductionOrchestrationInvocation.ps1`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/PORTING-PLAN.md`, and this worklog.
+- **Implementation details:** Added one WPP provider,
+  `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, schema `1`, and the accepted
+  73-event catalogue. Added attempt IDs, per-attempt trace sequence values,
+  status-class mapping, object snapshots, orchestration stage events, rollback
+  events, cleanup events, terminal summaries, and zero-only prohibited-operation
+  counter snapshots. Added WPP init/cleanup to driver lifecycle and WPP build
+  settings for Debug and Release. Existing `KdPrintEx` breadcrumbs remain as
+  fallback.
+- **Validation results:** `Build-Driver.ps1 -Configuration Debug -Platform x64`
+  PASS; `Build-Driver.ps1 -Configuration Release -Platform x64` PASS. Full
+  solution Debug and Release builds PASS. `Test-ChatpadRuntimeInstrumentation.ps1`
+  Debug and Release PASS with 73 accepted events, 73 header events, 73 inventory
+  events, 19/19 pure-model tests, equal Debug/Release catalogue, safety guard
+  PASS, and 73 assertions per configuration. Existing offline regressions for
+  request-owner model, protocol, transport, lifecycle, control setup, protocol
+  kernel compatibility, WDF control setup, KMDF request-owner context,
+  production linkage, production owner initialization, and production
+  orchestration invocation passed after instrumentation-aware guard updates.
+  Production orchestration invocation Full mode falls back to SourceOnly on
+  instrumentation branches because its historical A/B manifest binds a
+  pre-instrumentation binary; current instrumented binary evidence is covered by
+  `Test-ChatpadRuntimeInstrumentation.ps1` and the implementation manifest.
+- **Binary/static evidence:** Debug driver
+  `artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys` is 59904 bytes,
+  SHA-256 `AEE0D684800FC15BF77F233BEB125FBB65B1702E597BFB6B87BA6FBE9C1A6E36`,
+  Authenticode `NotSigned`. Release driver
+  `artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys` is 36864 bytes,
+  SHA-256 `C25F72AA43647906EA1C9685B66251546E6EBE03E832972A5C37B24BA24C8461`,
+  Authenticode `NotSigned`. `dumpbin /headers` confirmed x64 Native images and
+  expected `.text`, `.rdata`, `.data`, `.pdata`, and `.reloc` sections.
+  `dumpbin /imports` plus `/symbols` found no prohibited target/request
+  operation symbols. WPP-generated `.tmh` files exist under ignored
+  `artifacts/obj`.
+- **Repository safety:** `Test-RepositorySafety.ps1` PASS with
+  `DeploymentActions=0`, `SigningActions=0`, `PackagingActions=0`,
+  `CertificateCreationActions=0`, `KeyCreationActions=0`, `WindowsMutations=0`,
+  `DeviceQueries=0`, `HardwareAccesses=0`, `UnexpectedTrackedArtifacts=0`,
+  `TrackedEvidenceFiles=0`, and `NonIgnoredEvidenceFiles=0`. `git diff --check`
+  PASS with only Git LF-to-CRLF checkout-policy warnings.
+- **Generated artifact locations:** Build and regression logs are under
+  ignored `artifacts/logs/`, including
+  `runtime-instrumentation-regression-20260702T005926Z.log`,
+  `runtime-instrumentation-regression-resume3-20260702T010516Z.log`,
+  `runtime-instrumentation-driver-Debug-20260702T010612Z.log`,
+  `runtime-instrumentation-driver-Release-20260702T010612Z.log`,
+  `runtime-instrumentation-solution-Debug-20260702T010612Z.log`, and
+  `runtime-instrumentation-solution-Release-20260702T010612Z.log`.
+- **Safety:** No signing, certificate/key creation, catalog/package
+  construction, Driver Store staging, installation, loading, trace session
+  start, service/registry/verifier/boot mutation, device query, USB/HID/XUSB/
+  controller/Chatpad interaction, target discovery/open, request formatting/
+  reuse/submission/completion/cancellation, protocol traffic, keyboard
+  injection, Windows mutation, or hardware action occurred. `legacy/` was not
+  modified.
+- **Commit/push:** Commit exactly
+  `driver: implement offline runtime instrumentation` and push only
+  `origin/feature/offline-runtime-instrumentation-implementation`; final hash
+  is reported after commit.
+- **Remaining risks/limitations:** This is compile/static evidence only, not
+  runtime proof. The driver is unsigned, unpackaged, unstaged, uninstalled,
+  unloaded, and unexecuted. Independent implementation audit must verify final
+  commit hash, branch, parent, scope, manifest, binary identity, and clean
+  state before any runtime gate is considered.
+- **Next task:** Independently audit the offline runtime instrumentation
+  implementation from the final commit on
+  `feature/offline-runtime-instrumentation-implementation`.

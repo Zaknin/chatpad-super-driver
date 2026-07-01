@@ -1,0 +1,151 @@
+{
+  "schema_version": "1.0.0",
+  "checkpoint": "offline-runtime-instrumentation-implementation",
+  "implementation_branch": "feature/offline-runtime-instrumentation-implementation",
+  "starting_state": {
+    "branch": "feature/documentation-offline-runtime-instrumentation-design-remediation",
+    "commit": "526f6bb055b485fdb459a9d303fc3f814da15e48",
+    "parent": "b26514f59e9d07fbee09e8bab5ea296d18c0dd85",
+    "subject": "docs: remediate runtime instrumentation design audit",
+    "upstream": "origin/feature/documentation-offline-runtime-instrumentation-design-remediation",
+    "ahead_behind": "0/0",
+    "worktree": "clean"
+  },
+  "provider": {
+    "guid": "{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}",
+    "schema_version": 1,
+    "event_count": 73,
+    "debug_release_catalogue_equal": true
+  },
+  "artifacts": {
+    "drivers": {
+      "Debug": {
+        "path": "artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys",
+        "size": 59904,
+        "sha256": "AEE0D684800FC15BF77F233BEB125FBB65B1702E597BFB6B87BA6FBE9C1A6E36",
+        "authenticode": "NotSigned"
+      },
+      "Release": {
+        "path": "artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys",
+        "size": 36864,
+        "sha256": "C25F72AA43647906EA1C9685B66251546E6EBE03E832972A5C37B24BA24C8461",
+        "authenticode": "NotSigned"
+      }
+    },
+    "generated_wpp": {
+      "debug_tmh": "artifacts/obj/x64/Debug/ChatpadFilter/device.tmh",
+      "debug_driver_tmh": "artifacts/obj/x64/Debug/ChatpadFilter/driver.tmh",
+      "debug_owner_tmh": "artifacts/obj/x64/Debug/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.tmh",
+      "release_tmh": "artifacts/obj/x64/Release/ChatpadFilter/device.tmh",
+      "release_driver_tmh": "artifacts/obj/x64/Release/ChatpadFilter/driver.tmh",
+      "release_owner_tmh": "artifacts/obj/x64/Release/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.tmh",
+      "note": "Generated WPP headers are ignored artifacts. Provider GUID identity is validated from the tracked WPP configuration header and project WPP settings."
+    }
+  },
+  "validation": {
+    "runtime_instrumentation_guard": {
+      "Debug": "PASS",
+      "Release": "PASS",
+      "accepted_event_count": 73,
+      "header_event_count": 73,
+      "inventory_event_count": 73,
+      "pure_model_tests": "19/19",
+      "assertions_per_configuration": 73,
+      "safety_guard": "PASS"
+    },
+    "builds": {
+      "driver_debug": "PASS",
+      "driver_release": "PASS",
+      "solution_debug": "PASS",
+      "solution_release": "PASS"
+    },
+    "regressions": {
+      "request_owner_model": {
+        "Debug": "5002/5002",
+        "Release": "5002/5002"
+      },
+      "protocol": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "transport": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "lifecycle": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "control_setup": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "protocol_kernel_compatibility": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "wdf_control_setup": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "kmdf_request_owner_context": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "production_linkage": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "production_owner_initialization": {
+        "Debug": "PASS",
+        "Release": "PASS"
+      },
+      "production_orchestration_invocation": {
+        "Debug": "PASS SourceOnly instrumentation-aware legacy manifest fallback",
+        "Release": "PASS SourceOnly instrumentation-aware legacy manifest fallback"
+      }
+    },
+    "static_binary_inspection": {
+      "headers": "PASS x64 Native expected sections",
+      "prohibited_target_request_symbols": "PASS none found"
+    },
+    "repository_safety": {
+      "result": "PASS",
+      "deployment_actions": 0,
+      "signing_actions": 0,
+      "packaging_actions": 0,
+      "certificate_creation_actions": 0,
+      "key_creation_actions": 0,
+      "windows_mutations": 0,
+      "device_queries": 0,
+      "hardware_accesses": 0,
+      "unexpected_tracked_artifacts": 0
+    },
+    "diff_check": "PASS"
+  },
+  "evidence_logs": [
+    "artifacts/logs/runtime-instrumentation-regression-20260702T005926Z.log",
+    "artifacts/logs/runtime-instrumentation-regression-resume3-20260702T010516Z.log",
+    "artifacts/logs/runtime-instrumentation-driver-Debug-20260702T010612Z.log",
+    "artifacts/logs/runtime-instrumentation-driver-Release-20260702T010612Z.log",
+    "artifacts/logs/runtime-instrumentation-solution-Debug-20260702T010612Z.log",
+    "artifacts/logs/runtime-instrumentation-solution-Release-20260702T010612Z.log"
+  ],
+  "prohibited_actions_not_performed": [
+    "driver signing",
+    "certificate or key creation",
+    "catalog or package construction",
+    "Driver Store staging",
+    "installation",
+    "driver loading",
+    "trace session start",
+    "Windows registry, verifier, service, or boot mutation",
+    "device query",
+    "USB, HID, XUSB, controller, or Chatpad interaction",
+    "target discovery or open",
+    "request formatting, reuse, send, completion, or cancellation",
+    "runtime protocol traffic",
+    "keyboard injection"
+  ],
+  "self_reference_limitation": "The containing implementation commit cannot be named inside this manifest before the commit exists. Independent audit must verify the final commit hash, branch, parent, scope, and clean state."
+}

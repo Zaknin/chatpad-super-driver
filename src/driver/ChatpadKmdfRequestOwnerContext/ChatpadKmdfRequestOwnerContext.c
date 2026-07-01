@@ -1,4 +1,6 @@
 #include "ChatpadKmdfRequestOwnerContext.h"
+#include "ChatpadRuntimeDiagnostics.h"
+#include "ChatpadKmdfRequestOwnerContext.tmh"
 
 C_ASSERT(CHATPAD_KMDF_ACTIVATION_OUTBOUND_CAPACITY == 2u);
 C_ASSERT(CHATPAD_KMDF_ACTIVATION_INBOUND_CAPACITY == 2u);
@@ -65,6 +67,100 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_SIGNATURE !=
 #define CHATPAD_KMDF_REQUEST_OWNER_ROLLED_BACK_INIT_MASK \
     (CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY | \
      CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED)
+
+static void
+ChatpadKmdfTraceOwnerEvent(
+    ChatpadKmdfActivationRequestOwner *owner,
+    UCHAR level,
+    ULONG flags,
+    ChatpadRuntimeTraceEventId eventId,
+    NTSTATUS status,
+    ULONG stage,
+    ULONG data0,
+    ULONG data1
+    )
+{
+    uint64_t attemptId;
+    uint64_t sequence;
+
+    attemptId = owner != NULL ? owner->DiagnosticAttemptId : 0u;
+    sequence = ChatpadRuntimeNextOwnerSequence(owner);
+    if (flags == CHATPAD_TRACE_CLEANUP) {
+        ChatpadTrace(level, CHATPAD_TRACE_CLEANUP,
+            "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X Stage=%lu Data0=%lu Data1=%lu",
+            (ULONG)eventId, ChatpadRuntimeTraceEventName(eventId),
+            (unsigned long long)attemptId, (unsigned long long)sequence,
+            CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION,
+            (ULONG)ChatpadRuntimeClassifyStatus(status), (ULONG)status,
+            stage, data0, data1);
+    } else if (flags == CHATPAD_TRACE_INVARIANT) {
+        ChatpadTrace(level, CHATPAD_TRACE_INVARIANT,
+            "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X Stage=%lu Data0=%lu Data1=%lu",
+            (ULONG)eventId, ChatpadRuntimeTraceEventName(eventId),
+            (unsigned long long)attemptId, (unsigned long long)sequence,
+            CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION,
+            (ULONG)ChatpadRuntimeClassifyStatus(status), (ULONG)status,
+            stage, data0, data1);
+    } else {
+        ChatpadTrace(level, CHATPAD_TRACE_ORCHESTRATION,
+            "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X Stage=%lu Data0=%lu Data1=%lu",
+            (ULONG)eventId, ChatpadRuntimeTraceEventName(eventId),
+            (unsigned long long)attemptId, (unsigned long long)sequence,
+            CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION,
+            (ULONG)ChatpadRuntimeClassifyStatus(status), (ULONG)status,
+            stage, data0, data1);
+    }
+}
+
+static void
+ChatpadKmdfTraceOwnerSnapshot(
+    ChatpadKmdfActivationRequestOwner *owner,
+    UCHAR level,
+    ULONG flags,
+    ChatpadRuntimeTraceEventId eventId,
+    NTSTATUS status,
+    ULONG structuralReadyResult
+    )
+{
+    ChatpadRuntimeObjectSnapshot snapshot;
+
+    snapshot = ChatpadRuntimeCaptureObjectSnapshot(owner, structuralReadyResult);
+    if (flags == CHATPAD_TRACE_CLEANUP) {
+        ChatpadTrace(level, CHATPAD_TRACE_CLEANUP,
+            "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X BookkeepingLockPresent=%u ReusableRequestPresent=%u OutboundMemoryPresent=%u InboundMemoryPresent=%u OwnerReady=%u Faulted=%u ObjectGraphComplete=%u InitializationMask=0x%08X StructuralReadyResult=%lu",
+            (ULONG)eventId, ChatpadRuntimeTraceEventName(eventId),
+            (unsigned long long)(owner != NULL ? owner->DiagnosticAttemptId : 0u),
+            (unsigned long long)ChatpadRuntimeNextOwnerSequence(owner),
+            CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION,
+            (ULONG)ChatpadRuntimeClassifyStatus(status), (ULONG)status,
+            (unsigned int)snapshot.BookkeepingLockPresent,
+            (unsigned int)snapshot.ReusableRequestPresent,
+            (unsigned int)snapshot.OutboundMemoryPresent,
+            (unsigned int)snapshot.InboundMemoryPresent,
+            (unsigned int)snapshot.OwnerReady,
+            (unsigned int)snapshot.Faulted,
+            (unsigned int)snapshot.ObjectGraphComplete,
+            snapshot.InitializationMask,
+            snapshot.StructuralReadyResult);
+    } else {
+        ChatpadTrace(level, CHATPAD_TRACE_ORCHESTRATION,
+            "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X BookkeepingLockPresent=%u ReusableRequestPresent=%u OutboundMemoryPresent=%u InboundMemoryPresent=%u OwnerReady=%u Faulted=%u ObjectGraphComplete=%u InitializationMask=0x%08X StructuralReadyResult=%lu",
+            (ULONG)eventId, ChatpadRuntimeTraceEventName(eventId),
+            (unsigned long long)(owner != NULL ? owner->DiagnosticAttemptId : 0u),
+            (unsigned long long)ChatpadRuntimeNextOwnerSequence(owner),
+            CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION,
+            (ULONG)ChatpadRuntimeClassifyStatus(status), (ULONG)status,
+            (unsigned int)snapshot.BookkeepingLockPresent,
+            (unsigned int)snapshot.ReusableRequestPresent,
+            (unsigned int)snapshot.OutboundMemoryPresent,
+            (unsigned int)snapshot.InboundMemoryPresent,
+            (unsigned int)snapshot.OwnerReady,
+            (unsigned int)snapshot.Faulted,
+            (unsigned int)snapshot.ObjectGraphComplete,
+            snapshot.InitializationMask,
+            snapshot.StructuralReadyResult);
+    }
+}
 
 static int ChatpadKmdfRequestOwnerModelIsMarked(
     const ChatpadActivationRequestOwner *model)
@@ -1330,11 +1426,44 @@ ChatpadKmdfRequestOwnerRollbackPartialCreation(
         return result;
     }
 
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_INFORMATION,
+        CHATPAD_TRACE_CLEANUP,
+        CHATPAD_RUNTIME_EVENT_ROLLBACK_STARTED,
+        STATUS_SUCCESS,
+        (ULONG)state,
+        (ULONG)owner->InitializationMask,
+        0u);
+    ChatpadKmdfTraceOwnerSnapshot(
+        owner,
+        TRACE_LEVEL_INFORMATION,
+        CHATPAD_TRACE_CLEANUP,
+        CHATPAD_RUNTIME_EVENT_ROLLBACK_OBJECT_SNAPSHOT_BEFORE,
+        STATUS_SUCCESS,
+        0u);
+
     if (state == CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_CLEAN_MODEL_READY ||
         state == CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED) {
         effects->PriorInitializationMask = owner->InitializationMask;
         effects->ResultingInitializationMask = owner->InitializationMask;
         effects->AlreadyClean = 1u;
+        ChatpadKmdfTraceOwnerEvent(
+            owner,
+            TRACE_LEVEL_INFORMATION,
+            CHATPAD_TRACE_CLEANUP,
+            CHATPAD_RUNTIME_EVENT_ROLLBACK_COMPLETED,
+            STATUS_SUCCESS,
+            (ULONG)state,
+            effects->PriorInitializationMask,
+            effects->ResultingInitializationMask);
+        ChatpadKmdfTraceOwnerSnapshot(
+            owner,
+            TRACE_LEVEL_INFORMATION,
+            CHATPAD_TRACE_CLEANUP,
+            CHATPAD_RUNTIME_EVENT_ROLLBACK_OBJECT_SNAPSHOT_AFTER,
+            STATUS_SUCCESS,
+            0u);
         return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_ALREADY_CLEAN;
     }
 
@@ -1373,8 +1502,33 @@ ChatpadKmdfRequestOwnerRollbackPartialCreation(
     result = ChatpadKmdfRequestOwnerClassifyRollbackState(owner, &state);
     if (result != CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK ||
         state != CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_STATE_ROLLED_BACK_FAULTED) {
+        ChatpadKmdfTraceOwnerEvent(
+            owner,
+            TRACE_LEVEL_ERROR,
+            CHATPAD_TRACE_INVARIANT,
+            CHATPAD_RUNTIME_EVENT_OBJECT_SNAPSHOT_INCONSISTENT,
+            STATUS_INVALID_DEVICE_STATE,
+            (ULONG)state,
+            effects->PriorInitializationMask,
+            effects->ResultingInitializationMask);
         return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_POST_ROLLBACK_INVARIANT_FAILED;
     }
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_INFORMATION,
+        CHATPAD_TRACE_CLEANUP,
+        CHATPAD_RUNTIME_EVENT_ROLLBACK_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)state,
+        effects->PriorInitializationMask,
+        effects->ResultingInitializationMask);
+    ChatpadKmdfTraceOwnerSnapshot(
+        owner,
+        TRACE_LEVEL_INFORMATION,
+        CHATPAD_TRACE_CLEANUP,
+        CHATPAD_RUNTIME_EVENT_ROLLBACK_OBJECT_SNAPSHOT_AFTER,
+        STATUS_SUCCESS,
+        0u);
     return CHATPAD_KMDF_REQUEST_OWNER_ROLLBACK_OK;
 }
 
@@ -1510,6 +1664,15 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_VALIDATE_BASELINE;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     orchestrationResult = ChatpadKmdfRequestOwnerValidateOrchestrationBaseline(
         owner,
         report);
@@ -1528,9 +1691,27 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
     }
     report->LastCompletedStage =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_VALIDATE_BASELINE;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        (ULONG)report->BaselineValidationResult,
+        0u);
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_SPINLOCK;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     frameworkStatus = STATUS_INVALID_DEVICE_STATE;
     creationResult = ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock(
         parentDevice,
@@ -1557,9 +1738,27 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
     }
     report->LastCompletedStage = report->LastStageEntered;
     report->HighestPartialInitializationMask = owner->InitializationMask;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        (ULONG)report->CreationResult,
+        report->HighestPartialInitializationMask);
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_REQUEST;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     frameworkStatus = STATUS_INVALID_DEVICE_STATE;
     creationResult = ChatpadKmdfRequestOwnerCreateReusableRequest(
         parentDevice,
@@ -1586,9 +1785,27 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
     }
     report->LastCompletedStage = report->LastStageEntered;
     report->HighestPartialInitializationMask = owner->InitializationMask;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        (ULONG)report->CreationResult,
+        report->HighestPartialInitializationMask);
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_OUTBOUND_MEMORY;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     frameworkStatus = STATUS_INVALID_DEVICE_STATE;
     creationResult = ChatpadKmdfRequestOwnerCreateOutboundMemory(
         owner,
@@ -1614,9 +1831,27 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
     }
     report->LastCompletedStage = report->LastStageEntered;
     report->HighestPartialInitializationMask = owner->InitializationMask;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        (ULONG)report->CreationResult,
+        report->HighestPartialInitializationMask);
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_CREATE_INBOUND_MEMORY;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     frameworkStatus = STATUS_INVALID_DEVICE_STATE;
     creationResult = ChatpadKmdfRequestOwnerCreateInboundMemory(
         owner,
@@ -1642,9 +1877,27 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
     }
     report->LastCompletedStage = report->LastStageEntered;
     report->HighestPartialInitializationMask = owner->InitializationMask;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        (ULONG)report->CreationResult,
+        report->HighestPartialInitializationMask);
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_VALIDATE_PRE_READY;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     requestContext = ChatpadKmdfGetActivationRequestContext(owner->Request);
     report->ValidationResult = ChatpadKmdfRequestOwnerValidateCreationState(
         owner,
@@ -1657,15 +1910,51 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
         goto OrchestrationFailure;
     }
     report->LastCompletedStage = report->LastStageEntered;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        (ULONG)report->ValidationResult,
+        owner->InitializationMask);
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_PUBLISH_READY;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     report->ReadyPublicationAttempted = 1u;
     owner->InitializationMask |= CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY;
     report->LastCompletedStage = report->LastStageEntered;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        report->ReadyPublicationAttempted,
+        owner->InitializationMask);
 
     report->LastStageEntered =
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_VALIDATE_READY;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastStageEntered,
+        0u,
+        0u);
     requestContext = ChatpadKmdfGetActivationRequestContext(owner->Request);
     report->ValidationResult = ChatpadKmdfRequestOwnerValidateCreationState(
         owner,
@@ -1681,6 +1970,15 @@ ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
     }
 
     report->LastCompletedStage = report->LastStageEntered;
+    ChatpadKmdfTraceOwnerEvent(
+        owner,
+        TRACE_LEVEL_VERBOSE,
+        CHATPAD_TRACE_ORCHESTRATION,
+        CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+        STATUS_SUCCESS,
+        (ULONG)report->LastCompletedStage,
+        (ULONG)report->ValidationResult,
+        owner->InitializationMask);
     report->FinalInitializationMask = owner->InitializationMask;
     report->ReadyPublished = 1u;
     report->ObjectGraphComplete = 1u;
@@ -1702,6 +2000,24 @@ OrchestrationFailure:
     if (objectPublished) {
         report->LastStageEntered =
             CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_STAGE_ROLLBACK;
+        ChatpadKmdfTraceOwnerEvent(
+            owner,
+            TRACE_LEVEL_INFORMATION,
+            CHATPAD_TRACE_CLEANUP,
+            CHATPAD_RUNTIME_EVENT_ROLLBACK_REASON,
+            STATUS_SUCCESS,
+            (ULONG)report->FailedStage,
+            (ULONG)orchestrationResult,
+            report->HighestPartialInitializationMask);
+        ChatpadKmdfTraceOwnerEvent(
+            owner,
+            TRACE_LEVEL_VERBOSE,
+            CHATPAD_TRACE_ORCHESTRATION,
+            CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_ENTERED,
+            STATUS_SUCCESS,
+            (ULONG)report->LastStageEntered,
+            (ULONG)orchestrationResult,
+            0u);
         report->RollbackAttempted = 1u;
         rollbackResult = ChatpadKmdfRequestOwnerRollbackPartialCreation(
             owner,
@@ -1715,6 +2031,15 @@ OrchestrationFailure:
         }
         report->RollbackSucceeded = 1u;
         report->LastCompletedStage = report->LastStageEntered;
+        ChatpadKmdfTraceOwnerEvent(
+            owner,
+            TRACE_LEVEL_VERBOSE,
+            CHATPAD_TRACE_ORCHESTRATION,
+            CHATPAD_RUNTIME_EVENT_ORCHESTRATION_STAGE_COMPLETED,
+            STATUS_SUCCESS,
+            (ULONG)report->LastCompletedStage,
+            (ULONG)rollbackResult,
+            owner->InitializationMask);
     } else if (!ChatpadKmdfRequestOwnerMarkFaultedWithoutObjects(owner)) {
         report->Result =
             CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVARIANT_FAILED;
