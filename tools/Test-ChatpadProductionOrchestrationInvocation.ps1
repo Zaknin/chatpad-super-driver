@@ -350,7 +350,7 @@ $artifactsRoot = Join-Path $repoRoot 'artifacts'
 $implementationParent = '4ba0de15420e0b66287a501918de694c8b6fd720'
 $implementationCommit = 'efb729502a0527ac70e2d20fa31a323c3beb2920'
 $implementationBranch = 'feature/offline-kmdf-production-orchestration-invocation'
-$evidenceFinalizationStartingCommit = '33f726f68f563ec7e7e0dc1fc778a17bf85ebee9'
+$evidenceFinalizationStartingCommit = 'd22867f86917a6c81574b5f82d19aacd9984b213'
 $expectedImplementationPaths = @(
     'docs/DECISIONS.md',
     'docs/NEXT-TASK.md',
@@ -414,6 +414,12 @@ $mandatoryEvidenceIds = @(
     'ab_build_debug_b',
     'ab_build_release_a',
     'ab_build_release_b',
+    'ab_input_inventory_debug_a',
+    'ab_input_inventory_debug_b',
+    'ab_input_inventory_release_a',
+    'ab_input_inventory_release_b',
+    'ab_input_comparison_debug',
+    'ab_input_comparison_release',
     'ab_binary_debug_a',
     'ab_binary_debug_b',
     'ab_binary_release_a',
@@ -778,7 +784,7 @@ if ($InspectionMode -eq 'Full') {
         throw "Manifest is missing: $manifestPath"
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ([string]$manifest.schema_version -cne '1.2.0' -or
+    if ([string]$manifest.schema_version -cne '1.3.0' -or
         [string]$manifest.checkpoint -cne 'offline-kmdf-production-orchestration-invocation' -or
         [string]$manifest.implementation_commit -cne $implementationCommit -or
         [string]$manifest.implementation_parent -cne $implementationParent -or
@@ -916,12 +922,26 @@ if ($InspectionMode -eq 'Full') {
         $evidenceText = [System.IO.File]::ReadAllText($evidencePath)
         $evidenceTextById[[string]$entry.id] = $evidenceText
         if ($hasCommand) {
-            $transcriptCommandMatch = [regex]::Match(
-                $evidenceText,
-                '(?m)^Command:\s*(?<command>.+)$')
-            if (-not $transcriptCommandMatch.Success -or
-                $transcriptCommandMatch.Groups['command'].Value.Trim() -cne [string]$entry.command) {
-                $missingMetadataFields.Add("$($entry.id):command_fidelity")
+            if ([string]$entry.category -ceq 'ab_input_inventory') {
+                $inventoryCommand = ($evidenceText | ConvertFrom-Json).generation_command
+                if ([string]$inventoryCommand -cne [string]$entry.command) {
+                    $missingMetadataFields.Add("$($entry.id):command_fidelity")
+                }
+            }
+            elseif ([string]$entry.id -ceq 'repository_safety') {
+                $repositoryCommand = (Get-EvidenceKeyValues $evidenceText).Command
+                if ([string]$repositoryCommand -cne [string]$entry.command) {
+                    $missingMetadataFields.Add("$($entry.id):command_fidelity")
+                }
+            }
+            elseif ([string]$entry.id -cne $selfEvidenceId) {
+                $transcriptCommandMatch = [regex]::Match(
+                    $evidenceText,
+                    '(?m)^Command:\s*(?<command>.+)$')
+                if (-not $transcriptCommandMatch.Success -or
+                    $transcriptCommandMatch.Groups['command'].Value.Trim() -cne [string]$entry.command) {
+                    $missingMetadataFields.Add("$($entry.id):command_fidelity")
+                }
             }
         }
         elseif ($hasCommands) {
@@ -1041,7 +1061,9 @@ if ($InspectionMode -eq 'Full') {
         'CodeView.RSDS.Guid')
     if ([string]$manifest.ab_rebuild_contract.canonical_set -cne 'B' -or
         [string]$manifest.ab_rebuild_contract.implementation_commit -cne $implementationCommit -or
-        [int]$manifest.ab_rebuild_contract.frozen_input_count -ne 8 -or
+        [string]$manifest.ab_rebuild_contract.input_identity_method -notmatch 'compiler/linker tracking log closure' -or
+        [int]$manifest.ab_rebuild_contract.Debug.input_count -le 8 -or
+        [int]$manifest.ab_rebuild_contract.Release.input_count -le 8 -or
         (Compare-Object `
             -ReferenceObject $expectedNormalizationExclusions `
             -DifferenceObject @($manifest.ab_rebuild_contract.normalization_exclusions) `
@@ -1060,19 +1082,113 @@ if ($InspectionMode -eq 'Full') {
         Assert-EvidenceValue $buildValues 'ImplementationCommit' $implementationCommit $abBuildId
         Assert-EvidenceValue $buildValues 'BuildExitCode' '0' $abBuildId
         Assert-EvidenceValue $buildValues 'Result' 'PASS' $abBuildId
-        foreach ($frozenPath in @(
-                'Directory.Build.props',
-                'ChatpadWin11.sln',
-                'src/driver/ChatpadFilter/ChatpadFilter.vcxproj',
-                'src/driver/ChatpadFilter/device.c',
-                'src/driver/ChatpadFilter/driver.h',
-                'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c',
-                'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h',
-                'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj')) {
-            if (-not $buildValues.ContainsKey("FrozenBlob[$frozenPath]") -or
-                [string]$buildValues["FrozenBlob[$frozenPath]"] -notmatch '^[0-9a-f]{40}$') {
-                throw "A/B build evidence $abBuildId is missing frozen blob $frozenPath."
+        foreach ($requiredBuildKey in @(
+                'InputInventoryPath',
+                'InputInventorySha256',
+                'InputCount',
+                'UnresolvedInputCount',
+                'DuplicateNormalizedPathCount',
+                'ConfigurationDigestSha256',
+                'ToolchainDigestSha256',
+                'TrackedStateBeforeBuild',
+                'TrackedStateAfterBuild')) {
+            if (-not $buildValues.ContainsKey($requiredBuildKey)) {
+                throw "A/B build evidence $abBuildId is missing $requiredBuildKey."
             }
+        }
+        if ([int]$buildValues.InputCount -le 8 -or
+            [int]$buildValues.UnresolvedInputCount -ne 0 -or
+            [int]$buildValues.DuplicateNormalizedPathCount -ne 0 -or
+            [string]$buildValues.TrackedStateBeforeBuild -cne 'Clean' -or
+            [string]$buildValues.TrackedStateAfterBuild -cne 'Clean' -or
+            [string]$buildValues.InputInventorySha256 -notmatch '^[0-9A-F]{64}$' -or
+            [string]$buildValues.ConfigurationDigestSha256 -notmatch '^[0-9A-F]{64}$' -or
+            [string]$buildValues.ToolchainDigestSha256 -notmatch '^[0-9A-F]{64}$') {
+            throw "A/B build evidence $abBuildId has invalid complete-input identity metrics."
+        }
+    }
+
+    $inputInventoryCounts = @{}
+    foreach ($abConfiguration in @('Debug', 'Release')) {
+        foreach ($abSet in @('A', 'B')) {
+            $inventoryId = 'ab_input_inventory_{0}_{1}' -f
+                $abConfiguration.ToLowerInvariant(),
+                $abSet.ToLowerInvariant()
+            $inventoryEntry = @($evidenceEntries | Where-Object id -CEQ $inventoryId)[0]
+            $inventory = $evidenceTextById[$inventoryId] | ConvertFrom-Json
+            if ([string]$inventory.schema_version -cne 'chatpad-production-orchestration-ab-input-inventory-v1' -or
+                [string]$inventory.configuration -cne "$abConfiguration|x64" -or
+                [string]$inventory.set -cne $abSet -or
+                [string]$inventory.implementation_commit -cne $implementationCommit -or
+                [string]$inventory.method -notmatch 'ChatpadFilter CL/link tlogs' -or
+                [string]$inventory.method -notmatch 'ChatpadKmdfRequestOwnerContext project-reference CL/lib producer tlogs' -or
+                [int]$inventory.input_count -le 8 -or
+                [int]$inventory.unresolved_input_count -ne 0 -or
+                [int]$inventory.duplicate_normalized_path_count -ne 0 -or
+                @($inventory.inputs).Count -ne [int]$inventory.input_count -or
+                [string]$inventory.result -cne 'PASS') {
+                throw "A/B input inventory $inventoryId is incomplete or invalid."
+            }
+            $normalizedPaths = @($inventory.inputs | ForEach-Object { [string]$_.normalized_path })
+            if (@($normalizedPaths | Group-Object | Where-Object Count -gt 1).Count -ne 0) {
+                throw "A/B input inventory $inventoryId has duplicate normalized paths."
+            }
+            $requiredCategories = @(
+                'build_configuration',
+                'compiled_source',
+                'consumed_header',
+                'external_header',
+                'external_library',
+                'toolchain_identity')
+            foreach ($requiredCategory in $requiredCategories) {
+                if (@($inventory.inputs | Where-Object { [string]$_.category -ceq $requiredCategory }).Count -le 0) {
+                    throw "A/B input inventory $inventoryId lacks category $requiredCategory."
+                }
+            }
+            foreach ($input in @($inventory.inputs)) {
+                if ([string]::IsNullOrWhiteSpace([string]$input.normalized_path) -or
+                    [string]::IsNullOrWhiteSpace([string]$input.category) -or
+                    [string]$input.sha256 -notmatch '^[0-9A-F]{64}$' -or
+                    [long]$input.size -lt 0 -or
+                    @($input.mechanisms).Count -le 0) {
+                    throw "A/B input inventory $inventoryId has malformed input metadata."
+                }
+            }
+            $expectedInventoryMetric = 'inputs={0}; unresolved=0; duplicates=0' -f
+                [int]$inventory.input_count
+            if ([string]$inventoryEntry.metric_value -cne $expectedInventoryMetric) {
+                throw "A/B input inventory manifest metric does not match $inventoryId."
+            }
+            $inputInventoryCounts["$abConfiguration$abSet"] = [int]$inventory.input_count
+        }
+
+        if ($inputInventoryCounts["$($abConfiguration)A"] -ne $inputInventoryCounts["$($abConfiguration)B"]) {
+            throw "A/B input inventory counts differ for $abConfiguration."
+        }
+
+        $comparisonId = 'ab_input_comparison_{0}' -f $abConfiguration.ToLowerInvariant()
+        $comparisonValues = Get-EvidenceKeyValues $evidenceTextById[$comparisonId]
+        foreach ($zeroComparisonKey in @(
+                'MissingInputCount',
+                'ExtraInputCount',
+                'HashMismatchCount',
+                'UnresolvedInputCount',
+                'DuplicateNormalizedPathCount',
+                'ConfigurationMismatchCount',
+                'ToolchainIdentityMismatchCount')) {
+            Assert-EvidenceValue $comparisonValues $zeroComparisonKey '0' $comparisonId
+        }
+        foreach ($trueComparisonKey in @(
+                'InputPathSetsEqual',
+                'InputHashesEqual',
+                'BuildConfigurationEqual',
+                'ToolchainIdentityEqual')) {
+            Assert-EvidenceValue $comparisonValues $trueComparisonKey 'True' $comparisonId
+        }
+        Assert-EvidenceValue $comparisonValues 'Result' 'PASS' $comparisonId
+        $comparisonEntry = @($evidenceEntries | Where-Object id -CEQ $comparisonId)[0]
+        if ([string]$comparisonEntry.metric_value -cne [string]$comparisonValues.ManifestMetricValue) {
+            throw "A/B input comparison manifest metric does not match retained log $comparisonId."
         }
     }
 
@@ -1165,6 +1281,10 @@ if ($InspectionMode -eq 'Full') {
         $equivalenceValues = Get-EvidenceKeyValues $evidenceTextById[$equivalenceId]
         foreach ($trueKey in @(
                 'SourceInputsEqual',
+                'InputPathSetsEqual',
+                'InputHashesEqual',
+                'BuildConfigurationEqual',
+                'ToolchainIdentityEqual',
                 'SizesEqual',
                 'NormalizedPeHashesEqual',
                 'NormalizedSectionHashesEqual',
@@ -1184,6 +1304,11 @@ if ($InspectionMode -eq 'Full') {
             'ExcludedFields' `
             ($expectedNormalizationExclusions -join ';') `
             $equivalenceId
+        $equivalenceEntry = @($evidenceEntries | Where-Object id -CEQ $equivalenceId)[0]
+        if (-not $equivalenceValues.ContainsKey('ManifestMetricValue') -or
+            [string]$equivalenceEntry.metric_value -cne [string]$equivalenceValues.ManifestMetricValue) {
+            throw "A/B equivalence manifest metric does not match retained log $equivalenceId."
+        }
         Assert-EvidenceValue $equivalenceValues 'Result' 'PASS' $equivalenceId
     }
 

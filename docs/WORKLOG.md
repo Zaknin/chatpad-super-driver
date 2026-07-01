@@ -4409,3 +4409,79 @@
   schema-`1.2.0` manifest, retained A/B evidence, containing commit, and final
   upstream state. Runtime, target/request, signing, installation, loading, and
   hardware gates remain closed.
+
+## 2026-07-01 15:04 +04:00 - Production orchestration input-identity remediation
+
+- **Task title/objective:** Remediate the final independent audit findings:
+  replace the incomplete eight-file A/B source-input proof with complete
+  tracking-log-derived input identity, and make A/B equivalence manifest
+  metrics exactly match retained equivalence logs.
+- **Starting branch/commit:** Verified clean
+  `feature/offline-kmdf-production-orchestration-evidence-finalization` at
+  `d22867f86917a6c81574b5f82d19aacd9984b213`, parent
+  `33f726f68f563ec7e7e0dc1fc778a17bf85ebee9`, subject
+  `test: finalize production orchestration evidence`, then created
+  `feature/offline-kmdf-production-orchestration-input-identity-remediation`.
+- **Files created/modified:** Modified
+  `tools/Test-ChatpadProductionOrchestrationInvocation.ps1`,
+  `docs/evidence/production-orchestration-invocation-manifest.json`,
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-FINALIZATION.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`, and this
+  worklog. Regenerated ignored/untracked evidence under
+  `artifacts/logs/production-orchestration-ab-rebuild/`. No production
+  source/header, project, solution, INF, signing, packaging, or `legacy/` path
+  changed.
+- **Input-identity method:** The retained A/B generator now inventories the
+  effective clean-build pre-build input closure from explicit
+  solution/project/`Directory.Build.props` files, `ChatpadFilter` compiler and
+  linker tlogs, `ChatpadKmdfRequestOwnerContext` project-reference producer
+  compiler/librarian tlogs, external SDK/WDK/MSVC headers and libraries,
+  system reads, toolchain executable identity, and command digests. Generated
+  repo-local `.obj` and `.lib` intermediates are accounted for through their
+  producer tlog closure rather than treated as stable pre-build source inputs.
+- **A/B regeneration:** Offline Debug A, Release A, Debug B, and Release B
+  wrapper builds passed. The generator verified tracked state clean before and
+  after each build. Debug inventories contain 116 inputs; Release inventories
+  contain 118. Debug and Release input comparisons each report zero missing,
+  extra, hash mismatch, unresolved, duplicate normalized path, configuration
+  mismatch, and toolchain identity mismatch counts.
+- **Binary equivalence:** Debug A/B raw hashes are
+  `9973846C71C7A934535849357C98302377F479A317EBA82305C912B109AE6F72` and
+  `F05357700DCC71125CFA2583867B422E2E8E5A8E26FD3FA0AFCE5370AF5F8D7B`; both
+  normalize to
+  `18656A2A1EC059E1D84F353B386400D7B79E3C4C37B6407364609DEB09433E50`.
+  Release A/B raw hashes are
+  `5684A05AF1B5568F20F47A0D470E5FCF44FEA778CF28F802A778C814E99F9815` and
+  `5313E60CB503EBB4FA129D21CB26E1832E32FDE7E1F923D5C8E802D1D74D3905`; both
+  normalize to
+  `F87A4B3FB662D245856104AFB53027502B54AAE2018A596491521160A98B9A6C`.
+  Debug and Release each differ in 22 raw bytes. Normalization remains limited
+  to COFF timestamp, PE checksum, debug-directory timestamp, and CodeView GUID.
+- **Manifest/guard remediation:** Upgraded manifest schema to `1.3.0`; raised
+  mandatory evidence from 56 to 62; added four input-inventory IDs and two
+  input-comparison IDs; updated all regenerated A/B evidence hashes and
+  canonical B-side raw hashes; and changed equivalence `metric_value` strings
+  to exactly match retained `ManifestMetricValue` lines. The production
+  orchestration guard now rejects the old eight-file proof, requires complete
+  inventory metadata, validates input comparison counters, and cross-checks
+  equivalence manifest metrics against retained logs.
+- **Failed commands:** The first regenerated Debug A build completed but the
+  new inventory step failed because a PowerShell `Join-Path` array expression
+  was malformed; this was corrected. The next run failed closed because
+  generated `.obj` and `.lib` intermediates differed between clean builds; the
+  inventory model was corrected to account for those intermediates through
+  their producer tlog closure instead of treating them as pre-build inputs.
+- **Safety:** No signing, certificate/key creation, packaging, Inf2Cat/catalog
+  work, staging outside Git, installation, driver loading, Windows mutation,
+  device query, USB/XUSB/controller/Chatpad interaction, or hardware action
+  occurred.
+- **Commit/push:** Commit exactly
+  `test: complete production orchestration input identity evidence` without
+  amend and push only
+  `origin/feature/offline-kmdf-production-orchestration-input-identity-remediation`;
+  final hash is reported after commit.
+- **Next gate:** Independent read-only audit of implementation `efb7295`, the
+  schema-`1.3.0` manifest, all 62 ignored evidence files, retained input
+  inventories, retained A/B evidence, containing commit, and final upstream
+  state. Runtime, target/request, signing, installation, loading, and hardware
+  gates remain closed.

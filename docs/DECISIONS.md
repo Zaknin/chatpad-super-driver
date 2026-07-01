@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Complete A/B input identity with tracking-log closure
+
+**Decision:** The production-orchestration A/B evidence now proves input
+identity from the effective clean-build dependency closure rather than a
+manually selected source subset. The retained schema-`1.3.0` manifest includes
+four machine-readable input inventories and two A/B input-comparison logs. The
+inventory method uses explicit solution/project/`Directory.Build.props` files,
+`ChatpadFilter` compiler/linker tracking logs, the
+`ChatpadKmdfRequestOwnerContext` project-reference producer compiler/librarian
+tracking logs, external SDK/WDK/MSVC headers and libraries, system reads, and
+toolchain executable identity.
+
+**Rationale:** The final independent audit found that the previous eight-file
+claim did not cover the actual build dependency closure and that the
+equivalence manifest metrics did not match the retained logs. Tracking-log
+closure ties the proof to the evaluated build outputs instead of a maintained
+filename list, while the manifest now derives equivalence metrics from the
+retained logs' `ManifestMetricValue` lines.
+
+**Alternatives rejected:** Keeping the eight-file subset would preserve the
+audit failure. Claiming generated `.obj`/`.lib` intermediates as stable
+pre-build source inputs would overstate the proof because those intermediates
+are produced during each clean build; they are instead accounted for through
+their producer tlog closure. Expanding PE normalization to force equality was
+also rejected.
+
+**Consequences:** Debug inventories contain 116 inputs and Release inventories
+contain 118 inputs, with A/B path sets, hashes, build configuration digests,
+and toolchain identity matching. Set B remains canonical. Runtime,
+target/request, signing, installation, packaging, and hardware gates remain
+closed.
+
 ## 2026-07-01 - Replace historical binary inference with retained A/B evidence
 
 **Decision:** Finalize the production-orchestration evidence on a second
