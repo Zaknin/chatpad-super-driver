@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Invoke dormant request-owner orchestration in production offline
+
+**Decision:** Production `ChatpadEvtDeviceAdd` now invokes
+`ChatpadKmdfRequestOwnerCreateDormantObjectGraph` exactly once after ordinary
+owner initialization and explicit pre-object validation, and before lifecycle
+initialization. The production call uses a stack-local zero-initialized report,
+cross-checks the function return against report `Result`, maps failures before
+lifecycle, and requires structural ready state before continuing.
+
+**Rationale:** The prior defensive taxonomy and report contract selected this
+binding point and failure model. The production source needed the first real
+offline invocation so linker, object, binary, and guard evidence could prove
+the dormant graph is reachable without adding any target/request/runtime
+surface.
+
+**Alternatives rejected:** Directly calling creation helpers from `device.c`
+would duplicate orchestration and rollback ownership. Invoking orchestration
+before pre-object validation would create from an unproven baseline. Invoking
+after lifecycle initialization would widen cleanup obligations. Retaining
+helpers through `/INCLUDE` or `/WHOLEARCHIVE` would obscure proof of actual
+production reachability. Runtime loading, signing, package work, target
+discovery, and request operations remain outside this offline gate.
+
+**Consequences:** If a later authorized gate loads this driver, `EvtDeviceAdd`
+would create the dormant internal spinlock, reusable request, and two
+request-parented preallocated memory objects before lifecycle initialization.
+This checkpoint proves only compile/link/offline evidence. Independent
+implementation audit, runtime planning, signing/package work, staging,
+installation, target discovery, request formatting/submission/completion/
+cancellation, D0/removal rundown, and hardware observation remain separate
+future gates.
+
 ## 2026-07-01 - Close defensive rollback reachability and origin evidence
 
 **Decision:** Production orchestration uses the actual sequential no-observer

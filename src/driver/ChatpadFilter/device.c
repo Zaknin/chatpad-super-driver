@@ -1,6 +1,70 @@
 #include "driver.h"
 
 static NTSTATUS
+ChatpadOrchestrationResultToStatus(
+    ChatpadKmdfRequestOwnerOrchestrationResult result,
+    _In_ const ChatpadKmdfRequestOwnerOrchestrationReport *report
+    )
+{
+    switch (result) {
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK:
+        return STATUS_SUCCESS;
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_OWNER:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_PARENT_DEVICE:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_REPORT:
+        return STATUS_INVALID_PARAMETER;
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_SPINLOCK_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_REQUEST_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OUTBOUND_MEMORY_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INBOUND_MEMORY_FAILED:
+        if (report != NULL && !NT_SUCCESS(report->FrameworkStatus)) {
+            return report->FrameworkStatus;
+        }
+        return STATUS_INVALID_DEVICE_STATE;
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_SIGNATURE:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_UNSUPPORTED_VERSION:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_BASELINE:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_READY:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_FAULTED:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PARTIAL_STATE_PRESENT:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PRE_READY_VALIDATION_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_READY_VALIDATION_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ROLLBACK_FAILED:
+    case CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVARIANT_FAILED:
+    default:
+        return STATUS_INVALID_DEVICE_STATE;
+    }
+}
+
+static NTSTATUS
+ChatpadValidateOrchestrationReadyState(
+    _In_ PCHATPAD_FILTER_DEVICE_CONTEXT context,
+    _In_ const ChatpadKmdfRequestOwnerOrchestrationReport *report
+    )
+{
+    ChatpadKmdfActivationRequestContext *requestContext;
+    ChatpadKmdfRequestOwnerCreationResult readyValidationResult;
+
+    if (report->ReadyPublicationAttempted == 0u ||
+        report->ReadyPublished == 0u ||
+        report->ObjectGraphComplete == 0u ||
+        context->ActivationRequestOwner.Request == NULL) {
+        return STATUS_INVALID_DEVICE_STATE;
+    }
+
+    requestContext =
+        ChatpadKmdfGetActivationRequestContext(context->ActivationRequestOwner.Request);
+    readyValidationResult = ChatpadKmdfRequestOwnerValidateCreationState(
+        &context->ActivationRequestOwner,
+        requestContext,
+        CHATPAD_KMDF_REQUEST_OWNER_CREATION_STATE_FULLY_READY);
+    if (readyValidationResult != CHATPAD_KMDF_REQUEST_OWNER_CREATION_OK) {
+        return STATUS_INVALID_DEVICE_STATE;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS
 ChatpadOwnerInitializationResultToStatus(
     ChatpadKmdfRequestOwnerStorageResult result
     )
@@ -140,6 +204,26 @@ ChatpadEvtDeviceAdd(
         &ownerStorageValidation);
     if (ownerValidationResult != CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK) {
         return STATUS_INVALID_DEVICE_STATE;
+    }
+
+    ChatpadKmdfRequestOwnerOrchestrationReport orchestrationReport = { 0 };
+    ChatpadKmdfRequestOwnerOrchestrationResult orchestrationResult;
+
+    orchestrationResult = ChatpadKmdfRequestOwnerCreateDormantObjectGraph(
+        device,
+        &context->ActivationRequestOwner,
+        &orchestrationReport);
+    if (orchestrationResult != orchestrationReport.Result) {
+        return STATUS_INVALID_DEVICE_STATE;
+    }
+    if (orchestrationResult != CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK) {
+        return ChatpadOrchestrationResultToStatus(
+            orchestrationResult,
+            &orchestrationReport);
+    }
+    status = ChatpadValidateOrchestrationReadyState(context, &orchestrationReport);
+    if (!NT_SUCCESS(status)) {
+        return status;
     }
 
     lifecycleResult = ChatpadFilterLifecycleInitialize(&context->Lifecycle);

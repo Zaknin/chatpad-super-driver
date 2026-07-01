@@ -134,10 +134,13 @@ Get-ChildItem -LiteralPath $driverRoot -File -ErrorAction Stop |
 if ([regex]::Matches($driverSource, '#include\s+"ChatpadKmdfRequestOwnerContext\.h"').Count -ne 1 -or
     [regex]::Matches($driverSource, 'ChatpadKmdfActivationRequestOwner\s+ActivationRequestOwner\s*;').Count -ne 1 -or
     [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerInitializeStorage\s*\(').Count -ne 1 -or
-    [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerValidatePreObjectState\s*\(').Count -ne 1) {
-    throw 'Production source must contain only the exact authorized owner include, field, initializer, and validator integration.'
+    [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerValidatePreObjectState\s*\(').Count -ne 1 -or
+    [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerCreateDormantObjectGraph\s*\(').Count -ne 1 -or
+    [regex]::Matches($driverSource, 'ChatpadKmdfRequestOwnerValidateCreationState\s*\(').Count -ne 1 -or
+    [regex]::Matches($driverSource, 'ChatpadKmdfGetActivationRequestContext\s*\(').Count -ne 1) {
+    throw 'Production source must contain the exact authorized owner initialization and orchestration invocation integration.'
 }
-Assert-NoMatch $driverSource 'ChatpadKmdfRequestOwner(?:Create|Rollback|Prepare|Classify)|ChatpadKmdfGetActivationRequestContext|CreateDormantObjectGraph' 'Production source must not call or reference creation, rollback, orchestration, attribute, or request-context APIs.'
+Assert-NoMatch $driverSource 'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare|Classify)' 'Production source must not call direct creation, rollback, attribute, or classification APIs.'
 Assert-NoMatch $driverSource 'Wdf(?:IoTarget|UsbTarget|RequestFormat|RequestReuse|RequestSend|RequestComplete|RequestCancel|RequestSetCompletionRoutine)' 'Target discovery or request operation code is prohibited.'
 Assert-NoMatch $driverSource 'Wdf(?:SpinLockCreate|RequestCreate|MemoryCreatePreallocated|ObjectDelete)\s*\(' 'Production source must not create or delete dormant WDF objects.'
 
@@ -158,14 +161,23 @@ $driverPath = Join-Path $repoRoot ("artifacts\bin\{0}\{1}\ChatpadFilter\ChatpadF
 if (-not (Test-Path -LiteralPath $driverPath -PathType Leaf)) {
     throw "Expected built driver image is missing: $driverPath"
 }
+$contextObjectPath = Join-Path $repoRoot ("artifacts\obj\{0}\{1}\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.obj" -f $Platform, $Configuration)
+if (-not (Test-Path -LiteralPath $contextObjectPath -PathType Leaf)) {
+    throw "Expected context object is missing: $contextObjectPath"
+}
 $dumpbinPath = Get-DumpbinPath
 $imports = Invoke-ToolText -FilePath $dumpbinPath -Arguments @('/imports', $driverPath)
 $symbols = Invoke-ToolText -FilePath $dumpbinPath -Arguments @('/symbols', $driverPath)
+$contextSymbols = Invoke-ToolText -FilePath $dumpbinPath -Arguments @('/symbols', $contextObjectPath)
 $imageText = $imports + [Environment]::NewLine + $symbols
-$forbiddenOwnerPattern = 'ChatpadKmdfRequestOwner(?:Create|Rollback|Prepare|Classify)|CreateDormantObjectGraph'
-Assert-NoMatch $imageText $forbiddenOwnerPattern 'Final driver image must not retain creation, rollback, orchestration, or attribute-preparation symbols.'
+Assert-NoMatch $imageText 'WdfRequest(?:Reuse|Send|CancelSentRequest|SetCompletionRoutine)|WdfUsbTarget|WdfIoTarget' 'Final driver image must not retain target discovery or request-operation symbols.'
 $objectImportPattern = '(?<![A-Za-z0-9_])(?:WdfSpinLockCreate|WdfRequestCreate|WdfMemoryCreatePreallocated|WdfObjectDelete)(?![A-Za-z0-9_])'
-Assert-NoMatch $imports $objectImportPattern 'Final driver imports must not contain dormant WDF object-management APIs.'
+if ($Configuration -eq 'Debug' -and (
+    $contextSymbols -notmatch $objectImportPattern -or
+    $contextSymbols -notmatch 'ChatpadKmdfRequestOwnerCreateDormantObjectGraph' -or
+    $contextSymbols -notmatch 'ChatpadKmdfRequestOwnerRollbackPartialCreation')) {
+    throw 'Context object must expose expected dormant orchestration, rollback, and WDF object-management evidence.'
+}
 
 if ($BuildLogPath) {
     if (-not (Test-Path -LiteralPath $BuildLogPath -PathType Leaf)) {
@@ -187,6 +199,6 @@ if ($BuildLogPath) {
     }
 }
 
-Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; one native ProjectReference to ChatpadKmdfRequestOwnerContext; exact owner initialization integration; no request-owner forced retention; final driver has no creation/rollback/orchestration symbols or WDF object-management imports)." -f $Configuration, $Platform)
+Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; one native ProjectReference to ChatpadKmdfRequestOwnerContext; exact owner initialization plus orchestration invocation integration; no request-owner forced retention; dormant orchestration/WDF evidence is configuration-appropriate; final driver has no target/request-operation symbols)." -f $Configuration, $Platform)
 Write-Output 'Semantic guard limitation: targeted XML/text/binary string checks cannot prove full C macro expansion or all linker extraction internals; paired MSBuild logs, tlogs, dumpbin output, and diff review provide the binary evidence for this checkpoint.'
 exit 0

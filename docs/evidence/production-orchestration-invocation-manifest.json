@@ -1,0 +1,351 @@
+{
+  "schema_version": "1.0.0",
+  "checkpoint": "offline-kmdf-production-orchestration-invocation",
+  "manifest_statement": "The Git commit containing this manifest binds its contents; the manifest intentionally omits that containing commit hash.",
+  "starting_state": {
+    "branch": "feature/offline-kmdf-orchestration-defensive-taxonomy-fix",
+    "commit": "4ba0de15420e0b66287a501918de694c8b6fd720",
+    "parent": "8b06ff5c2a7679b3057992ac99302fa550ddf098",
+    "subject": "docs: close orchestration defensive taxonomy",
+    "upstream": "origin/feature/offline-kmdf-orchestration-defensive-taxonomy-fix"
+  },
+  "implementation_branch": "feature/offline-kmdf-production-orchestration-invocation",
+  "toolchain": {
+    "host": "Windows 10 Pro 25H2 build 26200.8655 x64",
+    "powershell": "7.6.3",
+    "visual_studio": "Visual Studio Community 2022 17.14.35",
+    "msvc_toolset": "14.44.35207",
+    "sdk": "10.0.26100.0",
+    "wdk": "10.0.26100.0",
+    "kmdf": "1.15",
+    "driver_toolset": "WindowsKernelModeDriver10.0",
+    "sign_mode": "Off"
+  },
+  "production_integration": {
+    "source": "src/driver/ChatpadFilter/device.c",
+    "call_site": "ChatpadEvtDeviceAdd",
+    "insertion_point": "after ChatpadKmdfRequestOwnerValidatePreObjectState succeeds and before ChatpadFilterLifecycleInitialize",
+    "orchestrator": "ChatpadKmdfRequestOwnerCreateDormantObjectGraph",
+    "orchestration_call_count": 1,
+    "report_storage": "local stack ChatpadKmdfRequestOwnerOrchestrationReport initialized with { 0 }",
+    "report_lifetime": "synchronous EvtDeviceAdd local, not stored in device context and not allowed to escape",
+    "result_cross_check": "function return must equal report.Result before status mapping or lifecycle initialization",
+    "structural_ready_validation": [
+      "ReadyPublicationAttempted != 0",
+      "ReadyPublished != 0",
+      "ObjectGraphComplete != 0",
+      "ActivationRequestOwner.Request != NULL",
+      "ChatpadKmdfRequestOwnerValidateCreationState(..., FULLY_READY)"
+    ],
+    "direct_helper_calls_from_device_c": false,
+    "direct_wdf_object_management_calls_from_device_c": false,
+    "target_or_request_operations": false,
+    "d0_or_removal_owner_observers": false
+  },
+  "status_mapping": {
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK": "STATUS_SUCCESS inside helper only; successful orchestration continues to lifecycle and does not itself decide final EvtDeviceAdd success",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_OWNER": "STATUS_INVALID_PARAMETER",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_PARENT_DEVICE": "STATUS_INVALID_PARAMETER",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_REPORT": "STATUS_INVALID_PARAMETER",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_SPINLOCK_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_REQUEST_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OUTBOUND_MEMORY_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INBOUND_MEMORY_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_SIGNATURE": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_UNSUPPORTED_VERSION": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_BASELINE": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_READY": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_FAULTED": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PARTIAL_STATE_PRESENT": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PRE_READY_VALIDATION_FAILED": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_READY_VALIDATION_FAILED": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ROLLBACK_FAILED": "STATUS_INVALID_DEVICE_STATE",
+    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVARIANT_FAILED": "STATUS_INVALID_DEVICE_STATE",
+    "return_report_mismatch": "STATUS_INVALID_DEVICE_STATE"
+  },
+  "validation": {
+    "driver_build": {
+      "Debug": "PASS",
+      "Release": "PASS"
+    },
+    "request_owner_model": {
+      "Debug": "PASS 5002/5002 assertions",
+      "Release": "PASS 5002/5002 assertions"
+    },
+    "request_owner_context": {
+      "Debug": "PASS",
+      "Release": "PASS"
+    },
+    "protocol": {
+      "Debug": "PASS 610/610 assertions",
+      "Release": "PASS 610/610 assertions"
+    },
+    "transport": {
+      "Debug": "PASS 186/186 assertions",
+      "Release": "PASS 186/186 assertions"
+    },
+    "lifecycle": {
+      "Debug": "PASS 109/109 assertions",
+      "Release": "PASS 109/109 assertions"
+    },
+    "control_setup": {
+      "Debug": "PASS 141/141 assertions",
+      "Release": "PASS 141/141 assertions"
+    },
+    "protocol_kernel_compatibility": {
+      "Debug": "PASS",
+      "Release": "PASS"
+    },
+    "wdf_control_setup": {
+      "Debug": "PASS",
+      "Release": "PASS"
+    },
+    "production_linkage_guard": {
+      "Debug": "PASS",
+      "Release": "PASS"
+    },
+    "production_owner_initialization_guard": {
+      "Debug": "PASS SourceOnly",
+      "Release": "PASS SourceOnly",
+      "full_mode_note": "The previous Full-mode manifest is a historic checkpoint with intentionally superseded driver hashes; this checkpoint's Full validation is production-orchestration Full mode."
+    },
+    "production_orchestration_guard": {
+      "Debug": "PASS SourceOnly",
+      "Release": "PASS SourceOnly",
+      "Full": "PASS Debug and Release"
+    },
+    "full_solution": {
+      "BuildTools_Debug": "BLOCKED by missing WindowsKernelModeDriver10.0 platform toolset in Build Tools instance",
+      "Community_Debug": "PASS",
+      "Community_Release": "PASS"
+    },
+    "safety": "PASS; no signing, packaging, staging, installation, loading, Windows mutation, hardware query, target discovery, request formatting, request send, completion, or cancellation"
+  },
+  "binary_inspection": {
+    "Debug": {
+      "context_symbols_show_orchestrator_and_rollback": true,
+      "context_symbols_show_wdf_object_management": true,
+      "device_or_image_references_show_orchestration": true,
+      "final_image_target_or_request_operations": false,
+      "forced_request_owner_retention": false
+    },
+    "Release": {
+      "context_symbols_show_orchestrator_and_rollback": true,
+      "context_wdf_named_symbols_visible_after_ltcg": false,
+      "device_or_image_named_references_visible_after_ltcg": false,
+      "final_image_target_or_request_operations": false,
+      "forced_request_owner_retention": false,
+      "ltcg_note": "Release named symbol absence is expected; proof uses audited source, link inputs, context symbols that remain visible, final-image absence checks, and no /INCLUDE or /WHOLEARCHIVE."
+    }
+  },
+  "artifacts": {
+    "drivers": {
+      "Debug": {
+        "path": "artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys",
+        "size": 32256,
+        "sha256": "826700E0556840D79D5A18A6C7CFA739FAF8ADEC6A9A3CF37F544187FBEAA821",
+        "authenticode": "NotSigned"
+      },
+      "Release": {
+        "path": "artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys",
+        "size": 20480,
+        "sha256": "D0983260B9CAD00CD72EE3F2AE4697110AA5C13DF01F7BC2B39C0FEF891F4CB3",
+        "authenticode": "NotSigned"
+      }
+    }
+  },
+  "evidence_entries": [
+    {
+      "id": "build_debug",
+      "path": "artifacts/logs/build-debug-x64-20260701T055549Z.log",
+      "sha256": "CB13C0ED06A89E5DE71FD62BE6CC4D6C8AA800F2ED37E89DFD908F381B331455",
+      "result": "PASS"
+    },
+    {
+      "id": "build_release",
+      "path": "artifacts/logs/build-release-x64-20260701T055554Z.log",
+      "sha256": "1B42651303E3F3BA718632F16918460C2B0EF1EC628F31B245DE1D29A7ECA801",
+      "result": "PASS"
+    },
+    {
+      "id": "request_owner_model_debug_build",
+      "path": "artifacts/logs/chatpad-request-owner-model-build-Debug-20260701T055603Z.log",
+      "sha256": "6D694EF0393235F547C4C5708472E177DF4CDAE09512F5D7630980B669346E6B",
+      "result": "PASS"
+    },
+    {
+      "id": "request_owner_model_debug_test",
+      "path": "artifacts/logs/chatpad-request-owner-model-test-Debug-20260701T055603Z.log",
+      "sha256": "0831CDAED1437C86F93470AAD86BC41523EDDBF6A44395C941AD201BCE3F99BC",
+      "result": "PASS 5002/5002"
+    },
+    {
+      "id": "request_owner_model_release_build",
+      "path": "artifacts/logs/chatpad-request-owner-model-build-Release-20260701T055607Z.log",
+      "sha256": "D50D708F45DFBBA354CAA39F55DECC4F756036096F26818665CDDA0E79EEBA75",
+      "result": "PASS"
+    },
+    {
+      "id": "request_owner_model_release_test",
+      "path": "artifacts/logs/chatpad-request-owner-model-test-Release-20260701T055607Z.log",
+      "sha256": "0831CDAED1437C86F93470AAD86BC41523EDDBF6A44395C941AD201BCE3F99BC",
+      "result": "PASS 5002/5002"
+    },
+    {
+      "id": "request_owner_context_debug",
+      "path": "artifacts/logs/chatpad-kmdf-request-owner-context-Debug-20260701T055612Z.log",
+      "sha256": "0D9E9BF5F0815804C2450E1FFB3F49C8925B291300E44B4D43AD4074AE31A097",
+      "result": "PASS"
+    },
+    {
+      "id": "request_owner_context_release",
+      "path": "artifacts/logs/chatpad-kmdf-request-owner-context-Release-20260701T055618Z.log",
+      "sha256": "C692EA0562AB4DCCF0939206235670A42EDC86BFEE42C8DAB255727C813D97EE",
+      "result": "PASS"
+    },
+    {
+      "id": "protocol_debug_test",
+      "path": "artifacts/logs/chatpad-protocol-integrated-test-Debug-20260701T055629Z.log",
+      "sha256": "E1A7AEB94A0FEAA1F2786C280ADD5B8C4ED8278B2D7E0E6EC80ED75056F90670",
+      "result": "PASS 610/610"
+    },
+    {
+      "id": "protocol_release_test",
+      "path": "artifacts/logs/chatpad-protocol-integrated-test-Release-20260701T055719Z.log",
+      "sha256": "E1A7AEB94A0FEAA1F2786C280ADD5B8C4ED8278B2D7E0E6EC80ED75056F90670",
+      "result": "PASS 610/610"
+    },
+    {
+      "id": "transport_debug_test",
+      "path": "artifacts/logs/chatpad-transport-test-Debug-20260701T055726Z.log",
+      "sha256": "400D00CC42A1D1529E0E41090FB16DD62A4C19D01723F75FC6B21D5E07C29BB3",
+      "result": "PASS 186/186"
+    },
+    {
+      "id": "transport_release_test",
+      "path": "artifacts/logs/chatpad-transport-test-Release-20260701T055731Z.log",
+      "sha256": "400D00CC42A1D1529E0E41090FB16DD62A4C19D01723F75FC6B21D5E07C29BB3",
+      "result": "PASS 186/186"
+    },
+    {
+      "id": "lifecycle_debug_test",
+      "path": "artifacts/logs/chatpad-filter-lifecycle-test-Debug-20260701T055736Z.log",
+      "sha256": "41E80ED213DC78D441818622D50E280293FB19E0B15947F4FFCCF4521235CEB2",
+      "result": "PASS 109/109"
+    },
+    {
+      "id": "lifecycle_release_test",
+      "path": "artifacts/logs/chatpad-filter-lifecycle-test-Release-20260701T055743Z.log",
+      "sha256": "41E80ED213DC78D441818622D50E280293FB19E0B15947F4FFCCF4521235CEB2",
+      "result": "PASS 109/109"
+    },
+    {
+      "id": "control_setup_debug_test",
+      "path": "artifacts/logs/chatpad-control-setup-test-Debug-20260701T055746Z.log",
+      "sha256": "06A87893D65C9998981E6E47735CAF2459C2E28F38A603534E310DA325D7E287",
+      "result": "PASS 141/141"
+    },
+    {
+      "id": "control_setup_release_test",
+      "path": "artifacts/logs/chatpad-control-setup-test-Release-20260701T055750Z.log",
+      "sha256": "06A87893D65C9998981E6E47735CAF2459C2E28F38A603534E310DA325D7E287",
+      "result": "PASS 141/141"
+    },
+    {
+      "id": "protocol_kernel_debug",
+      "path": "artifacts/logs/chatpad-protocol-kernel-compatibility-Debug-20260701T055754Z.log",
+      "sha256": "B44EA861C93A5971212F9C57B6A3DEF6655A392BFFA0EE7377C34B0031870634",
+      "result": "PASS"
+    },
+    {
+      "id": "protocol_kernel_release",
+      "path": "artifacts/logs/chatpad-protocol-kernel-compatibility-Release-20260701T055758Z.log",
+      "sha256": "FDB3AE1EF1A8F5A0C20E8AE53C4296D23A23C8B6A3D74B37EC305CAE3EA5AE2B",
+      "result": "PASS"
+    },
+    {
+      "id": "wdf_control_debug",
+      "path": "artifacts/logs/chatpad-wdf-control-setup-Debug-20260701T055803Z.log",
+      "sha256": "08E651E31D5E678C2AC2DC33A481594F9D57976A8C9C43148CD28D10DE885D94",
+      "result": "PASS"
+    },
+    {
+      "id": "wdf_control_release",
+      "path": "artifacts/logs/chatpad-wdf-control-setup-Release-20260701T055807Z.log",
+      "sha256": "75A41A4617C43AC6EEE408AAF35DEF289584AE42C27D0016C3CCF58138C0B005",
+      "result": "PASS"
+    },
+    {
+      "id": "production_linkage_debug",
+      "path": "artifacts/logs/production-linkage-debug-20260701T055814Z.log",
+      "sha256": "028B02C22A592EB5CF6B49ED64C6CD08834EFF83EDA8F1156F13FED4199C214A",
+      "result": "PASS"
+    },
+    {
+      "id": "production_linkage_release",
+      "path": "artifacts/logs/production-linkage-release-20260701T055820Z.log",
+      "sha256": "805B97C76E452E45BA367A7808CF73C18485A5F646A3FB8955C5F924A12825E3",
+      "result": "PASS"
+    },
+    {
+      "id": "production_owner_initialization_source_debug",
+      "path": "artifacts/logs/production-owner-initialization-source-debug-20260701T055826Z.log",
+      "sha256": "E1BC24306D82C8FB52187C340A88C6B0FE1F4F6D7FA0EB300BA2B5B3F8458C0A",
+      "result": "PASS SourceOnly"
+    },
+    {
+      "id": "production_owner_initialization_source_release",
+      "path": "artifacts/logs/production-owner-initialization-source-release-20260701T055832Z.log",
+      "sha256": "49497E1E90E58C459B32B040301A92475EBE38FF6275E7E969FAB2DADB51D215",
+      "result": "PASS SourceOnly"
+    },
+    {
+      "id": "production_orchestration_source_debug",
+      "path": "artifacts/logs/production-orchestration-source-debug-20260701T055838Z.log",
+      "sha256": "60C367F0B1FD37E03A81B7055C2B5929D48047DC6BAA317AEB4CFAAC9EFCE875",
+      "result": "PASS SourceOnly"
+    },
+    {
+      "id": "production_orchestration_source_release",
+      "path": "artifacts/logs/production-orchestration-source-release-20260701T055842Z.log",
+      "sha256": "83A97482AD0FF417CE9B3A8B2420C5819C092F30ACF6115864FE04FA60048153",
+      "result": "PASS SourceOnly"
+    },
+    {
+      "id": "production_orchestration_full_debug",
+      "path": "artifacts/logs/production-orchestration-full-debug-20260701T060231Z.log",
+      "sha256": "33F49EF961BF1AAD4B2CF72C8525D39C60DE82CA19FA82718AFB56C4CA764BF9",
+      "result": "PASS Full"
+    },
+    {
+      "id": "production_orchestration_full_release",
+      "path": "artifacts/logs/production-orchestration-full-release-20260701T060237Z.log",
+      "sha256": "65AE7AA06434D577D8994FFEDD6BC434E5586AF7A6577F59CB8C83B5020E326A",
+      "result": "PASS Full"
+    },
+    {
+      "id": "binary_inspection",
+      "path": "artifacts/logs/binary-inspection-production-orchestration-20260701T055917Z.log",
+      "sha256": "AD606D412856F6779C6FFE7F0EC0294BDED44490FA03430D6B3317725D1AA4C2",
+      "result": "PASS"
+    },
+    {
+      "id": "full_solution_buildtools_debug_blocked",
+      "path": "artifacts/logs/full-solution-debug-x64-20260701T055010Z.log",
+      "sha256": "0609E3D57EE2DF5B1102ABE75151468DB46C1CAC62426D239727BB14D9AAB5DC",
+      "result": "BLOCKED MSB8020"
+    },
+    {
+      "id": "full_solution_community_debug",
+      "path": "artifacts/logs/full-solution-debug-x64-community-20260701T055020Z.log",
+      "sha256": "A4D63C37DE88ABB89A52F89B112FF16A1116323B7E09D2779A4BC3EFAC395565",
+      "result": "PASS"
+    },
+    {
+      "id": "full_solution_community_release",
+      "path": "artifacts/logs/full-solution-release-x64-community-20260701T055030Z.log",
+      "sha256": "6B7CA75291F007BBEF6F64A2D478F67815339E74A381CDA1735815182351F193",
+      "result": "PASS"
+    }
+  ]
+}

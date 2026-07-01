@@ -601,11 +601,14 @@ function Test-RequestOwnerContextSemanticGuards {
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfActivationRequestOwner\s+ActivationRequestOwner\s*;').Count -ne 1 -or
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerInitializeStorage\s*\(').Count -ne 1 -or
         [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerValidatePreObjectState\s*\(').Count -ne 1 -or
-        $activeDriverSource -match 'ChatpadKmdfRequestOwner(?:Create|Rollback|Prepare|Classify)') {
-        throw 'Active ChatpadFilter source is not limited to exact ordinary owner initialization integration.'
+        [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerCreateDormantObjectGraph\s*\(').Count -ne 1 -or
+        [regex]::Matches($activeDriverSource, 'ChatpadKmdfRequestOwnerValidateCreationState\s*\(').Count -ne 1 -or
+        [regex]::Matches($activeDriverSource, 'ChatpadKmdfGetActivationRequestContext\s*\(').Count -ne 1 -or
+        $activeDriverSource -match 'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare|Classify)') {
+        throw 'Active ChatpadFilter source is not limited to the authorized production orchestration invocation integration.'
     }
 
-    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication; production integration is limited to one embedded owner, ordinary initialization, and pre-object validation)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
+    Write-Output ("Semantic guard: PASS (authorized direct calls: WdfSpinLockCreate={0}, WdfRequestCreate={1}, WdfMemoryCreatePreallocated={2}, WdfObjectDelete={3}; orchestrator helper calls=4, centralized rollback calls=1; all-or-nothing ready publication; production integration is limited to one embedded owner, ordinary initialization, pre-object validation, one dormant orchestration call, and structural-ready validation)." -f $spinLockCreateCount, $requestCreateCount, $preallocatedMemoryCreateCount, $objectDeleteCount)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, '..'))

@@ -1,12 +1,13 @@
 # Windows 11 KMDF Production Orchestration Invocation Design
 
-This is the authoritative documentation-only binding design for the first
-future production invocation of the existing dormant KMDF activation
-request-owner object-graph orchestrator from `ChatpadFilter`'s
-`EvtDeviceAdd` path.
+This is the authoritative binding design and offline implementation reference
+for the first production invocation of the existing dormant KMDF activation
+request-owner object-graph orchestrator from `ChatpadFilter`'s `EvtDeviceAdd`
+path.
 
-It documents a future source change. It does not implement or execute that
-change.
+The source change is now implemented offline and recorded in
+[Offline KMDF Production Orchestration Invocation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md).
+The driver still has not been loaded or executed.
 
 ## 1. Purpose and non-scope
 
@@ -18,11 +19,12 @@ handling, successful structural ready-state publication, later
 IRQL assumptions, implementation decomposition, validation requirements, and
 evidence requirements.
 
-This design does not authorize or implement source changes, helper execution,
-WDF object creation or deletion, target discovery, request formatting,
-request reuse, request submission, completion registration, cancellation,
-D0/removal rundown, signing, packaging, staging, installation, driver loading,
-Windows mutation, hardware testing, controller access, or Chatpad behavior.
+This design now has a matching offline source implementation. It still does
+not authorize driver loading, runtime helper execution, target discovery,
+request formatting, request reuse, request submission, completion
+registration, cancellation, D0/removal rundown, signing, packaging, staging,
+installation, Windows mutation, hardware testing, controller access, or
+Chatpad behavior.
 
 ## 2. Current production baseline
 
@@ -48,18 +50,22 @@ files:
   integration-boundary check.
 - Existing lifecycle initialization with
   `ChatpadFilterLifecycleInitialize(&context->Lifecycle)` occurs only after
-  ordinary owner initialization and the explicit pre-object validation both
-  succeed.
-- No production code calls
-  `ChatpadKmdfRequestOwnerCreateDormantObjectGraph`,
+  ordinary owner initialization, explicit pre-object validation, orchestration,
+  and structural-ready validation all succeed.
+- Production `device.c` calls
+  `ChatpadKmdfRequestOwnerCreateDormantObjectGraph` exactly once. It does not
+  directly call
   `ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock`,
   `ChatpadKmdfRequestOwnerCreateReusableRequest`,
   `ChatpadKmdfRequestOwnerCreateOutboundMemory`,
   `ChatpadKmdfRequestOwnerCreateInboundMemory`, or
   `ChatpadKmdfRequestOwnerRollbackPartialCreation`.
-- No production request-owner spinlock, request, outbound memory, or inbound
-  memory WDF object exists. `OWNER_READY` is not published. No target exists.
-  No request is formatted, submitted, completed, or cancelled.
+- Offline validation created no production request-owner spinlock, request,
+  outbound memory, or inbound memory WDF object because the driver was not
+  loaded. If a later authorized runtime gate loads this driver, the
+  orchestrator would create those dormant objects and publish structural
+  `OWNER_READY`. No target exists. No request is formatted, submitted,
+  completed, or cancelled.
 
 The production integration has not been executed through driver loading.
 
@@ -78,18 +84,21 @@ Current `ChatpadEvtDeviceAdd` has this exact tracked-source order:
 | 7 | `ChatpadEvtDeviceAdd` | Set `Signature`, `Version`, and `DiagnosticSequence = 0`. | None. | Owner storage still not initialized. | Uninitialized. | None beyond `WDFDEVICE`. | No observer. | None. |
 | 8 | `ChatpadEvtDeviceAdd` -> `ChatpadKmdfRequestOwnerInitializeStorage` | Initialize ordinary owner storage once. The initializer performs internal validation. | Non-OK result maps through `ChatpadOwnerInitializationResultToStatus` and returns immediately. | Clean `MODEL_READY` pre-object baseline on success. | Uninitialized. | No request-owner WDF object. | No observer. | None. |
 | 9 | `ChatpadEvtDeviceAdd` -> `ChatpadKmdfRequestOwnerValidatePreObjectState` | Perform one additional explicit integration-boundary validation. | Non-OK result returns `STATUS_INVALID_DEVICE_STATE` immediately. | Still clean `MODEL_READY` pre-object baseline. | Uninitialized. | No request-owner WDF object. | No observer. | None. |
-| 10 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleInitialize` | Initialize lifecycle state. | Result captured for later mapping. | Pre-object, structurally non-ready. | Initialized only on success. | No request-owner WDF object. | No owner observer. | None. |
-| 11 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleMarkDeviceCreated` | If lifecycle initialization passed, mark device created. | Result captured for later mapping. | Pre-object, structurally non-ready. | Created only on success. | No request-owner WDF object. | No owner observer. | None. |
-| 12 | `ChatpadEvtDeviceAdd` -> `ChatpadLogLifecycle` | Retrieve context, increment diagnostics, snapshot lifecycle, log. | Snapshot failure is converted to an unset diagnostic snapshot. | Not read by the logger. | Snapshot only. | None. | Still inside `EvtDeviceAdd`. | None. |
-| 13 | `ChatpadEvtDeviceAdd` -> `ChatpadLifecycleResultToStatus` | Return mapped lifecycle status. | Final status is returned. | Pre-object, structurally non-ready. | Depends on lifecycle result. | No request-owner WDF object. | Later callbacks can run only after successful add. | None. |
+| 10 | `ChatpadEvtDeviceAdd` -> `ChatpadKmdfRequestOwnerCreateDormantObjectGraph` | Invoke the dormant object-graph orchestrator exactly once with a local zero-initialized report. | Return/report mismatch or non-OK result returns before lifecycle initialization. | Structural ready only on success. | Uninitialized. | If later loaded, request-owner spinlock, targetless request, outbound memory, and inbound memory. Offline validation creates none. | No owner observer. | No target or hardware. |
+| 11 | `ChatpadEvtDeviceAdd` -> `ChatpadValidateOrchestrationReadyState` | Verify ready attempt, ready publication, object-graph completeness, non-null request, and authoritative `FULLY_READY` state. | Any failure returns before lifecycle initialization. | Structural ready on success. | Uninitialized. | None beyond completed dormant graph. | No owner observer. | None. |
+| 12 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleInitialize` | Initialize lifecycle state. | Result captured for later mapping. | Structurally ready. | Initialized only on success. | None beyond completed dormant graph. | No owner observer. | None. |
+| 13 | `ChatpadEvtDeviceAdd` -> `ChatpadFilterLifecycleMarkDeviceCreated` | If lifecycle initialization passed, mark device created. | Result captured for later mapping. | Structurally ready. | Created only on success. | None beyond completed dormant graph. | No owner observer. | None. |
+| 14 | `ChatpadEvtDeviceAdd` -> `ChatpadLogLifecycle` | Retrieve context, increment diagnostics, snapshot lifecycle, log. | Snapshot failure is converted to an unset diagnostic snapshot. | Not read by the logger. | Snapshot only. | None. | Still inside `EvtDeviceAdd`. | None. |
+| 15 | `ChatpadEvtDeviceAdd` -> `ChatpadLifecycleResultToStatus` | Return mapped lifecycle status. | Final status is returned. | Structurally ready if lifecycle path was reached. | Depends on lifecycle result. | None beyond completed dormant graph. | Later callbacks can run only after successful add. | None. |
 
-The current path creates no queue, target, request-owner WDF object, memory
-object, completion callback, cancellation callback, cleanup callback, destroy
-callback, timer, work item, interface, package, or hardware interaction.
+The current source creates no queue, target, completion callback, cancellation
+callback, cleanup callback, destroy callback, timer, work item, interface,
+package, or hardware interaction. Offline validation created no request-owner
+WDF object because the driver was not loaded.
 
 ## 4. Selected orchestration insertion point
 
-The selected future insertion point is immediately after successful
+The implemented insertion point is immediately after successful
 `ChatpadKmdfRequestOwnerValidatePreObjectState` in `ChatpadEvtDeviceAdd` and
 immediately before:
 
@@ -108,7 +117,7 @@ if (ownerValidationResult != CHATPAD_KMDF_REQUEST_OWNER_STORAGE_OK) {
 }
 ```
 
-The intended future order is:
+The implemented order is:
 
 1. `WdfDeviceCreate` succeeds and a production `WDFDEVICE` exists.
 2. `ChatpadFilterGetDeviceContext(device)` retrieves the current device
@@ -147,10 +156,10 @@ require D0 generation state, hardware resources, target discovery, or request
 submission. No incompatibility was found in tracked source or installed KMDF
 headers.
 
-## 6. Exact future production call sequence
+## 6. Exact production call sequence
 
-The future production code adds only local orchestration state and one
-orchestrator call in `ChatpadEvtDeviceAdd`. The binding call shape is:
+The production code adds only local orchestration state and one orchestrator
+call in `ChatpadEvtDeviceAdd`. The binding call shape is:
 
 ```c
 ownerStorageResult =
@@ -613,7 +622,7 @@ R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20 }`. Each source
 failure site maps to one identifier. The complete records below are the only
 binding origin definitions.
 
-+### Independently complete ordinary rollback-origin records
+### Independently complete ordinary rollback-origin records
 
 Each record below contains 27 binding groups and is complete without category 19, category 20, another origin row, or effect-state prose. The selected ordinary production model permits no rejection result and no post-effect failure state for any R1-R20 origin.
 
@@ -1507,9 +1516,10 @@ success.
     external call, or cleanup race.
 25. IRQL assumptions: selected call runs at PASSIVE_LEVEL in `EvtDeviceAdd`;
     individual creation/deletion APIs are valid through DISPATCH_LEVEL.
-26. Future implementation file scope: expected `device.c` only.
+26. Implementation file scope: current source implementation is limited to
+    `device.c` plus semantic-guard updates and continuity documentation.
 27. Binary retention: helper and WDF object-management retention is expected
-    and legitimate in the future implementation slice.
+    and legitimate in the implemented offline invocation slice.
 28. LTCG audit limitation: retention evidence combines source, object, COMDAT,
     linker/LTCG, WDF function-table, and final-image inspection; no
     named-symbol check is sufficient alone and LTCG need not be disabled.
@@ -1522,9 +1532,9 @@ success.
     result, assertion count when applicable, relative path, and SHA-256.
 31. Evidence format: tracked JSON manifest plus ignored logs under
     `artifacts\logs`.
-32. Next gate: independent read-only audit of this finalized defensive
-    taxonomy and report-contract design. Production implementation remains
-    unauthorized until that audit passes.
+32. Next gate: independent read-only audit of the offline production
+    orchestration invocation implementation and evidence. Runtime loading and
+    deployment remain unauthorized until that audit and later gates pass.
 
 Stop conditions:
 

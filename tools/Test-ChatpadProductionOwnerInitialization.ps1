@@ -278,7 +278,7 @@ if ($deviceAddText -notmatch
 }
 
 $forbiddenOwnerApis =
-    'ChatpadKmdfRequestOwner(?:CreateDormantObjectGraph|CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare[A-Za-z0-9_]*Attributes|ValidateReadyState|ValidateCreationState)'
+    'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare[A-Za-z0-9_]*Attributes|ValidateReadyState)'
 if ($productionText -match $forbiddenOwnerApis) {
     throw "Forbidden production request-owner API reference: $($Matches[0])"
 }

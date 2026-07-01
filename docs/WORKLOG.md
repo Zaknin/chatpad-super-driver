@@ -4090,3 +4090,111 @@
 - **Next gate:** Independent read-only audit of the finalized defensive
   taxonomy and report-contract design. Production implementation and every
   runtime action remain unauthorized.
+
+## 2026-07-01 10:08 +04:00 - Offline production orchestration invocation
+
+- **Task title/objective:** Implement the first offline production invocation
+  of the existing dormant KMDF request-owner object-graph orchestrator, using
+  the finalized defensive taxonomy and keeping all runtime/deployment gates
+  closed.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-orchestration-defensive-taxonomy-fix` at
+  `4ba0de15420e0b66287a501918de694c8b6fd720`, parent
+  `8b06ff5c2a7679b3057992ac99302fa550ddf098`, subject
+  `docs: close orchestration defensive taxonomy`, then created
+  `feature/offline-kmdf-production-orchestration-invocation`.
+- **Investigation:** Re-read the repository protocol and continuity files,
+  verified the exact branch/HEAD/upstream/clean state gate, inspected the
+  existing production owner initialization path, isolated KMDF request-owner
+  context source/header, existing production linkage/owner guards, and the
+  finalized orchestration-invocation design. Documentation was stale relative
+  to this new authorized implementation task, so the current-state and next
+  task files were corrected as part of the checkpoint.
+- **Files modified or added:**
+  `src/driver/ChatpadFilter/device.c`,
+  `tools/Test-ChatpadProductionOrchestrationInvocation.ps1`,
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1`,
+  `tools/Test-ChatpadProductionLinkage.ps1`,
+  `tools/Test-ChatpadProductionOwnerInitialization.ps1`,
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md`,
+  `docs/evidence/production-orchestration-invocation-manifest.json`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`,
+  `docs/PORTING-PLAN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`, and
+  `docs/WORKLOG.md`.
+- **Implementation details:** `ChatpadEvtDeviceAdd` now invokes
+  `ChatpadKmdfRequestOwnerCreateDormantObjectGraph` exactly once after
+  ordinary owner initialization and explicit pre-object validation, before
+  lifecycle initialization. The call uses a stack-local
+  `ChatpadKmdfRequestOwnerOrchestrationReport orchestrationReport = { 0 };`,
+  cross-checks function return against `orchestrationReport.Result`, maps
+  every non-OK result before lifecycle, and then validates structural ready
+  state with ready-attempt, ready-published, object-graph-complete, non-null
+  request, and `FULLY_READY` checks.
+- **Status mapping:** Null owner/parent/report map to
+  `STATUS_INVALID_PARAMETER`; spinlock/request/outbound-memory/inbound-memory
+  creation failures preserve a failing `FrameworkStatus` when present and
+  otherwise map to `STATUS_INVALID_DEVICE_STATE`; all local baseline,
+  already-ready, already-faulted, partial-state, validation, rollback, and
+  invariant failures map to `STATUS_INVALID_DEVICE_STATE`; return/report
+  mismatch maps to `STATUS_INVALID_DEVICE_STATE`.
+- **Guard updates:** Added the production orchestration semantic guard with
+  SourceOnly and Full modes. Updated existing KMDF context, production
+  linkage, and production owner-initialization guards because their prior
+  source assumptions intentionally described the pre-orchestration checkpoint
+  and would otherwise reject the authorized current source. The owner-
+  initialization guard was run in SourceOnly mode because its previous Full
+  manifest is a historic checkpoint with intentionally superseded driver
+  hashes.
+- **Builds and tests:** Driver wrapper builds passed for Debug and Release.
+  Request-owner model passed 5002/5002 assertions in Debug and Release.
+  Protocol passed 610/610 assertions in Debug and Release. Transport passed
+  186/186 assertions in Debug and Release. Lifecycle passed 109/109 assertions
+  in Debug and Release. Control setup passed 141/141 assertions in Debug and
+  Release. KMDF request-owner context, protocol kernel compatibility, WDF
+  control setup, production linkage, production owner-initialization
+  SourceOnly, and production orchestration SourceOnly/Full guards passed in
+  Debug and Release.
+- **Full-solution validation:** The Build Tools MSBuild full-solution Debug
+  attempt failed with `MSB8020` because that VS instance lacks the
+  `WindowsKernelModeDriver10.0` platform toolset. Visual Studio Community
+  full-solution builds passed for Debug and Release.
+- **Binary evidence:** Debug driver
+  `artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys` is 32,256 bytes,
+  SHA-256
+  `826700E0556840D79D5A18A6C7CFA739FAF8ADEC6A9A3CF37F544187FBEAA821`,
+  Authenticode `NotSigned`. Release driver
+  `artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys` is 20,480 bytes,
+  SHA-256
+  `D0983260B9CAD00CD72EE3F2AE4697110AA5C13DF01F7BC2B39C0FEF891F4CB3`,
+  Authenticode `NotSigned`. Debug object inspection exposes dormant helper and
+  WDF object-management evidence; Release LTCG strips ordinary named WDF
+  evidence, so Release proof combines source, link inputs, context symbols,
+  no forced retention, and final-image forbidden-operation absence.
+- **Evidence artifacts:** Retained ignored logs are under `artifacts/logs/`.
+  The tracked manifest
+  `docs/evidence/production-orchestration-invocation-manifest.json` records
+  relative paths, SHA-256 values, driver hashes, validation results, and
+  binary-inspection notes.
+- **Failed commands:** One refreshed driver build command failed because the
+  wrapper was piped through `Tee-Object` to the same timestamped log that
+  `Build-Driver.ps1` opened internally. Two attempted validation-loop wrapper
+  commands failed before invoking tests because PowerShell argument splatting
+  was incorrect. Direct commands were then run and passed. These failures did
+  not mutate tracked state.
+- **Safety:** No files under `legacy/` were modified. No signing, package or
+  catalog creation, staging, installation, driver loading, Windows mutation,
+  hardware query, controller interaction, or Chatpad interaction occurred. No
+  target discovery, request formatting, request send, completion,
+  cancellation, D0/removal owner observer, cleanup callback, or destroy
+  callback was added.
+- **Commit/push:** Commit exactly
+  `driver: invoke production request owner orchestration` without amend and
+  push only
+  `origin/feature/offline-kmdf-production-orchestration-invocation`; final hash
+  is reported after commit.
+- **Next gate:** Independent read-only implementation and evidence audit of
+  the offline production orchestration invocation. Runtime loading, signing,
+  packaging, deployment, target discovery, request operations, and hardware
+  observation remain unauthorized.

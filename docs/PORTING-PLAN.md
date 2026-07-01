@@ -128,6 +128,16 @@ Source references:
   validates the newly initialized storage internally, after which
   `EvtDeviceAdd` performs one additional explicit pre-object
   integration-boundary validation before lifecycle initialization.
+- The offline production orchestration-invocation checkpoint is complete in
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md`, with tracked
+  evidence in
+  `docs/evidence/production-orchestration-invocation-manifest.json`. Current
+  production `EvtDeviceAdd` now invokes
+  `ChatpadKmdfRequestOwnerCreateDormantObjectGraph` exactly once after
+  explicit pre-object validation and before lifecycle initialization, using a
+  stack-local report, return/report cross-checking, status mapping, and
+  structural-ready validation. This was compile/link/offline validation only;
+  no driver was loaded and no runtime WDF graph was observed.
 - The owner-initialization audit-corrections checkpoint is complete in
   `docs/OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md`. It corrected
   documentation, guard wording, and retained evidence without changing
@@ -182,22 +192,20 @@ Completion or authorization of one stage does not authorize the next stage.
 Each stage requires its own reviewed evidence, explicit authorization, stop
 conditions, and recovery boundary.
 
-The offline request-owner preparation path now includes compile-only,
-uninvoked helpers for device-parented lock/request creation, request-parented
-outbound/inbound preallocated-memory creation, request-first/spinlock-second
-rollback, all-or-nothing structural-ready orchestration, and a
-documentation-only production-integration design. Production project linkage,
-owner embedding, ordinary initializer integration, explicit pre-object
-validation, independent audits, and evidence corrections are complete. The
-production context now embeds one authoritative owner and calls only ordinary
-initialization and one additional explicit pre-object validation before
-lifecycle initialization. The portable model source is linked as a WDK object;
-the isolated KMDF context source still comes only from its static-library
-project. This documentation-only consistency correction does not authorize
-dormant orchestration, actual request-owner WDF object creation during driver
+The offline request-owner preparation path now includes device-parented
+lock/request creation, request-parented outbound/inbound preallocated-memory
+creation, request-first/spinlock-second rollback, all-or-nothing
+structural-ready orchestration, production project linkage, owner embedding,
+ordinary initializer integration, explicit pre-object validation, and the first
+production call into the dormant orchestrator. The production context embeds
+one authoritative owner and now calls ordinary initialization, explicit
+pre-object validation, dormant orchestration, and structural-ready validation
+before lifecycle initialization. The portable model source is linked as a WDK
+object; the isolated KMDF context source still comes only from its
+static-library project. This offline checkpoint does not authorize driver
 loading, target discovery, request formatting/submission/completion/
-cancellation, D0/removal rundown, signing, staging, installation, loading, or
-hardware validation.
+cancellation, D0/removal rundown, signing, staging, installation, Windows
+mutation, or hardware validation.
 
 Before any deployment stage, the project also requires a tested
 device-specific recovery procedure that restores the Microsoft `xusb22`
