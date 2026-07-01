@@ -1,17 +1,18 @@
 # Project State
 
-*Last updated: 2026-07-01 (first-runtime observation and recovery planning)*
+*Last updated: 2026-07-01 (offline runtime instrumentation design)*
 
 ## Current State
 
-- **Branch:** `feature/documentation-first-runtime-observation-recovery-plan`.
-- **Starting commit:** `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`, `test: finalize production orchestration provenance evidence`.
-- **Starting parent:** `6a586bb2490e6a2611987a229c8c9d11d32fab01`.
-- **Expected containing commit subject:** `docs: define first runtime observation and recovery gate`.
+- **Branch:** `feature/documentation-offline-runtime-instrumentation-design`.
+- **Starting commit:** `fbca8852e47300d4f483968b23e42ee82e88b972`, `docs: define first runtime observation and recovery gate`.
+- **Starting parent:** `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`.
+- **Expected containing commit subject:** `docs: define offline runtime instrumentation design`.
 - **Frozen accepted baseline:** `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`.
 - **Frozen implementation:** `efb729502a0527ac70e2d20fa31a323c3beb2920`, `driver: invoke production request owner orchestration`.
 - **Accepted audit status:** `AUDIT PASS WITH LIMITATIONS`.
 - **Runtime planning document:** `docs/WINDOWS11-FIRST-RUNTIME-OBSERVATION-AND-RECOVERY-PLAN.md`.
+- **Offline instrumentation design:** `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`.
 - **Offline evidence checkpoint:** `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-FINAL-REMEDIATION.md`.
 - **Manifest:** schema `1.6.0`, 102 mandatory evidence IDs and 102 entries.
 
@@ -24,7 +25,10 @@
 - The current build is **not sufficiently observable for first controlled
   load** because orchestration result, structural-ready reachability, cleanup,
   and target/request absence are not emitted as durable runtime evidence.
-- Selected next task: offline runtime instrumentation design.
+- Offline runtime instrumentation design selects WPP software tracing as the
+  primary first-load diagnostic mechanism and is ready for offline
+  implementation.
+- Selected next task: implement the accepted diagnostic instrumentation offline.
 
 ## Safety and Limitations
 

@@ -17,6 +17,15 @@ observation, target discovery, request execution, signing, packaging,
 installation, loading, device query, and hardware testing remain prohibited
 future gates.
 
+The offline runtime instrumentation design is complete in
+`docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`. It selects WPP
+software tracing as the primary first-load diagnostic mechanism, keeps existing
+`KdPrintEx` statements as fallback only, reserves a 73-event catalogue, and
+requires Release-capable diagnostic evidence before any runtime gate can open.
+Implementation of that instrumentation is the next offline task; signing,
+packaging, staging, installation, loading, device query, and hardware testing
+remain closed.
+
 This plan starts from the preserved source-only baseline. It intentionally does not load, install, execute, or test any legacy binary.
 
 ## Phase 0: Preserve and Audit

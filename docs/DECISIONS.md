@@ -4,6 +4,32 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Select WPP as primary first-load diagnostic mechanism
+
+**Decision:** Use WPP software tracing as the primary mechanism for the future
+first controlled load diagnostic instrumentation. Retain existing `KdPrintEx`
+statements only as fallback evidence. The instrumentation must be present in
+the intended Release-capable diagnostic binary and must use stable source-level
+event IDs, bounded scalar fields, per-attempt correlation, prohibited-operation
+counters, and object-presence snapshots.
+
+**Rationale:** The first-runtime recovery plan found the accepted binary
+insufficiently observable. WPP is a native kernel-driver tracing pattern that
+can be collected from a session started before load, works with KMDF driver
+code, has low disabled overhead, and can provide durable ETL evidence without
+target/request behavior. Existing debug prints lack stable event identity and
+structured terminal proof.
+
+**Alternatives rejected:** `KdPrintEx` alone is not durable or structured
+enough. A custom ETW/TraceLogging provider or Windows event-log reporting would
+be more invasive for the first dormant load. Debugger-only inspection is not
+auditable enough for acceptance evidence.
+
+**Consequences:** The next task is offline implementation of the accepted
+diagnostic instrumentation. Signing, packaging, staging, installation, loading,
+device query, target discovery, request execution, and hardware gates remain
+closed.
+
 ## 2026-07-01 - Require offline runtime instrumentation before first load
 
 **Decision:** The current accepted production orchestration build is not

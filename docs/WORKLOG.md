@@ -4793,3 +4793,76 @@
   prerequisite is satisfied by this documentation phase. Runtime evidence cannot
   prove the first-load success criteria until a separate offline instrumentation
   gate is authorized and accepted.
+
+## 2026-07-01 23:07 +04:00 - Offline runtime instrumentation design
+
+- **Objective:** Create a documentation-only diagnostic-instrumentation design
+  for the future first controlled runtime observation of the Windows 11 Chatpad
+  driver.
+- **Starting state:** Verified exact clean synchronized branch
+  `feature/documentation-first-runtime-observation-recovery-plan` at
+  `fbca8852e47300d4f483968b23e42ee82e88b972`, parent
+  `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`, subject
+  `docs: define first runtime observation and recovery gate`, upstream
+  `origin/feature/documentation-first-runtime-observation-recovery-plan`,
+  upstream hash `fbca8852e47300d4f483968b23e42ee82e88b972`, ahead/behind
+  `0/0`, clean worktree and index. Then created
+  `feature/documentation-offline-runtime-instrumentation-design`.
+- **Accepted baseline recorded:** Offline production orchestration source,
+  frozen production build inputs, binary/A-B provenance, the 102-entry final
+  evidence manifest, the first-runtime observation and recovery plan, and the
+  verdict that the current binary is insufficiently observable remain accepted.
+  No signing, package creation, staging, installation, loading, device binding,
+  target discovery, request execution, or hardware validation has occurred.
+- **Source inspection:** Read-only inspection located current `KdPrintEx`
+  statements in `src/driver/ChatpadFilter/driver.c` for `DriverEntry` and
+  `WdfDriverCreate` failure, in `src/driver/ChatpadFilter/device.c` for
+  `EvtDeviceAdd`, `WdfDeviceCreate` failure, and lifecycle callback snapshots.
+  The orchestration path, object creation helpers, rollback helper, structural
+  ready validation, and cleanup path do not currently emit durable structured
+  events. Modern tracked source under `src/` still has no WDF target open,
+  request formatting, request reuse, request send, completion, or cancellation
+  operation sites.
+- **Instrumentation mechanism:** Selected WPP software tracing as the primary
+  first-load diagnostic mechanism, with existing `KdPrintEx` retained as
+  fallback only. Rejected `KdPrintEx` alone as insufficiently structured,
+  custom ETW/TraceLogging or Windows event-log reporting as more invasive than
+  required, and debugger-only inspection as not independently auditable.
+- **Design summary:** Added a 73-event deterministic event catalogue, per
+  `EvtDeviceAdd` attempt correlation, Release-capable diagnostic policy,
+  prohibited-operation counters, object-presence snapshots, bounded
+  orchestration-report schema, failure-path coverage, success/failure event
+  sequences, cleanup observability, IRQL/concurrency rules, data minimization,
+  future static guards, future offline tests, and future trace collection and
+  interpretation rules.
+- **Design verdict:** `INSTRUMENTATION DESIGN READY FOR OFFLINE IMPLEMENTATION`.
+- **Files created/modified:** Added
+  `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`. Modified
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/PORTING-PLAN.md`, and this worklog.
+- **Commands and checks run:** Baseline Git verification commands for branch,
+  HEAD, parent, subject, upstream, upstream hash, ahead/behind, and status
+  passed. Read-only source `git grep`/file inspection for diagnostic statements,
+  WDF object operations, and target/request operation sites completed.
+  `git diff --check` passed with only Git's LF-to-CRLF checkout-policy
+  warnings. Changed-path containment passed for the six authorized
+  documentation paths. Frozen source/header, project/solution/props/INF,
+  script/test/guard, evidence-manifest, and contract containment passed. LF-only
+  validation passed. Final-newline validation passed. Markdown relative-link
+  validation passed. Secrets and credential scan passed. Changed-surface
+  path-case validation passed.
+- **Safety:** No source, header, project, solution, props, INF, build script,
+  test, guard, evidence manifest, contract, generated evidence, signing,
+  packaging, or `legacy/` path was modified. No build, test, guard, tracing
+  header generation, TMF generation, provider registration, registry mutation,
+  verifier mutation, test signing, certificate/key creation, staging,
+  installation, driver loading, device query, USB/HID/XUSB/controller/Chatpad
+  inspection, target discovery/open, request formatting/submission/reuse/
+  completion/cancellation, Windows mutation, or hardware interaction occurred.
+- **Commit/push:** Commit exactly
+  `docs: define offline runtime instrumentation design` and push only
+  `origin/feature/documentation-offline-runtime-instrumentation-design`; final
+  hash is reported after commit.
+- **Next task:** Implement the accepted diagnostic instrumentation offline, with
+  no signing, installation, loading, device query, target discovery, request
+  execution, or hardware interaction.
