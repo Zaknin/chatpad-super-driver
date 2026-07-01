@@ -1,5 +1,15 @@
 # Porting Plan
 
+## Current provenance gate (2026-07-01)
+
+The offline production-orchestration evidence is at schema `1.5.0` on
+`feature/offline-kmdf-production-orchestration-provenance-closure-remediation`.
+The 26-path production runtime/link contract is separate from the 32-path A/B
+wrapper-build contract. Four isolated clean builds retain exact raw TLOG roots,
+objects, libraries, parser output, and same-set closure. Runtime observation,
+target discovery, request execution, signing, packaging, installation, loading,
+and hardware testing remain prohibited future gates.
+
 This plan starts from the preserved source-only baseline. It intentionally does not load, install, execute, or test any legacy binary.
 
 ## Phase 0: Preserve and Audit

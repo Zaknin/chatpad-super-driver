@@ -1,9 +1,9 @@
 {
   "schema_version": "chatpad-production-orchestration-tracked-input-contract-v2",
-  "contract_name": "production-runtime-link-input-set",
-  "purpose": "Repository-tracked inputs that directly define or build the production ChatpadFilter SYS and linked production libraries, plus the separately labelled packaging-only prototype INF boundary.",
-  "declared_count": 26,
-  "derivation_method": "Frozen implementation project graph plus retained CL, LIB, and LINK records; the prototype INF is included only as a packaging boundary.",
+  "contract_name": "ab-wrapper-build-tracked-input-set",
+  "purpose": "Every repository-tracked solution, shared property, project, source, and header input consumed by the accepted four-set A/B wrapper builds.",
+  "declared_count": 32,
+  "derivation_method": "Accepted Build-Driver.ps1 command, solution and project graph, and retained per-set CL command/read, LIB, and LINK records for ChatpadFilter, ChatpadKmdfRequestOwnerContext, and ChatpadProtocol.",
   "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
   "build_commands": [
     ".\\tools\\Build-Driver.ps1 -Configuration Debug -Platform x64",
@@ -15,11 +15,12 @@
   ],
   "project_set": [
     "ChatpadFilter",
-    "ChatpadKmdfRequestOwnerContext"
+    "ChatpadKmdfRequestOwnerContext",
+    "ChatpadProtocol"
   ],
-  "inf_inclusion_policy": "Exactly one prototype INF is retained as packaging-only boundary evidence and is not a build input.",
+  "inf_inclusion_policy": "No INF is included because the accepted wrapper does not package or consume an INF.",
   "containing_commit_binding": "499f6eae4b0e8a6fd4dbf3186c44906b5e6d4201",
-  "limitations": "This contract does not claim to cover every project built by the A/B wrapper; ChatpadProtocol wrapper-only inputs are defined by the separate wrapper-build contract.",
+  "limitations": "External SDK, WDK, MSVC, and system inputs are hash-bound in generated per-set inventories rather than this repository-tracked contract.",
   "entries": [
     {
       "path": "ChatpadWin11.sln",
@@ -84,36 +85,6 @@
       "supporting_retained_tlogs": [
         "build transcript and accepted MSBuild command"
       ]
-    },
-    {
-      "path": "prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf",
-      "category": "prototype_inf_packaging_boundary",
-      "role": "prototype_inf_reference",
-      "consuming_projects": [
-        "ChatpadFilter"
-      ],
-      "configuration_applicability": [
-        "Debug|x64",
-        "Release|x64"
-      ],
-      "inclusion_reason": "Tracked prototype INF included only to make packaging-boundary policy explicit; it is not compiled linked or packaged by this offline checkpoint.",
-      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
-      "git_blob_id": "958e8f75198c41f44667d571c39d71dbb92b1512",
-      "sha256": "7E752EDAFDB252AF746C2AE6A9EFB3032A077A23FEB39C064D0E2C30700D11CE",
-      "classification": "packaging-only",
-      "compiled": false,
-      "linked": false,
-      "imported": false,
-      "referenced": true,
-      "shared_build": false,
-      "project_definition": false,
-      "solution_definition": false,
-      "packaging_only": true,
-      "present_debug_a": false,
-      "present_debug_b": false,
-      "present_release_a": false,
-      "present_release_b": false,
-      "supporting_retained_tlogs": null
     },
     {
       "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.c",
@@ -473,6 +444,39 @@
       ]
     },
     {
+      "path": "src/protocol/ChatpadProtocol/ChatpadActivationExecutor.c",
+      "category": "compiled_source",
+      "role": "protocol_activation_executor_source",
+      "consuming_projects": [
+        "ChatpadProtocol"
+      ],
+      "configuration_applicability": [
+        "Debug|x64",
+        "Release|x64"
+      ],
+      "inclusion_reason": "Compiled into the wrapper-built ChatpadProtocol static library.",
+      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+      "git_blob_id": "e69393a6fdfc00768ab00184271d72238b22dbbf",
+      "sha256": "B8681F686555D90FF94C4C1A84D767F4B72C5EDCBCCF6F4359CE5C07FAF83DE3",
+      "classification": "compiled",
+      "compiled": true,
+      "linked": true,
+      "imported": false,
+      "referenced": true,
+      "shared_build": false,
+      "project_definition": false,
+      "solution_definition": false,
+      "packaging_only": false,
+      "present_debug_a": true,
+      "present_debug_b": true,
+      "present_release_a": true,
+      "present_release_b": true,
+      "supporting_retained_tlogs": [
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.command.1.tlog",
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.read.1.tlog"
+      ]
+    },
+    {
       "path": "src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h",
       "category": "consumed_header",
       "role": "protocol_activation_executor_header",
@@ -617,6 +621,200 @@
       "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
       "git_blob_id": "c896a7273554bdf367796105150240ab7a2913da",
       "sha256": "4663AD1A6BBD64D5575546CD93A49A96990CCDD9B0BE206F70AD34DDC4F14A7D",
+      "classification": "referenced",
+      "compiled": false,
+      "linked": false,
+      "imported": false,
+      "referenced": true,
+      "shared_build": false,
+      "project_definition": false,
+      "solution_definition": false,
+      "packaging_only": false,
+      "present_debug_a": true,
+      "present_debug_b": true,
+      "present_release_a": true,
+      "present_release_b": true,
+      "supporting_retained_tlogs": [
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.read.1.tlog"
+      ]
+    },
+    {
+      "path": "src/protocol/ChatpadProtocol/ChatpadKeyboardParser.c",
+      "category": "compiled_source",
+      "role": "protocol_keyboard_parser_source",
+      "consuming_projects": [
+        "ChatpadProtocol"
+      ],
+      "configuration_applicability": [
+        "Debug|x64",
+        "Release|x64"
+      ],
+      "inclusion_reason": "Compiled into the wrapper-built ChatpadProtocol static library.",
+      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+      "git_blob_id": "426ab20595f57e39e671875a04e246eb38759a01",
+      "sha256": "EAD1DE0DB37E74AE627658A90354A0E6F6DB3BA1FF4570446EEA44F336AF6100",
+      "classification": "compiled",
+      "compiled": true,
+      "linked": true,
+      "imported": false,
+      "referenced": true,
+      "shared_build": false,
+      "project_definition": false,
+      "solution_definition": false,
+      "packaging_only": false,
+      "present_debug_a": true,
+      "present_debug_b": true,
+      "present_release_a": true,
+      "present_release_b": true,
+      "supporting_retained_tlogs": [
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.command.1.tlog",
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.read.1.tlog"
+      ]
+    },
+    {
+      "path": "src/protocol/ChatpadProtocol/ChatpadKeyboardParser.h",
+      "category": "consumed_header",
+      "role": "protocol_keyboard_parser_header",
+      "consuming_projects": [
+        "ChatpadProtocol"
+      ],
+      "configuration_applicability": [
+        "Debug|x64",
+        "Release|x64"
+      ],
+      "inclusion_reason": "Read by ChatpadProtocol compilation.",
+      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+      "git_blob_id": "dc52778da1a0201abe6e1130a33fb0e752ecbe73",
+      "sha256": "99A6B4E5DDEE99B257D80B69930465D32E82CF17610224E63FFFFC8D7A25A95A",
+      "classification": "referenced",
+      "compiled": false,
+      "linked": false,
+      "imported": false,
+      "referenced": true,
+      "shared_build": false,
+      "project_definition": false,
+      "solution_definition": false,
+      "packaging_only": false,
+      "present_debug_a": true,
+      "present_debug_b": true,
+      "present_release_a": true,
+      "present_release_b": true,
+      "supporting_retained_tlogs": [
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.read.1.tlog"
+      ]
+    },
+    {
+      "path": "src/protocol/ChatpadProtocol/ChatpadProtocol.vcxproj",
+      "category": "build_configuration",
+      "role": "protocol_project",
+      "consuming_projects": [
+        "ChatpadProtocol"
+      ],
+      "configuration_applicability": [
+        "Debug|x64",
+        "Release|x64"
+      ],
+      "inclusion_reason": "Project definition explicitly built by Build-Driver.ps1.",
+      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+      "git_blob_id": "74de6056acc7babf8349442dda24e55eb61de0c7",
+      "sha256": "1C075B3DC52509AAD24ECE8FE87D67148B878F8EB3F54F025A221CF70D453702",
+      "classification": "project-definition",
+      "compiled": false,
+      "linked": false,
+      "imported": true,
+      "referenced": true,
+      "shared_build": false,
+      "project_definition": true,
+      "solution_definition": false,
+      "packaging_only": false,
+      "present_debug_a": true,
+      "present_debug_b": true,
+      "present_release_a": true,
+      "present_release_b": true,
+      "supporting_retained_tlogs": [
+        "build transcript and accepted MSBuild command"
+      ]
+    },
+    {
+      "path": "src/protocol/ChatpadProtocol/ChatpadProtocolStateMachine.c",
+      "category": "compiled_source",
+      "role": "protocol_state_machine_source",
+      "consuming_projects": [
+        "ChatpadProtocol"
+      ],
+      "configuration_applicability": [
+        "Debug|x64",
+        "Release|x64"
+      ],
+      "inclusion_reason": "Compiled into the wrapper-built ChatpadProtocol static library.",
+      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+      "git_blob_id": "04bfa445268fb35eb799085201dc0aae39f6da72",
+      "sha256": "F2FCB7BB0596ECE6E17D93AE567E69327DA95DD794FE13443241E5D23BE4BDCD",
+      "classification": "compiled",
+      "compiled": true,
+      "linked": true,
+      "imported": false,
+      "referenced": true,
+      "shared_build": false,
+      "project_definition": false,
+      "solution_definition": false,
+      "packaging_only": false,
+      "present_debug_a": true,
+      "present_debug_b": true,
+      "present_release_a": true,
+      "present_release_b": true,
+      "supporting_retained_tlogs": [
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.command.1.tlog",
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.read.1.tlog"
+      ]
+    },
+    {
+      "path": "src/protocol/ChatpadProtocol/ChatpadProtocolStateMachine.h",
+      "category": "consumed_header",
+      "role": "protocol_state_machine_header",
+      "consuming_projects": [
+        "ChatpadProtocol"
+      ],
+      "configuration_applicability": [
+        "Debug|x64",
+        "Release|x64"
+      ],
+      "inclusion_reason": "Read by ChatpadProtocol compilation.",
+      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+      "git_blob_id": "f9b089406dcb7b88111a32fac4a0e879d79bf64d",
+      "sha256": "DD807205DB3E74DA50FB398E14BA43EBD5F1E7AA1FE363B1B438D18104A8A219",
+      "classification": "referenced",
+      "compiled": false,
+      "linked": false,
+      "imported": false,
+      "referenced": true,
+      "shared_build": false,
+      "project_definition": false,
+      "solution_definition": false,
+      "packaging_only": false,
+      "present_debug_a": true,
+      "present_debug_b": true,
+      "present_release_a": true,
+      "present_release_b": true,
+      "supporting_retained_tlogs": [
+        "debug-a/raw-tlogs/ChatpadProtocol/**/CL.read.1.tlog"
+      ]
+    },
+    {
+      "path": "src/protocol/ChatpadProtocol/ChatpadProtocolTypes.h",
+      "category": "consumed_header",
+      "role": "protocol_types_header",
+      "consuming_projects": [
+        "ChatpadProtocol"
+      ],
+      "configuration_applicability": [
+        "Debug|x64",
+        "Release|x64"
+      ],
+      "inclusion_reason": "Shared protocol type header read by keyboard parser and state machine compilation.",
+      "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+      "git_blob_id": "817e7a32d5f0999ad1f1a86d261de0a5ea77e3ff",
+      "sha256": "C76B1EDA52488B331A20C44F22E21F945B44AC53174753401278FC4FAF456F59",
       "classification": "referenced",
       "compiled": false,
       "linked": false,

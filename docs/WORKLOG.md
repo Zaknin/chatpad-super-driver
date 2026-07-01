@@ -4570,3 +4570,67 @@
   26-path input set, retained raw tlogs, producer closure, final guard logs,
   upstream state, and final clean worktree. Runtime, target/request, signing,
   installation, loading, and hardware gates remain closed.
+
+## 2026-07-01 19:15 +04:00 - Production orchestration provenance-closure remediation
+
+- **Objective:** Close all provenance-completeness defects reported against
+  `499f6eae4b0e8a6fd4dbf3186c44906b5e6d4201` without changing production,
+  project, solution, INF, signing, packaging, deployment, or hardware behavior.
+- **Starting state:** Exact clean synchronized branch
+  `feature/offline-kmdf-production-orchestration-tlog-provenance-remediation`
+  at `499f6ea`, parent `b2a9b5c`, subject
+  `test: bind production orchestration tlog provenance`, upstream equality
+  and 0/0 ahead/behind verified before creating the current branch.
+- **Audit correction:** The production boundary is 26 paths, including one
+  packaging-only INF. The independently derived wrapper-build boundary is 32
+  paths, not an assumed 33: 25 non-INF production/build inputs plus seven
+  omitted `ChatpadProtocol` inputs.
+- **Tracked changes:** Updated producer, production guard, manifest, production
+  contract, continuity/design documents, and prior failed-checkpoint note;
+  added the wrapper contract and provenance-closure checkpoint. No C/C++
+  source/header, project, solution, shared props/targets, INF, or `legacy/`
+  path changed.
+- **Frozen identities:** Producer size 111,989, SHA-256
+  `17AD4A2F409147E93BD7D85F2F12FA637AB305B5FF51C882A23CBE2134F96688`,
+  blob `0c6926804a6ee8bffa5f58d1193d23eb59682d10`; production contract SHA-256
+  `E79135FA00CC241E58E590552162A0F90149A978DF5FCC008B0FFF41E8453D20`,
+  blob `1a139183480cee78fb70f431f549b971fc320a1b`; wrapper contract SHA-256
+  `C05881CA9F7663C65F4DA7E07AA9196E1E422BB5A5CD76A96AFE8C3EAAF22844`,
+  blob `bd3b746b5e5812b2712a4eff531746472a662e5d`.
+- **Generation:** Freeze UTC `2026-07-01T15:07:39.6032226Z`; final identity
+  verification `2026-07-01T15:09:15.9740485Z`. Four clean Community/WDK
+  builds passed. Every set retained 22 TLOGs, 15 objects, and 2 libraries.
+  Debug inventories contain 130 inputs; Release inventories contain 132.
+- **Parser/closure:** Debug parser totals are 684/662/22 raw/parsed/empty;
+  Release totals are 688/666/22. Unparseable, discarded, unexplained,
+  freshness, raw-root, hash, object-source, library, linked-library, and
+  same-set defect counters are zero. The declared `ChatpadFilter.lib` path is
+  explicitly classified as a non-emitted import-library output.
+- **Binary evidence:** Debug A/B raw hashes are
+  `ACE75E310DF3F3EA51685BDD2A2AE228C5D49E9CD0EF6EADFEF0C0AC108C1DB2`
+  and `9650D7059A8183E28B0CB883D61F63BD4C88DB62D8B613645D77B3514632D5B8`;
+  Release A/B are
+  `56BF87712394F5C0A5574441CF895E5EE03BA937664FECE972FDD04E552295B3`
+  and `0A9AE86BE72EEE431462B4F9D943EF9A48718974AA6C4C5E7D8FCE9BDA18E643`.
+  Normalized Debug/Release hashes remain `18656A...33E50` and
+  `F87A4B...9A6C`.
+- **Validation:** SourceOnly Debug/Release pass. Full Debug/Release pass with
+  schema `1.5.0`, 99/99 guard/declaration/entry IDs, and every explicit defect
+  counter zero. Repository safety passes with all source/project/INF,
+  prohibited-action, tracked-artifact, and evidence counters zero.
+- **Failed closed attempts:** Four partial runs exposed parser aggregation,
+  empty-collection property access, fixed-object schema assignment, and
+  set-specific command-digest defects. A later complete run exposed an
+  incorrect aggregate intermediate hash counter. Each producer correction
+  invalidated the prior bytes and restarted all four sets. No failed attempt
+  executed prohibited behavior.
+- **Safety:** No signing, catalogs/packages, certificates/keys, installation,
+  loading, Windows mutation, device query, USB/HID/XUSB/controller/Chatpad
+  access, target discovery, or request action occurred.
+- **Commit/push:** Commit exactly
+  `test: close production orchestration provenance gaps` and push only the
+  current branch; the self-referential final hash is reported from Git after
+  commit and is not embedded in this entry.
+- **Next task:** Independent read-only audit of the final commit, 99-entry
+  manifest, dual contracts, frozen producer, retained roots/intermediates,
+  Full logs, and synchronized upstream state.

@@ -1,5 +1,15 @@
 # Windows 11 KMDF Production Integration Design
 
+## Provenance closure note (2026-07-01)
+
+Offline production-orchestration acceptance now distinguishes the direct
+production runtime/link boundary (26 tracked paths) from the broader A/B
+wrapper-build boundary (32 tracked paths, including complete
+`ChatpadProtocol`). Schema `1.5.0` evidence requires isolated retained TLOG
+roots, lossless parsing, retained object/library bytes, source and library
+producer closure, and same-set final-link closure. This evidence change does
+not authorize or alter runtime integration.
+
 This document records the staged design and current offline implementation
 state for introducing the dormant KMDF activation request-owner object graph
 into the production `ChatpadFilter` codebase through separately gated steps.

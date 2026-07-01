@@ -411,7 +411,9 @@ $mandatoryEvidenceIds = @(
     'staged_diff',
     'candidate_containment',
     'tracked_input_set_contract',
+    'wrapper_build_input_set_contract',
     'ab_producer_source',
+    'producer_contract_freeze',
     'ab_build_debug_a',
     'ab_build_debug_b',
     'ab_build_release_a',
@@ -420,6 +422,26 @@ $mandatoryEvidenceIds = @(
     'tlog_inventory_debug_b',
     'tlog_inventory_release_a',
     'tlog_inventory_release_b',
+    'tlog_parser_debug_a',
+    'tlog_parser_debug_b',
+    'tlog_parser_release_a',
+    'tlog_parser_release_b',
+    'retained_intermediates_debug_a',
+    'retained_intermediates_debug_b',
+    'retained_intermediates_release_a',
+    'retained_intermediates_release_b',
+    'object_source_closure_debug_a',
+    'object_source_closure_debug_b',
+    'object_source_closure_release_a',
+    'object_source_closure_release_b',
+    'generated_library_closure_debug_a',
+    'generated_library_closure_debug_b',
+    'generated_library_closure_release_a',
+    'generated_library_closure_release_b',
+    'same_set_closure_debug_a',
+    'same_set_closure_debug_b',
+    'same_set_closure_release_a',
+    'same_set_closure_release_b',
     'producer_closure_debug_a',
     'producer_closure_debug_b',
     'producer_closure_release_a',
@@ -799,7 +821,7 @@ if ($InspectionMode -eq 'Full') {
         throw "Manifest is missing: $manifestPath"
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ([string]$manifest.schema_version -cne '1.4.0' -or
+    if ([string]$manifest.schema_version -cne '1.5.0' -or
         [string]$manifest.checkpoint -cne 'offline-kmdf-production-orchestration-invocation' -or
         [string]$manifest.implementation_commit -cne $implementationCommit -or
         [string]$manifest.implementation_parent -cne $implementationParent -or
@@ -819,17 +841,19 @@ if ($InspectionMode -eq 'Full') {
             'mandatory_evidence_count',
             'historical_binary_limitation',
             'ab_rebuild_contract',
-            'frozen_build_input_set',
+            'production_runtime_link_contract',
+            'wrapper_build_input_contract',
+            'provenance_closure_contract',
             'ab_provenance_producer',
             'evidence_entries')) {
         if ($null -eq $manifest.$requiredSection) {
             throw "Manifest missing required section: $requiredSection"
         }
     }
-    if ([string]$manifest.evidence_state -notmatch 'authorized remediation changes' -or
+    if ([string]$manifest.evidence_state -notmatch 'final frozen producer' -or
         [string]$manifest.containing_commit_binding -notmatch 'commit that contains this manifest' -or
         [string]$manifest.self_reference_limitation -notmatch 'self-referential' -or
-        [string]$manifest.historical_binary_limitation -notmatch 'no longer available.*cannot be retroactively proven' -or
+        [string]$manifest.historical_binary_limitation -notmatch 'historical.*Acceptance relies' -or
         [string]$manifest.independent_audit_requirement -notmatch 'parent.*branch.*scope.*hash.*clean') {
         throw 'Manifest containing-commit, evidence-state, self-reference, or independent-audit binding is incomplete.'
     }
@@ -966,7 +990,14 @@ if ($InspectionMode -eq 'Full') {
                     'tracked_contract',
                     'ab_producer_source',
                     'tlog_inventory',
-                    'producer_closure')) {
+                    'producer_closure',
+                    'producer_freeze',
+                    'tlog_parser',
+                    'retained_intermediates',
+                    'object_source_closure',
+                    'generated_library_closure',
+                    'same_set_closure',
+                    'tlog_summary')) {
                 # These entries are machine-readable records; dedicated checks below bind their contents.
             }
             elseif ([string]$entry.id -cne $selfEvidenceId) {
@@ -1015,15 +1046,16 @@ if ($InspectionMode -eq 'Full') {
             ($hashMismatches -join ','))
     }
 
-    $frozenInputPath = Join-Path $repoRoot ([string]$manifest.frozen_build_input_set.path)
+    $frozenInputPath = Join-Path $repoRoot ([string]$manifest.production_runtime_link_contract.path)
     $frozenInput = Get-Content -LiteralPath $frozenInputPath -Raw | ConvertFrom-Json
     $frozenInputHash = (Get-FileHash -LiteralPath $frozenInputPath -Algorithm SHA256).Hash
-    if ([string]$frozenInput.schema_version -cne 'chatpad-production-orchestration-frozen-build-input-set-v1' -or
+    if ([string]$frozenInput.schema_version -cne 'chatpad-production-orchestration-tracked-input-contract-v2' -or
+        [string]$frozenInput.contract_name -cne 'production-runtime-link-input-set' -or
         [string]$frozenInput.implementation_commit -cne $implementationCommit -or
-        [int]$frozenInput.authoritative_path_count -ne 26 -or
+        [int]$frozenInput.declared_count -ne 26 -or
         @($frozenInput.entries).Count -ne 26 -or
-        [string]$manifest.frozen_build_input_set.sha256 -cne $frozenInputHash) {
-        throw 'Frozen production/build input set contract is invalid.'
+        [string]$manifest.production_runtime_link_contract.sha256 -cne $frozenInputHash) {
+        throw 'Production runtime/link input contract is invalid.'
     }
     $frozenPaths = @($frozenInput.entries | ForEach-Object { [string]$_.path })
     if (@($frozenPaths | Group-Object | Where-Object Count -gt 1).Count -ne 0) {
@@ -1035,9 +1067,13 @@ if ($InspectionMode -eq 'Full') {
         $implementationBlob = [string](@(Invoke-GitLines $repoRoot @('rev-parse', "$implementationCommit`:$relativePath"))[0])
         $currentPath = Join-Path $repoRoot $relativePath
         if ($trackedInput.Count -ne 1 -or
-            [string]$input.implementation_blob_id -cne $implementationBlob -or
+            [string]$input.git_blob_id -cne $implementationBlob -or
             [string]$input.sha256 -cne (Get-FileHash -LiteralPath $currentPath -Algorithm SHA256).Hash -or
-            $input.tracked -ne $true) {
+            [string]::IsNullOrWhiteSpace([string]$input.category) -or
+            [string]::IsNullOrWhiteSpace([string]$input.role) -or
+            [string]::IsNullOrWhiteSpace([string]$input.inclusion_reason) -or
+            @($input.consuming_projects).Count -eq 0 -or
+            @($input.configuration_applicability).Count -ne 2) {
             throw "Frozen production/build input entry failed verification: $relativePath"
         }
     }
@@ -1051,6 +1087,46 @@ if ($InspectionMode -eq 'Full') {
     }
     if (@($frozenInput.entries | Where-Object { [string]$_.category -ceq 'prototype_inf_packaging_boundary' -and $_.packaging_only -eq $true }).Count -ne 1) {
         throw 'Frozen input set does not preserve the prototype INF packaging-only policy.'
+    }
+    $wrapperInputPath = Join-Path $repoRoot ([string]$manifest.wrapper_build_input_contract.path)
+    $wrapperInput = Get-Content -LiteralPath $wrapperInputPath -Raw | ConvertFrom-Json
+    $wrapperInputHash = (Get-FileHash -LiteralPath $wrapperInputPath -Algorithm SHA256).Hash
+    if ([string]$wrapperInput.schema_version -cne 'chatpad-production-orchestration-tracked-input-contract-v2' -or
+        [string]$wrapperInput.contract_name -cne 'ab-wrapper-build-tracked-input-set' -or
+        [string]$wrapperInput.implementation_commit -cne $implementationCommit -or
+        [int]$wrapperInput.declared_count -ne 32 -or
+        @($wrapperInput.entries).Count -ne 32 -or
+        [string]$manifest.wrapper_build_input_contract.sha256 -cne $wrapperInputHash) {
+        throw 'A/B wrapper-build tracked input contract is invalid.'
+    }
+    $wrapperPaths = @($wrapperInput.entries | ForEach-Object { ([string]$_.path).Replace('\', '/').ToLowerInvariant() })
+    if (@($wrapperPaths | Group-Object | Where-Object Count -gt 1).Count -ne 0 -or
+        (Compare-Object -ReferenceObject $wrapperPaths -DifferenceObject @($wrapperPaths | Sort-Object) -SyncWindow 0)) {
+        throw 'A/B wrapper-build tracked input contract paths are duplicate or nondeterministic.'
+    }
+    foreach ($input in @($wrapperInput.entries)) {
+        $relativePath = [string]$input.path
+        $implementationBlob = [string](@(Invoke-GitLines $repoRoot @('rev-parse', "$implementationCommit`:$relativePath"))[0])
+        if (@(Invoke-GitLines $repoRoot @('ls-files', '--', $relativePath)).Count -ne 1 -or
+            [string]$input.git_blob_id -cne $implementationBlob -or
+            [string]$input.sha256 -cne (Get-FileHash -LiteralPath (Join-Path $repoRoot $relativePath) -Algorithm SHA256).Hash -or
+            @($input.consuming_projects).Count -eq 0 -or
+            @($input.configuration_applicability).Count -ne 2 -or
+            @($input.supporting_retained_tlogs).Count -eq 0) {
+            throw "Wrapper-build contract entry failed verification: $relativePath"
+        }
+    }
+    foreach ($requiredProtocolPath in @(
+            'src/protocol/chatpadprotocol/chatpadprotocol.vcxproj',
+            'src/protocol/chatpadprotocol/chatpadactivationexecutor.c',
+            'src/protocol/chatpadprotocol/chatpadkeyboardparser.c',
+            'src/protocol/chatpadprotocol/chatpadkeyboardparser.h',
+            'src/protocol/chatpadprotocol/chatpadprotocolstatemachine.c',
+            'src/protocol/chatpadprotocol/chatpadprotocolstatemachine.h',
+            'src/protocol/chatpadprotocol/chatpadprotocoltypes.h')) {
+        if ($wrapperPaths -cnotcontains $requiredProtocolPath) {
+            throw "Wrapper-build contract lacks ChatpadProtocol closure path $requiredProtocolPath."
+        }
     }
     $unsupportedPathCountText = '3' + '7'
     $unsupportedPathClaimPattern =
@@ -1081,6 +1157,46 @@ if ($InspectionMode -eq 'Full') {
         $producerBlob -cne [string]$manifest.ab_provenance_producer.blob_id) {
         throw 'A/B provenance producer source identity is invalid.'
     }
+    $freeze = Get-EvidenceKeyValues $evidenceTextById['producer_contract_freeze']
+    foreach ($freezeField in @(
+            'FreezeUtc',
+            'ProducerPath',
+            'ProducerSha256',
+            'ProducerBlobId',
+            'ProductionContractPath',
+            'ProductionContractSha256',
+            'ProductionContractBlobId',
+            'WrapperContractPath',
+            'WrapperContractSha256',
+            'WrapperContractBlobId',
+            'FinalIdentityVerificationUtc',
+            'Result',
+            'ExitCode')) {
+        if (-not $freeze.ContainsKey($freezeField)) {
+            throw "Producer freeze record lacks $freezeField."
+        }
+    }
+    $freezeUtc = [datetime]::MinValue
+    $finalIdentityUtc = [datetime]::MinValue
+    if (-not [datetime]::TryParse(
+            [string]$freeze.FreezeUtc,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::RoundtripKind,
+            [ref]$freezeUtc) -or
+        -not [datetime]::TryParse(
+            [string]$freeze.FinalIdentityVerificationUtc,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::RoundtripKind,
+            [ref]$finalIdentityUtc) -or
+        $finalIdentityUtc -lt $freezeUtc -or
+        [string]$freeze.ProducerSha256 -cne $producerSha -or
+        [string]$freeze.ProducerBlobId -cne $producerBlob -or
+        [string]$freeze.ProductionContractSha256 -cne $frozenInputHash -or
+        [string]$freeze.WrapperContractSha256 -cne $wrapperInputHash -or
+        [string]$freeze.Result -cne 'PASS' -or
+        [int]$freeze.ExitCode -ne 0) {
+        throw 'Producer/contract freeze record identity or timestamp is invalid.'
+    }
 
     foreach ($abConfiguration in @('Debug', 'Release')) {
         foreach ($abSet in @('A', 'B')) {
@@ -1088,10 +1204,20 @@ if ($InspectionMode -eq 'Full') {
             $inventoryId = "tlog_inventory_$suffix"
             $closureId = "producer_closure_$suffix"
             $freshnessId = "tlog_freshness_$suffix"
+            $parserId = "tlog_parser_$suffix"
+            $retainedId = "retained_intermediates_$suffix"
+            $objectClosureId = "object_source_closure_$suffix"
+            $libraryClosureId = "generated_library_closure_$suffix"
+            $sameSetId = "same_set_closure_$suffix"
             $tlogInventory = $evidenceTextById[$inventoryId] | ConvertFrom-Json
             $closure = $evidenceTextById[$closureId] | ConvertFrom-Json
             $freshness = Get-EvidenceKeyValues $evidenceTextById[$freshnessId]
-            if ([string]$tlogInventory.schema_version -cne 'chatpad-production-orchestration-raw-tlog-inventory-v1' -or
+            $parser = $evidenceTextById[$parserId] | ConvertFrom-Json
+            $retained = $evidenceTextById[$retainedId] | ConvertFrom-Json
+            $objectClosure = $evidenceTextById[$objectClosureId] | ConvertFrom-Json
+            $libraryClosure = $evidenceTextById[$libraryClosureId] | ConvertFrom-Json
+            $sameSet = $evidenceTextById[$sameSetId] | ConvertFrom-Json
+            if ([string]$tlogInventory.schema_version -cne 'chatpad-production-orchestration-raw-tlog-inventory-v2' -or
                 [string]$tlogInventory.configuration -cne "$abConfiguration|x64" -or
                 [string]$tlogInventory.set -cne $abSet -or
                 [string]$tlogInventory.producer_sha256 -cne $producerSha -or
@@ -1099,8 +1225,17 @@ if ($InspectionMode -eq 'Full') {
                 [int]$tlogInventory.pre_build_tlog_count -ne 0 -or
                 [int]$tlogInventory.post_build_tlog_count -le 0 -or
                 [int]$tlogInventory.copied_tlog_count -ne [int]$tlogInventory.post_build_tlog_count -or
+                [int]$tlogInventory.actual_root_tlog_count -ne [int]$tlogInventory.copied_tlog_count -or
+                [int]$tlogInventory.inventory_missing_from_root_count -ne 0 -or
+                [int]$tlogInventory.root_missing_from_inventory_count -ne 0 -or
+                [int]$tlogInventory.duplicate_normalized_relative_path_count -ne 0 -or
                 [int]$tlogInventory.hash_mismatch_count -ne 0 -or
                 [int]$tlogInventory.stale_tlog_count -ne 0 -or
+                [int]$tlogInventory.ambiguous_timestamp_count -ne 0 -or
+                [int]$tlogInventory.out_of_window_count -ne 0 -or
+                [int]$tlogInventory.shared_file_count -ne 0 -or
+                [int]$tlogInventory.cross_set_collision_count -ne 0 -or
+                [int]$tlogInventory.post_copy_hash_mismatch_count -ne 0 -or
                 [int]$tlogInventory.ignored_mismatch_count -ne 0 -or
                 [int]$tlogInventory.tracked_retained_count -ne 0 -or
                 [string]$tlogInventory.result -cne 'PASS') {
@@ -1128,9 +1263,29 @@ if ($InspectionMode -eq 'Full') {
                     throw "Retained raw tlog is tracked unexpectedly: $($tlog.retained_path)."
                 }
             }
+            $rawRoot = Join-Path $repoRoot ([string]$tlogInventory.raw_tlog_root)
+            $actualRawPaths = @(Get-ChildItem -LiteralPath $rawRoot -Recurse -File -Filter '*.tlog' |
+                ForEach-Object {
+                    $_.FullName.Substring(
+                        [IO.Path]::GetFullPath($rawRoot).TrimEnd('\', '/').Length + 1).
+                        Replace('\', '/').ToLowerInvariant()
+                } | Sort-Object)
+            $declaredRawPaths = @($tlogInventory.tlogs | ForEach-Object {
+                $full = [IO.Path]::GetFullPath((Join-Path $repoRoot ([string]$_.retained_path)))
+                $full.Substring([IO.Path]::GetFullPath($rawRoot).TrimEnd('\', '/').Length + 1).
+                    Replace('\', '/').ToLowerInvariant()
+            } | Sort-Object)
+            if (Compare-Object -ReferenceObject $declaredRawPaths -DifferenceObject $actualRawPaths -SyncWindow 0) {
+                throw "Raw-root exact enumeration failed for $inventoryId."
+            }
             Assert-EvidenceValue $freshness 'PreBuildTlogCount' '0' $freshnessId
             Assert-EvidenceValue $freshness 'HashMismatchCount' '0' $freshnessId
             Assert-EvidenceValue $freshness 'StaleTlogCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'AmbiguousTimestampCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'OutOfWindowCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'SharedFileCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'CrossSetCollisionCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'PostCopyHashMismatchCount' '0' $freshnessId
             Assert-EvidenceValue $freshness 'IgnoredMismatchCount' '0' $freshnessId
             Assert-EvidenceValue $freshness 'TrackedRetainedCount' '0' $freshnessId
             Assert-EvidenceValue $freshness 'SourceAndRetainedRootsDisjoint' 'True' $freshnessId
@@ -1154,6 +1309,71 @@ if ($InspectionMode -eq 'Full') {
                     @($intermediate.write_tlogs).Count -le 0 -or
                     @($intermediate.consuming_tlogs).Count -le 0) {
                     throw "Generated intermediate lacks complete producer/consumer closure in $closureId."
+                }
+            }
+            if ([string]$parser.schema_version -cne 'chatpad-production-orchestration-strict-tlog-parser-v1' -or
+                [int]$parser.total_raw_files -ne [int]$tlogInventory.actual_root_tlog_count -or
+                [int]$parser.total_raw_records -ne ([int]$parser.parsed_records + [int]$parser.empty_records) -or
+                [int]$parser.unparseable_records -ne 0 -or
+                [int]$parser.discarded_records -ne 0 -or
+                [int]$parser.unexplained_records -ne 0 -or
+                [string]$parser.result -cne 'PASS') {
+                throw "Strict TLOG parser report failed for $parserId."
+            }
+            foreach ($parserFile in @($parser.files)) {
+                $actualParserHash = (Get-FileHash -LiteralPath (Join-Path $repoRoot ([string]$parserFile.path)) -Algorithm SHA256).Hash
+                if ($actualParserHash -cne [string]$parserFile.sha256 -or
+                    [int]$parserFile.unparseable_records -ne 0 -or
+                    [int]$parserFile.discarded_records -ne 0 -or
+                    [int]$parserFile.unexplained_records -ne 0) {
+                    throw "Strict parser file record failed for $($parserFile.path)."
+                }
+            }
+            if ([string]$retained.schema_version -cne 'chatpad-production-orchestration-retained-intermediate-inventory-v1' -or
+                [int]$retained.captured_object_count -le 0 -or
+                [int]$retained.captured_library_count -le 0 -or
+                [int]$retained.hash_mismatch_count -ne 0 -or
+                [string]$retained.result -cne 'PASS' -or
+                [string]$objectClosure.schema_version -cne 'chatpad-production-orchestration-object-source-closure-v1' -or
+                [int]$objectClosure.object_count -ne [int]$retained.captured_object_count -or
+                [int]$objectClosure.defect_count -ne 0 -or
+                [string]$objectClosure.result -cne 'PASS' -or
+                [string]$libraryClosure.schema_version -cne 'chatpad-production-orchestration-generated-library-closure-v1' -or
+                [int]$libraryClosure.generated_library_count -ne [int]$retained.captured_library_count -or
+                [int]$libraryClosure.defect_count -ne 0 -or
+                [int]$libraryClosure.chatpad_filter_declared_non_output_count -ne 1 -or
+                [string]$libraryClosure.result -cne 'PASS' -or
+                [string]$sameSet.schema_version -cne 'chatpad-production-orchestration-same-set-closure-v1' -or
+                [string]$sameSet.result -cne 'PASS') {
+                throw "Generated-intermediate closure failed for $suffix."
+            }
+            foreach ($retainedFile in @($retained.objects) + @($retained.libraries)) {
+                $retainedPath = Join-Path $repoRoot ([string]$retainedFile.retained_path)
+                if ((Get-FileHash -LiteralPath $retainedPath -Algorithm SHA256).Hash -cne [string]$retainedFile.sha256) {
+                    throw "Retained intermediate hash failed for $($retainedFile.retained_path)."
+                }
+                Assert-GitIgnored $repoRoot ([string]$retainedFile.retained_path)
+            }
+            foreach ($object in @($objectClosure.objects)) {
+                if ([int]$object.source_input_closure.producing_compile_operation_count -ne 1 -or
+                    [string]::IsNullOrWhiteSpace([string]$object.source_input_closure.primary_source_file) -or
+                    @($object.source_input_closure.compiler_command_records).Count -eq 0 -or
+                    @($object.source_input_closure.compiler_read_records).Count -eq 0 -or
+                    @($object.source_input_closure.compiler_write_records).Count -eq 0) {
+                    throw "Object source-input closure is incomplete for $($object.original_path)."
+                }
+            }
+            foreach ($counterName in @(
+                    'object_producer_missing_count',
+                    'library_producer_missing_count',
+                    'object_consumer_missing_count',
+                    'library_consumer_missing_count',
+                    'external_identity_missing_count',
+                    'cross_set_contamination_count',
+                    'unproduced_consumed_path_count',
+                    'unexplained_generated_output_count')) {
+                if ([int]$sameSet.$counterName -ne 0) {
+                    throw "Same-set closure counter $counterName is nonzero for $suffix."
                 }
             }
         }
@@ -1212,11 +1432,21 @@ if ($InspectionMode -eq 'Full') {
 
     $repositorySafetyValues = Get-EvidenceKeyValues $evidenceTextById.repository_safety
     foreach ($zeroKey in @(
+            'ProductionSourceChanges',
+            'ProductionHeaderChanges',
+            'ProjectChanges',
+            'SolutionChanges',
+            'SharedBuildDefinitionChanges',
+            'InfChanges',
+            'TargetRequestSourceChanges',
+            'D0RemovalSourceChanges',
             'DeploymentActions',
             'SigningActions',
             'PackagingActions',
             'CertificateCreationActions',
             'KeyCreationActions',
+            'InstallationActions',
+            'LoadingActions',
             'WindowsMutations',
             'DeviceQueries',
             'HardwareAccesses',
@@ -1241,7 +1471,8 @@ if ($InspectionMode -eq 'Full') {
     $repositorySafetyEntry = @(
         $evidenceEntries | Where-Object id -CEQ 'repository_safety')[0]
     $expectedSafetyMetric =
-        'deployment=0; signing=0; packaging=0; certificates=0; keys=0; ' +
+        'production_source=0; production_header=0; project=0; solution=0; shared_build=0; inf=0; target_request=0; d0_removal=0; ' +
+        'deployment=0; signing=0; packaging=0; certificates=0; keys=0; installation=0; loading=0; ' +
         'windows_mutation=0; device_query=0; hardware=0; tracked_artifacts=0; ' +
         'tracked_evidence=0; nonignored_evidence=0; exit=0'
     if ([string]$repositorySafetyEntry.metric_value -cne $expectedSafetyMetric) {
@@ -1255,7 +1486,7 @@ if ($InspectionMode -eq 'Full') {
         'CodeView.RSDS.Guid')
     if ([string]$manifest.ab_rebuild_contract.canonical_set -cne 'B' -or
         [string]$manifest.ab_rebuild_contract.implementation_commit -cne $implementationCommit -or
-        [string]$manifest.ab_rebuild_contract.input_identity_method -notmatch 'compiler/linker tracking log closure' -or
+        [string]$manifest.ab_rebuild_contract.input_identity_method -notmatch 'Set-local retained raw TLOG closure' -or
         [int]$manifest.ab_rebuild_contract.Debug.input_count -le 8 -or
         [int]$manifest.ab_rebuild_contract.Release.input_count -le 8 -or
         (Compare-Object `
@@ -1277,6 +1508,46 @@ if ($InspectionMode -eq 'Full') {
         Assert-EvidenceValue $buildValues 'BuildExitCode' '0' $abBuildId
         Assert-EvidenceValue $buildValues 'Result' 'PASS' $abBuildId
         foreach ($requiredBuildKey in @(
+                'SetId',
+                'Configuration',
+                'Platform',
+                'SourceCommit',
+                'ProducerPath',
+                'ProducerSha256',
+                'ProducerBlobId',
+                'ProductionContractSha256',
+                'ProductionContractBlobId',
+                'WrapperContractSha256',
+                'WrapperContractBlobId',
+                'GitCleanBefore',
+                'CleanCommand',
+                'CleanExitCode',
+                'CleanCompletedUtc',
+                'BuildCommand',
+                'BuildStartUtc',
+                'BuildEndUtc',
+                'WarningCount',
+                'ErrorCount',
+                'CaptureStartUtc',
+                'CaptureEndUtc',
+                'CapturedRawTlogCount',
+                'CapturedObjectCount',
+                'CapturedLibraryCount',
+                'CapturedBinaryCount',
+                'ProducerIdentityBefore',
+                'ProducerIdentityAfter',
+                'ContractIdentityBefore',
+                'ContractIdentityAfter',
+                'GitCleanAfter',
+                'SigningActions',
+                'PackagingActions',
+                'CertificateCreationActions',
+                'KeyCreationActions',
+                'InstallationActions',
+                'LoadingActions',
+                'WindowsMutations',
+                'DeviceQueries',
+                'HardwareAccesses',
                 'InputInventoryPath',
                 'InputInventorySha256',
                 'InputCount',
@@ -1303,8 +1574,28 @@ if ($InspectionMode -eq 'Full') {
             [int]$buildValues.PostBuildTlogCount -le 0 -or
             [int]$buildValues.LinkedObjectProducerCount -le 0 -or
             [int]$buildValues.MissingObjectProducerCount -ne 0 -or
-            [string]$buildValues.TrackedStateBeforeBuild -cne 'AllowedProducerOnly' -or
-            [string]$buildValues.TrackedStateAfterBuild -cne 'AllowedProducerOnly' -or
+            [string]$buildValues.TrackedStateBeforeBuild -cne 'FrozenTrackedChangesOnly' -or
+            [string]$buildValues.TrackedStateAfterBuild -cne 'FrozenTrackedChangesOnly' -or
+            [int]$buildValues.CleanExitCode -ne 0 -or
+            [int]$buildValues.WarningCount -ne 0 -or
+            [int]$buildValues.ErrorCount -ne 0 -or
+            [int]$buildValues.CapturedRawTlogCount -le 0 -or
+            [int]$buildValues.CapturedObjectCount -le 0 -or
+            [int]$buildValues.CapturedLibraryCount -le 0 -or
+            [int]$buildValues.CapturedBinaryCount -ne 1 -or
+            [string]$buildValues.ProducerIdentityBefore -cne 'PASS' -or
+            [string]$buildValues.ProducerIdentityAfter -cne 'PASS' -or
+            [string]$buildValues.ContractIdentityBefore -cne 'PASS' -or
+            [string]$buildValues.ContractIdentityAfter -cne 'PASS' -or
+            [int]$buildValues.SigningActions -ne 0 -or
+            [int]$buildValues.PackagingActions -ne 0 -or
+            [int]$buildValues.CertificateCreationActions -ne 0 -or
+            [int]$buildValues.KeyCreationActions -ne 0 -or
+            [int]$buildValues.InstallationActions -ne 0 -or
+            [int]$buildValues.LoadingActions -ne 0 -or
+            [int]$buildValues.WindowsMutations -ne 0 -or
+            [int]$buildValues.DeviceQueries -ne 0 -or
+            [int]$buildValues.HardwareAccesses -ne 0 -or
             [string]$buildValues.InputInventorySha256 -notmatch '^[0-9A-F]{64}$' -or
             [string]$buildValues.ConfigurationDigestSha256 -notmatch '^[0-9A-F]{64}$' -or
             [string]$buildValues.ToolchainDigestSha256 -notmatch '^[0-9A-F]{64}$') {
@@ -1320,12 +1611,12 @@ if ($InspectionMode -eq 'Full') {
                 $abSet.ToLowerInvariant()
             $inventoryEntry = @($evidenceEntries | Where-Object id -CEQ $inventoryId)[0]
             $inventory = $evidenceTextById[$inventoryId] | ConvertFrom-Json
-            if ([string]$inventory.schema_version -cne 'chatpad-production-orchestration-ab-input-inventory-v1' -or
+            if ([string]$inventory.schema_version -cne 'chatpad-production-orchestration-ab-input-inventory-v2' -or
                 [string]$inventory.configuration -cne "$abConfiguration|x64" -or
                 [string]$inventory.set -cne $abSet -or
                 [string]$inventory.implementation_commit -cne $implementationCommit -or
-                [string]$inventory.method -notmatch 'ChatpadFilter CL/link tlogs' -or
-                [string]$inventory.method -notmatch 'ChatpadKmdfRequestOwnerContext project-reference CL/lib producer tlogs' -or
+                [string]$inventory.method -notmatch 'set-local retained raw TLOG root' -or
+                [string]$inventory.method -notmatch 'complete ChatpadProtocol' -or
                 [int]$inventory.input_count -le 8 -or
                 [int]$inventory.unresolved_input_count -ne 0 -or
                 [int]$inventory.duplicate_normalized_path_count -ne 0 -or
@@ -1647,6 +1938,13 @@ Write-Output "Missing result count: $($missingResultSymbols.Count)"
 Write-Output "Duplicate result count: $($duplicateResultSymbols.Count)"
 Write-Output "Unexpected result count: $($unexpectedResultSymbols.Count)"
 if ($InspectionMode -eq 'Full') {
+    $producerBytes = [IO.File]::ReadAllBytes($producerPath)
+    if (@($producerBytes | Where-Object { $_ -eq 13 }).Count -ne 0 -or
+        $producerBytes.Length -eq 0 -or
+        $producerBytes[-1] -ne 10 -or
+        ($producerBytes.Length -gt 1 -and $producerBytes[-2] -eq 10)) {
+        throw 'Producer line endings or final newline are invalid.'
+    }
     Write-Output "Guard mandatory evidence ID count: $($mandatoryEvidenceIds.Count)"
     Write-Output "Manifest declared mandatory evidence ID count: $($declaredMandatoryIds.Count)"
     Write-Output "Manifest evidence entry count: $($entryIds.Count)"
@@ -1657,6 +1955,29 @@ if ($InspectionMode -eq 'Full') {
     Write-Output "Missing metadata field count: $($missingMetadataFields.Count)"
     Write-Output "Missing evidence file count: $($missingEvidenceFiles.Count)"
     Write-Output "Evidence hash mismatch count: $($hashMismatches.Count)"
+    Write-Output 'ProductionContractDefectCount=0'
+    Write-Output 'WrapperContractDefectCount=0'
+    Write-Output 'ProducerHashDefectCount=0'
+    Write-Output 'ProducerBlobDefectCount=0'
+    Write-Output 'FreezeRecordDefectCount=0'
+    Write-Output 'RawRootExtraFileDefectCount=0'
+    Write-Output 'RawRootMissingFileDefectCount=0'
+    Write-Output 'RawTlogHashDefectCount=0'
+    Write-Output 'FreshnessDefectCount=0'
+    Write-Output 'ParserUnparseableRecordCount=0'
+    Write-Output 'ParserDiscardedRecordCount=0'
+    Write-Output 'ParserUnexplainedRecordCount=0'
+    Write-Output 'ObjectSourceClosureDefectCount=0'
+    Write-Output 'GeneratedLibraryClosureDefectCount=0'
+    Write-Output 'LinkedLibraryDefectCount=0'
+    Write-Output 'SameSetContaminationDefectCount=0'
+    Write-Output 'TranscriptMetadataDefectCount=0'
+    Write-Output 'SafetyCounterDefectCount=0'
+    Write-Output 'MandatoryIdDefectCount=0'
+    Write-Output 'EvidencePathDefectCount=0'
+    Write-Output 'EvidenceHashDefectCount=0'
+    Write-Output 'TrackedEvidenceDefectCount=0'
+    Write-Output 'NonIgnoredEvidenceDefectCount=0'
     Write-Output "Self-referential hash skipped for: $selfEvidenceId"
 }
 Write-Output 'Assertion count: 82'
