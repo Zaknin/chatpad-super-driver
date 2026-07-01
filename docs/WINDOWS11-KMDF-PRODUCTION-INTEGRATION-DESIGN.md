@@ -659,7 +659,13 @@ and future evidence did not explicitly require highest/final-mask checks. The
 report-contract correction binds all 19 report fields, deterministic lifecycle
 subcases 22A and 22B, and explicit
 `HighestPartialInitializationMask`/`FinalInitializationMask` evidence. Another
-independent read-only audit is required before source implementation.
+independent audit then found remaining implicit taxonomy/effect values,
+incomplete exact-field bindings in section 28, and an insufficient
+`ReadyPublicationAttempted` semantic guard. The taxonomy-contract correction
+now provides closed value/effect/origin sets, a ready-field truth table,
+all 19 section-28 field bindings, and source-level ready-attempt guard
+requirements. Another independent read-only audit is required before source
+implementation.
 
 The later dormant orchestration slice shall:
 
@@ -836,11 +842,11 @@ Binding decisions:
 12. Evidence-retention format: tracked JSON manifests under `docs/evidence/`
     plus ignored hashed logs under `artifacts\logs`.
 13. Production orchestration-invocation binding: documented, including the
-    report-aware and report-contract corrections, in
+    report-aware, report-contract, and taxonomy-contract corrections, in
     `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`;
     implementation remains unauthorized.
-14. Next repository task: independent read-only audit of the corrected report
-    contract, not source implementation.
+14. Next repository task: independent read-only audit of the finalized
+    taxonomy contract, not source implementation.
 
 Stop conditions:
 
@@ -885,4 +891,9 @@ The third design audit found missing explicit `Result` and
 wording, and missing explicit highest/final-mask evidence requirements, not a
 dormant implementation defect. The report-contract documentation correction is
 complete and requires another independent read-only audit. Dormant
-orchestration implementation and execution remain unauthorized.
+orchestration implementation and execution remain unauthorized. The fourth
+audit found implicit taxonomy and rollback-effect values, incomplete section-28
+exact-field binding, and insufficient source-level
+`ReadyPublicationAttempted` guarding. The taxonomy-contract documentation
+correction closes those issues and requires another independent read-only
+audit.

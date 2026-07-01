@@ -1,16 +1,16 @@
 # Project State
 
-*Last updated: 2026-07-01 (orchestration report-contract correction)*
+*Last updated: 2026-07-01 (orchestration taxonomy-contract correction)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-orchestration-report-contract-fix`.
+- **Branch:** `feature/offline-kmdf-orchestration-taxonomy-contract-fix`.
 - **Current implementation checkpoint:**
   `8b91eaf939252e038bd0970db261cc14b1089613`,
   `docs: align owner initialization state`.
-- **Expected report-contract correction commit:** the commit containing this
-  correction uses subject `docs: bind orchestration report contract` and has
-  parent `ad04ebc17a4ca75d033a08514f692b037a5e6dc8`.
+- **Expected taxonomy-contract correction commit:** the commit containing this
+  correction uses subject `docs: finalize orchestration taxonomy contract` and
+  has parent `6f9f2750347ee6ecd50470261a6af0a859b53357`.
 - **Historical owner-initialization checkpoint:**
   `a25d5637487ec6e4e7583a64dcec6c5192e06092`,
   `driver: initialize production request owner`.
@@ -42,7 +42,13 @@
   omitted explicit highest/final-mask checks. This documentation-only
   correction binds all 19 report fields, deterministic lifecycle-failure
   subcases 22A and 22B, and explicit mask evidence. Orchestration is not
-  implemented and the dormant source is unchanged.
+  implemented and the dormant source is unchanged. A fourth independent audit
+  found that helper/validator/rollback-effect values remained implicit,
+  section 28 omitted ten exact field names, and the semantic guard did not
+  enforce source-level `ReadyPublicationAttempted` behavior. This
+  documentation-only correction adds closed exact value sets, complete
+  rollback-effect/origin matrices, a ready-field truth table, all 19 section-28
+  field bindings, and exact ready-attempt guard requirements.
 - **Production context:** `driver.h` includes the authoritative KMDF
   request-owner header and embeds exactly one
   `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
@@ -78,13 +84,13 @@
 - **Safety:** no production `.c/.h`, project/solution file, owner model,
   request-owner implementation, build output, INF, signing, package,
   deployment, recovery, D0, cleanup, removal, Windows state, device state, or
-  hardware state was changed by this report-contract correction. No build,
+  hardware state was changed by this taxonomy-contract correction. No build,
   test, helper, orchestration, rollback, WDF object action, driver load, or
   hardware query ran.
 
 ## Unresolved blockers
 
-- The corrected report-contract production orchestration invocation design
+- The finalized taxonomy-contract production orchestration invocation design
   requires another independent read-only documentation audit.
 - Dormant orchestration invocation is designed but not implemented and remains
   unauthorized.

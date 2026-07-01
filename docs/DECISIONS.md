@@ -4,6 +4,34 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Close orchestration taxonomy values and rollback effects
+
+**Decision:** The production orchestration taxonomy uses closed
+source-supported validator sets, exact rollback-effect profiles `E0` through
+`E4`, and a closed rollback-origin matrix. Successful and post-effect rollback
+always end in `MODEL_READY | FAULTED`; rejection before deletion is explicitly
+defensive and retains its enumerated prefix. Section 28 binds every exact report
+field by name, meaning, production use, and guard/evidence requirement.
+`ReadyPublicationAttempted` is guarded as false before `PUBLISH_READY`, true
+for final-ready validation and success, and persistent through rollback.
+
+**Rationale:** The fourth independent audit found that taxonomy cells still
+used inferred helper/validator/effect wording, section 28 omitted ten exact
+field names, and the semantic guard checked only
+`ReadyPublicationAttempted` presence rather than its source-level truth table.
+
+**Alternatives rejected:** Open-ended rollback state wording would not prove
+final owner state. Referring to another row's result would preserve inference.
+A field-name text search would not prove ready-attempt assignment or rollback
+persistence. Generic field groups in section 28 would remain incomplete.
+
+**Consequences:** The 22 categories, 28 sections, insertion point, report
+lifetime, one-call rule, early rejection, no-object faulting, status mapping,
+WDF parentage, lifecycle subcases, and separate implementation/runtime gates
+remain unchanged. Future guards and evidence must validate every exact report
+field, rollback-effects member, ready truth-table row, and closed final state.
+The next gate is another independent read-only audit.
+
 ## 2026-07-01 - Bind every orchestration report field and lifecycle outcome
 
 **Decision:** The production orchestration-invocation taxonomy explicitly

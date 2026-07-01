@@ -3947,3 +3947,72 @@
 - **Next gate:** Independent read-only audit of the corrected report contract.
   Production orchestration implementation and every runtime action remain
   unauthorized.
+
+## 2026-07-01 07:49 +04:00 - Orchestration taxonomy-contract finalization
+
+- **Task title/objective:** Correct the final three documentation-only defects
+  found by the fourth independent orchestration report-contract audit:
+  inferred taxonomy/effect values, incomplete section-28 exact-field binding,
+  and insufficient `ReadyPublicationAttempted` semantic guarding.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-orchestration-report-contract-fix` at
+  `6f9f2750347ee6ecd50470261a6af0a859b53357`, parent
+  `ad04ebc17a4ca75d033a08514f692b037a5e6dc8`, subject
+  `docs: bind orchestration report contract`, then created
+  `feature/offline-kmdf-orchestration-taxonomy-contract-fix`.
+- **Investigation:** Re-read the repository protocol and continuity files;
+  inspected the complete report, orchestration, stage, storage, creation,
+  validation, rollback, effects, and initialization-mask definitions; and
+  traced every helper, validator, failure label, rollback assignment, and
+  return. Source proves five exact effect profiles (`E0`-`E4`), 20 closed
+  rollback-origin profiles, and one post-effect final state (`FAULT`).
+- **Files modified:**
+  `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and
+  `docs/WORKLOG.md`.
+- **Taxonomy correction:** Replaced inferred helper/validator/effect wording
+  with exact enum notation, closed validator sets, exact WDF-status pairings,
+  and exact rollback-effect profiles. Categories 9-18 now describe successful
+  recovery only; categories 19 and 20 use a closed 20-profile origin matrix.
+  Category 19 is explicitly defensive and pre-deletion with `E0`; category 20
+  records `POST_ROLLBACK_INVARIANT_FAILED`, `E1`-`E4`, and exact final
+  `MODEL_READY | FAULTED` state.
+- **Effects and ready contract:** Documented all seven
+  `RollbackEffects` members and exact `E0`-`E4` values, nominal `P1`-`P4`
+  handle states, closed rejection results, and the single post-effect final
+  state. Added a ready-field truth table covering early rejection, all stage
+  failures, final-ready recovery, rollback failures, success, and later
+  `EvtDeviceAdd` failure.
+- **Section 28 and guards:** Added a 19-row exact-field table binding every
+  report field by meaning, authoritative assignment source, production use,
+  and guard/evidence requirement. The semantic guard now proves
+  `ReadyPublicationAttempted=FALSE` before `PUBLISH_READY`, `TRUE` for
+  final-ready failure/profile `R20`/success, persistence through rollback, and
+  independence from `ReadyPublished`, `ObjectGraphComplete`, and final-mask
+  `OWNER_READY`.
+- **Validation:** Structural checks passed with 28 sequential sections, 22
+  top-level categories, one 22A and one 22B subdivision, 10 populated cells in
+  every category row, all 19 exact field names in section 28, five effect
+  profiles, 20 origin profiles, one ready-field truth table, and zero banned
+  placeholder phrases. Eleven relative Markdown links passed
+  existence/tracking/case/anchor checks. `git diff --check` passed with only
+  expected `core.autocrlf=true` conversion notices. The documented non-building
+  `tools\Test-RepositorySafety.ps1` check passed. Two later ad hoc checker
+  attempts failed because the first regex spanned adjacent Markdown tables and
+  the second expected `Scenario` instead of the actual `Path` ready-table
+  header; the corrected blank-line-bounded and exact-header parser passed with
+  the expected 22 rows, 10 populated cells per row, and one ready truth table.
+- **Safety:** Documentation-only. No source/header, project/solution,
+  script/test, manifest/evidence, artifact/binary, INF, signing, package,
+  deployment, recovery, D0/removal, USB, or hardware file changed. No build,
+  regression, test, compile, helper, initialization, validation,
+  orchestration, rollback, WDF object action, driver load, Windows mutation,
+  hardware query, or controller/Chatpad interaction occurred.
+- **Commit/push:** Commit exactly
+  `docs: finalize orchestration taxonomy contract` without amend and push only
+  `origin/feature/offline-kmdf-orchestration-taxonomy-contract-fix`; final hash
+  is reported after commit.
+- **Next gate:** Independent read-only audit of the finalized taxonomy and
+  report contract. Production implementation and every runtime action remain
+  unauthorized.

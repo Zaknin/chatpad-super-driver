@@ -3,43 +3,44 @@
 ## Current state
 
 - Current branch:
-  `feature/offline-kmdf-orchestration-report-contract-fix`.
+  `feature/offline-kmdf-orchestration-taxonomy-contract-fix`.
 - Required starting commit: the documentation-only commit with exact subject
-  `docs: bind orchestration report contract`.
+  `docs: finalize orchestration taxonomy contract`.
 - Required parent:
-  `ad04ebc17a4ca75d033a08514f692b037a5e6dc8`,
-  `docs: complete orchestration report design`.
-- Corrected design:
+  `6f9f2750347ee6ecd50470261a6af0a859b53357`,
+  `docs: bind orchestration report contract`.
+- Finalized design:
   [Windows 11 KMDF Production Orchestration Invocation Design](WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md).
-- The third independent design audit found three remaining documentation-only
-  defects: exact report fields `Result` and `ReadyPublicationAttempted` were
-  not explicitly bound, post-orchestration lifecycle behavior was ambiguous,
-  and the evidence contract omitted explicit highest/final-mask checks.
-- The report-contract correction explicitly binds all 19 source report fields,
-  distinguishes function return from report `Result`, makes mismatch a hard
-  local failure, defines deterministic lifecycle subcases 22A and 22B, and
-  names both mask fields in future evidence requirements.
-- Earlier early-rejection, report-mask, rollback, status-mapping, insertion,
-  report-lifetime, LTCG, and WDF-parentage corrections remain unchanged.
-- Dormant request-owner source is unchanged. Production orchestration remains
-  unimplemented and unauthorized.
+- The fourth independent audit found three documentation-only defects:
+  helper/validator/rollback-effect values remained implicit, section 28 did
+  not explicitly bind all 19 exact fields, and the semantic guard did not
+  enforce source-level `ReadyPublicationAttempted` behavior.
+- The taxonomy-contract correction replaces placeholders with closed exact
+  value sets and origin/effect profiles, defines a closed `{ FAULT }`
+  post-effect state, adds a ready-field truth table, binds all 19 fields in
+  section 28, and requires semantic proof of ready-attempt values and rollback
+  persistence.
+- Earlier report initialization, return/result consistency, mask semantics,
+  deterministic lifecycle subcases 22A/22B, evidence requirements, early
+  rejection, status mapping, WDF parentage, and LTCG limits remain unchanged.
+- Dormant source is unchanged. Production orchestration remains unimplemented
+  and unauthorized.
 
 ## Recommended objective
 
-Perform an independent read-only audit of the corrected production
-orchestration report contract.
+Perform an independent read-only audit of the finalized production
+orchestration taxonomy and report contract.
 
 ## Preconditions
 
 1. Verify exact branch, HEAD, parent, subject, upstream, clean worktree, and
    clean index.
-2. Confirm the correction commit contains only approved Markdown files.
-3. Inspect the authoritative 19-field report structure and every relevant
-   assignment in the existing dormant source.
-4. Inspect current `device.c` lifecycle initialization and device-created
-   transition ordering.
-5. Confirm the main design retains exactly 28 sequential numbered sections and
-   22 top-level taxonomy categories with subcases 22A and 22B.
+2. Confirm only approved Markdown files changed.
+3. Inspect all report, creation, validation, rollback, effect, mask, and stage
+   definitions and assignments in the dormant source.
+4. Confirm 28 sequential sections, 22 top-level categories, and deterministic
+   subcases 22A and 22B.
+5. Confirm all 19 exact fields occur in both taxonomy and section 28.
 6. Confirm no production implementation or runtime action occurred.
 
 ## Safety restrictions
@@ -54,23 +55,23 @@ orchestration report contract.
 
 ## Acceptance criteria
 
-- All 19 exact source report fields are explicitly bound for every taxonomy
-  category without blank cells or inference.
-- Function return and report `Result` are distinct and equal on every path with
-  valid report storage; null-report behavior and mismatch failure policy are
-  exact.
-- `ReadyPublicationAttempted` is explicit for every category and remains
-  distinct from `ReadyPublished`, final-mask `OWNER_READY`,
-  `ObjectGraphComplete`, and successful `Result`.
-- Category 22 contains deterministic subcases 22A and 22B matching current
-  `device.c`; no conditional lifecycle wording remains.
-- Future evidence explicitly checks `HighestPartialInitializationMask`
-  progression/rollback stability and `FinalInitializationMask` final-state
-  behavior with exact command, result, and SHA-256 binding.
-- Early rejection, post-baseline no-object faulting, status behavior, rollback
-  ownership, insertion point, one-call rule, lifecycle failure reachability,
-  report lifetime, LTCG limits, and separate implementation/runtime gates
-  remain correct.
+- Every taxonomy category and subcase resolves all 19 report fields through
+  exact symbols, closed sets, and `E0`-`E4` effect profiles with no placeholder
+  or cross-row inference.
+- Framework and validation subcases use source-supported creation/validation
+  enums and exact framework-status behavior.
+- Category 19 is bounded as a defensive classifier rejection with `E0`;
+  category 20 uses `R(POST_ROLLBACK_INVARIANT_FAILED)`, `E1`-`E4`, and the
+  single final state `{ FAULT }`.
+- The ready-field truth table matches source, including final-ready failure,
+  rollback profile `R20`, success, and later lifecycle failure.
+- Section 28 names and binds all 19 fields by meaning, production use, and
+  guard/evidence requirement.
+- Semantic guards enforce exact `ReadyPublicationAttempted` values, distinction
+  from other ready indicators, and persistence through rollback.
+- Insertion point, one-call/no-retry rule, early rejection, no-object faulting,
+  status mapping, lifecycle reachability, report lifetime, WDF parentage, and
+  separate implementation/runtime gates remain correct.
 - Production orchestration remains unimplemented and unauthorized.
 
 ## Inspect first
