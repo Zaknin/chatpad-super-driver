@@ -4485,3 +4485,88 @@
   inventories, retained A/B evidence, containing commit, and final upstream
   state. Runtime, target/request, signing, installation, loading, and hardware
   gates remain closed.
+
+## 2026-07-01 16:52 +04:00 - Production orchestration tlog-provenance remediation
+
+- **Task title/objective:** Create an evidence-only provenance-remediation
+  checkpoint for the offline production KMDF request-owner orchestration A/B
+  evidence. Remediate the independent audit findings that the prior A/B
+  evidence lacked retained raw tlogs, lacked a tracked producer, and did not
+  contain an explicit authoritative production/build input contract.
+- **Starting branch/commit:** Verified clean
+  `feature/offline-kmdf-production-orchestration-input-identity-remediation`
+  at `b2a9b5cee457f69126c6f6c80615738e4ae59f31`, upstream synchronized, then
+  created
+  `feature/offline-kmdf-production-orchestration-tlog-provenance-remediation`.
+- **Files created/modified:** Added
+  `tools/New-ChatpadProductionOrchestrationAbProvenanceEvidence.ps1`,
+  `docs/evidence/production-orchestration-frozen-build-input-set.json`, and
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-TLOG-PROVENANCE-REMEDIATION.md`.
+  Modified `tools/Test-ChatpadProductionOrchestrationInvocation.ps1`,
+  `docs/evidence/production-orchestration-invocation-manifest.json`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and this
+  worklog. No production source/header, project, solution, INF, or `legacy/`
+  file changed.
+- **Producer binding:** The tracked producer was staged before evidence
+  generation and bound to SHA-256
+  `9A52D03C2C3DAF98E475761DC2CC1B30169D73C5A04A0BA233DEE050DC67FD95` and Git
+  blob `ebbcb5357b4fc55807f55d58d4afa4006cdb8cf4`.
+- **Frozen input set:** Added an explicit tracked 26-path production/build
+  input set. The prototype INF is included only as a packaging-boundary
+  reference and is marked `packaging_only=true`; no package was generated.
+- **Evidence generated:** Regenerated ignored/untracked evidence under
+  `artifacts/logs/production-orchestration-ab-tlog-provenance/`. Debug A,
+  Debug B, Release A, and Release B each started from zero relevant tlogs and
+  retained 22 raw tlogs under per-set `raw-tlogs/`. Each set has
+  `tlog-inventory.json`, `tlog-freshness.log`, and `producer-closure.json`.
+- **Tlog/closure results:** Total retained raw tlogs: 88. Every set reports
+  zero stale tlogs, zero hash mismatches, zero ignored-path defects, and zero
+  tracked retained tlogs. Every set records 9 linked object producers, 2 linked
+  libraries, zero missing object producers, and zero stale/orphan
+  intermediates.
+- **A/B build results:** Offline Debug A, Release A, Debug B, and Release B
+  clean builds passed. Debug inventories contain 116 inputs; Release
+  inventories contain 118. Debug and Release input comparisons report zero
+  missing, extra, hash mismatch, unresolved, duplicate normalized path,
+  configuration mismatch, and toolchain identity mismatch counts.
+- **Binary equivalence:** Debug A/B raw hashes are
+  `1473C48D73E098343B2ACAA40660BB907A881F0474809F6F982E46FFD6089885` and
+  `116792765713A3D10F5485EFD99A3E817D260633E9A04818D4F309B16A1AE486`; both
+  normalize to
+  `18656A2A1EC059E1D84F353B386400D7B79E3C4C37B6407364609DEB09433E50`.
+  Release A/B raw hashes are
+  `BADE58510F2F38E9536F828AF30B67B463E78EFC24251F77C08378E02F3EB42C` and
+  `135EC03632FC0AF025FAA0052B2A1163CCCB2FD9354DC7ABB6B88409C545E5C3`;
+  both normalize to
+  `F87A4B3FB662D245856104AFB53027502B54AAE2018A596491521160A98B9A6C`.
+- **Manifest/guard remediation:** Upgraded manifest schema to `1.4.0`; raised
+  mandatory evidence from 62 to 77; added tracked input-contract, producer,
+  raw-tlog inventory, tlog-freshness, producer-closure, and tlog-summary IDs.
+  The guard now verifies the 26-path tracked input set, producer hash/blob,
+  mandatory ID equality, raw tlog freshness/hash/ignored/untracked state,
+  required tlog families/projects, and linked object producer closure.
+- **Validation commands/results:**
+  - `.\tools\New-ChatpadProductionOrchestrationAbProvenanceEvidence.ps1 -ExpectedProducerSha256 9A52D03C2C3DAF98E475761DC2CC1B30169D73C5A04A0BA233DEE050DC67FD95 -ExpectedProducerBlobId ebbcb5357b4fc55807f55d58d4afa4006cdb8cf4` - PASS.
+  - `.\tools\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Debug -Platform x64 -InspectionMode SourceOnly` - PASS.
+  - `.\tools\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Release -Platform x64 -InspectionMode SourceOnly` - PASS.
+  - `.\tools\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Debug -Platform x64 -InspectionMode Full` - PASS with 77 guard IDs, 77 declared IDs, 77 entries, and zero missing/hash defects.
+  - `.\tools\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Release -Platform x64 -InspectionMode Full` - PASS with 77 guard IDs, 77 declared IDs, 77 entries, and zero missing/hash defects.
+- **Failed commands/corrections:** Initial full-guard runs failed on stale
+  manifest prose, tracked-contract untracked assumptions, a self-scan literal
+  for the rejected historical path-count claim, and stale equivalence metrics.
+  The guard and manifest were corrected, then final Debug and Release Full
+  guards passed.
+- **Safety:** No signing, certificate/key creation, packaging, Inf2Cat/catalog
+  work, staging outside Git, installation, driver loading, Windows mutation,
+  device query, USB/XUSB/controller/Chatpad interaction, hardware action,
+  target discovery, or request operation occurred.
+- **Commit/push:** Commit exactly
+  `test: bind production orchestration tlog provenance` without amend and push
+  only
+  `origin/feature/offline-kmdf-production-orchestration-tlog-provenance-remediation`;
+  final hash is reported after commit.
+- **Next gate:** Independent read-only audit of the containing commit,
+  schema-`1.4.0` manifest, 77 evidence entries, tracked producer, tracked
+  26-path input set, retained raw tlogs, producer closure, final guard logs,
+  upstream state, and final clean worktree. Runtime, target/request, signing,
+  installation, loading, and hardware gates remain closed.

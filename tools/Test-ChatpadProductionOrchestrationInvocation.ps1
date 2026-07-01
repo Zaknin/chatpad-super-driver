@@ -410,10 +410,25 @@ $mandatoryEvidenceIds = @(
     'unstaged_diff',
     'staged_diff',
     'candidate_containment',
+    'tracked_input_set_contract',
+    'ab_producer_source',
     'ab_build_debug_a',
     'ab_build_debug_b',
     'ab_build_release_a',
     'ab_build_release_b',
+    'tlog_inventory_debug_a',
+    'tlog_inventory_debug_b',
+    'tlog_inventory_release_a',
+    'tlog_inventory_release_b',
+    'producer_closure_debug_a',
+    'producer_closure_debug_b',
+    'producer_closure_release_a',
+    'producer_closure_release_b',
+    'tlog_freshness_debug_a',
+    'tlog_freshness_debug_b',
+    'tlog_freshness_release_a',
+    'tlog_freshness_release_b',
+    'tlog_comparison_summary',
     'ab_input_inventory_debug_a',
     'ab_input_inventory_debug_b',
     'ab_input_inventory_release_a',
@@ -784,7 +799,7 @@ if ($InspectionMode -eq 'Full') {
         throw "Manifest is missing: $manifestPath"
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ([string]$manifest.schema_version -cne '1.3.0' -or
+    if ([string]$manifest.schema_version -cne '1.4.0' -or
         [string]$manifest.checkpoint -cne 'offline-kmdf-production-orchestration-invocation' -or
         [string]$manifest.implementation_commit -cne $implementationCommit -or
         [string]$manifest.implementation_parent -cne $implementationParent -or
@@ -804,6 +819,8 @@ if ($InspectionMode -eq 'Full') {
             'mandatory_evidence_count',
             'historical_binary_limitation',
             'ab_rebuild_contract',
+            'frozen_build_input_set',
+            'ab_provenance_producer',
             'evidence_entries')) {
         if ($null -eq $manifest.$requiredSection) {
             throw "Manifest missing required section: $requiredSection"
@@ -910,11 +927,22 @@ if ($InspectionMode -eq 'Full') {
         if ([System.IO.Path]::IsPathRooted([string]$entry.path)) {
             throw "Manifest evidence path must be repository-relative: $($entry.path)"
         }
-        $evidencePath = Assert-PathWithinDirectory `
-            (Join-Path $repoRoot ([string]$entry.path)) `
-            $artifactsRoot `
-            "Manifest evidence path $($entry.id)"
-        Assert-GitIgnored $repoRoot ([string]$entry.path)
+        if ([string]$entry.category -ceq 'tracked_contract') {
+            $evidencePath = Assert-PathWithinDirectory `
+                (Join-Path $repoRoot ([string]$entry.path)) `
+                $repoRoot `
+                "Tracked manifest evidence path $($entry.id)"
+            $trackedEntry = @(Invoke-GitLines $repoRoot @('ls-files', '--', [string]$entry.path))
+            if ($trackedEntry.Count -ne 1) {
+                throw "Tracked manifest evidence path is not tracked: $($entry.path)"
+            }
+        } else {
+            $evidencePath = Assert-PathWithinDirectory `
+                (Join-Path $repoRoot ([string]$entry.path)) `
+                $artifactsRoot `
+                "Manifest evidence path $($entry.id)"
+            Assert-GitIgnored $repoRoot ([string]$entry.path)
+        }
         if (-not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) {
             $missingEvidenceFiles.Add([string]$entry.id)
             continue
@@ -933,6 +961,13 @@ if ($InspectionMode -eq 'Full') {
                 if ([string]$repositoryCommand -cne [string]$entry.command) {
                     $missingMetadataFields.Add("$($entry.id):command_fidelity")
                 }
+            }
+            elseif ([string]$entry.category -in @(
+                    'tracked_contract',
+                    'ab_producer_source',
+                    'tlog_inventory',
+                    'producer_closure')) {
+                # These entries are machine-readable records; dedicated checks below bind their contents.
             }
             elseif ([string]$entry.id -cne $selfEvidenceId) {
                 $transcriptCommandMatch = [regex]::Match(
@@ -957,11 +992,13 @@ if ($InspectionMode -eq 'Full') {
                 $missingMetadataFields.Add("$($entry.id):commands_fidelity")
             }
         }
-        $trackedEvidence = @(
-            & git -C $repoRoot ls-files --error-unmatch -- ([string]$entry.path) 2>$null
-        )
-        if ($LASTEXITCODE -eq 0 -or $trackedEvidence.Count -ne 0) {
-            throw "Manifest evidence path must be untracked: $($entry.path)"
+        if ([string]$entry.category -cne 'tracked_contract') {
+            $trackedEvidence = @(
+                & git -C $repoRoot ls-files --error-unmatch -- ([string]$entry.path) 2>$null
+            )
+            if ($LASTEXITCODE -eq 0 -or $trackedEvidence.Count -ne 0) {
+                throw "Manifest evidence path must be untracked: $($entry.path)"
+            }
         }
         $actualEvidenceHash = (Get-FileHash -LiteralPath $evidencePath -Algorithm SHA256).Hash
         if ([string]$entry.id -cne $selfEvidenceId -and
@@ -977,6 +1014,163 @@ if ($InspectionMode -eq 'Full') {
             ($missingEvidenceFiles -join ','),
             ($hashMismatches -join ','))
     }
+
+    $frozenInputPath = Join-Path $repoRoot ([string]$manifest.frozen_build_input_set.path)
+    $frozenInput = Get-Content -LiteralPath $frozenInputPath -Raw | ConvertFrom-Json
+    $frozenInputHash = (Get-FileHash -LiteralPath $frozenInputPath -Algorithm SHA256).Hash
+    if ([string]$frozenInput.schema_version -cne 'chatpad-production-orchestration-frozen-build-input-set-v1' -or
+        [string]$frozenInput.implementation_commit -cne $implementationCommit -or
+        [int]$frozenInput.authoritative_path_count -ne 26 -or
+        @($frozenInput.entries).Count -ne 26 -or
+        [string]$manifest.frozen_build_input_set.sha256 -cne $frozenInputHash) {
+        throw 'Frozen production/build input set contract is invalid.'
+    }
+    $frozenPaths = @($frozenInput.entries | ForEach-Object { [string]$_.path })
+    if (@($frozenPaths | Group-Object | Where-Object Count -gt 1).Count -ne 0) {
+        throw 'Frozen production/build input set contains duplicate paths.'
+    }
+    foreach ($input in @($frozenInput.entries)) {
+        $relativePath = [string]$input.path
+        $trackedInput = @(Invoke-GitLines $repoRoot @('ls-files', '--', $relativePath))
+        $implementationBlob = [string](@(Invoke-GitLines $repoRoot @('rev-parse', "$implementationCommit`:$relativePath"))[0])
+        $currentPath = Join-Path $repoRoot $relativePath
+        if ($trackedInput.Count -ne 1 -or
+            [string]$input.implementation_blob_id -cne $implementationBlob -or
+            [string]$input.sha256 -cne (Get-FileHash -LiteralPath $currentPath -Algorithm SHA256).Hash -or
+            $input.tracked -ne $true) {
+            throw "Frozen production/build input entry failed verification: $relativePath"
+        }
+    }
+    foreach ($requiredFrozenPath in @(
+            'src/driver/ChatpadFilter/device.c',
+            'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c',
+            'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj')) {
+        if ($frozenPaths -cnotcontains $requiredFrozenPath) {
+            throw "Frozen production/build input set is missing required path $requiredFrozenPath."
+        }
+    }
+    if (@($frozenInput.entries | Where-Object { [string]$_.category -ceq 'prototype_inf_packaging_boundary' -and $_.packaging_only -eq $true }).Count -ne 1) {
+        throw 'Frozen input set does not preserve the prototype INF packaging-only policy.'
+    }
+    $unsupportedPathCountText = '3' + '7'
+    $unsupportedPathClaimPattern =
+        '(?i)\b' + $unsupportedPathCountText + '[- ]path|\b' +
+        $unsupportedPathCountText + ' paths\b|path count:\s*' +
+        $unsupportedPathCountText + '|authoritative_path_count"\s*:\s*' +
+        $unsupportedPathCountText
+    foreach ($claimPath in @(
+            'docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-TLOG-PROVENANCE-REMEDIATION.md',
+            'docs/PROJECT-STATE.md',
+            'docs/NEXT-TASK.md',
+            'docs/WORKLOG.md',
+            'docs/evidence/production-orchestration-invocation-manifest.json',
+            'tools/Test-ChatpadProductionOrchestrationInvocation.ps1')) {
+        $claimFullPath = Join-Path $repoRoot $claimPath
+        if ((Test-Path -LiteralPath $claimFullPath -PathType Leaf) -and
+            [System.IO.File]::ReadAllText($claimFullPath) -match $unsupportedPathClaimPattern) {
+            throw "Unsupported historical path-count claim remains in $claimPath."
+        }
+    }
+
+    $producerPath = Join-Path $repoRoot ([string]$manifest.ab_provenance_producer.path)
+    $producerSha = (Get-FileHash -LiteralPath $producerPath -Algorithm SHA256).Hash
+    $producerBlob = [string](@(Invoke-GitLines $repoRoot @('hash-object', '--', $producerPath))[0])
+    $producerTracked = @(Invoke-GitLines $repoRoot @('ls-files', '--', [string]$manifest.ab_provenance_producer.path))
+    if ($producerTracked.Count -ne 1 -or
+        $producerSha -cne [string]$manifest.ab_provenance_producer.sha256 -or
+        $producerBlob -cne [string]$manifest.ab_provenance_producer.blob_id) {
+        throw 'A/B provenance producer source identity is invalid.'
+    }
+
+    foreach ($abConfiguration in @('Debug', 'Release')) {
+        foreach ($abSet in @('A', 'B')) {
+            $suffix = '{0}_{1}' -f $abConfiguration.ToLowerInvariant(), $abSet.ToLowerInvariant()
+            $inventoryId = "tlog_inventory_$suffix"
+            $closureId = "producer_closure_$suffix"
+            $freshnessId = "tlog_freshness_$suffix"
+            $tlogInventory = $evidenceTextById[$inventoryId] | ConvertFrom-Json
+            $closure = $evidenceTextById[$closureId] | ConvertFrom-Json
+            $freshness = Get-EvidenceKeyValues $evidenceTextById[$freshnessId]
+            if ([string]$tlogInventory.schema_version -cne 'chatpad-production-orchestration-raw-tlog-inventory-v1' -or
+                [string]$tlogInventory.configuration -cne "$abConfiguration|x64" -or
+                [string]$tlogInventory.set -cne $abSet -or
+                [string]$tlogInventory.producer_sha256 -cne $producerSha -or
+                [string]$tlogInventory.producer_blob_id -cne $producerBlob -or
+                [int]$tlogInventory.pre_build_tlog_count -ne 0 -or
+                [int]$tlogInventory.post_build_tlog_count -le 0 -or
+                [int]$tlogInventory.copied_tlog_count -ne [int]$tlogInventory.post_build_tlog_count -or
+                [int]$tlogInventory.hash_mismatch_count -ne 0 -or
+                [int]$tlogInventory.stale_tlog_count -ne 0 -or
+                [int]$tlogInventory.ignored_mismatch_count -ne 0 -or
+                [int]$tlogInventory.tracked_retained_count -ne 0 -or
+                [string]$tlogInventory.result -cne 'PASS') {
+                throw "Raw tlog inventory $inventoryId is invalid."
+            }
+            foreach ($requiredFamily in @('CL.command', 'CL.read', 'CL.write', 'LINK.command', 'LINK.read', 'LINK.write', 'LIB.command', 'LIB.read', 'LIB.write')) {
+                if (@($tlogInventory.families | Where-Object { [string]$_.family -ceq $requiredFamily }).Count -le 0) {
+                    throw "Raw tlog inventory $inventoryId lacks family $requiredFamily."
+                }
+            }
+            foreach ($requiredProject in @('ChatpadFilter', 'ChatpadKmdfRequestOwnerContext', 'ChatpadProtocol')) {
+                if (@($tlogInventory.projects | Where-Object { [string]$_.project -ceq $requiredProject }).Count -le 0) {
+                    throw "Raw tlog inventory $inventoryId lacks project $requiredProject."
+                }
+            }
+            foreach ($tlog in @($tlogInventory.tlogs)) {
+                $retainedPath = Join-Path $repoRoot ([string]$tlog.retained_path)
+                if (-not (Test-Path -LiteralPath $retainedPath -PathType Leaf) -or
+                    (Get-FileHash -LiteralPath $retainedPath -Algorithm SHA256).Hash -cne [string]$tlog.sha256) {
+                    throw "Raw retained tlog hash verification failed for $($tlog.retained_path)."
+                }
+                Assert-GitIgnored $repoRoot ([string]$tlog.retained_path)
+                $trackedTlog = @(Invoke-GitLines $repoRoot @('ls-files', '--', [string]$tlog.retained_path))
+                if ($trackedTlog.Count -ne 0) {
+                    throw "Retained raw tlog is tracked unexpectedly: $($tlog.retained_path)."
+                }
+            }
+            Assert-EvidenceValue $freshness 'PreBuildTlogCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'HashMismatchCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'StaleTlogCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'IgnoredMismatchCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'TrackedRetainedCount' '0' $freshnessId
+            Assert-EvidenceValue $freshness 'SourceAndRetainedRootsDisjoint' 'True' $freshnessId
+            Assert-EvidenceValue $freshness 'Result' 'PASS' $freshnessId
+            if ([string]$closure.schema_version -cne 'chatpad-production-orchestration-intermediate-producer-closure-v1' -or
+                [string]$closure.configuration -cne "$abConfiguration|x64" -or
+                [string]$closure.set -cne $abSet -or
+                [string]$closure.producer_sha256 -cne $producerSha -or
+                [string]$closure.producer_blob_id -cne $producerBlob -or
+                [int]$closure.linked_object_count -le 0 -or
+                [int]$closure.consuming_link_tlog_count -le 0 -or
+                [int]$closure.missing_object_producer_count -ne 0 -or
+                [int]$closure.stale_orphan_intermediate_count -ne 0 -or
+                [string]$closure.result -cne 'PASS') {
+                throw "Intermediate producer closure $closureId is invalid."
+            }
+            foreach ($intermediate in @($closure.generated_intermediates)) {
+                if ($intermediate.producer_record_complete -ne $true -or
+                    @($intermediate.command_tlogs).Count -le 0 -or
+                    @($intermediate.read_tlogs).Count -le 0 -or
+                    @($intermediate.write_tlogs).Count -le 0 -or
+                    @($intermediate.consuming_tlogs).Count -le 0) {
+                    throw "Generated intermediate lacks complete producer/consumer closure in $closureId."
+                }
+            }
+        }
+    }
+    $summaryValues = Get-EvidenceKeyValues $evidenceTextById['tlog_comparison_summary']
+    foreach ($summaryKey in @(
+            'DebugATlogCount',
+            'DebugBTlogCount',
+            'ReleaseATlogCount',
+            'ReleaseBTlogCount')) {
+        if (-not $summaryValues.ContainsKey($summaryKey) -or [int]$summaryValues[$summaryKey] -le 0) {
+            throw "Tlog comparison summary has invalid $summaryKey."
+        }
+    }
+    Assert-EvidenceValue $summaryValues 'AllSetsFresh' 'True' 'tlog_comparison_summary'
+    Assert-EvidenceValue $summaryValues 'AllClosuresComplete' 'True' 'tlog_comparison_summary'
+    Assert-EvidenceValue $summaryValues 'Result' 'PASS' 'tlog_comparison_summary'
 
     foreach ($semanticId in @(
             'kmdf_context_semantic_debug',
@@ -1090,6 +1284,12 @@ if ($InspectionMode -eq 'Full') {
                 'DuplicateNormalizedPathCount',
                 'ConfigurationDigestSha256',
                 'ToolchainDigestSha256',
+                'PreBuildTlogCount',
+                'PostBuildTlogCount',
+                'RawTlogInventory',
+                'ProducerClosure',
+                'LinkedObjectProducerCount',
+                'MissingObjectProducerCount',
                 'TrackedStateBeforeBuild',
                 'TrackedStateAfterBuild')) {
             if (-not $buildValues.ContainsKey($requiredBuildKey)) {
@@ -1099,8 +1299,12 @@ if ($InspectionMode -eq 'Full') {
         if ([int]$buildValues.InputCount -le 8 -or
             [int]$buildValues.UnresolvedInputCount -ne 0 -or
             [int]$buildValues.DuplicateNormalizedPathCount -ne 0 -or
-            [string]$buildValues.TrackedStateBeforeBuild -cne 'Clean' -or
-            [string]$buildValues.TrackedStateAfterBuild -cne 'Clean' -or
+            [int]$buildValues.PreBuildTlogCount -ne 0 -or
+            [int]$buildValues.PostBuildTlogCount -le 0 -or
+            [int]$buildValues.LinkedObjectProducerCount -le 0 -or
+            [int]$buildValues.MissingObjectProducerCount -ne 0 -or
+            [string]$buildValues.TrackedStateBeforeBuild -cne 'AllowedProducerOnly' -or
+            [string]$buildValues.TrackedStateAfterBuild -cne 'AllowedProducerOnly' -or
             [string]$buildValues.InputInventorySha256 -notmatch '^[0-9A-F]{64}$' -or
             [string]$buildValues.ConfigurationDigestSha256 -notmatch '^[0-9A-F]{64}$' -or
             [string]$buildValues.ToolchainDigestSha256 -notmatch '^[0-9A-F]{64}$') {
@@ -1197,7 +1401,7 @@ if ($InspectionMode -eq 'Full') {
         foreach ($abSet in @('A', 'B')) {
             $contract = $manifest.ab_rebuild_contract.$abConfiguration.$abSet
             if ($null -eq $contract -or
-                [string]$contract.path -notmatch '^artifacts/logs/production-orchestration-ab-rebuild/' -or
+                [string]$contract.path -notmatch '^artifacts/logs/production-orchestration-ab-tlog-provenance/' -or
                 [string]$contract.raw_sha256 -notmatch '^[0-9A-F]{64}$' -or
                 [string]$contract.normalized_pe_sha256 -notmatch '^[0-9A-F]{64}$') {
                 throw "A/B rebuild contract is incomplete for $abConfiguration $abSet."
