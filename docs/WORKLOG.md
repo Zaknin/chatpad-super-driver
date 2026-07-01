@@ -4016,3 +4016,77 @@
 - **Next gate:** Independent read-only audit of the finalized taxonomy and
   report contract. Production implementation and every runtime action remain
   unauthorized.
+
+## 2026-07-01 08:28 +04:00 - Defensive orchestration-taxonomy closure
+
+- **Task title/objective:** Correct the four documentation-only blockers from
+  the fifth independent audit: invalid ready-mask normalization, incomplete
+  rollback rejection/effect closure, cross-table R1-R20 profiles, and missing
+  explicit R1-R20 evidence requirements; also correct stale next-audit wording.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-orchestration-taxonomy-contract-fix` at
+  `8b06ff5c2a7679b3057992ac99302fa550ddf098`, parent
+  `6f9f2750347ee6ecd50470261a6af0a859b53357`, subject
+  `docs: finalize orchestration taxonomy contract`, then created
+  `feature/offline-kmdf-orchestration-defensive-taxonomy-fix`.
+- **Investigation:** Re-read the repository protocol and continuity files;
+  confirmed the authoritative header, implementation, and `device.c` blobs are
+  unchanged from the immediately preceding full audit; and rechecked report
+  reset/mask capture, ready classification, all 16 rollback results, all seven
+  effect members, deletion/effect order, common failure handling, and final
+  assignments.
+- **Files modified:**
+  `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and
+  `docs/WORKLOG.md`.
+- **Ready-mask correction:** Split the `OWNER_READY`-present baseline category
+  into independently bound valid-ready and invalid-ready-shaped subcases.
+  Exact valid ready uses `READY`; invalid ready-shaped input retains the actual
+  incoming mask in initial/highest/final fields. The source-supported
+  `MODEL_READY | OWNER_READY` missing-handle example is explicit.
+- **Rollback-model correction:** Bound ordinary production to the actual
+  sequential no-observer model and separated a finite offline fault-injection
+  model. Classified all 16 rollback enum results and replaced the incomplete
+  five-profile model with 12 closed documentation labels: `N0`, `J0`, `A0`,
+  `AF`, `S1`-`S4`, and `F1`-`F4`. `ALREADY_CLEAN` now has populated masks and
+  `AlreadyClean=TRUE`; invalid-mask and owner-ready rejections begin no
+  deletion.
+- **Origin/evidence correction:** Retained exactly 20 ordinary origins and
+  expanded each R1-R20 record with all 19 report fields, exact entry
+  preconditions, ready values, every permitted ordinary/finite outcome, all
+  seven effects, final mask/state/result/status, lifecycle false, and final
+  `EvtDeviceAdd` outcome. Section 23 now requires a one-to-one R1-R20 evidence
+  entry with source site, command, configuration, result, assertion count when
+  applicable, relative path, and SHA-256.
+- **Validation:** Direct source/document checks found 28 sequential sections,
+  22 ten-cell taxonomy categories, 16 exact rollback-result rows with no
+  missing/invented enum, 12 closed effect states, 20 sequential independently
+  complete origin records, R1-R19 ready-attempt false, R20 true, all 19 section
+  28 fields, and explicit R1-R20 evidence. Eleven relative Markdown links
+  resolve to tracked case-correct targets. All changed Markdown files are
+  LF-only. `git diff --check` passed with expected `core.autocrlf=true`
+  notices. The documented non-building `tools\Test-RepositorySafety.ps1`
+  check passed.
+- **Failed validation/patch commands:** One generated R1-R20 patch failed at
+  JavaScript parsing; one generated R1-R20 insertion failed anchor context; one
+  combined truth-table patch failed context verification; one generated
+  per-origin outcome patch used partial heading context and failed; and one
+  combined PowerShell validation command failed to parse. A naive pipe counter
+  also reported two false table
+  widths because it counted escaped `\|`; the corrected unescaped-pipe parser
+  passed all 22 rows. All failures occurred before mutation or were rejected by
+  `apply_patch`; smaller corrected commands completed successfully.
+- **Safety:** Documentation-only. No source/header, project/solution,
+  script/test, manifest/evidence, artifact/binary, INF, signing, package,
+  deployment, recovery, D0/removal, USB, or hardware file changed. No build,
+  regression, test, compile, helper, initialization, validation,
+  orchestration, rollback, WDF object action, driver load, Windows mutation,
+  hardware query, or controller/Chatpad interaction occurred.
+- **Commit/push:** Commit exactly
+  `docs: close orchestration defensive taxonomy` without amend and push only
+  `origin/feature/offline-kmdf-orchestration-defensive-taxonomy-fix`; final
+  hash is reported after commit.
+- **Next gate:** Independent read-only audit of the finalized defensive
+  taxonomy and report-contract design. Production implementation and every
+  runtime action remain unauthorized.

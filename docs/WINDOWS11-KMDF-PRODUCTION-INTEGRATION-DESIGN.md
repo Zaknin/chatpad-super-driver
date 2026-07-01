@@ -665,7 +665,13 @@ incomplete exact-field bindings in section 28, and an insufficient
 now provides closed value/effect/origin sets, a ready-field truth table,
 all 19 section-28 field bindings, and source-level ready-attempt guard
 requirements. Another independent read-only audit is required before source
-implementation.
+implementation. The fifth audit then found noncanonical ready-shaped masks
+normalized to `READY`, an incomplete defensive rollback/effect closure,
+cross-table R1-R20 profiles, and no explicit R1-R20 evidence requirement. The
+defensive-taxonomy correction preserves incoming masks, classifies all
+rollback enum results through a closed 12-label model, makes each R1-R20 record
+self-contained, and requires one-to-one R1-R20 evidence. Dormant source remains
+unchanged; no production WDF graph was created and no driver loading occurred.
 
 The later dormant orchestration slice shall:
 
@@ -842,11 +848,12 @@ Binding decisions:
 12. Evidence-retention format: tracked JSON manifests under `docs/evidence/`
     plus ignored hashed logs under `artifacts\logs`.
 13. Production orchestration-invocation binding: documented, including the
-    report-aware, report-contract, and taxonomy-contract corrections, in
+    report-aware, report-contract, taxonomy-contract, and defensive-taxonomy
+    corrections, in
     `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`;
     implementation remains unauthorized.
 14. Next repository task: independent read-only audit of the finalized
-    taxonomy contract, not source implementation.
+    defensive taxonomy and report-contract design, not source implementation.
 
 Stop conditions:
 
@@ -896,4 +903,8 @@ audit found implicit taxonomy and rollback-effect values, incomplete section-28
 exact-field binding, and insufficient source-level
 `ReadyPublicationAttempted` guarding. The taxonomy-contract documentation
 correction closes those issues and requires another independent read-only
-audit.
+audit. The fifth audit found invalid ready-mask normalization, incomplete
+rollback rejection/effect closure, non-self-contained R1-R20 profiles, and
+missing explicit R1-R20 evidence. The defensive-taxonomy documentation
+correction closes those issues and requires another independent read-only
+audit before any source implementation.

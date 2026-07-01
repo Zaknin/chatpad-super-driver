@@ -4,6 +4,35 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Close defensive rollback reachability and origin evidence
+
+**Decision:** Production orchestration uses the actual sequential no-observer
+model: every ordinary R1-R20 entry is P1-P4 and permits only `ROLLBACK_OK` plus
+the exact successful S1-S4 effect state. A separate finite offline
+fault-injection model classifies every source rollback enum through the closed
+12-label set `N0`, `J0`, `A0`, `AF`, `S1`-`S4`, and `F1`-`F4`; it is not a
+production concurrency premise. Valid already-ready input requires exact
+`READY`, while invalid `OWNER_READY`-bearing input preserves its actual mask.
+Each R1-R20 record is self-contained and future evidence is one-to-one.
+
+**Rationale:** The fifth independent design audit found that invalid
+ready-shaped masks were normalized incorrectly, rollback rejection/effects
+were not closed under the stated mutation premise, R1-R20 required cross-table
+inference, and section 23 did not explicitly require R1-R20 evidence.
+
+**Alternatives rejected:** An unlimited mutation premise cannot support a
+finite exhaustive state model. Treating `ALREADY_CLEAN` as zero effects
+contradicts source-populated masks and `AlreadyClean=TRUE`. Retaining compact
+origin rows that depend on category/effect prose would not meet independent
+field binding. Generic rollback coverage would not prove all 20 identifiers.
+
+**Consequences:** Every rollback result enum is classified; already-clean,
+invalid-mask, owner-ready, rejection, success, and post-effect states have
+exact effect/final-state contracts. The 28 sections, 22 categories, insertion
+point, single call/report lifetime, status mapping, WDF parentage, lifecycle
+subcases, and separate implementation/runtime gates remain unchanged. Another
+independent read-only audit is required before implementation.
+
 ## 2026-07-01 - Close orchestration taxonomy values and rollback effects
 
 **Decision:** The production orchestration taxonomy uses closed

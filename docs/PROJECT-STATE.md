@@ -1,16 +1,16 @@
 # Project State
 
-*Last updated: 2026-07-01 (orchestration taxonomy-contract correction)*
+*Last updated: 2026-07-01 (defensive orchestration-taxonomy correction)*
 
 ## Current state
 
-- **Branch:** `feature/offline-kmdf-orchestration-taxonomy-contract-fix`.
+- **Branch:** `feature/offline-kmdf-orchestration-defensive-taxonomy-fix`.
 - **Current implementation checkpoint:**
   `8b91eaf939252e038bd0970db261cc14b1089613`,
   `docs: align owner initialization state`.
-- **Expected taxonomy-contract correction commit:** the commit containing this
-  correction uses subject `docs: finalize orchestration taxonomy contract` and
-  has parent `6f9f2750347ee6ecd50470261a6af0a859b53357`.
+- **Expected defensive-taxonomy correction commit:** the commit containing this
+  correction uses subject `docs: close orchestration defensive taxonomy` and
+  has parent `8b06ff5c2a7679b3057992ac99302fa550ddf098`.
 - **Historical owner-initialization checkpoint:**
   `a25d5637487ec6e4e7583a64dcec6c5192e06092`,
   `driver: initialize production request owner`.
@@ -48,7 +48,14 @@
   enforce source-level `ReadyPublicationAttempted` behavior. This
   documentation-only correction adds closed exact value sets, complete
   rollback-effect/origin matrices, a ready-field truth table, all 19 section-28
-  field bindings, and exact ready-attempt guard requirements.
+  field bindings, and exact ready-attempt guard requirements. A fifth
+  independent audit found that invalid ready-shaped masks were normalized,
+  rollback rejection/effects were not closed, R1-R20 profiles were not
+  self-contained, and evidence omitted explicit R1-R20 coverage. This
+  documentation-only correction preserves actual incoming ready-shaped masks,
+  classifies all rollback enum results through a closed 12-label effect model,
+  separates ordinary production from finite offline fault injection, expands
+  every R1-R20 record, and requires one-to-one origin evidence.
 - **Production context:** `driver.h` includes the authoritative KMDF
   request-owner header and embeds exactly one
   `ChatpadKmdfActivationRequestOwner ActivationRequestOwner`.
@@ -84,14 +91,14 @@
 - **Safety:** no production `.c/.h`, project/solution file, owner model,
   request-owner implementation, build output, INF, signing, package,
   deployment, recovery, D0, cleanup, removal, Windows state, device state, or
-  hardware state was changed by this taxonomy-contract correction. No build,
+  hardware state was changed by this defensive-taxonomy correction. No build,
   test, helper, orchestration, rollback, WDF object action, driver load, or
   hardware query ran.
 
 ## Unresolved blockers
 
-- The finalized taxonomy-contract production orchestration invocation design
-  requires another independent read-only documentation audit.
+- The finalized defensive taxonomy and report-contract design requires another
+  independent read-only documentation audit.
 - Dormant orchestration invocation is designed but not implemented and remains
   unauthorized.
 - Normal teardown, active-operation rundown, target discovery, request
