@@ -1,19 +1,28 @@
 # Project State
 
-*Last updated: 2026-07-01 (offline runtime instrumentation design)*
+*Last updated: 2026-07-01 (offline runtime instrumentation design remediation)*
 
 ## Current State
 
-- **Branch:** `feature/documentation-offline-runtime-instrumentation-design`.
-- **Starting commit:** `fbca8852e47300d4f483968b23e42ee82e88b972`, `docs: define first runtime observation and recovery gate`.
-- **Starting parent:** `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`.
-- **Expected containing commit subject:** `docs: define offline runtime instrumentation design`.
+- **Branch:** `feature/documentation-offline-runtime-instrumentation-design-remediation`.
+- **Starting commit:** `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`,
+  `docs: define offline runtime instrumentation design`.
+- **Required parent for remediation:** `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`.
+- **Accepted first-runtime recovery plan:**
+  `fbca8852e47300d4f483968b23e42ee82e88b972`.
 - **Frozen accepted baseline:** `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`.
-- **Frozen implementation:** `efb729502a0527ac70e2d20fa31a323c3beb2920`, `driver: invoke production request owner orchestration`.
-- **Accepted audit status:** `AUDIT PASS WITH LIMITATIONS`.
-- **Runtime planning document:** `docs/WINDOWS11-FIRST-RUNTIME-OBSERVATION-AND-RECOVERY-PLAN.md`.
-- **Offline instrumentation design:** `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`.
-- **Offline evidence checkpoint:** `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-FINAL-REMEDIATION.md`.
+- **Frozen implementation:** `efb729502a0527ac70e2d20fa31a323c3beb2920`,
+  `driver: invoke production request owner orchestration`.
+- **Original offline instrumentation design commit:**
+  `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`.
+- **Independent audit result for original instrumentation design:** `AUDIT FAIL`.
+- **Original audit blockers:** incomplete per-event metadata and premature
+  continuity advancement to implementation.
+- **Remediated instrumentation design:**
+  `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`.
+- **Remediated design status:** independent acceptance pending.
+- **Offline evidence checkpoint:**
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-FINAL-REMEDIATION.md`.
 - **Manifest:** schema `1.6.0`, 102 mandatory evidence IDs and 102 entries.
 
 ## Current Implementation State
@@ -25,16 +34,19 @@
 - The current build is **not sufficiently observable for first controlled
   load** because orchestration result, structural-ready reachability, cleanup,
   and target/request absence are not emitted as durable runtime evidence.
-- Offline runtime instrumentation design selects WPP software tracing as the
-  primary first-load diagnostic mechanism and is ready for offline
-  implementation.
-- Selected next task: implement the accepted diagnostic instrumentation offline.
+- Offline runtime instrumentation design exists and selects WPP software
+  tracing as the primary first-load diagnostic mechanism.
+- The remediated design has not yet passed independent audit.
+- No diagnostic instrumentation source exists.
+- No source implementation authorization exists.
+- Selected next task: independently audit the remediated offline runtime
+  instrumentation design.
 
 ## Safety and Limitations
 
 - Production source, headers, project files, solution files, shared props,
   INF files, signing, packaging, guards, tests, scripts, generated evidence,
-  and `legacy/` are unchanged by the current documentation-only phase.
+  and `legacy/` are unchanged by the current documentation-only remediation.
 - The driver remains unsigned, unpackaged, unstaged, uninstalled, unloaded, and
   unexecuted.
 - No hardware identity has been queried.

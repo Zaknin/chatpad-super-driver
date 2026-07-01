@@ -4,6 +4,33 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Gate instrumentation implementation on independent design acceptance
+
+**Decision:** Every runtime instrumentation event definition must contain
+expected IRQL, maximum frequency, first-load criterion, and failure or rollback
+action metadata before the design can be accepted. Continuity documents must
+not advance from design authoring to implementation until an independent design
+audit passes. A design verdict written in an authoring checkpoint does not
+constitute independent acceptance.
+
+**Rationale:** The independent audit of
+`b26514f59e9d07fbee09e8bab5ea296d18c0dd85` failed for documentation-only
+reasons: the 73-event catalogue did not include all required per-event
+metadata, and continuation documents prematurely named implementation as the
+next task. The repository needs an explicit audit gate to prevent authoring
+optimism from opening source or runtime work.
+
+**Alternatives rejected:** Treating category-level prose as complete per-event
+metadata would preserve ambiguity for IRQL, frequency, criteria, and operator
+action. Treating the design author's "ready" verdict as acceptance would bypass
+the independent-review workflow. Opening an implementation task before audit
+would widen the gate without independent diagnostic-design approval.
+
+**Consequences:** The next task is independent read-only audit of the
+remediated offline runtime instrumentation design. Source implementation,
+signing, packaging, staging, installation, loading, device query, target
+discovery, request execution, and hardware gates remain closed.
+
 ## 2026-07-01 - Select WPP as primary first-load diagnostic mechanism
 
 **Decision:** Use WPP software tracing as the primary mechanism for the future
@@ -25,10 +52,10 @@ enough. A custom ETW/TraceLogging provider or Windows event-log reporting would
 be more invasive for the first dormant load. Debugger-only inspection is not
 auditable enough for acceptance evidence.
 
-**Consequences:** The next task is offline implementation of the accepted
-diagnostic instrumentation. Signing, packaging, staging, installation, loading,
-device query, target discovery, request execution, and hardware gates remain
-closed.
+**Consequences:** WPP remains the selected primary mechanism for the remediated
+design, but implementation is not authorized until an independent design audit
+passes. Signing, packaging, staging, installation, loading, device query,
+target discovery, request execution, and hardware gates remain closed.
 
 ## 2026-07-01 - Require offline runtime instrumentation before first load
 

@@ -3,29 +3,32 @@
 ## Exact Current State
 
 - Required branch:
-  `feature/documentation-offline-runtime-instrumentation-design`.
-- Required starting commit: the commit containing this file, with subject
-  `docs: define offline runtime instrumentation design` and parent
+  `feature/documentation-offline-runtime-instrumentation-design-remediation`.
+- Required starting commit: the remediation commit containing this file, with
+  subject `docs: remediate runtime instrumentation design audit`.
+- Required parent:
+  `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`,
+  `docs: define offline runtime instrumentation design`.
+- Accepted first-runtime recovery plan:
   `fbca8852e47300d4f483968b23e42ee82e88b972`.
-- First-runtime recovery plan accepted at
-  `fbca8852e47300d4f483968b23e42ee82e88b972`.
-- Frozen accepted baseline: `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`,
-  `AUDIT PASS WITH LIMITATIONS`.
-- Frozen implementation: `efb729502a0527ac70e2d20fa31a323c3beb2920`.
-- Instrumentation design:
+- Original offline instrumentation design checkpoint:
+  `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`.
+- Independent audit result for the original design checkpoint: `AUDIT FAIL`.
+- Original blocking defects:
+  incomplete per-event metadata and premature continuity advancement to
+  implementation.
+- Remediated design:
   `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`.
-- Design verdict: `INSTRUMENTATION DESIGN READY FOR OFFLINE IMPLEMENTATION`.
-- Selected mechanism: WPP software tracing as primary evidence, existing
-  `KdPrintEx` as fallback only.
+- Remediated design status: independent acceptance pending.
+- Selected mechanism remains WPP software tracing as primary evidence, with
+  existing `KdPrintEx` as fallback only.
 - Driver state: unsigned, unpackaged, unstaged, uninstalled, unloaded, and
   unexecuted.
 - Hardware/device state: no hardware identity has been queried in this phase.
 
 ## Next Recommended Objective
 
-Implement the accepted diagnostic instrumentation offline, with no signing,
-installation, loading, device query, target discovery, request execution, or
-hardware interaction.
+Independently audit the remediated offline runtime instrumentation design.
 
 ## Preconditions
 
@@ -35,42 +38,42 @@ hardware interaction.
    `docs/NEXT-TASK.md`, recent `docs/WORKLOG.md`,
    `docs/WINDOWS11-FIRST-RUNTIME-OBSERVATION-AND-RECOVERY-PLAN.md`, and
    `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`.
-3. Reconfirm that no runtime authorization exists.
-4. Treat source/project/test/build changes as permitted only if the next task
-   explicitly authorizes offline diagnostic implementation. Signing, packaging,
-   staging, installation, loading, live device query, and hardware gates remain
-   closed.
+3. Confirm the remediation changed only authorized documentation paths.
+4. Reconfirm that no instrumentation implementation authorization exists.
 
 ## Safety Restrictions
 
+- Do not implement instrumentation during the audit.
 - Do not sign, package, create certificates/keys, stage, install, load, mutate
   Windows, query devices, use PnPUtil/DISM/DevCon/Device Manager, enable
   verifier, alter boot settings, access USB/HID/XUSB/controller/Chatpad, open a
   target, discover targets, or perform request formatting/submission/
   completion/cancellation.
-- Do not modify `legacy/`.
-- Do not treat instrumentation implementation as runtime approval.
+- Do not modify source, headers, projects, solution files, shared props, INF
+  files, scripts, tests, guards, evidence manifests/contracts, generated
+  evidence, signing/packaging paths, or `legacy/`.
 
 ## Acceptance Criteria
 
-- Diagnostic events and IDs match the accepted design.
-- Instrumentation remains diagnostic-only and does not introduce target
-  discovery, request formatting, send, completion, or cancellation.
-- Debug and Release diagnostic behavior is explicitly tested or guarded.
-- Prohibited-operation counters initialize to zero and produce final snapshots.
-- Object-presence snapshots and orchestration-report summaries avoid handles,
-  pointers, buffers, USB payloads, and Chatpad payloads.
-- Static guards prove no duplicate IDs, no prohibited data fields, no new
-  target/request operation paths, and no status-path changes.
-- Existing offline regressions applicable to the implementation pass.
-- Continuation docs are updated with exact evidence and no unsupported runtime
-  claims.
+- All 73 event IDs and symbolic names are preserved.
+- Every event has complete per-event metadata for expected IRQL, maximum
+  frequency, first-load criterion, and failure or rollback action.
+- WPP safety assumptions are technically reasonable and do not authorize unsafe
+  emission points.
+- Continuity documents accurately state that the original audit failed, the
+  remediation is not independently accepted, implementation is not authorized,
+  and the next task is independent read-only audit.
+- Frozen source/header, project/solution/props/INF, script/test/guard,
+  manifest/contract, signing/packaging, generated evidence, and `legacy/`
+  surfaces remain unchanged.
+- Signing, packaging, device discovery, staging, installation, loading,
+  runtime, and hardware gates remain closed.
 
 ## Inspect First
 
 - `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`
 - `docs/WINDOWS11-FIRST-RUNTIME-OBSERVATION-AND-RECOVERY-PLAN.md`
-- `src/driver/ChatpadFilter/driver.c`
-- `src/driver/ChatpadFilter/device.c`
-- `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`
-- `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h`
+- `docs/PROJECT-STATE.md`
+- `docs/DECISIONS.md`
+- `docs/PORTING-PLAN.md`
+- `docs/WORKLOG.md`

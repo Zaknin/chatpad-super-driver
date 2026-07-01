@@ -4835,7 +4835,10 @@
   sequences, cleanup observability, IRQL/concurrency rules, data minimization,
   future static guards, future offline tests, and future trace collection and
   interpretation rules.
-- **Design verdict:** `INSTRUMENTATION DESIGN READY FOR OFFLINE IMPLEMENTATION`.
+- **Original design authoring verdict, later superseded by independent audit
+  failure:** the design authoring checkpoint described the instrumentation
+  design as implementation-ready before independent acceptance. The later
+  audit of `b26514f59e9d07fbee09e8bab5ea296d18c0dd85` returned `AUDIT FAIL`.
 - **Files created/modified:** Added
   `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`. Modified
   `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
@@ -4863,6 +4866,73 @@
   `docs: define offline runtime instrumentation design` and push only
   `origin/feature/documentation-offline-runtime-instrumentation-design`; final
   hash is reported after commit.
-- **Next task:** Implement the accepted diagnostic instrumentation offline, with
-  no signing, installation, loading, device query, target discovery, request
-  execution, or hardware interaction.
+- **Original next-task statement, later superseded by independent audit
+  failure:** the authoring checkpoint proposed offline diagnostic
+  implementation next, with no signing, installation, loading, device query,
+  target discovery, request execution, or hardware interaction. The later audit
+  failure keeps implementation unauthorized until a remediated design passes
+  independent audit.
+
+## 2026-07-01 23:28 +04:00 - Offline runtime instrumentation design audit remediation
+
+- **Objective:** Create a documentation-only remediation checkpoint for the
+  offline runtime diagnostic-instrumentation design after independent audit
+  failure. Correct exactly the two blocking documentation defects without
+  implementing instrumentation or opening runtime gates.
+- **Starting state:** Verified exact clean synchronized branch
+  `feature/documentation-offline-runtime-instrumentation-design` at
+  `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`, parent
+  `fbca8852e47300d4f483968b23e42ee82e88b972`, subject
+  `docs: define offline runtime instrumentation design`, upstream
+  `origin/feature/documentation-offline-runtime-instrumentation-design`,
+  upstream hash `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`, ahead/behind
+  `0/0`, clean worktree and index. Then created
+  `feature/documentation-offline-runtime-instrumentation-design-remediation`.
+- **Independent audit failure recorded:** The audit of
+  `b26514f59e9d07fbee09e8bab5ea296d18c0dd85` returned `AUDIT FAIL` for two
+  documentation-only blockers: the 73-event catalogue lacked complete per-event
+  expected-IRQL, maximum-frequency, first-load-criterion, and
+  failure/rollback-action metadata; and continuity documents prematurely
+  advanced the next task to instrumentation implementation.
+- **Remediation performed:** Expanded
+  `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md` so every one of
+  the preserved 73 events has the four required audit fields, added a
+  documentation consistency validation summary with all missing-field counters
+  zero, and changed the design verdict to independent audit pending. Updated
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`, and
+  `docs/PORTING-PLAN.md` so the exact next action is independent read-only
+  audit, not implementation.
+- **Files created, modified, or removed:** Modified only the six authorized
+  documentation paths:
+  `docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/PORTING-PLAN.md`, and this worklog.
+- **Validation results:** Changed-path containment passed with exactly six
+  authorized documentation paths and zero unexpected paths. Frozen source/
+  header, project/solution/props/INF, script/test/guard, manifest/contract,
+  signing/packaging/generated, and `legacy/` surfaces all had changed count
+  zero. Markdown relative-link validation passed. Changed-surface path-case
+  validation reported zero defects. LF-only validation passed for all changed
+  files, and each changed file has exactly one final newline. `git diff
+  --check` passed with only Git's LF-to-CRLF checkout-policy warnings. Added
+  line secrets/credential scan reported zero hits. Event catalogue validation
+  reported 73 events, 73 unique IDs, 73 unique symbolic names, zero duplicate
+  IDs, zero duplicate names, zero out-of-range IDs, zero missing expected-IRQL
+  fields, zero missing maximum-frequency fields, zero missing first-load-
+  criterion fields, zero missing failure/rollback-action fields, and zero bad
+  table column counts. Continuity wording scan found no remaining phrase that
+  authorizes or selects implementation.
+- **Safety:** No source, header, project, solution, props, INF, script, test,
+  guard, evidence manifest, contract, generated evidence, signing, packaging,
+  or `legacy/` path was modified. No build, test, guard, WPP generation, trace
+  registration/start, signing, certificate/key creation, packaging, staging,
+  installation, driver loading, device query, USB/HID/XUSB/controller/Chatpad
+  interaction, target discovery, request operation, Windows mutation, or
+  hardware action occurred.
+- **Commit/push:** Commit exactly
+  `docs: remediate runtime instrumentation design audit` and push only
+  `origin/feature/documentation-offline-runtime-instrumentation-design-remediation`;
+  final hash is reported after commit.
+- **Next task:** Independently audit the remediated offline runtime
+  instrumentation design. Only after that audit passes may an offline
+  implementation prompt be prepared.

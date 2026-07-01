@@ -17,14 +17,20 @@ observation, target discovery, request execution, signing, packaging,
 installation, loading, device query, and hardware testing remain prohibited
 future gates.
 
-The offline runtime instrumentation design is complete in
-`docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`. It selects WPP
+Current phase: **Offline runtime instrumentation design - independent
+acceptance pending**.
+
+The original offline runtime instrumentation design was committed at
+`b26514f59e9d07fbee09e8bab5ea296d18c0dd85`. Its independent audit returned
+`AUDIT FAIL` for documentation-only defects: incomplete per-event metadata and
+premature continuity advancement to implementation. The remediated design is in
+`docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`. It preserves WPP
 software tracing as the primary first-load diagnostic mechanism, keeps existing
-`KdPrintEx` statements as fallback only, reserves a 73-event catalogue, and
+`KdPrintEx` statements as fallback only, preserves the 73-event catalogue, and
 requires Release-capable diagnostic evidence before any runtime gate can open.
-Implementation of that instrumentation is the next offline task; signing,
-packaging, staging, installation, loading, device query, and hardware testing
-remain closed.
+The next task is independent read-only audit of the remediated design. Source
+implementation is not authorized; signing, packaging, staging, installation,
+loading, device query, and hardware testing remain closed.
 
 This plan starts from the preserved source-only baseline. It intentionally does not load, install, execute, or test any legacy binary.
 
