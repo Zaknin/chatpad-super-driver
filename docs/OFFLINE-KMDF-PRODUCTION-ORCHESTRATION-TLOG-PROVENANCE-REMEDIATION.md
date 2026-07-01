@@ -5,8 +5,8 @@
 > the 26-path production boundary with the broader wrapper build, omitted
 > complete `ChatpadProtocol` closure, trusted shared mutable TLOG locations,
 > and did not retain or independently close all generated intermediates.
-> Acceptance is superseded by
-> [Offline KMDF Production Orchestration Provenance Closure Remediation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-CLOSURE-REMEDIATION.md).
+> Acceptance is superseded by the later closure checkpoint and finally by
+> [Offline KMDF Production Orchestration Provenance Final Remediation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-FINAL-REMEDIATION.md).
 
 Date: 2026-07-01
 

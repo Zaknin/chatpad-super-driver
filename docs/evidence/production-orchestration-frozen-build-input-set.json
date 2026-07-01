@@ -5,6 +5,8 @@
   "declared_count": 26,
   "derivation_method": "Frozen implementation project graph plus retained CL, LIB, and LINK records; the prototype INF is included only as a packaging boundary.",
   "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+  "implementation_parent": "4ba0de15420e0b66287a501918de694c8b6fd720",
+  "remediation_starting_commit": "6a586bb2490e6a2611987a229c8c9d11d32fab01",
   "build_commands": [
     ".\\tools\\Build-Driver.ps1 -Configuration Debug -Platform x64",
     ".\\tools\\Build-Driver.ps1 -Configuration Release -Platform x64"
@@ -18,7 +20,8 @@
     "ChatpadKmdfRequestOwnerContext"
   ],
   "inf_inclusion_policy": "Exactly one prototype INF is retained as packaging-only boundary evidence and is not a build input.",
-  "containing_commit_binding": "499f6eae4b0e8a6fd4dbf3186c44906b5e6d4201",
+  "containing_commit_binding": "The contract is committed in its containing Git commit. The final containing hash is intentionally not embedded because doing so would be self-referential; an independent audit obtains the containing commit from Git and verifies its parent, subject, branch, scope, and hashes. Pre-final evidence must not claim generation from a commit that did not yet exist.",
+  "self_reference_limitation": "The containing commit hash cannot be embedded in content that contributes to that hash because doing so would be self-referential. The remediation starting commit is historical context only, not the containing commit.",
   "limitations": "This contract does not claim to cover every project built by the A/B wrapper; ChatpadProtocol wrapper-only inputs are defined by the separate wrapper-build contract.",
   "entries": [
     {

@@ -1,5 +1,12 @@
 # Offline KMDF Production Orchestration Provenance Closure Remediation
 
+> Independent audit result: **FAIL for remaining provenance completeness**.
+> Production source was not defective, but the schema-`1.5.0` checkpoint did
+> not yet include the final independent raw-TLOG validator source binding,
+> exact-root negative-test evidence, PDB binding inventory, and complete
+> final-remediation guard coverage. Acceptance is superseded by
+> [Offline KMDF Production Orchestration Provenance Final Remediation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-FINAL-REMEDIATION.md).
+
 ## Purpose and Scope
 
 This evidence-only checkpoint closes the independent provenance audit defects in commit `499f6eae4b0e8a6fd4dbf3186c44906b5e6d4201`. Production implementation `efb729502a0527ac70e2d20fa31a323c3beb2920` remains frozen. No runtime, target/request, signing, packaging, installation, loading, or hardware behavior is added or exercised.

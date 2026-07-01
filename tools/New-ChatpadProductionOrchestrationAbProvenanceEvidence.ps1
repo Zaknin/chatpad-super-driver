@@ -22,7 +22,15 @@ param(
 
     [Parameter(Mandatory)]
     [ValidatePattern('^[0-9a-f]{40}$')]
-    [string]$ExpectedWrapperContractBlobId
+    [string]$ExpectedWrapperContractBlobId,
+
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[0-9A-Fa-f]{64}$')]
+    [string]$ExpectedRawTlogValidatorSha256,
+
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[0-9a-f]{40}$')]
+    [string]$ExpectedRawTlogValidatorBlobId
 )
 
 Set-StrictMode -Version Latest
@@ -31,10 +39,13 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = [System.IO.Path]::GetFullPath(
     [System.IO.Path]::Combine($PSScriptRoot, '..'))
 $implementationCommit = 'efb729502a0527ac70e2d20fa31a323c3beb2920'
-$finalizationStartingCommit = '499f6eae4b0e8a6fd4dbf3186c44906b5e6d4201'
-$expectedBranch = 'feature/offline-kmdf-production-orchestration-provenance-closure-remediation'
+$implementationParent = '4ba0de15420e0b66287a501918de694c8b6fd720'
+$finalizationStartingCommit = '6a586bb2490e6a2611987a229c8c9d11d32fab01'
+$expectedBranch = 'feature/offline-kmdf-production-orchestration-provenance-final-remediation'
 $producerRelativePath = 'tools/New-ChatpadProductionOrchestrationAbProvenanceEvidence.ps1'
 $producerPath = Join-Path $repositoryRoot $producerRelativePath
+$rawTlogValidatorRelativePath = 'tools/Test-ChatpadProductionOrchestrationRawTlogEvidence.ps1'
+$rawTlogValidatorPath = Join-Path $repositoryRoot $rawTlogValidatorRelativePath
 $productionContractRelativePath = 'docs/evidence/production-orchestration-frozen-build-input-set.json'
 $wrapperContractRelativePath = 'docs/evidence/production-orchestration-wrapper-build-input-set.json'
 $productionContractPath = Join-Path $repositoryRoot $productionContractRelativePath
@@ -65,6 +76,8 @@ function Assert-TrackedInputContract {
     if ([string]$contract.schema_version -cne 'chatpad-production-orchestration-tracked-input-contract-v2' -or
         [string]$contract.contract_name -cne $ExpectedName -or
         [string]$contract.implementation_commit -cne $implementationCommit -or
+        [string]$contract.implementation_parent -cne $implementationParent -or
+        [string]$contract.remediation_starting_commit -cne $finalizationStartingCommit -or
         [int]$contract.declared_count -ne $ExpectedCount -or
         @($contract.entries).Count -ne $ExpectedCount -or
         [string]::IsNullOrWhiteSpace([string]$contract.purpose) -or
@@ -73,7 +86,9 @@ function Assert-TrackedInputContract {
         @($contract.included_configurations).Count -ne 2 -or
         @($contract.project_set).Count -lt 2 -or
         [string]::IsNullOrWhiteSpace([string]$contract.inf_inclusion_policy) -or
-        [string]$contract.containing_commit_binding -cne $finalizationStartingCommit -or
+        [string]$contract.containing_commit_binding -notmatch 'containing Git commit' -or
+        [string]$contract.containing_commit_binding -notmatch 'independent audit' -or
+        [string]$contract.self_reference_limitation -notmatch 'self-referential' -or
         [string]::IsNullOrWhiteSpace([string]$contract.limitations)) {
         throw "Tracked input contract metadata is invalid: $Path"
     }
@@ -133,6 +148,8 @@ function Test-FrozenIdentity {
         production_contract_blob_id = Invoke-GitText @('hash-object', '--', $productionContractRelativePath)
         wrapper_contract_sha256 = (Get-FileHash -LiteralPath $wrapperContractPath -Algorithm SHA256).Hash
         wrapper_contract_blob_id = Invoke-GitText @('hash-object', '--', $wrapperContractRelativePath)
+        raw_tlog_validator_sha256 = (Get-FileHash -LiteralPath $rawTlogValidatorPath -Algorithm SHA256).Hash
+        raw_tlog_validator_blob_id = Invoke-GitText @('hash-object', '--', $rawTlogValidatorRelativePath)
     }
     $actual.result = if (
         $actual.producer_sha256 -ceq $ExpectedProducerSha256.ToUpperInvariant() -and
@@ -140,7 +157,9 @@ function Test-FrozenIdentity {
         $actual.production_contract_sha256 -ceq $ExpectedProductionContractSha256.ToUpperInvariant() -and
         $actual.production_contract_blob_id -ceq $ExpectedProductionContractBlobId.ToLowerInvariant() -and
         $actual.wrapper_contract_sha256 -ceq $ExpectedWrapperContractSha256.ToUpperInvariant() -and
-        $actual.wrapper_contract_blob_id -ceq $ExpectedWrapperContractBlobId.ToLowerInvariant()) {
+        $actual.wrapper_contract_blob_id -ceq $ExpectedWrapperContractBlobId.ToLowerInvariant() -and
+        $actual.raw_tlog_validator_sha256 -ceq $ExpectedRawTlogValidatorSha256.ToUpperInvariant() -and
+        $actual.raw_tlog_validator_blob_id -ceq $ExpectedRawTlogValidatorBlobId.ToLowerInvariant()) {
         'PASS'
     } else {
         'FAIL'
@@ -437,7 +456,12 @@ function Add-BuildInput {
     param(
         [Parameter(Mandatory)][System.Collections.Generic.Dictionary[string, object]]$Inputs,
         [Parameter(Mandatory)][string]$Path,
-        [Parameter(Mandatory)][string]$Mechanism
+        [Parameter(Mandatory)][string]$Mechanism,
+        [Parameter(Mandatory)][string[]]$SourceTlogReferences,
+        [Parameter(Mandatory)][string[]]$ConsumingProjects,
+        [Parameter(Mandatory)][string[]]$Tools,
+        [Parameter(Mandatory)][string]$Configuration,
+        [Parameter(Mandatory)][string]$Set
     )
 
     $fullPath = [System.IO.Path]::GetFullPath($Path)
@@ -452,11 +476,18 @@ function Add-BuildInput {
         $Inputs[$normalized] = [pscustomobject][ordered]@{
             normalized_path = $normalized
             display_path = Get-RelativeDisplayPath $fullPath
+            original_path_forms = [string[]]@($fullPath, (Get-RelativeDisplayPath $fullPath))
             category = Get-InputCategory $fullPath $Mechanism
             size = [long](Get-Item -LiteralPath $fullPath).Length
             sha256 = $hash
             repo_local = [bool]$repoLocal
+            repository_or_external_classification = if ($repoLocal) { 'repository' } else { 'external-immutable-input' }
             mechanisms = @($Mechanism)
+            source_tlog_references = [string[]]@($SourceTlogReferences | Sort-Object -Unique)
+            consuming_project = [string[]]@($ConsumingProjects | Sort-Object -Unique)
+            producing_or_consuming_tool = [string[]]@($Tools | Sort-Object -Unique)
+            set_id = "$Configuration-$Set"
+            configuration = "$Configuration|x64"
         }
         return
     }
@@ -470,6 +501,12 @@ function Add-BuildInput {
         $mechanisms.Add($Mechanism)
     }
     $existing.mechanisms = [string[]]$mechanisms
+    $existing.source_tlog_references = [string[]]@(
+        @($existing.source_tlog_references) + @($SourceTlogReferences) | Sort-Object -Unique)
+    $existing.consuming_project = [string[]]@(
+        @($existing.consuming_project) + @($ConsumingProjects) | Sort-Object -Unique)
+    $existing.producing_or_consuming_tool = [string[]]@(
+        @($existing.producing_or_consuming_tool) + @($Tools) | Sort-Object -Unique)
 }
 
 function Add-TLogPathInputs {
@@ -497,7 +534,14 @@ function Add-TLogPathInputs {
                 continue
             }
             if (Test-Path -LiteralPath $candidate -PathType Leaf) {
-                Add-BuildInput $Inputs $candidate $Mechanism
+                $project = Get-TLogProject $TLogPath
+                $tool = if ($Mechanism -like 'cl_*') { 'CL' } elseif ($Mechanism -like 'link_*') { 'LINK' } elseif ($Mechanism -like 'lib_*') { 'LIB' } else { 'MSBuild' }
+                Add-BuildInput $Inputs $candidate $Mechanism `
+                    -SourceTlogReferences @((Get-RelativeRepositoryPath $TLogPath)) `
+                    -ConsumingProjects @($project) `
+                    -Tools @($tool) `
+                    -Configuration $script:inventoryConfiguration `
+                    -Set $script:inventorySet
             }
         }
     }
@@ -516,7 +560,12 @@ function Add-ClCommandSources {
     foreach ($line in [System.IO.File]::ReadLines($CommandTLogPath)) {
         if ($line.StartsWith('^')) {
             $sourcePath = $line.Substring(1)
-            Add-BuildInput $Inputs $sourcePath $Mechanism
+            Add-BuildInput $Inputs $sourcePath $Mechanism `
+                -SourceTlogReferences @((Get-RelativeRepositoryPath $CommandTLogPath)) `
+                -ConsumingProjects @((Get-TLogProject $CommandTLogPath)) `
+                -Tools @('CL') `
+                -Configuration $script:inventoryConfiguration `
+                -Set $script:inventorySet
         }
     }
 }
@@ -568,6 +617,58 @@ function Assert-AllowedTrackedState {
     if ($unexpected.Count -ne 0) {
         throw "Tracked repository state has unexpected changes during $Label`: $($unexpected -join '; ')"
     }
+}
+
+function Get-HonestGitState {
+    param(
+        [Parameter(Mandatory)][string]$Label,
+        [Parameter(Mandatory)][string[]]$AllowedPaths
+    )
+
+    $status = @(& git -C $repositoryRoot status --short --untracked-files=all)
+    if ($LASTEXITCODE -ne 0) { throw "git status failed during $Label." }
+    & git -C $repositoryRoot diff --quiet --
+    $diffExitCode = $LASTEXITCODE
+    if ($diffExitCode -notin @(0, 1)) { throw "git diff --quiet failed during $Label." }
+    & git -C $repositoryRoot diff --cached --quiet --
+    $cachedDiffExitCode = $LASTEXITCODE
+    if ($cachedDiffExitCode -notin @(0, 1)) { throw "git diff --cached --quiet failed during $Label." }
+    $unexpected = New-Object 'Collections.Generic.List[string]'
+    foreach ($line in $status) {
+        if ($line.Length -lt 4) { $unexpected.Add($line); continue }
+        $relative = $line.Substring(3).Replace('\', '/')
+        if ($relative -match ' -> ') { $relative = ($relative -split ' -> ')[-1] }
+        if ($AllowedPaths -cnotcontains $relative) { $unexpected.Add($line) }
+    }
+    return [pscustomobject][ordered]@{
+        label = $Label
+        captured_utc = (Get-Date).ToUniversalTime().ToString('o')
+        status_short = [string[]]$status
+        diff_exit_code = $diffExitCode
+        cached_diff_exit_code = $cachedDiffExitCode
+        globally_clean = ($status.Count -eq 0 -and $diffExitCode -eq 0 -and $cachedDiffExitCode -eq 0)
+        clean_relative_to_frozen_snapshot = ($unexpected.Count -eq 0)
+        unexpected_status_count = $unexpected.Count
+        unexpected_status = [string[]]$unexpected
+        allowed_remediation_paths = [string[]]$AllowedPaths
+    }
+}
+
+function Add-IdentityTranscriptLines {
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][AllowEmptyString()][System.Collections.Generic.List[string]]$Lines,
+        [Parameter(Mandatory)][string]$Phase,
+        [Parameter(Mandatory)][object]$Identity
+    )
+
+    $Lines.Add("Identity${Phase}Result=$($Identity.result)")
+    $Lines.Add("Identity${Phase}Utc=$($Identity.verification_utc)")
+    $Lines.Add("Identity${Phase}ProducerSha256=$($Identity.producer_sha256)")
+    $Lines.Add("Identity${Phase}ProducerBlobId=$($Identity.producer_blob_id)")
+    $Lines.Add("Identity${Phase}ProductionContractSha256=$($Identity.production_contract_sha256)")
+    $Lines.Add("Identity${Phase}ProductionContractBlobId=$($Identity.production_contract_blob_id)")
+    $Lines.Add("Identity${Phase}WrapperContractSha256=$($Identity.wrapper_contract_sha256)")
+    $Lines.Add("Identity${Phase}WrapperContractBlobId=$($Identity.wrapper_contract_blob_id)")
 }
 
 function Remove-IgnoredArtifactTree {
@@ -637,112 +738,6 @@ function Get-TLogProject {
     return 'unknown'
 }
 
-function Read-StrictTLog {
-    param(
-        [Parameter(Mandatory)][string]$Path,
-        [Parameter(Mandatory)][string]$Family,
-        [Parameter(Mandatory)][string]$RetainedPath
-    )
-
-    $bytes = [IO.File]::ReadAllBytes($Path)
-    $encodingName = 'ANSI-or-unknown'
-    $offset = 0
-    if ($bytes.Length -ge 2 -and $bytes[0] -eq 0xff -and $bytes[1] -eq 0xfe) {
-        $encoding = [Text.Encoding]::Unicode
-        $encodingName = 'UTF-16LE-BOM'
-        $offset = 2
-    } elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xfe -and $bytes[1] -eq 0xff) {
-        $encoding = [Text.Encoding]::BigEndianUnicode
-        $encodingName = 'UTF-16BE-BOM'
-        $offset = 2
-    } elseif ($bytes.Length -ge 3 -and $bytes[0] -eq 0xef -and $bytes[1] -eq 0xbb -and $bytes[2] -eq 0xbf) {
-        $encoding = [Text.UTF8Encoding]::new($false, $true)
-        $encodingName = 'UTF-8-BOM'
-        $offset = 3
-    } else {
-        try {
-            $encoding = [Text.UTF8Encoding]::new($false, $true)
-            [void]$encoding.GetString($bytes)
-            $encodingName = 'UTF-8-no-BOM'
-        } catch {
-            $encoding = [Text.Encoding]::Default
-        }
-    }
-    $text = $encoding.GetString($bytes, $offset, $bytes.Length - $offset)
-    $nullSeparated = $text.Contains([char]0)
-    $parts = [regex]::Split($text, "`r`n|`n|`r|`0")
-    $records = [Collections.Generic.List[object]]::new()
-    $empty = 0
-    $response = 0
-    $environment = 0
-    $relative = 0
-    $quoted = 0
-    $normalizedSeen = @{}
-    $duplicate = 0
-    foreach ($part in $parts) {
-        $original = [string]$part
-        $trimmed = $original.Trim()
-        if ($trimmed.Length -eq 0) {
-            $empty++
-            $records.Add([pscustomobject][ordered]@{
-                original_record_text = $original
-                normalized_comparison_form = ''
-                parser_classification = 'empty'
-                source_tlog_path = $RetainedPath
-            })
-            continue
-        }
-        $hasResponse = $trimmed -match '(?:^|\s)@[^\s]+'
-        $hasEnvironment = $trimmed -match '%[^%]+%|\$\([^)]+\)'
-        $hasQuoted = $trimmed.Contains('"')
-        $candidate = $trimmed.TrimStart('^').Trim('"')
-        $isAbsolute = $candidate -match '^[A-Za-z]:[\\/]' -or $candidate -match '^\\\\'
-        $hasRelative = -not $isAbsolute -and
-            ($candidate -match '[\\/]' -or $candidate -match '^\.\.?[\\/]')
-        if ($hasResponse) { $response++ }
-        if ($hasEnvironment) { $environment++ }
-        if ($hasQuoted) { $quoted++ }
-        if ($hasRelative) { $relative++ }
-        $normalized = ($trimmed -replace '\\', '/').ToLowerInvariant()
-        if ($normalizedSeen.ContainsKey($normalized)) { $duplicate++ } else { $normalizedSeen[$normalized] = $true }
-        $classification = if ($trimmed.StartsWith('^')) {
-            "$Family-item-key"
-        } elseif ($Family -like '*.command') {
-            "$Family-command"
-        } elseif ($Family -like '*.read') {
-            "$Family-read"
-        } elseif ($Family -like '*.write') {
-            "$Family-write"
-        } elseif ($Family -ceq 'CL.items') {
-            'CL-items-record'
-        } else {
-            'tool-specific-record'
-        }
-        $records.Add([pscustomobject][ordered]@{
-            original_record_text = $original
-            normalized_comparison_form = $normalized
-            parser_classification = $classification
-            source_tlog_path = $RetainedPath
-        })
-    }
-    return [pscustomobject][ordered]@{
-        encoding = $encodingName
-        null_separated = $nullSeparated
-        total_records = $parts.Count
-        parsed_records = $parts.Count - $empty
-        empty_records = $empty
-        response_file_records = $response
-        environment_variable_records = $environment
-        relative_path_records = $relative
-        quoted_path_records = $quoted
-        duplicate_normalized_records = $duplicate
-        unparseable_records = 0
-        discarded_records = 0
-        unexplained_records = 0
-        records = [object[]]$records
-    }
-}
-
 function New-StrictParserReport {
     param(
         [Parameter(Mandatory)][string]$Configuration,
@@ -751,74 +746,29 @@ function New-StrictParserReport {
     )
 
     $key = "$($Configuration.ToLowerInvariant())-$($Set.ToLowerInvariant())"
-    $files = [Collections.Generic.List[object]]::new()
-    $totalRawRecords = 0
-    $parsedRecordCount = 0
-    $emptyRecordCount = 0
-    $nullSeparatedRecordCount = 0
-    $responseFileRecordCount = 0
-    $environmentRecordCount = 0
-    $relativePathRecordCount = 0
-    $quotedPathRecordCount = 0
-    $duplicateRecordCount = 0
-    foreach ($tlog in @($Tlogs)) {
-        $parsed = Read-StrictTLog `
-            -Path (Join-Path $repositoryRoot ([string]$tlog.retained_path)) `
-            -Family ([string]$tlog.family) `
-            -RetainedPath ([string]$tlog.retained_path)
-        $files.Add([pscustomobject][ordered]@{
-            path = [string]$tlog.retained_path
-            sha256 = [string]$tlog.sha256
-            family = [string]$tlog.family
-            project = [string]$tlog.project
-            encoding = $parsed.encoding
-            null_separated = $parsed.null_separated
-            total_records = $parsed.total_records
-            parsed_records = $parsed.parsed_records
-            empty_records = $parsed.empty_records
-            response_file_records = $parsed.response_file_records
-            environment_variable_records = $parsed.environment_variable_records
-            relative_path_records = $parsed.relative_path_records
-            quoted_path_records = $parsed.quoted_path_records
-            duplicate_normalized_records = $parsed.duplicate_normalized_records
-            unparseable_records = 0
-            discarded_records = 0
-            unexplained_records = 0
-            records = $parsed.records
-        })
-        $totalRawRecords += [int]$parsed.total_records
-        $parsedRecordCount += [int]$parsed.parsed_records
-        $emptyRecordCount += [int]$parsed.empty_records
-        if ($parsed.null_separated) { $nullSeparatedRecordCount += [int]$parsed.total_records }
-        $responseFileRecordCount += [int]$parsed.response_file_records
-        $environmentRecordCount += [int]$parsed.environment_variable_records
-        $relativePathRecordCount += [int]$parsed.relative_path_records
-        $quotedPathRecordCount += [int]$parsed.quoted_path_records
-        $duplicateRecordCount += [int]$parsed.duplicate_normalized_records
+    $rawRootRelative = "artifacts/logs/production-orchestration-ab-tlog-provenance/$key/raw-tlogs"
+    $reportRelative = "artifacts/logs/production-orchestration-ab-tlog-provenance/$key/tlog-parser-report.json"
+    $output = @(& $rawTlogValidatorPath `
+        -Mode GenerateParserReport `
+        -RawRoot $rawRootRelative `
+        -SetId "$Configuration-$Set" `
+        -Configuration "$Configuration|x64" `
+        -OutputPath $reportRelative 2>&1 | ForEach-Object { $_.ToString() })
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        throw "Raw TLOG parser failed for $Configuration $Set with exit code $exitCode`: $($output -join ' ')"
     }
-    $report = [pscustomobject][ordered]@{
-        schema_version = 'chatpad-production-orchestration-strict-tlog-parser-v1'
-        parser_source_path = $producerRelativePath
-        parser_source_sha256 = $ExpectedProducerSha256.ToUpperInvariant()
-        set_id = "$Configuration-$Set"
-        configuration = "$Configuration|x64"
-        total_raw_files = @($files).Count
-        total_raw_records = $totalRawRecords
-        parsed_records = $parsedRecordCount
-        empty_records = $emptyRecordCount
-        recognized_null_separated_records = $nullSeparatedRecordCount
-        response_file_records = $responseFileRecordCount
-        environment_variable_records = $environmentRecordCount
-        relative_path_records = $relativePathRecordCount
-        quoted_path_records = $quotedPathRecordCount
-        duplicate_normalized_records = $duplicateRecordCount
-        unparseable_records = 0
-        discarded_records = 0
-        unexplained_records = 0
-        files = [object[]]$files
-        result = 'PASS'
+    $report = Get-Content -LiteralPath (Join-Path $repositoryRoot $reportRelative) -Raw | ConvertFrom-Json
+    if ([string]$report.parser_source_sha256 -cne $ExpectedRawTlogValidatorSha256.ToUpperInvariant() -or
+        [string]$report.parser_source_blob_id -cne $ExpectedRawTlogValidatorBlobId.ToLowerInvariant() -or
+        [int]$report.RawFileCount -ne @($Tlogs).Count -or
+        [int]$report.UnparseableRecordCount -ne 0 -or
+        [int]$report.DiscardedRecordCount -ne 0 -or
+        [int]$report.UnexplainedRecordCount -ne 0 -or
+        [int]$report.EncodingDefectCount -ne 0 -or
+        [string]$report.result -cne 'PASS') {
+        throw "Raw TLOG parser report is invalid for $Configuration $Set."
     }
-    Write-JsonEvidence (Join-Path (Join-Path $evidenceRoot $key) 'tlog-parser-report.json') $report
     return $report
 }
 
@@ -839,6 +789,7 @@ function Copy-RawTLogs {
     $captureStartUtc = (Get-Date).ToUniversalTime()
     $records = [System.Collections.Generic.List[object]]::new()
     $staleCount = 0
+    $ambiguousTimestampCount = 0
     $hashMismatchCount = 0
     $ignoredMismatchCount = 0
     $trackedMismatchCount = 0
@@ -858,6 +809,9 @@ function Copy-RawTLogs {
         if ($sourceFile.LastWriteTimeUtc -lt $BuildStartUtc.AddSeconds(-2) -or
             $sourceFile.LastWriteTimeUtc -gt $BuildEndUtc.AddSeconds(2)) {
             $staleCount++
+        }
+        if ($CleanCompletedUtc -gt $BuildStartUtc -or $BuildStartUtc -gt $BuildEndUtc -or $BuildEndUtc -gt $captureStartUtc) {
+            $ambiguousTimestampCount++
         }
         $retainedRelative = Get-RelativeRepositoryPath $retainedPath
         & git -C $repositoryRoot check-ignore -q -- $retainedRelative
@@ -903,6 +857,13 @@ function Copy-RawTLogs {
         $records | ForEach-Object { ([string]$_.retained_path).Replace('\', '/').ToLowerInvariant() } |
             Group-Object | Where-Object Count -gt 1
     ).Count
+    $sharedFileCount = @($records | Group-Object source_path | Where-Object Count -gt 1).Count
+    $otherRetainedTlogs = @(Get-ChildItem -LiteralPath $evidenceRoot -Recurse -File -Filter '*.tlog' -ErrorAction SilentlyContinue | Where-Object {
+        -not $_.FullName.StartsWith([IO.Path]::GetFullPath($rawRoot).TrimEnd('\','/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
+    } | ForEach-Object { [IO.Path]::GetFullPath($_.FullName).ToLowerInvariant() })
+    $crossSetCollisionCount = @($records | Where-Object {
+        $otherRetainedTlogs -ccontains [IO.Path]::GetFullPath((Join-Path $repositoryRoot ([string]$_.retained_path))).ToLowerInvariant()
+    }).Count
 
     $families = @($records | Group-Object family | Sort-Object Name | ForEach-Object {
         [pscustomobject][ordered]@{ family = $_.Name; count = [int]$_.Count }
@@ -929,10 +890,10 @@ function Copy-RawTLogs {
         root_missing_from_inventory_count = [int]$rootMissingFromInventoryCount
         duplicate_normalized_relative_path_count = [int]$duplicateRelativePathCount
         stale_tlog_count = [int]$staleCount
-        ambiguous_timestamp_count = 0
+        ambiguous_timestamp_count = [int]$ambiguousTimestampCount
         out_of_window_count = [int]$staleCount
-        shared_file_count = 0
-        cross_set_collision_count = 0
+        shared_file_count = [int]$sharedFileCount
+        cross_set_collision_count = [int]$crossSetCollisionCount
         post_copy_hash_mismatch_count = [int]$hashMismatchCount
         hash_mismatch_count = [int]$hashMismatchCount
         ignored_mismatch_count = [int]$ignoredMismatchCount
@@ -954,6 +915,9 @@ function Copy-RawTLogs {
             $duplicateRelativePathCount -eq 0 -and
             $hashMismatchCount -eq 0 -and
             $staleCount -eq 0 -and
+            $ambiguousTimestampCount -eq 0 -and
+            $sharedFileCount -eq 0 -and
+            $crossSetCollisionCount -eq 0 -and
             $ignoredMismatchCount -eq 0 -and
             $trackedMismatchCount -eq 0) { 'PASS' } else { 'FAIL' }
     }
@@ -972,10 +936,10 @@ function Copy-RawTLogs {
         "DuplicateNormalizedRelativePathCount=$duplicateRelativePathCount",
         "HashMismatchCount=$hashMismatchCount",
         "StaleTlogCount=$staleCount",
-        "AmbiguousTimestampCount=0",
+        "AmbiguousTimestampCount=$ambiguousTimestampCount",
         "OutOfWindowCount=$staleCount",
-        "SharedFileCount=0",
-        "CrossSetCollisionCount=0",
+        "SharedFileCount=$sharedFileCount",
+        "CrossSetCollisionCount=$crossSetCollisionCount",
         "PostCopyHashMismatchCount=$hashMismatchCount",
         "IgnoredMismatchCount=$ignoredMismatchCount",
         "TrackedRetainedCount=$trackedMismatchCount",
@@ -1009,7 +973,7 @@ function New-ProducerClosureEvidence {
     foreach ($tlog in $linkTlogs) {
         $path = Join-Path $repositoryRoot ([string]$tlog.source_path)
         foreach ($line in [System.IO.File]::ReadLines($path)) {
-            foreach ($match in [regex]::Matches($line, '(?i)[A-Z]:\\[^|"\r\n ]+\.(obj|lib)')) {
+            foreach ($match in [regex]::Matches($line, '(?i)[A-Z]:\\[^|"\r\n]*?\.(obj|lib)')) {
                 $candidate = [System.IO.Path]::GetFullPath($match.Value)
                 if ([System.IO.Path]::GetExtension($candidate).Equals('.obj', [System.StringComparison]::OrdinalIgnoreCase)) {
                     if ($linkedObjectPaths -cnotcontains $candidate) { $linkedObjectPaths.Add($candidate) }
@@ -1043,16 +1007,61 @@ function New-ProducerClosureEvidence {
         $repoLocal = $libraryPath.StartsWith(
             ([System.IO.Path]::GetFullPath($repositoryRoot).TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar),
             [System.StringComparison]::OrdinalIgnoreCase)
+        $libraryExists = Test-Path -LiteralPath $libraryPath -PathType Leaf
         $project = if ($repoLocal) { Get-TLogProject $libraryPath } else { 'external' }
+        $declaredImportLibraryNonOutput = (
+            $repoLocal -and
+            -not $libraryExists -and
+            $project -ceq 'ChatpadFilter' -and
+            [System.IO.Path]::GetFileName($libraryPath).Equals('ChatpadFilter.lib', [System.StringComparison]::OrdinalIgnoreCase))
+        $generatedProjectLibrary = ($repoLocal -and -not $declaredImportLibraryNonOutput)
         $projectTlogs = @($TLogInventory.tlogs | Where-Object { [string]$_.project -ceq $project })
+        $producerCommand = [string[]]@(
+            if ($declaredImportLibraryNonOutput) {
+                $linkTlogs | Where-Object family -CEQ 'LINK.command' | ForEach-Object retained_path
+            } else {
+                $projectTlogs | Where-Object family -CEQ 'LIB.command' | ForEach-Object retained_path
+            })
+        $producerRead = [string[]]@(
+            if ($declaredImportLibraryNonOutput) {
+                @()
+            } else {
+                $projectTlogs | Where-Object family -CEQ 'LIB.read' | ForEach-Object retained_path
+            })
+        $producerWrite = [string[]]@(
+            if ($declaredImportLibraryNonOutput) {
+                $linkTlogs | Where-Object family -CEQ 'LINK.write' | ForEach-Object retained_path
+            } else {
+                $projectTlogs | Where-Object family -CEQ 'LIB.write' | ForEach-Object retained_path
+            })
+        $retainedGeneratedPath = if ($generatedProjectLibrary) {
+            $relativeFromBin = $libraryPath.Substring(([IO.Path]::GetFullPath((Join-Path $repositoryRoot "artifacts\bin\x64\$Configuration")).TrimEnd('\')).Length + 1)
+            Get-RelativeRepositoryPath (Join-Path (Join-Path $setRoot 'intermediates\libraries') $relativeFromBin)
+        } else { $null }
         $libraryRecords.Add([pscustomobject][ordered]@{
+            path = if ($repoLocal) { Get-RelativeRepositoryPath $libraryPath } else { $libraryPath }
             linked_path = if ($repoLocal) { Get-RelativeRepositoryPath $libraryPath } else { $libraryPath }
-            linked_sha256 = if (Test-Path -LiteralPath $libraryPath -PathType Leaf) { (Get-FileHash -LiteralPath $libraryPath -Algorithm SHA256).Hash } else { $null }
-            identity = if ($repoLocal) { 'repo_local_project_reference' } else { 'external_toolchain_or_sdk_library' }
+            linked_sha256 = if ($libraryExists) { (Get-FileHash -LiteralPath $libraryPath -Algorithm SHA256).Hash } else { $null }
+            size = if ($libraryExists) { [long](Get-Item -LiteralPath $libraryPath).Length } else { -1 }
+            classification = if ($declaredImportLibraryNonOutput) { 'declared-import-library-not-emitted' } elseif ($repoLocal) { 'generated-project-reference-library' } else { 'external-immutable-library' }
+            generated = [bool]$generatedProjectLibrary
+            identity = if ($declaredImportLibraryNonOutput) { 'declared_non_output_import_library' } elseif ($repoLocal) { 'repo_local_project_reference' } else { 'external_toolchain_or_sdk_library' }
             producing_project = $project
-            producing_tool = if ($repoLocal) { 'LIB' } else { 'external' }
-            producer_tlogs = [string[]]@($projectTlogs | Where-Object { [string]$_.family -like 'LIB.*' } | ForEach-Object retained_path)
-            consuming_tlogs = [string[]]@($linkTlogs | ForEach-Object retained_path)
+            producing_tool = if ($declaredImportLibraryNonOutput) { 'LINK' } elseif ($repoLocal) { 'LIB' } else { 'external' }
+            producer_operation = if ($declaredImportLibraryNonOutput) { "$project LINK /IMPLIB declaration" } elseif ($repoLocal) { "$project LIB" } else { 'external pre-existing immutable input' }
+            producer_command_tlog = $producerCommand
+            producer_read_tlog = $producerRead
+            producer_write_tlog = $producerWrite
+            producer_tlogs = [string[]]@(if ($declaredImportLibraryNonOutput) { $linkTlogs | ForEach-Object retained_path } else { $projectTlogs | Where-Object { [string]$_.family -like 'LIB.*' } | ForEach-Object retained_path })
+            consumer_operation = 'ChatpadFilter final LINK'
+            consuming_command_tlog = [string[]]@($linkTlogs | Where-Object family -CEQ 'LINK.command' | ForEach-Object retained_path)
+            consuming_read_tlog = [string[]]@(if ($declaredImportLibraryNonOutput) { @() } else { $linkTlogs | Where-Object family -CEQ 'LINK.read' | ForEach-Object retained_path })
+            consuming_tlogs = [string[]]@(if ($declaredImportLibraryNonOutput) { $linkTlogs | Where-Object family -CEQ 'LINK.command' | ForEach-Object retained_path } else { $linkTlogs | ForEach-Object retained_path })
+            retained_path = $retainedGeneratedPath
+            immutable_identity = if ($repoLocal) { $null } else { [pscustomobject][ordered]@{ size = if ($libraryExists) { [long](Get-Item -LiteralPath $libraryPath).Length } else { -1 }; sha256 = if ($libraryExists) { (Get-FileHash -LiteralPath $libraryPath -Algorithm SHA256).Hash } else { $null } } }
+            set_id = "$Configuration-$Set"
+            configuration = "$Configuration|x64"
+            same_set_identity = if ($declaredImportLibraryNonOutput) { 'declared-non-output' } elseif ($repoLocal) { "$Configuration-$Set" } else { 'external-immutable' }
         })
     }
     $missingObjectProducers = @($producerRecords | Where-Object { -not $_.producer_record_complete })
@@ -1140,6 +1149,24 @@ function New-RetainedIntermediateEvidence {
         Copy-Item -LiteralPath $sourceObject.FullName -Destination $retained -Force
         $sourceHash = (Get-FileHash -LiteralPath $sourceObject.FullName -Algorithm SHA256).Hash
         $retainedHash = (Get-FileHash -LiteralPath $retained -Algorithm SHA256).Hash
+        $repoRootFull = [IO.Path]::GetFullPath($repositoryRoot).TrimEnd('\', '/')
+        $repositoryHeaders = @($headers | Where-Object {
+            $_.StartsWith($repoRootFull + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
+        })
+        $primarySource = if ($sourceCandidates.Count -eq 1) { $sourceCandidates[0] } else { $null }
+        $primarySourceDirectory = if ($null -ne $primarySource) { [IO.Path]::GetFullPath((Split-Path -Parent $primarySource)).TrimEnd('\', '/') } else { '' }
+        $projectLocalHeaders = @($repositoryHeaders | Where-Object {
+            $_.StartsWith($primarySourceDirectory + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
+        } | ForEach-Object { Get-RelativeDisplayPath $_ } | Sort-Object -Unique)
+        $sharedRepositoryHeaders = @($repositoryHeaders | Where-Object {
+            -not $_.StartsWith($primarySourceDirectory + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
+        } | ForEach-Object { Get-RelativeDisplayPath $_ } | Sort-Object -Unique)
+        $externalHeaders = @($headers | Where-Object {
+            -not $_.StartsWith($repoRootFull + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
+        } | Sort-Object -Unique)
+        $commandReferences = [string[]]@($commandTlogs | ForEach-Object { [string]$_.retained_path })
+        $readReferences = [string[]]@($readTlogs | ForEach-Object { [string]$_.retained_path })
+        $writeReferences = [string[]]@($writeTlogs | ForEach-Object { [string]$_.retained_path })
         $objects.Add([pscustomobject][ordered]@{
             original_path = Get-RelativeRepositoryPath $sourceObject.FullName
             retained_path = Get-RelativeRepositoryPath $retained
@@ -1152,9 +1179,15 @@ function New-RetainedIntermediateEvidence {
             retained_sha256 = $retainedHash
             original_last_write_utc = $sourceObject.LastWriteTimeUtc.ToString('o')
             capture_utc = (Get-Date).ToUniversalTime().ToString('o')
+            primary_source = if ($null -ne $primarySource) { Get-RelativeDisplayPath $primarySource } else { $null }
+            project_local_headers = [string[]]$projectLocalHeaders
+            shared_repository_headers = [string[]]$sharedRepositoryHeaders
+            external_headers = [string[]]$externalHeaders
+            compiler_command_tlog = $commandReferences
+            compiler_read_tlog = $readReferences
+            compiler_write_tlog = $writeReferences
             producer_tlog_references = [string[]]@(
-                @($commandTlogs | ForEach-Object { [string]$_.retained_path }) +
-                @($writeTlogs | ForEach-Object { [string]$_.retained_path }))
+                @($commandReferences) + @($writeReferences))
             consumer_tlog_references = [string[]]@(
                 $TLogInventory.tlogs |
                     Where-Object { [string]$_.family -in @('LIB.read', 'LINK.read') } |
@@ -1164,16 +1197,13 @@ function New-RetainedIntermediateEvidence {
                     } |
                     ForEach-Object retained_path)
             source_input_closure = [pscustomobject][ordered]@{
-                primary_source_file = if ($sourceCandidates.Count -eq 1) { Get-RelativeDisplayPath $sourceCandidates[0] } else { $null }
-                project_local_headers = [string[]]@($headers | Where-Object {
-                    $_.StartsWith([IO.Path]::GetFullPath($repositoryRoot), [StringComparison]::OrdinalIgnoreCase)
-                } | ForEach-Object { Get-RelativeDisplayPath $_ })
-                external_headers = [string[]]@($headers | Where-Object {
-                    -not $_.StartsWith([IO.Path]::GetFullPath($repositoryRoot), [StringComparison]::OrdinalIgnoreCase)
-                })
-                compiler_command_records = [string[]]@($commandTlogs | ForEach-Object { [string]$_.retained_path })
-                compiler_read_records = [string[]]@($readTlogs | ForEach-Object { [string]$_.retained_path })
-                compiler_write_records = [string[]]@($writeTlogs | ForEach-Object { [string]$_.retained_path })
+                primary_source = if ($null -ne $primarySource) { Get-RelativeDisplayPath $primarySource } else { $null }
+                project_local_headers = [string[]]$projectLocalHeaders
+                shared_repository_headers = [string[]]$sharedRepositoryHeaders
+                external_headers = [string[]]$externalHeaders
+                compiler_command_tlog = $commandReferences
+                compiler_read_tlog = $readReferences
+                compiler_write_tlog = $writeReferences
                 producing_compile_operation_count = [int]$sourceCandidates.Count
             }
         })
@@ -1213,7 +1243,11 @@ function New-RetainedIntermediateEvidence {
             $_.project -ceq $project -and
             $allTlogText.IndexOf((Join-Path $repositoryRoot ([string]$_.original_path)), [StringComparison]::OrdinalIgnoreCase) -ge 0
         } | ForEach-Object retained_path)
+        $commandTlogReferences = [string[]]@($producerTlogs | Where-Object { [string]$_.family -like '*.command' } | ForEach-Object { [string]$_.retained_path })
+        $readTlogReferences = [string[]]@($producerTlogs | Where-Object { [string]$_.family -like '*.read' } | ForEach-Object { [string]$_.retained_path })
+        $writeTlogReferences = [string[]]@($producerTlogs | Where-Object { [string]$_.family -like '*.write' } | ForEach-Object { [string]$_.retained_path })
         $libraries.Add([pscustomobject][ordered]@{
+            source_path = Get-RelativeRepositoryPath $sourceLibrary.FullName
             original_path = Get-RelativeRepositoryPath $sourceLibrary.FullName
             retained_path = Get-RelativeRepositoryPath $retained
             size = [long]$sourceLibrary.Length
@@ -1221,13 +1255,19 @@ function New-RetainedIntermediateEvidence {
             retained_sha256 = $retainedHash
             producing_project = $project
             producer_tool = $producerFamily
+            command_tlog = $commandTlogReferences
+            read_tlog = $readTlogReferences
+            write_tlog = $writeTlogReferences
             producer_tlog_references = [string[]]@($producerTlogs | ForEach-Object { [string]$_.retained_path })
             member_object_retained_paths = [string[]]$memberObjects
+            consuming_operation = if ($consumerTlogs.Count -gt 0) { 'ChatpadFilter final LINK' } else { 'none' }
             consuming_project_or_operation = if ($consumerTlogs.Count -gt 0) { 'ChatpadFilter final LINK' } else { 'none' }
             consuming_tlog_references = [string[]]@($consumerTlogs | ForEach-Object { [string]$_.retained_path })
             set_id = "$Configuration-$Set"
             configuration = "$Configuration|x64"
             classification = $classification
+            actually_emitted = $true
+            consumed = ($consumerTlogs.Count -gt 0)
             original_last_write_utc = $sourceLibrary.LastWriteTimeUtc.ToString('o')
             capture_utc = (Get-Date).ToUniversalTime().ToString('o')
         })
@@ -1244,10 +1284,14 @@ function New-RetainedIntermediateEvidence {
                 $declaredNonOutputs.Add([pscustomobject][ordered]@{
                     declared_path = Get-RelativeRepositoryPath $declaredPath
                     producer_tool = 'LINK'
+                    command_tlog = [string[]]@([string]$linkCommandTlog.retained_path)
+                    read_tlog = [string[]]@($TLogInventory.tlogs | Where-Object { [string]$_.project -ceq 'ChatpadFilter' -and [string]$_.family -ceq 'LINK.read' } | ForEach-Object { [string]$_.retained_path })
+                    write_tlog = [string[]]@($TLogInventory.tlogs | Where-Object { [string]$_.project -ceq 'ChatpadFilter' -and [string]$_.family -ceq 'LINK.write' } | ForEach-Object { [string]$_.retained_path })
                     producer_tlog_reference = [string]$linkCommandTlog.retained_path
                     classification = 'declared-import-library-not-emitted'
                     explanation = 'LINK declared an auxiliary import-library path, but no import library was emitted because the driver exports no symbols; the path is not a generated or consumed library.'
                     exists_after_build = $false
+                    actually_emitted = $false
                     consumed = $false
                 })
             }
@@ -1257,13 +1301,18 @@ function New-RetainedIntermediateEvidence {
     $objectDefects = @($objects | Where-Object {
         $_.sha256 -cne $_.retained_sha256 -or
         $_.source_input_closure.producing_compile_operation_count -ne 1 -or
-        [string]::IsNullOrWhiteSpace([string]$_.source_input_closure.primary_source_file) -or
-        @($_.producer_tlog_references).Count -eq 0 -or
+        [string]::IsNullOrWhiteSpace([string]$_.source_input_closure.primary_source) -or
+        $null -eq $_.source_input_closure.shared_repository_headers -or
+        @($_.compiler_command_tlog).Count -eq 0 -or
+        @($_.compiler_read_tlog).Count -eq 0 -or
+        @($_.compiler_write_tlog).Count -eq 0 -or
         @($_.consumer_tlog_references).Count -eq 0
     }).Count
     $libraryDefects = @($libraries | Where-Object {
         $_.sha256 -cne $_.retained_sha256 -or
-        @($_.producer_tlog_references).Count -eq 0 -or
+        @($_.command_tlog).Count -eq 0 -or
+        @($_.read_tlog).Count -eq 0 -or
+        @($_.write_tlog).Count -eq 0 -or
         [string]::IsNullOrWhiteSpace([string]$_.classification)
     }).Count
     $inventory = [pscustomobject][ordered]@{
@@ -1354,20 +1403,35 @@ function Get-BuildInputInventory {
     )
 
     $inputs = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
+    $script:inventoryConfiguration = $Configuration
+    $script:inventorySet = $Set
+    $key = "$($Configuration.ToLowerInvariant())-$($Set.ToLowerInvariant())"
+    $rawRoot = Join-Path (Join-Path $evidenceRoot $key) 'raw-tlogs'
+    $filterTLogRoot = Join-Path $rawRoot 'ChatpadFilter\ChatpadFilter.tlog'
+    $contextTLogRoot = Join-Path $rawRoot 'ChatpadKmdfRequestOwnerContext\ChatpadK.421C7E3A.tlog'
+    $protocolTLogRoot = Join-Path $rawRoot 'ChatpadProtocol\ChatpadProtocol.tlog'
+    $allCommandTlogs = @(
+        (Join-Path $filterTLogRoot 'CL.command.1.tlog'),
+        (Join-Path $filterTLogRoot 'link.command.1.tlog'),
+        (Join-Path $contextTLogRoot 'CL.command.1.tlog'),
+        (Join-Path $contextTLogRoot 'Lib.command.1.tlog'),
+        (Join-Path $protocolTLogRoot 'CL.command.1.tlog'),
+        (Join-Path $protocolTLogRoot 'Lib.command.1.tlog'))
+    $allCommandReferences = [string[]]@($allCommandTlogs | ForEach-Object { Get-RelativeRepositoryPath $_ })
     foreach ($path in @(
             'ChatpadWin11.sln',
             'Directory.Build.props',
             'src/driver/ChatpadFilter/ChatpadFilter.vcxproj',
             'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj',
             'src/protocol/ChatpadProtocol/ChatpadProtocol.vcxproj')) {
-        Add-BuildInput $inputs (Join-Path $repositoryRoot $path) 'msbuild_project_closure:explicit_project_or_repo_import'
+        $consumers = if ($path -match 'ChatpadFilter') { @('ChatpadFilter') } elseif ($path -match 'ChatpadKmdfRequestOwnerContext') { @('ChatpadKmdfRequestOwnerContext') } elseif ($path -match 'ChatpadProtocol') { @('ChatpadProtocol') } else { @('ChatpadFilter','ChatpadKmdfRequestOwnerContext','ChatpadProtocol') }
+        Add-BuildInput $inputs (Join-Path $repositoryRoot $path) 'msbuild_project_closure:explicit_project_or_repo_import' `
+            -SourceTlogReferences $allCommandReferences `
+            -ConsumingProjects $consumers `
+            -Tools @('MSBuild') `
+            -Configuration $Configuration `
+            -Set $Set
     }
-
-    $key = "$($Configuration.ToLowerInvariant())-$($Set.ToLowerInvariant())"
-    $rawRoot = Join-Path (Join-Path $evidenceRoot $key) 'raw-tlogs'
-    $filterTLogRoot = Join-Path $rawRoot 'ChatpadFilter\ChatpadFilter.tlog'
-    $contextTLogRoot = Join-Path $rawRoot 'ChatpadKmdfRequestOwnerContext\ChatpadK.421C7E3A.tlog'
-    $protocolTLogRoot = Join-Path $rawRoot 'ChatpadProtocol\ChatpadProtocol.tlog'
     Add-ClCommandSources $inputs (Join-Path $filterTLogRoot 'CL.command.1.tlog') 'cl_command_tlog:ChatpadFilter'
     Add-TLogPathInputs $inputs (Join-Path $filterTLogRoot 'CL.read.1.tlog') 'cl_read_tlog:ChatpadFilter'
     Add-TLogPathInputs $inputs (Join-Path $filterTLogRoot 'Cl.items.tlog') 'cl_items_tlog:ChatpadFilter'
@@ -1386,7 +1450,23 @@ function Get-BuildInputInventory {
             (Get-ToolchainPath 'link.exe' $DumpbinPath),
             (Get-ToolchainPath 'lib.exe' $DumpbinPath),
             $DumpbinPath)) {
-        Add-BuildInput $inputs $tool ("toolchain_identity:{0}:{1}" -f [System.IO.Path]::GetFileName($tool), (Get-Item -LiteralPath $tool).VersionInfo.FileVersion)
+        $toolName = [System.IO.Path]::GetFileName($tool)
+        $toolRefs = if ($toolName -ieq 'cl.exe') {
+            @($allCommandReferences | Where-Object { $_ -match '/CL\.command\.' })
+        } elseif ($toolName -ieq 'link.exe') {
+            @($allCommandReferences | Where-Object { $_ -match '/link\.command\.' })
+        } elseif ($toolName -ieq 'lib.exe') {
+            @($allCommandReferences | Where-Object { $_ -match '/Lib\.command\.' })
+        } else {
+            $allCommandReferences
+        }
+        $toolConsumers = if ($toolName -ieq 'cl.exe') { @('ChatpadFilter','ChatpadKmdfRequestOwnerContext','ChatpadProtocol') } elseif ($toolName -ieq 'link.exe') { @('ChatpadFilter') } elseif ($toolName -ieq 'lib.exe') { @('ChatpadKmdfRequestOwnerContext','ChatpadProtocol') } else { @('evidence-inspection') }
+        Add-BuildInput $inputs $tool ("toolchain_identity:{0}:{1}" -f $toolName, (Get-Item -LiteralPath $tool).VersionInfo.FileVersion) `
+            -SourceTlogReferences $toolRefs `
+            -ConsumingProjects $toolConsumers `
+            -Tools @($toolName) `
+            -Configuration $Configuration `
+            -Set $Set
     }
 
     $commandFiles = @(
@@ -1546,6 +1626,7 @@ try {
     $producerBlobId = $initialIdentity.producer_blob_id
     foreach ($trackedPath in @(
             $producerRelativePath,
+            $rawTlogValidatorRelativePath,
             $productionContractRelativePath,
             $wrapperContractRelativePath)) {
         $tracked = @(& git -C $repositoryRoot ls-files --error-unmatch -- $trackedPath 2>$null)
@@ -1555,6 +1636,7 @@ try {
     }
     $allowedTrackedPaths = @(
         $producerRelativePath,
+        $rawTlogValidatorRelativePath,
         $productionContractRelativePath,
         $wrapperContractRelativePath,
         'tools/Test-ChatpadProductionOrchestrationInvocation.ps1',
@@ -1578,6 +1660,10 @@ try {
         "WrapperContractSize=$((Get-Item -LiteralPath $wrapperContractPath).Length)",
         "WrapperContractSha256=$($initialIdentity.wrapper_contract_sha256)",
         "WrapperContractBlobId=$($initialIdentity.wrapper_contract_blob_id)",
+        "RawTlogValidatorPath=$rawTlogValidatorRelativePath",
+        "RawTlogValidatorSize=$((Get-Item -LiteralPath $rawTlogValidatorPath).Length)",
+        "RawTlogValidatorSha256=$($initialIdentity.raw_tlog_validator_sha256)",
+        "RawTlogValidatorBlobId=$($initialIdentity.raw_tlog_validator_blob_id)",
         'FinalIdentityVerificationUtc=PENDING',
         'Result=PENDING',
         'ExitCode=PENDING')
@@ -1592,6 +1678,9 @@ try {
         "ProductionContractBlobId=$($initialIdentity.production_contract_blob_id)",
         "WrapperContractSha256=$($initialIdentity.wrapper_contract_sha256)",
         "WrapperContractBlobId=$($initialIdentity.wrapper_contract_blob_id)",
+        "RawTlogValidatorPath=$rawTlogValidatorRelativePath",
+        "RawTlogValidatorSha256=$($initialIdentity.raw_tlog_validator_sha256)",
+        "RawTlogValidatorBlobId=$($initialIdentity.raw_tlog_validator_blob_id)",
         "FreezeUtc=$($freezeUtc.ToString('o'))",
         "OutputRoot=$(Get-RelativeRepositoryPath $evidenceRoot)",
         "TrackedBeforeGeneration=True",
@@ -1602,6 +1691,7 @@ try {
     $results = [ordered]@{}
     $inputInventories = [ordered]@{}
     $setEvidence = [ordered]@{}
+    $pdbRecords = New-Object 'Collections.Generic.List[object]'
     $expectedSymbols = @(
         'ChatpadKmdfRequestOwnerCreateDormantObjectGraph',
         'ChatpadKmdfRequestOwnerCreateBookkeepingSpinLock',
@@ -1627,6 +1717,7 @@ try {
             $cleanCommand = "Remove ignored artifacts/obj/x64/$configuration and artifacts/bin/x64/$configuration"
             $buildPath = Join-Path $evidenceRoot "ab-build-$key.log"
             $generatedAt = (Get-Date).ToUniversalTime().ToString('o')
+            $gitStateBefore = Get-HonestGitState "before A/B set $key" $allowedTrackedPaths
             Assert-AllowedTrackedState "before A/B build $set $configuration" $allowedTrackedPaths
             $identityBeforeClean = Test-FrozenIdentity "$key-before-clean"
             [void](Assert-TrackedInputContract -Path $productionContractPath -ExpectedName 'production-runtime-link-input-set' -ExpectedCount 26)
@@ -1693,6 +1784,26 @@ try {
             $pdbPath = Join-Path $evidenceRoot "ChatpadFilter-$key.pdb"
             Copy-Item -LiteralPath $driverSource -Destination $driverPath -Force
             Copy-Item -LiteralPath $pdbSource -Destination $pdbPath -Force
+            $pdbRelative = Get-RelativeRepositoryPath $pdbPath
+            & git -C $repositoryRoot check-ignore -q -- $pdbRelative
+            $pdbIgnored = $LASTEXITCODE -eq 0
+            $pdbTracked = @(& git -C $repositoryRoot ls-files -- $pdbRelative)
+            if ($LASTEXITCODE -ne 0) { throw "Unable to inspect retained PDB tracking state for $key." }
+            $pdbRecords.Add([pscustomobject][ordered]@{
+                set = $Set
+                configuration = "$configuration|x64"
+                ab_side = $Set
+                original_path = Get-RelativeRepositoryPath $pdbSource
+                retained_path = $pdbRelative
+                size = [long](Get-Item -LiteralPath $pdbPath).Length
+                sha256 = (Get-FileHash -LiteralPath $pdbPath -Algorithm SHA256).Hash
+                capture_utc = (Get-Date).ToUniversalTime().ToString('o')
+                producing_build = Get-RelativeRepositoryPath $buildPath
+                corresponding_binary = $driverRelative
+                symbol_disassembly_use = 'Retained for independent symbol correlation; retained dumpbin symbol and disassembly transcripts are bound separately.'
+                ignored = [bool]$pdbIgnored
+                untracked = ($pdbTracked.Count -eq 0)
+            })
             $captureEndUtc = (Get-Date).ToUniversalTime()
             $identityAfterCapture = Test-FrozenIdentity "$key-after-capture"
             [void](Assert-TrackedInputContract -Path $productionContractPath -ExpectedName 'production-runtime-link-input-set' -ExpectedCount 26)
@@ -1716,7 +1827,12 @@ try {
             $buildLines.Add("ProductionContractBlobId=$($identityBeforeBuild.production_contract_blob_id)")
             $buildLines.Add("WrapperContractSha256=$($identityBeforeBuild.wrapper_contract_sha256)")
             $buildLines.Add("WrapperContractBlobId=$($identityBeforeBuild.wrapper_contract_blob_id)")
-            $buildLines.Add('GitCleanBefore=FrozenTrackedChangesOnly')
+            $buildLines.Add("GitStatusShortBefore=$(@($gitStateBefore.status_short) -join ' || ')")
+            $buildLines.Add("GitDiffExitCodeBefore=$($gitStateBefore.diff_exit_code)")
+            $buildLines.Add("GitCachedDiffExitCodeBefore=$($gitStateBefore.cached_diff_exit_code)")
+            $buildLines.Add("GitCleanBefore=$($gitStateBefore.globally_clean)")
+            $buildLines.Add("GitCleanRelativeToFrozenSnapshotBefore=$($gitStateBefore.clean_relative_to_frozen_snapshot)")
+            $buildLines.Add('GitCleanSemantics=Global clean requires empty short status outside ignored roots plus zero ordinary and cached diff exit codes; remediation generation is separately allowed only relative to the frozen producer/contracts/validator snapshot.')
             $buildLines.Add("CleanCommand=$cleanCommand")
             $buildLines.Add("CleanExitCode=$cleanExitCode")
             $buildLines.Add("CleanStartUtc=$($cleanStartUtc.ToString('o'))")
@@ -1738,23 +1854,20 @@ try {
             $buildLines.Add("CapturedObjectCount=$($intermediateEvidence.Inventory.captured_object_count)")
             $buildLines.Add("CapturedLibraryCount=$($intermediateEvidence.Inventory.captured_library_count)")
             $buildLines.Add('CapturedBinaryCount=1')
-            $buildLines.Add("ProducerIdentityBefore=$($identityBeforeClean.result)")
-            $buildLines.Add("ProducerIdentityBeforeBuild=$($identityBeforeBuild.result)")
-            $buildLines.Add("ProducerIdentityAfter=$($identityAfterCapture.result)")
-            $buildLines.Add("ContractIdentityBefore=$($identityBeforeBuild.result)")
-            $buildLines.Add("ContractIdentityAfter=$($identityAfterCapture.result)")
-            $buildLines.Add("ParserUnparseableRecords=$($parserReport.unparseable_records)")
-            $buildLines.Add("ParserDiscardedRecords=$($parserReport.discarded_records)")
-            $buildLines.Add("ParserUnexplainedRecords=$($parserReport.unexplained_records)")
+            $buildLines.Add('CapturedPdbCount=1')
+            Add-IdentityTranscriptLines -Lines $buildLines -Phase 'BeforeClean' -Identity $identityBeforeClean
+            Add-IdentityTranscriptLines -Lines $buildLines -Phase 'BeforeBuild' -Identity $identityBeforeBuild
+            Add-IdentityTranscriptLines -Lines $buildLines -Phase 'AfterCapture' -Identity $identityAfterCapture
+            $buildLines.Add("ParserUnparseableRecords=$($parserReport.UnparseableRecordCount)")
+            $buildLines.Add("ParserDiscardedRecords=$($parserReport.DiscardedRecordCount)")
+            $buildLines.Add("ParserUnexplainedRecords=$($parserReport.UnexplainedRecordCount)")
             $buildLines.Add("RawTlogInventory=$(Get-RelativeRepositoryPath (Join-Path (Join-Path $evidenceRoot $key) 'tlog-inventory.json'))")
             $buildLines.Add("ProducerClosure=$(Get-RelativeRepositoryPath (Join-Path (Join-Path $evidenceRoot $key) 'producer-closure.json'))")
             $buildLines.Add("LinkedObjectProducerCount=$($producerClosure.linked_object_count)")
             $buildLines.Add("MissingObjectProducerCount=$($producerClosure.missing_object_producer_count)")
             $buildLines.Add("ConfigurationDigestSha256=$($inventory.configuration_digest_sha256)")
             $buildLines.Add("ToolchainDigestSha256=$($inventory.toolchain_digest_sha256)")
-            $buildLines.Add('TrackedStateBeforeBuild=FrozenTrackedChangesOnly')
-            $buildLines.Add('TrackedStateAfterBuild=FrozenTrackedChangesOnly')
-            $buildLines.Add('GitCleanAfter=FrozenTrackedChangesOnly')
+            $buildLines.Add("TrackedStateBeforeBuild=AllowedRemediationPathsOnly:$($gitStateBefore.clean_relative_to_frozen_snapshot)")
             $buildLines.Add('SigningActions=0')
             $buildLines.Add('PackagingActions=0')
             $buildLines.Add('CertificateCreationActions=0')
@@ -1772,8 +1885,7 @@ try {
             $buildLines.Add("BuildExitCode=$buildExitCode")
             $buildLines.Add("WarningCount=$(@($buildOutput | Where-Object { $_ -match '(?i)\\bwarning\\b' }).Count)")
             $buildLines.Add("ErrorCount=$(@($buildOutput | Where-Object { $_ -match '(?i)\\berror\\b' }).Count)")
-            $buildLines.Add('Result=PASS')
-            Write-Evidence $buildPath $buildLines
+            $buildLines.Add('AfterSetIdentityScope=Executed after all set capture, hashing, binary inspection, and retention transcript construction; the build transcript is serialized after the check because its own bytes are not an identity input.')
 
             $contextObjectRelative =
                 "artifacts/obj/x64/$configuration/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.obj"
@@ -1910,8 +2022,102 @@ try {
                 NormalizedSymbolSetSha256 = Get-NormalizedDumpHash $driverSymbols $driverPath
                 ImportDumpSha256 = Get-NormalizedDumpHash $imports $driverPath
             }
+            $identityAfterSetFinalization = Test-FrozenIdentity "$key-after-set-finalization"
+            [void](Assert-TrackedInputContract -Path $productionContractPath -ExpectedName 'production-runtime-link-input-set' -ExpectedCount 26)
+            [void](Assert-TrackedInputContract -Path $wrapperContractPath -ExpectedName 'ab-wrapper-build-tracked-input-set' -ExpectedCount 32)
+            $gitStateAfter = Get-HonestGitState "after A/B set $key" $allowedTrackedPaths
+            if (-not $gitStateAfter.clean_relative_to_frozen_snapshot) {
+                throw "Unexpected repository change after A/B set $key."
+            }
+            Add-IdentityTranscriptLines -Lines $buildLines -Phase 'AfterSetFinalization' -Identity $identityAfterSetFinalization
+            $buildLines.Add("FinalAfterSetIdentityUtc=$($identityAfterSetFinalization.verification_utc)")
+            $buildLines.Add("GitStatusShortAfter=$(@($gitStateAfter.status_short) -join ' || ')")
+            $buildLines.Add("GitDiffExitCodeAfter=$($gitStateAfter.diff_exit_code)")
+            $buildLines.Add("GitCachedDiffExitCodeAfter=$($gitStateAfter.cached_diff_exit_code)")
+            $buildLines.Add("GitCleanAfter=$($gitStateAfter.globally_clean)")
+            $buildLines.Add("GitCleanRelativeToFrozenSnapshotAfter=$($gitStateAfter.clean_relative_to_frozen_snapshot)")
+            $buildLines.Add("TrackedStateAfterBuild=AllowedRemediationPathsOnly:$($gitStateAfter.clean_relative_to_frozen_snapshot)")
+            $buildLines.Add('Result=PASS')
+            Write-Evidence $buildPath $buildLines
         }
     }
+
+    $pdbInventoryPath = Join-Path $evidenceRoot 'pdb-inventory.json'
+    $actualPdbPaths = @(Get-ChildItem -LiteralPath $evidenceRoot -File -Filter 'ChatpadFilter-*.pdb' | Sort-Object FullName | ForEach-Object { Get-RelativeRepositoryPath $_.FullName })
+    $declaredPdbPaths = @($pdbRecords | ForEach-Object { [string]$_.retained_path } | Sort-Object)
+    $pdbInventory = [pscustomobject][ordered]@{
+        schema_version = 'chatpad-production-orchestration-pdb-inventory-v1'
+        policy = 'All four retained PDBs are hash-bound bidirectionally; no unbound PDB is accepted.'
+        record_count = $pdbRecords.Count
+        actual_file_count = $actualPdbPaths.Count
+        missing_file_count = @($declaredPdbPaths | Where-Object { $actualPdbPaths -cnotcontains $_ }).Count
+        extra_file_count = @($actualPdbPaths | Where-Object { $declaredPdbPaths -cnotcontains $_ }).Count
+        hash_mismatch_count = @($pdbRecords | Where-Object { (Get-FileHash -LiteralPath (Join-Path $repositoryRoot ([string]$_.retained_path)) -Algorithm SHA256).Hash -cne [string]$_.sha256 }).Count
+        ignored_state_defect_count = @($pdbRecords | Where-Object { -not [bool]$_.ignored }).Count
+        tracked_state_defect_count = @($pdbRecords | Where-Object { -not [bool]$_.untracked }).Count
+        records = [object[]]$pdbRecords
+        result = 'PENDING'
+    }
+    $pdbInventory.result = if ($pdbInventory.record_count -eq 4 -and $pdbInventory.actual_file_count -eq 4 -and $pdbInventory.missing_file_count -eq 0 -and $pdbInventory.extra_file_count -eq 0 -and $pdbInventory.hash_mismatch_count -eq 0 -and $pdbInventory.ignored_state_defect_count -eq 0 -and $pdbInventory.tracked_state_defect_count -eq 0) { 'PASS' } else { 'FAIL' }
+    Write-JsonEvidence $pdbInventoryPath $pdbInventory
+    if ($pdbInventory.result -cne 'PASS') { throw 'Retained PDB binding failed.' }
+
+    $negativeSourceRoot = Join-Path $evidenceRoot 'debug-a\raw-tlogs'
+    $negativeInventoryPath = Join-Path $evidenceRoot 'debug-a\tlog-inventory.json'
+    $negativeTestRoot = Join-Path $evidenceRoot 'negative-test'
+    $disposableRoot = Join-Path $negativeTestRoot 'disposable-root'
+    New-Item -ItemType Directory -Path $negativeTestRoot -Force | Out-Null
+    Copy-Item -LiteralPath $negativeSourceRoot -Destination $disposableRoot -Recurse -Force
+    $canonicalBeforeJson = @(& $rawTlogValidatorPath -Mode ValidateExactRoot -RawRoot (Get-RelativeRepositoryPath $negativeSourceRoot) -InventoryPath (Get-RelativeRepositoryPath $negativeInventoryPath) 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $canonicalBeforeExit = $LASTEXITCODE
+    $canonicalBefore = $canonicalBeforeJson | ConvertFrom-Json
+    $disposableBeforeJson = @(& $rawTlogValidatorPath -Mode ValidateExactRoot -RawRoot (Get-RelativeRepositoryPath $disposableRoot) -InventoryPath (Get-RelativeRepositoryPath $negativeInventoryPath) 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $disposableBeforeExit = $LASTEXITCODE
+    $disposableBefore = $disposableBeforeJson | ConvertFrom-Json
+    if ($canonicalBeforeExit -ne 0 -or $disposableBeforeExit -ne 0) { throw 'Negative-test baseline validation failed.' }
+    $syntheticPath = Join-Path $disposableRoot 'synthetic-extra-audit.tlog'
+    [IO.File]::WriteAllText($syntheticPath, "synthetic extra TLOG for exact-root negative test`n", $utf8)
+    $negativeJson = @(& $rawTlogValidatorPath -Mode ValidateExactRoot -RawRoot (Get-RelativeRepositoryPath $disposableRoot) -InventoryPath (Get-RelativeRepositoryPath $negativeInventoryPath) 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $negativeExit = $LASTEXITCODE
+    $negativeResult = $negativeJson | ConvertFrom-Json
+    if ($negativeExit -eq 0 -or [int]$negativeResult.extra_file_count -ne 1 -or @($negativeResult.extra_files) -cnotcontains 'synthetic-extra-audit.tlog') {
+        throw 'Extra-TLOG negative test did not fail exactly as required.'
+    }
+    Remove-Item -LiteralPath $syntheticPath -Force
+    $restoredJson = @(& $rawTlogValidatorPath -Mode ValidateExactRoot -RawRoot (Get-RelativeRepositoryPath $disposableRoot) -InventoryPath (Get-RelativeRepositoryPath $negativeInventoryPath) 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $restoredExit = $LASTEXITCODE
+    $restored = $restoredJson | ConvertFrom-Json
+    $canonicalAfterJson = @(& $rawTlogValidatorPath -Mode ValidateExactRoot -RawRoot (Get-RelativeRepositoryPath $negativeSourceRoot) -InventoryPath (Get-RelativeRepositoryPath $negativeInventoryPath) 2>&1 | ForEach-Object { $_.ToString() }) -join "`n"
+    $canonicalAfterExit = $LASTEXITCODE
+    $canonicalAfter = $canonicalAfterJson | ConvertFrom-Json
+    if ($restoredExit -ne 0 -or $canonicalAfterExit -ne 0 -or [string]$restored.root_hash_sha256 -cne [string]$disposableBefore.root_hash_sha256 -or [string]$canonicalAfter.root_hash_sha256 -cne [string]$canonicalBefore.root_hash_sha256) {
+        throw 'Extra-TLOG negative-test restoration or canonical-root identity failed.'
+    }
+    Remove-IgnoredArtifactTree $negativeTestRoot
+    $negativeTranscriptPath = Join-Path $evidenceRoot 'raw-tlog-extra-file-negative-test.log'
+    Write-Evidence $negativeTranscriptPath @(
+        "CanonicalSourceRoot=$(Get-RelativeRepositoryPath $negativeSourceRoot)",
+        "DisposableRoot=$(Get-RelativeRepositoryPath $disposableRoot)",
+        "OriginalInventoryCount=$($disposableBefore.actual_file_count)",
+        "OriginalDisposableRootHash=$($disposableBefore.root_hash_sha256)",
+        'SyntheticFile=synthetic-extra-audit.tlog',
+        "NegativeTestCommand=.\tools\Test-ChatpadProductionOrchestrationRawTlogEvidence.ps1 -Mode ValidateExactRoot -RawRoot '$(Get-RelativeRepositoryPath $disposableRoot)' -InventoryPath '$(Get-RelativeRepositoryPath $negativeInventoryPath)'",
+        'ExpectedFailure=True',
+        "FailureExitCode=$negativeExit",
+        "DetectedExtraFileCount=$($negativeResult.extra_file_count)",
+        "DetectedExtraFilePath=$(@($negativeResult.extra_files) -join ';')",
+        'RestorationAction=Deleted only disposable synthetic-extra-audit.tlog, then deleted the disposable test tree after PASS',
+        "PostRestorationCommand=.\tools\Test-ChatpadProductionOrchestrationRawTlogEvidence.ps1 -Mode ValidateExactRoot -RawRoot '$(Get-RelativeRepositoryPath $disposableRoot)' -InventoryPath '$(Get-RelativeRepositoryPath $negativeInventoryPath)'",
+        "PostRestorationExitCode=$restoredExit",
+        "PostRestorationFileCount=$($restored.actual_file_count)",
+        "PostRestorationRootHash=$($restored.root_hash_sha256)",
+        "PostRestorationHashResult=$([string]$restored.root_hash_sha256 -ceq [string]$disposableBefore.root_hash_sha256)",
+        "CanonicalRootHashBefore=$($canonicalBefore.root_hash_sha256)",
+        "CanonicalRootHashAfter=$($canonicalAfter.root_hash_sha256)",
+        "CanonicalRootUnchangedResult=$([string]$canonicalBefore.root_hash_sha256 -ceq [string]$canonicalAfter.root_hash_sha256)",
+        'DisposableRootRetentionPolicy=Deleted after successful restoration validation',
+        'FinalResult=PASS',
+        'Result=PASS')
 
     foreach ($configuration in @('Debug', 'Release')) {
         $configurationLower = $configuration.ToLowerInvariant()
@@ -2096,6 +2302,10 @@ try {
         "WrapperContractSize=$((Get-Item -LiteralPath $wrapperContractPath).Length)",
         "WrapperContractSha256=$($finalIdentity.wrapper_contract_sha256)",
         "WrapperContractBlobId=$($finalIdentity.wrapper_contract_blob_id)",
+        "RawTlogValidatorPath=$rawTlogValidatorRelativePath",
+        "RawTlogValidatorSize=$((Get-Item -LiteralPath $rawTlogValidatorPath).Length)",
+        "RawTlogValidatorSha256=$($finalIdentity.raw_tlog_validator_sha256)",
+        "RawTlogValidatorBlobId=$($finalIdentity.raw_tlog_validator_blob_id)",
         "FinalIdentityVerificationUtc=$($finalIdentityUtc.ToString('o'))",
         'Result=PASS',
         'ExitCode=0')

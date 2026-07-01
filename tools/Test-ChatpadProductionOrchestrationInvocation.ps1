@@ -71,6 +71,38 @@ function Invoke-GitLines {
     return @($output)
 }
 
+function Invoke-RawTlogValidator {
+    param(
+        [Parameter(Mandatory)][string]$ValidatorPath,
+        [Parameter(Mandatory)][string[]]$Arguments
+    )
+
+    if (($Arguments.Count % 2) -ne 0) {
+        throw "Raw TLOG validator argument list must contain name/value pairs."
+    }
+
+    $parameters = @{}
+    for ($i = 0; $i -lt $Arguments.Count; $i += 2) {
+        $name = [string]$Arguments[$i]
+        if (-not $name.StartsWith('-')) {
+            throw "Raw TLOG validator argument name '$name' does not start with '-'."
+        }
+
+        $parameters[$name.TrimStart('-')] = $Arguments[$i + 1]
+    }
+
+    $output = @(& $ValidatorPath @parameters 2>&1 | ForEach-Object {
+        if ($null -eq $_) { '' } else { $_.ToString() }
+    })
+    $exitCode = $LASTEXITCODE
+    $text = $output -join "`n"
+    $data = $null
+    try { $data = $text | ConvertFrom-Json } catch {
+        throw "Raw TLOG validator returned non-JSON output: $text"
+    }
+    return [pscustomobject]@{ ExitCode = $exitCode; Data = $data; Text = $text }
+}
+
 function Get-NormalizedDirectoryPath {
     param([Parameter(Mandatory)][string]$Path)
 
@@ -350,7 +382,7 @@ $artifactsRoot = Join-Path $repoRoot 'artifacts'
 $implementationParent = '4ba0de15420e0b66287a501918de694c8b6fd720'
 $implementationCommit = 'efb729502a0527ac70e2d20fa31a323c3beb2920'
 $implementationBranch = 'feature/offline-kmdf-production-orchestration-invocation'
-$evidenceFinalizationStartingCommit = 'd22867f86917a6c81574b5f82d19aacd9984b213'
+$evidenceFinalizationStartingCommit = '6a586bb2490e6a2611987a229c8c9d11d32fab01'
 $expectedImplementationPaths = @(
     'docs/DECISIONS.md',
     'docs/NEXT-TASK.md',
@@ -466,7 +498,10 @@ $mandatoryEvidenceIds = @(
     'ab_retention_release_a',
     'ab_retention_release_b',
     'ab_equivalence_debug',
-    'ab_equivalence_release'
+    'ab_equivalence_release',
+    'raw_tlog_validator_source',
+    'raw_tlog_extra_file_negative_test',
+    'pdb_inventory'
 )
 
 $deviceText = Remove-CComments ([System.IO.File]::ReadAllText($devicePath))
@@ -821,12 +856,12 @@ if ($InspectionMode -eq 'Full') {
         throw "Manifest is missing: $manifestPath"
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ([string]$manifest.schema_version -cne '1.5.0' -or
+    if ([string]$manifest.schema_version -cne '1.6.0' -or
         [string]$manifest.checkpoint -cne 'offline-kmdf-production-orchestration-invocation' -or
         [string]$manifest.implementation_commit -cne $implementationCommit -or
         [string]$manifest.implementation_parent -cne $implementationParent -or
         [string]$manifest.implementation_branch -cne $implementationBranch -or
-        [string]$manifest.remediation_starting_commit -cne $implementationCommit -or
+        [string]$manifest.remediation_starting_commit -cne $evidenceFinalizationStartingCommit -or
         [string]$manifest.evidence_finalization_starting_commit -cne $evidenceFinalizationStartingCommit) {
         throw 'Manifest schema, checkpoint, implementation binding, or remediation starting commit is invalid.'
     }
@@ -845,17 +880,72 @@ if ($InspectionMode -eq 'Full') {
             'wrapper_build_input_contract',
             'provenance_closure_contract',
             'ab_provenance_producer',
+            'raw_tlog_validator',
+            'per_set_identity_verification_policy',
+            'independent_raw_tlog_parser_policy',
+            'independent_freshness_recomputation_policy',
+            'provenance_record_schemas',
+            'git_state_semantics',
+            'extra_tlog_negative_test_policy',
+            'pdb_retention_policy',
             'evidence_entries')) {
         if ($null -eq $manifest.$requiredSection) {
             throw "Manifest missing required section: $requiredSection"
         }
     }
     if ([string]$manifest.evidence_state -notmatch 'final frozen producer' -or
-        [string]$manifest.containing_commit_binding -notmatch 'commit that contains this manifest' -or
+        [string]$manifest.containing_commit_binding -notmatch 'containing Git commit' -or
+        [string]$manifest.containing_commit_binding -notmatch 'independent audit' -or
+        [string]$manifest.containing_commit_binding -notmatch 'did not yet exist' -or
         [string]$manifest.self_reference_limitation -notmatch 'self-referential' -or
         [string]$manifest.historical_binary_limitation -notmatch 'historical.*Acceptance relies' -or
         [string]$manifest.independent_audit_requirement -notmatch 'parent.*branch.*scope.*hash.*clean') {
         throw 'Manifest containing-commit, evidence-state, self-reference, or independent-audit binding is incomplete.'
+    }
+    $independentCounters = [ordered]@{
+        ContractMetadataDefectCount = 0
+        ContainingBindingDefectCount = 0
+        PerSetIdentityPolicyDefectCount = 0
+        RawRootExtraDefectCount = 0
+        RawRootMissingDefectCount = 0
+        RawTlogHashDefectCount = 0
+        ParserEncodingDefectCount = 0
+        ParserUnparseableRecordCount = 0
+        ParserDiscardedRecordCount = 0
+        ParserUnexplainedRecordCount = 0
+        FreshnessStaleRecordCount = 0
+        FreshnessAmbiguousRecordCount = 0
+        FreshnessOutOfWindowRecordCount = 0
+        ObjectSchemaDefectCount = 0
+        ObjectSharedHeaderDefectCount = 0
+        GeneratedLibrarySchemaDefectCount = 0
+        LinkedLibraryDefectCount = 0
+        InputProvenanceMissingFieldCount = 0
+        InputSourceTlogDefectCount = 0
+        InputProjectDefectCount = 0
+        InputToolDefectCount = 0
+        GitStateTranscriptDefectCount = 0
+        AfterSetIdentityDefectCount = 0
+        NegativeTestEvidenceDefectCount = 0
+        PdbBindingDefectCount = 0
+        SafetyCounterDefectCount = 0
+        MandatoryIdDefectCount = 0
+        EvidencePathDefectCount = 0
+        EvidenceHashDefectCount = 0
+        TrackedEvidenceDefectCount = 0
+        NonIgnoredEvidenceDefectCount = 0
+    }
+    $expectedIdentityPhases = @('BeforeClean','BeforeBuild','AfterCapture','AfterSetFinalization')
+    $expectedIdentityFields = @('producer_sha256','producer_blob_id','production_contract_sha256','production_contract_blob_id','wrapper_contract_sha256','wrapper_contract_blob_id')
+    $expectedIdentityEvidenceIds = @('ab_build_debug_a','ab_build_debug_b','ab_build_release_a','ab_build_release_b')
+    if ((Compare-Object -ReferenceObject $expectedIdentityPhases -DifferenceObject @($manifest.per_set_identity_verification_policy.required_phases) -SyncWindow 0) -or
+        (Compare-Object -ReferenceObject $expectedIdentityFields -DifferenceObject @($manifest.per_set_identity_verification_policy.required_identities) -SyncWindow 0) -or
+        (Compare-Object -ReferenceObject $expectedIdentityEvidenceIds -DifferenceObject @($manifest.per_set_identity_verification_policy.evidence_ids) -SyncWindow 0) -or
+        [string]$manifest.per_set_identity_verification_policy.expected_result -cne 'PASS' -or
+        [string]$manifest.per_set_identity_verification_policy.mismatch_handling -notmatch 'Fail closed' -or
+        [string]$manifest.per_set_identity_verification_policy.independent_guard_recomputation -notmatch 'recomputes') {
+        $independentCounters.PerSetIdentityPolicyDefectCount++
+        throw 'Manifest per-set identity verification policy is invalid.'
     }
     $declaredMandatoryIds = @($manifest.mandatory_evidence_ids | ForEach-Object { [string]$_ })
     $duplicateDeclaredMandatoryIds = @(
@@ -886,6 +976,8 @@ if ($InspectionMode -eq 'Full') {
         $duplicatePaths.Count -ne 0 -or
         $missingMandatoryIds.Count -ne 0 -or
         $unexpectedEvidenceIds.Count -ne 0) {
+        $independentCounters.MandatoryIdDefectCount = $duplicateIds.Count + $missingMandatoryIds.Count + $unexpectedEvidenceIds.Count
+        $independentCounters.EvidencePathDefectCount = $duplicatePaths.Count
         throw ("Manifest evidence ID/path set is invalid. Missing={0}; unexpected={1}; duplicate IDs={2}; duplicate paths={3}." -f
             ($missingMandatoryIds -join ','),
             ($unexpectedEvidenceIds -join ','),
@@ -997,7 +1089,9 @@ if ($InspectionMode -eq 'Full') {
                     'object_source_closure',
                     'generated_library_closure',
                     'same_set_closure',
-                    'tlog_summary')) {
+                    'tlog_summary',
+                    'negative_test',
+                    'pdb_inventory')) {
                 # These entries are machine-readable records; dedicated checks below bind their contents.
             }
             elseif ([string]$entry.id -cne $selfEvidenceId) {
@@ -1040,6 +1134,8 @@ if ($InspectionMode -eq 'Full') {
     if ($missingMetadataFields.Count -ne 0 -or
         $missingEvidenceFiles.Count -ne 0 -or
         $hashMismatches.Count -ne 0) {
+        $independentCounters.EvidencePathDefectCount += $missingEvidenceFiles.Count
+        $independentCounters.EvidenceHashDefectCount = $hashMismatches.Count
         throw ("Manifest evidence validation failed. Missing metadata={0}; missing files={1}; hash mismatches={2}." -f
             ($missingMetadataFields -join ','),
             ($missingEvidenceFiles -join ','),
@@ -1052,6 +1148,11 @@ if ($InspectionMode -eq 'Full') {
     if ([string]$frozenInput.schema_version -cne 'chatpad-production-orchestration-tracked-input-contract-v2' -or
         [string]$frozenInput.contract_name -cne 'production-runtime-link-input-set' -or
         [string]$frozenInput.implementation_commit -cne $implementationCommit -or
+        [string]$frozenInput.implementation_parent -cne $implementationParent -or
+        [string]$frozenInput.remediation_starting_commit -cne $evidenceFinalizationStartingCommit -or
+        [string]$frozenInput.containing_commit_binding -notmatch 'containing Git commit' -or
+        [string]$frozenInput.containing_commit_binding -notmatch 'independent audit' -or
+        [string]$frozenInput.self_reference_limitation -notmatch 'self-referential' -or
         [int]$frozenInput.declared_count -ne 26 -or
         @($frozenInput.entries).Count -ne 26 -or
         [string]$manifest.production_runtime_link_contract.sha256 -cne $frozenInputHash) {
@@ -1094,6 +1195,11 @@ if ($InspectionMode -eq 'Full') {
     if ([string]$wrapperInput.schema_version -cne 'chatpad-production-orchestration-tracked-input-contract-v2' -or
         [string]$wrapperInput.contract_name -cne 'ab-wrapper-build-tracked-input-set' -or
         [string]$wrapperInput.implementation_commit -cne $implementationCommit -or
+        [string]$wrapperInput.implementation_parent -cne $implementationParent -or
+        [string]$wrapperInput.remediation_starting_commit -cne $evidenceFinalizationStartingCommit -or
+        [string]$wrapperInput.containing_commit_binding -notmatch 'containing Git commit' -or
+        [string]$wrapperInput.containing_commit_binding -notmatch 'independent audit' -or
+        [string]$wrapperInput.self_reference_limitation -notmatch 'self-referential' -or
         [int]$wrapperInput.declared_count -ne 32 -or
         @($wrapperInput.entries).Count -ne 32 -or
         [string]$manifest.wrapper_build_input_contract.sha256 -cne $wrapperInputHash) {
@@ -1157,6 +1263,15 @@ if ($InspectionMode -eq 'Full') {
         $producerBlob -cne [string]$manifest.ab_provenance_producer.blob_id) {
         throw 'A/B provenance producer source identity is invalid.'
     }
+    $rawTlogValidatorPath = Join-Path $repoRoot ([string]$manifest.raw_tlog_validator.path)
+    $rawTlogValidatorSha = (Get-FileHash -LiteralPath $rawTlogValidatorPath -Algorithm SHA256).Hash
+    $rawTlogValidatorBlob = [string](@(Invoke-GitLines $repoRoot @('hash-object', '--', $rawTlogValidatorPath))[0])
+    $rawTlogValidatorTracked = @(Invoke-GitLines $repoRoot @('ls-files', '--', [string]$manifest.raw_tlog_validator.path))
+    if ($rawTlogValidatorTracked.Count -ne 1 -or
+        $rawTlogValidatorSha -cne [string]$manifest.raw_tlog_validator.sha256 -or
+        $rawTlogValidatorBlob -cne [string]$manifest.raw_tlog_validator.blob_id) {
+        throw 'Raw TLOG validator source identity is invalid.'
+    }
     $freeze = Get-EvidenceKeyValues $evidenceTextById['producer_contract_freeze']
     foreach ($freezeField in @(
             'FreezeUtc',
@@ -1169,6 +1284,9 @@ if ($InspectionMode -eq 'Full') {
             'WrapperContractPath',
             'WrapperContractSha256',
             'WrapperContractBlobId',
+            'RawTlogValidatorPath',
+            'RawTlogValidatorSha256',
+            'RawTlogValidatorBlobId',
             'FinalIdentityVerificationUtc',
             'Result',
             'ExitCode')) {
@@ -1193,11 +1311,19 @@ if ($InspectionMode -eq 'Full') {
         [string]$freeze.ProducerBlobId -cne $producerBlob -or
         [string]$freeze.ProductionContractSha256 -cne $frozenInputHash -or
         [string]$freeze.WrapperContractSha256 -cne $wrapperInputHash -or
+        [string]$freeze.RawTlogValidatorSha256 -cne $rawTlogValidatorSha -or
+        [string]$freeze.RawTlogValidatorBlobId -cne $rawTlogValidatorBlob -or
         [string]$freeze.Result -cne 'PASS' -or
         [int]$freeze.ExitCode -ne 0) {
         throw 'Producer/contract freeze record identity or timestamp is invalid.'
     }
 
+    $independentParserBySuffix = @{}
+    $independentFreshnessBySuffix = @{}
+    $objectRecordCount = 0
+    $generatedLibraryRecordCount = 0
+    $linkedLibraryRecordCount = 0
+    $retainedTlogPhysicalPaths = New-Object 'Collections.Generic.List[string]'
     foreach ($abConfiguration in @('Debug', 'Release')) {
         foreach ($abSet in @('A', 'B')) {
             $suffix = '{0}_{1}' -f $abConfiguration.ToLowerInvariant(), $abSet.ToLowerInvariant()
@@ -1209,6 +1335,7 @@ if ($InspectionMode -eq 'Full') {
             $objectClosureId = "object_source_closure_$suffix"
             $libraryClosureId = "generated_library_closure_$suffix"
             $sameSetId = "same_set_closure_$suffix"
+            $setInputInventoryId = "ab_input_inventory_$suffix"
             $tlogInventory = $evidenceTextById[$inventoryId] | ConvertFrom-Json
             $closure = $evidenceTextById[$closureId] | ConvertFrom-Json
             $freshness = Get-EvidenceKeyValues $evidenceTextById[$freshnessId]
@@ -1217,6 +1344,7 @@ if ($InspectionMode -eq 'Full') {
             $objectClosure = $evidenceTextById[$objectClosureId] | ConvertFrom-Json
             $libraryClosure = $evidenceTextById[$libraryClosureId] | ConvertFrom-Json
             $sameSet = $evidenceTextById[$sameSetId] | ConvertFrom-Json
+            $setInputInventory = $evidenceTextById[$setInputInventoryId] | ConvertFrom-Json
             if ([string]$tlogInventory.schema_version -cne 'chatpad-production-orchestration-raw-tlog-inventory-v2' -or
                 [string]$tlogInventory.configuration -cne "$abConfiguration|x64" -or
                 [string]$tlogInventory.set -cne $abSet -or
@@ -1252,6 +1380,7 @@ if ($InspectionMode -eq 'Full') {
                 }
             }
             foreach ($tlog in @($tlogInventory.tlogs)) {
+                $retainedTlogPhysicalPaths.Add(([string]$tlog.retained_path).Replace('\','/').ToLowerInvariant())
                 $retainedPath = Join-Path $repoRoot ([string]$tlog.retained_path)
                 if (-not (Test-Path -LiteralPath $retainedPath -PathType Leaf) -or
                     (Get-FileHash -LiteralPath $retainedPath -Algorithm SHA256).Hash -cne [string]$tlog.sha256) {
@@ -1264,6 +1393,16 @@ if ($InspectionMode -eq 'Full') {
                 }
             }
             $rawRoot = Join-Path $repoRoot ([string]$tlogInventory.raw_tlog_root)
+            $inventoryEntryPath = [string](@($evidenceEntries | Where-Object id -CEQ $inventoryId)[0].path)
+            $parserEntryPath = [string](@($evidenceEntries | Where-Object id -CEQ $parserId)[0].path)
+            $exactRootValidation = Invoke-RawTlogValidator -ValidatorPath $rawTlogValidatorPath -Arguments @(
+                '-Mode','ValidateExactRoot','-RawRoot',[string]$tlogInventory.raw_tlog_root,'-InventoryPath',$inventoryEntryPath)
+            $independentCounters.RawRootExtraDefectCount += [int]$exactRootValidation.Data.extra_file_count
+            $independentCounters.RawRootMissingDefectCount += [int]$exactRootValidation.Data.missing_file_count
+            $independentCounters.RawTlogHashDefectCount += [int]$exactRootValidation.Data.hash_mismatch_count
+            if ($exactRootValidation.ExitCode -ne 0 -or [string]$exactRootValidation.Data.result -cne 'PASS') {
+                throw "Independent raw-root exact enumeration failed for $inventoryId."
+            }
             $actualRawPaths = @(Get-ChildItem -LiteralPath $rawRoot -Recurse -File -Filter '*.tlog' |
                 ForEach-Object {
                     $_.FullName.Substring(
@@ -1290,6 +1429,18 @@ if ($InspectionMode -eq 'Full') {
             Assert-EvidenceValue $freshness 'TrackedRetainedCount' '0' $freshnessId
             Assert-EvidenceValue $freshness 'SourceAndRetainedRootsDisjoint' 'True' $freshnessId
             Assert-EvidenceValue $freshness 'Result' 'PASS' $freshnessId
+            $freshnessValidation = Invoke-RawTlogValidator -ValidatorPath $rawTlogValidatorPath -Arguments @(
+                '-Mode','ValidateFreshness','-RawRoot',[string]$tlogInventory.raw_tlog_root,'-InventoryPath',$inventoryEntryPath)
+            $independentFreshnessBySuffix[$suffix] = $freshnessValidation.Data
+            $independentCounters.FreshnessStaleRecordCount += [int]$freshnessValidation.Data.stale_count
+            $independentCounters.FreshnessAmbiguousRecordCount += [int]$freshnessValidation.Data.ambiguous_timestamp_count
+            $independentCounters.FreshnessOutOfWindowRecordCount += [int]$freshnessValidation.Data.out_of_window_count
+            if ($freshnessValidation.ExitCode -ne 0 -or [string]$freshnessValidation.Data.result -cne 'PASS' -or
+                [int]$freshnessValidation.Data.pre_build_count -ne 0 -or [int]$freshnessValidation.Data.post_build_count -ne 22 -or
+                [int]$freshnessValidation.Data.shared_file_count -ne 0 -or [int]$freshnessValidation.Data.cross_set_path_collision_count -ne 0 -or
+                [int]$freshnessValidation.Data.post_copy_hash_mismatch_count -ne 0) {
+                throw "Independent freshness recomputation failed for $inventoryId."
+            }
             if ([string]$closure.schema_version -cne 'chatpad-production-orchestration-intermediate-producer-closure-v1' -or
                 [string]$closure.configuration -cne "$abConfiguration|x64" -or
                 [string]$closure.set -cne $abSet -or
@@ -1311,23 +1462,34 @@ if ($InspectionMode -eq 'Full') {
                     throw "Generated intermediate lacks complete producer/consumer closure in $closureId."
                 }
             }
-            if ([string]$parser.schema_version -cne 'chatpad-production-orchestration-strict-tlog-parser-v1' -or
-                [int]$parser.total_raw_files -ne [int]$tlogInventory.actual_root_tlog_count -or
-                [int]$parser.total_raw_records -ne ([int]$parser.parsed_records + [int]$parser.empty_records) -or
-                [int]$parser.unparseable_records -ne 0 -or
-                [int]$parser.discarded_records -ne 0 -or
-                [int]$parser.unexplained_records -ne 0 -or
+            if ([string]$parser.schema_version -cne 'chatpad-production-orchestration-raw-tlog-parser-v2' -or
+                [int]$parser.RawFileCount -ne [int]$tlogInventory.actual_root_tlog_count -or
+                [int]$parser.RawRecordCount -ne ([int]$parser.ParsedRecordCount + [int]$parser.EmptyRecordCount) -or
+                [int]$parser.EncodingDefectCount -ne 0 -or
+                [int]$parser.UnparseableRecordCount -ne 0 -or
+                [int]$parser.DiscardedRecordCount -ne 0 -or
+                [int]$parser.UnexplainedRecordCount -ne 0 -or
                 [string]$parser.result -cne 'PASS') {
                 throw "Strict TLOG parser report failed for $parserId."
             }
             foreach ($parserFile in @($parser.files)) {
                 $actualParserHash = (Get-FileHash -LiteralPath (Join-Path $repoRoot ([string]$parserFile.path)) -Algorithm SHA256).Hash
                 if ($actualParserHash -cne [string]$parserFile.sha256 -or
-                    [int]$parserFile.unparseable_records -ne 0 -or
-                    [int]$parserFile.discarded_records -ne 0 -or
-                    [int]$parserFile.unexplained_records -ne 0) {
+                    [int]$parserFile.UnparseableRecordCount -ne 0 -or
+                    [int]$parserFile.DiscardedRecordCount -ne 0 -or
+                    [int]$parserFile.UnexplainedRecordCount -ne 0) {
                     throw "Strict parser file record failed for $($parserFile.path)."
                 }
+            }
+            $parserValidation = Invoke-RawTlogValidator -ValidatorPath $rawTlogValidatorPath -Arguments @(
+                '-Mode','ValidateParserReport','-RawRoot',[string]$tlogInventory.raw_tlog_root,'-ReportPath',$parserEntryPath)
+            $independentParserBySuffix[$suffix] = $parserValidation.Data.recomputed_counters
+            $independentCounters.ParserEncodingDefectCount += [int]$parserValidation.Data.recomputed_counters.EncodingDefectCount
+            $independentCounters.ParserUnparseableRecordCount += [int]$parserValidation.Data.recomputed_counters.UnparseableRecordCount
+            $independentCounters.ParserDiscardedRecordCount += [int]$parserValidation.Data.recomputed_counters.DiscardedRecordCount
+            $independentCounters.ParserUnexplainedRecordCount += [int]$parserValidation.Data.recomputed_counters.UnexplainedRecordCount
+            if ($parserValidation.ExitCode -ne 0 -or [string]$parserValidation.Data.result -cne 'PASS' -or [int]$parserValidation.Data.counter_mismatch_count -ne 0) {
+                throw "Independent retained-byte parser validation failed for $parserId."
             }
             if ([string]$retained.schema_version -cne 'chatpad-production-orchestration-retained-intermediate-inventory-v1' -or
                 [int]$retained.captured_object_count -le 0 -or
@@ -1355,13 +1517,106 @@ if ($InspectionMode -eq 'Full') {
                 Assert-GitIgnored $repoRoot ([string]$retainedFile.retained_path)
             }
             foreach ($object in @($objectClosure.objects)) {
-                if ([int]$object.source_input_closure.producing_compile_operation_count -ne 1 -or
-                    [string]::IsNullOrWhiteSpace([string]$object.source_input_closure.primary_source_file) -or
-                    @($object.source_input_closure.compiler_command_records).Count -eq 0 -or
-                    @($object.source_input_closure.compiler_read_records).Count -eq 0 -or
-                    @($object.source_input_closure.compiler_write_records).Count -eq 0) {
+                $objectRecordCount++
+                $requiredObjectFields = @('primary_source','project_local_headers','shared_repository_headers','external_headers','compiler_command_tlog','compiler_read_tlog','compiler_write_tlog','original_path','retained_path','size','sha256','project','configuration','set_id')
+                $missingObjectFields = @($requiredObjectFields | Where-Object { $object.PSObject.Properties.Name -cnotcontains $_ })
+                $independentCounters.ObjectSchemaDefectCount += $missingObjectFields.Count
+                if ($missingObjectFields.Count -ne 0 -or
+                    [int]$object.source_input_closure.producing_compile_operation_count -ne 1 -or
+                    [string]::IsNullOrWhiteSpace([string]$object.primary_source) -or
+                    @($object.compiler_command_tlog).Count -eq 0 -or
+                    @($object.compiler_read_tlog).Count -eq 0 -or
+                    @($object.compiler_write_tlog).Count -eq 0) {
                     throw "Object source-input closure is incomplete for $($object.original_path)."
                 }
+                $primaryPath = Join-Path $repoRoot ([string]$object.primary_source)
+                if (-not (Test-Path -LiteralPath $primaryPath -PathType Leaf)) {
+                    $independentCounters.ObjectSchemaDefectCount++
+                    throw "Object primary source is missing for $($object.original_path)."
+                }
+                $primaryDirectory = [IO.Path]::GetFullPath((Split-Path -Parent $primaryPath)).TrimEnd('\', '/')
+                foreach ($header in @($object.project_local_headers)) {
+                    $headerPath = [IO.Path]::GetFullPath((Join-Path $repoRoot ([string]$header)))
+                    if (-not $headerPath.StartsWith($primaryDirectory + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+                        $independentCounters.ObjectSharedHeaderDefectCount++
+                    }
+                }
+                foreach ($header in @($object.shared_repository_headers)) {
+                    $normalizedHeader = ([string]$header).Replace('\', '/').ToLowerInvariant()
+                    if ($wrapperPaths -cnotcontains $normalizedHeader -or -not (Test-Path -LiteralPath (Join-Path $repoRoot ([string]$header)) -PathType Leaf)) {
+                        $independentCounters.ObjectSharedHeaderDefectCount++
+                    }
+                }
+                foreach ($externalHeader in @($object.external_headers)) {
+                    try {
+                        $externalNormalized = ([IO.Path]::GetFullPath([string]$externalHeader).TrimEnd('\','/').Replace('\','/')).ToLowerInvariant()
+                        $externalIdentity = @($setInputInventory.inputs | Where-Object { [string]$_.normalized_path -ceq $externalNormalized })
+                        if ($externalIdentity.Count -ne 1 -or [string]$externalIdentity[0].sha256 -notmatch '^[0-9A-F]{64}$' -or
+                            (Get-FileHash -LiteralPath ([string]$externalHeader) -Algorithm SHA256).Hash -cne [string]$externalIdentity[0].sha256) {
+                            $independentCounters.ObjectSchemaDefectCount++
+                        }
+                    } catch { $independentCounters.ObjectSchemaDefectCount++ }
+                }
+                $declaredRawTlogs = @($tlogInventory.tlogs | ForEach-Object { [string]$_.retained_path })
+                foreach ($tlogReference in @($object.compiler_command_tlog) + @($object.compiler_read_tlog) + @($object.compiler_write_tlog)) {
+                    if ($declaredRawTlogs -cnotcontains [string]$tlogReference) { $independentCounters.ObjectSchemaDefectCount++ }
+                }
+                if (([string]$object.retained_path).Replace('\','/') -notmatch ('/' + $suffix.Replace('_','-') + '/')) {
+                    $independentCounters.ObjectSchemaDefectCount++
+                }
+            }
+            if ($independentCounters.ObjectSchemaDefectCount -ne 0 -or $independentCounters.ObjectSharedHeaderDefectCount -ne 0) {
+                throw "Independent object source/header provenance validation failed for $suffix."
+            }
+            foreach ($library in @($libraryClosure.linked_libraries)) {
+                $generatedLibraryRecordCount++
+                $requiredLibraryFields = @('source_path','retained_path','size','sha256','producing_project','producer_tool','command_tlog','read_tlog','write_tlog','member_object_retained_paths','consuming_operation','consuming_tlog_references','classification','set_id','configuration','actually_emitted','consumed')
+                $missingLibraryFields = @($requiredLibraryFields | Where-Object { $library.PSObject.Properties.Name -cnotcontains $_ })
+                $independentCounters.GeneratedLibrarySchemaDefectCount += $missingLibraryFields.Count
+                if ($missingLibraryFields.Count -ne 0 -or @($library.command_tlog).Count -eq 0 -or @($library.read_tlog).Count -eq 0 -or @($library.write_tlog).Count -eq 0 -or -not [bool]$library.actually_emitted) {
+                    throw "Generated-library schema validation failed for $($library.original_path)."
+                }
+                $retainedLibraryPath = Join-Path $repoRoot ([string]$library.retained_path)
+                if (-not (Test-Path -LiteralPath $retainedLibraryPath -PathType Leaf) -or (Get-FileHash -LiteralPath $retainedLibraryPath -Algorithm SHA256).Hash -cne [string]$library.sha256) {
+                    $independentCounters.GeneratedLibrarySchemaDefectCount++
+                }
+            }
+            foreach ($linkedLibrary in @($closure.linked_libraries)) {
+                $linkedLibraryRecordCount++
+                $requiredLinkedFields = @('path','classification','generated','set_id','configuration','producer_operation','producer_command_tlog','producer_read_tlog','producer_write_tlog','consumer_operation','consuming_command_tlog','consuming_read_tlog','same_set_identity')
+                $missingLinkedFields = @($requiredLinkedFields | Where-Object { $linkedLibrary.PSObject.Properties.Name -cnotcontains $_ })
+                $independentCounters.LinkedLibraryDefectCount += $missingLinkedFields.Count
+                if ($missingLinkedFields.Count -ne 0 -or @($linkedLibrary.consuming_command_tlog).Count -eq 0) { continue }
+                if ([string]$linkedLibrary.classification -ceq 'declared-import-library-not-emitted') {
+                    if ([bool]$linkedLibrary.generated -or
+                        -not [string]::IsNullOrWhiteSpace([string]$linkedLibrary.retained_path) -or
+                        $null -ne $linkedLibrary.immutable_identity -or
+                        [long]$linkedLibrary.size -ne -1 -or
+                        -not [string]::IsNullOrWhiteSpace([string]$linkedLibrary.linked_sha256) -or
+                        [string]$linkedLibrary.same_set_identity -cne 'declared-non-output') {
+                        $independentCounters.LinkedLibraryDefectCount++
+                    }
+                    continue
+                }
+                if (@($linkedLibrary.consuming_read_tlog).Count -eq 0) {
+                    $independentCounters.LinkedLibraryDefectCount++
+                    continue
+                }
+                if ([bool]$linkedLibrary.generated) {
+                    if (@($linkedLibrary.producer_command_tlog).Count -eq 0 -or @($linkedLibrary.producer_read_tlog).Count -eq 0 -or @($linkedLibrary.producer_write_tlog).Count -eq 0 -or
+                        [string]::IsNullOrWhiteSpace([string]$linkedLibrary.retained_path) -or
+                        -not (Test-Path -LiteralPath (Join-Path $repoRoot ([string]$linkedLibrary.retained_path)) -PathType Leaf) -or
+                        [string]$linkedLibrary.same_set_identity -cne "$abConfiguration-$abSet") {
+                        $independentCounters.LinkedLibraryDefectCount++
+                    }
+                } else {
+                    if ($null -eq $linkedLibrary.immutable_identity -or [string]$linkedLibrary.immutable_identity.sha256 -notmatch '^[0-9A-F]{64}$' -or [long]$linkedLibrary.immutable_identity.size -le 0) {
+                        $independentCounters.LinkedLibraryDefectCount++
+                    }
+                }
+            }
+            if ($independentCounters.GeneratedLibrarySchemaDefectCount -ne 0 -or $independentCounters.LinkedLibraryDefectCount -ne 0) {
+                throw "Independent generated/linked-library validation failed for $suffix."
             }
             foreach ($counterName in @(
                     'object_producer_missing_count',
@@ -1378,6 +1633,8 @@ if ($InspectionMode -eq 'Full') {
             }
         }
     }
+    $crossSetTlogPathCollisionCount = @($retainedTlogPhysicalPaths | Group-Object | Where-Object Count -gt 1).Count
+    if ($crossSetTlogPathCollisionCount -ne 0) { throw 'Independent cross-set retained TLOG path collision validation failed.' }
     $summaryValues = Get-EvidenceKeyValues $evidenceTextById['tlog_comparison_summary']
     foreach ($summaryKey in @(
             'DebugATlogCount',
@@ -1391,6 +1648,60 @@ if ($InspectionMode -eq 'Full') {
     Assert-EvidenceValue $summaryValues 'AllSetsFresh' 'True' 'tlog_comparison_summary'
     Assert-EvidenceValue $summaryValues 'AllClosuresComplete' 'True' 'tlog_comparison_summary'
     Assert-EvidenceValue $summaryValues 'Result' 'PASS' 'tlog_comparison_summary'
+
+    $negativeValues = Get-EvidenceKeyValues $evidenceTextById['raw_tlog_extra_file_negative_test']
+    foreach ($negativeField in @('CanonicalSourceRoot','DisposableRoot','OriginalInventoryCount','SyntheticFile','NegativeTestCommand','ExpectedFailure','FailureExitCode','DetectedExtraFileCount','DetectedExtraFilePath','RestorationAction','PostRestorationCommand','PostRestorationExitCode','PostRestorationFileCount','PostRestorationHashResult','CanonicalRootUnchangedResult','DisposableRootRetentionPolicy','FinalResult','Result')) {
+        if (-not $negativeValues.ContainsKey($negativeField)) { $independentCounters.NegativeTestEvidenceDefectCount++ }
+    }
+    if ([string]$negativeValues.ExpectedFailure -cne 'True' -or [int]$negativeValues.FailureExitCode -eq 0 -or
+        [int]$negativeValues.DetectedExtraFileCount -ne 1 -or [string]$negativeValues.DetectedExtraFilePath -cne 'synthetic-extra-audit.tlog' -or
+        [int]$negativeValues.PostRestorationExitCode -ne 0 -or [int]$negativeValues.PostRestorationFileCount -ne 22 -or
+        [string]$negativeValues.PostRestorationHashResult -cne 'True' -or [string]$negativeValues.CanonicalRootUnchangedResult -cne 'True' -or
+        [string]$negativeValues.FinalResult -cne 'PASS' -or [string]$negativeValues.Result -cne 'PASS') {
+        $independentCounters.NegativeTestEvidenceDefectCount++
+    }
+    $guardNegativeRoot = Join-Path $repoRoot 'artifacts\logs\production-orchestration-ab-tlog-provenance\guard-negative-validation'
+    $canonicalNegativeRoot = Join-Path $repoRoot ([string]$negativeValues.CanonicalSourceRoot)
+    [void](Assert-PathWithinDirectory $guardNegativeRoot $artifactsRoot 'Guard negative-test disposable root')
+    try {
+        if (Test-Path -LiteralPath $guardNegativeRoot) { Remove-Item -LiteralPath $guardNegativeRoot -Recurse -Force }
+        Copy-Item -LiteralPath $canonicalNegativeRoot -Destination $guardNegativeRoot -Recurse -Force
+        $guardBaseline = Invoke-RawTlogValidator -ValidatorPath $rawTlogValidatorPath -Arguments @('-Mode','ValidateExactRoot','-RawRoot','artifacts/logs/production-orchestration-ab-tlog-provenance/guard-negative-validation','-InventoryPath','artifacts/logs/production-orchestration-ab-tlog-provenance/debug-a/tlog-inventory.json')
+        $guardSyntheticPath = Join-Path $guardNegativeRoot 'guard-synthetic-extra.tlog'
+        [IO.File]::WriteAllText($guardSyntheticPath, "guard synthetic extra`n", [Text.UTF8Encoding]::new($false))
+        $guardFailure = Invoke-RawTlogValidator -ValidatorPath $rawTlogValidatorPath -Arguments @('-Mode','ValidateExactRoot','-RawRoot','artifacts/logs/production-orchestration-ab-tlog-provenance/guard-negative-validation','-InventoryPath','artifacts/logs/production-orchestration-ab-tlog-provenance/debug-a/tlog-inventory.json')
+        Remove-Item -LiteralPath $guardSyntheticPath -Force
+        $guardRestored = Invoke-RawTlogValidator -ValidatorPath $rawTlogValidatorPath -Arguments @('-Mode','ValidateExactRoot','-RawRoot','artifacts/logs/production-orchestration-ab-tlog-provenance/guard-negative-validation','-InventoryPath','artifacts/logs/production-orchestration-ab-tlog-provenance/debug-a/tlog-inventory.json')
+        if ($guardBaseline.ExitCode -ne 0 -or $guardFailure.ExitCode -eq 0 -or [int]$guardFailure.Data.extra_file_count -ne 1 -or @($guardFailure.Data.extra_files) -cnotcontains 'guard-synthetic-extra.tlog' -or
+            $guardRestored.ExitCode -ne 0 -or [string]$guardBaseline.Data.root_hash_sha256 -cne [string]$guardRestored.Data.root_hash_sha256) {
+            $independentCounters.NegativeTestEvidenceDefectCount++
+        }
+    } finally {
+        if (Test-Path -LiteralPath $guardNegativeRoot) { Remove-Item -LiteralPath $guardNegativeRoot -Recurse -Force }
+    }
+    if ($independentCounters.NegativeTestEvidenceDefectCount -ne 0) { throw 'Independent extra-TLOG negative-test validation failed.' }
+
+    $pdbInventory = $evidenceTextById['pdb_inventory'] | ConvertFrom-Json
+    $pdbRoot = Join-Path $repoRoot 'artifacts\logs\production-orchestration-ab-tlog-provenance'
+    $actualPdbs = @(Get-ChildItem -LiteralPath $pdbRoot -Recurse -File -Filter '*.pdb' | Sort-Object FullName)
+    $declaredPdbPaths = @($pdbInventory.records | ForEach-Object { [string]$_.retained_path } | Sort-Object)
+    $actualPdbPaths = @($actualPdbs | ForEach-Object { $_.FullName.Substring($repoRoot.TrimEnd('\','/').Length + 1).Replace('\','/') } | Sort-Object)
+    if ([string]$pdbInventory.schema_version -cne 'chatpad-production-orchestration-pdb-inventory-v1' -or [int]$pdbInventory.record_count -ne 4 -or
+        $actualPdbs.Count -ne 4 -or (Compare-Object -ReferenceObject $declaredPdbPaths -DifferenceObject $actualPdbPaths -SyncWindow 0)) {
+        $independentCounters.PdbBindingDefectCount++
+    }
+    foreach ($pdb in @($pdbInventory.records)) {
+        $pdbPath = Join-Path $repoRoot ([string]$pdb.retained_path)
+        $binaryPath = Join-Path $repoRoot ([string]$pdb.corresponding_binary)
+        if (-not (Test-Path -LiteralPath $pdbPath -PathType Leaf) -or -not (Test-Path -LiteralPath $binaryPath -PathType Leaf) -or
+            (Get-FileHash -LiteralPath $pdbPath -Algorithm SHA256).Hash -cne [string]$pdb.sha256 -or
+            [long](Get-Item -LiteralPath $pdbPath).Length -ne [long]$pdb.size -or -not [bool]$pdb.ignored -or -not [bool]$pdb.untracked) {
+            $independentCounters.PdbBindingDefectCount++
+        }
+        Assert-GitIgnored $repoRoot ([string]$pdb.retained_path)
+        if (@(Invoke-GitLines $repoRoot @('ls-files','--',[string]$pdb.retained_path)).Count -ne 0) { $independentCounters.PdbBindingDefectCount++ }
+    }
+    if ($independentCounters.PdbBindingDefectCount -ne 0) { throw 'Retained PDB bidirectional binding validation failed.' }
 
     foreach ($semanticId in @(
             'kmdf_context_semantic_debug',
@@ -1431,7 +1742,7 @@ if ($InspectionMode -eq 'Full') {
     }
 
     $repositorySafetyValues = Get-EvidenceKeyValues $evidenceTextById.repository_safety
-    foreach ($zeroKey in @(
+    $repositorySafetyZeroKeys = @(
             'ProductionSourceChanges',
             'ProductionHeaderChanges',
             'ProjectChanges',
@@ -1453,7 +1764,11 @@ if ($InspectionMode -eq 'Full') {
             'UnexpectedTrackedArtifacts',
             'TrackedEvidenceFiles',
             'NonIgnoredEvidenceFiles',
-            'ExitCode')) {
+            'ExitCode')
+    foreach ($zeroKey in $repositorySafetyZeroKeys) {
+        if (-not $repositorySafetyValues.ContainsKey($zeroKey) -or [int]$repositorySafetyValues[$zeroKey] -ne 0) {
+            $independentCounters.SafetyCounterDefectCount++
+        }
         Assert-EvidenceValue $repositorySafetyValues $zeroKey '0' 'repository_safety'
     }
     Assert-EvidenceValue $repositorySafetyValues 'Result' 'PASS' 'repository_safety'
@@ -1519,7 +1834,11 @@ if ($InspectionMode -eq 'Full') {
                 'ProductionContractBlobId',
                 'WrapperContractSha256',
                 'WrapperContractBlobId',
+                'GitStatusShortBefore',
+                'GitDiffExitCodeBefore',
+                'GitCachedDiffExitCodeBefore',
                 'GitCleanBefore',
+                'GitCleanRelativeToFrozenSnapshotBefore',
                 'CleanCommand',
                 'CleanExitCode',
                 'CleanCompletedUtc',
@@ -1534,11 +1853,13 @@ if ($InspectionMode -eq 'Full') {
                 'CapturedObjectCount',
                 'CapturedLibraryCount',
                 'CapturedBinaryCount',
-                'ProducerIdentityBefore',
-                'ProducerIdentityAfter',
-                'ContractIdentityBefore',
-                'ContractIdentityAfter',
+                'CapturedPdbCount',
+                'FinalAfterSetIdentityUtc',
+                'GitStatusShortAfter',
+                'GitDiffExitCodeAfter',
+                'GitCachedDiffExitCodeAfter',
                 'GitCleanAfter',
+                'GitCleanRelativeToFrozenSnapshotAfter',
                 'SigningActions',
                 'PackagingActions',
                 'CertificateCreationActions',
@@ -1567,6 +1888,29 @@ if ($InspectionMode -eq 'Full') {
                 throw "A/B build evidence $abBuildId is missing $requiredBuildKey."
             }
         }
+        foreach ($phase in @('BeforeClean','BeforeBuild','AfterCapture','AfterSetFinalization')) {
+            foreach ($identityField in @('Result','Utc','ProducerSha256','ProducerBlobId','ProductionContractSha256','ProductionContractBlobId','WrapperContractSha256','WrapperContractBlobId')) {
+                $phaseKey = "Identity$phase$identityField"
+                if (-not $buildValues.ContainsKey($phaseKey)) {
+                    $independentCounters.AfterSetIdentityDefectCount++
+                }
+            }
+            if ([string]$buildValues["Identity${phase}Result"] -cne 'PASS' -or
+                [string]$buildValues["Identity${phase}ProducerSha256"] -cne $producerSha -or
+                [string]$buildValues["Identity${phase}ProducerBlobId"] -cne $producerBlob -or
+                [string]$buildValues["Identity${phase}ProductionContractSha256"] -cne $frozenInputHash -or
+                [string]$buildValues["Identity${phase}WrapperContractSha256"] -cne $wrapperInputHash) {
+                $independentCounters.AfterSetIdentityDefectCount++
+            }
+        }
+        $beforeCleanCalculated = ([string]::IsNullOrEmpty([string]$buildValues.GitStatusShortBefore) -and [int]$buildValues.GitDiffExitCodeBefore -eq 0 -and [int]$buildValues.GitCachedDiffExitCodeBefore -eq 0)
+        $afterCleanCalculated = ([string]::IsNullOrEmpty([string]$buildValues.GitStatusShortAfter) -and [int]$buildValues.GitDiffExitCodeAfter -eq 0 -and [int]$buildValues.GitCachedDiffExitCodeAfter -eq 0)
+        if ([bool]::Parse([string]$buildValues.GitCleanBefore) -ne $beforeCleanCalculated -or
+            [bool]::Parse([string]$buildValues.GitCleanAfter) -ne $afterCleanCalculated -or
+            [string]$buildValues.GitCleanRelativeToFrozenSnapshotBefore -cne 'True' -or
+            [string]$buildValues.GitCleanRelativeToFrozenSnapshotAfter -cne 'True') {
+            $independentCounters.GitStateTranscriptDefectCount++
+        }
         if ([int]$buildValues.InputCount -le 8 -or
             [int]$buildValues.UnresolvedInputCount -ne 0 -or
             [int]$buildValues.DuplicateNormalizedPathCount -ne 0 -or
@@ -1574,8 +1918,8 @@ if ($InspectionMode -eq 'Full') {
             [int]$buildValues.PostBuildTlogCount -le 0 -or
             [int]$buildValues.LinkedObjectProducerCount -le 0 -or
             [int]$buildValues.MissingObjectProducerCount -ne 0 -or
-            [string]$buildValues.TrackedStateBeforeBuild -cne 'FrozenTrackedChangesOnly' -or
-            [string]$buildValues.TrackedStateAfterBuild -cne 'FrozenTrackedChangesOnly' -or
+            [string]$buildValues.TrackedStateBeforeBuild -notmatch '^AllowedRemediationPathsOnly:True$' -or
+            [string]$buildValues.TrackedStateAfterBuild -notmatch '^AllowedRemediationPathsOnly:True$' -or
             [int]$buildValues.CleanExitCode -ne 0 -or
             [int]$buildValues.WarningCount -ne 0 -or
             [int]$buildValues.ErrorCount -ne 0 -or
@@ -1583,10 +1927,7 @@ if ($InspectionMode -eq 'Full') {
             [int]$buildValues.CapturedObjectCount -le 0 -or
             [int]$buildValues.CapturedLibraryCount -le 0 -or
             [int]$buildValues.CapturedBinaryCount -ne 1 -or
-            [string]$buildValues.ProducerIdentityBefore -cne 'PASS' -or
-            [string]$buildValues.ProducerIdentityAfter -cne 'PASS' -or
-            [string]$buildValues.ContractIdentityBefore -cne 'PASS' -or
-            [string]$buildValues.ContractIdentityAfter -cne 'PASS' -or
+            [int]$buildValues.CapturedPdbCount -ne 1 -or
             [int]$buildValues.SigningActions -ne 0 -or
             [int]$buildValues.PackagingActions -ne 0 -or
             [int]$buildValues.CertificateCreationActions -ne 0 -or
@@ -1601,9 +1942,13 @@ if ($InspectionMode -eq 'Full') {
             [string]$buildValues.ToolchainDigestSha256 -notmatch '^[0-9A-F]{64}$') {
             throw "A/B build evidence $abBuildId has invalid complete-input identity metrics."
         }
+        if ($independentCounters.AfterSetIdentityDefectCount -ne 0 -or $independentCounters.GitStateTranscriptDefectCount -ne 0) {
+            throw "A/B build evidence $abBuildId failed independent identity/Git-state validation."
+        }
     }
 
     $inputInventoryCounts = @{}
+    $inputProvenanceRecordCount = 0
     foreach ($abConfiguration in @('Debug', 'Release')) {
         foreach ($abSet in @('A', 'B')) {
             $inventoryId = 'ab_input_inventory_{0}_{1}' -f
@@ -1640,14 +1985,69 @@ if ($InspectionMode -eq 'Full') {
                     throw "A/B input inventory $inventoryId lacks category $requiredCategory."
                 }
             }
-            foreach ($input in @($inventory.inputs)) {
-                if ([string]::IsNullOrWhiteSpace([string]$input.normalized_path) -or
-                    [string]::IsNullOrWhiteSpace([string]$input.category) -or
-                    [string]$input.sha256 -notmatch '^[0-9A-F]{64}$' -or
-                    [long]$input.size -lt 0 -or
-                    @($input.mechanisms).Count -le 0) {
+            foreach ($inventoryInput in @($inventory.inputs)) {
+                $inputProvenanceRecordCount++
+                $requiredInputFields = @('normalized_path','original_path_forms','repository_or_external_classification','size','sha256','mechanisms','source_tlog_references','consuming_project','producing_or_consuming_tool','set_id','configuration')
+                $missingInputFields = @($requiredInputFields | Where-Object { $inventoryInput.PSObject.Properties.Name -cnotcontains $_ })
+                $independentCounters.InputProvenanceMissingFieldCount += $missingInputFields.Count
+                $inputSourceTlogReferences = @()
+                if ($inventoryInput.PSObject.Properties.Name -ccontains 'source_tlog_references') {
+                    $inputSourceTlogReferences = @($inventoryInput.source_tlog_references)
+                }
+                if ([string]::IsNullOrWhiteSpace([string]$inventoryInput.normalized_path) -or
+                    [string]::IsNullOrWhiteSpace([string]$inventoryInput.category) -or
+                    [string]$inventoryInput.sha256 -notmatch '^[0-9A-F]{64}$' -or
+                    [long]$inventoryInput.size -lt 0 -or
+                    @($inventoryInput.mechanisms).Count -le 0 -or
+                    @($inventoryInput.original_path_forms).Count -le 0 -or
+                    $inputSourceTlogReferences.Count -le 0 -or
+                    @($inventoryInput.consuming_project).Count -le 0 -or
+                    @($inventoryInput.producing_or_consuming_tool).Count -le 0 -or
+                    [string]$inventoryInput.set_id -cne "$abConfiguration-$abSet" -or
+                    [string]$inventoryInput.configuration -cne "$abConfiguration|x64") {
                     throw "A/B input inventory $inventoryId has malformed input metadata."
                 }
+                $parserSuffix = '{0}_{1}' -f $abConfiguration.ToLowerInvariant(), $abSet.ToLowerInvariant()
+                $reparsed = $independentParserBySuffix[$parserSuffix]
+                $parserPaths = @($reparsed.files | ForEach-Object { [string]$_.path })
+                foreach ($sourceReference in $inputSourceTlogReferences) {
+                    if ($parserPaths -cnotcontains [string]$sourceReference) { $independentCounters.InputSourceTlogDefectCount++ }
+                }
+                if (@($inventoryInput.consuming_project | Where-Object { [string]::IsNullOrWhiteSpace([string]$_) -or $_ -eq 'unknown' }).Count -ne 0) {
+                    $independentCounters.InputProjectDefectCount++
+                }
+                if (@($inventoryInput.producing_or_consuming_tool | Where-Object { [string]::IsNullOrWhiteSpace([string]$_) -or $_ -eq 'unknown' }).Count -ne 0) {
+                    $independentCounters.InputToolDefectCount++
+                }
+                $requiresDirectOccurrence = @($inventoryInput.mechanisms | Where-Object { $_ -notlike 'msbuild_project_closure:*' -and $_ -notlike 'toolchain_identity:*' }).Count -gt 0
+                if ($requiresDirectOccurrence) {
+                    $occurrenceFound = $false
+                    foreach ($parserFile in @($reparsed.files | Where-Object { $inputSourceTlogReferences -ccontains [string]$_.path })) {
+                        foreach ($record in @($parserFile.records)) {
+                            foreach ($candidate in @($record.path_candidates)) {
+                                try {
+                                    $candidateNormalized = ([IO.Path]::GetFullPath([string]$candidate).TrimEnd('\','/').Replace('\','/')).ToLowerInvariant()
+                                    if ($candidateNormalized -ceq [string]$inventoryInput.normalized_path) { $occurrenceFound = $true }
+                                } catch { }
+                            }
+                        }
+                    }
+                    if (-not $occurrenceFound) { $independentCounters.InputSourceTlogDefectCount++ }
+                }
+            }
+            $repoInventoryPaths = @($inventory.inputs | Where-Object repo_local | ForEach-Object {
+                $display = ([string]$_.display_path).Replace('\','/').ToLowerInvariant()
+                if ($display -match '^[a-z]:/') {
+                    $rootNormalized = [IO.Path]::GetFullPath($repoRoot).Replace('\','/').TrimEnd('/').ToLowerInvariant()
+                    $display = $display.Substring($rootNormalized.Length + 1)
+                }
+                $display
+            } | Sort-Object -Unique)
+            if (Compare-Object -ReferenceObject $wrapperPaths -DifferenceObject $repoInventoryPaths -SyncWindow 0) {
+                $independentCounters.InputProvenanceMissingFieldCount++
+            }
+            if ($independentCounters.InputProvenanceMissingFieldCount -ne 0 -or $independentCounters.InputSourceTlogDefectCount -ne 0 -or $independentCounters.InputProjectDefectCount -ne 0 -or $independentCounters.InputToolDefectCount -ne 0) {
+                throw "Independent complete input-provenance validation failed for $inventoryId. missing_fields=$($independentCounters.InputProvenanceMissingFieldCount); source_tlog_defects=$($independentCounters.InputSourceTlogDefectCount); project_defects=$($independentCounters.InputProjectDefectCount); tool_defects=$($independentCounters.InputToolDefectCount)."
             }
             $expectedInventoryMetric = 'inputs={0}; unresolved=0; duplicates=0' -f
                 [int]$inventory.input_count
@@ -1945,6 +2345,42 @@ if ($InspectionMode -eq 'Full') {
         ($producerBytes.Length -gt 1 -and $producerBytes[-2] -eq 10)) {
         throw 'Producer line endings or final newline are invalid.'
     }
+    foreach ($jsonPath in @($frozenInputPath, $wrapperInputPath, $manifestPath)) {
+        $jsonBytes = [IO.File]::ReadAllBytes($jsonPath)
+        if (@($jsonBytes | Where-Object { $_ -eq 13 }).Count -ne 0 -or $jsonBytes.Length -eq 0 -or $jsonBytes[-1] -ne 10 -or ($jsonBytes.Length -gt 1 -and $jsonBytes[-2] -eq 10)) {
+            throw "Tracked JSON line endings or final newline are invalid: $jsonPath"
+        }
+    }
+    $contractMetadataDefects = @(
+        ($frozenInput.implementation_commit -cne $implementationCommit)
+        ($frozenInput.implementation_parent -cne $implementationParent)
+        ($frozenInput.remediation_starting_commit -cne $evidenceFinalizationStartingCommit)
+        ($wrapperInput.implementation_commit -cne $implementationCommit)
+        ($wrapperInput.implementation_parent -cne $implementationParent)
+        ($wrapperInput.remediation_starting_commit -cne $evidenceFinalizationStartingCommit))
+    $independentCounters.ContractMetadataDefectCount = @($contractMetadataDefects | Where-Object { $_ }).Count
+    $containingBindingDefects = @(
+        ([string]$frozenInput.containing_commit_binding -notmatch 'independent audit')
+        ([string]$wrapperInput.containing_commit_binding -notmatch 'independent audit')
+        ([string]$manifest.containing_commit_binding -notmatch 'independent audit'))
+    $independentCounters.ContainingBindingDefectCount = @($containingBindingDefects | Where-Object { $_ }).Count
+    $independentCounters.MandatoryIdDefectCount = $missingMandatoryIds.Count + $unexpectedEvidenceIds.Count + $duplicateIds.Count
+    $independentCounters.EvidencePathDefectCount = $missingEvidenceFiles.Count + $duplicatePaths.Count
+    $independentCounters.EvidenceHashDefectCount = $hashMismatches.Count
+    $trackedEvidenceDefects = 0
+    $nonIgnoredEvidenceDefects = 0
+    foreach ($entry in @($evidenceEntries | Where-Object category -CNE 'tracked_contract')) {
+        if (@(& git -C $repoRoot ls-files -- ([string]$entry.path)).Count -ne 0) { $trackedEvidenceDefects++ }
+        & git -C $repoRoot check-ignore -q -- ([string]$entry.path)
+        if ($LASTEXITCODE -ne 0) { $nonIgnoredEvidenceDefects++ }
+    }
+    $independentCounters.TrackedEvidenceDefectCount = $trackedEvidenceDefects
+    $independentCounters.NonIgnoredEvidenceDefectCount = $nonIgnoredEvidenceDefects
+    $nonzeroIndependentCounters = @($independentCounters.GetEnumerator() | Where-Object { [int]$_.Value -ne 0 })
+    if ($nonzeroIndependentCounters.Count -ne 0) {
+        $counterText = (($nonzeroIndependentCounters | ForEach-Object { '{0}={1}' -f $_.Key, $_.Value }) -join '; ')
+        throw "Independent Full-guard defect counters are nonzero: $counterText"
+    }
     Write-Output "Guard mandatory evidence ID count: $($mandatoryEvidenceIds.Count)"
     Write-Output "Manifest declared mandatory evidence ID count: $($declaredMandatoryIds.Count)"
     Write-Output "Manifest evidence entry count: $($entryIds.Count)"
@@ -1955,29 +2391,13 @@ if ($InspectionMode -eq 'Full') {
     Write-Output "Missing metadata field count: $($missingMetadataFields.Count)"
     Write-Output "Missing evidence file count: $($missingEvidenceFiles.Count)"
     Write-Output "Evidence hash mismatch count: $($hashMismatches.Count)"
-    Write-Output 'ProductionContractDefectCount=0'
-    Write-Output 'WrapperContractDefectCount=0'
-    Write-Output 'ProducerHashDefectCount=0'
-    Write-Output 'ProducerBlobDefectCount=0'
-    Write-Output 'FreezeRecordDefectCount=0'
-    Write-Output 'RawRootExtraFileDefectCount=0'
-    Write-Output 'RawRootMissingFileDefectCount=0'
-    Write-Output 'RawTlogHashDefectCount=0'
-    Write-Output 'FreshnessDefectCount=0'
-    Write-Output 'ParserUnparseableRecordCount=0'
-    Write-Output 'ParserDiscardedRecordCount=0'
-    Write-Output 'ParserUnexplainedRecordCount=0'
-    Write-Output 'ObjectSourceClosureDefectCount=0'
-    Write-Output 'GeneratedLibraryClosureDefectCount=0'
-    Write-Output 'LinkedLibraryDefectCount=0'
-    Write-Output 'SameSetContaminationDefectCount=0'
-    Write-Output 'TranscriptMetadataDefectCount=0'
-    Write-Output 'SafetyCounterDefectCount=0'
-    Write-Output 'MandatoryIdDefectCount=0'
-    Write-Output 'EvidencePathDefectCount=0'
-    Write-Output 'EvidenceHashDefectCount=0'
-    Write-Output 'TrackedEvidenceDefectCount=0'
-    Write-Output 'NonIgnoredEvidenceDefectCount=0'
+    Write-Output "Independent object record count: $objectRecordCount"
+    Write-Output "Independent generated-library record count: $generatedLibraryRecordCount"
+    Write-Output "Independent linked-library record count: $linkedLibraryRecordCount"
+    Write-Output "Independent input-provenance record count: $inputProvenanceRecordCount"
+    foreach ($counter in $independentCounters.GetEnumerator()) {
+        Write-Output "$($counter.Key)=$($counter.Value)"
+    }
     Write-Output "Self-referential hash skipped for: $selfEvidenceId"
 }
 Write-Output 'Assertion count: 82'

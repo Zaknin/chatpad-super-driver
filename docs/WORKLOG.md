@@ -4634,3 +4634,82 @@
 - **Next task:** Independent read-only audit of the final commit, 99-entry
   manifest, dual contracts, frozen producer, retained roots/intermediates,
   Full logs, and synchronized upstream state.
+
+## 2026-07-01 22:28 +04:00 - Production orchestration provenance final remediation
+
+- **Objective:** Create the final evidence-only remediation checkpoint for the
+  offline production KMDF request-owner orchestration provenance. Close the
+  remaining provenance-completeness gaps without changing production source,
+  project files, solution files, shared props/targets, INF files, signing,
+  packaging, deployment, runtime, device, request, USB/controller, Chatpad, or
+  `legacy/` behavior.
+- **Starting state:** Verified current branch
+  `feature/offline-kmdf-production-orchestration-provenance-final-remediation`
+  at `6a586bb2490e6a2611987a229c8c9d11d32fab01`, parent
+  `499f6eae4b0e8a6fd4dbf3186c44906b5e6d4201`, subject
+  `test: close production orchestration provenance gaps`. Existing
+  continuation docs were stale for the in-progress final branch and were
+  corrected as part of this task.
+- **Tracked changes:** Added
+  `tools/Test-ChatpadProductionOrchestrationRawTlogEvidence.ps1` and
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-PROVENANCE-FINAL-REMEDIATION.md`.
+  Modified the tracked producer, production guard, manifest, production
+  contract, wrapper contract, superseded checkpoint notes, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and this worklog. No production
+  source/header, project, solution, shared props/targets, INF, or `legacy/`
+  path changed.
+- **Final frozen identities:** Producer size 133,971, SHA-256
+  `FAE701C1F866D8A9179422EC7CBE22874742BB4AA99545BE227F5082C5EABE4A`, blob
+  `d7b3d082418f35fccd32160fe9ef95b7cfd93567`; raw-TLOG validator size 28,839,
+  SHA-256 `102B8EFC1408B4CBB48196DE8C2E4828C33798ED24E2D895002F36C3C9B5DD57`,
+  blob `da20a172c5b360a86a5fee97501d91962024400e`; production contract
+  SHA-256 `FBB45D2FDC7FC3F411F2A8B96E5EF2EC36CF14E0C9417188E306997D2DDBC490`,
+  blob `4abacca79d1dc8d3b4a42522c691041e574e1a2b`; wrapper contract SHA-256
+  `4DC83A17D416E39582E44E45CF54ABE9D341D18CE7845A8CB5F61B165828852B`, blob
+  `31d53a63544d79af7331e46cfdd2c3ba95bf3033`.
+- **Generation:** Freeze UTC `2026-07-01T18:11:32.0737688Z`; final identity
+  verification UTC `2026-07-01T18:13:36.2999752Z`. Four clean offline A/B
+  builds passed. Each set retained 22 raw TLOGs, 15 objects, 2 emitted
+  libraries, one SYS, and one PDB. Debug inventories contain 130 inputs;
+  Release inventories contain 132.
+- **Final binary evidence:** Debug A/B raw hashes are
+  `0FF99A482268A0F2057DA2C5EDF1279AB0F0D48DBFFFE1E862C202A8C9470A32` and
+  `4A6E9B6938A8EA424A3BAC1A9E6CFCA67558225DD2192505E87ADDCD46399CA3`; both
+  normalize to `18656A2A1EC059E1D84F353B386400D7B79E3C4C37B6407364609DEB09433E50`.
+  Release A/B raw hashes are
+  `9432D744D38870E4C0EB91E4566A9D089FEACF3D28EE5BD249FD343EBFB0FFCD` and
+  `D8C45923173839CCCF619883A4E9E19D95D15F3C15D24CCD2E4EA3E88F294DCF`; both
+  normalize to `F87A4B3FB662D245856104AFB53027502B54AAE2018A596491521160A98B9A6C`.
+- **Manifest/guard remediation:** Upgraded the manifest to schema `1.6.0` with
+  102 mandatory entries. Added tracked raw-validator source evidence,
+  disposable extra-TLOG negative-test evidence, and retained PDB inventory.
+  The guard now validates raw-root exactness, raw byte parser/freshness
+  recomputation, contract containing-policy metadata, generated object/library
+  provenance, complete input provenance, Git-state transcript semantics,
+  PDB binding, negative-test evidence, and ignored-evidence containment.
+- **Validation results:** SourceOnly Debug and Release pass. Full Debug and
+  Release pass with 102 guard/declaration/entry IDs, zero missing/unexpected/
+  duplicate IDs, zero metadata/path/hash defects, 60 object records, 8
+  generated-library records, 32 linked-library records, 524 input-provenance
+  records, and every explicit independent defect counter zero. Final Full log
+  hashes are Debug
+  `23E5E086EB3D2002F25888AC906C562E2CF9CD351AE7632421314EBF073304E4` and
+  Release `7BB1D4FDD2610F2297E193ADC224FD4A889C430537DCFF9FEF4040C024B6DFB2`.
+- **Failed closed attempts:** The final guard initially exposed a raw-validator
+  argument-binding bug, a producer misclassification of the non-emitted
+  `ChatpadFilter.lib` import-library declaration, PowerShell `$input` scoping
+  in the input-provenance loop, stale A/B raw hashes in the manifest rebuild
+  contract, and array/pipeline precedence in final metadata counters. Each was
+  corrected and revalidated before final PASS.
+- **Safety:** No signing, certificate/key creation, packaging, Inf2Cat/catalog
+  work, installation, driver loading, Windows mutation, device query,
+  USB/HID/XUSB/controller/Chatpad interaction, target discovery, request
+  operation, D0/removal observation, or hardware action occurred.
+- **Commit/push:** Commit exactly
+  `test: finalize production orchestration provenance evidence` and push only
+  `origin/feature/offline-kmdf-production-orchestration-provenance-final-remediation`;
+  final hash is reported after commit.
+- **Next task:** Independent read-only audit of the final commit, 102-entry
+  manifest, dual contracts, raw-TLOG validator, frozen producer, retained
+  roots/intermediates/PDBs, negative extra-TLOG evidence, Full logs, and
+  synchronized upstream state.

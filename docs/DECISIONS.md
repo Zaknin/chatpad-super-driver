@@ -4,6 +4,30 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Require independently validated raw evidence, PDB binding, and negative root tests
+
+**Decision:** Final production-orchestration provenance acceptance requires a
+tracked independent raw-TLOG validator, exact raw-root validation, parser and
+freshness recomputation from retained bytes, a retained PDB inventory, and an
+extra-TLOG negative test performed only on a disposable duplicate root.
+
+**Rationale:** The remaining provenance-completeness audit defects were about
+independent verifiability of generated evidence, not production source. A
+separate validator and negative test prove that the accepted raw roots are
+complete and closed, while PDB inventory binding prevents retained debug
+artifacts from being outside the manifest surface.
+
+**Alternatives rejected:** Trusting producer-generated parser reports would
+not independently prove raw byte interpretation. Testing extra-file rejection
+against accepted roots would mutate evidence. Leaving PDBs retained but
+unmanifested would keep part of the accepted artifact surface unaudited.
+
+**Consequences:** Manifest schema `1.6.0` has 102 mandatory entries. Final
+guards recompute root, parser, freshness, object/library/input/PDB, Git-state,
+and negative-test evidence with zero explicit defect counters. Runtime,
+target/request, signing, packaging, installation, loading, and hardware gates
+remain closed.
+
 ## 2026-07-01 - Separate production and wrapper-build provenance contracts
 
 **Decision:** Maintain two immutable tracked-input contracts for production
