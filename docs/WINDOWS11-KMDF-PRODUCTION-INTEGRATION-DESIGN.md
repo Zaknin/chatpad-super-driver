@@ -652,7 +652,14 @@ category, and binds production status selection. The second independent design
 audit failed only because the prior report/status taxonomy and report
 initialization wording were incomplete; the corrected early-rejection
 semantics remain accepted, and the dormant implementation is unchanged.
-Another independent read-only audit is required before source implementation.
+A third independent audit then found three remaining documentation-contract
+defects: exact report fields `Result` and `ReadyPublicationAttempted` were not
+explicitly bound, the later `EvtDeviceAdd` lifecycle category was ambiguous,
+and future evidence did not explicitly require highest/final-mask checks. The
+report-contract correction binds all 19 report fields, deterministic lifecycle
+subcases 22A and 22B, and explicit
+`HighestPartialInitializationMask`/`FinalInitializationMask` evidence. Another
+independent read-only audit is required before source implementation.
 
 The later dormant orchestration slice shall:
 
@@ -829,11 +836,11 @@ Binding decisions:
 12. Evidence-retention format: tracked JSON manifests under `docs/evidence/`
     plus ignored hashed logs under `artifacts\logs`.
 13. Production orchestration-invocation binding: documented, including the
-    report-aware correction, in
+    report-aware and report-contract corrections, in
     `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`;
     implementation remains unauthorized.
-14. Next repository task: independent read-only audit of the corrected
-    report-aware design, not source implementation.
+14. Next repository task: independent read-only audit of the corrected report
+    contract, not source implementation.
 
 Stop conditions:
 
@@ -873,8 +880,9 @@ pre-object-validation slice:
 
 The checkpoint record is
 [Offline KMDF Production Owner Initialization](OFFLINE-KMDF-PRODUCTION-OWNER-INITIALIZATION.md).
-The second design audit found incomplete report/status taxonomy and ambiguous
-caller report initialization wording, not a dormant implementation defect.
-The report-aware documentation correction is complete and requires an
-independent read-only audit. Dormant orchestration implementation and execution
-remain unauthorized.
+The third design audit found missing explicit `Result` and
+`ReadyPublicationAttempted` bindings, ambiguous post-orchestration lifecycle
+wording, and missing explicit highest/final-mask evidence requirements, not a
+dormant implementation defect. The report-contract documentation correction is
+complete and requires another independent read-only audit. Dormant
+orchestration implementation and execution remain unauthorized.

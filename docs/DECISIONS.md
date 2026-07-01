@@ -4,6 +4,37 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Bind every orchestration report field and lifecycle outcome
+
+**Decision:** The production orchestration-invocation taxonomy explicitly
+binds all 19 source report fields for every category. Production classifies
+from the orchestration function return and cross-checks report `Result`; a
+mismatch is a hard `STATUS_INVALID_DEVICE_STATE` failure that cannot reach
+lifecycle initialization or trigger caller-owned rollback. Exact
+`ReadyPublicationAttempted` state is independent from `ReadyPublished`, final
+mask `OWNER_READY`, `ObjectGraphComplete`, and successful report `Result`.
+After orchestration success, current later failure behavior is split into
+lifecycle-initializer failure and device-created-transition failure.
+
+**Rationale:** The third independent design audit found that semantic shorthand
+did not explicitly bind `Result` or `ReadyPublicationAttempted`, later
+lifecycle wording did not reflect the deterministic current `device.c` order,
+and the future evidence contract did not name both mask checks.
+
+**Alternatives rejected:** Treating the function return as an implicit report
+field would hide mismatch handling. Treating any ready-related flag as
+equivalent would contradict the source. Retaining one conditional lifecycle
+phrase would obscure whether initialization or the device-created transition
+failed. Generic mask-evidence wording would not bind the required checks.
+
+**Consequences:** The 22-category taxonomy and 28-section structure remain
+unchanged, with category 22 divided into deterministic subcases 22A and 22B.
+Future evidence explicitly checks `HighestPartialInitializationMask`
+progression/rollback stability and `FinalInitializationMask` final-state
+accuracy. Early rejection, no-object faulting, insertion point, one-call rule,
+rollback ownership, WDF parentage, and separate implementation/runtime gates
+remain unchanged. The next gate is another independent read-only audit.
+
 ## 2026-07-01 - Bind orchestration report initialization and field semantics
 
 **Decision:** Future production `EvtDeviceAdd` code will use exactly one local

@@ -175,6 +175,9 @@ orchestrationResult =
         device,
         &context->ActivationRequestOwner,
         &orchestrationReport);
+if (orchestrationResult != orchestrationReport.Result) {
+    return STATUS_INVALID_DEVICE_STATE;
+}
 if (orchestrationResult !=
         CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK) {
     return ChatpadOrchestrationResultToStatus(
@@ -252,6 +255,11 @@ final ready state.
 
 Before production continues to lifecycle initialization, success requires:
 
+- function return and report `Result` both equal
+  `CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK`;
+- `ReadyPublicationAttempted=TRUE`;
+- `ReadyPublished=TRUE`;
+- `ObjectGraphComplete=TRUE`;
 - `MODEL_READY` present;
 - lock, request, outbound-memory, and inbound-memory creation bits present;
 - `OWNER_READY` present;
@@ -300,19 +308,22 @@ The future `EvtDeviceAdd` mapping is deterministic and binding:
 
 Production applies the mapping in this order:
 
-1. `OK` continues; it does not itself become the final `EvtDeviceAdd` status.
-2. Null production input, `NULL_OWNER`, `NULL_PARENT_DEVICE`, or `NULL_REPORT`
+1. Cross-check the function return against report `Result`; any mismatch
+   returns `STATUS_INVALID_DEVICE_STATE`, preserves the report for diagnostics,
+   does not invoke rollback, and does not initialize lifecycle.
+2. `OK` continues; it does not itself become the final `EvtDeviceAdd` status.
+3. Null production input, `NULL_OWNER`, `NULL_PARENT_DEVICE`, or `NULL_REPORT`
    returns `STATUS_INVALID_PARAMETER`.
-3. A creation-stage result (`SPINLOCK_FAILED`, `REQUEST_FAILED`,
+4. A creation-stage result (`SPINLOCK_FAILED`, `REQUEST_FAILED`,
    `OUTBOUND_MEMORY_FAILED`, or `INBOUND_MEMORY_FAILED`) returns
    `report.FrameworkStatus` only when `NT_SUCCESS(report.FrameworkStatus)` is
    false.
-4. Every local creation/validation failure for which `FrameworkStatus` is the
+5. Every local creation/validation failure for which `FrameworkStatus` is the
    local sentinel or `STATUS_SUCCESS` returns `STATUS_INVALID_DEVICE_STATE`.
-5. `ROLLBACK_FAILED` always returns `STATUS_INVALID_DEVICE_STATE`; the
+6. `ROLLBACK_FAILED` always returns `STATUS_INVALID_DEVICE_STATE`; the
    original stage, helper/validation result, framework status, rollback result,
    effects, and masks remain diagnostic report evidence.
-6. Any unrecognized result returns `STATUS_INVALID_DEVICE_STATE`.
+7. Any unrecognized result returns `STATUS_INVALID_DEVICE_STATE`.
 
 Rollback does not overwrite `FrameworkStatus`, `CreationResult`,
 `ValidationResult`, or `FailedStage`. No non-success result reaches lifecycle
@@ -334,8 +345,51 @@ post-baseline no-object stage failure, partial-object failure, and later
 post-success failure. No rule may infer that every failure before object
 publication faults the owner.
 
-The tables below use the authoritative field name `LastCompletedStage`. Mask
-abbreviations are exact symbolic combinations:
+The authoritative
+`ChatpadKmdfRequestOwnerOrchestrationReport` contract contains exactly these
+19 source fields:
+
+1. `Result`;
+2. `LastStageEntered`;
+3. `LastCompletedStage`;
+4. `FailedStage`;
+5. `BaselineValidationResult`;
+6. `CreationResult`;
+7. `ValidationResult`;
+8. `FrameworkStatus`;
+9. `RollbackResult`;
+10. `RollbackEffects`;
+11. `InitialInitializationMask`;
+12. `HighestPartialInitializationMask`;
+13. `FinalInitializationMask`;
+14. `CreationHelperCalled`;
+15. `ReadyPublicationAttempted`;
+16. `ReadyPublished`;
+17. `RollbackAttempted`;
+18. `RollbackSucceeded`;
+19. `ObjectGraphComplete`.
+
+Every taxonomy row below binds all 19 fields through explicitly named grouped
+columns. Within a grouped cell, values appear in the same order as the exact
+field names in its header. No cell may substitute the function return value
+for report `Result`, or `ReadyPublished`, final-mask `OWNER_READY`, or
+`ObjectGraphComplete` for `ReadyPublicationAttempted`.
+
+The function return and report `Result` are distinct observables. For every
+path with valid report storage, the orchestrator finalizes report `Result`
+before return and returns the identical value. Some paths initialize
+`Result=INVARIANT_FAILED` and finalize it only after classification or
+recovery. If the report pointer is null, the function returns `NULL_REPORT`
+and no report field can be written. A pre-invocation production rejection
+calls no orchestrator and produces neither observable.
+
+Future production classifies first from the function return and cross-checks
+report `Result` whenever valid report storage was supplied. A mismatch is an
+invariant failure: preserve the report for diagnostics, do not initialize
+lifecycle, return `STATUS_INVALID_DEVICE_STATE`, and do not call rollback
+outside the orchestrator. A mismatch can never be treated as success.
+
+Mask abbreviations are exact symbolic combinations:
 
 - `P0 = MODEL_READY`;
 - `P1 = P0 | LOCK_CREATED`;
@@ -348,10 +402,11 @@ abbreviations are exact symbolic combinations:
 After `RtlZeroMemory`, zero-valued report defaults are `LastCompletedStage =
 NONE`, `FailedStage = NONE`, `BaselineValidationResult = STORAGE_OK`,
 `CreationResult = CREATION_OK`, `ValidationResult = CREATION_OK`,
-`RollbackResult = ROLLBACK_OK`, zero masks, zero effects, and zero flags. The
-orchestrator then sets `Result = INVARIANT_FAILED`, `FrameworkStatus =
-STATUS_INVALID_DEVICE_STATE`, and `LastStageEntered = VALIDATE_BASELINE`.
-“Zero effects” below means every member of `RollbackEffects` remains zero.
+`RollbackResult = ROLLBACK_OK`, zero masks, zero effects, and all six flags
+`FALSE`. The orchestrator then sets `Result = INVARIANT_FAILED`,
+`FrameworkStatus = STATUS_INVALID_DEVICE_STATE`, and `LastStageEntered =
+VALIDATE_BASELINE`. “Zero effects” below means every member of
+`RollbackEffects` remains zero.
 For every non-null owner, `InitialInitializationMask`,
 `HighestPartialInitializationMask`, and `FinalInitializationMask` are first
 set to the incoming mask. `CreationHelperCalled` becomes `1` after the
@@ -361,40 +416,73 @@ change that field.
 
 ### Early rejection matrix
 
-| Category | Baseline accepted / object published / common path | Returned result | Stages (`LastStageEntered`; `LastCompletedStage`; `FailedStage`) | Helper / validators / `FrameworkStatus` | `HighestPartialInitializationMask`; `FinalInitializationMask` | Ready flags | Rollback attempted / result / effects | Final owner state | Production status / lifecycle / `EvtDeviceAdd` |
+| Category | Baseline accepted / object published / common path | Function return; report `Result` | `LastStageEntered`; `LastCompletedStage`; `FailedStage` | `BaselineValidationResult`; `CreationResult`; `ValidationResult`; `FrameworkStatus` | `InitialInitializationMask`; `HighestPartialInitializationMask`; `FinalInitializationMask` | `CreationHelperCalled`; `ReadyPublicationAttempted`; `ReadyPublished`; `RollbackAttempted`; `RollbackSucceeded`; `ObjectGraphComplete` | `RollbackResult`; `RollbackEffects` | Final owner state | Production status / lifecycle / `EvtDeviceAdd` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Null production integration input before invocation | No call; none; no. | Not applicable. | Not applicable. | Not applicable. | Not applicable; not applicable. | Not applicable. | No report and no rollback. | No orchestrator-owned transition. | `STATUS_INVALID_PARAMETER`; lifecycle no; return that failure. |
-| Null report pointer | No baseline; none; no. | `NULL_REPORT`. | No writable report; no fields are available. | No helper or validator; no report status. | No report; no report. | No report. | No report and no rollback. | Owner is not inspected or changed. | `STATUS_INVALID_PARAMETER`; lifecycle no; return that failure. |
-| Null parent device | Yes; none; no. | `NULL_PARENT_DEVICE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | No helper; baseline `STORAGE_OK`; `ValidationResult=CREATION_OK`; sentinel `STATUS_INVALID_DEVICE_STATE`. | `P0`; `P0`. | Attempted `0`; published `0`; complete `0`. | Attempted `0`; default `ROLLBACK_OK`; zero effects. | Clean `P0`; no automatic fault transition. | `STATUS_INVALID_PARAMETER`; lifecycle no; return that failure. |
-| Null owner | No; none; no. | `NULL_OWNER`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | No helper; baseline field remains default `STORAGE_OK` because validation cannot run; `ValidationResult=CREATION_OK`; sentinel status. | `0`; `0`. | All zero. | Attempted `0`; default `ROLLBACK_OK`; zero effects. | Not applicable; no owner exists. | `STATUS_INVALID_PARAMETER`; lifecycle no; return that failure. |
-| Invalid clean baseline, signature, or version | No; no new object; no. | `INVALID_SIGNATURE`, `UNSUPPORTED_VERSION`, or `INVALID_BASELINE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | No helper; `BaselineValidationResult` is the actual storage failure when the pre-object validator ran, otherwise its zero default; `ValidationResult=CREATION_OK`; sentinel status. | Incoming owner mask; same incoming mask. | All zero. | Attempted `0`; default `ROLLBACK_OK`; zero effects. | Incoming invalid state unchanged; no repair or fault publication. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return that failure. |
-| Already ready | No clean baseline; pre-existing full graph; no. | `ALREADY_READY` when fully-ready validation passes, otherwise `INVALID_BASELINE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | No helper; baseline field default; `ValidationResult` is the fully-ready validator result; sentinel status. | Incoming `READY`; incoming `READY`. | Attempted `0`; published `1` and complete `1` only for `ALREADY_READY`. | Attempted `0`; default `ROLLBACK_OK`; zero effects. | Existing ready owner unchanged. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return that failure. |
-| Already faulted | No clean baseline; none in the accepted rolled-back-fault form; no. | `ALREADY_FAULTED` when rollback classification proves `FAULT`, otherwise `INVALID_BASELINE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | No helper; validation fields default; sentinel status. | Incoming `FAULT` or invalid incoming mask; same mask. | All zero. | Attempted `0`; report result remains default `ROLLBACK_OK`; zero effects; classification is not an orchestrator rollback attempt. | Existing state unchanged. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return that failure. |
-| Existing partial state | No clean baseline; existing prefix handles/bits may exist; no. | `PARTIAL_STATE_PRESENT` when rollback classification recognizes a non-clean prefix, otherwise `INVALID_BASELINE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | No creation helper; validation fields default; sentinel status. | Incoming partial mask; same incoming mask. | All zero. | Attempted `0`; report result default `ROLLBACK_OK`; zero effects; classification only. | Existing state unchanged; ownership is not guessed. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return that failure. |
+| Null production integration input before invocation | No call; none; no. | Function not called; report `Result` not produced. | Not applicable; not applicable; not applicable. | Not applicable; not applicable; not applicable; not applicable. | Not applicable; not applicable; not applicable. | Not applicable; not applicable; not applicable; not applicable; not applicable; not applicable. | Not applicable; not applicable. | No orchestrator-owned transition. | `STATUS_INVALID_PARAMETER`; lifecycle initializer not called; return that failure. |
+| Null report pointer | No baseline; none; no. | Function returns `NULL_REPORT`; report `Result` is unavailable because no valid report storage exists. | Unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists. | Unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists. | Unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists. | Unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists; unavailable because no valid report storage exists. | Unavailable because no valid report storage exists; unavailable because no valid report storage exists. | Owner is not inspected or changed. | `STATUS_INVALID_PARAMETER`; lifecycle initializer not called; return that failure. |
+| Null parent device | Yes; none; no. | Function and report `Result` are both `NULL_PARENT_DEVICE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | `STORAGE_OK`; `CREATION_OK`; `CREATION_OK`; `STATUS_INVALID_DEVICE_STATE`. | `P0`; `P0`; `P0`. | `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`. | `ROLLBACK_OK`; zero effects. | Clean `P0`; no automatic fault transition. | `STATUS_INVALID_PARAMETER`; lifecycle initializer not called; return that failure. |
+| Null owner | No; none; no. | Function and report `Result` are both `NULL_OWNER`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | Default `STORAGE_OK`; `CREATION_OK`; `CREATION_OK`; `STATUS_INVALID_DEVICE_STATE`. | `0`; `0`; `0`. | `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`. | `ROLLBACK_OK`; zero effects. | Not applicable; no owner exists. | `STATUS_INVALID_PARAMETER`; lifecycle initializer not called; return that failure. |
+| Invalid clean baseline, signature, or version | No; no new object; no. | Function and report `Result` are both the exact `INVALID_SIGNATURE`, `UNSUPPORTED_VERSION`, or `INVALID_BASELINE` classification. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | Actual storage failure when pre-object validation ran, otherwise default `STORAGE_OK`; `CREATION_OK`; `CREATION_OK`; `STATUS_INVALID_DEVICE_STATE`. | Incoming owner mask; same incoming mask; same incoming mask. | `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`. | `ROLLBACK_OK`; zero effects. | Incoming invalid state unchanged; no repair or fault publication. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return that failure. |
+| Already ready | No clean baseline; pre-existing full graph; no. | Function and report `Result` are both `ALREADY_READY` when fully-ready validation passes, otherwise both `INVALID_BASELINE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | Default `STORAGE_OK`; `CREATION_OK`; exact fully-ready validator result; `STATUS_INVALID_DEVICE_STATE`. | Incoming `READY`; incoming `READY`; incoming `READY`. | `FALSE`; `FALSE`; `TRUE` only for `ALREADY_READY`, otherwise `FALSE`; `FALSE`; `FALSE`; `TRUE` only for `ALREADY_READY`, otherwise `FALSE`. | `ROLLBACK_OK`; zero effects. | Existing ready owner unchanged. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return that failure. |
+| Already faulted | No clean baseline; none in the accepted rolled-back-fault form; no. | Function and report `Result` are both `ALREADY_FAULTED` when rollback classification proves `FAULT`, otherwise both `INVALID_BASELINE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | Default `STORAGE_OK`; `CREATION_OK`; `CREATION_OK`; `STATUS_INVALID_DEVICE_STATE`. | Incoming `FAULT` or invalid incoming mask; same incoming mask; same incoming mask. | `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`. | `ROLLBACK_OK`; zero effects; classification is not an orchestrator rollback attempt. | Existing state unchanged. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return that failure. |
+| Existing partial state | No clean baseline; existing prefix handles/bits may exist; no. | Function and report `Result` are both `PARTIAL_STATE_PRESENT` when rollback classification recognizes a non-clean prefix, otherwise both `INVALID_BASELINE`. | `VALIDATE_BASELINE`; `NONE`; `VALIDATE_BASELINE`. | Default `STORAGE_OK`; `CREATION_OK`; `CREATION_OK`; `STATUS_INVALID_DEVICE_STATE`. | Incoming partial or invalid mask; same incoming mask; same incoming mask. | `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`. | `ROLLBACK_OK`; zero effects; classification only. | Existing state unchanged; ownership is not guessed. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return that failure. |
 
 ### Creation and validation failure matrix
 
-| Category | Baseline accepted / object published / common path | Returned result after successful recovery | Stages (`LastStageEntered`; `LastCompletedStage`; `FailedStage`) | Helper / validators / `FrameworkStatus` | `HighestPartialInitializationMask`; `FinalInitializationMask` | Ready flags | Rollback attempted / result / effects | Final owner / fault marking | Production status / lifecycle / `EvtDeviceAdd` |
+| Category | Baseline accepted / object published / common path | Function return; report `Result` | `LastStageEntered`; `LastCompletedStage`; `FailedStage` | `BaselineValidationResult`; `CreationResult`; `ValidationResult`; `FrameworkStatus` | `InitialInitializationMask`; `HighestPartialInitializationMask`; `FinalInitializationMask` | `CreationHelperCalled`; `ReadyPublicationAttempted`; `ReadyPublished`; `RollbackAttempted`; `RollbackSucceeded`; `ObjectGraphComplete` | `RollbackResult`; `RollbackEffects` | Final owner / fault marking | Production status / lifecycle / `EvtDeviceAdd` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Spinlock framework/local failure before publication | Yes; none; yes. | `SPINLOCK_FAILED`; `INVARIANT_FAILED` only if no-object fault marking or final classification fails. | `CREATE_SPINLOCK`; `VALIDATE_BASELINE`; `CREATE_SPINLOCK`. | `CreationResult` is exact helper failure; `ValidationResult` retains prior/default `CREATION_OK`; `FrameworkStatus` is exact failing WDF status when WDF failed, otherwise sentinel or `STATUS_SUCCESS` for a local anomaly. | `P0`; `FAULT` when no-object marking succeeds, otherwise actual unchanged/invalid mask. | All zero. | No rollback attempt; default `ROLLBACK_OK`; zero effects. | No-object helper publishes `FAULT`; no rollback. | Exact failing framework status, else `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Spinlock post-success validation failure | Yes; lock; yes. | `SPINLOCK_FAILED`. | `ROLLBACK`; `ROLLBACK`; `CREATE_SPINLOCK`. | Internal helper validation: `CreationResult=POST_CREATION_INVARIANT_FAILED`, report `ValidationResult` remains prior/default; outer validation: `CreationResult=CREATION_OK`, report `ValidationResult` is exact failure. `FrameworkStatus=STATUS_SUCCESS`. | `P1`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; spinlock deletion initiated `1`; request hierarchy and memory representation `0`; `AlreadyClean=0`; prior `P1`, resulting `FAULT`. | Rollback publishes `FAULT`. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Request framework/local failure | Yes; lock only; yes. | `REQUEST_FAILED`. | `ROLLBACK`; `ROLLBACK`; `CREATE_REQUEST`. | Exact request helper failure; `ValidationResult` retains successful spinlock validation; exact failing WDF status when present, otherwise sentinel. | `P1`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; spinlock deletion `1`; request hierarchy `0`; memory representation `0`; prior `P1`, resulting `FAULT`. | Rollback publishes `FAULT`. | Exact failing framework status, else `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Request post-success validation failure | Yes; lock and request; yes. | `REQUEST_FAILED`. | `ROLLBACK`; `ROLLBACK`; `CREATE_REQUEST`. | Internal helper failure or `CreationResult=CREATION_OK` plus exact outer `ValidationResult`; `FrameworkStatus=STATUS_SUCCESS`. | `P2`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; request hierarchy and spinlock deletion `1`; memory representation `0`; prior `P2`, resulting `FAULT`. | Rollback publishes `FAULT`. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Outbound-memory framework/local failure | Yes; lock and request; yes. | `OUTBOUND_MEMORY_FAILED`. | `ROLLBACK`; `ROLLBACK`; `CREATE_OUTBOUND_MEMORY`. | Exact outbound helper failure; `ValidationResult` retains successful request-stage validation; exact failing WDF status when present, otherwise sentinel. | `P2`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; request hierarchy and spinlock deletion `1`; outbound/inbound representation `0`; prior `P2`, resulting `FAULT`. | Rollback publishes `FAULT`. | Exact failing framework status, else `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Outbound-memory post-success validation failure | Yes; lock, request, outbound memory; yes. | `OUTBOUND_MEMORY_FAILED`. | `ROLLBACK`; `ROLLBACK`; `CREATE_OUTBOUND_MEMORY`. | Internal helper failure or `CreationResult=CREATION_OK` plus exact outer `ValidationResult`; `FrameworkStatus=STATUS_SUCCESS`. | `P3`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; request hierarchy and spinlock deletion `1`; outbound represented `1`, inbound `0`; prior `P3`, resulting `FAULT`. | Rollback publishes `FAULT`. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Inbound-memory framework/local failure | Yes; lock, request, outbound memory; yes. | `INBOUND_MEMORY_FAILED`. | `ROLLBACK`; `ROLLBACK`; `CREATE_INBOUND_MEMORY`. | Exact inbound helper failure; `ValidationResult` retains successful outbound-stage validation; exact failing WDF status when present, otherwise sentinel. | `P3`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; request hierarchy and spinlock deletion `1`; outbound represented `1`, inbound `0`; prior `P3`, resulting `FAULT`. | Rollback publishes `FAULT`. | Exact failing framework status, else `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Inbound-memory post-success validation failure | Yes; full pre-ready graph; yes. | `INBOUND_MEMORY_FAILED`. | `ROLLBACK`; `ROLLBACK`; `CREATE_INBOUND_MEMORY`. | Internal helper failure or `CreationResult=CREATION_OK` plus exact outer `ValidationResult`; `FrameworkStatus=STATUS_SUCCESS`. | `P4`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; request hierarchy and spinlock deletion `1`; outbound/inbound represented `1`; prior `P4`, resulting `FAULT`. | Rollback publishes `FAULT`. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Complete pre-ready validation failure | Yes; full pre-ready graph; yes. | `PRE_READY_VALIDATION_FAILED`. | `ROLLBACK`; `ROLLBACK`; `VALIDATE_PRE_READY`. | Last helper result remains inbound `CREATION_OK`; `ValidationResult` is exact pre-ready failure; `FrameworkStatus=STATUS_SUCCESS`. | `P4`; `FAULT`. | All zero. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; request hierarchy and spinlock deletion `1`; both memories represented; prior `P4`, resulting `FAULT`. | Rollback publishes `FAULT`. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Final-ready validation failure | Yes; full graph; yes. | `READY_VALIDATION_FAILED`. | `ROLLBACK`; `ROLLBACK`; `VALIDATE_READY`. | Last helper result remains inbound `CREATION_OK`; `ValidationResult` is exact final-ready failure; `FrameworkStatus=STATUS_SUCCESS`. | `P4`; `FAULT`. | Attempted `1`; published `0`; complete `0`; `OWNER_READY` is cleared before failure handling. | Attempted `1`; `ROLLBACK_OK`; succeeded `1`; request hierarchy and spinlock deletion `1`; both memories represented; prior `P4`, resulting `FAULT`. | Rollback publishes `FAULT`. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
+| Spinlock framework/local failure before publication | Yes; none; yes. | Function and report `Result` are both `SPINLOCK_FAILED`; both become `INVARIANT_FAILED` only if no-object fault marking or final classification fails. | `CREATE_SPINLOCK`; `VALIDATE_BASELINE`; `CREATE_SPINLOCK`. | `STORAGE_OK`; exact helper failure; prior/default `CREATION_OK`; exact failing WDF status, sentinel, or `STATUS_SUCCESS` for a local anomaly. | `P0`; `P0`; `FAULT` when no-object marking succeeds, otherwise actual unchanged/invalid mask. | `TRUE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`; `FALSE`. | `ROLLBACK_OK`; zero effects. | No-object helper publishes `FAULT`; no rollback. | Exact failing framework status, else `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Spinlock post-success validation failure | Yes; lock; yes. | Function and report `Result` are both `SPINLOCK_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise prior completed stage; `CREATE_SPINLOCK`. | `STORAGE_OK`; internal failure `POST_CREATION_INVARIANT_FAILED` or outer-validation `CREATION_OK`; prior/default `CREATION_OK` for internal failure or exact outer failure; `STATUS_SUCCESS`. | `P0`; `P1`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Request framework/local failure | Yes; lock only; yes. | Function and report `Result` are both `REQUEST_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `CREATE_SPINLOCK`; `CREATE_REQUEST`. | `STORAGE_OK`; exact request helper failure; successful spinlock-stage validation; exact failing WDF status when present, otherwise sentinel. | `P0`; `P1`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | Exact failing framework status only when top-level result remains `REQUEST_FAILED`, otherwise `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Request post-success validation failure | Yes; lock and request; yes. | Function and report `Result` are both `REQUEST_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `CREATE_SPINLOCK`; `CREATE_REQUEST`. | `STORAGE_OK`; exact internal helper failure or `CREATION_OK`; prior successful spinlock validation for internal failure or exact outer failure; `STATUS_SUCCESS`. | `P0`; `P2`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Outbound-memory framework/local failure | Yes; lock and request; yes. | Function and report `Result` are both `OUTBOUND_MEMORY_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `CREATE_REQUEST`; `CREATE_OUTBOUND_MEMORY`. | `STORAGE_OK`; exact outbound helper failure; successful request-stage validation; exact failing WDF status when present, otherwise sentinel. | `P0`; `P2`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | Exact failing framework status only when top-level result remains `OUTBOUND_MEMORY_FAILED`, otherwise `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Outbound-memory post-success validation failure | Yes; lock, request, outbound memory; yes. | Function and report `Result` are both `OUTBOUND_MEMORY_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `CREATE_REQUEST`; `CREATE_OUTBOUND_MEMORY`. | `STORAGE_OK`; exact internal helper failure or `CREATION_OK`; prior successful request validation for internal failure or exact outer failure; `STATUS_SUCCESS`. | `P0`; `P3`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Inbound-memory framework/local failure | Yes; lock, request, outbound memory; yes. | Function and report `Result` are both `INBOUND_MEMORY_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `CREATE_OUTBOUND_MEMORY`; `CREATE_INBOUND_MEMORY`. | `STORAGE_OK`; exact inbound helper failure; successful outbound-stage validation; exact failing WDF status when present, otherwise sentinel. | `P0`; `P3`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | Exact failing framework status only when top-level result remains `INBOUND_MEMORY_FAILED`, otherwise `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Inbound-memory post-success validation failure | Yes; full pre-ready graph; yes. | Function and report `Result` are both `INBOUND_MEMORY_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `CREATE_OUTBOUND_MEMORY`; `CREATE_INBOUND_MEMORY`. | `STORAGE_OK`; exact internal helper failure or `CREATION_OK`; prior successful outbound validation for internal failure or exact outer failure; `STATUS_SUCCESS`. | `P0`; `P4`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Complete pre-ready validation failure | Yes; full pre-ready graph; yes. | Function and report `Result` are both `PRE_READY_VALIDATION_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `CREATE_INBOUND_MEMORY`; `VALIDATE_PRE_READY`. | `STORAGE_OK`; inbound `CREATION_OK`; exact pre-ready failure; `STATUS_SUCCESS`. | `P0`; `P4`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `FALSE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | Successful rollback publishes `FAULT`; failed rollback remains report-described. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Final-ready validation failure | Yes; full graph; yes. | Function and report `Result` are both `READY_VALIDATION_FAILED` after successful rollback, or both `ROLLBACK_FAILED` if rollback fails. | `ROLLBACK`; `ROLLBACK` only after successful rollback, otherwise `PUBLISH_READY`; `VALIDATE_READY`. | `STORAGE_OK`; inbound `CREATION_OK`; exact final-ready failure; `STATUS_SUCCESS`. | `P0`; `P4`; `FAULT` after successful rollback or actual failure state. | `TRUE`; `TRUE`; `FALSE`; `TRUE`; `TRUE` only after successful rollback; `FALSE`. | `ROLLBACK_OK` after success or exact failure; exact effects. | `OWNER_READY` is tentatively set, validation fails, `OWNER_READY` is cleared, and successful rollback publishes `FAULT`; failed rollback remains report-described. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
 
 ### Rollback, success, and later-failure matrix
 
-| Category | Baseline accepted / object published / common path | Returned result | Stages / helper / validation fields | `FrameworkStatus`; masks | Ready flags | Rollback attempted / result / effects | Final owner state | Production status / lifecycle / `EvtDeviceAdd` |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Rollback rejection before deletion | Yes; partial/full pre-ready graph; yes. | `ROLLBACK_FAILED`. | `LastStageEntered=ROLLBACK`; `LastCompletedStage` remains the last pre-failure completed stage; original `FailedStage`, `CreationResult`, and `ValidationResult` are preserved. | Original framework status; `HighestPartialInitializationMask` is the pre-rollback prefix excluding `OWNER_READY`; `FinalInitializationMask` is the unchanged rejected state after ready clearing. | Original attempt flag preserved; published `0`; complete `0`. | Attempted `1`; exact non-OK rollback result; succeeded `0`; effects remain zero because classification rejected before deletion. | Partial/full pre-ready state may remain; `OWNER_READY` absent. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Rollback failure after effects begin | Yes; partial/full pre-ready graph; yes. | `ROLLBACK_FAILED`. | `LastStageEntered=ROLLBACK`; rollback is not marked completed; original `FailedStage`, `CreationResult`, and `ValidationResult` are preserved. | Original framework status; highest mask remains the pre-rollback prefix excluding `OWNER_READY`; final mask is the actual variable post-effect state captured at return. | Original attempt flag preserved; published `0`; complete `0`. | Attempted `1`; exact non-OK result such as `POST_ROLLBACK_INVARIANT_FAILED`; succeeded `0`; effects preserve initiated deletions, represented memories, prior mask, and resulting mask. | Variable report-described failure state; do not invent a fixed mask or retry. | `STATUS_INVALID_DEVICE_STATE`; lifecycle no; return failure. |
-| Success | Yes with `BaselineValidationResult=STORAGE_OK`; full graph; no failure path. | `OK`. | `LastStageEntered=VALIDATE_READY`; `LastCompletedStage=VALIDATE_READY`; `FailedStage=NONE`; `CreationResult=CREATION_OK`; `ValidationResult=CREATION_OK`. | `FrameworkStatus=STATUS_SUCCESS`; highest `P4`; final `READY`. | Attempted `1`; published `1`; complete `1`. | Attempted `0`; default `ROLLBACK_OK`; zero effects; succeeded `0`. | Structurally ready dormant owner, no target or operation. | Continue; lifecycle runs; final status comes from remaining existing `EvtDeviceAdd` work. |
-| Later existing `EvtDeviceAdd` failure after orchestration success | Yes with `BaselineValidationResult=STORAGE_OK`; full graph; no orchestration failure path. | `OK`. | `LastStageEntered=VALIDATE_READY`; `LastCompletedStage=VALIDATE_READY`; `FailedStage=NONE`; `CreationResult=CREATION_OK`; `ValidationResult=CREATION_OK`. | `FrameworkStatus=STATUS_SUCCESS`; highest `P4`; final `READY`. | Attempted `1`; published `1`; complete `1`. | Attempted `0`; default `ROLLBACK_OK`; zero effects; succeeded `0`; no later orchestrator rollback. | Ready owner exists until failed-device destruction removes its context and parented children. | Return the later existing failure; lifecycle may have run; do not call pre-ready rollback. |
+| Category | Baseline accepted / object published / common path | Function return; report `Result` | `LastStageEntered`; `LastCompletedStage`; `FailedStage` | `BaselineValidationResult`; `CreationResult`; `ValidationResult`; `FrameworkStatus` | `InitialInitializationMask`; `HighestPartialInitializationMask`; `FinalInitializationMask` | `CreationHelperCalled`; `ReadyPublicationAttempted`; `ReadyPublished`; `RollbackAttempted`; `RollbackSucceeded`; `ObjectGraphComplete` | `RollbackResult`; `RollbackEffects` | Final owner state | Production status / lifecycle / `EvtDeviceAdd` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Rollback rejection before deletion | Yes; partial/full pre-ready graph; yes. | Function and report `Result` are both `ROLLBACK_FAILED`. | `ROLLBACK`; last pre-failure completed stage; original failed stage. | `STORAGE_OK`; original creation result; original validation result; original framework status. | `P0`; pre-rollback prefix excluding `OWNER_READY`; unchanged rejected state after ready clearing. | `TRUE`; `TRUE` only when the original failure was final-ready validation, otherwise `FALSE`; `FALSE`; `TRUE`; `FALSE`; `FALSE`. | Exact non-OK rollback result; zero effects because classification rejected before deletion. | Partial/full pre-ready state remains; `OWNER_READY` absent. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Rollback failure after effects begin | Yes; partial/full pre-ready graph; yes. | Function and report `Result` are both `ROLLBACK_FAILED`. | `ROLLBACK`; last pre-failure completed stage because rollback is not completed; original failed stage. | `STORAGE_OK`; original creation result; original validation result; original framework status. | `P0`; pre-rollback prefix excluding `OWNER_READY`; variable actual post-effect state. | `TRUE`; `TRUE` only when the original failure was final-ready validation, otherwise `FALSE`; `FALSE`; `TRUE`; `FALSE`; `FALSE`. | Exact non-OK result such as `POST_ROLLBACK_INVARIANT_FAILED`; effects preserve initiated deletions, represented memories, prior mask, and resulting mask. | Variable report-described failure state; do not invent a fixed mask or retry. | `STATUS_INVALID_DEVICE_STATE`; lifecycle initializer not called; return failure. |
+| Success | Yes with `BaselineValidationResult=STORAGE_OK`; full graph; no failure path. | Function and report `Result` are both `OK`. | `VALIDATE_READY`; `VALIDATE_READY`; `NONE`. | `STORAGE_OK`; `CREATION_OK`; `CREATION_OK`; `STATUS_SUCCESS`. | `P0`; `P4`; `READY`. | `TRUE`; `TRUE`; `TRUE`; `FALSE`; `FALSE`; `TRUE`. | `ROLLBACK_OK`; zero effects. | Structurally ready dormant owner, no target or operation. | Continue; lifecycle initializer called; later setup continues rather than returning orchestration success directly. |
+| Later existing `EvtDeviceAdd` failure after orchestration success | Yes with `BaselineValidationResult=STORAGE_OK`; full graph; no orchestration failure path. | Function return and unchanged report `Result` are both `OK`. | `VALIDATE_READY`; `VALIDATE_READY`; `NONE`. | `STORAGE_OK`; `CREATION_OK`; `CREATION_OK`; `STATUS_SUCCESS`. | `P0`; `P4`; `READY`. | `TRUE`; `TRUE`; `TRUE`; `FALSE`; `FALSE`; `TRUE`. | `ROLLBACK_OK`; zero effects. | Ready owner exists until failed-device destruction removes its context and parented children. | Subcase 22A: lifecycle initializer returns `NULL_STATE`, device-created transition is not called, and `EvtDeviceAdd` returns `STATUS_INVALID_PARAMETER`. Subcase 22B: lifecycle initialized successfully, device-created transition returns `NOT_MARKED` or `INVALID_PHASE`, and `EvtDeviceAdd` returns `STATUS_INVALID_DEVICE_STATE`. In both: no pre-ready rollback or manual owner clearing; failed-device WDF hierarchy destruction is authoritative. |
+
+#### Category 22A: lifecycle initialization fails
+
+Orchestration has already succeeded and the completed-success report remains
+unchanged. `ChatpadFilterLifecycleInitialize` is called and returns
+`CHATPAD_FILTER_LIFECYCLE_NULL_STATE`, its only source-supported failure. No
+lifecycle fields are initialized. `ChatpadFilterLifecycleMarkDeviceCreated`
+is not called. `EvtDeviceAdd` returns `STATUS_INVALID_PARAMETER` through
+`ChatpadLifecycleResultToStatus(lifecycleResult)`. Production does not call
+pre-ready orchestration rollback or clear owner state manually. WDF destruction
+of the failed device object deletes the request-owner graph through its
+established object parentage. With the current valid device-context pointer,
+this remains a defensive failure path rather than an expected path.
+
+#### Category 22B: device-created transition fails
+
+Orchestration has already succeeded and the completed-success report remains
+unchanged. `ChatpadFilterLifecycleInitialize` returns
+`CHATPAD_FILTER_LIFECYCLE_OK`, so lifecycle is initialized successfully.
+`ChatpadFilterLifecycleMarkDeviceCreated` is then called. Its source-supported
+failures after a non-null successful initializer are
+`CHATPAD_FILTER_LIFECYCLE_NOT_MARKED` or
+`CHATPAD_FILTER_LIFECYCLE_INVALID_PHASE`; either maps to
+`STATUS_INVALID_DEVICE_STATE`. Production does not call pre-ready orchestration
+rollback or clear owner state manually. Failed-device WDF hierarchy
+destruction remains authoritative. This is distinct from future normal removal
+after active request work. The current successful initializer establishes the
+required mark and unset phase, so this is also a defensive unexpected-state
+path.
+
+Current `device.c` has no other failure point after lifecycle initialization
+and the device-created transition, so 22A and 22B are the only current
+post-orchestration failure subcases.
 
 `HighestPartialInitializationMask` is initialized from the incoming owner mask
 for every non-null owner, so an early rejection retains that incoming mask and
@@ -448,14 +536,22 @@ production behavior:
 If `OWNER_READY` was tentatively published and final ready validation fails,
 the orchestrator owns all recovery logic:
 
-1. `OWNER_READY` is cleared inside the orchestrator.
-2. The original failure stage is preserved in the report.
-3. Rollback runs exactly once.
-4. Success is not returned.
-5. Lifecycle initialization does not run.
+1. The ready-publication stage is entered.
+2. Exact report field `ReadyPublicationAttempted` becomes `TRUE`.
+3. `OWNER_READY` is tentatively present in the owner mask.
+4. Final-ready validation fails.
+5. `OWNER_READY` is cleared inside the orchestrator.
+6. The original failed stage and validation result are preserved, and rollback
+   runs exactly once.
+7. `FinalInitializationMask` captures the actual final return state.
+8. Function return and report `Result` remain the same failure
+   (`READY_VALIDATION_FAILED` after successful rollback or `ROLLBACK_FAILED`
+   after rollback failure).
+9. Lifecycle initialization does not run.
 
 Production code must not duplicate or second-guess that internal logic. It
-must only map the returned result and fail `EvtDeviceAdd`.
+must map the function return, cross-check report `Result`, and fail
+`EvtDeviceAdd`.
 
 ## 13. Rollback failure
 
@@ -484,7 +580,9 @@ orchestrator-produced partial states are safely reversible.
 
 If orchestration succeeds but a later existing `EvtDeviceAdd` step fails, the
 current rollback helper must not be called. It is pre-ready only and rejects
-ready owners.
+ready owners. The only current subcases are taxonomy subcases 22A and 22B:
+the lifecycle initializer is called and fails, or it succeeds and the
+device-created lifecycle transition is called and fails.
 
 The authoritative strategy is:
 
@@ -663,6 +761,13 @@ The future implementation guard must check:
 - exactly one production orchestration call;
 - the one call receives the local report and the result/report are checked
   before lifecycle initialization;
+- taxonomy binds exact report fields `Result` and
+  `ReadyPublicationAttempted`;
+- production classification reads the function return and cross-checks report
+  `Result`;
+- a return/report mismatch is a hard `STATUS_INVALID_DEVICE_STATE` failure,
+  preserves diagnostics, invokes no production rollback, and cannot reach
+  lifecycle initialization;
 - exact insertion point after explicit pre-object validation and before
   lifecycle initialization;
 - lifecycle initialization reachable only after orchestration success;
@@ -679,6 +784,10 @@ The future implementation guard must check:
   it contains a failing `NTSTATUS`;
 - rollback failure kept distinguishable and mask/report fields available for
   offline evidence;
+- taxonomy subcases 22A and 22B distinguish lifecycle-initializer failure from
+  device-created-transition failure;
+- `HighestPartialInitializationMask` and `FinalInitializationMask` remain
+  explicitly available for evidence;
 - no diagnostic output containing WDF handles or protocol payloads;
 - expected retained orchestration, creation, rollback, and validation helpers;
 - expected WDF function-table references for object creation/deletion;
@@ -744,6 +853,16 @@ It must record:
 - report zero-initialization and lifetime guard evidence;
 - failure-taxonomy guard evidence and expected statically testable report
   fields;
+- static or test evidence for exact
+  `HighestPartialInitializationMask` progression through `P0`, `P1`, `P2`,
+  `P3`, and `P4`, including proof that rollback does not rewrite it;
+- static or test evidence for exact `FinalInitializationMask` behavior on
+  early rejection with valid report storage, post-baseline no-object fault,
+  successful partial rollback, rollback failure, final-ready validation
+  failure, and success;
+- evidence that each final mask equals the actual final owner state and that
+  `OWNER_READY` and `FAULTED` presence matches the documented category;
+- exact command, result, and SHA-256 binding for both mask checks;
 - retained helper evidence;
 - COMDAT/function-level-linking and LTCG analysis;
 - WDF function-table-reference evidence;
@@ -835,63 +954,83 @@ Binding decisions:
    local report with `{ 0 }`; the orchestrator clears it again internally; it
    is synchronous, contains no handles, is read only after return, is not
    retained, and cannot escape `EvtDeviceAdd`.
-4. Status mapping: preserve a failing framework `NTSTATUS` only for a
+4. Function return and report `Result`: production classifies from the
+   function return and cross-checks the exact report `Result`; valid report
+   paths require equality. A mismatch is a hard invariant failure mapped to
+   `STATUS_INVALID_DEVICE_STATE`, preserves the report, invokes no direct
+   rollback, and cannot reach lifecycle initialization.
+5. Status mapping: preserve a failing framework `NTSTATUS` only for a
    creation-stage failure; map null arguments to `STATUS_INVALID_PARAMETER`;
    map baseline, repeated/partial state, local validation, rollback failure,
    invariant failure, and unknown results to `STATUS_INVALID_DEVICE_STATE`;
    never return success or run lifecycle after a non-success result.
-5. Report masks: early rejection retains the incoming non-null-owner mask.
+6. Report masks: early rejection retains the incoming non-null-owner mask.
    After an accepted clean baseline, `HighestPartialInitializationMask` is the
    greatest published pre-ready prefix observed before recovery and excludes
    tentative `OWNER_READY` and later `FAULTED`; `FinalInitializationMask` is
    the actual non-null-owner mask at return and may contain `FAULTED` or
    `OWNER_READY`.
-6. Early report behavior: a non-null report is cleared first; null owner leaves
+7. Ready-publication fields: exact `ReadyPublicationAttempted` becomes `TRUE`
+   only when the `PUBLISH_READY` stage executes and remains `TRUE` if final
+   ready validation later fails. It is distinct from `ReadyPublished`, final
+   mask `OWNER_READY`, `ObjectGraphComplete`, and report `Result`.
+8. Early report behavior: a non-null report is cleared first; null owner leaves
    zero masks, while every non-null owner seeds initial/highest/final masks;
    early rejection preserves the incoming owner and performs no rollback.
-7. Stage report behavior: preserve the original `FailedStage`, latest helper
+9. Stage report behavior: preserve the original `FailedStage`, latest helper
    and validator results, framework status, highest pre-ready prefix, and ready
    flags; common failure chooses no-object faulting or one rollback attempt
    from actual publication state.
-8. Rollback report behavior: rollback changes `LastStageEntered`, result,
+10. Rollback report behavior: rollback changes `LastStageEntered`, report
+    `Result`,
    rollback fields/effects, completion state, and final mask as source
    dictates, but does not erase original failure fields or framework status.
-9. Clean baseline: no sequence-advance eligibility is part of the required
+11. Clean baseline: no sequence-advance eligibility is part of the required
    `SequenceAdvanceEligible == 0u` pre-object baseline.
-10. Early rejection: null-parent and invalid-baseline rejections return before
+12. Early rejection: null-parent and invalid-baseline rejections return before
     common fault handling; they do not receive the post-baseline no-object
     fault transition.
-11. Post-baseline no-object stage failure: after baseline acceptance and staged
+13. Post-baseline no-object stage failure: after baseline acceptance and staged
     creation entry, a no-publication spinlock-stage failure reaches common
     failure handling, does not roll back, and faults through the existing
     no-object helper.
-12. Partial-state validation failure: represented through the actual failed
+14. Partial-state validation failure: represented through the actual failed
     stage result plus `FailedStage` and `ValidationResult`, not a dedicated
     orchestration enum; rollback is selected only when an object was published.
-13. Partial rollback: orchestrator invokes centralized rollback exactly once;
+15. Partial rollback: orchestrator invokes centralized rollback exactly once;
     production `device.c` does not delete objects.
-14. Rollback failure: dedicated rollback-failure result, original failure
+16. Rollback failure: dedicated rollback-failure result, original failure
     preserved in the report, no retry, no direct best-effort deletion, fail
     `EvtDeviceAdd` with the stable local failure mapping.
-15. Later `EvtDeviceAdd` failure cleanup: after structural readiness, rely on
+17. Later failure subcase 22A: lifecycle initializer is called and fails;
+    device-created transition is not called; return its mapped failure without
+    pre-ready rollback or manual owner clearing.
+18. Later failure subcase 22B: lifecycle initializes successfully;
+    device-created transition is called and fails; return its mapped failure
+    without pre-ready rollback or manual owner clearing.
+19. Later `EvtDeviceAdd` failure cleanup: after structural readiness, rely on
     framework deletion of the failed device object and parented children.
-16. WDF parentage: spinlock and request parented to `WDFDEVICE`; outbound and
+20. WDF parentage: spinlock and request parented to `WDFDEVICE`; outbound and
     inbound memory parented to the request.
-17. Callback visibility: no new observer beyond the initialization call.
-18. Concurrency assumptions: sequential publication is sufficient only while
+21. Callback visibility: no new observer beyond the initialization call.
+22. Concurrency assumptions: sequential publication is sufficient only while
     there is no observer, target, admitted operation, completion, cancellation,
     external call, or cleanup race.
-19. IRQL assumptions: selected call runs at PASSIVE_LEVEL in `EvtDeviceAdd`;
+23. IRQL assumptions: selected call runs at PASSIVE_LEVEL in `EvtDeviceAdd`;
     individual creation/deletion APIs are valid through DISPATCH_LEVEL.
-20. Future implementation file scope: expected `device.c` only.
-21. Binary retention: helper and WDF object-management retention is expected
+24. Future implementation file scope: expected `device.c` only.
+25. Binary retention: helper and WDF object-management retention is expected
     and legitimate in the future implementation slice.
-22. LTCG audit limitation: retention evidence combines source, object, COMDAT,
+26. LTCG audit limitation: retention evidence combines source, object, COMDAT,
     linker/LTCG, WDF function-table, and final-image inspection; no
     named-symbol check is sufficient alone and LTCG need not be disabled.
-23. Evidence format: tracked JSON manifest plus ignored logs under
+27. Mask evidence: the manifest explicitly binds
+    `HighestPartialInitializationMask` progression and rollback stability plus
+    `FinalInitializationMask` final-state behavior, with exact commands,
+    results, and SHA-256 values.
+28. Evidence format: tracked JSON manifest plus ignored logs under
     `artifacts\logs`.
-24. Next gate: independent read-only audit of this corrected report-aware
+29. Next gate: independent read-only audit of this corrected report-aware
     design.
 
 Stop conditions:

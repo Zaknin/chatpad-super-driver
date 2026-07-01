@@ -3871,3 +3871,79 @@
 - **Next gate:** Independent read-only audit of the corrected report-aware
   production orchestration-invocation design. Source implementation and every
   runtime action remain unauthorized.
+
+## 2026-07-01 07:12 +04:00 - Orchestration report-contract correction
+
+- **Task title/objective:** Correct the three remaining documentation-only
+  defects found by the third independent production orchestration-invocation
+  design audit: explicit report-field binding, deterministic later lifecycle
+  failures, and explicit highest/final-mask evidence requirements.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-orchestration-report-design-fix` at
+  `ad04ebc17a4ca75d033a08514f692b037a5e6dc8`, parent
+  `8ec45055b3608ae917fa05e762ce37f73424ab63`, subject
+  `docs: complete orchestration report design`, then created
+  `feature/offline-kmdf-orchestration-report-contract-fix`.
+- **Investigation:** Re-read the repository protocol and continuity files,
+  verified all 19 authoritative report fields and every relevant `Result`/
+  ready-publication assignment, and inspected current `device.c` plus
+  lifecycle implementation/status mapping. The source confirms that valid
+  report paths finalize report `Result` to the function return, only the
+  publish-ready stage sets `ReadyPublicationAttempted`, and current
+  post-orchestration failures are limited to lifecycle initialization or the
+  following device-created transition.
+- **Files modified:**
+  `docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and
+  `docs/WORKLOG.md`.
+- **Report contract:** The 22-category taxonomy now binds function return and
+  exact report `Result` separately, lists all 19 exact source fields, and
+  assigns every field through explicitly ordered grouped columns with no blank
+  cells. It binds exact `ReadyPublicationAttempted` independently from
+  `ReadyPublished`, final-mask `OWNER_READY`, `ObjectGraphComplete`, and
+  success. A function-return/report mismatch is a hard
+  `STATUS_INVALID_DEVICE_STATE` failure that preserves diagnostics, invokes no
+  caller-owned rollback, and cannot reach lifecycle initialization.
+- **Lifecycle contract:** Category 22 remains one top-level category with
+  deterministic subcases 22A and 22B. Subcase 22A records initializer
+  `NULL_STATE` mapping to `STATUS_INVALID_PARAMETER` without calling the
+  device-created transition. Subcase 22B records successful initialization
+  followed by `NOT_MARKED` or `INVALID_PHASE`, both mapped to
+  `STATUS_INVALID_DEVICE_STATE`. Neither subcase calls pre-ready rollback or
+  manually clears the owner; failed-device WDF hierarchy destruction remains
+  authoritative.
+- **Evidence contract:** Future evidence now explicitly checks
+  `HighestPartialInitializationMask` progression and rollback stability,
+  `FinalInitializationMask` on all required early/failure/success paths, exact
+  final owner-state correspondence, `OWNER_READY`/`FAULTED` presence, and exact
+  command/result/SHA-256 binding. No evidence manifest was created or changed.
+- **Validation:** Structural inspection passed with 28 sequential numbered
+  sections, 22 taxonomy categories, one 22A and one 22B subdivision, all 19
+  source fields explicitly present, consistent 10-cell taxonomy rows, and zero
+  blank cells. Ambiguity searches found no `returned result`, unlabeled ready
+  flags, `may have run`, `possibly initialized`, `TBD`, `later decide`, or
+  unresolved `either/or` wording. Eleven relative Markdown links passed
+  existence/tracking/case/anchor checks. `git diff --check` passed with only
+  expected `core.autocrlf=true` conversion warnings. All six working-tree
+  Markdown files are LF-only with no CRLF or lone-CR content; numstat shows
+  targeted edits rather than whole-file conversion. The documented
+  non-building `tools\Test-RepositorySafety.ps1` check passed.
+- **Failed command:** An initial read used the nonexistent path
+  `src\driver\ChatpadFilterLifecycle\ChatpadFilterLifecycle.c` and failed
+  without changing state. Read-only discovery located the authoritative file
+  at `src\driver\ChatpadFilter\ChatpadFilterLifecycle.c`, which was then
+  inspected successfully.
+- **Safety:** Documentation-only. No source/header, project/solution,
+  script/test, manifest/evidence, artifact/binary, INF, signing, package,
+  deployment, recovery, D0/removal, USB, or hardware file changed. No build,
+  test, compile, helper, initialization, validation, orchestration, rollback,
+  WDF object action, driver load, Windows mutation, hardware query, or
+  controller/Chatpad interaction occurred.
+- **Commit/push:** Commit exactly
+  `docs: bind orchestration report contract` without amend and push only
+  `origin/feature/offline-kmdf-orchestration-report-contract-fix`; final hash
+  is reported after commit.
+- **Next gate:** Independent read-only audit of the corrected report contract.
+  Production orchestration implementation and every runtime action remain
+  unauthorized.
