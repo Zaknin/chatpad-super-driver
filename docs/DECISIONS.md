@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Bind production orchestration evidence to immutable scope
+
+**Decision:** Remediate the production orchestration checkpoint on a separate
+branch without changing production source. The semantic guard binds the exact
+implementation parent and commit, requires Git's authoritative 14-path scope,
+proves all 18 status mappings, and requires a closed metadata-complete evidence
+set. Pre-final and self-referential evidence limitations are explicit.
+
+**Rationale:** Independent source inspection passed, but the initial evidence
+audit found that current-worktree scope inspection, partial mapping checks,
+open-ended manifest iteration, compile-only KMDF context evidence, and missing
+repository/Git evidence could not independently prove the checkpoint.
+
+**Alternatives rejected:** Fabricating a fifteenth implementation path would
+contradict Git. Amending the implementation commit would erase checkpoint
+provenance. Embedding the final remediation hash in its own manifest or
+claiming a guard validated its own changing transcript would be
+self-referential.
+
+**Consequences:** Runtime source remains identical to implementation commit
+`efb729502a0527ac70e2d20fa31a323c3beb2920`. Acceptance requires a new
+independent read-only audit of the remediated guard, manifest, ignored
+evidence, containing commit, and final clean upstream state. Runtime,
+target/request, signing, installation, and hardware gates remain closed.
+
 ## 2026-07-01 - Invoke dormant request-owner orchestration in production offline
 
 **Decision:** Production `ChatpadEvtDeviceAdd` now invokes

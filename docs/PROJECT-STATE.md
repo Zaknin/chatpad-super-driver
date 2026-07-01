@@ -1,16 +1,22 @@
 # Project State
 
-*Last updated: 2026-07-01 (offline production orchestration invocation)*
+*Last updated: 2026-07-01 (production orchestration evidence remediation)*
 
 ## Current State
 
-- **Branch:** `feature/offline-kmdf-production-orchestration-invocation`.
+- **Branch:**
+  `feature/offline-kmdf-production-orchestration-evidence-remediation`.
+- **Frozen implementation commit:**
+  `efb729502a0527ac70e2d20fa31a323c3beb2920`,
+  `driver: invoke production request owner orchestration`.
 - **Starting checkpoint:** `4ba0de15420e0b66287a501918de694c8b6fd720`,
   `docs: close orchestration defensive taxonomy`.
 - **Expected implementation commit:** the commit containing this state uses
   subject `driver: invoke production request owner orchestration`.
 - **Checkpoint record:**
   [Offline KMDF Production Orchestration Invocation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md).
+- **Evidence-remediation record:**
+  [Offline KMDF Production Orchestration Evidence Remediation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-REMEDIATION.md).
 - **Evidence manifest:**
   [production-orchestration-invocation-manifest.json](evidence/production-orchestration-invocation-manifest.json).
 - **Historical owner-initialization checkpoint:**
@@ -34,6 +40,10 @@
   observation, cleanup owner observation, or removal owner observation.
 - The isolated KMDF request-owner context remains the owner of helper creation,
   ready publication, and pre-ready rollback.
+- Independent source inspection passed. The first evidence audit failed on
+  guard/manifest completeness. The separate remediation changes no production
+  source and binds the immutable 14-path implementation scope and complete
+  18-result mapping.
 
 ## Build and Validation State
 
@@ -57,23 +67,28 @@
 - Production owner-initialization guard: PASS SourceOnly in Debug and Release.
   Its old Full-mode manifest is a historic prior checkpoint with intentionally
   superseded driver hashes.
-- Production orchestration guard: PASS SourceOnly and Full in Debug and
-  Release. Full mode verifies manifest evidence hashes, driver identity,
-  artifact containment, source constraints, context symbols, link inputs, and
-  final-image forbidden-operation absence.
+- Production orchestration guard: PASS SourceOnly in Debug and Release with
+  `18/18` mapped results and zero missing, duplicate, or unexpected cases.
+  Full Debug/Release validation uses the schema-`1.1.0` closed mandatory
+  evidence set and explicitly skips only its own changing transcript hash.
+- The remediated manifest requires 42 unique evidence IDs, exact commands,
+  configurations, count/metric applicability, per-entry state binding,
+  repository/Git evidence, and containing-commit limitations.
 
 ## Binary State
 
 - Debug driver:
   `artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys`, 32,256 bytes,
   SHA-256
-  `826700E0556840D79D5A18A6C7CFA739FAF8ADEC6A9A3CF37F544187FBEAA821`,
+  `DD33388A3905A4C5AFCFD3FF4E3443308CC9A280BCDD094FB7ACED7478880F83`,
   Authenticode `NotSigned`.
 - Release driver:
   `artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys`, 20,480 bytes,
   SHA-256
-  `D0983260B9CAD00CD72EE3F2AE4697110AA5C13DF01F7BC2B39C0FEF891F4CB3`,
+  `72B30B0523B07F91A21FE8711ED846F4B355652F0E2B0FEA691F894A4304CAC5`,
   Authenticode `NotSigned`.
+- Source was unchanged; the source-identical rebuild retained both sizes but
+  changed hashes because the current PE build is not reproducible byte-for-byte.
 - Debug object inspection exposes dormant orchestration, rollback, and WDF
   object-management evidence. Release LTCG strips ordinary named references;
   Release proof is based on audited source, link inputs, visible context
@@ -93,9 +108,9 @@
 
 ## Unresolved Blockers
 
-- The new production orchestration invocation requires an independent offline
-  implementation and evidence audit before any runtime, signing, packaging, or
-  deployment gate.
+- The production implementation plus remediated guard/evidence checkpoint
+  requires another independent read-only audit before any runtime, signing,
+  packaging, or deployment gate.
 - The driver has not been loaded; the new dormant WDF object-graph creation
   behavior is compile-validated only.
 - Target discovery, request formatting, submission, completion, cancellation,

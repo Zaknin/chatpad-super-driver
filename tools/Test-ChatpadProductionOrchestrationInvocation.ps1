@@ -174,6 +174,69 @@ $contextPath = Join-Path $repoRoot 'src\driver\ChatpadKmdfRequestOwnerContext\Ch
 $contextHeaderPath = Join-Path $repoRoot 'src\driver\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.h'
 $manifestPath = Join-Path $repoRoot 'docs\evidence\production-orchestration-invocation-manifest.json'
 $artifactsRoot = Join-Path $repoRoot 'artifacts'
+$implementationParent = '4ba0de15420e0b66287a501918de694c8b6fd720'
+$implementationCommit = 'efb729502a0527ac70e2d20fa31a323c3beb2920'
+$implementationBranch = 'feature/offline-kmdf-production-orchestration-invocation'
+$expectedImplementationPaths = @(
+    'docs/DECISIONS.md',
+    'docs/NEXT-TASK.md',
+    'docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md',
+    'docs/PORTING-PLAN.md',
+    'docs/PROJECT-STATE.md',
+    'docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md',
+    'docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md',
+    'docs/WORKLOG.md',
+    'docs/evidence/production-orchestration-invocation-manifest.json',
+    'src/driver/ChatpadFilter/device.c',
+    'tools/Test-ChatpadKmdfRequestOwnerContext.ps1',
+    'tools/Test-ChatpadProductionLinkage.ps1',
+    'tools/Test-ChatpadProductionOrchestrationInvocation.ps1',
+    'tools/Test-ChatpadProductionOwnerInitialization.ps1'
+)
+$mandatoryEvidenceIds = @(
+    'orchestration_source_debug',
+    'orchestration_source_release',
+    'orchestration_full_debug',
+    'orchestration_full_release',
+    'production_linkage_debug',
+    'production_linkage_release',
+    'production_owner_init_source_debug',
+    'production_owner_init_source_release',
+    'kmdf_context_semantic_debug',
+    'kmdf_context_semantic_release',
+    'request_owner_model_debug',
+    'request_owner_model_release',
+    'protocol_debug',
+    'protocol_release',
+    'transport_debug',
+    'transport_release',
+    'lifecycle_debug',
+    'lifecycle_release',
+    'control_setup_debug',
+    'control_setup_release',
+    'protocol_kernel_debug',
+    'protocol_kernel_release',
+    'wdf_control_debug',
+    'wdf_control_release',
+    'driver_build_debug',
+    'driver_build_release',
+    'solution_community_debug',
+    'solution_community_release',
+    'solution_buildtools_debug',
+    'binary_debug',
+    'binary_release',
+    'authenticode_debug',
+    'authenticode_release',
+    'retention_debug',
+    'retention_release',
+    'target_request_absence',
+    'repository_safety',
+    'implementation_commit_scope',
+    'implementation_diff_check',
+    'unstaged_diff',
+    'staged_diff',
+    'candidate_containment'
+)
 
 $deviceText = Remove-CComments ([System.IO.File]::ReadAllText($devicePath))
 $headerText = Remove-CComments ([System.IO.File]::ReadAllText($headerPath))
@@ -282,23 +345,94 @@ if (-not $statusMatch.Success) {
     throw 'Unable to locate ChatpadOrchestrationResultToStatus helper.'
 }
 $statusBody = $statusMatch.Groups['body'].Value
-foreach ($required in @(
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_OWNER',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_PARENT_DEVICE',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_REPORT',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_SPINLOCK_FAILED',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_REQUEST_FAILED',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OUTBOUND_MEMORY_FAILED',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INBOUND_MEMORY_FAILED',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ROLLBACK_FAILED',
-        'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVARIANT_FAILED')) {
-    if ($statusBody -notmatch [regex]::Escape($required)) {
-        throw "Status helper does not mention required result: $required"
-    }
+$resultEnumMatch = [regex]::Match(
+    $contextHeaderText,
+    '(?s)typedef\s+enum\s+ChatpadKmdfRequestOwnerOrchestrationResult\s*\{(?<body>.*?)\}\s*ChatpadKmdfRequestOwnerOrchestrationResult\s*;')
+if (-not $resultEnumMatch.Success) {
+    throw 'Unable to locate the authoritative orchestration-result enum.'
 }
-if ($statusBody -notmatch 'if\s*\(\s*report\s*!=\s*NULL\s*&&\s*!NT_SUCCESS\s*\(\s*report->FrameworkStatus\s*\)\s*\)\s*\{\s*return\s+report->FrameworkStatus\s*;' -or
-    $statusBody -notmatch 'default:\s*return\s+STATUS_INVALID_DEVICE_STATE\s*;') {
-    throw 'Status helper must conditionally preserve failed FrameworkStatus and default to STATUS_INVALID_DEVICE_STATE.'
+$expectedResultSymbols = @(
+    [regex]::Matches(
+        $resultEnumMatch.Groups['body'].Value,
+        '\bCHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_[A-Z0-9_]+\b') |
+        ForEach-Object { $_.Value } |
+        Select-Object -Unique
+)
+$mappedResultSymbols = @(
+    [regex]::Matches(
+        $statusBody,
+        'case\s+(CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_[A-Z0-9_]+)\s*:') |
+        ForEach-Object { $_.Groups[1].Value }
+)
+$missingResultSymbols = @(
+    $expectedResultSymbols |
+        Where-Object { $mappedResultSymbols -cnotcontains $_ }
+)
+$duplicateResultSymbols = @(
+    $mappedResultSymbols |
+        Group-Object |
+        Where-Object { $_.Count -ne 1 } |
+        ForEach-Object { $_.Name }
+)
+$unexpectedResultSymbols = @(
+    $mappedResultSymbols |
+        Where-Object { $expectedResultSymbols -cnotcontains $_ } |
+        Select-Object -Unique
+)
+if ($expectedResultSymbols.Count -ne 18 -or
+    $mappedResultSymbols.Count -ne 18 -or
+    $missingResultSymbols.Count -ne 0 -or
+    $duplicateResultSymbols.Count -ne 0 -or
+    $unexpectedResultSymbols.Count -ne 0) {
+    throw ("Orchestration status mapping is incomplete. Expected={0}; mapped={1}; missing={2}; duplicate={3}; unexpected={4}." -f
+        $expectedResultSymbols.Count,
+        $mappedResultSymbols.Count,
+        ($missingResultSymbols -join ','),
+        ($duplicateResultSymbols -join ','),
+        ($unexpectedResultSymbols -join ','))
+}
+$okSymbol = 'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK'
+$nullSymbols = @(
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_OWNER',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_PARENT_DEVICE',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_REPORT'
+)
+$creationFailureSymbols = @(
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_SPINLOCK_FAILED',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_REQUEST_FAILED',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OUTBOUND_MEMORY_FAILED',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INBOUND_MEMORY_FAILED'
+)
+$stateFailureSymbols = @(
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_SIGNATURE',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_UNSUPPORTED_VERSION',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_BASELINE',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_READY',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_FAULTED',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PARTIAL_STATE_PRESENT',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PRE_READY_VALIDATION_FAILED',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_READY_VALIDATION_FAILED',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ROLLBACK_FAILED',
+    'CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVARIANT_FAILED'
+)
+$okPattern = 'case\s+' + [regex]::Escape($okSymbol) +
+    '\s*:\s*return\s+STATUS_SUCCESS\s*;'
+$nullPattern = (($nullSymbols | ForEach-Object {
+    'case\s+' + [regex]::Escape($_) + '\s*:'
+}) -join '\s*') + '\s*return\s+STATUS_INVALID_PARAMETER\s*;'
+$creationPattern = (($creationFailureSymbols | ForEach-Object {
+    'case\s+' + [regex]::Escape($_) + '\s*:'
+}) -join '\s*') +
+    '\s*if\s*\(\s*report\s*!=\s*NULL\s*&&\s*!NT_SUCCESS\s*\(\s*report->FrameworkStatus\s*\)\s*\)\s*\{\s*return\s+report->FrameworkStatus\s*;\s*\}\s*return\s+STATUS_INVALID_DEVICE_STATE\s*;'
+$statePattern = (($stateFailureSymbols | ForEach-Object {
+    'case\s+' + [regex]::Escape($_) + '\s*:'
+}) -join '\s*') +
+    '\s*default\s*:\s*return\s+STATUS_INVALID_DEVICE_STATE\s*;'
+if ($statusBody -notmatch $okPattern -or
+    $statusBody -notmatch $nullPattern -or
+    $statusBody -notmatch $creationPattern -or
+    $statusBody -notmatch $statePattern) {
+    throw 'Status helper does not implement the exact audited success, argument, creation-failure, state-failure, and default mappings.'
 }
 
 foreach ($field in @(
@@ -355,28 +489,69 @@ $projectText = [System.IO.File]::ReadAllText($projectPath)
 Assert-NoMatch $projectText '(?i)/(?:INCLUDE|WHOLEARCHIVE):[^\s<]*RequestOwner|/WHOLEARCHIVE|WHOLEARCHIVE' `
     'Project must not force request-owner retention.'
 
-$changedPaths = @(@(
-    & git -C $repoRoot diff --name-only HEAD --
-    & git -C $repoRoot ls-files --others --exclude-standard
-) | Where-Object { $_ -ne '' } | Sort-Object -Unique)
-$allowedChanged = @(
-    'src/driver/ChatpadFilter/device.c',
-    'tools/Test-ChatpadProductionOrchestrationInvocation.ps1',
-    'tools/Test-ChatpadKmdfRequestOwnerContext.ps1',
-    'tools/Test-ChatpadProductionLinkage.ps1',
-    'tools/Test-ChatpadProductionOwnerInitialization.ps1',
-    'docs/evidence/production-orchestration-invocation-manifest.json',
-    'docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md',
-    'docs/DECISIONS.md',
-    'docs/NEXT-TASK.md',
-    'docs/PROJECT-STATE.md',
-    'docs/PORTING-PLAN.md',
-    'docs/WORKLOG.md',
-    'docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md',
-    'docs/WINDOWS11-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION-DESIGN.md')
-$unexpectedChanged = @($changedPaths | Where-Object { $allowedChanged -cnotcontains $_ })
-if ($unexpectedChanged.Count -ne 0) {
-    throw "Unexpected changed path exists: $($unexpectedChanged -join ', ')"
+$actualImplementationParent = [string](@(
+    Invoke-GitLines $repoRoot @('rev-parse', "$implementationCommit^")
+)[0])
+if ($actualImplementationParent -cne $implementationParent) {
+    throw "Implementation commit parent mismatch: $actualImplementationParent"
+}
+$implementationNameStatus = @(
+    Invoke-GitLines $repoRoot @(
+        'diff',
+        '--name-status',
+        $implementationParent,
+        $implementationCommit,
+        '--')
+)
+$implementationPaths = @(
+    $implementationNameStatus |
+        ForEach-Object { ($_ -split "`t")[-1] } |
+        Sort-Object -Unique
+)
+$missingImplementationPaths = @(
+    $expectedImplementationPaths |
+        Where-Object { $implementationPaths -cnotcontains $_ }
+)
+$unexpectedImplementationPaths = @(
+    $implementationPaths |
+        Where-Object { $expectedImplementationPaths -cnotcontains $_ }
+)
+if ($implementationPaths.Count -ne $expectedImplementationPaths.Count -or
+    $missingImplementationPaths.Count -ne 0 -or
+    $unexpectedImplementationPaths.Count -ne 0) {
+    throw ("Implementation commit scope mismatch. Expected={0}; observed={1}; missing={2}; unexpected={3}." -f
+        $expectedImplementationPaths.Count,
+        $implementationPaths.Count,
+        ($missingImplementationPaths -join ','),
+        ($unexpectedImplementationPaths -join ','))
+}
+$implementationSourcePaths = @(
+    $implementationPaths |
+        Where-Object {
+            $_ -match '^src/' -and
+            $_ -match '\.(?:c|cpp|h|hpp)$'
+        }
+)
+if ($implementationSourcePaths.Count -ne 1 -or
+    $implementationSourcePaths[0] -cne 'src/driver/ChatpadFilter/device.c') {
+    throw "Implementation source scope is not limited to device.c: $($implementationSourcePaths -join ',')"
+}
+$prohibitedImplementationPaths = @(
+    $implementationPaths |
+        Where-Object {
+            $_ -match '^legacy/' -or
+            $_ -match '\.(?:sln|vcxproj|vcxproj\.filters|inf|inx|cat|pfx|cer|key)$' -or
+            $_ -match '(?i)(?:^|/)(?:signing|packaging|deployment|target|usb|hardware|removal|d0)(?:/|[-_.])'
+        }
+)
+if ($prohibitedImplementationPaths.Count -ne 0) {
+    throw "Implementation commit contains prohibited paths: $($prohibitedImplementationPaths -join ',')"
+}
+$implementationDiffCheck = @(
+    & git -C $repoRoot diff --check $implementationParent $implementationCommit --
+)
+if ($LASTEXITCODE -ne 0 -or $implementationDiffCheck.Count -ne 0) {
+    throw "Implementation parent-to-current diff check failed: $($implementationDiffCheck -join '; ')"
 }
 
 $trackedPaths = @(Invoke-GitLines $repoRoot @('ls-files'))
@@ -401,7 +576,8 @@ $directChecks = @(
     'forbidden direct owner/WDF/target/request/logging checks',
     'authoritative report-field and ready-publication source checks',
     'project forced-retention absence',
-    'changed-file and generated-output containment checks')
+    'immutable implementation parent-to-current scope and whitespace checks',
+    'generated-output containment checks')
 $inferredChecks = @()
 $limitations = @(
     'Source matching is targeted text/regex inspection, not a full C parser.',
@@ -414,10 +590,13 @@ if ($InspectionMode -eq 'Full') {
         throw "Manifest is missing: $manifestPath"
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ([string]$manifest.schema_version -eq '' -or
+    if ([string]$manifest.schema_version -cne '1.1.0' -or
         [string]$manifest.checkpoint -cne 'offline-kmdf-production-orchestration-invocation' -or
-        [string]$manifest.starting_state.commit -cne '4ba0de15420e0b66287a501918de694c8b6fd720') {
-        throw 'Manifest schema, checkpoint, or starting commit is invalid.'
+        [string]$manifest.implementation_commit -cne $implementationCommit -or
+        [string]$manifest.implementation_parent -cne $implementationParent -or
+        [string]$manifest.implementation_branch -cne $implementationBranch -or
+        [string]$manifest.remediation_starting_commit -cne $implementationCommit) {
+        throw 'Manifest schema, checkpoint, implementation binding, or remediation starting commit is invalid.'
     }
     foreach ($requiredSection in @(
             'toolchain',
@@ -431,10 +610,83 @@ if ($InspectionMode -eq 'Full') {
             throw "Manifest missing required section: $requiredSection"
         }
     }
-    if ([string]$manifest.manifest_statement -notmatch 'commit containing this manifest') {
-        throw 'Manifest must bind to the commit containing it.'
+    if ([string]$manifest.evidence_state -notmatch 'authorized remediation changes' -or
+        [string]$manifest.containing_commit_binding -notmatch 'commit that contains this manifest' -or
+        [string]$manifest.self_reference_limitation -notmatch 'self-referential' -or
+        [string]$manifest.independent_audit_requirement -notmatch 'parent.*branch.*scope.*hash.*clean') {
+        throw 'Manifest containing-commit, evidence-state, self-reference, or independent-audit binding is incomplete.'
     }
-    foreach ($entry in @($manifest.evidence_entries)) {
+    $evidenceEntries = @($manifest.evidence_entries)
+    $entryIds = @($evidenceEntries | ForEach-Object { [string]$_.id })
+    $entryPaths = @($evidenceEntries | ForEach-Object { [string]$_.path })
+    $duplicateIds = @(
+        $entryIds | Group-Object | Where-Object { $_.Count -gt 1 }
+    )
+    $duplicatePaths = @(
+        $entryPaths | Group-Object | Where-Object { $_.Count -gt 1 }
+    )
+    $missingMandatoryIds = @(
+        $mandatoryEvidenceIds | Where-Object { $entryIds -cnotcontains $_ }
+    )
+    $unexpectedEvidenceIds = @(
+        $entryIds | Where-Object { $mandatoryEvidenceIds -cnotcontains $_ }
+    )
+    if ($duplicateIds.Count -ne 0 -or
+        $duplicatePaths.Count -ne 0 -or
+        $missingMandatoryIds.Count -ne 0 -or
+        $unexpectedEvidenceIds.Count -ne 0) {
+        throw ("Manifest evidence ID/path set is invalid. Missing={0}; unexpected={1}; duplicate IDs={2}; duplicate paths={3}." -f
+            ($missingMandatoryIds -join ','),
+            ($unexpectedEvidenceIds -join ','),
+            (($duplicateIds | ForEach-Object Name) -join ','),
+            (($duplicatePaths | ForEach-Object Name) -join ','))
+    }
+    $requiredEntryFields = @(
+        'id',
+        'category',
+        'path',
+        'sha256',
+        'result',
+        'command',
+        'configuration',
+        'assertions_passed',
+        'assertions_total',
+        'metric_name',
+        'metric_value',
+        'metric_unit',
+        'count_applicability',
+        'generated_against_commit',
+        'generated_against_state',
+        'generated_at_utc',
+        'notes'
+    )
+    $missingMetadataFields = [System.Collections.Generic.List[string]]::new()
+    $missingEvidenceFiles = [System.Collections.Generic.List[string]]::new()
+    $hashMismatches = [System.Collections.Generic.List[string]]::new()
+    $selfEvidenceId = if ($Configuration -eq 'Debug') {
+        'orchestration_full_debug'
+    } else {
+        'orchestration_full_release'
+    }
+    foreach ($entry in $evidenceEntries) {
+        foreach ($field in $requiredEntryFields) {
+            if ($entry.PSObject.Properties.Name -cnotcontains $field) {
+                $missingMetadataFields.Add("$($entry.id):$field")
+            }
+        }
+        if ([string]::IsNullOrWhiteSpace([string]$entry.id) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.category) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.path) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.result) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.command) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.configuration) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.count_applicability) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.generated_against_commit) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.generated_against_state) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.generated_at_utc) -or
+            [string]$entry.sha256 -notmatch '^[0-9A-F]{64}$') {
+            $missingMetadataFields.Add("$($entry.id):value")
+        }
         if ([System.IO.Path]::IsPathRooted([string]$entry.path)) {
             throw "Manifest evidence path must be repository-relative: $($entry.path)"
         }
@@ -444,15 +696,28 @@ if ($InspectionMode -eq 'Full') {
             "Manifest evidence path $($entry.id)"
         Assert-GitIgnored $repoRoot ([string]$entry.path)
         if (-not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) {
-            throw "Manifest evidence path is missing: $($entry.path)"
+            $missingEvidenceFiles.Add([string]$entry.id)
+            continue
         }
-        if ([string]$entry.sha256 -eq '') {
-            throw "Manifest evidence path is missing SHA-256: $($entry.id)"
+        $trackedEvidence = @(
+            & git -C $repoRoot ls-files --error-unmatch -- ([string]$entry.path) 2>$null
+        )
+        if ($LASTEXITCODE -eq 0 -or $trackedEvidence.Count -ne 0) {
+            throw "Manifest evidence path must be untracked: $($entry.path)"
         }
         $actualEvidenceHash = (Get-FileHash -LiteralPath $evidencePath -Algorithm SHA256).Hash
-        if ($actualEvidenceHash -cne [string]$entry.sha256) {
-            throw "Manifest evidence SHA-256 mismatch for $($entry.id)."
+        if ([string]$entry.id -cne $selfEvidenceId -and
+            $actualEvidenceHash -cne [string]$entry.sha256) {
+            $hashMismatches.Add([string]$entry.id)
         }
+    }
+    if ($missingMetadataFields.Count -ne 0 -or
+        $missingEvidenceFiles.Count -ne 0 -or
+        $hashMismatches.Count -ne 0) {
+        throw ("Manifest evidence validation failed. Missing metadata={0}; missing files={1}; hash mismatches={2}." -f
+            ($missingMetadataFields -join ','),
+            ($missingEvidenceFiles -join ','),
+            ($hashMismatches -join ','))
     }
 
     $driverPath = Join-Path $repoRoot (
@@ -549,6 +814,7 @@ if ($InspectionMode -eq 'Full') {
 
     $directChecks += @(
         'manifest schema/containment/SHA checks',
+        'mandatory evidence ID and per-entry metadata checks',
         'driver/object/tlog artifact containment checks',
         'context helper symbol inspection',
         'driver WDF function-table/import and forbidden operation inspection',
@@ -573,7 +839,26 @@ Write-Output "Inspection mode: $InspectionMode"
 Write-Output ("Direct checks: {0}" -f ($directChecks -join '; '))
 Write-Output ("Inferred checks: {0}" -f $(if ($inferredChecks.Count -eq 0) { 'none (source-only mode)' } else { $inferredChecks -join '; ' }))
 Write-Output ("Limitations: {0}" -f ($limitations -join ' '))
-Write-Output 'Assertion count: 64'
+Write-Output "Implementation parent: $implementationParent"
+Write-Output "Implementation commit: $implementationCommit"
+Write-Output "Implementation path count: $($implementationPaths.Count)"
+Write-Output "Expected orchestration result count: $($expectedResultSymbols.Count)"
+Write-Output "Observed mapped result count: $($mappedResultSymbols.Count)"
+Write-Output "Missing result count: $($missingResultSymbols.Count)"
+Write-Output "Duplicate result count: $($duplicateResultSymbols.Count)"
+Write-Output "Unexpected result count: $($unexpectedResultSymbols.Count)"
+if ($InspectionMode -eq 'Full') {
+    Write-Output "Mandatory evidence ID count: $($mandatoryEvidenceIds.Count)"
+    Write-Output "Observed mandatory evidence ID count: $($entryIds.Count)"
+    Write-Output "Missing mandatory ID count: $($missingMandatoryIds.Count)"
+    Write-Output "Duplicate evidence ID count: $($duplicateIds.Count)"
+    Write-Output "Duplicate evidence path count: $($duplicatePaths.Count)"
+    Write-Output "Missing metadata field count: $($missingMetadataFields.Count)"
+    Write-Output "Missing evidence file count: $($missingEvidenceFiles.Count)"
+    Write-Output "Evidence hash mismatch count: $($hashMismatches.Count)"
+    Write-Output "Self-referential hash skipped for: $selfEvidenceId"
+}
+Write-Output 'Assertion count: 82'
 Write-Output 'Result: PASS'
 Write-Output 'Exit code: 0'
 exit 0

@@ -138,6 +138,11 @@ Source references:
   stack-local report, return/report cross-checking, status mapping, and
   structural-ready validation. This was compile/link/offline validation only;
   no driver was loaded and no runtime WDF graph was observed.
+- The separate production orchestration evidence-remediation checkpoint
+  preserves that source unchanged while binding the immutable implementation
+  scope, all 18 result mappings, mandatory evidence metadata/IDs, KMDF semantic
+  guard output, repository safety, staged/unstaged state, and containing-commit
+  limitations. It is evidence progress only, not runtime progress.
 - The owner-initialization audit-corrections checkpoint is complete in
   `docs/OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md`. It corrected
   documentation, guard wording, and retained evidence without changing

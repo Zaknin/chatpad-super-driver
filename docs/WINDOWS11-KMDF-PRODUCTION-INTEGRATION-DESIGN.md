@@ -44,6 +44,13 @@ device-parented targetless request, and two request-parented preallocated
 memory objects over exact two-byte owner arrays. Structural readiness does not
 admit an operation.
 
+The production implementation passed independent source inspection. Its
+initial evidence audit failed on guard and manifest completeness, not source
+behavior. The separate
+[Offline KMDF Production Orchestration Evidence Remediation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-REMEDIATION.md)
+binds immutable implementation scope, all 18 mappings, and a closed evidence
+set without changing production source or opening a runtime gate.
+
 ## 2. Current production reality
 
 Current `ChatpadFilter` production code is a compile-validated KMDF

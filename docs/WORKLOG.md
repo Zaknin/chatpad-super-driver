@@ -4198,3 +4198,107 @@
   the offline production orchestration invocation. Runtime loading, signing,
   packaging, deployment, target discovery, request operations, and hardware
   observation remain unauthorized.
+
+## 2026-07-01 12:55 +04:00 - Production orchestration evidence remediation
+
+- **Task title/objective:** Create a separate offline checkpoint that fixes the
+  production orchestration guard and evidence defects found by the independent
+  audit without changing production source behavior.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-production-orchestration-invocation` at
+  `efb729502a0527ac70e2d20fa31a323c3beb2920`, parent
+  `4ba0de15420e0b66287a501918de694c8b6fd720`, subject
+  `driver: invoke production request owner orchestration`, then created
+  `feature/offline-kmdf-production-orchestration-evidence-remediation`.
+- **Scope correction:** Git's authoritative parent-to-implementation
+  `name-only` and `name-status` each return 14 paths, not the requested 15.
+  The guard and evidence record the exact 14 and do not fabricate an omitted
+  path. `device.c` is the only production source path in that immutable diff.
+- **Files created/modified:** Created
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-REMEDIATION.md`;
+  modified
+  `tools/Test-ChatpadProductionOrchestrationInvocation.ps1`,
+  `docs/evidence/production-orchestration-invocation-manifest.json`,
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/PORTING-PLAN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`, and this worklog.
+  No C/C++ source, header, project, solution, INF, compatibility guard, or
+  `legacy/` path changed.
+- **Guard remediation:** Replaced current-worktree scope inspection with fixed
+  parent-to-implementation Git inspection, exact 14-path equality, source and
+  prohibited-path checks, and immutable `diff --check`. Parsed the
+  authoritative enum and required 18 expected/18 mapped results with zero
+  missing, duplicate, or unexpected cases plus exact success, null-argument,
+  creation-status, state-failure, and default mappings. Preserved call
+  cardinality/placement, report lifetime, mismatch, structural-ready,
+  lifecycle, direct-helper/deletion, target/request, D0/removal, logging, and
+  forced-retention checks.
+- **Manifest remediation:** Upgraded schema to `1.1.0`; defined a closed
+  42-ID set; added exact command, configuration, assertion/count applicability,
+  metric, state/commit binding, UTC time, result, notes, path, and SHA-256 to
+  every entry; added dedicated repository safety, immutable scope, whitespace,
+  unstaged, staged, and containment evidence; and replaced KMDF compile-only
+  references with semantic/build transcripts.
+- **Guard results:** SourceOnly Debug and Release passed with `82` guard
+  assertions, 14 implementation paths, and `18/18` mappings. Full Debug and
+  Release passed with `42/42` mandatory IDs and zero missing IDs, duplicate
+  IDs/paths, missing metadata, missing files, or non-self hash mismatches.
+  Each Full run explicitly skipped only its own changing transcript hash;
+  Release validated the final Debug transcript hash.
+- **Regressions:** Request-owner model passed `5002/5002`, protocol
+  `610/610`, transport `186/186`, lifecycle `109/109`, and control setup
+  `141/141` in both Debug and Release. KMDF context semantic/build, protocol
+  kernel compatibility, WDF control setup, production linkage, and production
+  owner initialization SourceOnly passed in both configurations.
+- **Builds:** ChatpadFilter wrapper and Community/WDK full-solution Debug and
+  Release builds passed with no warning/error diagnostics. The Build Tools
+  Debug attempt reproduced exactly three `MSB8020` errors and zero warnings
+  because that VS instance lacks `WindowsKernelModeDriver10.0`.
+- **Binaries:** Source-identical rebuilt Debug remains 32,256 bytes, x64
+  Native, `NotSigned`, SHA-256
+  `DD33388A3905A4C5AFCFD3FF4E3443308CC9A280BCDD094FB7ACED7478880F83`.
+  Release remains 20,480 bytes, x64 Native, `NotSigned`, SHA-256
+  `72B30B0523B07F91A21FE8711ED846F4B355652F0E2B0FEA691F894A4304CAC5`.
+  Sizes remained stable but hashes changed from the earlier build, consistent
+  with non-reproducible PE metadata.
+- **Retention:** Debug and Release context objects expose all 11 expected
+  orchestration/helper/rollback/validator/attribute symbols. Final disassembly
+  retains the orchestrator and `WdfFunctions`; combined source/object/link
+  evidence closes COMDAT/LTCG name visibility. No `/INCLUDE`,
+  `/WHOLEARCHIVE`, target discovery, formatting, reuse, send, completion,
+  cancellation, or D0/removal owner-observation evidence exists.
+- **Repository/Git evidence:** Non-deployment repository safety passed with
+  zero deployment, Windows-mutation, device-query, hardware, or tracked
+  artifact counts. Immutable implementation scope is 14 paths, one production
+  source, zero unexpected/prohibited paths, and zero whitespace errors.
+  Unstaged and candidate containment evidence recorded zero unexpected paths;
+  the staged capture recorded nine authorized paths and zero unexpected,
+  production-source, generated-artifact, or whitespace defects before later
+  Full-log hashes and this worklog closeout.
+- **Evidence location:** 42 dedicated ignored logs under `artifacts/logs/`
+  with timestamp token `20260701T083915Z`; none is tracked.
+- **Failed commands:** The first strengthened SourceOnly run failed because an
+  overbroad `sign` regex matched `design`; the narrowed path-component regex
+  passed. The first candidate-containment run correctly found two manifest
+  placeholder hashes after safety/unstaged logs were replaced. A later retry
+  failed before evidence output because PowerShell parsed `-and` as a
+  `Test-Path` argument; explicit parentheses fixed it. No failure changed
+  production source or executed runtime behavior.
+- **Self-reference limits:** The manifest omits its containing hash. Full
+  guard logs skip only their own changing hash. Staged evidence describes its
+  exact pre-final capture point before its hash, final Full hashes, and worklog
+  closeout were inserted. Independent audit must verify final Git parent,
+  branch, scope, all 42 log hashes, and clean synchronized state.
+- **Safety:** No signing, certificate/key creation, packaging, catalog work,
+  staging outside Git, installation, driver loading, Windows mutation, device
+  query, USB/XUSB/controller/Chatpad interaction, or hardware action occurred.
+- **Commit/push:** Commit exactly
+  `test: remediate production orchestration evidence` without amend and push
+  only
+  `origin/feature/offline-kmdf-production-orchestration-evidence-remediation`;
+  final hash is reported after commit.
+- **Next gate:** Independent read-only audit of implementation `efb7295` plus
+  the remediated guard, manifest, evidence logs, containing commit, and final
+  upstream state. Runtime, target/request, signing, installation, loading, and
+  hardware gates remain closed.

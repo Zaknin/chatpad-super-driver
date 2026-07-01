@@ -168,3 +168,22 @@ evidence audit of this committed production orchestration invocation. The audit
 should stay read-only, verify `device.c`, the semantic guard, the manifest,
 the binary evidence, and continuity docs, and confirm no target/request/runtime
 surface was introduced.
+
+## Independent Audit and Separate Evidence Remediation
+
+The independent audit confirmed that production source integration, all 18
+status mappings, structural-ready enforcement, lifecycle ordering, isolated
+library integrity, binary structure, and target/request absence were correct.
+It failed the checkpoint because the guard and evidence manifest did not prove
+the complete committed scope and mandatory evidence contract.
+
+Production source was not changed to resolve those findings. A separate
+[Offline KMDF Production Orchestration Evidence Remediation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-REMEDIATION.md)
+checkpoint strengthens immutable commit-scope validation, complete 18-result
+mapping checks, mandatory manifest metadata and evidence IDs, KMDF semantic
+guard capture, repository safety, Git diff evidence, and containing-commit
+binding.
+
+Final acceptance still requires another independent read-only audit. No
+runtime, signing, packaging, staging, installation, loading, target discovery,
+request operation, or hardware gate is opened by the remediation.

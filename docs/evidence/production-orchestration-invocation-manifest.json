@@ -1,15 +1,24 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "checkpoint": "offline-kmdf-production-orchestration-invocation",
-  "manifest_statement": "The Git commit containing this manifest binds its contents; the manifest intentionally omits that containing commit hash.",
-  "starting_state": {
-    "branch": "feature/offline-kmdf-orchestration-defensive-taxonomy-fix",
-    "commit": "4ba0de15420e0b66287a501918de694c8b6fd720",
-    "parent": "8b06ff5c2a7679b3057992ac99302fa550ddf098",
-    "subject": "docs: close orchestration defensive taxonomy",
-    "upstream": "origin/feature/offline-kmdf-orchestration-defensive-taxonomy-fix"
-  },
+  "remediation_checkpoint": "offline-kmdf-production-orchestration-evidence-remediation",
+  "implementation_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+  "implementation_parent": "4ba0de15420e0b66287a501918de694c8b6fd720",
   "implementation_branch": "feature/offline-kmdf-production-orchestration-invocation",
+  "remediation_starting_commit": "efb729502a0527ac70e2d20fa31a323c3beb2920",
+  "remediation_branch": "feature/offline-kmdf-production-orchestration-evidence-remediation",
+  "evidence_state": "Evidence was generated against the immutable implementation commit or the worktree/index based on that commit plus only authorized remediation changes; each entry identifies its exact state.",
+  "containing_commit_binding": "This manifest is committed in the Git commit that contains this manifest. The containing commit hash is intentionally not embedded.",
+  "self_reference_limitation": "Embedding the containing commit or requiring a Full guard transcript to validate its own final hash would be self-referential. Full guard runs skip only their own changing transcript hash; staged evidence records its pre-final capture point.",
+  "independent_audit_requirement": "An independent audit must obtain the containing commit from Git and verify its parent, branch, scope, manifest content, referenced hashes, and final clean synchronized status.",
+  "implementation_scope": {
+    "authoritative_path_count": 14,
+    "requested_but_disproved_path_count": 15,
+    "production_source_path_count": 1,
+    "production_source": "src/driver/ChatpadFilter/device.c",
+    "unexpected_path_count": 0,
+    "prohibited_path_count": 0
+  },
   "toolchain": {
     "host": "Windows 10 Pro 25H2 build 26200.8655 x64",
     "powershell": "7.6.3",
@@ -23,329 +32,107 @@
   },
   "production_integration": {
     "source": "src/driver/ChatpadFilter/device.c",
-    "call_site": "ChatpadEvtDeviceAdd",
-    "insertion_point": "after ChatpadKmdfRequestOwnerValidatePreObjectState succeeds and before ChatpadFilterLifecycleInitialize",
-    "orchestrator": "ChatpadKmdfRequestOwnerCreateDormantObjectGraph",
     "orchestration_call_count": 1,
-    "report_storage": "local stack ChatpadKmdfRequestOwnerOrchestrationReport initialized with { 0 }",
-    "report_lifetime": "synchronous EvtDeviceAdd local, not stored in device context and not allowed to escape",
-    "result_cross_check": "function return must equal report.Result before status mapping or lifecycle initialization",
-    "structural_ready_validation": [
-      "ReadyPublicationAttempted != 0",
-      "ReadyPublished != 0",
-      "ObjectGraphComplete != 0",
-      "ActivationRequestOwner.Request != NULL",
-      "ChatpadKmdfRequestOwnerValidateCreationState(..., FULLY_READY)"
-    ],
-    "direct_helper_calls_from_device_c": false,
-    "direct_wdf_object_management_calls_from_device_c": false,
+    "expected_result_count": 18,
+    "observed_mapped_result_count": 18,
+    "missing_result_count": 0,
+    "duplicate_result_count": 0,
+    "unexpected_result_count": 0,
+    "production_source_frozen": true,
     "target_or_request_operations": false,
     "d0_or_removal_owner_observers": false
   },
   "status_mapping": {
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK": "STATUS_SUCCESS inside helper only; successful orchestration continues to lifecycle and does not itself decide final EvtDeviceAdd success",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_OWNER": "STATUS_INVALID_PARAMETER",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_PARENT_DEVICE": "STATUS_INVALID_PARAMETER",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_NULL_REPORT": "STATUS_INVALID_PARAMETER",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_SPINLOCK_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_REQUEST_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OUTBOUND_MEMORY_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INBOUND_MEMORY_FAILED": "failed report.FrameworkStatus when failing, otherwise STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_SIGNATURE": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_UNSUPPORTED_VERSION": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVALID_BASELINE": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_READY": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ALREADY_FAULTED": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PARTIAL_STATE_PRESENT": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_PRE_READY_VALIDATION_FAILED": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_READY_VALIDATION_FAILED": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_ROLLBACK_FAILED": "STATUS_INVALID_DEVICE_STATE",
-    "CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_INVARIANT_FAILED": "STATUS_INVALID_DEVICE_STATE",
-    "return_report_mismatch": "STATUS_INVALID_DEVICE_STATE"
+    "success_count": 1,
+    "invalid_argument_count": 3,
+    "creation_failure_count": 4,
+    "invalid_device_state_count": 10,
+    "unknown_default": "STATUS_INVALID_DEVICE_STATE",
+    "framework_status_rule": "Returned only for the four creation-failure results and only when failing."
   },
   "validation": {
-    "driver_build": {
-      "Debug": "PASS",
-      "Release": "PASS"
-    },
-    "request_owner_model": {
-      "Debug": "PASS 5002/5002 assertions",
-      "Release": "PASS 5002/5002 assertions"
-    },
-    "request_owner_context": {
-      "Debug": "PASS",
-      "Release": "PASS"
-    },
-    "protocol": {
-      "Debug": "PASS 610/610 assertions",
-      "Release": "PASS 610/610 assertions"
-    },
-    "transport": {
-      "Debug": "PASS 186/186 assertions",
-      "Release": "PASS 186/186 assertions"
-    },
-    "lifecycle": {
-      "Debug": "PASS 109/109 assertions",
-      "Release": "PASS 109/109 assertions"
-    },
-    "control_setup": {
-      "Debug": "PASS 141/141 assertions",
-      "Release": "PASS 141/141 assertions"
-    },
-    "protocol_kernel_compatibility": {
-      "Debug": "PASS",
-      "Release": "PASS"
-    },
-    "wdf_control_setup": {
-      "Debug": "PASS",
-      "Release": "PASS"
-    },
-    "production_linkage_guard": {
-      "Debug": "PASS",
-      "Release": "PASS"
-    },
-    "production_owner_initialization_guard": {
-      "Debug": "PASS SourceOnly",
-      "Release": "PASS SourceOnly",
-      "full_mode_note": "The previous Full-mode manifest is a historic checkpoint with intentionally superseded driver hashes; this checkpoint's Full validation is production-orchestration Full mode."
-    },
-    "production_orchestration_guard": {
-      "Debug": "PASS SourceOnly",
-      "Release": "PASS SourceOnly",
-      "Full": "PASS Debug and Release"
-    },
-    "full_solution": {
-      "BuildTools_Debug": "BLOCKED by missing WindowsKernelModeDriver10.0 platform toolset in Build Tools instance",
-      "Community_Debug": "PASS",
-      "Community_Release": "PASS"
-    },
-    "safety": "PASS; no signing, packaging, staging, installation, loading, Windows mutation, hardware query, target discovery, request formatting, request send, completion, or cancellation"
+    "request_owner_model": "PASS 5002/5002 Debug and Release",
+    "protocol": "PASS 610/610 Debug and Release",
+    "transport": "PASS 186/186 Debug and Release",
+    "lifecycle": "PASS 109/109 Debug and Release",
+    "control_setup": "PASS 141/141 Debug and Release",
+    "community_solution": "PASS Debug and Release",
+    "build_tools_debug": "BLOCKED_EXPECTED MSB8020",
+    "runtime_execution": false
   },
   "binary_inspection": {
     "Debug": {
-      "context_symbols_show_orchestrator_and_rollback": true,
-      "context_symbols_show_wdf_object_management": true,
-      "device_or_image_references_show_orchestration": true,
-      "final_image_target_or_request_operations": false,
-      "forced_request_owner_retention": false
+      "size": 32256,
+      "sha256": "DD33388A3905A4C5AFCFD3FF4E3443308CC9A280BCDD094FB7ACED7478880F83",
+      "authenticode": "NotSigned",
+      "pe": "x64 Native"
     },
     "Release": {
-      "context_symbols_show_orchestrator_and_rollback": true,
-      "context_wdf_named_symbols_visible_after_ltcg": false,
-      "device_or_image_named_references_visible_after_ltcg": false,
-      "final_image_target_or_request_operations": false,
-      "forced_request_owner_retention": false,
-      "ltcg_note": "Release named symbol absence is expected; proof uses audited source, link inputs, context symbols that remain visible, final-image absence checks, and no /INCLUDE or /WHOLEARCHIVE."
-    }
+      "size": 20480,
+      "sha256": "72B30B0523B07F91A21FE8711ED846F4B355652F0E2B0FEA691F894A4304CAC5",
+      "authenticode": "NotSigned",
+      "pe": "x64 Native"
+    },
+    "rebuild_note": "Sizes remained stable while hashes changed after a source-identical rebuild; PE output is not byte-for-byte reproducible."
   },
   "artifacts": {
     "drivers": {
       "Debug": {
         "path": "artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys",
         "size": 32256,
-        "sha256": "826700E0556840D79D5A18A6C7CFA739FAF8ADEC6A9A3CF37F544187FBEAA821",
+        "sha256": "DD33388A3905A4C5AFCFD3FF4E3443308CC9A280BCDD094FB7ACED7478880F83",
         "authenticode": "NotSigned"
       },
       "Release": {
         "path": "artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys",
         "size": 20480,
-        "sha256": "D0983260B9CAD00CD72EE3F2AE4697110AA5C13DF01F7BC2B39C0FEF891F4CB3",
+        "sha256": "72B30B0523B07F91A21FE8711ED846F4B355652F0E2B0FEA691F894A4304CAC5",
         "authenticode": "NotSigned"
       }
     }
   },
   "evidence_entries": [
-    {
-      "id": "build_debug",
-      "path": "artifacts/logs/build-debug-x64-20260701T055549Z.log",
-      "sha256": "CB13C0ED06A89E5DE71FD62BE6CC4D6C8AA800F2ED37E89DFD908F381B331455",
-      "result": "PASS"
-    },
-    {
-      "id": "build_release",
-      "path": "artifacts/logs/build-release-x64-20260701T055554Z.log",
-      "sha256": "1B42651303E3F3BA718632F16918460C2B0EF1EC628F31B245DE1D29A7ECA801",
-      "result": "PASS"
-    },
-    {
-      "id": "request_owner_model_debug_build",
-      "path": "artifacts/logs/chatpad-request-owner-model-build-Debug-20260701T055603Z.log",
-      "sha256": "6D694EF0393235F547C4C5708472E177DF4CDAE09512F5D7630980B669346E6B",
-      "result": "PASS"
-    },
-    {
-      "id": "request_owner_model_debug_test",
-      "path": "artifacts/logs/chatpad-request-owner-model-test-Debug-20260701T055603Z.log",
-      "sha256": "0831CDAED1437C86F93470AAD86BC41523EDDBF6A44395C941AD201BCE3F99BC",
-      "result": "PASS 5002/5002"
-    },
-    {
-      "id": "request_owner_model_release_build",
-      "path": "artifacts/logs/chatpad-request-owner-model-build-Release-20260701T055607Z.log",
-      "sha256": "D50D708F45DFBBA354CAA39F55DECC4F756036096F26818665CDDA0E79EEBA75",
-      "result": "PASS"
-    },
-    {
-      "id": "request_owner_model_release_test",
-      "path": "artifacts/logs/chatpad-request-owner-model-test-Release-20260701T055607Z.log",
-      "sha256": "0831CDAED1437C86F93470AAD86BC41523EDDBF6A44395C941AD201BCE3F99BC",
-      "result": "PASS 5002/5002"
-    },
-    {
-      "id": "request_owner_context_debug",
-      "path": "artifacts/logs/chatpad-kmdf-request-owner-context-Debug-20260701T055612Z.log",
-      "sha256": "0D9E9BF5F0815804C2450E1FFB3F49C8925B291300E44B4D43AD4074AE31A097",
-      "result": "PASS"
-    },
-    {
-      "id": "request_owner_context_release",
-      "path": "artifacts/logs/chatpad-kmdf-request-owner-context-Release-20260701T055618Z.log",
-      "sha256": "C692EA0562AB4DCCF0939206235670A42EDC86BFEE42C8DAB255727C813D97EE",
-      "result": "PASS"
-    },
-    {
-      "id": "protocol_debug_test",
-      "path": "artifacts/logs/chatpad-protocol-integrated-test-Debug-20260701T055629Z.log",
-      "sha256": "E1A7AEB94A0FEAA1F2786C280ADD5B8C4ED8278B2D7E0E6EC80ED75056F90670",
-      "result": "PASS 610/610"
-    },
-    {
-      "id": "protocol_release_test",
-      "path": "artifacts/logs/chatpad-protocol-integrated-test-Release-20260701T055719Z.log",
-      "sha256": "E1A7AEB94A0FEAA1F2786C280ADD5B8C4ED8278B2D7E0E6EC80ED75056F90670",
-      "result": "PASS 610/610"
-    },
-    {
-      "id": "transport_debug_test",
-      "path": "artifacts/logs/chatpad-transport-test-Debug-20260701T055726Z.log",
-      "sha256": "400D00CC42A1D1529E0E41090FB16DD62A4C19D01723F75FC6B21D5E07C29BB3",
-      "result": "PASS 186/186"
-    },
-    {
-      "id": "transport_release_test",
-      "path": "artifacts/logs/chatpad-transport-test-Release-20260701T055731Z.log",
-      "sha256": "400D00CC42A1D1529E0E41090FB16DD62A4C19D01723F75FC6B21D5E07C29BB3",
-      "result": "PASS 186/186"
-    },
-    {
-      "id": "lifecycle_debug_test",
-      "path": "artifacts/logs/chatpad-filter-lifecycle-test-Debug-20260701T055736Z.log",
-      "sha256": "41E80ED213DC78D441818622D50E280293FB19E0B15947F4FFCCF4521235CEB2",
-      "result": "PASS 109/109"
-    },
-    {
-      "id": "lifecycle_release_test",
-      "path": "artifacts/logs/chatpad-filter-lifecycle-test-Release-20260701T055743Z.log",
-      "sha256": "41E80ED213DC78D441818622D50E280293FB19E0B15947F4FFCCF4521235CEB2",
-      "result": "PASS 109/109"
-    },
-    {
-      "id": "control_setup_debug_test",
-      "path": "artifacts/logs/chatpad-control-setup-test-Debug-20260701T055746Z.log",
-      "sha256": "06A87893D65C9998981E6E47735CAF2459C2E28F38A603534E310DA325D7E287",
-      "result": "PASS 141/141"
-    },
-    {
-      "id": "control_setup_release_test",
-      "path": "artifacts/logs/chatpad-control-setup-test-Release-20260701T055750Z.log",
-      "sha256": "06A87893D65C9998981E6E47735CAF2459C2E28F38A603534E310DA325D7E287",
-      "result": "PASS 141/141"
-    },
-    {
-      "id": "protocol_kernel_debug",
-      "path": "artifacts/logs/chatpad-protocol-kernel-compatibility-Debug-20260701T055754Z.log",
-      "sha256": "B44EA861C93A5971212F9C57B6A3DEF6655A392BFFA0EE7377C34B0031870634",
-      "result": "PASS"
-    },
-    {
-      "id": "protocol_kernel_release",
-      "path": "artifacts/logs/chatpad-protocol-kernel-compatibility-Release-20260701T055758Z.log",
-      "sha256": "FDB3AE1EF1A8F5A0C20E8AE53C4296D23A23C8B6A3D74B37EC305CAE3EA5AE2B",
-      "result": "PASS"
-    },
-    {
-      "id": "wdf_control_debug",
-      "path": "artifacts/logs/chatpad-wdf-control-setup-Debug-20260701T055803Z.log",
-      "sha256": "08E651E31D5E678C2AC2DC33A481594F9D57976A8C9C43148CD28D10DE885D94",
-      "result": "PASS"
-    },
-    {
-      "id": "wdf_control_release",
-      "path": "artifacts/logs/chatpad-wdf-control-setup-Release-20260701T055807Z.log",
-      "sha256": "75A41A4617C43AC6EEE408AAF35DEF289584AE42C27D0016C3CCF58138C0B005",
-      "result": "PASS"
-    },
-    {
-      "id": "production_linkage_debug",
-      "path": "artifacts/logs/production-linkage-debug-20260701T055814Z.log",
-      "sha256": "028B02C22A592EB5CF6B49ED64C6CD08834EFF83EDA8F1156F13FED4199C214A",
-      "result": "PASS"
-    },
-    {
-      "id": "production_linkage_release",
-      "path": "artifacts/logs/production-linkage-release-20260701T055820Z.log",
-      "sha256": "805B97C76E452E45BA367A7808CF73C18485A5F646A3FB8955C5F924A12825E3",
-      "result": "PASS"
-    },
-    {
-      "id": "production_owner_initialization_source_debug",
-      "path": "artifacts/logs/production-owner-initialization-source-debug-20260701T055826Z.log",
-      "sha256": "E1BC24306D82C8FB52187C340A88C6B0FE1F4F6D7FA0EB300BA2B5B3F8458C0A",
-      "result": "PASS SourceOnly"
-    },
-    {
-      "id": "production_owner_initialization_source_release",
-      "path": "artifacts/logs/production-owner-initialization-source-release-20260701T055832Z.log",
-      "sha256": "49497E1E90E58C459B32B040301A92475EBE38FF6275E7E969FAB2DADB51D215",
-      "result": "PASS SourceOnly"
-    },
-    {
-      "id": "production_orchestration_source_debug",
-      "path": "artifacts/logs/production-orchestration-source-debug-20260701T055838Z.log",
-      "sha256": "60C367F0B1FD37E03A81B7055C2B5929D48047DC6BAA317AEB4CFAAC9EFCE875",
-      "result": "PASS SourceOnly"
-    },
-    {
-      "id": "production_orchestration_source_release",
-      "path": "artifacts/logs/production-orchestration-source-release-20260701T055842Z.log",
-      "sha256": "83A97482AD0FF417CE9B3A8B2420C5819C092F30ACF6115864FE04FA60048153",
-      "result": "PASS SourceOnly"
-    },
-    {
-      "id": "production_orchestration_full_debug",
-      "path": "artifacts/logs/production-orchestration-full-debug-20260701T060231Z.log",
-      "sha256": "33F49EF961BF1AAD4B2CF72C8525D39C60DE82CA19FA82718AFB56C4CA764BF9",
-      "result": "PASS Full"
-    },
-    {
-      "id": "production_orchestration_full_release",
-      "path": "artifacts/logs/production-orchestration-full-release-20260701T060237Z.log",
-      "sha256": "65AE7AA06434D577D8994FFEDD6BC434E5586AF7A6577F59CB8C83B5020E326A",
-      "result": "PASS Full"
-    },
-    {
-      "id": "binary_inspection",
-      "path": "artifacts/logs/binary-inspection-production-orchestration-20260701T055917Z.log",
-      "sha256": "AD606D412856F6779C6FFE7F0EC0294BDED44490FA03430D6B3317725D1AA4C2",
-      "result": "PASS"
-    },
-    {
-      "id": "full_solution_buildtools_debug_blocked",
-      "path": "artifacts/logs/full-solution-debug-x64-20260701T055010Z.log",
-      "sha256": "0609E3D57EE2DF5B1102ABE75151468DB46C1CAC62426D239727BB14D9AAB5DC",
-      "result": "BLOCKED MSB8020"
-    },
-    {
-      "id": "full_solution_community_debug",
-      "path": "artifacts/logs/full-solution-debug-x64-community-20260701T055020Z.log",
-      "sha256": "A4D63C37DE88ABB89A52F89B112FF16A1116323B7E09D2779A4BC3EFAC395565",
-      "result": "PASS"
-    },
-    {
-      "id": "full_solution_community_release",
-      "path": "artifacts/logs/full-solution-release-x64-community-20260701T055030Z.log",
-      "sha256": "6B7CA75291F007BBEF6F64A2D478F67815339E74A381CDA1735815182351F193",
-      "result": "PASS"
-    }
+    {"id":"orchestration_source_debug","category":"guard","path":"artifacts/logs/remediation-orchestration-source-debug-20260701T083915Z.log","sha256":"575AD5976640BB85811DA2153F210FB4AA658E7B29F8395247B66FC98764DDCB","result":"PASS","command":".\\tools\\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Debug -Platform x64 -InspectionMode SourceOnly","configuration":"SourceOnly-Debug","assertions_passed":82,"assertions_total":82,"metric_name":"mapped_results","metric_value":18,"metric_unit":"results","count_applicability":"Guard assertions and mapped-result count apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:39:40Z","notes":"14 implementation paths; zero result discrepancies."},
+    {"id":"orchestration_source_release","category":"guard","path":"artifacts/logs/remediation-orchestration-source-release-20260701T083915Z.log","sha256":"9FE451CFD6079224DF7BDEB427F01529C884DBE8D18D674A5490B8D65C5FB78C","result":"PASS","command":".\\tools\\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Release -Platform x64 -InspectionMode SourceOnly","configuration":"SourceOnly-Release","assertions_passed":82,"assertions_total":82,"metric_name":"mapped_results","metric_value":18,"metric_unit":"results","count_applicability":"Guard assertions and mapped-result count apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:39:40Z","notes":"14 implementation paths; zero result discrepancies."},
+    {"id":"orchestration_full_debug","category":"guard","path":"artifacts/logs/remediation-orchestration-full-debug-20260701T083915Z.log","sha256":"D5EDF3D1F2C8E1088F007490C2BAB771222FFE6E398D6D3C06456D9EEC356B31","result":"PASS","command":".\\tools\\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Debug -Platform x64 -InspectionMode Full","configuration":"Full-Debug","assertions_passed":82,"assertions_total":82,"metric_name":"mandatory_evidence_ids","metric_value":42,"metric_unit":"ids","count_applicability":"Guard assertions and mandatory-ID count apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"pre-final remediation worktree","generated_at_utc":"2026-07-01T08:53:30Z","notes":"Validated 42 mandatory entries with zero metadata/file/non-self-hash defects and skipped only its own changing transcript hash; Release still held its bootstrap hash at this capture."},
+    {"id":"orchestration_full_release","category":"guard","path":"artifacts/logs/remediation-orchestration-full-release-20260701T083915Z.log","sha256":"78E4634B7F683E7F9AFD57C9ED8B9EAF51641395597E8767E6955673920B1CE7","result":"PASS","command":".\\tools\\Test-ChatpadProductionOrchestrationInvocation.ps1 -Configuration Release -Platform x64 -InspectionMode Full","configuration":"Full-Release","assertions_passed":82,"assertions_total":82,"metric_name":"mandatory_evidence_ids","metric_value":42,"metric_unit":"ids","count_applicability":"Guard assertions and mandatory-ID count apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"pre-final remediation worktree","generated_at_utc":"2026-07-01T08:54:06Z","notes":"Validated the final Debug Full hash and all other mandatory entries with zero metadata/file/non-self-hash defects; skipped only its own changing transcript hash."},
+    {"id":"production_linkage_debug","category":"compatibility_guard","path":"artifacts/logs/remediation-production-linkage-debug-20260701T083915Z.log","sha256":"9867CA060AEF1CDA601E29C407DA05438B611FBB63D68F5B8430378DDE407B7B","result":"PASS","command":".\\tools\\Test-ChatpadProductionLinkage.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":null,"assertions_total":null,"metric_name":"semantic_guard_pass","metric_value":1,"metric_unit":"boolean","count_applicability":"Native assertion counts do not apply; semantic guard result metric applies.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:39:44Z","notes":"Target/request absence and linkage checked."},
+    {"id":"production_linkage_release","category":"compatibility_guard","path":"artifacts/logs/remediation-production-linkage-release-20260701T083915Z.log","sha256":"94B2701CE2E30A2CD87ADCB465040692EAB10EDF5C621AFC1EBBE610FE93DE99","result":"PASS","command":".\\tools\\Test-ChatpadProductionLinkage.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":null,"assertions_total":null,"metric_name":"semantic_guard_pass","metric_value":1,"metric_unit":"boolean","count_applicability":"Native assertion counts do not apply; semantic guard result metric applies.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:39:44Z","notes":"Target/request absence and linkage checked."},
+    {"id":"production_owner_init_source_debug","category":"compatibility_guard","path":"artifacts/logs/remediation-owner-init-source-debug-20260701T083915Z.log","sha256":"AE544C4973E38D92E383B704C1D740804086A8D65CAD1C2E15F464425CB9E1C2","result":"PASS","command":".\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Debug -Platform x64 -InspectionMode SourceOnly","configuration":"SourceOnly-Debug","assertions_passed":null,"assertions_total":null,"metric_name":"semantic_guard_pass","metric_value":1,"metric_unit":"boolean","count_applicability":"Native assertion counts do not apply; semantic guard result metric applies.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:39:45Z","notes":"Owner initialization compatibility retained."},
+    {"id":"production_owner_init_source_release","category":"compatibility_guard","path":"artifacts/logs/remediation-owner-init-source-release-20260701T083915Z.log","sha256":"F35A90B12363F24001395BB80EFBFD93177375B57869B95E28B4FAB301E2DD42","result":"PASS","command":".\\tools\\Test-ChatpadProductionOwnerInitialization.ps1 -Configuration Release -Platform x64 -InspectionMode SourceOnly","configuration":"SourceOnly-Release","assertions_passed":null,"assertions_total":null,"metric_name":"semantic_guard_pass","metric_value":1,"metric_unit":"boolean","count_applicability":"Native assertion counts do not apply; semantic guard result metric applies.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:39:46Z","notes":"Owner initialization compatibility retained."},
+    {"id":"kmdf_context_semantic_debug","category":"semantic_guard","path":"artifacts/logs/remediation-kmdf-context-semantic-debug-20260701T083915Z.log","sha256":"61517117CF29C4A46F69E04EDE9ACD7E79A10A7FB0056CB38DFEE406D4448765","result":"PASS","command":".\\tools\\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":null,"assertions_total":null,"metric_name":"semantic_pass_markers","metric_value":1,"metric_unit":"markers","count_applicability":"Semantic checks are reported by one explicit PASS marker; native assertions do not apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:39:42Z","notes":"Dedicated transcript includes semantic PASS, build exit 0, and artifact metrics."},
+    {"id":"kmdf_context_semantic_release","category":"semantic_guard","path":"artifacts/logs/remediation-kmdf-context-semantic-release-20260701T083915Z.log","sha256":"D6C55ED5F54A8A7C075F3D3603E8E9D56A69347C5C84C5CAE1C06D599C78E426","result":"PASS","command":".\\tools\\Test-ChatpadKmdfRequestOwnerContext.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":null,"assertions_total":null,"metric_name":"semantic_pass_markers","metric_value":1,"metric_unit":"markers","count_applicability":"Semantic checks are reported by one explicit PASS marker; native assertions do not apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:39:44Z","notes":"Dedicated transcript includes semantic PASS, build exit 0, and artifact metrics."},
+    {"id":"request_owner_model_debug","category":"regression","path":"artifacts/logs/remediation-request-owner-model-debug-20260701T083915Z.log","sha256":"DF1C46BC1C049D3DC2EB9E2429B0D1554EA270501F2073389141BC3E0F08AD1D","result":"PASS","command":".\\tools\\Test-ChatpadRequestOwnerModel.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":5002,"assertions_total":5002,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:39:58Z","notes":"Baseline preserved."},
+    {"id":"request_owner_model_release","category":"regression","path":"artifacts/logs/remediation-request-owner-model-release-20260701T083915Z.log","sha256":"FE2B5CC912E31FF0CFA2B251421592D72C26D9CBA5B7E6AB61E8F835EE9BE0A7","result":"PASS","command":".\\tools\\Test-ChatpadRequestOwnerModel.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":5002,"assertions_total":5002,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:00Z","notes":"Baseline preserved."},
+    {"id":"protocol_debug","category":"regression","path":"artifacts/logs/remediation-protocol-debug-20260701T083915Z.log","sha256":"A63F626D8FF66F57C93C8C007065B192A9FB172ECB0A96D52AFF2C9C64BEB5C0","result":"PASS","command":".\\tools\\Test-ChatpadProtocol.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":610,"assertions_total":610,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:02Z","notes":"Baseline preserved."},
+    {"id":"protocol_release","category":"regression","path":"artifacts/logs/remediation-protocol-release-20260701T083915Z.log","sha256":"5385477A2072E5AC508DE469CF834DFB95D4C6B4E9930F3921638ABE6BC1725B","result":"PASS","command":".\\tools\\Test-ChatpadProtocol.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":610,"assertions_total":610,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:03Z","notes":"Baseline preserved."},
+    {"id":"transport_debug","category":"regression","path":"artifacts/logs/remediation-transport-debug-20260701T083915Z.log","sha256":"108939D9C029863765302BD11CF39F082F22F6A546B909612C5B6B467AA934F4","result":"PASS","command":".\\tools\\Test-ChatpadTransport.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":186,"assertions_total":186,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:04Z","notes":"Baseline preserved."},
+    {"id":"transport_release","category":"regression","path":"artifacts/logs/remediation-transport-release-20260701T083915Z.log","sha256":"A91931B5A9D5FCD193CD4DDE53E9687E3F5C0360EB5ACD51C7430B31EFD4FA64","result":"PASS","command":".\\tools\\Test-ChatpadTransport.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":186,"assertions_total":186,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:05Z","notes":"Baseline preserved."},
+    {"id":"lifecycle_debug","category":"regression","path":"artifacts/logs/remediation-lifecycle-debug-20260701T083915Z.log","sha256":"DC75A9448A37DCEDD763D19BECA3DEC7E948C4C08A373C76DBE22E48C8D8EDED","result":"PASS","command":".\\tools\\Test-ChatpadFilterLifecycle.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":109,"assertions_total":109,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:06Z","notes":"Baseline preserved."},
+    {"id":"lifecycle_release","category":"regression","path":"artifacts/logs/remediation-lifecycle-release-20260701T083915Z.log","sha256":"D7625A319ADDE00D2E7E74F05154055149A36A4378E4F3ACB05197F1D6E608C3","result":"PASS","command":".\\tools\\Test-ChatpadFilterLifecycle.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":109,"assertions_total":109,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:07Z","notes":"Baseline preserved."},
+    {"id":"control_setup_debug","category":"regression","path":"artifacts/logs/remediation-control-setup-debug-20260701T083915Z.log","sha256":"5D2C70B88814006885CBE82946279D0535BFC3232E4016B3E899FD45554E1BE3","result":"PASS","command":".\\tools\\Test-ChatpadControlSetup.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":141,"assertions_total":141,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:08Z","notes":"Baseline preserved."},
+    {"id":"control_setup_release","category":"regression","path":"artifacts/logs/remediation-control-setup-release-20260701T083915Z.log","sha256":"D41DB1B079E21CFDACF79E3427486378536FF463C1F2FCFAFFC1D014210533C0","result":"PASS","command":".\\tools\\Test-ChatpadControlSetup.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":141,"assertions_total":141,"metric_name":"failed_assertions","metric_value":0,"metric_unit":"assertions","count_applicability":"Native assertion counts apply.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree based on implementation commit","generated_at_utc":"2026-07-01T08:40:09Z","notes":"Baseline preserved."},
+    {"id":"protocol_kernel_debug","category":"compile_guard","path":"artifacts/logs/remediation-protocol-kernel-debug-20260701T083915Z.log","sha256":"DCB00D6FF7ACC022473CFA7C836F1D34819B934485BDFCE205245C357AA0454A","result":"PASS","command":".\\tools\\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Compile check uses build warning/error metrics, not native assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:40:10Z","notes":"Kernel compatibility compile check."},
+    {"id":"protocol_kernel_release","category":"compile_guard","path":"artifacts/logs/remediation-protocol-kernel-release-20260701T083915Z.log","sha256":"EEEDC3E8A0E8AFECC037F1D39D94812AD7B4A32A43BC4ADFA5A31E2949B69D63","result":"PASS","command":".\\tools\\Test-ChatpadProtocolKernelCompatibility.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Compile check uses build warning/error metrics, not native assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:40:11Z","notes":"Kernel compatibility compile check."},
+    {"id":"wdf_control_debug","category":"compile_guard","path":"artifacts/logs/remediation-wdf-control-debug-20260701T083915Z.log","sha256":"C0481F34226CFB760487DEBFAB76BD847F7FBBBEFAD777DABDC692391AD3137F","result":"PASS","command":".\\tools\\Test-ChatpadWdfControlSetup.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Compile/semantic guard uses build metrics, not native assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:40:12Z","notes":"WDF control setup guard and compile check."},
+    {"id":"wdf_control_release","category":"compile_guard","path":"artifacts/logs/remediation-wdf-control-release-20260701T083915Z.log","sha256":"26683BAF8739F794936227ABD1810332273B342EB761DE4F5CC488E40B34B9CE","result":"PASS","command":".\\tools\\Test-ChatpadWdfControlSetup.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Compile/semantic guard uses build metrics, not native assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build remediation worktree","generated_at_utc":"2026-07-01T08:40:13Z","notes":"WDF control setup guard and compile check."},
+    {"id":"driver_build_debug","category":"build","path":"artifacts/logs/remediation-driver-build-debug-20260701T083915Z.log","sha256":"D0E631BAA184E4A8F0007A3741832DA2AAB0B79138802AC5F708773AB81C82BA","result":"PASS","command":".\\tools\\Build-Driver.ps1 -Configuration Debug -Platform x64","configuration":"Debug","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Build uses warning/error/result metrics, not assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"source-identical rebuild from remediation worktree","generated_at_utc":"2026-07-01T08:40:38Z","notes":"SignMode Off; no deployment action."},
+    {"id":"driver_build_release","category":"build","path":"artifacts/logs/remediation-driver-build-release-20260701T083915Z.log","sha256":"AD2BE2749E89FC4E6C52BA8521F6F3F72619ACA897E79D37EAA3D2A074259D13","result":"PASS","command":".\\tools\\Build-Driver.ps1 -Configuration Release -Platform x64","configuration":"Release","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Build uses warning/error/result metrics, not assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"source-identical rebuild from remediation worktree","generated_at_utc":"2026-07-01T08:40:40Z","notes":"SignMode Off; no deployment action."},
+    {"id":"solution_community_debug","category":"build","path":"artifacts/logs/remediation-solution-community-debug-20260701T083915Z.log","sha256":"680534501DBBB4FE98D248B5D9B6603D4C55F3A59A5B3F1281AFE712495014BA","result":"PASS","command":"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\" .\\ChatpadWin11.sln /nologo /m /t:Clean;Build /p:Configuration=Debug /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:RepoRoot=C:\\Dev\\chatpad-super-driver /verbosity:minimal","configuration":"Debug","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Build uses warning/error/result metrics, not assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"source-identical rebuild from remediation worktree","generated_at_utc":"2026-07-01T08:40:42Z","notes":"Community/WDK authoritative full solution build."},
+    {"id":"solution_community_release","category":"build","path":"artifacts/logs/remediation-solution-community-release-20260701T083915Z.log","sha256":"E93CC94512A5E0A165DD822EBA1884D33412D5BDF030054E47E226A470B58685","result":"PASS","command":"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\" .\\ChatpadWin11.sln /nologo /m /t:Clean;Build /p:Configuration=Release /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:RepoRoot=C:\\Dev\\chatpad-super-driver /verbosity:minimal","configuration":"Release","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"PASS; warnings=0; errors=0","metric_unit":"summary","count_applicability":"Build uses warning/error/result metrics, not assertions.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"source-identical rebuild from remediation worktree","generated_at_utc":"2026-07-01T08:40:44Z","notes":"Community/WDK authoritative full solution build."},
+    {"id":"solution_buildtools_debug","category":"build_limitation","path":"artifacts/logs/remediation-solution-buildtools-debug-20260701T083915Z.log","sha256":"ECEBB2D862C7A3F8B5AC5245E76FC3C1E965E0392C699C449E90199748279885","result":"BLOCKED_EXPECTED","command":"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe\" .\\ChatpadWin11.sln /nologo /m /t:Build /p:Configuration=Debug /p:Platform=x64 /p:PreferredToolArchitecture=x64 /p:RepoRoot=C:\\Dev\\chatpad-super-driver /verbosity:minimal","configuration":"Debug","assertions_passed":null,"assertions_total":null,"metric_name":"build_summary","metric_value":"BLOCKED_EXPECTED; warnings=0; MSB8020 errors=3","metric_unit":"summary","count_applicability":"Expected toolchain diagnostic counts apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"remediation worktree Build Tools attempt","generated_at_utc":"2026-07-01T08:40:44Z","notes":"Build Tools instance lacks WindowsKernelModeDriver10.0; Community/WDK passes."},
+    {"id":"binary_debug","category":"binary","path":"artifacts/logs/remediation-binary-debug-20260701T083915Z.log","sha256":"F4AB409A4975834C8CD5526AC880A705DB98CA6CB9B242B51EBC54E6843C9FB7","result":"PASS","command":"Get-Item 'artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys'; Get-FileHash -Algorithm SHA256 'artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys'; dumpbin.exe /HEADERS 'artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys'","configuration":"Binary-Debug","assertions_passed":null,"assertions_total":null,"metric_name":"size","metric_value":32256,"metric_unit":"bytes","count_applicability":"Binary size/hash/type metrics apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build binary inspection","generated_at_utc":"2026-07-01T08:41:27Z","notes":"SHA-256 DD33388A3905A4C5AFCFD3FF4E3443308CC9A280BCDD094FB7ACED7478880F83; x64 Native."},
+    {"id":"binary_release","category":"binary","path":"artifacts/logs/remediation-binary-release-20260701T083915Z.log","sha256":"ABBF4DE83C80E6601673704C15246EF82238AC04E55F765348812BB7E4A7DDBE","result":"PASS","command":"Get-Item 'artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys'; Get-FileHash -Algorithm SHA256 'artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys'; dumpbin.exe /HEADERS 'artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys'","configuration":"Binary-Release","assertions_passed":null,"assertions_total":null,"metric_name":"size","metric_value":20480,"metric_unit":"bytes","count_applicability":"Binary size/hash/type metrics apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build binary inspection","generated_at_utc":"2026-07-01T08:41:27Z","notes":"SHA-256 72B30B0523B07F91A21FE8711ED846F4B355652F0E2B0FEA691F894A4304CAC5; x64 Native."},
+    {"id":"authenticode_debug","category":"binary_signature","path":"artifacts/logs/remediation-authenticode-debug-20260701T083915Z.log","sha256":"70CF2A3165AD49190CEA9BF0956A9152A8A28AD0B64A26128FDDCF8818E3C42F","result":"PASS","command":"Get-AuthenticodeSignature 'artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys'","configuration":"Binary-Debug","assertions_passed":null,"assertions_total":null,"metric_name":"authenticode","metric_value":"NotSigned","metric_unit":"status","count_applicability":"Signature status applies; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build binary inspection","generated_at_utc":"2026-07-01T08:41:27Z","notes":"No signer certificate."},
+    {"id":"authenticode_release","category":"binary_signature","path":"artifacts/logs/remediation-authenticode-release-20260701T083915Z.log","sha256":"5B6D0DF789D5F069A18B0C0FE5DBC71564AD7D848030447E87610699695EA5DA","result":"PASS","command":"Get-AuthenticodeSignature 'artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys'","configuration":"Binary-Release","assertions_passed":null,"assertions_total":null,"metric_name":"authenticode","metric_value":"NotSigned","metric_unit":"status","count_applicability":"Signature status applies; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build binary inspection","generated_at_utc":"2026-07-01T08:41:27Z","notes":"No signer certificate."},
+    {"id":"retention_debug","category":"binary_retention","path":"artifacts/logs/remediation-retention-debug-20260701T083915Z.log","sha256":"AF8E636CD4B6E4AA34189DA127AA2ECE62A90D1D7C066F8FB9608DFF6A6E7502","result":"PASS","command":"dumpbin.exe /SYMBOLS context.obj; dumpbin.exe /DISASM,/SYMBOLS,/IMPORTS ChatpadFilter.sys; Get-Content link.command.1.tlog","configuration":"Binary-Debug","assertions_passed":null,"assertions_total":null,"metric_name":"context_symbols_visible","metric_value":11,"metric_unit":"symbols","count_applicability":"Retention/symbol/WDF dispatch metrics apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build binary inspection","generated_at_utc":"2026-07-01T08:41:27Z","notes":"Final named components 10/11; WdfFunctions visible; four WDF object-management names visible; no forced retention."},
+    {"id":"retention_release","category":"binary_retention","path":"artifacts/logs/remediation-retention-release-20260701T083915Z.log","sha256":"F0A0CF9343851A242D331CC23AD64465E7FBFFA3573C177E494EAF2A9B738611","result":"PASS","command":"dumpbin.exe /SYMBOLS context.obj; dumpbin.exe /DISASM,/SYMBOLS,/IMPORTS ChatpadFilter.sys; Get-Content link.command.1.tlog","configuration":"Binary-Release","assertions_passed":null,"assertions_total":null,"metric_name":"context_symbols_visible","metric_value":11,"metric_unit":"symbols","count_applicability":"Retention/symbol/WDF dispatch metrics apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build binary inspection","generated_at_utc":"2026-07-01T08:41:27Z","notes":"Final named components 9/11 due LTCG/COMDAT; WdfFunctions visible; source/context/link evidence closes retention; no forced retention."},
+    {"id":"target_request_absence","category":"binary_absence","path":"artifacts/logs/remediation-target-request-absence-20260701T083915Z.log","sha256":"23DBB38EAC33F92F92F2ABFD54AA07E2066CFD59E447121703BA69117DD9DDC9","result":"PASS","command":"dumpbin.exe /DISASM,/SYMBOLS,/IMPORTS Debug and Release ChatpadFilter.sys; scan exact forbidden target/request/D0 patterns","configuration":"Binary-Debug-Release","assertions_passed":null,"assertions_total":null,"metric_name":"forbidden_patterns_observed","metric_value":0,"metric_unit":"patterns","count_applicability":"Forbidden binary-pattern count applies; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"post-build binary inspection","generated_at_utc":"2026-07-01T08:41:27Z","notes":"No target discovery, formatting, reuse, send, completion, cancellation, or D0/removal owner observation evidence."},
+    {"id":"repository_safety","category":"repository","path":"artifacts/logs/remediation-repository-safety-20260701T083915Z.log","sha256":"24DB87EC5B0FA13B2D5D0EAABAC241DDE070AE03F3EBF66F7E86774C24F2C7E4","result":"PASS","command":".\\tools\\Test-RepositorySafety.ps1","configuration":"Repository","assertions_passed":null,"assertions_total":null,"metric_name":"prohibited_action_counts","metric_value":"deployment=0; windows_mutation=0; device_query=0; hardware=0; tracked_artifacts=0","metric_unit":"counts","count_applicability":"Repository safety violation counts apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"pre-final remediation worktree","generated_at_utc":"2026-07-01T08:49:45Z","notes":"Dedicated non-deployment repository-safety capture."},
+    {"id":"implementation_commit_scope","category":"git_scope","path":"artifacts/logs/remediation-implementation-scope-20260701T083915Z.log","sha256":"11B3DB0851952E0581D3B260704CDCC7BE6EC4E77741354CE4DF46E5B611D4C3","result":"PASS","command":"git diff --name-status 4ba0de15420e0b66287a501918de694c8b6fd720 efb729502a0527ac70e2d20fa31a323c3beb2920; git diff --stat 4ba0de15420e0b66287a501918de694c8b6fd720 efb729502a0527ac70e2d20fa31a323c3beb2920; git diff --name-only 4ba0de15420e0b66287a501918de694c8b6fd720 efb729502a0527ac70e2d20fa31a323c3beb2920","configuration":"CommitScope","assertions_passed":null,"assertions_total":null,"metric_name":"changed_paths","metric_value":14,"metric_unit":"paths","count_applicability":"Committed path/violation counts apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"immutable implementation commit","generated_at_utc":"2026-07-01T08:44:47Z","notes":"One production source path; zero unexpected/prohibited paths. Git disproves the requested 15-path assumption."},
+    {"id":"implementation_diff_check","category":"git_scope","path":"artifacts/logs/remediation-implementation-diff-check-20260701T083915Z.log","sha256":"85AE0BAE58B98EB1226114D9C4F1E3FD5DB3B09149648AE4AE4787337160EC02","result":"PASS","command":"git diff --check 4ba0de15420e0b66287a501918de694c8b6fd720 efb729502a0527ac70e2d20fa31a323c3beb2920","configuration":"CommitScope","assertions_passed":null,"assertions_total":null,"metric_name":"whitespace_errors","metric_value":0,"metric_unit":"errors","count_applicability":"Whitespace error count applies; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"immutable implementation commit","generated_at_utc":"2026-07-01T08:44:47Z","notes":"Parent-to-current whitespace check."},
+    {"id":"unstaged_diff","category":"git_candidate","path":"artifacts/logs/remediation-unstaged-diff-20260701T083915Z.log","sha256":"5A87A6515AC6FA761CE18BB4BB9409617E77867CDB9D53A03537C238F55364F6","result":"PASS","command":"git diff --name-status; git diff --stat; git diff --check","configuration":"Repository","assertions_passed":null,"assertions_total":null,"metric_name":"unexpected_paths","metric_value":0,"metric_unit":"paths","count_applicability":"Unstaged authorized/unexpected path counts apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"pre-final remediation worktree capture point","generated_at_utc":"2026-07-01T08:49:45Z","notes":"Selected worktree checkpoint before staging; does not claim final post-commit cleanliness. Untracked remediation document is covered by final candidate containment."},
+    {"id":"staged_diff","category":"git_candidate","path":"artifacts/logs/remediation-staged-diff-20260701T083915Z.log","sha256":"ADD40130E84797A969BBCE742842E15B8C6648C50B654718C73EE60B978A81B8","result":"PASS","command":"git diff --cached --name-status; git diff --cached --stat; git diff --cached --check","configuration":"Repository","assertions_passed":null,"assertions_total":null,"metric_name":"unexpected_paths","metric_value":0,"metric_unit":"paths","count_applicability":"Staged authorized/unexpected path counts apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"staged remediation candidate before its own final manifest hash insertion","generated_at_utc":"2026-07-01T08:52:41Z","notes":"Captured nine authorized staged paths, zero unexpected/production/generated paths, and zero whitespace errors before this hash, later Full-guard hashes, and final worklog closeout were inserted."},
+    {"id":"candidate_containment","category":"repository","path":"artifacts/logs/remediation-candidate-containment-20260701T083915Z.log","sha256":"D3091F1D12C7906B6F2C3416C75BBBCD7C316CDCF3198FBE954D3A1FC9DFAFE0","result":"PASS","command":"git diff --name-only; git ls-files --others --exclude-standard; git ls-files; git check-ignore; manifest metadata/path/hash validation","configuration":"Repository","assertions_passed":null,"assertions_total":null,"metric_name":"unexpected_paths","metric_value":0,"metric_unit":"paths","count_applicability":"Candidate path/artifact/manifest defect counts apply; assertions do not.","generated_against_commit":"efb729502a0527ac70e2d20fa31a323c3beb2920","generated_against_state":"pre-final remediation candidate","generated_at_utc":"2026-07-01T08:51:30Z","notes":"Pre-final capture includes tracked modifications and the untracked remediation document; all non-self evidence hashes matched and the changing containment-log hash was explicitly skipped."}
   ]
 }
