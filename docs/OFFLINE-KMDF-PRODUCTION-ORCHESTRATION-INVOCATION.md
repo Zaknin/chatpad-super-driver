@@ -184,6 +184,19 @@ mapping checks, mandatory manifest metadata and evidence IDs, KMDF semantic
 guard capture, repository safety, Git diff evidence, and containing-commit
 binding.
 
+The second evidence audit then found five fidelity defects in the first
+remediation: no manifest-level mandatory-ID declaration, abbreviated retention
+commands, missing KMDF semantic totals, incomplete repository-safety counters,
+and no retained historical binary pair for independent equivalence proof.
+
+Production source again remained unchanged. The separate
+[Offline KMDF Production Orchestration Evidence Finalization](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-FINALIZATION.md)
+checkpoint upgrades the manifest to schema `1.2.0`, declares 56 mandatory IDs,
+records exact ordered commands and explicit metrics, and retains a
+source-identical A/B rebuild comparison. Historical binary hashes remain
+observations only because the earlier files cannot be retroactively compared.
+
 Final acceptance still requires another independent read-only audit. No
-runtime, signing, packaging, staging, installation, loading, target discovery,
-request operation, or hardware gate is opened by the remediation.
+runtime, signing, packaging, certificate/key creation, staging, installation,
+loading, target discovery, request operation, device query, or hardware gate
+is opened by either remediation.

@@ -4302,3 +4302,110 @@
   the remediated guard, manifest, evidence logs, containing commit, and final
   upstream state. Runtime, target/request, signing, installation, loading, and
   hardware gates remain closed.
+
+## 2026-07-01 13:54 +04:00 - Production orchestration evidence finalization
+
+- **Task title/objective:** Create the second evidence-only remediation
+  checkpoint for five audit findings: manifest-level mandatory IDs, exact
+  retention commands, explicit KMDF semantic metrics, explicit
+  repository-safety counters, and retained source-identical A/B binary
+  evidence.
+- **Starting branch/commit:** Verified clean synchronized
+  `feature/offline-kmdf-production-orchestration-evidence-remediation` at
+  `33f726f68f563ec7e7e0dc1fc778a17bf85ebee9`, parent
+  `efb729502a0527ac70e2d20fa31a323c3beb2920`, subject
+  `test: remediate production orchestration evidence`, then created
+  `feature/offline-kmdf-production-orchestration-evidence-finalization`.
+- **Investigation:** Re-read the repository protocol and continuation files,
+  verified the exact starting gate and prior checkpoint, identified the three
+  currently used validators, confirmed the frozen implementation and
+  authoritative 14-path implementation scope, and reproduced the second
+  audit's five evidence-fidelity defects. Documentation was stale only because
+  this authorized task superseded its next-audit instruction.
+- **Tracked files created/modified:** Created
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-FINALIZATION.md`;
+  modified `tools/Test-ChatpadProductionOrchestrationInvocation.ps1`,
+  `tools/Test-ChatpadKmdfRequestOwnerContext.ps1`,
+  `tools/Test-RepositorySafety.ps1`,
+  `docs/evidence/production-orchestration-invocation-manifest.json`,
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-REMEDIATION.md`,
+  `docs/OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md`,
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/PORTING-PLAN.md`,
+  `docs/WINDOWS11-KMDF-PRODUCTION-INTEGRATION-DESIGN.md`, and this worklog.
+  No production source/header, model, protocol, transport, lifecycle, D0,
+  removal, project, solution, INF, signing, packaging, or `legacy/` path
+  changed.
+- **Guard/manifest finalization:** Upgraded the manifest to schema `1.2.0`;
+  added the exact ordered 56-ID top-level declaration; required equality among
+  the guard, declaration, and entry IDs; required exactly one literal
+  `command` or ordered `commands` representation; validated command fidelity;
+  parsed explicit KMDF and repository-safety metrics; and independently
+  re-parsed retained A/B PE files to verify raw hashes, normalized PE equality,
+  section metadata, normalized sections, and executable sections.
+- **KMDF and safety evidence:** Debug and Release KMDF transcripts report
+  `62/62` semantic checks, zero warnings/errors, build exit zero, guard exit
+  zero, and PASS. Repository safety reports zero deployment, signing,
+  packaging, certificate creation, key creation, Windows mutation, device
+  query, hardware access, unexpected tracked artifacts, tracked evidence, and
+  non-ignored evidence, with exit zero and PASS.
+- **A/B builds:** Four clean Community/WDK wrapper builds passed from the same
+  eight frozen source/project blobs. Debug A/B are each 32,256 bytes with raw
+  hashes
+  `E9F82840B5316CBDD8C3F550DF196A18B51B08770CDD514804B26D0A5AA826A1`
+  and
+  `5BF55C56138ABB180ACC3DB77D3CB03A8FC82DD7706926C06F342C096F76F0AA`.
+  Release A/B are each 20,480 bytes with raw hashes
+  `FCC17F6DDFFA44CDE50448F9EF7B730E54E3CAF3D849570D0723689623411F39`
+  and
+  `F7D8182D32FAFC86A3D42A414365170C8EA46404E7545351AA43AEB2EF2AEDBB`.
+- **A/B equivalence:** Debug differs in 22 raw bytes and Release in 23.
+  Normalization zeroes only COFF timestamp, PE checksum, debug-directory
+  timestamp, and CodeView GUID. Debug normalizes to
+  `18656A2A1EC059E1D84F353B386400D7B79E3C4C37B6407364609DEB09433E50`;
+  Release normalizes to
+  `F87A4B3FB662D245856104AFB53027502B54AAE2018A596491521160A98B9A6C`.
+  Section structure, executable-section raw hashes, imports, normalized
+  disassembly/symbols, WDF references, orchestration/helper/rollback/validator
+  retention, target/request absence, and `NotSigned` state are equal. Set B is
+  canonical.
+- **Historical limitation:** Earlier implementation and first-remediation
+  binary hashes remain observations only. Those files and raw outputs were not
+  retained, so their exact equivalence cannot be retroactively proven.
+- **Evidence location:** Ignored evidence is under
+  `artifacts/logs/production-orchestration-evidence-finalization/` and
+  `artifacts/logs/production-orchestration-ab-rebuild/`. The latter retains
+  four SYS/PDB pairs, four build logs, four binary logs, four full retention
+  logs, and two equivalence logs. No evidence or generated binary is tracked.
+- **Validation:** Manifest JSON parses with schema `1.2.0`, 56 declared IDs,
+  56 entries, 56 unique IDs, and 56 unique paths. SourceOnly Debug/Release
+  passed. Full Debug/Release passed with zero missing, unexpected, duplicate,
+  metadata, path, or non-self hash defects. A/B capture and direct PE
+  revalidation passed. Markdown links, line endings, repository safety,
+  immutable scope, whitespace, staged/unstaged state, candidate containment,
+  complete diff, and final Git state were validated before commit.
+- **Failed commands:** The inherited first A/B capture command failed at
+  PowerShell parsing before mutation. During continuation, the new ignored
+  capture helper first rejected blank dump-output lines, then used an overly
+  narrow `WdfFunctions` regex; both failures occurred after safe offline builds
+  and were corrected before the retained four-build run. Early Full-guard
+  attempts exposed CRLF key parsing and conflicting nested build-log timestamp
+  keys; both were corrected before PASS. One read-only command-fidelity probe
+  and one disassembly-comparison probe had PowerShell empty-pipe parse errors.
+  One documentation patch missed its context and changed nothing.
+- **Self-reference limits:** Each Full log skips only its own changing hash.
+  Staged and candidate evidence records its exact pre-final capture point. The
+  independent audit must verify final containing commit, both Full hashes, all
+  56 evidence hashes, and clean synchronized state.
+- **Safety:** No signing, certificate/key creation, packaging, catalog work,
+  staging outside Git, installation, driver loading, Windows mutation, device
+  query, USB/XUSB/controller/Chatpad interaction, or hardware action occurred.
+- **Commit/push:** Commit exactly
+  `test: finalize production orchestration evidence` without amend and push
+  only
+  `origin/feature/offline-kmdf-production-orchestration-evidence-finalization`;
+  final hash is reported after commit.
+- **Next gate:** Independent read-only audit of implementation `efb7295`, the
+  schema-`1.2.0` manifest, retained A/B evidence, containing commit, and final
+  upstream state. Runtime, target/request, signing, installation, loading, and
+  hardware gates remain closed.

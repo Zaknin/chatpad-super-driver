@@ -143,6 +143,13 @@ Source references:
   scope, all 18 result mappings, mandatory evidence metadata/IDs, KMDF semantic
   guard output, repository safety, staged/unstaged state, and containing-commit
   limitations. It is evidence progress only, not runtime progress.
+- The second production orchestration evidence-finalization checkpoint
+  preserves production source again, upgrades the manifest to schema `1.2.0`
+  with 56 top-level mandatory IDs, records exact ordered retention commands and
+  explicit semantic/safety counters, and replaces an unprovable historical
+  binary comparison with a retained source-identical A/B rebuild. It remains
+  evidence-only; runtime, target/request, signing, installation, and hardware
+  gates are closed.
 - The owner-initialization audit-corrections checkpoint is complete in
   `docs/OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md`. It corrected
   documentation, guard wording, and retained evidence without changing

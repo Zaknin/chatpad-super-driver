@@ -51,6 +51,14 @@ behavior. The separate
 binds immutable implementation scope, all 18 mappings, and a closed evidence
 set without changing production source or opening a runtime gate.
 
+The second evidence audit found five fidelity defects in that evidence set,
+not a production-source defect. The later
+[Offline KMDF Production Orchestration Evidence Finalization](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-FINALIZATION.md)
+adds the manifest-level mandatory declaration, exact ordered retention
+commands, explicit KMDF and repository-safety counters, and a retained
+source-identical A/B rebuild. Its 56-entry schema-`1.2.0` manifest still opens
+no target/request, runtime, signing, installation, or hardware behavior.
+
 ## 2. Current production reality
 
 Current `ChatpadFilter` production code is a compile-validated KMDF
@@ -949,3 +957,8 @@ correction closes those issues and requires another independent read-only
 audit. The later offline production orchestration invocation checkpoint is now
 implemented and recorded in
 [Offline KMDF Production Orchestration Invocation](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-INVOCATION.md).
+Its first evidence remediation subsequently failed a second audit on five
+evidence-fidelity issues. The evidence-finalization checkpoint closes those
+issues without changing production source; another independent read-only audit
+of the final manifest, retained A/B evidence, containing commit, and upstream
+state remains required.

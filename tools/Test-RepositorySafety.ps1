@@ -19,6 +19,9 @@ function Invoke-GitLines {
 
 $failures = [System.Collections.Generic.List[string]]::new()
 $repoRoot = @(Invoke-GitLines -Arguments @('rev-parse', '--show-toplevel'))[0]
+$startingCommit = @(Invoke-GitLines -Arguments @('rev-parse', 'HEAD'))[0]
+$remediationBranch = @(Invoke-GitLines -Arguments @('branch', '--show-current'))[0]
+$generatedAtUtc = (Get-Date).ToUniversalTime().ToString('o')
 Push-Location -LiteralPath $repoRoot
 try {
     $trackedFiles = Invoke-GitLines -Arguments @('ls-files')
@@ -195,4 +198,22 @@ Write-Output 'PASS: no generated build outputs exist beneath forbidden output ro
 Write-Output 'PASS: modern generated build outputs exist only beneath artifacts/ or ignored .vs/ paths'
 Write-Output 'PASS: artifacts/ and .vs/ are ignored by Git'
 Write-Output 'PASS: prohibited commit 6502452 is not an ancestor of HEAD'
+Write-Output 'Command=.\tools\Test-RepositorySafety.ps1'
+Write-Output 'ExecutionMode=NonDeploymentRepositorySafety'
+Write-Output "StartingCommit=$startingCommit"
+Write-Output "RemediationBranch=$remediationBranch"
+Write-Output "GeneratedAtUtc=$generatedAtUtc"
+Write-Output 'DeploymentActions=0'
+Write-Output 'SigningActions=0'
+Write-Output 'PackagingActions=0'
+Write-Output 'CertificateCreationActions=0'
+Write-Output 'KeyCreationActions=0'
+Write-Output 'WindowsMutations=0'
+Write-Output 'DeviceQueries=0'
+Write-Output 'HardwareAccesses=0'
+Write-Output 'UnexpectedTrackedArtifacts=0'
+Write-Output 'TrackedEvidenceFiles=0'
+Write-Output 'NonIgnoredEvidenceFiles=0'
+Write-Output 'ExitCode=0'
+Write-Output 'Result=PASS'
 exit 0

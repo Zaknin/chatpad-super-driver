@@ -11,6 +11,20 @@ Production source is frozen. This checkpoint changes no C/C++ source, header,
 project, solution, INF, signing, packaging, deployment, target, D0, removal,
 USB, controller, or hardware behavior.
 
+## Second Audit Outcome
+
+A second evidence audit later rejected this checkpoint for five
+evidence-fidelity reasons: no top-level mandatory-ID declaration, abbreviated
+retention commands, missing KMDF semantic totals, incomplete repository-safety
+action counters, and an unretained historical binary pair. Production source
+still passed inspection.
+
+Those findings are addressed by the separate
+[Offline KMDF Production Orchestration Evidence Finalization](OFFLINE-KMDF-PRODUCTION-ORCHESTRATION-EVIDENCE-FINALIZATION.md)
+checkpoint. The schema-`1.1.0` and 42-entry statements below describe this
+historical first-remediation checkpoint; they are not the final acceptance
+state.
+
 ## Starting State
 
 - Implementation commit:
@@ -164,9 +178,7 @@ Final candidate manifest statistics:
 
 ## Binary Results
 
-The source-identical rebuild retained the expected sizes but produced different
-hashes from the earlier build, consistent with non-reproducible PE build
-metadata:
+This checkpoint observed the following rebuilt binaries:
 
 | Configuration | Size | SHA-256 | Authenticode |
 | --- | ---: | --- | --- |
@@ -178,6 +190,12 @@ disassembly, symbol, and WDF function-table evidence proves orchestration,
 creation-helper, rollback, validator, and attribute-preparation retention while
 bounding COMDAT/LTCG visibility. No target discovery or request formatting,
 reuse, send, completion, or cancellation evidence is present.
+
+The earlier implementation-checkpoint binaries and raw inspection outputs were
+not retained. Therefore, their exact equivalence to the pair above cannot be
+retroactively proven; the hashes are historical observations only. The later
+finalization checkpoint replaces that unsupported comparison with a retained
+source-identical A/B experiment.
 
 ## Remaining Limitations
 
@@ -197,6 +215,6 @@ loading, Windows mutation, device query, hardware interaction, controller
 interaction, or Chatpad interaction occurred.
 
 The next task is an independent read-only audit of the production
-implementation together with this remediated guard and evidence checkpoint.
+implementation together with the later evidence-finalization checkpoint.
 Runtime observation, target discovery, request execution, signing,
 installation, loading, and hardware testing remain unauthorized.

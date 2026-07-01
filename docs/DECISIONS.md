@@ -4,6 +4,34 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Replace historical binary inference with retained A/B evidence
+
+**Decision:** Finalize the production-orchestration evidence on a second
+evidence-only branch. Manifest schema `1.2.0` independently declares all 56
+mandatory IDs, preserves exact single or ordered multi-command transcripts,
+requires explicit KMDF and repository-safety metrics, and accepts binary
+equivalence only from a retained source-identical A/B rebuild. Normalization is
+limited to COFF timestamp, PE checksum, debug-directory timestamp, and CodeView
+GUID.
+
+**Rationale:** The second audit showed that the first remediation's 42-entry
+manifest could not independently prove its mandatory set, exact retention
+commands, semantic totals, complete prohibited-action counters, or equivalence
+to an earlier binary pair that was no longer available.
+
+**Alternatives rejected:** Inferring historical equivalence from unchanged
+source and equal size would remain unprovable. Collapsing commands into
+pseudo-commands would prevent reproduction. Treating prose safety statements
+as counters would not close action evidence. Normalizing executable bytes or
+unnamed differing fields would conceal behavior changes.
+
+**Consequences:** Earlier binary hashes remain historical observations only.
+Set B of the retained A/B experiment is canonical. Both A/B pairs must match in
+normalized PE, executable sections, imports, disassembly, symbols, WDF
+references, retention, target/request absence, and Authenticode state.
+Production source remains frozen, and another independent read-only audit is
+required before any runtime or deployment gate.
+
 ## 2026-07-01 - Bind production orchestration evidence to immutable scope
 
 **Decision:** Remediate the production orchestration checkpoint on a separate

@@ -154,6 +154,179 @@ function Invoke-ToolText {
     return ($output -join [Environment]::NewLine)
 }
 
+function Get-EvidenceKeyValues {
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Text,
+        [Parameter()][switch]$AllowConflictingDuplicates
+    )
+
+    $values = @{}
+    foreach ($match in [regex]::Matches(
+        $Text,
+        '(?m)^(?<key>[A-Za-z][A-Za-z0-9_]*(?:\[[^\]\r\n]+\])?)=(?<value>[^\r\n]*)\r?$')) {
+        $key = $match.Groups['key'].Value
+        if ($values.ContainsKey($key)) {
+            if ([string]$values[$key] -cne $match.Groups['value'].Value.Trim()) {
+                if (-not $AllowConflictingDuplicates) {
+                    throw "Evidence contains conflicting machine-readable key: $key"
+                }
+            }
+            continue
+        }
+        $values[$key] = $match.Groups['value'].Value.Trim()
+    }
+    return $values
+}
+
+function Assert-EvidenceValue {
+    param(
+        [Parameter(Mandatory)][hashtable]$Values,
+        [Parameter(Mandatory)][string]$Key,
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Expected,
+        [Parameter(Mandatory)][string]$EvidenceId
+    )
+
+    if (-not $Values.ContainsKey($Key) -or
+        [string]$Values[$Key] -cne $Expected) {
+        throw "Evidence $EvidenceId requires $Key=$Expected."
+    }
+}
+
+function Get-BytesSha256 {
+    param([Parameter(Mandatory)][byte[]]$Bytes)
+
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return [Convert]::ToHexString($sha.ComputeHash($Bytes))
+    }
+    finally {
+        $sha.Dispose()
+    }
+}
+
+function Get-PeComparisonRecord {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -lt 512 -or
+        [System.Text.Encoding]::ASCII.GetString($bytes, 0, 2) -cne 'MZ') {
+        throw "A/B candidate is not a PE image: $Path"
+    }
+    $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+    if ([System.Text.Encoding]::ASCII.GetString($bytes, $peOffset, 4) -cne "PE`0`0") {
+        throw "A/B candidate has an invalid PE signature: $Path"
+    }
+    $optionalOffset = $peOffset + 24
+    if ([BitConverter]::ToUInt16($bytes, $optionalOffset) -ne 0x20b) {
+        throw "A/B candidate is not PE32+: $Path"
+    }
+
+    $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+    $sectionCount = [BitConverter]::ToUInt16($bytes, $peOffset + 6)
+    $optionalHeaderSize = [BitConverter]::ToUInt16($bytes, $peOffset + 20)
+    $subsystem = [BitConverter]::ToUInt16($bytes, $optionalOffset + 68)
+    $debugRva = [BitConverter]::ToUInt32($bytes, $optionalOffset + 160)
+    $debugSize = [BitConverter]::ToUInt32($bytes, $optionalOffset + 164)
+    $sectionTable = $optionalOffset + $optionalHeaderSize
+
+    $normalized = [byte[]]$bytes.Clone()
+    for ($index = 0; $index -lt 4; $index++) {
+        $normalized[$peOffset + 8 + $index] = 0
+        $normalized[$optionalOffset + 64 + $index] = 0
+    }
+
+    $sections = [System.Collections.Generic.List[object]]::new()
+    $debugRaw = 0
+    for ($sectionIndex = 0; $sectionIndex -lt $sectionCount; $sectionIndex++) {
+        $offset = $sectionTable + (40 * $sectionIndex)
+        $name = [System.Text.Encoding]::ASCII.GetString($bytes, $offset, 8).Trim([char]0)
+        $virtualSize = [BitConverter]::ToUInt32($bytes, $offset + 8)
+        $virtualAddress = [BitConverter]::ToUInt32($bytes, $offset + 12)
+        $rawSize = [BitConverter]::ToUInt32($bytes, $offset + 16)
+        $rawPointer = [BitConverter]::ToUInt32($bytes, $offset + 20)
+        $characteristics = [BitConverter]::ToUInt32($bytes, $offset + 36)
+        if ($debugRva -ge $virtualAddress -and
+            $debugRva -lt ($virtualAddress + [Math]::Max($virtualSize, $rawSize))) {
+            $debugRaw = $rawPointer + ($debugRva - $virtualAddress)
+        }
+        $rawBytes = if ($rawSize -gt 0) {
+            [byte[]]$bytes[$rawPointer..($rawPointer + $rawSize - 1)]
+        } else {
+            [byte[]]::new(0)
+        }
+        $sections.Add([pscustomobject]@{
+            Name = $name
+            VirtualSize = [long]$virtualSize
+            RawSize = [long]$rawSize
+            RawPointer = [long]$rawPointer
+            Characteristics = ('0x{0:X8}' -f $characteristics)
+            Executable = (($characteristics -band 0x20000000) -ne 0)
+            RawSha256 = Get-BytesSha256 $rawBytes
+        })
+    }
+
+    if ($debugRva -ne 0 -and $debugSize -gt 0 -and $debugRaw -eq 0) {
+        throw "Unable to map A/B PE debug directory: $Path"
+    }
+    for ($offset = $debugRaw; $debugSize -gt 0 -and $offset -lt ($debugRaw + $debugSize); $offset += 28) {
+        for ($index = 0; $index -lt 4; $index++) {
+            $normalized[$offset + 4 + $index] = 0
+        }
+        $debugType = [BitConverter]::ToUInt32($bytes, $offset + 12)
+        $dataPointer = [BitConverter]::ToUInt32($bytes, $offset + 24)
+        if ($debugType -eq 2 -and
+            $dataPointer -gt 0 -and
+            [System.Text.Encoding]::ASCII.GetString($bytes, $dataPointer, 4) -ceq 'RSDS') {
+            for ($index = 0; $index -lt 16; $index++) {
+                $normalized[$dataPointer + 4 + $index] = 0
+            }
+        }
+    }
+
+    foreach ($section in $sections) {
+        $rawSize = [int]$section.RawSize
+        $rawPointer = [int]$section.RawPointer
+        $normalizedBytes = if ($rawSize -gt 0) {
+            [byte[]]$normalized[$rawPointer..($rawPointer + $rawSize - 1)]
+        } else {
+            [byte[]]::new(0)
+        }
+        Add-Member -InputObject $section -NotePropertyName NormalizedSha256 `
+            -NotePropertyValue (Get-BytesSha256 $normalizedBytes)
+    }
+
+    $metadataRows = @(
+        $sections | ForEach-Object {
+            '{0}|{1}|{2}|{3}' -f
+                $_.Name,
+                $_.VirtualSize,
+                $_.RawSize,
+                $_.Characteristics
+        }
+    )
+    $normalizedSectionRows = @(
+        $sections | ForEach-Object {
+            '{0}|{1}' -f $_.Name, $_.NormalizedSha256
+        }
+    )
+    $executableSectionRows = @(
+        $sections | Where-Object Executable | ForEach-Object {
+            '{0}|{1}' -f $_.Name, $_.RawSha256
+        }
+    )
+
+    return [pscustomobject]@{
+        Size = [long]$bytes.Length
+        RawSha256 = Get-BytesSha256 $bytes
+        NormalizedPeSha256 = Get-BytesSha256 $normalized
+        Machine = ('0x{0:X4}' -f $machine)
+        Subsystem = if ($subsystem -eq 1) { 'Native' } else { [string]$subsystem }
+        SectionMetadata = $metadataRows -join "`n"
+        NormalizedSectionHashes = $normalizedSectionRows -join "`n"
+        ExecutableSectionHashes = $executableSectionRows -join "`n"
+    }
+}
+
 $repoRoot = [System.IO.Path]::GetFullPath(
     [System.IO.Path]::Combine($PSScriptRoot, '..'))
 $gitRoot = [System.IO.Path]::GetFullPath(
@@ -177,6 +350,7 @@ $artifactsRoot = Join-Path $repoRoot 'artifacts'
 $implementationParent = '4ba0de15420e0b66287a501918de694c8b6fd720'
 $implementationCommit = 'efb729502a0527ac70e2d20fa31a323c3beb2920'
 $implementationBranch = 'feature/offline-kmdf-production-orchestration-invocation'
+$evidenceFinalizationStartingCommit = '33f726f68f563ec7e7e0dc1fc778a17bf85ebee9'
 $expectedImplementationPaths = @(
     'docs/DECISIONS.md',
     'docs/NEXT-TASK.md',
@@ -235,7 +409,21 @@ $mandatoryEvidenceIds = @(
     'implementation_diff_check',
     'unstaged_diff',
     'staged_diff',
-    'candidate_containment'
+    'candidate_containment',
+    'ab_build_debug_a',
+    'ab_build_debug_b',
+    'ab_build_release_a',
+    'ab_build_release_b',
+    'ab_binary_debug_a',
+    'ab_binary_debug_b',
+    'ab_binary_release_a',
+    'ab_binary_release_b',
+    'ab_retention_debug_a',
+    'ab_retention_debug_b',
+    'ab_retention_release_a',
+    'ab_retention_release_b',
+    'ab_equivalence_debug',
+    'ab_equivalence_release'
 )
 
 $deviceText = Remove-CComments ([System.IO.File]::ReadAllText($devicePath))
@@ -590,12 +778,13 @@ if ($InspectionMode -eq 'Full') {
         throw "Manifest is missing: $manifestPath"
     }
     $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ([string]$manifest.schema_version -cne '1.1.0' -or
+    if ([string]$manifest.schema_version -cne '1.2.0' -or
         [string]$manifest.checkpoint -cne 'offline-kmdf-production-orchestration-invocation' -or
         [string]$manifest.implementation_commit -cne $implementationCommit -or
         [string]$manifest.implementation_parent -cne $implementationParent -or
         [string]$manifest.implementation_branch -cne $implementationBranch -or
-        [string]$manifest.remediation_starting_commit -cne $implementationCommit) {
+        [string]$manifest.remediation_starting_commit -cne $implementationCommit -or
+        [string]$manifest.evidence_finalization_starting_commit -cne $evidenceFinalizationStartingCommit) {
         throw 'Manifest schema, checkpoint, implementation binding, or remediation starting commit is invalid.'
     }
     foreach ($requiredSection in @(
@@ -605,6 +794,10 @@ if ($InspectionMode -eq 'Full') {
             'validation',
             'binary_inspection',
             'artifacts',
+            'mandatory_evidence_ids',
+            'mandatory_evidence_count',
+            'historical_binary_limitation',
+            'ab_rebuild_contract',
             'evidence_entries')) {
         if ($null -eq $manifest.$requiredSection) {
             throw "Manifest missing required section: $requiredSection"
@@ -613,8 +806,19 @@ if ($InspectionMode -eq 'Full') {
     if ([string]$manifest.evidence_state -notmatch 'authorized remediation changes' -or
         [string]$manifest.containing_commit_binding -notmatch 'commit that contains this manifest' -or
         [string]$manifest.self_reference_limitation -notmatch 'self-referential' -or
+        [string]$manifest.historical_binary_limitation -notmatch 'no longer available.*cannot be retroactively proven' -or
         [string]$manifest.independent_audit_requirement -notmatch 'parent.*branch.*scope.*hash.*clean') {
         throw 'Manifest containing-commit, evidence-state, self-reference, or independent-audit binding is incomplete.'
+    }
+    $declaredMandatoryIds = @($manifest.mandatory_evidence_ids | ForEach-Object { [string]$_ })
+    $duplicateDeclaredMandatoryIds = @(
+        $declaredMandatoryIds | Group-Object | Where-Object { $_.Count -gt 1 }
+    )
+    if ([int]$manifest.mandatory_evidence_count -ne $mandatoryEvidenceIds.Count -or
+        $declaredMandatoryIds.Count -ne $mandatoryEvidenceIds.Count -or
+        $duplicateDeclaredMandatoryIds.Count -ne 0 -or
+        (Compare-Object -ReferenceObject $mandatoryEvidenceIds -DifferenceObject $declaredMandatoryIds -SyncWindow 0)) {
+        throw 'Manifest top-level mandatory evidence declaration does not exactly match the guard set and order.'
     }
     $evidenceEntries = @($manifest.evidence_entries)
     $entryIds = @($evidenceEntries | ForEach-Object { [string]$_.id })
@@ -641,13 +845,15 @@ if ($InspectionMode -eq 'Full') {
             (($duplicateIds | ForEach-Object Name) -join ','),
             (($duplicatePaths | ForEach-Object Name) -join ','))
     }
+    if (Compare-Object -ReferenceObject $declaredMandatoryIds -DifferenceObject $entryIds -SyncWindow 0) {
+        throw 'Manifest evidence entry order does not exactly match the top-level mandatory declaration.'
+    }
     $requiredEntryFields = @(
         'id',
         'category',
         'path',
         'sha256',
         'result',
-        'command',
         'configuration',
         'assertions_passed',
         'assertions_total',
@@ -663,6 +869,7 @@ if ($InspectionMode -eq 'Full') {
     $missingMetadataFields = [System.Collections.Generic.List[string]]::new()
     $missingEvidenceFiles = [System.Collections.Generic.List[string]]::new()
     $hashMismatches = [System.Collections.Generic.List[string]]::new()
+    $evidenceTextById = @{}
     $selfEvidenceId = if ($Configuration -eq 'Debug') {
         'orchestration_full_debug'
     } else {
@@ -674,11 +881,18 @@ if ($InspectionMode -eq 'Full') {
                 $missingMetadataFields.Add("$($entry.id):$field")
             }
         }
+        $hasCommand = $entry.PSObject.Properties.Name -ccontains 'command' -and
+            -not [string]::IsNullOrWhiteSpace([string]$entry.command)
+        $hasCommands = $entry.PSObject.Properties.Name -ccontains 'commands' -and
+            @($entry.commands).Count -gt 0 -and
+            @($entry.commands | Where-Object { [string]::IsNullOrWhiteSpace([string]$_) }).Count -eq 0
+        if ($hasCommand -eq $hasCommands) {
+            $missingMetadataFields.Add("$($entry.id):exactly_one_of_command_or_commands")
+        }
         if ([string]::IsNullOrWhiteSpace([string]$entry.id) -or
             [string]::IsNullOrWhiteSpace([string]$entry.category) -or
             [string]::IsNullOrWhiteSpace([string]$entry.path) -or
             [string]::IsNullOrWhiteSpace([string]$entry.result) -or
-            [string]::IsNullOrWhiteSpace([string]$entry.command) -or
             [string]::IsNullOrWhiteSpace([string]$entry.configuration) -or
             [string]::IsNullOrWhiteSpace([string]$entry.count_applicability) -or
             [string]::IsNullOrWhiteSpace([string]$entry.generated_against_commit) -or
@@ -699,6 +913,30 @@ if ($InspectionMode -eq 'Full') {
             $missingEvidenceFiles.Add([string]$entry.id)
             continue
         }
+        $evidenceText = [System.IO.File]::ReadAllText($evidencePath)
+        $evidenceTextById[[string]$entry.id] = $evidenceText
+        if ($hasCommand) {
+            $transcriptCommandMatch = [regex]::Match(
+                $evidenceText,
+                '(?m)^Command:\s*(?<command>.+)$')
+            if (-not $transcriptCommandMatch.Success -or
+                $transcriptCommandMatch.Groups['command'].Value.Trim() -cne [string]$entry.command) {
+                $missingMetadataFields.Add("$($entry.id):command_fidelity")
+            }
+        }
+        elseif ($hasCommands) {
+            $transcriptCommands = @(
+                [regex]::Matches(
+                    $evidenceText,
+                    '(?m)^Command\[(?<index>\d+)\]:\s*(?<command>.+)$') |
+                    Sort-Object { [int]$_.Groups['index'].Value } |
+                    ForEach-Object { $_.Groups['command'].Value.Trim() }
+            )
+            if ($transcriptCommands.Count -ne @($entry.commands).Count -or
+                (Compare-Object -ReferenceObject @($entry.commands) -DifferenceObject $transcriptCommands -SyncWindow 0)) {
+                $missingMetadataFields.Add("$($entry.id):commands_fidelity")
+            }
+        }
         $trackedEvidence = @(
             & git -C $repoRoot ls-files --error-unmatch -- ([string]$entry.path) 2>$null
         )
@@ -718,6 +956,235 @@ if ($InspectionMode -eq 'Full') {
             ($missingMetadataFields -join ','),
             ($missingEvidenceFiles -join ','),
             ($hashMismatches -join ','))
+    }
+
+    foreach ($semanticId in @(
+            'kmdf_context_semantic_debug',
+            'kmdf_context_semantic_release')) {
+        $semanticValues = Get-EvidenceKeyValues $evidenceTextById[$semanticId]
+        foreach ($requiredKey in @(
+                'SemanticChecksPassed',
+                'SemanticChecksTotal',
+                'Warnings',
+                'Errors',
+                'BuildExitCode',
+                'GuardExitCode',
+                'Result')) {
+            if (-not $semanticValues.ContainsKey($requiredKey)) {
+                throw "KMDF semantic evidence $semanticId is missing $requiredKey."
+            }
+        }
+        $semanticPassed = [int]$semanticValues.SemanticChecksPassed
+        $semanticTotal = [int]$semanticValues.SemanticChecksTotal
+        if ($semanticTotal -le 0 -or
+            $semanticPassed -ne $semanticTotal -or
+            [int]$semanticValues.Warnings -ne 0 -or
+            [int]$semanticValues.Errors -ne 0 -or
+            [int]$semanticValues.BuildExitCode -ne 0 -or
+            [int]$semanticValues.GuardExitCode -ne 0 -or
+            [string]$semanticValues.Result -cne 'PASS') {
+            throw "KMDF semantic evidence $semanticId has invalid explicit metrics."
+        }
+        $semanticEntry = @($evidenceEntries | Where-Object id -CEQ $semanticId)[0]
+        if ([int]$semanticEntry.assertions_passed -ne $semanticPassed -or
+            [int]$semanticEntry.assertions_total -ne $semanticTotal -or
+            [string]$semanticEntry.metric_value -cne (
+                'passed={0}; total={1}; warnings=0; errors=0; build_exit=0; guard_exit=0' -f
+                    $semanticPassed,
+                    $semanticTotal)) {
+            throw "KMDF semantic manifest metrics do not match transcript $semanticId."
+        }
+    }
+
+    $repositorySafetyValues = Get-EvidenceKeyValues $evidenceTextById.repository_safety
+    foreach ($zeroKey in @(
+            'DeploymentActions',
+            'SigningActions',
+            'PackagingActions',
+            'CertificateCreationActions',
+            'KeyCreationActions',
+            'WindowsMutations',
+            'DeviceQueries',
+            'HardwareAccesses',
+            'UnexpectedTrackedArtifacts',
+            'TrackedEvidenceFiles',
+            'NonIgnoredEvidenceFiles',
+            'ExitCode')) {
+        Assert-EvidenceValue $repositorySafetyValues $zeroKey '0' 'repository_safety'
+    }
+    Assert-EvidenceValue $repositorySafetyValues 'Result' 'PASS' 'repository_safety'
+    foreach ($requiredIdentityKey in @(
+            'Command',
+            'ExecutionMode',
+            'StartingCommit',
+            'RemediationBranch',
+            'GeneratedAtUtc')) {
+        if (-not $repositorySafetyValues.ContainsKey($requiredIdentityKey) -or
+            [string]::IsNullOrWhiteSpace([string]$repositorySafetyValues[$requiredIdentityKey])) {
+            throw "Repository-safety evidence is missing $requiredIdentityKey."
+        }
+    }
+    $repositorySafetyEntry = @(
+        $evidenceEntries | Where-Object id -CEQ 'repository_safety')[0]
+    $expectedSafetyMetric =
+        'deployment=0; signing=0; packaging=0; certificates=0; keys=0; ' +
+        'windows_mutation=0; device_query=0; hardware=0; tracked_artifacts=0; ' +
+        'tracked_evidence=0; nonignored_evidence=0; exit=0'
+    if ([string]$repositorySafetyEntry.metric_value -cne $expectedSafetyMetric) {
+        throw 'Repository-safety manifest counters do not match the explicit transcript.'
+    }
+
+    $expectedNormalizationExclusions = @(
+        'COFF.TimeDateStamp',
+        'OptionalHeader.CheckSum',
+        'DebugDirectory.TimeDateStamp',
+        'CodeView.RSDS.Guid')
+    if ([string]$manifest.ab_rebuild_contract.canonical_set -cne 'B' -or
+        [string]$manifest.ab_rebuild_contract.implementation_commit -cne $implementationCommit -or
+        [int]$manifest.ab_rebuild_contract.frozen_input_count -ne 8 -or
+        (Compare-Object `
+            -ReferenceObject $expectedNormalizationExclusions `
+            -DifferenceObject @($manifest.ab_rebuild_contract.normalization_exclusions) `
+            -SyncWindow 0)) {
+        throw 'A/B rebuild contract identity or normalization exclusions are invalid.'
+    }
+
+    foreach ($abBuildId in @(
+            'ab_build_debug_a',
+            'ab_build_debug_b',
+            'ab_build_release_a',
+            'ab_build_release_b')) {
+        $buildValues = Get-EvidenceKeyValues `
+            $evidenceTextById[$abBuildId] `
+            -AllowConflictingDuplicates
+        Assert-EvidenceValue $buildValues 'ImplementationCommit' $implementationCommit $abBuildId
+        Assert-EvidenceValue $buildValues 'BuildExitCode' '0' $abBuildId
+        Assert-EvidenceValue $buildValues 'Result' 'PASS' $abBuildId
+        foreach ($frozenPath in @(
+                'Directory.Build.props',
+                'ChatpadWin11.sln',
+                'src/driver/ChatpadFilter/ChatpadFilter.vcxproj',
+                'src/driver/ChatpadFilter/device.c',
+                'src/driver/ChatpadFilter/driver.h',
+                'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c',
+                'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h',
+                'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj')) {
+            if (-not $buildValues.ContainsKey("FrozenBlob[$frozenPath]") -or
+                [string]$buildValues["FrozenBlob[$frozenPath]"] -notmatch '^[0-9a-f]{40}$') {
+                throw "A/B build evidence $abBuildId is missing frozen blob $frozenPath."
+            }
+        }
+    }
+
+    $abRecords = @{}
+    foreach ($abConfiguration in @('Debug', 'Release')) {
+        foreach ($abSet in @('A', 'B')) {
+            $contract = $manifest.ab_rebuild_contract.$abConfiguration.$abSet
+            if ($null -eq $contract -or
+                [string]$contract.path -notmatch '^artifacts/logs/production-orchestration-ab-rebuild/' -or
+                [string]$contract.raw_sha256 -notmatch '^[0-9A-F]{64}$' -or
+                [string]$contract.normalized_pe_sha256 -notmatch '^[0-9A-F]{64}$') {
+                throw "A/B rebuild contract is incomplete for $abConfiguration $abSet."
+            }
+            $candidatePath = Assert-PathWithinDirectory `
+                (Join-Path $repoRoot ([string]$contract.path)) `
+                $artifactsRoot `
+                "A/B candidate $abConfiguration $abSet"
+            Assert-GitIgnored $repoRoot ([string]$contract.path)
+            if (-not (Test-Path -LiteralPath $candidatePath -PathType Leaf)) {
+                throw "A/B candidate is missing: $candidatePath"
+            }
+            $record = Get-PeComparisonRecord $candidatePath
+            if ($record.Size -ne [long]$contract.size -or
+                $record.RawSha256 -cne [string]$contract.raw_sha256 -or
+                $record.NormalizedPeSha256 -cne [string]$contract.normalized_pe_sha256 -or
+                $record.Machine -cne '0x8664' -or
+                $record.Subsystem -cne 'Native') {
+                throw "A/B candidate contract mismatch for $abConfiguration $abSet."
+            }
+            $abRecords["$abConfiguration$abSet"] = $record
+
+            $binaryEvidenceId = 'ab_binary_{0}_{1}' -f
+                $abConfiguration.ToLowerInvariant(),
+                $abSet.ToLowerInvariant()
+            $binaryValues = Get-EvidenceKeyValues $evidenceTextById[$binaryEvidenceId]
+            Assert-EvidenceValue $binaryValues 'Size' ([string]$record.Size) $binaryEvidenceId
+            Assert-EvidenceValue $binaryValues 'RawSha256' $record.RawSha256 $binaryEvidenceId
+            Assert-EvidenceValue `
+                $binaryValues `
+                'NormalizedPeSha256' `
+                $record.NormalizedPeSha256 `
+                $binaryEvidenceId
+            Assert-EvidenceValue $binaryValues 'Machine' '0x8664' $binaryEvidenceId
+            Assert-EvidenceValue $binaryValues 'Subsystem' 'Native' $binaryEvidenceId
+            Assert-EvidenceValue $binaryValues 'Authenticode' 'NotSigned' $binaryEvidenceId
+            Assert-EvidenceValue $binaryValues 'Result' 'PASS' $binaryEvidenceId
+
+            $retentionEvidenceId = 'ab_retention_{0}_{1}' -f
+                $abConfiguration.ToLowerInvariant(),
+                $abSet.ToLowerInvariant()
+            $retentionValues = Get-EvidenceKeyValues $evidenceTextById[$retentionEvidenceId]
+            foreach ($retentionKey in @(
+                    'OrchestrationRetention',
+                    'HelperRetention',
+                    'RollbackRetention',
+                    'ValidatorRetention',
+                    'Result')) {
+                Assert-EvidenceValue $retentionValues $retentionKey 'PASS' $retentionEvidenceId
+            }
+            Assert-EvidenceValue `
+                $retentionValues `
+                'ContextSymbolCount' `
+                '11' `
+                $retentionEvidenceId
+            Assert-EvidenceValue `
+                $retentionValues `
+                'ForbiddenTargetRequestOperationCount' `
+                '0' `
+                $retentionEvidenceId
+            Assert-EvidenceValue `
+                $retentionValues `
+                'ForcedRetentionCount' `
+                '0' `
+                $retentionEvidenceId
+        }
+
+        $aRecord = $abRecords["$($abConfiguration)A"]
+        $bRecord = $abRecords["$($abConfiguration)B"]
+        if ($aRecord.Size -ne $bRecord.Size -or
+            $aRecord.NormalizedPeSha256 -cne $bRecord.NormalizedPeSha256 -or
+            $aRecord.Machine -cne $bRecord.Machine -or
+            $aRecord.Subsystem -cne $bRecord.Subsystem -or
+            $aRecord.SectionMetadata -cne $bRecord.SectionMetadata -or
+            $aRecord.NormalizedSectionHashes -cne $bRecord.NormalizedSectionHashes -or
+            $aRecord.ExecutableSectionHashes -cne $bRecord.ExecutableSectionHashes) {
+            throw "A/B PE equivalence failed for $abConfiguration."
+        }
+
+        $equivalenceId = 'ab_equivalence_{0}' -f $abConfiguration.ToLowerInvariant()
+        $equivalenceValues = Get-EvidenceKeyValues $evidenceTextById[$equivalenceId]
+        foreach ($trueKey in @(
+                'SourceInputsEqual',
+                'SizesEqual',
+                'NormalizedPeHashesEqual',
+                'NormalizedSectionHashesEqual',
+                'ExecutableSectionHashesEqual',
+                'ImportsEqual',
+                'NormalizedDisassemblyEqual',
+                'NormalizedSymbolSetEqual',
+                'WdfReferencesEqual',
+                'RetentionBoundaryEqual',
+                'TargetRequestAbsenceEqual',
+                'AuthenticodeEqual')) {
+            Assert-EvidenceValue $equivalenceValues $trueKey 'True' $equivalenceId
+        }
+        Assert-EvidenceValue $equivalenceValues 'RawHashesEqual' 'False' $equivalenceId
+        Assert-EvidenceValue `
+            $equivalenceValues `
+            'ExcludedFields' `
+            ($expectedNormalizationExclusions -join ';') `
+            $equivalenceId
+        Assert-EvidenceValue $equivalenceValues 'Result' 'PASS' $equivalenceId
     }
 
     $driverPath = Join-Path $repoRoot (
@@ -814,7 +1281,10 @@ if ($InspectionMode -eq 'Full') {
 
     $directChecks += @(
         'manifest schema/containment/SHA checks',
-        'mandatory evidence ID and per-entry metadata checks',
+        'guard/manifest/entry mandatory-ID equality and per-entry metadata checks',
+        'exact single-command or ordered multi-command transcript fidelity',
+        'KMDF semantic metrics and repository-safety action counters',
+        'retained source-identical A/B PE and behavior-boundary equivalence',
         'driver/object/tlog artifact containment checks',
         'context helper symbol inspection',
         'driver WDF function-table/import and forbidden operation inspection',
@@ -848,9 +1318,11 @@ Write-Output "Missing result count: $($missingResultSymbols.Count)"
 Write-Output "Duplicate result count: $($duplicateResultSymbols.Count)"
 Write-Output "Unexpected result count: $($unexpectedResultSymbols.Count)"
 if ($InspectionMode -eq 'Full') {
-    Write-Output "Mandatory evidence ID count: $($mandatoryEvidenceIds.Count)"
-    Write-Output "Observed mandatory evidence ID count: $($entryIds.Count)"
+    Write-Output "Guard mandatory evidence ID count: $($mandatoryEvidenceIds.Count)"
+    Write-Output "Manifest declared mandatory evidence ID count: $($declaredMandatoryIds.Count)"
+    Write-Output "Manifest evidence entry count: $($entryIds.Count)"
     Write-Output "Missing mandatory ID count: $($missingMandatoryIds.Count)"
+    Write-Output "Unexpected evidence ID count: $($unexpectedEvidenceIds.Count)"
     Write-Output "Duplicate evidence ID count: $($duplicateIds.Count)"
     Write-Output "Duplicate evidence path count: $($duplicatePaths.Count)"
     Write-Output "Missing metadata field count: $($missingMetadataFields.Count)"

@@ -622,6 +622,14 @@ if (-not $repoRoot.TrimEnd('\', '/').Equals($gitRoot.TrimEnd('\', '/'), [System.
 }
 
 Test-RequestOwnerContextSemanticGuards -RepositoryRoot $repoRoot
+$semanticGuardDefinition = (Get-Command Test-RequestOwnerContextSemanticGuards -CommandType Function).Definition
+$semanticChecksTotal = [regex]::Matches(
+    $semanticGuardDefinition,
+    '(?m)^\s*throw\b').Count
+if ($semanticChecksTotal -le 0) {
+    throw 'Unable to derive a positive semantic guard-clause count.'
+}
+$semanticChecksPassed = $semanticChecksTotal
 
 $detectorPath = Join-Path $PSScriptRoot 'Get-DriverBuildEnvironment.ps1'
 $detectorOutput = @(& $detectorPath 2>&1)
@@ -683,6 +691,14 @@ Write-Output "MSBuild: $msbuildPath"
 Write-Output "Building only ChatpadKmdfRequestOwnerContextCompileCheck and its context dependency ($Configuration|$Platform)."
 $buildOutput = @(& $msbuildPath @msbuildArguments 2>&1)
 $msbuildExitCode = $LASTEXITCODE
+$warningCount = @(
+    $buildOutput |
+        Where-Object { [string]$_ -match '(?i)\bwarning\s+[A-Z]+\d+\b' }
+).Count
+$errorCount = @(
+    $buildOutput |
+        Where-Object { [string]$_ -match '(?i)\berror\s+[A-Z]+\d+\b' }
+).Count
 $buildOutput | Write-Output
 Write-Output "MSBuild exit code: $msbuildExitCode"
 Write-Output "Build log: $logPath"
@@ -726,4 +742,12 @@ Write-Output 'Signing execution scan: PASS (no SignTool or active signing task e
 Write-Output 'Prohibited output scan: PASS (no .sys, INF, CAT, certificate, package, installer, or deployment output created).'
 Write-Output 'Artifact containment: PASS (all context compile-check outputs are beneath artifacts/).'
 Write-Output 'KMDF request-owner context compile-check guard: PASS.'
+Write-Output "Configuration=$Configuration|$Platform"
+Write-Output "SemanticChecksPassed=$semanticChecksPassed"
+Write-Output "SemanticChecksTotal=$semanticChecksTotal"
+Write-Output "Warnings=$warningCount"
+Write-Output "Errors=$errorCount"
+Write-Output "BuildExitCode=$msbuildExitCode"
+Write-Output 'GuardExitCode=0'
+Write-Output 'Result=PASS'
 exit 0
