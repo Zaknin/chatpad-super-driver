@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-01 - Require offline runtime instrumentation before first load
+
+**Decision:** The current accepted production orchestration build is not
+sufficiently observable for first controlled runtime load. A separate offline
+runtime instrumentation design and implementation gate is required before any
+signing, package construction, staging, installation, driver loading, device
+query, or hardware observation.
+
+**Rationale:** Existing Windows evidence can show coarse service/PnP outcomes,
+and current `KdPrintEx` call sites can show `DriverEntry`, `EvtDeviceAdd`,
+`WdfDeviceCreate` failure, and lifecycle callback results if debug capture is
+armed. The source does not currently emit durable evidence for orchestration
+result/report fields, report/function mismatch, structural-ready reachability,
+cleanup after failure, or runtime target/request absence.
+
+**Alternatives rejected:** Loading the driver to discover whether observability
+is adequate would collapse the planning gate into runtime execution. Relying on
+source-only absence of target/request calls would not prove runtime absence.
+Relying only on SetupAPI, System, Kernel-PnP, SCM, or WDF framework events would
+not prove the project-specific orchestration state.
+
+**Consequences:** The next task is offline runtime instrumentation design.
+Signing, packaging, staging, installation, loading, live device identity
+capture, and hardware testing remain closed independent gates.
+
 ## 2026-07-01 - Require independently validated raw evidence, PDB binding, and negative root tests
 
 **Decision:** Final production-orchestration provenance acceptance requires a

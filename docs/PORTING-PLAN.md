@@ -1,14 +1,21 @@
 # Porting Plan
 
-## Current provenance gate (2026-07-01)
+## Current runtime-observation planning gate (2026-07-01)
 
-The offline production-orchestration evidence is at schema `1.5.0` on
-`feature/offline-kmdf-production-orchestration-provenance-closure-remediation`.
-The 26-path production runtime/link contract is separate from the 32-path A/B
-wrapper-build contract. Four isolated clean builds retain exact raw TLOG roots,
-objects, libraries, parser output, and same-set closure. Runtime observation,
-target discovery, request execution, signing, packaging, installation, loading,
-and hardware testing remain prohibited future gates.
+The offline production-orchestration evidence is accepted at commit
+`4c84891ca24ef969664f53fd5e9ec2a697f2edb9` after `AUDIT PASS WITH
+LIMITATIONS`. The evidence manifest is schema `1.6.0` with 102 mandatory
+entries. The 26-path production runtime/link contract is separate from the
+32-path A/B wrapper-build contract. Four isolated clean builds retain exact raw
+TLOG roots, objects, libraries, PDBs, parser output, and same-set closure.
+
+The current phase is first-runtime observation and recovery planning. The plan
+is in `docs/WINDOWS11-FIRST-RUNTIME-OBSERVATION-AND-RECOVERY-PLAN.md` and
+selects offline runtime instrumentation design as the next gate because the
+current build is not sufficiently observable for first controlled load. Runtime
+observation, target discovery, request execution, signing, packaging,
+installation, loading, device query, and hardware testing remain prohibited
+future gates.
 
 This plan starts from the preserved source-only baseline. It intentionally does not load, install, execute, or test any legacy binary.
 

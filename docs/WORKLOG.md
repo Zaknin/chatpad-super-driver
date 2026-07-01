@@ -4713,3 +4713,83 @@
   manifest, dual contracts, raw-TLOG validator, frozen producer, retained
   roots/intermediates/PDBs, negative extra-TLOG evidence, Full logs, and
   synchronized upstream state.
+
+## 2026-07-01 22:55 +04:00 - First runtime observation and recovery planning
+
+- **Objective:** Create a documentation-only first-runtime-observation,
+  rollback, and recovery plan for the accepted Windows 11 Chatpad driver
+  baseline and decide whether the current driver is sufficiently observable for
+  a safe first controlled load.
+- **Starting state:** Verified exact clean synchronized baseline branch
+  `feature/offline-kmdf-production-orchestration-provenance-final-remediation`
+  at `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`, parent
+  `6a586bb2490e6a2611987a229c8c9d11d32fab01`, subject
+  `test: finalize production orchestration provenance evidence`, upstream
+  `origin/feature/offline-kmdf-production-orchestration-provenance-final-remediation`,
+  upstream hash `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`, ahead/behind
+  `0/0`, clean worktree and index. Then created
+  `feature/documentation-first-runtime-observation-recovery-plan`.
+- **Documentation discrepancy corrected:** `docs/PORTING-PLAN.md` still named
+  the prior schema `1.5.0` closure-remediation branch as the current
+  provenance gate. The live accepted baseline is schema `1.6.0` at `4c84891`,
+  so the porting plan was updated before being used as current continuation
+  truth.
+- **Investigation summary:** Source-only inspection covered
+  `src/driver/ChatpadFilter/device.c`, `src/driver/ChatpadFilter/driver.c`,
+  `src/driver/ChatpadFilter/ChatpadFilterLifecycle.c`,
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`,
+  and `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h`.
+  The current production path would enter `EvtDeviceAdd`, create the WDF device,
+  initialize the embedded owner, validate pre-object state, create one spinlock,
+  one targetless reusable request, outbound/inbound preallocated memory, validate
+  structural ready, then initialize lifecycle state. Modern tracked source has
+  no `WdfIoTarget`, request formatting, request reuse, request send, completion,
+  or cancellation call sites under `src/`.
+- **Observability result:** Current Windows evidence can directly observe coarse
+  service/PnP outcomes, and existing `KdPrintEx` can show `DriverEntry`,
+  `EvtDeviceAdd`, `WdfDeviceCreate` failure, and lifecycle callbacks when debug
+  capture is armed. The current source does not emit durable runtime evidence
+  for orchestration result/report fields, report/function mismatch,
+  structural-ready reachability, cleanup after failure, or target/request
+  absence.
+- **Verdict:** `CURRENT BUILD IS NOT SUFFICIENTLY OBSERVABLE FOR FIRST
+  CONTROLLED LOAD`.
+- **Files created/modified:** Added
+  `docs/WINDOWS11-FIRST-RUNTIME-OBSERVATION-AND-RECOVERY-PLAN.md`. Modified
+  `docs/DECISIONS.md`, `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/PORTING-PLAN.md`, and this worklog.
+- **Important implementation details:** This was documentation-only. The plan
+  separates documentation/design from future read-only device capture,
+  instrumentation, signing, package design, recovery rehearsal, staging,
+  binding/loading, runtime observation, and rollback verification. It selects
+  Option A, offline runtime instrumentation design, as the next task.
+- **Commands and checks run:** Baseline Git verification commands for branch,
+  HEAD, parent, subject, upstream, upstream hash, ahead/behind, and status
+  passed. Source-only `git grep`/file inspection for modern WDF/request/debug
+  call sites completed. `git diff --check` passed with only Git's LF-to-CRLF
+  checkout-policy warnings. LF line-ending validation passed. Final-newline
+  validation passed. Changed-path containment passed for the six authorized
+  documentation paths. Frozen source/project/solution/props/INF/script/test/
+  evidence containment passed. Markdown relative-link validation passed.
+  Refined secrets scan passed; the first broad scan produced a false positive
+  on the plan's prohibition against private keys. Changed-surface path-case
+  validation passed; the first broad scan produced false positives from
+  unrelated historical path-like text already present in the append-only
+  worklog.
+- **Safety:** No `.c`, `.cpp`, `.h`, `.hpp`, project, solution, props, INF,
+  signing, packaging, guard, test, script, generated evidence, or `legacy/`
+  path was modified. No build, test, signing, certificate/key creation,
+  catalog/package construction, Driver Store staging, installation, driver
+  loading, service mutation, registry mutation, verifier mutation, boot-setting
+  mutation, device query, USB/HID/XUSB/controller/Chatpad interaction, target
+  discovery, request formatting/submission/completion/cancellation, D0/removal
+  observation, Windows mutation, or hardware action occurred.
+- **Commit/push:** Commit exactly
+  `docs: define first runtime observation and recovery gate` and push only
+  `origin/feature/documentation-first-runtime-observation-recovery-plan`; final
+  hash is reported after commit.
+- **Remaining risks/limitations:** The driver remains runtime-unqualified and
+  unsigned/uninstalled/unloaded. No current machine or target device recovery
+  prerequisite is satisfied by this documentation phase. Runtime evidence cannot
+  prove the first-load success criteria until a separate offline instrumentation
+  gate is authorized and accepted.
