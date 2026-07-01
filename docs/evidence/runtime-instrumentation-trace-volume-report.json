@@ -1,0 +1,77 @@
+{
+  "schema_version": "chatpad-runtime-instrumentation-trace-volume-v1",
+  "source_basis": [
+    "src/driver/ChatpadFilter/driver.c",
+    "src/driver/ChatpadFilter/device.c",
+    "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c",
+    "docs/evidence/runtime-instrumentation-event-sites.csv"
+  ],
+  "stage_count_bound": 9,
+  "counts": {
+    "driver_entry_maximum": {
+      "value": 4,
+      "formula": "started + create-attempted + create-failed-or-completed + completed"
+    },
+    "successful_device_add_maximum": {
+      "value": 43,
+      "formula": "11 pre-orchestration + 16 stage entered/completed + 6 orchestration result/summary + 2 readiness + 4 lifecycle/mark-created + 4 terminal events"
+    },
+    "device_creation_failure_maximum": {
+      "value": 7,
+      "formula": "entered + create-attempted + create-failed + pre-context 1713 + terminal + final-summary + returned-status"
+    },
+    "spinlock_creation_failure_maximum": {
+      "value": 31,
+      "formula": "11 pre-orchestration + 3 stage events + 6 rollback events + 7 result/taxonomy events + 4 terminal events"
+    },
+    "request_creation_failure_maximum": {
+      "value": 33,
+      "formula": "spinlock failure maximum + completed spinlock stage pair"
+    },
+    "outbound_memory_creation_failure_maximum": {
+      "value": 35,
+      "formula": "request failure maximum + completed request stage pair"
+    },
+    "inbound_memory_creation_failure_maximum": {
+      "value": 37,
+      "formula": "outbound failure maximum + completed outbound-memory stage pair"
+    },
+    "rollback_maximum": {
+      "value": 6,
+      "formula": "rollback stage-entered + rollback reason + started + object-before + completed + object-after"
+    },
+    "cleanup_maximum": {
+      "value": 18,
+      "formula": "entered + 12 nonzero-counter events + cleanup snapshot + sequence-gap + schema-mismatch + cleanup-invariant + completed"
+    },
+    "terminal_maximum": {
+      "value": 16,
+      "formula": "12 nonzero-counter validation events + 1713 + success-or-failure + final-summary + returned-status"
+    },
+    "stage_entered_maximum": 9,
+    "stage_completed_maximum": 8,
+    "invariant_event_maximum": {
+      "value": 5,
+      "formula": "bounded transition-gap + unexpected mapping + inconsistent object snapshot + counter overflow + schema mismatch; current operation-free paths cannot reach counter overflow"
+    },
+    "prohibited_nonzero_event_maximum": {
+      "value": 24,
+      "formula": "12 terminal validations + 12 cleanup validations; actual current production maximum is zero because the update helper has zero production operation callers"
+    }
+  },
+  "loop_analysis": {
+    "unbounded_trace_loop_count": 0,
+    "bounded_counter_validation_loop_limit": 12,
+    "per_byte_source_count": 0,
+    "per_packet_source_count": 0,
+    "payload_logging_source_count": 0,
+    "recursive_trace_source_count": 0
+  },
+  "assumptions": [
+    "One EvtDeviceAdd attempt follows one terminal path.",
+    "The orchestration stage enum remains bounded to nine non-NONE values.",
+    "Prohibited-operation counters have no production operation callers.",
+    "Diagnostic invariant events do not change production control flow."
+  ],
+  "result": "PASS"
+}

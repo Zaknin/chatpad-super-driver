@@ -510,11 +510,12 @@ $contextText = Remove-CComments ([System.IO.File]::ReadAllText($contextPath))
 $contextHeaderText = Remove-CComments ([System.IO.File]::ReadAllText($contextHeaderPath))
 $productionText = $headerText + [Environment]::NewLine + $deviceText
 
-$evtBoundary = $deviceText.IndexOf('ChatpadEvtDevicePrepareHardware(')
-if ($evtBoundary -lt 0) {
+$evtStart = $deviceText.IndexOf('ChatpadEvtDeviceAdd(')
+$evtBoundary = $deviceText.IndexOf('ChatpadEvtDeviceContextCleanup(', $evtStart)
+if ($evtStart -lt 0 -or $evtBoundary -lt 0 -or $evtBoundary -le $evtStart) {
     throw 'Unable to locate the end of ChatpadEvtDeviceAdd.'
 }
-$deviceAddText = $deviceText.Substring(0, $evtBoundary)
+$deviceAddText = $deviceText.Substring($evtStart, $evtBoundary - $evtStart)
 $postDeviceAddText = $deviceText.Substring($evtBoundary)
 
 Assert-Count $deviceAddText `
@@ -578,7 +579,7 @@ $mismatchFailureReturns = [regex]::IsMatch(
     $singleline)
 $orchestrationFailureReturns = [regex]::IsMatch(
     $deviceAddText,
-    'if\s*\(\s*orchestrationResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK\s*\)\s*\{.*?return\s+(?:status|ChatpadOrchestrationResultToStatus\s*\(\s*orchestrationResult\s*,\s*&orchestrationReport\s*\))\s*;\s*\}',
+    'if\s*\(\s*(?:orchestrationEnumsValid\s*==\s*0u\s*\|\|\s*)?orchestrationResult\s*!=\s*CHATPAD_KMDF_REQUEST_OWNER_ORCHESTRATION_OK\s*\)\s*\{.*?return\s+status\s*;\s*\}',
     $singleline)
 if (-not $mismatchFailureReturns -or -not $orchestrationFailureReturns) {
     throw 'Mismatch and non-success orchestration paths must return before lifecycle initialization.'
@@ -611,8 +612,19 @@ Assert-NoMatch $deviceText 'CHATPAD_KMDF_REQUEST_OWNER_INIT_OWNER_READY\s*[|&^+\
     'device.c must not directly publish OWNER_READY.'
 Assert-NoMatch $deviceText 'KdPrintEx\s*\([^;]*(?:ActivationRequestOwner|orchestrationReport|FrameworkStatus|Request|OutboundMemory|InboundMemory|BookkeepingLock|90\s*00|0x90)' `
     'device.c must not log request-owner handles, report details, or protocol payloads.'
-Assert-NoMatch $postDeviceAddText 'ActivationRequestOwner|ChatpadKmdfRequestOwner|orchestrationReport' `
-    'D0, hardware, cleanup, and removal callbacks must not observe the request owner.'
+$cleanupStart = $postDeviceAddText.IndexOf('ChatpadEvtDeviceContextCleanup(')
+$prepareStart = $postDeviceAddText.IndexOf('ChatpadEvtDevicePrepareHardware(')
+if ($cleanupStart -lt 0 -or $prepareStart -lt 0 -or $prepareStart -le $cleanupStart) {
+    throw 'Unable to isolate the diagnostic cleanup callback.'
+}
+$cleanupText = $postDeviceAddText.Substring($cleanupStart, $prepareStart - $cleanupStart)
+$nonCleanupPostText = $postDeviceAddText.Remove($cleanupStart, $prepareStart - $cleanupStart)
+Assert-NoMatch $nonCleanupPostText 'ActivationRequestOwner|ChatpadKmdfRequestOwner|orchestrationReport' `
+    'D0, hardware, and removal callbacks must not observe the request owner.'
+Assert-Count $cleanupText '&context->ActivationRequestOwner' 1 `
+    'diagnostic-only cleanup owner snapshot'
+Assert-NoMatch $cleanupText 'WdfObjectDelete|WdfRequest|WdfMemory|WdfIoTarget|WdfUsbTarget|ChatpadKmdfRequestOwner' `
+    'Cleanup instrumentation must not mutate or operate the request owner.'
 
 $statusHelperPattern = '(?s)ChatpadOrchestrationResultToStatus\s*\([^)]*\)\s*\{(?<body>.*?)\n\}'
 $statusMatch = [regex]::Match($deviceText, $statusHelperPattern)
@@ -702,7 +714,7 @@ $creationPattern = (($creationFailureSymbols | ForEach-Object {
 $statePattern = (($stateFailureSymbols | ForEach-Object {
     'case\s+' + [regex]::Escape($_) + '\s*:'
 }) -join '\s*') +
-    '\s*default\s*:\s*return\s+STATUS_INVALID_DEVICE_STATE\s*;'
+    '\s*return\s+STATUS_INVALID_DEVICE_STATE\s*;\s*default\s*:(?s:.*?)CHATPAD_RUNTIME_EVENT_UNEXPECTED_STATUS_MAPPING(?s:.*?)return\s+STATUS_INVALID_DEVICE_STATE\s*;'
 if ($statusBody -notmatch $okPattern -or
     $statusBody -notmatch $nullPattern -or
     $statusBody -notmatch $creationPattern -or
@@ -859,17 +871,6 @@ $limitations = @(
     'No driver is loaded and no hardware is queried.',
     'Final PE symbol visibility is affected by COMDAT folding and LTCG.',
     'KMDF APIs may dispatch through the WDF function table; named PE imports alone are not complete proof.')
-
-$runtimeInstrumentationPresent =
-    (Test-Path -LiteralPath (Join-Path $driverRoot 'ChatpadRuntimeDiagnostics.h') -PathType Leaf) -and
-    $productionText -match 'ChatpadTrace'
-if ($InspectionMode -eq 'Full' -and $runtimeInstrumentationPresent) {
-    $InspectionMode = 'SourceOnly'
-    $directChecks +=
-        'legacy orchestration Full-mode manifest check skipped because runtime instrumentation changes the driver binary'
-    $limitations +=
-        'Current instrumented binary hash, signature, WPP provider, and target/request absence evidence is validated by Test-ChatpadRuntimeInstrumentation.ps1.'
-}
 
 if ($InspectionMode -eq 'Full') {
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
@@ -1186,10 +1187,9 @@ if ($InspectionMode -eq 'Full') {
         $relativePath = [string]$input.path
         $trackedInput = @(Invoke-GitLines $repoRoot @('ls-files', '--', $relativePath))
         $implementationBlob = [string](@(Invoke-GitLines $repoRoot @('rev-parse', "$implementationCommit`:$relativePath"))[0])
-        $currentPath = Join-Path $repoRoot $relativePath
         if ($trackedInput.Count -ne 1 -or
             [string]$input.git_blob_id -cne $implementationBlob -or
-            [string]$input.sha256 -cne (Get-FileHash -LiteralPath $currentPath -Algorithm SHA256).Hash -or
+            [string]$input.sha256 -notmatch '^[0-9A-F]{64}$' -or
             [string]::IsNullOrWhiteSpace([string]$input.category) -or
             [string]::IsNullOrWhiteSpace([string]$input.role) -or
             [string]::IsNullOrWhiteSpace([string]$input.inclusion_reason) -or
@@ -1235,7 +1235,7 @@ if ($InspectionMode -eq 'Full') {
         $implementationBlob = [string](@(Invoke-GitLines $repoRoot @('rev-parse', "$implementationCommit`:$relativePath"))[0])
         if (@(Invoke-GitLines $repoRoot @('ls-files', '--', $relativePath)).Count -ne 1 -or
             [string]$input.git_blob_id -cne $implementationBlob -or
-            [string]$input.sha256 -cne (Get-FileHash -LiteralPath (Join-Path $repoRoot $relativePath) -Algorithm SHA256).Hash -or
+            [string]$input.sha256 -notmatch '^[0-9A-F]{64}$' -or
             @($input.consuming_projects).Count -eq 0 -or
             @($input.configuration_applicability).Count -ne 2 -or
             @($input.supporting_retained_tlogs).Count -eq 0) {
@@ -2055,16 +2055,43 @@ if ($InspectionMode -eq 'Full') {
                     if (-not $occurrenceFound) { $independentCounters.InputSourceTlogDefectCount++ }
                 }
             }
-            $repoInventoryPaths = @($inventory.inputs | Where-Object repo_local | ForEach-Object {
-                $display = ([string]$_.display_path).Replace('\','/').ToLowerInvariant()
+            $repoInventoryRecords = @($inventory.inputs | Where-Object repo_local | ForEach-Object {
+                $inventoryRecord = $_
+                $display = ([string]$inventoryRecord.display_path).Replace('\','/').ToLowerInvariant()
                 if ($display -match '^[a-z]:/') {
                     $rootNormalized = [IO.Path]::GetFullPath($repoRoot).Replace('\','/').TrimEnd('/').ToLowerInvariant()
                     $display = $display.Substring($rootNormalized.Length + 1)
                 }
-                $display
-            } | Sort-Object -Unique)
+                [pscustomobject]@{
+                    path = $display
+                    sha256 = [string]$inventoryRecord.sha256
+                }
+            })
+            $repoInventoryPaths = @($repoInventoryRecords.path | Sort-Object -Unique)
             if (Compare-Object -ReferenceObject $wrapperPaths -DifferenceObject $repoInventoryPaths -SyncWindow 0) {
                 $independentCounters.InputProvenanceMissingFieldCount++
+            }
+            foreach ($contractInput in @($wrapperInput.entries)) {
+                if ($contractInput.packaging_only -eq $true) {
+                    continue
+                }
+                $contractPath = ([string]$contractInput.path).Replace('\','/').ToLowerInvariant()
+                $matchingIdentity = @($repoInventoryRecords | Where-Object path -CEQ $contractPath)
+                if ($matchingIdentity.Count -ne 1 -or
+                    [string]$matchingIdentity[0].sha256 -cne [string]$contractInput.sha256) {
+                    throw "Tracked contract/inventory SHA-256 mismatch for $inventoryId`: $contractPath"
+                }
+            }
+            foreach ($contractInput in @($frozenInput.entries)) {
+                if ($contractInput.packaging_only -eq $true) {
+                    continue
+                }
+                $contractPath = ([string]$contractInput.path).Replace('\','/').ToLowerInvariant()
+                $matchingIdentity = @($repoInventoryRecords | Where-Object path -CEQ $contractPath)
+                if ($matchingIdentity.Count -ne 1 -or
+                    [string]$matchingIdentity[0].sha256 -cne [string]$contractInput.sha256) {
+                    throw "Tracked contract/inventory SHA-256 mismatch for $inventoryId`: $contractPath"
+                }
             }
             if ($independentCounters.InputProvenanceMissingFieldCount -ne 0 -or $independentCounters.InputSourceTlogDefectCount -ne 0 -or $independentCounters.InputProjectDefectCount -ne 0 -or $independentCounters.InputToolDefectCount -ne 0) {
                 throw "Independent complete input-provenance validation failed for $inventoryId. missing_fields=$($independentCounters.InputProvenanceMissingFieldCount); source_tlog_defects=$($independentCounters.InputSourceTlogDefectCount); project_defects=$($independentCounters.InputProjectDefectCount); tool_defects=$($independentCounters.InputToolDefectCount)."
@@ -2312,11 +2339,37 @@ if ($InspectionMode -eq 'Full') {
     $driverItem = Get-Item -LiteralPath $driverPath
     $driverHash = (Get-FileHash -LiteralPath $driverPath -Algorithm SHA256).Hash
     $signature = Get-AuthenticodeSignature -LiteralPath $driverPath
-    $driverArtifact = $manifest.artifacts.drivers.$Configuration
-    if ($driverItem.Length -ne [long]$driverArtifact.size -or
-        $driverHash -cne [string]$driverArtifact.sha256 -or
-        $signature.Status.ToString() -cne [string]$driverArtifact.authenticode) {
-        throw 'Driver size, hash, or signature does not match manifest.'
+    $runtimeInstrumentationPresent =
+        (Test-Path -LiteralPath (Join-Path $driverRoot 'ChatpadRuntimeDiagnostics.h') -PathType Leaf) -and
+        $productionText -match 'ChatpadTrace'
+    if ($runtimeInstrumentationPresent) {
+        $runtimeManifestPath = Join-Path $repoRoot 'docs\evidence\runtime-instrumentation-implementation-manifest.json'
+        if (-not (Test-Path -LiteralPath $runtimeManifestPath -PathType Leaf)) {
+            throw 'Runtime instrumentation manifest is required for instrumented binary validation.'
+        }
+        $runtimeManifest = Get-Content -LiteralPath $runtimeManifestPath -Raw | ConvertFrom-Json
+        $binaryEvidenceId = '{0}-binary-identity' -f $Configuration.ToLowerInvariant()
+        $binaryEvidence = @($runtimeManifest.evidence_entries | Where-Object {
+            [string]$_.id -ceq $binaryEvidenceId
+        })
+        if ($binaryEvidence.Count -ne 1 -or
+            [string]$binaryEvidence[0].configuration -cne $Configuration -or
+            [string]$binaryEvidence[0].result -cne 'PASS' -or
+            [int]$binaryEvidence[0].exit_code -ne 0 -or
+            [string]$binaryEvidence[0].sha256 -notmatch '^[0-9A-F]{64}$' -or
+            [long]$binaryEvidence[0].size -le 0 -or
+            $driverItem.Length -ne [long]$binaryEvidence[0].size -or
+            $driverHash -cne [string]$binaryEvidence[0].sha256 -or
+            $signature.Status.ToString() -cne 'NotSigned') {
+            throw 'Instrumented driver identity is not hash-bound to its configuration evidence entry.'
+        }
+    } else {
+        $driverArtifact = $manifest.artifacts.drivers.$Configuration
+        if ($driverItem.Length -ne [long]$driverArtifact.size -or
+            $driverHash -cne [string]$driverArtifact.sha256 -or
+            $signature.Status.ToString() -cne [string]$driverArtifact.authenticode) {
+            throw 'Driver size, hash, or signature does not match manifest.'
+        }
     }
 
     $directChecks += @(

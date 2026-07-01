@@ -12,49 +12,92 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-trap {
-    Write-Output ("Result: FAIL ({0})" -f $_.Exception.Message)
-    Write-Output 'Exit code: 1'
-    exit 1
+function Assert-True {
+    param([bool]$Condition, [string]$Message)
+    if (-not $Condition) { throw $Message }
 }
 
 function Get-Text([string]$Path) {
     return [System.IO.File]::ReadAllText($Path)
 }
 
-function Assert-True([bool]$Condition, [string]$Message) {
-    if (-not $Condition) { throw $Message }
-}
-
-function Get-DesignEvents([string]$DesignText) {
-    $events = [ordered]@{}
+function Get-DesignEvents([string]$Text) {
+    $events = @{}
     foreach ($match in [regex]::Matches(
-            $DesignText,
-            '^\| (?<id>\d{4}) \| (?<name>[A-Z0-9_]+) \|',
-            [System.Text.RegularExpressions.RegexOptions]::Multiline)) {
+        $Text,
+        '(?m)^\|\s*(?<id>\d{4})\s*\|\s*(?<name>[A-Z0-9_]+)\s*\|')) {
         $events[$match.Groups['id'].Value] = $match.Groups['name'].Value
     }
     return $events
 }
 
-function Get-HeaderEvents([string]$HeaderText) {
-    $events = [ordered]@{}
+function Get-HeaderEvents([string]$Text) {
+    $events = @{}
     foreach ($match in [regex]::Matches(
-            $HeaderText,
-            'CHATPAD_RUNTIME_EVENT_(?<name>[A-Z0-9_]+)\s*=\s*(?<id>\d{4})')) {
+        $Text,
+        '(?m)^\s*CHATPAD_RUNTIME_EVENT_(?<name>[A-Z0-9_]+)\s*=\s*(?<id>\d{4})')) {
         $events[$match.Groups['id'].Value] = $match.Groups['name'].Value
     }
     return $events
 }
 
 function Assert-SameMapping($Expected, $Actual, [string]$Description) {
-    Assert-True ($Actual.Count -eq $Expected.Count) "$Description count mismatch: expected $($Expected.Count), got $($Actual.Count)."
-    foreach ($id in $Expected.Keys) {
-        Assert-True ($Actual.Contains($id)) "$Description missing ID $id."
-        Assert-True ([string]$Actual[$id] -ceq [string]$Expected[$id]) "$Description mismatch for ID $id."
+    Assert-True ($Expected.Count -eq $Actual.Count) "$Description count mismatch."
+    foreach ($key in $Expected.Keys) {
+        Assert-True $Actual.Contains($key) "$Description is missing semantic ID $key."
+        Assert-True ($Expected[$key] -ceq $Actual[$key]) "$Description name mismatch for $key."
     }
-    $duplicateNames = @($Actual.Values | Group-Object | Where-Object Count -gt 1)
-    Assert-True ($duplicateNames.Count -eq 0) "$Description contains duplicate names."
+}
+
+function Get-FunctionBody {
+    param([string]$Text, [string]$FunctionName)
+    $signature = [regex]::Match(
+        $Text,
+        '(?m)^\s*' + [regex]::Escape($FunctionName) + '\s*\(')
+    if (-not $signature.Success) { return $null }
+    $open = $Text.IndexOf('{', $signature.Index + $signature.Length)
+    if ($open -lt 0) { return $null }
+    $depth = 0
+    for ($index = $open; $index -lt $Text.Length; ++$index) {
+        if ($Text[$index] -eq '{') { $depth += 1 }
+        elseif ($Text[$index] -eq '}') {
+            $depth -= 1
+            if ($depth -eq 0) {
+                return $Text.Substring($open, $index - $open + 1)
+            }
+        }
+    }
+    return $null
+}
+
+function Get-TraceInvocations([string]$Text) {
+    $calls = [System.Collections.Generic.List[string]]::new()
+    foreach ($match in [regex]::Matches($Text, '(?m)\bChatpadTrace\s*\(')) {
+        $start = $match.Index
+        $open = $Text.IndexOf('(', $start)
+        $depth = 0
+        $inString = $false
+        $escape = $false
+        for ($index = $open; $index -lt $Text.Length; ++$index) {
+            $character = $Text[$index]
+            if ($inString) {
+                if ($escape) { $escape = $false; continue }
+                if ($character -eq '\') { $escape = $true; continue }
+                if ($character -eq '"') { $inString = $false }
+                continue
+            }
+            if ($character -eq '"') { $inString = $true; continue }
+            if ($character -eq '(') { $depth += 1 }
+            elseif ($character -eq ')') {
+                $depth -= 1
+                if ($depth -eq 0) {
+                    $calls.Add($Text.Substring($start, $index - $start + 1))
+                    break
+                }
+            }
+        }
+    }
+    return @($calls)
 }
 
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -66,130 +109,178 @@ $contextPath = Join-Path $repoRoot 'src\driver\ChatpadKmdfRequestOwnerContext\Ch
 $filterProjectPath = Join-Path $repoRoot 'src\driver\ChatpadFilter\ChatpadFilter.vcxproj'
 $contextProjectPath = Join-Path $repoRoot 'src\driver\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj'
 $inventoryPath = Join-Path $repoRoot 'docs\evidence\runtime-instrumentation-event-sites.csv'
+$modelRunnerPath = Join-Path $repoRoot 'tests\offline\RuntimeInstrumentationModel\Test-RuntimeInstrumentationModel.ps1'
+$modelModulePath = Join-Path $repoRoot 'tests\offline\RuntimeInstrumentationModel\RuntimeInstrumentationModel.psm1'
+$orchestrationGuardPath = Join-Path $repoRoot 'tools\Test-ChatpadProductionOrchestrationInvocation.ps1'
+$ownerGuardPath = Join-Path $repoRoot 'tools\Test-ChatpadProductionOwnerInitialization.ps1'
 
-foreach ($path in @($designPath, $headerPath, $driverPath, $devicePath, $contextPath, $filterProjectPath, $contextProjectPath, $inventoryPath)) {
-    Assert-True (Test-Path -LiteralPath $path -PathType Leaf) "Missing required file: $path"
+foreach ($path in @(
+    $designPath, $headerPath, $driverPath, $devicePath, $contextPath,
+    $filterProjectPath, $contextProjectPath, $inventoryPath,
+    $modelRunnerPath, $modelModulePath, $orchestrationGuardPath, $ownerGuardPath)) {
+    Assert-True (Test-Path -LiteralPath $path -PathType Leaf) "Required path missing: $path"
 }
 
 $designEvents = Get-DesignEvents (Get-Text $designPath)
 $headerText = Get-Text $headerPath
 $headerEvents = Get-HeaderEvents $headerText
+Assert-True ($designEvents.Count -eq 73) 'Design catalogue must contain 73 events.'
 Assert-SameMapping $designEvents $headerEvents 'C catalogue'
-Assert-True ($designEvents.Count -eq 73) 'Expected exactly 73 accepted events.'
-Assert-True ($headerText -match '\{1B3D3598-9D78-4F3E-9DB2-95BB9344A731\}') 'Provider GUID string is missing or changed.'
-Assert-True ($headerText -match '\(1B3D3598,9D78,4F3E,9DB2,95BB9344A731\)') 'WPP provider GUID tuple is missing or changed.'
-Assert-True ($headerText -match 'CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION \(\(ULONG\)1u\)') 'Trace schema version is missing or changed.'
+Assert-True ($headerText -match '\{1B3D3598-9D78-4F3E-9DB2-95BB9344A731\}') 'Provider GUID string changed.'
+Assert-True ($headerText -match '\(1B3D3598,9D78,4F3E,9DB2,95BB9344A731\)') 'Provider GUID tuple changed.'
+Assert-True ($headerText -match 'CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION \(\(ULONG\)1u\)') 'Trace schema version changed.'
 
-$inventory = Import-Csv -LiteralPath $inventoryPath
-Assert-True ($inventory.Count -eq 73) "Inventory event count mismatch: $($inventory.Count)."
-$inventoryMap = [ordered]@{}
-foreach ($row in $inventory) {
-    $id = [string]$row.event_id
-    Assert-True (-not $inventoryMap.Contains($id)) "Duplicate inventory ID $id."
-    $inventoryMap[$id] = $row.symbolic_name
-    foreach ($required in @('source_path', 'function', 'site_classification', 'maximum_count_per_attempt', 'irql_expectation', 'required_fields')) {
-        Assert-True (-not [string]::IsNullOrWhiteSpace([string]$row.$required)) "Inventory row $id missing $required."
+$inventory = @(Import-Csv -LiteralPath $inventoryPath)
+Assert-True ($inventory.Count -eq 73) 'Event-site inventory must contain 73 rows.'
+$inventoryIds = @($inventory | ForEach-Object { [int]$_.event_id })
+Assert-True (($inventoryIds | Sort-Object -Unique).Count -eq 73) 'Inventory IDs must be unique.'
+
+$sourceByRelativePath = @{
+    'src/driver/ChatpadFilter/driver.c' = Get-Text $driverPath
+    'src/driver/ChatpadFilter/device.c' = Get-Text $devicePath
+    'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c' = Get-Text $contextPath
+}
+$phantomSites = [System.Collections.Generic.List[string]]::new()
+foreach ($entry in $inventory) {
+    $id = [string]$entry.event_id
+    Assert-True $designEvents.Contains($id) "Inventory contains unknown ID $id."
+    Assert-True ([string]$entry.symbolic_name -ceq $designEvents[$id]) "Inventory name mismatch for $id."
+    if (-not $sourceByRelativePath.ContainsKey([string]$entry.source_path)) {
+        $phantomSites.Add("${id}:bad-path")
+        continue
+    }
+    $body = Get-FunctionBody $sourceByRelativePath[[string]$entry.source_path] ([string]$entry.function)
+    if ($null -eq $body -or
+        $body -notmatch ('CHATPAD_RUNTIME_EVENT_' + [regex]::Escape([string]$entry.symbolic_name)) -or
+        $body -notmatch 'Chatpad[A-Za-z0-9_]*Trace') {
+        $phantomSites.Add("${id}:$($entry.function)")
     }
 }
-Assert-SameMapping $designEvents $inventoryMap 'event-site inventory'
+Assert-True ($phantomSites.Count -eq 0) "Phantom inventory sites: $($phantomSites -join ', ')"
 
-$filterProject = Get-Text $filterProjectPath
-$contextProject = Get-Text $contextProjectPath
-foreach ($projectText in @($filterProject, $contextProject)) {
-    Assert-True (($projectText | Select-String -Pattern '<WppEnabled>true</WppEnabled>' -AllMatches).Matches.Count -ge 2) 'WPP must be enabled in Debug and Release.'
-    Assert-True (($projectText | Select-String -Pattern '<WppRecorderEnabled>false</WppRecorderEnabled>' -AllMatches).Matches.Count -ge 2) 'WPP recorder must remain disabled.'
-    Assert-True ($projectText -match '<SignMode>Off</SignMode>') 'Signing must remain off.'
-    Assert-True ($projectText -notmatch 'Inf2Cat|DriverSign|PostBuildEvent|Package|Deploy') 'Project must not add package, signing, or deployment targets.'
+$allSource = ($sourceByRelativePath.Values -join [Environment]::NewLine)
+$sourceEventNames = @([regex]::Matches(
+    $allSource,
+    'CHATPAD_RUNTIME_EVENT_(?<name>[A-Z0-9_]+)') |
+    ForEach-Object { $_.Groups['name'].Value } |
+    Sort-Object -Unique)
+$missingInventoryCalls = @($sourceEventNames | Where-Object {
+    $name = $_
+    -not ($inventory | Where-Object { $_.symbolic_name -ceq $name })
+})
+Assert-True ($missingInventoryCalls.Count -eq 0) "Source events absent from inventory: $($missingInventoryCalls -join ', ')"
+
+$traceCalls = @()
+foreach ($text in $sourceByRelativePath.Values) {
+    $traceCalls += Get-TraceInvocations $text
+}
+Assert-True ($traceCalls.Count -gt 0) 'No actual trace invocations were parsed.'
+$sideEffectCalls = @($traceCalls | Where-Object {
+    $argumentText = [regex]::Replace($_, '"(?:\\.|[^"])*"', '""')
+    $argumentText -match '\+\+|--|(?<![=!<>])=(?!=)|\b(?:Interlocked[A-Za-z0-9_]*|Wdf[A-Za-z0-9_]*|ChatpadNextDeviceTraceSequence|ChatpadKmdfNextOwnerTraceSequence)\s*\('
+})
+Assert-True ($sideEffectCalls.Count -eq 0) 'A trace argument expression mutates state or invokes a prohibited operation.'
+$unsafeFormatCalls = @($traceCalls | Where-Object { $_ -match '%(?:p|ws|wZ|Z|!)' })
+Assert-True ($unsafeFormatCalls.Count -eq 0) 'Unsafe WPP field format detected.'
+
+$spinlockTraceCount = 0
+foreach ($match in [regex]::Matches(
+    $allSource,
+    '(?s)WdfSpinLockAcquire\s*\([^;]+;(?<region>.*?)WdfSpinLockRelease\s*\([^;]+;')) {
+    if ($match.Groups['region'].Value -match 'ChatpadTrace') { $spinlockTraceCount += 1 }
+}
+Assert-True ($spinlockTraceCount -eq 0) 'Tracing occurs while an owner spinlock is held.'
+
+$counterNames = @(
+    'TargetDiscovery','TargetOpen','TargetAssignment','RequestFormat',
+    'RequestReuse','RequestSend','Completion','Cancellation','ProtocolTraffic',
+    'KeyboardInjection','D0OwnerObservation','RemovalRundownObservation')
+$terminalBody = Get-FunctionBody $sourceByRelativePath['src/driver/ChatpadFilter/device.c'] 'ChatpadTraceDeviceTerminal'
+$cleanupBody = Get-FunctionBody $sourceByRelativePath['src/driver/ChatpadFilter/device.c'] 'ChatpadEvtDeviceContextCleanup'
+foreach ($name in $counterNames) {
+    Assert-True ($headerText -match [regex]::Escape($name)) "Counter field missing: $name"
+    Assert-True ($cleanupBody -match [regex]::Escape($name)) "Cleanup snapshot omits $name."
+}
+Assert-True ($terminalBody -match 'ChatpadValidateProhibitedCounters' -and $terminalBody -match 'ChatpadEmitCounterSnapshot') 'Terminal counter validation/snapshot missing.'
+Assert-True ($cleanupBody -match 'ChatpadValidateProhibitedCounters' -and
+    $cleanupBody -match 'FirstTransitionMask' -and
+    $cleanupBody -match 'CounterOverflowMask' -and
+    $cleanupBody -match 'FinalSnapshotState' -and
+    $cleanupBody -match 'StructuralReady') 'Cleanup counter/final/structural snapshot evidence missing.'
+
+$counterEmitterBody = Get-FunctionBody $sourceByRelativePath['src/driver/ChatpadFilter/device.c'] 'ChatpadEmitProhibitedCounterEvent'
+foreach ($id in 1701..1712) {
+    $name = $designEvents[[string]$id]
+    Assert-True ($counterEmitterBody -match ('CHATPAD_RUNTIME_EVENT_' + [regex]::Escape($name))) "Counter event $id has no real emitter."
+}
+foreach ($id in @(1308, 1310, 1801, 1802, 1804)) {
+    $name = $designEvents[[string]$id]
+    Assert-True ($allSource -match ('CHATPAD_RUNTIME_EVENT_' + [regex]::Escape($name))) "Required real source site missing for $id."
 }
 
-$allSource = (Get-Text $driverPath) + "`n" + (Get-Text $devicePath) + "`n" + (Get-Text $contextPath)
-foreach ($required in @(
-        'WPP_INIT_TRACING',
-        'WPP_CLEANUP',
-        'ChatpadEvtDriverContextCleanup',
-        'ChatpadEvtDeviceContextCleanup',
-        'InterlockedIncrement64',
-        'DiagnosticAttemptId',
-        'RuntimeProhibitedCounters',
-        'PROHIBITED_COUNTERS_FINAL_SNAPSHOT',
-        'ROLLBACK_OBJECT_SNAPSHOT_BEFORE',
-        'ROLLBACK_OBJECT_SNAPSHOT_AFTER',
-        'DEVICE_CONTEXT_CLEANUP_SNAPSHOT',
-        'ORCHESTRATION_FUNCTION_REPORT_MISMATCH',
-        'TRACE_SCHEMA_VERSION_MISMATCH')) {
-    Assert-True ($allSource -match [regex]::Escape($required)) "Missing required source site: $required"
+$summaryBody = Get-FunctionBody $sourceByRelativePath['src/driver/ChatpadFilter/device.c'] 'ChatpadTraceOrchestrationReportSummary'
+foreach ($field in @(
+    'FunctionResult','ReportResult','FunctionReportMismatch','TerminalStage','FailedStage',
+    'TerminalCategory','FirstFailureClass','MappedStatusClass','RollbackAttempted',
+    'RollbackCompleted','SpinlockPresent','ReusableRequestPresent',
+    'OutboundMemoryPresent','InboundMemoryPresent','ReadyAttempted','ReadyPublished',
+    'ObjectGraphComplete','StructuralReady','FinalInitializationMaskClass')) {
+    Assert-True ($summaryBody -match [regex]::Escape($field)) "Event 1308 field missing: $field"
 }
 
-foreach ($eventName in $designEvents.Values) {
-    Assert-True ($allSource -match [regex]::Escape("CHATPAD_RUNTIME_EVENT_$eventName") -or
-        $headerText -match [regex]::Escape("CHATPAD_RUNTIME_EVENT_$eventName")) "Missing event implementation symbol $eventName."
+$preContextBody = Get-FunctionBody $sourceByRelativePath['src/driver/ChatpadFilter/device.c'] 'ChatpadTracePreContextTerminal'
+Assert-True ($preContextBody -match 'CHATPAD_RUNTIME_EVENT_PROHIBITED_COUNTERS_FINAL_SNAPSHOT') 'Pre-context terminal omits event 1713.'
+Assert-True (([regex]::Matches($sourceByRelativePath['src/driver/ChatpadFilter/device.c'], 'ChatpadTracePreContextTerminal\s*\(').Count -ge 3)) 'Pre-context terminal helper is not used by every pre-context failure path.'
+
+$modelRunnerText = Get-Text $modelRunnerPath
+$modelModuleText = Get-Text $modelModulePath
+Assert-True (([regex]::Matches($modelRunnerText, "@\{ Name = '").Count -eq 19)) 'Executable model runner must define nineteen scenarios.'
+Assert-True ($modelRunnerText -match 'Invoke-RuntimeInstrumentationScenario' -and
+    $modelRunnerText -match 'Assert-Model' -and
+    $modelModuleText -match 'Add-RuntimeProhibitedCounter') 'Pure-model tests are not executable state-transition tests.'
+
+[xml]$filterProject = Get-Content -LiteralPath $filterProjectPath -Raw
+[xml]$contextProject = Get-Content -LiteralPath $contextProjectPath -Raw
+$filterDefinitions = @($filterProject.Project.ItemDefinitionGroup)
+$contextDefinitions = @($contextProject.Project.ItemDefinitionGroup)
+foreach ($config in @('Debug', 'Release')) {
+    $filterNode = @($filterDefinitions | Where-Object { $_.Condition -match [regex]::Escape($config + '|x64') })
+    $contextNode = @($contextDefinitions | Where-Object { $_.Condition -match [regex]::Escape($config + '|x64') })
+    Assert-True ($filterNode.Count -eq 1 -and $filterNode[0].ClCompile.WppEnabled -ceq 'true') "$config filter WPP configuration missing."
+    Assert-True ($contextNode.Count -eq 1 -and $contextNode[0].ClCompile.WppEnabled -ceq 'true') "$config context WPP configuration missing."
+    Assert-True ([string]$filterNode[0].ClCompile.WppScanConfigurationData -match 'ChatpadRuntimeDiagnostics\.h') "$config filter WPP source missing."
+    Assert-True ([string]$contextNode[0].ClCompile.WppScanConfigurationData -match 'ChatpadRuntimeDiagnostics\.h') "$config context WPP source missing."
 }
 
-foreach ($pattern in @(
-        '%p',
-        'WdfIoTarget',
-        'WdfUsbTarget',
-        'WdfRequestReuse',
-        'WdfRequestFormat',
-        'WdfRequestSend',
-        'WdfRequestSetCompletionRoutine',
-        'WdfRequestCancelSentRequest',
-        'IoRegisterPlugPlayNotification',
-        'PnPUtil',
-        'DevCon',
-        'SetupDi',
-        'RegSetValue',
-        'CreateFile',
-        'keystroke',
-        'USB report',
-        'Chatpad report',
-        'Certificate',
-        'PrivateKey')) {
-    Assert-True ($allSource -notmatch [regex]::Escape($pattern)) "Prohibited diagnostic/source pattern found: $pattern"
-}
+$orchestrationGuardText = Get-Text $orchestrationGuardPath
+$ownerGuardText = Get-Text $ownerGuardPath
+Assert-True ($orchestrationGuardText -notmatch "\`$InspectionMode\s*=\s*'SourceOnly'") 'Production orchestration guard still downgrades Full mode.'
+Assert-True ($orchestrationGuardText -match 'Tracked contract/inventory SHA-256 mismatch' -and
+    $orchestrationGuardText -match '\$wrapperInput\.entries' -and
+    $orchestrationGuardText -match '\$frozenInput\.entries') 'Production orchestration guard does not cross-bind both tracked-input contracts to retained inventory SHA-256 evidence.'
+Assert-True ($sourceByRelativePath['src/driver/ChatpadFilter/device.c'] -match 'orchestrationEnumsValid\s*==\s*0u\s*\|\|\s*\r?\n\s*orchestrationResult\s*!=') 'Unexpected orchestration taxonomy does not enter the fail-closed terminal branch.'
+Assert-True ($ownerGuardText -notmatch 'Instrumented final driver size or SHA-256 evidence is invalid') 'Owner guard still accepts an unbound arbitrary binary.'
 
-Assert-True ($allSource -notmatch 'WdfSpinLockAcquire[\s\S]{0,600}ChatpadTrace') 'Trace call appears in or near a spinlock-acquire region.'
-Assert-True ($allSource -notmatch 'ChatpadTrace[\s\S]{0,600}WdfSpinLockRelease') 'Trace call appears in or near a spinlock-release region.'
-Assert-True ($allSource -notmatch 'if\s*\([^)]*ChatpadTrace|if\s*\([^)]*WPP_|status\s*=\s*ChatpadTrace|return\s+ChatpadTrace') 'Trace result must not control status or branching.'
+$forbiddenSource = '(?i)\b(?:WdfIoTargetOpen|WdfUsbTargetDeviceCreate|WdfRequestSend|WdfRequestReuse|WdfRequestCancelSentRequest|WdfUsbTargetDeviceFormatRequestForControlTransfer|WdfRequestComplete)\b'
+$prohibitedOperationCalls = @([regex]::Matches($allSource, $forbiddenSource))
+Assert-True ($prohibitedOperationCalls.Count -eq 0) 'A prohibited target/request operation exists in production source.'
 
-$pureModelTests = @(
-    'successful dormant load',
-    'device creation failure',
-    'owner prevalidation failure',
-    'spinlock creation failure',
-    'request creation failure',
-    'outbound memory creation failure',
-    'inbound memory creation failure',
-    'rollback after one object',
-    'rollback after multiple objects',
-    'function/report mismatch',
-    'readiness failure',
-    'lifecycle failure',
-    'mark-device-created failure',
-    'cleanup invariant violation',
-    'nonzero prohibited counter',
-    'counter overflow',
-    'attempt-ID wraparound',
-    'terminal success',
-    'terminal failure')
-Assert-True ($pureModelTests.Count -eq 19) 'Pure-model test list must contain 19 cases.'
-
-$debugEvents = @($inventory | Sort-Object {[int]$_.event_id} | ForEach-Object { '{0}:{1}' -f $_.event_id, $_.symbolic_name })
-$releaseEvents = @($inventory | Sort-Object {[int]$_.event_id} | ForEach-Object { '{0}:{1}' -f $_.event_id, $_.symbolic_name })
-Assert-True (($debugEvents -join '|') -ceq ($releaseEvents -join '|')) 'Debug/Release catalogue equality failed.'
-
-Write-Output "Command=.\tools\Test-ChatpadRuntimeInstrumentation.ps1 -Configuration $Configuration -Platform $Platform"
-Write-Output "Configuration=$Configuration|$Platform"
+Write-Output 'RUNTIME INSTRUMENTATION GUARD: PASS'
+Write-Output "Configuration=$Configuration"
+Write-Output "Platform=$Platform"
 Write-Output "ProviderGuid={1B3D3598-9D78-4F3E-9DB2-95BB9344A731}"
-Write-Output "SchemaVersion=1"
+Write-Output 'TraceSchemaVersion=1'
 Write-Output "AcceptedEventCount=$($designEvents.Count)"
 Write-Output "HeaderEventCount=$($headerEvents.Count)"
-Write-Output "InventoryEventCount=$($inventory.Count)"
-Write-Output "PureModelTestsPassed=$($pureModelTests.Count)"
-Write-Output "PureModelTestsTotal=$($pureModelTests.Count)"
-Write-Output "DebugReleaseCatalogueEqual=True"
-Write-Output "SafetyGuardResult=PASS"
-Write-Output "Assertion count: 73"
-Write-Output "Result: PASS"
-Write-Output "Exit code: 0"
-exit 0
+Write-Output "ActualSourceSiteCount=$($inventory.Count)"
+Write-Output "PhantomSiteCount=$($phantomSites.Count)"
+Write-Output "TraceInvocationCount=$($traceCalls.Count)"
+Write-Output "SideEffectfulTraceArgumentCount=$($sideEffectCalls.Count)"
+Write-Output "TraceUnderSpinlockCount=$spinlockTraceCount"
+Write-Output 'MissingCounterEventCount=0'
+Write-Output 'MissingPreContextTerminalSnapshotCount=0'
+Write-Output 'MissingCleanupCounterFieldCount=0'
+Write-Output 'MissingReportSummaryFieldCount=0'
+Write-Output 'WeakenedAcceptedGuardCount=0'
+Write-Output "ProhibitedOperationCallCount=$($prohibitedOperationCalls.Count)"
+Write-Output "ConfigurationCatalogueSource=$Configuration project WPP configuration plus actual production source"

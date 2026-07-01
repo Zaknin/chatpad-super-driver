@@ -9,28 +9,26 @@ entries. The 26-path production runtime/link contract is separate from the
 32-path A/B wrapper-build contract. Four isolated clean builds retain exact raw
 TLOG roots, objects, libraries, PDBs, parser output, and same-set closure.
 
-The current phase is first-runtime observation and recovery planning. The plan
-is in `docs/WINDOWS11-FIRST-RUNTIME-OBSERVATION-AND-RECOVERY-PLAN.md` and
-selects offline runtime instrumentation design as the next gate because the
-current build is not sufficiently observable for first controlled load. Runtime
+The current phase is offline runtime-instrumentation remediation. Runtime
 observation, target discovery, request execution, signing, packaging,
 installation, loading, device query, and hardware testing remain prohibited
 future gates.
 
-Current phase: **Offline runtime instrumentation implementation - independent
-implementation audit pending**.
+Current phase: **Offline runtime instrumentation remediation - independent
+read-only remediation audit pending**.
 
 The original offline runtime instrumentation design was committed at
 `b26514f59e9d07fbee09e8bab5ea296d18c0dd85`. Its independent audit returned
 `AUDIT FAIL` for documentation-only defects, which were remediated at
-`526f6bb055b485fdb459a9d303fc3f814da15e48`. The independently accepted
-WPP-based implementation now exists on
-`feature/offline-runtime-instrumentation-implementation`, with provider GUID
+`526f6bb055b485fdb459a9d303fc3f814da15e48`. The first WPP implementation
+at `3546ace3892914935276ed74f39d2cd71a53858e`
+failed independent audit. The remediation now exists on
+`feature/offline-runtime-instrumentation-implementation-remediation`, with provider GUID
 `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, schema `1`, and 73 accepted events.
 The implementation is documented in
 `docs/OFFLINE-RUNTIME-INSTRUMENTATION-IMPLEMENTATION.md`, with manifest
 `docs/evidence/runtime-instrumentation-implementation-manifest.json`.
-The next task is independent implementation audit. Signing, packaging,
+The next task is independent read-only remediation audit. Signing, packaging,
 staging, installation, loading, trace collection, device query, and hardware
 testing remain closed.
 
@@ -184,15 +182,15 @@ Source references:
   binary comparison with a retained source-identical A/B rebuild. It remains
   evidence-only; runtime, target/request, signing, installation, and hardware
   gates are closed.
-- The offline runtime instrumentation implementation checkpoint is complete
-  locally in
+- The first offline runtime instrumentation implementation checkpoint failed
+  independent audit. Its narrowly scoped remediation is complete locally in
   `docs/OFFLINE-RUNTIME-INSTRUMENTATION-IMPLEMENTATION.md`, with tracked
   evidence in
   `docs/evidence/runtime-instrumentation-implementation-manifest.json`.
   `ChatpadFilter` and `ChatpadKmdfRequestOwnerContext` now share one WPP
   provider, schema `1`, and the 73-event accepted catalogue. This is still an
-  offline compile/static-validation checkpoint until an independent
-  implementation audit accepts it; signing, packaging, staging, installation,
+  offline compile/static-validation checkpoint until an independent read-only
+  remediation audit accepts it; signing, packaging, staging, installation,
   loading, trace collection, device query, and hardware testing remain closed.
 - The owner-initialization audit-corrections checkpoint is complete in
   `docs/OFFLINE-KMDF-OWNER-INITIALIZATION-AUDIT-CORRECTIONS.md`. It corrected

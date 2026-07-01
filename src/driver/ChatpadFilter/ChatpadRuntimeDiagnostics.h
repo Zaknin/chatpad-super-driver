@@ -138,20 +138,59 @@ typedef enum ChatpadRuntimeTraceKeyword {
     CHATPAD_TRACE_TERMINAL = 10
 } ChatpadRuntimeTraceKeyword;
 
+typedef enum ChatpadRuntimeProhibitedCounterKind {
+    CHATPAD_RUNTIME_COUNTER_TARGET_DISCOVERY = 0,
+    CHATPAD_RUNTIME_COUNTER_TARGET_OPEN,
+    CHATPAD_RUNTIME_COUNTER_TARGET_ASSIGNMENT,
+    CHATPAD_RUNTIME_COUNTER_REQUEST_FORMAT,
+    CHATPAD_RUNTIME_COUNTER_REQUEST_REUSE,
+    CHATPAD_RUNTIME_COUNTER_REQUEST_SEND,
+    CHATPAD_RUNTIME_COUNTER_COMPLETION,
+    CHATPAD_RUNTIME_COUNTER_CANCELLATION,
+    CHATPAD_RUNTIME_COUNTER_PROTOCOL_TRAFFIC,
+    CHATPAD_RUNTIME_COUNTER_KEYBOARD_INJECTION,
+    CHATPAD_RUNTIME_COUNTER_D0_OWNER_OBSERVATION,
+    CHATPAD_RUNTIME_COUNTER_REMOVAL_RUNDOWN,
+    CHATPAD_RUNTIME_COUNTER_KIND_COUNT
+} ChatpadRuntimeProhibitedCounterKind;
+
+C_ASSERT(CHATPAD_RUNTIME_COUNTER_KIND_COUNT == 12);
+
+/*
+ * Counter updates use interlocked compare/exchange and never hold the request
+ * owner's spinlock. Values saturate at MAXLONG; overflow attempts are retained
+ * in OverflowMask and never wrap.
+ */
 typedef struct ChatpadRuntimeProhibitedCounters {
-    ULONG TargetDiscovery;
-    ULONG TargetOpen;
-    ULONG TargetAssignment;
-    ULONG RequestFormat;
-    ULONG RequestReuse;
-    ULONG RequestSend;
-    ULONG Completion;
-    ULONG Cancellation;
-    ULONG ProtocolTraffic;
-    ULONG KeyboardInjection;
-    ULONG D0OwnerObservation;
-    ULONG RemovalRundownObservation;
+    volatile LONG Value[CHATPAD_RUNTIME_COUNTER_KIND_COUNT];
+    volatile LONG FirstTransitionMask;
+    volatile LONG OverflowMask;
 } ChatpadRuntimeProhibitedCounters;
+
+typedef struct ChatpadRuntimeCounterSnapshot {
+    ULONG Value[CHATPAD_RUNTIME_COUNTER_KIND_COUNT];
+    ULONG FirstTransitionMask;
+    ULONG OverflowMask;
+} ChatpadRuntimeCounterSnapshot;
+
+typedef struct ChatpadRuntimeAttemptState {
+    uint64_t AttemptId;
+    uint64_t TraceSequence;
+    ChatpadRuntimeProhibitedCounters ProhibitedCounters;
+    UCHAR Initialized;
+    UCHAR FailureRecorded;
+    UCHAR RollbackStarted;
+    UCHAR RollbackCompleted;
+    UCHAR CleanupEntered;
+    UCHAR CounterSnapshotEmitted;
+    UCHAR FinalSnapshotEmitted;
+    UCHAR StructuralReady;
+    UCHAR TerminalEmitted;
+    UCHAR TerminalSucceeded;
+    UCHAR CleanupSnapshotEmitted;
+    UCHAR CleanupCompleted;
+    NTSTATUS TerminalStatus;
+} ChatpadRuntimeAttemptState;
 
 typedef struct ChatpadRuntimeObjectSnapshot {
     UCHAR BookkeepingLockPresent;
@@ -297,16 +336,6 @@ ChatpadRuntimeCaptureObjectSnapshot(
     return snapshot;
 }
 
-static __inline uint64_t
-ChatpadRuntimeNextOwnerSequence(ChatpadKmdfActivationRequestOwner *owner)
-{
-    if (owner == NULL) {
-        return 0u;
-    }
-    owner->DiagnosticTraceSequence += 1u;
-    return owner->DiagnosticTraceSequence;
-}
-
 #define CHATPAD_RUNTIME_TRACE_EVENT_FORMAT \
     "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X Stage=%lu Data0=%lu Data1=%lu"
 
@@ -314,4 +343,4 @@ ChatpadRuntimeNextOwnerSequence(ChatpadKmdfActivationRequestOwner *owner)
     "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X BookkeepingLockPresent=%u ReusableRequestPresent=%u OutboundMemoryPresent=%u InboundMemoryPresent=%u OwnerReady=%u Faulted=%u ObjectGraphComplete=%u InitializationMask=0x%08X StructuralReadyResult=%lu"
 
 #define CHATPAD_RUNTIME_TRACE_COUNTERS_FORMAT \
-    "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu TargetDiscovery=%lu TargetOpen=%lu TargetAssignment=%lu RequestFormat=%lu RequestReuse=%lu RequestSend=%lu Completion=%lu Cancellation=%lu ProtocolTraffic=%lu KeyboardInjection=%lu D0OwnerObservation=%lu RemovalRundownObservation=%lu"
+    "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu TargetDiscovery=%lu TargetOpen=%lu TargetAssignment=%lu RequestFormat=%lu RequestReuse=%lu RequestSend=%lu Completion=%lu Cancellation=%lu ProtocolTraffic=%lu KeyboardInjection=%lu D0OwnerObservation=%lu RemovalRundownObservation=%lu FirstTransitionMask=0x%08X OverflowMask=0x%08X"

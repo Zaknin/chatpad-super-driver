@@ -4,6 +4,33 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Require source-real instrumentation and hash-bound independent evidence
+
+**Decision:** Runtime-instrumentation acceptance requires real production
+emission sites for every catalogue event, side-effect-free trace arguments, a
+saturating twelve-counter model with terminal and cleanup validation, meaningful
+sequence/cleanup invariants, executable pure-model tests, independently derived
+Debug/Release WPP evidence, complete per-configuration regression matrices, and
+a hash-bound manifest. Production orchestration Full mode may not downgrade to
+SourceOnly, and instrumented binary identity must be configuration-bound.
+
+**Rationale:** Independent audit of `3546ace3892914935276ed74f39d2cd71a53858e`
+found that header/CSV declarations were being accepted as source coverage,
+model tests were strings, configuration equality reused one CSV, counter and
+cleanup evidence was incomplete, event 1308 was misclassified, guards were
+weakened, and accepted evidence was not fully bound.
+
+**Alternatives rejected:** Treating declarations as emissions, retaining
+state-mutating macro arguments, accepting syntactically valid arbitrary hashes,
+or silently reducing Full inspection would preserve the audit defects. Adding
+dummy prohibited-operation calls would change production behavior and was also
+rejected.
+
+**Consequences:** The remediation remains offline and audit-pending. The next
+task is independent read-only audit. Signing, packaging, staging, installation,
+loading, tracing, device query, target/request operations, Windows mutation,
+and hardware gates remain closed.
+
 ## 2026-07-01 - Gate instrumentation implementation on independent design acceptance
 
 **Decision:** Every runtime instrumentation event definition must contain

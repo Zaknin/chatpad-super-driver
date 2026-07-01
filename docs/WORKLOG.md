@@ -5042,3 +5042,102 @@
 - **Next task:** Independently audit the offline runtime instrumentation
   implementation from the final commit on
   `feature/offline-runtime-instrumentation-implementation`.
+
+## 2026-07-02 02:49 +04:00 - Offline runtime instrumentation implementation remediation
+
+- **Objective:** Correct only the blocking defects from the independent audit
+  of `3546ace3892914935276ed74f39d2cd71a53858e`, produce complete offline
+  evidence, commit exactly `driver: remediate offline runtime instrumentation`,
+  and push only the remediation branch.
+- **Starting state:** The original task verified the exact clean synchronized
+  branch `feature/offline-runtime-instrumentation-implementation` at
+  `3546ace3892914935276ed74f39d2cd71a53858e`, parent
+  `526f6bb055b485fdb459a9d303fc3f814da15e48`, subject
+  `driver: implement offline runtime instrumentation`, upstream equality and
+  ahead/behind `0/0`, then created
+  `feature/offline-runtime-instrumentation-implementation-remediation`.
+- **Continuation discrepancy:** On continuation, the live branch contained an
+  unfinished uncommitted remediation while continuity documents still named
+  the original implementation branch and independent implementation audit.
+  The unfinished work was preserved; no reset, clean, stash, checkout, amend,
+  merge, rebase, or alternate worktree was used. This entry and the replaced
+  current-state documents correct that stale continuation state.
+- **Source remediation:** Preserved provider GUID, schema, and all 73 event IDs
+  and names. Added real diagnostic sites for 1310, 1701-1712, 1801, 1802, and
+  1804; removed sequence mutation from trace arguments; added attempt-local
+  pre-context terminal state; implemented the authoritative twelve-counter
+  saturating/interlocked model, first-transition and overflow masks, terminal
+  and cleanup validation, sequence transitions, meaningful cleanup invariants,
+  structural/final snapshot state, fail-closed unexpected taxonomy, and the
+  bounded event-1308 orchestration report summary. Ordinary return status,
+  object creation, rollback ownership/order, readiness, lifecycle, WDF
+  parenting, target/request, D0, and removal behavior were preserved.
+- **Guard remediation:** Restored production orchestration Full mode with no
+  SourceOnly downgrade. Historical contract Git blob IDs remain bound to the
+  immutable implementation commit, and historical checkout SHA-256 values are
+  cross-bound to all retained A/B inventories except the explicit
+  packaging-only INF boundary. Restored configuration-bound instrumented binary
+  validation in the production owner guard. Strengthened the instrumentation
+  guard to parse real trace calls, source/function sites, arguments, spinlock
+  regions, counter/cleanup/report fields, configuration nodes, prohibited
+  operations, and accepted-guard strength.
+- **Executable evidence:** Added a dedicated pure-model module and runner with
+  19 scenarios and 228 assertions, plus a 13-entry per-configuration regression
+  matrix runner. Added tracked independent Debug/Release equality and
+  trace-volume reports. Replaced the old manifest with a schema-`1.1.0`
+  mandatory hash-bound evidence contract; failed historical logs are not
+  accepted PASS evidence.
+- **Files changed:** Modified
+  `src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h`, `device.c`, `driver.h`,
+  `src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c`,
+  three guard scripts, the event-site CSV, manifest, implementation document,
+  `PROJECT-STATE.md`, `NEXT-TASK.md`, `PORTING-PLAN.md`, `DECISIONS.md`, and
+  this worklog. Added two pure-model files, the regression-matrix runner, the
+  Debug/Release equality report, and trace-volume report. No INF, solution,
+  project, protocol, transport, legacy, signing, packaging, or deployment path
+  changed.
+- **Validation:** Runtime instrumentation guards Debug/Release PASS with 73
+  actual sites, zero phantom sites, 34 parsed trace invocations, and all defect
+  counters zero. Pure model PASS, 19/19 scenarios and 228/228 assertions. KMDF
+  request-owner compile/semantic checks PASS, 62/62 for each configuration.
+  Production owner Full and orchestration Full guards PASS for Debug and
+  Release. Complete matrices PASS, 13/13 entries and 301/301 assertions per
+  configuration, zero errors; their 18 warning lines are Git LF/CRLF checkout
+  warnings. Debug/Release driver builds and full-solution builds PASS. Static
+  PE inspection PASS for x64 Native images and zero prohibited symbols.
+  Repository safety PASS with all explicit action/artifact counters zero.
+- **Final binary evidence:** Debug is 68,096 bytes, SHA-256
+  `1C62C702EC8A28CFBEEAAA96C7642DAA6D7B0120C306349C9596D8AC77BB1B8F`,
+  Authenticode `NotSigned`. Release is 40,960 bytes, SHA-256
+  `39BF019DC82C49639EF1977E0742168AC067005F4C7FE4257DA0DE70BD3E544C`,
+  Authenticode `NotSigned`.
+- **Rejected/intermediate checks:** An unsupported `-AsJson` detector option
+  failed without mutation. One identity-collection one-liner had a parse error.
+  One final manifest recheck one-liner also had a `foreach` spacing parse error;
+  the corrected validator was rerun.
+  The restored orchestration guard first rejected its outdated source-order
+  regex, then exposed historical checkout-SHA/Git-blob representation and the
+  packaging-only INF boundary; each issue was corrected without reducing Full
+  inspection. Earlier intermediate binaries/logs are not accepted final
+  evidence.
+- **Artifacts:** Final accepted logs remain ignored under `artifacts/logs/`,
+  including compile logs `runtime-remediation-compile-{Debug,Release}-*`,
+  matrices `runtime-instrumentation-matrix-{Debug,Release}-*`, final driver and
+  solution logs `runtime-remediation-final-{driver,solution}-*`, guard/model/
+  safety logs `runtime-remediation-{guard-*,pure-model,repository-safety}-*`,
+  binary inspection, target/request absence, and containment logs. Generated
+  SYS/OBJ/LIB/PDB/TMH outputs remain ignored under `artifacts/`.
+- **Safety:** No signing, certificate/key creation, packaging, Driver Store
+  staging, installation, loading, trace-session registration/start, service/
+  registry/verifier/boot mutation, device query, USB/HID/XUSB/controller/Chatpad
+  interaction, target discovery/open, request formatting/reuse/send/completion/
+  cancellation, protocol traffic, keyboard injection, Windows mutation, or
+  hardware action occurred. Network access is reserved for the final Git push.
+- **Commit/push:** Expected commit subject
+  `driver: remediate offline runtime instrumentation`; final hash and pushed
+  upstream are verified after commit.
+- **Remaining limitation / next task:** This is offline compile/static evidence,
+  not runtime proof. Perform an independent read-only audit of the final
+  remediation commit, manifest, retained ignored evidence, binary identities,
+  containing commit, and clean synchronized Git state before considering any
+  later gate.

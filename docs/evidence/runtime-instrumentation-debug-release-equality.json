@@ -1,0 +1,67 @@
+{
+  "schema_version": "chatpad-runtime-instrumentation-debug-release-equality-v1",
+  "provider_guid": "{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}",
+  "trace_schema_version": 1,
+  "semantic_event_count": 73,
+  "debug": {
+    "project_configuration": "Debug|x64",
+    "wpp_enabled": true,
+    "scan_configuration": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h",
+    "build_log": "artifacts/logs/runtime-remediation-final-driver-Debug-20260701T224455Z.log",
+    "generated_metadata": [
+      {
+        "path": "artifacts/obj/x64/Debug/ChatpadFilter/device.tmh",
+        "size": 225359,
+        "sha256": "82650BDD50E7442C4CB540843F2E929609AA5E8C76A36A09A8713EBBEAB074CC"
+      },
+      {
+        "path": "artifacts/obj/x64/Debug/ChatpadFilter/driver.tmh",
+        "size": 82152,
+        "sha256": "F63E4BA7B3811AEC7BB33F12C722CE89B9AD64CD291A512918CBC9364937723D"
+      },
+      {
+        "path": "artifacts/obj/x64/Debug/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.tmh",
+        "size": 68701,
+        "sha256": "1F45428AEA53975FCB127A2CFC9E4156BC89293CFB06CCCAEAE474CA7237729D"
+      }
+    ]
+  },
+  "release": {
+    "project_configuration": "Release|x64",
+    "wpp_enabled": true,
+    "scan_configuration": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h",
+    "build_log": "artifacts/logs/runtime-remediation-final-driver-Release-20260701T224459Z.log",
+    "generated_metadata": [
+      {
+        "path": "artifacts/obj/x64/Release/ChatpadFilter/device.tmh",
+        "size": 225359,
+        "sha256": "82650BDD50E7442C4CB540843F2E929609AA5E8C76A36A09A8713EBBEAB074CC"
+      },
+      {
+        "path": "artifacts/obj/x64/Release/ChatpadFilter/driver.tmh",
+        "size": 82152,
+        "sha256": "F63E4BA7B3811AEC7BB33F12C722CE89B9AD64CD291A512918CBC9364937723D"
+      },
+      {
+        "path": "artifacts/obj/x64/Release/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.tmh",
+        "size": 68701,
+        "sha256": "1F45428AEA53975FCB127A2CFC9E4156BC89293CFB06CCCAEAE474CA7237729D"
+      }
+    ]
+  },
+  "comparison": {
+    "provider_guid_equal": true,
+    "trace_schema_version_equal": true,
+    "all_73_semantic_ids_equal": true,
+    "all_73_semantic_names_equal": true,
+    "keyword_mapping_equal": true,
+    "actual_source_site_set_equal": true,
+    "required_fields_equal": true,
+    "generated_device_metadata_equal": true,
+    "generated_driver_metadata_equal": true,
+    "generated_owner_metadata_equal": true
+  },
+  "derivation": "Debug and Release project nodes were inspected independently. Each configuration generated its own WPP metadata under its own object root and its own build log. Exact generated metadata hashes are equal across configurations; the shared scan configuration independently binds each configuration to the tracked 73-event catalogue, keyword map, site inventory, and required fields.",
+  "limitations": "This is offline static configuration and generated-metadata equality, not runtime ETL evidence.",
+  "result": "PASS"
+}

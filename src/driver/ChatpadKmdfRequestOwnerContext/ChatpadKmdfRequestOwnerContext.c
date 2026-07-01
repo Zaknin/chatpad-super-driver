@@ -68,6 +68,18 @@ C_ASSERT(CHATPAD_KMDF_REQUEST_OWNER_STORAGE_VALIDATION_SIGNATURE !=
     (CHATPAD_KMDF_REQUEST_OWNER_INIT_MODEL_READY | \
      CHATPAD_KMDF_REQUEST_OWNER_INIT_FAULTED)
 
+static uint64_t
+ChatpadKmdfNextOwnerTraceSequence(
+    ChatpadKmdfActivationRequestOwner *owner
+    )
+{
+    if (owner == NULL) {
+        return 0u;
+    }
+    owner->DiagnosticTraceSequence += 1u;
+    return owner->DiagnosticTraceSequence;
+}
+
 static void
 ChatpadKmdfTraceOwnerEvent(
     ChatpadKmdfActivationRequestOwner *owner,
@@ -84,7 +96,7 @@ ChatpadKmdfTraceOwnerEvent(
     uint64_t sequence;
 
     attemptId = owner != NULL ? owner->DiagnosticAttemptId : 0u;
-    sequence = ChatpadRuntimeNextOwnerSequence(owner);
+    sequence = ChatpadKmdfNextOwnerTraceSequence(owner);
     if (flags == CHATPAD_TRACE_CLEANUP) {
         ChatpadTrace(level, CHATPAD_TRACE_CLEANUP,
             "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X Stage=%lu Data0=%lu Data1=%lu",
@@ -123,14 +135,18 @@ ChatpadKmdfTraceOwnerSnapshot(
     )
 {
     ChatpadRuntimeObjectSnapshot snapshot;
+    uint64_t attemptId;
+    uint64_t sequence;
 
     snapshot = ChatpadRuntimeCaptureObjectSnapshot(owner, structuralReadyResult);
+    attemptId = owner != NULL ? owner->DiagnosticAttemptId : 0u;
+    sequence = ChatpadKmdfNextOwnerTraceSequence(owner);
     if (flags == CHATPAD_TRACE_CLEANUP) {
         ChatpadTrace(level, CHATPAD_TRACE_CLEANUP,
             "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X BookkeepingLockPresent=%u ReusableRequestPresent=%u OutboundMemoryPresent=%u InboundMemoryPresent=%u OwnerReady=%u Faulted=%u ObjectGraphComplete=%u InitializationMask=0x%08X StructuralReadyResult=%lu",
             (ULONG)eventId, ChatpadRuntimeTraceEventName(eventId),
-            (unsigned long long)(owner != NULL ? owner->DiagnosticAttemptId : 0u),
-            (unsigned long long)ChatpadRuntimeNextOwnerSequence(owner),
+            (unsigned long long)attemptId,
+            (unsigned long long)sequence,
             CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION,
             (ULONG)ChatpadRuntimeClassifyStatus(status), (ULONG)status,
             (unsigned int)snapshot.BookkeepingLockPresent,
@@ -146,8 +162,8 @@ ChatpadKmdfTraceOwnerSnapshot(
         ChatpadTrace(level, CHATPAD_TRACE_ORCHESTRATION,
             "EventId=%lu EventName=%s AttemptId=%I64u Sequence=%I64u SchemaVersion=%lu StatusClass=%lu NtStatus=0x%08X BookkeepingLockPresent=%u ReusableRequestPresent=%u OutboundMemoryPresent=%u InboundMemoryPresent=%u OwnerReady=%u Faulted=%u ObjectGraphComplete=%u InitializationMask=0x%08X StructuralReadyResult=%lu",
             (ULONG)eventId, ChatpadRuntimeTraceEventName(eventId),
-            (unsigned long long)(owner != NULL ? owner->DiagnosticAttemptId : 0u),
-            (unsigned long long)ChatpadRuntimeNextOwnerSequence(owner),
+            (unsigned long long)attemptId,
+            (unsigned long long)sequence,
             CHATPAD_RUNTIME_TRACE_SCHEMA_VERSION,
             (ULONG)ChatpadRuntimeClassifyStatus(status), (ULONG)status,
             (unsigned int)snapshot.BookkeepingLockPresent,

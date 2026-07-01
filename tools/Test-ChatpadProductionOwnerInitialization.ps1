@@ -552,24 +552,43 @@ if ($InspectionMode -eq 'Full') {
         }
     }
 
-    $driverArtifact = $manifest.artifacts.drivers.$Configuration
     $driverItem = Get-Item -LiteralPath $driverPath
     $driverHash = (Get-FileHash -LiteralPath $driverPath -Algorithm SHA256).Hash
     $runtimeInstrumentationPresent =
         (Test-Path -LiteralPath (Join-Path $filterRoot 'ChatpadRuntimeDiagnostics.h') -PathType Leaf) -and
         $productionText -match 'ChatpadTrace'
-    if (-not $runtimeInstrumentationPresent -and
-        ($driverItem.Length -ne [long]$driverArtifact.size -or
-        $driverHash -cne [string]$driverArtifact.sha256)) {
-        throw 'Final driver size or SHA-256 does not match the manifest baseline.'
-    }
-    if ($runtimeInstrumentationPresent -and
-        ($driverItem.Length -le 0 -or $driverHash -notmatch '^[0-9A-F]{64}$')) {
-        throw 'Instrumented final driver size or SHA-256 evidence is invalid.'
+    if ($runtimeInstrumentationPresent) {
+        $runtimeManifestPath = Join-Path $repoRoot 'docs\evidence\runtime-instrumentation-implementation-manifest.json'
+        if (-not (Test-Path -LiteralPath $runtimeManifestPath -PathType Leaf)) {
+            throw 'Runtime instrumentation manifest is required for instrumented binary validation.'
+        }
+        $runtimeManifest = Get-Content -LiteralPath $runtimeManifestPath -Raw | ConvertFrom-Json
+        $binaryEvidenceId = '{0}-binary-identity' -f $Configuration.ToLowerInvariant()
+        $binaryEvidence = @($runtimeManifest.evidence_entries | Where-Object {
+            [string]$_.id -ceq $binaryEvidenceId
+        })
+        if ($binaryEvidence.Count -ne 1 -or
+            [string]$binaryEvidence[0].configuration -cne $Configuration -or
+            [string]$binaryEvidence[0].result -cne 'PASS' -or
+            [int]$binaryEvidence[0].exit_code -ne 0 -or
+            [string]$binaryEvidence[0].sha256 -notmatch '^[0-9A-F]{64}$' -or
+            [long]$binaryEvidence[0].size -le 0 -or
+            $driverItem.Length -ne [long]$binaryEvidence[0].size -or
+            $driverHash -cne [string]$binaryEvidence[0].sha256) {
+            throw 'Instrumented driver identity is not hash-bound to its configuration evidence entry.'
+        }
+        $expectedAuthenticode = 'NotSigned'
+    } else {
+        $driverArtifact = $manifest.artifacts.drivers.$Configuration
+        if ($driverItem.Length -ne [long]$driverArtifact.size -or
+            $driverHash -cne [string]$driverArtifact.sha256) {
+            throw 'Final driver size or SHA-256 does not match the manifest baseline.'
+        }
+        $expectedAuthenticode = [string]$driverArtifact.authenticode
     }
     $signature = Get-AuthenticodeSignature -LiteralPath $driverPath
     if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::NotSigned -or
-        $signature.Status.ToString() -cne [string]$driverArtifact.authenticode) {
+        $signature.Status.ToString() -cne $expectedAuthenticode) {
         throw "Driver signature state is invalid: $($signature.Status)"
     }
 
