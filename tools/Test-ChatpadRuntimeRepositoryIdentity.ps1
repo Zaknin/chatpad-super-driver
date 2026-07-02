@@ -4,7 +4,7 @@ param(
     [string]$CurrentReadinessImplementationCommit,
     [Parameter(Mandatory)]
     [string]$CurrentReadinessFinalizationCommit,
-    [string]$ApprovedReadinessBranch = 'feature/runtime-bringup-readiness-enforcement-remediation',
+    [string]$ApprovedReadinessBranch = 'feature/runtime-bringup-readiness-validator-totality-remediation',
     [string]$ApprovedRepositoryRoot = 'C:\Dev\chatpad-super-driver'
 )
 

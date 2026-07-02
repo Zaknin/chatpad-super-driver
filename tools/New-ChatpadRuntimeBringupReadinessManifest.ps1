@@ -18,7 +18,7 @@ function New-Entry($Id,$Path,$State,$Result){
     [pscustomobject][ordered]@{id=$Id;relative_path=$Path.Replace('\','/');state=$State;byte_size=[long]$item.Length;sha256=(Get-FileHash $full -Algorithm SHA256).Hash;result=$Result;evidence_classification='synthetic'}
 }
 
-$base='2bb08fee77125f6b5bed2774c085ce57fe192752'
+$base='66de13033e4ba5f67465829c25c0e6a158516044'
 $paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)
 $paths=@($paths|Where-Object{$_-and$_-ne$OutputPath}|Sort-Object -Unique)
 $entries=[Collections.Generic.List[object]]::new()
@@ -35,7 +35,7 @@ $manifest=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED'
     blocker='BLOCKED_NOT_IMPLEMENTED'
     repository=[pscustomobject][ordered]@{
-        branch='feature/runtime-bringup-readiness-enforcement-remediation'
+        branch='feature/runtime-bringup-readiness-validator-totality-remediation'
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
         prior_readiness_implementation_commit='0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea'
         prior_readiness_finalization_commit='2bb08fee77125f6b5bed2774c085ce57fe192752'
@@ -50,7 +50,8 @@ $manifest=[pscustomobject][ordered]@{
     readiness=[pscustomobject][ordered]@{
         fixture_count=[int]$suite.fixture_count;assertion_count=[int]$suite.assertion_count;category_totals=@($suite.category_totals)
         unrelated_exception_false_positive_count=0;empty_operation_install_pass_count=0;install_plan_crash_count=0
-        invalid_schema_transition_acceptance_count=0;unlinked_stop_condition_count=0
+        invalid_schema_transition_acceptance_count=[int]$suite.invalid_schema_transition_acceptance_count;unlinked_stop_condition_count=[int]$suite.unlinked_stop_condition_count
+        uncontrolled_exception_count=[int]$suite.uncontrolled_exception_count;property_not_found_exception_count=[int]$suite.property_not_found_exception_count;strictmode_exception_count=[int]$suite.strictmode_exception_count
         psscriptanalyzer_status=$pssaResult;runtime_evidence_schema='chatpad-runtime-evidence-schema-v3'
         exact_instance_binding_operations=0;exact_instance_restoration_operations=0;broad_approved_install_operations=0;broad_approved_rollback_operations=0
     }

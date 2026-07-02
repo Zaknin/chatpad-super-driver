@@ -6,8 +6,13 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 
 if ($HostStatePath) {
-    $state = Read-ChatpadJson $HostStatePath
-    Test-ChatpadHostStateContract -State $state | ConvertTo-Json -Depth 12
+    try {
+        $state = Read-ChatpadJson $HostStatePath
+        Test-ChatpadHostStateContract -State $state | ConvertTo-Json -Depth 12
+    } catch {
+        New-ChatpadValidatorInternalError -Check host-preflight -Exception $_.Exception | ConvertTo-Json -Depth 12
+        exit 1
+    }
     exit 0
 }
 
