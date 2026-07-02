@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Separate runtime-observation shape from live evaluation and account every assertion
+
+**Decision:** Runtime-observation record structure is validated separately from
+runtime evaluation. Only source-classification `live`, runtime-evaluation mode,
+non-synthetic provenance, approved producer/script identity, coherent
+session/host/timestamps, condition-specific evidence, and a matching existing
+artifact size and SHA-256 may reach an evaluated runtime result. Synthetic,
+sample, planned, unknown, or missing provenance cannot produce runtime PASS.
+All suite assertions belong to first-class fixture records; aggregate and
+category totals are derived from those records and independently recomputed by
+the manifest validator.
+
+**Rationale:** The independent stop-linkage audit showed that
+`evidence_available=true` and `triggered=false` could PASS without provenance,
+including explicitly synthetic input. It also found 140 fixture records with
+915 assertions while six off-ledger harness checks produced the reported 921,
+so category totals could not independently reconcile.
+
+**Alternatives rejected:** Treating `evidence_available` as proof, accepting a
+generic payload for every condition, marking fixtures live, combining
+structural validation with runtime authorization, retaining an implicit
+`915 + 6` accounting rule, or trusting manifest aggregate numbers without
+enumerating the bound suite records.
+
+**Consequences:** Five condition-specific evidence contracts and permanent
+missing/synthetic provenance matrices are required. Structurally valid
+synthetic records may pass only the shape validator and remain blocked by the
+runtime evaluator. Harness checks are normal one-assertion fixtures. Record,
+category, and aggregate arithmetic must match exactly or fail with
+`ASSERTION_ACCOUNTING_INVALID`. Live readiness remains
+`BLOCKED_NOT_IMPLEMENTED`.
+
 ## 2026-07-02 - Centralize final operation lifecycle and evidence inventory truth
 
 **Decision:** Operation lifecycle validity is enforced by the shared

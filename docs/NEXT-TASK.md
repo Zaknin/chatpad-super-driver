@@ -3,55 +3,66 @@
 ## Exact current state
 
 - Required branch:
-  `feature/runtime-bringup-stop-linkage-final-remediation`.
+  `feature/runtime-bringup-observer-provenance-accounting-remediation`.
 - Required starting point: the evidence-finalization commit containing this
-  file, subject `docs: finalize stop-linkage readiness evidence`.
+  file, subject `docs: finalize observer provenance and accounting evidence`.
 - Required direct parent:
-  `a810d8ba3438a08cfa4742e53be61f64be5aa58e`.
-- Required prior finalization:
-  `30da5003aba75ef0f079c9a8c2c90df3768601d5`.
+  `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`.
+- Required implementation chain:
+  `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb` →
+  `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`.
+- Prior finalization:
+  `9b5c8f3b4ac8c0dc0453da693266a82fea636ec0`.
 - Framework status: `PASS`.
 - Live installation readiness: `BLOCKED`.
 - Blocker: `BLOCKED_NOT_IMPLEMENTED`.
-- Suite: 140 fixtures, 921 assertions, 15 validators, 180 malformed-input
-  cases, and zero uncontrolled, PropertyNotFound, StrictMode, lifecycle,
-  missing-start, linkage, or nested-array acceptance defects.
+- Suite: 304 first-class fixture records and 1,724 assertions.
+- Accounting: record/category counts `304/304`; record/category assertions
+  `1,724/1,724`; unassigned, off-ledger, duplicate-counted, and reconciliation
+  defects `0`.
+- Runtime observers: missing-provenance PASS `0`; synthetic-source PASS `0`;
+  unsupported runtime-observer PASS `0`; live observations `0`.
 - Stop linkage: 20 conditions, 20 unique IDs, five runtime-observer links,
-  unlinked `0`, unknown IDs `0`, malformed linkage `0`.
+  and zero unlinked, unknown, malformed, or nested-array acceptance defects.
 - PowerShell: 41 `.ps1`, 2 `.psm1`, 43 total; all parse with zero errors.
 - Driver state remains unsigned, unpackaged, unstaged, uninstalled, unloaded,
   untraced, unqueried, and unexecuted.
 
 ## Next recommended objective
 
-Perform an independent, read-only audit of the stop-linkage implementation and
-evidence-finalization commits.
+Perform an independent, read-only audit of both runtime-observer provenance and
+assertion-accounting implementation commits and the evidence-finalization
+commit.
 
 The audit must directly:
 
-- inspect the runtime type and nesting shape of every linkage value;
-- verify canonical flat repository-relative path arrays;
-- rerun the exact double-wrapped and three-level nested-array rejection probes;
-- verify all five runtime-observer IDs link only to
-  `tools/Test-ChatpadRuntimeObservation.ps1`;
-- verify missing, scalar, empty, null, non-string, traversal, wildcard,
-  nonexistent, duplicate, unknown, and misclassified linkage rejection;
-- confirm the finalization commit changed no executable logic;
-- verify current-state and next-task documentation;
-- confirm framework `PASS`, live readiness `BLOCKED`, and blocker
-  `BLOCKED_NOT_IMPLEMENTED`.
+- test all five runtime-observer IDs with `evidence_available=true` and missing
+  provenance;
+- test all five IDs with `source_classification=synthetic`;
+- inspect session, host, producer, observer path, timestamps, freshness,
+  artifact identity/path/size/SHA-256, collection result, evidence type, and
+  condition-specific payload enforcement;
+- confirm structural synthetic PASS is separate from runtime evaluation and
+  cannot authorize continuation;
+- confirm no live observation is claimed or performed;
+- independently sum every fixture record assertion and every category;
+- prove both record and category sums equal the reported totals;
+- verify no assertion is off-ledger, unassigned, or duplicate-counted;
+- preserve the flat stop-linkage and nested-array rejection contracts;
+- verify the finalization commit changes no executable file;
+- confirm live readiness remains `BLOCKED`.
 
 ## Preconditions
 
-1. Verify exact branch, full HEAD, direct parent, subject, upstream equality,
+1. Verify the exact branch, full HEAD, direct parent, upstream equality,
    ahead/behind `0/0`, and clean worktree.
-2. Supply the full finalization HEAD and implementation commit
-   `a810d8ba3438a08cfa4742e53be61f64be5aa58e` to repository identity
-   validation.
-3. Rehash the accepted baseline manifest and both frozen SYS files.
-4. Verify the finalization diff changes no `.ps1`, `.psm1`, executable
-   schema, canonical policy data, tests, validators, generators, or manifest
-   validator.
+2. Supply the full finalization HEAD and final implementation commit
+   `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10` to repository identity
+   validation; verify its direct parent is
+   `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb`.
+3. Rehash the accepted baseline manifest, both frozen SYS files, the finalized
+   manifest, and all manifest entries.
+4. Inspect complete call paths before executing only offline synthetic modes.
 
 ## Safety restrictions
 
@@ -65,19 +76,18 @@ The audit must directly:
 
 ## Acceptance criteria
 
-- Canonical register result is `PASS` / `STOP_LINKAGE_VALID`.
-- Stop-condition count and unique count are both 20.
-- Runtime-observer linkage count is five; unlinked, unknown, and malformed
-  counts are zero.
-- Nested-array acceptance and malformed-linkage exception counts are zero.
-- All five runtime-only observations remain blocked without runtime evidence.
-- Full suite and manifest validation pass with exact derived totals.
-- No executable finalization changes or prohibited operations occurred.
-- Live readiness remains `BLOCKED`.
+- All five missing-provenance probes produce zero PASS results.
+- All five synthetic-source probes produce zero PASS results.
+- Unsupported runtime-observer PASS and live-observation counts are zero.
+- Record count equals category record sum.
+- Record assertion sum equals category assertion sum and reported total.
+- Accounting, observer provenance, manifest, lifecycle, totality, and
+  stop-linkage results pass.
+- Finalization executable changes and prohibited operations are zero.
+- Live readiness remains `BLOCKED` with `BLOCKED_NOT_IMPLEMENTED`.
 
 ## Inspect first
 
-- `docs/evidence/runtime-bringup-stop-conditions.json`
 - `tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1`
 - `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
 - `tools/Test-ChatpadRuntimeObservation.ps1`

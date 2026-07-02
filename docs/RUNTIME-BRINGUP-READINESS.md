@@ -18,16 +18,109 @@ The third independent audit found remaining uncontrolled exception paths and
 unsupported lifecycle-transition acceptances. The validator-totality
 remediation is offline-only and keeps the live gate closed.
 
-## Stop-linkage final remediation status
+## Runtime-observer provenance and assertion-accounting remediation status
+
+The independent stop-linkage audit accepted the flat linkage remediation but
+returned `AUDIT FAIL` for two remaining defects. First, each of the five
+runtime observers could return PASS when `evidence_available=true` and
+`triggered=false` without source, session, host, timestamp, producer, artifact,
+or condition-specific provenance; explicitly synthetic evidence also passed.
+Second, the suite reported 921 assertions from 915 fixture assertions plus six
+separately counted harness checks, while category totals covered only the 915
+fixture assertions.
+
+- Current branch:
+  `feature/runtime-bringup-observer-provenance-accounting-remediation`.
+- Primary implementation commit:
+  `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb`.
+- Corrective no-BOM generator commit:
+  `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`.
+- `Test-ChatpadRuntimeObservationRecordShape` validates record structure
+  without granting runtime authorization. Closed source classifications are
+  `live`, `synthetic`, `sample`, `planned`, and `unknown`; closed observation
+  modes are runtime evaluation, contract-only fixture validation, and
+  synthetic negative testing.
+- Runtime provenance requires observation/condition/session/host IDs, approved
+  producer `ChatpadRuntimeObservation/v1`, exact observer path
+  `tools/Test-ChatpadRuntimeObservation.ps1`, ordered and fresh timestamps,
+  a positive age policy, artifact ID/path/size/SHA-256, collection result,
+  matching session/host/condition IDs, and the condition-specific evidence
+  type and payload.
+- A runtime-evaluation PASS additionally requires source `live`, a false
+  synthetic marker, and an existing repository-contained runtime-evidence file
+  whose actual size and SHA-256 match the record. No live record or artifact
+  was created by this remediation.
+- The five condition-specific evidence types are
+  `device-inventory-diff`, `driver-service-transition`,
+  `code-integrity-event`, `setupapi-match-analysis`, and
+  `input-behavior-observation`. A generic nonempty object is rejected.
+- Five missing-provenance probes and five explicit synthetic-source probes
+  produce zero PASS results. The complete 140-case observer provenance matrix
+  has zero unsupported runtime PASS results and zero uncontrolled exceptions.
+  Live observations evaluated: `0`.
+- The six harness checks are now ordinary one-assertion fixture records.
+  There is no separate assertion counter. Record and category totals are
+  calculated from fixture records and independently recomputed from the bound
+  suite evidence by the manifest validator.
+- Final accounting is 304 fixture/result records and 1,724 assertions:
+  record count `304`, category record sum `304`, record assertion sum `1,724`,
+  and category assertion sum `1,724`. Unassigned, off-ledger,
+  duplicate-counted, and category-reconciliation defect counts are all `0`.
+- Framework status remains `PASS`; live readiness remains `BLOCKED`; blocker
+  remains `BLOCKED_NOT_IMPLEMENTED`. Exact binding, exact restoration, broad
+  approved install, and broad approved rollback operation counts remain zero.
+- PSScriptAnalyzer remains `SKIPPED_UNAVAILABLE`.
+
+### Final assertion ledger
+
+| Category | Records | Assertions |
+| --- | ---: | ---: |
+| accepted-baseline-identity | 1 | 4 |
+| assertion-accounting-negative | 18 | 108 |
+| authorization | 1 | 4 |
+| binary-identity | 1 | 5 |
+| collection-shape | 10 | 50 |
+| collection-shape-structural | 10 | 50 |
+| committed-sample | 1 | 4 |
+| current-driver | 1 | 5 |
+| event-log | 1 | 5 |
+| evidence | 2 | 10 |
+| harness-self-test | 6 | 6 |
+| host | 1 | 5 |
+| install | 2 | 10 |
+| nested-array-rejection | 2 | 12 |
+| nested-quoting | 1 | 4 |
+| operation | 2 | 10 |
+| operation-lifecycle | 32 | 181 |
+| package-semantic | 1 | 6 |
+| powershell-inventory | 1 | 14 |
+| reconciliation | 1 | 5 |
+| rollback | 2 | 10 |
+| rollback-totality | 12 | 60 |
+| runtime-observer-linkage | 6 | 26 |
+| runtime-observer-provenance | 140 | 700 |
+| runtime-observer-shape | 5 | 20 |
+| schema-semantic | 4 | 20 |
+| schema-structural | 1 | 4 |
+| semantic-transition | 8 | 40 |
+| signing | 2 | 10 |
+| stop-condition-linkage | 14 | 82 |
+| target | 1 | 5 |
+| target-totality | 12 | 60 |
+| validator-totality | 1 | 184 |
+| wpp | 1 | 5 |
+| **Total** | **304** | **1,724** |
+
+## Prior stop-linkage final remediation status
 
 The fifth independent audit confirmed the operation-lifecycle, committed
 sample, and PowerShell inventory repairs, then found two residual defects:
 stop-condition linkage arrays were double-wrapped at the validator call site,
 and this document still named an older remediation audit as the next task.
 
-- Current branch:
+- Prior branch:
   `feature/runtime-bringup-stop-linkage-final-remediation`.
-- Current implementation commit:
+- Prior implementation commit:
   `a810d8ba3438a08cfa4742e53be61f64be5aa58e`.
 - Framework validation is `PASS`; live installation readiness is `BLOCKED`;
   blocker is `BLOCKED_NOT_IMPLEMENTED`.
@@ -90,7 +183,7 @@ and this document still named an older remediation audit as the next task.
   `VALIDATOR_INTERNAL_ERROR` boundary with sanitized exception diagnostics.
   Normal malformed input is rejected by explicit contract logic, not by the
   boundary.
-- The final offline suite contains 140 fixtures and 921 assertions. The
+- The prior offline suite reported 140 fixtures and 921 assertions. The
   malformed-input matrix covers 15 public validators and 180 cases.
   Uncontrolled exceptions:
   `0`; `PropertyNotFoundException` count: `0`; StrictMode exception count:
@@ -426,10 +519,14 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only audit of the stop-linkage implementation commit and its
-evidence-finalization commit. The audit must inspect the runtime type and shape
-of every linkage value, verify canonical flat arrays, rerun the exact
-double-wrapped-array rejection probe, verify all five runtime-observer links,
-confirm the finalization commit changed no executable files, verify this
-next-task statement, and confirm authoritative live readiness remains
-`BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED`.
+Independent read-only audit of runtime-observer provenance and
+assertion-accounting implementation commits
+`b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb` and
+`ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`, plus the
+evidence-finalization commit. The audit must test all five observer IDs with missing provenance and
+synthetic source classification; inspect session/host/artifact enforcement;
+confirm no live observation is claimed; independently sum every fixture
+record and category; prove both assertion sums equal 1,724; verify the
+finalization commit changed no executable files; preserve stop-linkage
+rejection; and confirm authoritative live readiness remains `BLOCKED` with
+blocker `BLOCKED_NOT_IMPLEMENTED`.

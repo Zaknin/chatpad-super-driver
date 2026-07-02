@@ -1,15 +1,15 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-02T15:51:36.8827511Z",
+    "generated_utc":  "2026-07-02T19:08:37.0080286Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
     "blocker":  "BLOCKED_NOT_IMPLEMENTED",
     "repository":  {
-                       "branch":  "feature/runtime-bringup-stop-linkage-final-remediation",
+                       "branch":  "feature/runtime-bringup-observer-provenance-accounting-remediation",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
-                       "prior_readiness_implementation_commit":  "4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6",
-                       "prior_readiness_finalization_commit":  "30da5003aba75ef0f079c9a8c2c90df3768601d5",
-                       "current_readiness_implementation_commit":  "a810d8ba3438a08cfa4742e53be61f64be5aa58e",
+                       "prior_readiness_implementation_commit":  "a810d8ba3438a08cfa4742e53be61f64be5aa58e",
+                       "prior_readiness_finalization_commit":  "9b5c8f3b4ac8c0dc0453da693266a82fea636ec0",
+                       "current_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -21,163 +21,190 @@
                                       "release_sys_sha256":  "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
                                   },
     "readiness":  {
-                      "fixture_count":  140,
-                      "assertion_count":  921,
+                      "fixture_count":  304,
+                      "fixture_assertion_sum":  1724,
+                      "harness_result_record_count":  6,
+                      "harness_assertion_sum":  6,
+                      "total_result_record_count":  304,
+                      "assertion_count":  1724,
+                      "record_assertion_sum":  1724,
+                      "category_record_sum":  304,
+                      "category_assertion_sum":  1724,
+                      "assertion_accounting_result":  "PASS",
+                      "unassigned_assertion_count":  0,
+                      "off_ledger_assertion_count":  0,
+                      "duplicate_counted_assertion_count":  0,
+                      "category_reconciliation_defect_count":  0,
                       "category_totals":  [
                                               {
                                                   "category":  "accepted-baseline-identity",
-                                                  "fixtures":  1,
-                                                  "assertions":  4
+                                                  "record_count":  1,
+                                                  "assertion_count":  4
+                                              },
+                                              {
+                                                  "category":  "assertion-accounting-negative",
+                                                  "record_count":  18,
+                                                  "assertion_count":  108
                                               },
                                               {
                                                   "category":  "authorization",
-                                                  "fixtures":  1,
-                                                  "assertions":  4
+                                                  "record_count":  1,
+                                                  "assertion_count":  4
                                               },
                                               {
                                                   "category":  "binary-identity",
-                                                  "fixtures":  1,
-                                                  "assertions":  5
+                                                  "record_count":  1,
+                                                  "assertion_count":  5
                                               },
                                               {
                                                   "category":  "collection-shape",
-                                                  "fixtures":  10,
-                                                  "assertions":  50
+                                                  "record_count":  10,
+                                                  "assertion_count":  50
                                               },
                                               {
                                                   "category":  "collection-shape-structural",
-                                                  "fixtures":  10,
-                                                  "assertions":  50
+                                                  "record_count":  10,
+                                                  "assertion_count":  50
                                               },
                                               {
                                                   "category":  "committed-sample",
-                                                  "fixtures":  1,
-                                                  "assertions":  4
+                                                  "record_count":  1,
+                                                  "assertion_count":  4
                                               },
                                               {
                                                   "category":  "current-driver",
-                                                  "fixtures":  1,
-                                                  "assertions":  5
+                                                  "record_count":  1,
+                                                  "assertion_count":  5
                                               },
                                               {
                                                   "category":  "event-log",
-                                                  "fixtures":  1,
-                                                  "assertions":  5
+                                                  "record_count":  1,
+                                                  "assertion_count":  5
                                               },
                                               {
                                                   "category":  "evidence",
-                                                  "fixtures":  2,
-                                                  "assertions":  10
+                                                  "record_count":  2,
+                                                  "assertion_count":  10
+                                              },
+                                              {
+                                                  "category":  "harness-self-test",
+                                                  "record_count":  6,
+                                                  "assertion_count":  6
                                               },
                                               {
                                                   "category":  "host",
-                                                  "fixtures":  1,
-                                                  "assertions":  5
+                                                  "record_count":  1,
+                                                  "assertion_count":  5
                                               },
                                               {
                                                   "category":  "install",
-                                                  "fixtures":  2,
-                                                  "assertions":  10
+                                                  "record_count":  2,
+                                                  "assertion_count":  10
                                               },
                                               {
                                                   "category":  "nested-array-rejection",
-                                                  "fixtures":  2,
-                                                  "assertions":  12
+                                                  "record_count":  2,
+                                                  "assertion_count":  12
                                               },
                                               {
                                                   "category":  "nested-quoting",
-                                                  "fixtures":  1,
-                                                  "assertions":  4
+                                                  "record_count":  1,
+                                                  "assertion_count":  4
                                               },
                                               {
                                                   "category":  "operation",
-                                                  "fixtures":  2,
-                                                  "assertions":  10
+                                                  "record_count":  2,
+                                                  "assertion_count":  10
                                               },
                                               {
                                                   "category":  "operation-lifecycle",
-                                                  "fixtures":  32,
-                                                  "assertions":  181
+                                                  "record_count":  32,
+                                                  "assertion_count":  181
                                               },
                                               {
                                                   "category":  "package-semantic",
-                                                  "fixtures":  1,
-                                                  "assertions":  6
+                                                  "record_count":  1,
+                                                  "assertion_count":  6
                                               },
                                               {
                                                   "category":  "powershell-inventory",
-                                                  "fixtures":  1,
-                                                  "assertions":  14
+                                                  "record_count":  1,
+                                                  "assertion_count":  14
                                               },
                                               {
                                                   "category":  "reconciliation",
-                                                  "fixtures":  1,
-                                                  "assertions":  5
+                                                  "record_count":  1,
+                                                  "assertion_count":  5
                                               },
                                               {
                                                   "category":  "rollback",
-                                                  "fixtures":  2,
-                                                  "assertions":  10
+                                                  "record_count":  2,
+                                                  "assertion_count":  10
                                               },
                                               {
                                                   "category":  "rollback-totality",
-                                                  "fixtures":  12,
-                                                  "assertions":  60
-                                              },
-                                              {
-                                                  "category":  "runtime-observer",
-                                                  "fixtures":  5,
-                                                  "assertions":  25
+                                                  "record_count":  12,
+                                                  "assertion_count":  60
                                               },
                                               {
                                                   "category":  "runtime-observer-linkage",
-                                                  "fixtures":  6,
-                                                  "assertions":  26
+                                                  "record_count":  6,
+                                                  "assertion_count":  26
+                                              },
+                                              {
+                                                  "category":  "runtime-observer-provenance",
+                                                  "record_count":  140,
+                                                  "assertion_count":  700
+                                              },
+                                              {
+                                                  "category":  "runtime-observer-shape",
+                                                  "record_count":  5,
+                                                  "assertion_count":  20
                                               },
                                               {
                                                   "category":  "schema-semantic",
-                                                  "fixtures":  4,
-                                                  "assertions":  20
+                                                  "record_count":  4,
+                                                  "assertion_count":  20
                                               },
                                               {
                                                   "category":  "schema-structural",
-                                                  "fixtures":  1,
-                                                  "assertions":  4
+                                                  "record_count":  1,
+                                                  "assertion_count":  4
                                               },
                                               {
                                                   "category":  "semantic-transition",
-                                                  "fixtures":  8,
-                                                  "assertions":  40
+                                                  "record_count":  8,
+                                                  "assertion_count":  40
                                               },
                                               {
                                                   "category":  "signing",
-                                                  "fixtures":  2,
-                                                  "assertions":  10
+                                                  "record_count":  2,
+                                                  "assertion_count":  10
                                               },
                                               {
                                                   "category":  "stop-condition-linkage",
-                                                  "fixtures":  14,
-                                                  "assertions":  82
+                                                  "record_count":  14,
+                                                  "assertion_count":  82
                                               },
                                               {
                                                   "category":  "target",
-                                                  "fixtures":  1,
-                                                  "assertions":  5
+                                                  "record_count":  1,
+                                                  "assertion_count":  5
                                               },
                                               {
                                                   "category":  "target-totality",
-                                                  "fixtures":  12,
-                                                  "assertions":  60
+                                                  "record_count":  12,
+                                                  "assertion_count":  60
                                               },
                                               {
                                                   "category":  "validator-totality",
-                                                  "fixtures":  1,
-                                                  "assertions":  184
+                                                  "record_count":  1,
+                                                  "assertion_count":  184
                                               },
                                               {
                                                   "category":  "wpp",
-                                                  "fixtures":  1,
-                                                  "assertions":  5
+                                                  "record_count":  1,
+                                                  "assertion_count":  5
                                               }
                                           ],
                       "unrelated_exception_false_positive_count":  0,
@@ -196,6 +223,14 @@
                       "uncontrolled_exception_count":  0,
                       "property_not_found_exception_count":  0,
                       "strictmode_exception_count":  0,
+                      "observer_provenance_contract_result":  "PASS",
+                      "missing_provenance_probe_count":  5,
+                      "missing_provenance_pass_count":  0,
+                      "synthetic_source_probe_count":  5,
+                      "synthetic_runtime_observer_pass_count":  0,
+                      "unsupported_runtime_observer_pass_count":  0,
+                      "runtime_observations_evaluated_live":  0,
+                      "runtime_observation_gates_blocked_or_unavailable":  25,
                       "malformed_input_validator_count":  15,
                       "malformed_input_case_count":  180,
                       "committed_sample_structural_validation":  "PASS",
@@ -227,11 +262,56 @@
                   },
     "entries":  [
                     {
-                        "id":  "tracked-docs-evidence-runtime-bringup-stop-conditions-json",
-                        "relative_path":  "docs/evidence/runtime-bringup-stop-conditions.json",
+                        "id":  "tracked-docs-decisions-md",
+                        "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  10173,
-                        "sha256":  "32CAD06BEDDC079286FA2397D3915897BA91681BA006AB6217BEB5893C93010B",
+                        "byte_size":  114304,
+                        "sha256":  "ACE63090B6F899790F252ED91F47C6C6728FFBC63785297B9C7A504CB047F51B",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-docs-next-task-md",
+                        "relative_path":  "docs/NEXT-TASK.md",
+                        "state":  "tracked",
+                        "byte_size":  4431,
+                        "sha256":  "DAC55927914E7895C2A82AA1B076817ABFC875AB62D3D322D8D0F253DAB40AAF",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-docs-porting-plan-md",
+                        "relative_path":  "docs/PORTING-PLAN.md",
+                        "state":  "tracked",
+                        "byte_size":  18924,
+                        "sha256":  "2AE0B269DDEED9E417C4933E0AF5B3550520EC070BAB7C9181369F487E2228E8",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-docs-project-state-md",
+                        "relative_path":  "docs/PROJECT-STATE.md",
+                        "state":  "tracked",
+                        "byte_size":  4219,
+                        "sha256":  "87247496D5C23F1898CDE0C1950198023DBC97E9FE72C16F3602A05380F8E615",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-docs-runtime-bringup-readiness-md",
+                        "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
+                        "state":  "tracked",
+                        "byte_size":  25087,
+                        "sha256":  "32F9A2851B6E39AAEF96DB4A9598CCA6BAAFBE47747EFA342E3BF0289F517C14",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-docs-worklog-md",
+                        "relative_path":  "docs/WORKLOG.md",
+                        "state":  "tracked",
+                        "byte_size":  405720,
+                        "sha256":  "BEBEC6277BD04436DBC120DFC3A9E4E2E6D780C7BDC9EBF55172C156DA36FE83",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -239,8 +319,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  7194,
-                        "sha256":  "0202028389B1B2DA04CD5389675B1D310FE1DDD7DAAD1CCE075B0639B65C2157",
+                        "byte_size":  8905,
+                        "sha256":  "791DAA01463B096BFD259D7CF12DFFE674BBC877F82E59D0E613B645C7250349",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -248,8 +328,8 @@
                         "id":  "tracked-tools-runtimebringup-chatpadruntimebringup-common-psm1",
                         "relative_path":  "tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1",
                         "state":  "tracked",
-                        "byte_size":  77127,
-                        "sha256":  "EEF7744B9C9AEFCF491611001E54B4D97683526232D921911DE41B818381DCFD",
+                        "byte_size":  91659,
+                        "sha256":  "0CBBD6C27A9C90FACD99E4637ADEB8A823BB9581A434F2B6A9D5AA5AD8BAC925",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -257,8 +337,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
                         "state":  "tracked",
-                        "byte_size":  70281,
-                        "sha256":  "1B0F7E8BB8A2EC2803011676F4A7C8341C5D851B08141435C55C59F9ECE2C082",
+                        "byte_size":  92648,
+                        "sha256":  "0C4E53DA63C25482DD709D092D9A0F8053604FD7560387FAAB599EF905EFC770",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -266,8 +346,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  4738,
-                        "sha256":  "D01F3C8E09DB06EF2D68B24081A791E2A31B863EB0982851E59AD47208C335D7",
+                        "byte_size":  9903,
+                        "sha256":  "6BF7879D67D1317D3930C14609CE4FFF9C18DA0A1801E6F723C009D47420F90A",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -275,17 +355,17 @@
                         "id":  "tracked-tools-test-chatpadruntimerepositoryidentity-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeRepositoryIdentity.ps1",
                         "state":  "tracked",
-                        "byte_size":  839,
-                        "sha256":  "9D61C2AFC3FDE5FBD80C2033E824C549B39D8A5B9FB8BC936CA85E3E79B08925",
+                        "byte_size":  851,
+                        "sha256":  "6A1346BB40D7BD97EF0DDD5A52A7023567FE9636D5D94C59B1E8CCBA9EDC43B8",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/runtime-bringup-stop-linkage-suite-post-implementation-a810d8b.json",
+                        "relative_path":  "artifacts/logs/runtime-bringup-observer-provenance-accounting-suite-post-implementation-ac0e25c.json",
                         "state":  "ignored",
-                        "byte_size":  209238,
-                        "sha256":  "9D92B07308149D9310A14B0A4ED0943FE31CCC547104321ABDF58882A7436F88",
+                        "byte_size":  470214,
+                        "sha256":  "63BBC80C60B7B7FA029FF2534070F8CC3104BD7DDBBEF17E165F29E8FEFDC633",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }

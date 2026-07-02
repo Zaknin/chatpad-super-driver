@@ -5,12 +5,20 @@
 The offline runtime instrumentation milestone is accepted and frozen at
 `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned
 `AUDIT PASS WITH LIMITATIONS`. The current branch
-`feature/runtime-bringup-stop-linkage-final-remediation` repairs the fifth
-readiness audit findings with canonical flat stop-condition linkage arrays,
-strict nested/wrong-path rejection, five verified runtime-observer links, and
-corrected continuity documentation. The retained lifecycle, committed-sample,
-PowerShell inventory, validator-totality, and blocked-install contracts remain
-covered by 140 offline fixtures with 921 assertions.
+`feature/runtime-bringup-observer-provenance-accounting-remediation` repairs
+the final stop-linkage audit findings: runtime observations no longer PASS
+from caller-supplied evidence booleans or synthetic provenance, and every
+assertion now belongs to a first-class record whose category and aggregate
+totals reconcile exactly. The retained stop-linkage, lifecycle,
+committed-sample, PowerShell inventory, validator-totality, and blocked-install
+contracts remain covered by 304 offline fixture records with 1,724 assertions.
+
+The historical stop-linkage result contained 140 fixture records with 915
+fixture assertions plus six separately counted harness assertions, producing a
+reported 921 that did not match category arithmetic. The current ledger
+contains six ordinary `harness-self-test` fixtures and reports record/category
+counts `304/304` and record/category assertion sums `1,724/1,724`, with zero
+unassigned, off-ledger, duplicate-counted, or category-reconciliation defects.
 
 Authoritative framework status is `PASS`; authoritative live installation
 readiness is `BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED`. Exact-instance
@@ -20,14 +28,19 @@ installation, loading, trace collection, event-log export, live device query,
 target/request operation, hardware access, Windows mutation, reboot, or
 production source change.
 
-Current phase: **Runtime bring-up stop-linkage final remediation -
-exact-instance binding blocked; independent read-only two-commit audit
-pending**.
+Current phase: **Runtime-observer provenance and assertion-accounting
+remediation - exact-instance binding blocked; independent read-only two-commit
+audit pending**.
 
-The next task is an independent read-only audit of the stop-linkage
-implementation and evidence-finalization commits. Exact-instance binding still
-requires its own implementation and audit gate; this remediation does not
-authorize a live session, signing, or Windows mutation.
+The next task is an independent read-only audit of primary implementation
+commit `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb`, corrective implementation
+commit `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`, and the
+evidence-finalization commit. The audit must test all five missing/synthetic provenance paths,
+independently reconcile every record/category assertion, verify zero
+executable finalization changes, and confirm live readiness remains blocked.
+Exact-instance binding still requires its own implementation and audit gate;
+this remediation does not authorize a live session, signing, or Windows
+mutation.
 
 ## Previous runtime-observation planning gate (2026-07-02)
 

@@ -6038,3 +6038,120 @@
   not implemented. The next task is an independent read-only audit of the
   implementation commit and its documentation/evidence finalization commit,
   directly inspecting linkage runtime shapes and nested-array rejection.
+
+## 2026-07-02 23:05 +04:00 - Runtime-observer provenance and assertion-accounting remediation
+
+- **Objective:** Correct the final stop-linkage audit defects: runtime
+  observations could PASS from `evidence_available=true` without live
+  provenance and explicitly synthetic evidence could PASS; suite accounting
+  reported 921 from 915 fixture assertions plus six off-ledger harness checks,
+  so categories did not reconcile. Preserve framework `PASS`, live readiness
+  `BLOCKED`, blocker `BLOCKED_NOT_IMPLEMENTED`, stop linkage, lifecycle,
+  malformed-input totality, and zero exact/broad executable operations.
+- **Starting state:** Verified exact branch
+  `feature/runtime-bringup-stop-linkage-final-remediation` at
+  `9b5c8f3b4ac8c0dc0453da693266a82fea636ec0`, direct parent
+  `a810d8ba3438a08cfa4742e53be61f64be5aa58e`, clean staged/unstaged/untracked
+  state, live remote equality, and ahead/behind `0/0`. Rehashed the accepted
+  manifest and frozen Debug/Release SYS files to their documented sizes and
+  SHA-256 values. Captured ignored starting evidence at
+  `artifacts/logs/runtime-bringup-observer-provenance-accounting-remediation-start-20260702T185150Z.json`
+  and created
+  `feature/runtime-bringup-observer-provenance-accounting-remediation`.
+- **Audit discrepancy preserved accurately:** The prior suite had 140 fixture
+  records with 915 fixture assertions and six separately counted harness
+  assertions, producing 921 reported assertions while category totals summed
+  to 915. The prior runtime observer checked only condition ID,
+  `evidence_available`, and `triggered`, allowing five missing-provenance and
+  five synthetic-source inputs to PASS.
+- **Runtime-observation implementation:** Added a separate authoritative
+  record-shape validator with closed source/mode enums; stable observation,
+  condition, session, host, producer, and observer identities; capture and
+  validation timestamps; freshness/future checks; artifact
+  ID/path/size/SHA-256 and collection result; cross-session/host/condition
+  consistency; synthetic marker consistency; and five closed evidence-type
+  plus payload contracts. A generic payload cannot satisfy a condition.
+- **Runtime evaluation:** Missing evidence remains controlled `BLOCKED /
+  RUNTIME_EVIDENCE_NOT_AVAILABLE`. Malformed provenance returns controlled
+  `FAIL / RUNTIME_OBSERVATION_PROVENANCE_INVALID`. Structurally valid
+  synthetic, sample, planned, and unknown sources remain BLOCKED. Only live
+  runtime-evaluation provenance with a matching existing repository-contained
+  evidence artifact size and SHA-256 can reach an evaluated result. No fixture
+  was marked live and no live artifact or observation was created.
+- **Observer regressions:** Added five positive synthetic shape fixtures and
+  140 runtime-evaluation negative fixtures across all five observer IDs,
+  covering no provenance, every non-live source, missing session/host/producer,
+  wrong observer, timestamps/freshness/future time, missing or mismatched
+  artifact identity/size/hash/session/host/condition/collection result,
+  missing/generic/wrong-condition payloads, wrong evidence types, missing
+  evidence, and unknown IDs. Missing-provenance PASS, synthetic-source PASS,
+  unsupported runtime-observer PASS, live observations, and uncontrolled
+  exceptions are all zero.
+- **Assertion accounting:** Converted all six harness checks into ordinary
+  one-assertion fixtures. Removed the separate assertion counter. Added an
+  accounting contract plus 18 negative fixtures for off-ledger assertions,
+  category omissions and high/low totals, duplicate IDs, multiple/missing
+  categories, negative/nonnumeric/zero assertion counts, hardcoded totals,
+  omitted harness records, record/category aggregate mismatches, and the exact
+  historical 140/915-plus-six/921 discrepancy.
+- **Final derived ledger:** 304 fixture/result records; 1,724 assertions;
+  record count and category record sum both 304; record assertion sum,
+  category assertion sum, and reported total all 1,724; six harness records /
+  six harness assertions; unassigned, off-ledger, duplicate-counted, and
+  category-reconciliation defects all zero. Category totals are stored in the
+  suite and manifest and independently recomputed from bound suite records by
+  the manifest validator.
+- **Failed commands and corrected reruns:** The first suite rerun failed before
+  JSON output because Windows PowerShell required whitespace between the
+  simplified `Where-Object` operator and value; spacing was corrected. The
+  next rerun exposed flattened timestamp-pair metadata plus two accounting
+  negative fixtures that reached `Measure-Object` or collapsed a one-record
+  array; timestamp pairs became named objects, invalid records bypass derived
+  arithmetic, and the historical probe uses two records totaling 915. The
+  expanded observer rerun then found missing artifact size was coerced from
+  null to zero, and the summary command repeated the `Where-Object` spacing
+  error; explicit null rejection and corrected summary syntax fixed both.
+  The corrected complete suite passed. Finalization hygiene then found that
+  Windows PowerShell emitted the generated manifest with a UTF-8 BOM. Per the
+  executable-freeze rule, the manifest was not hand-normalized; the generator
+  was reopened, changed to explicit UTF-8 without BOM, committed separately,
+  and all post-implementation evidence was regenerated. No failed command
+  performed a live or prohibited operation.
+- **Implementation validation:** All 41 tracked `.ps1` and 2 tracked `.psm1`
+  files parsed with zero AST errors. The complete suite passed with framework
+  `PASS`, live readiness `BLOCKED`, blocker `BLOCKED_NOT_IMPLEMENTED`, 304
+  records, 1,724 assertions, 15 validators, 180 malformed-input cases, 20
+  unique stop conditions, five runtime-observer links, nested-array acceptance
+  zero, invalid lifecycle acceptance zero, all exception counters zero, and
+  committed sample structural/semantic `PASS`. `git diff --check` passed and
+  the prohibited executable-token scan found no live or mutating command.
+- **Implementation commit:** `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb`,
+  subject `Harden runtime observer provenance and accounting`. It contains all
+  executable changes in the shared module, synthetic suite, manifest
+  generator, manifest validator, and repository identity wrapper. Executable
+  contract logic was frozen after this commit.
+- **Corrective implementation commit:**
+  `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`, subject
+  `Write readiness manifest without UTF-8 BOM`. It changes only the manifest
+  generator output encoding after the finalization hygiene gate exposed the
+  BOM. Executable logic was frozen again after this commit.
+- **Post-implementation evidence:** Reran the frozen suite into
+  `artifacts/logs/runtime-bringup-observer-provenance-accounting-suite-post-implementation-ac0e25c.json`;
+  size 470,214 bytes; SHA-256
+  `63BBC80C60B7B7FA029FF2534070F8CC3104BD7DDBBEF17E165F29E8FEFDC633`.
+- **Finalization and safety:** Finalization is limited to the readiness
+  manifest and continuity documentation. No production source/header, INF,
+  project, solution, protocol, transport, binary, package, credential,
+  signing material, or `legacy/` path changed. No certificate/private-key
+  operation, signing, CAT generation, package creation, staging,
+  installation, binding, loading, rollback, Windows/service/registry/boot/
+  security mutation, tracing, event-log export, live device query, hardware
+  access, protocol traffic, input injection, or reboot occurred.
+- **Remaining blocker and next task:** Exact-instance binding/restoration is
+  not implemented. The exact next task is an independent read-only audit of
+  implementation commits `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb`
+  and `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`, plus the
+  evidence-finalization commit, directly testing all five
+  missing/synthetic observer paths, artifact provenance, record/category
+  arithmetic, executable-finalization isolation, and authoritative blocked
+  live readiness.
