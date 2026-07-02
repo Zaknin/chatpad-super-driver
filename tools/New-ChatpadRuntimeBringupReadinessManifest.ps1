@@ -69,10 +69,10 @@ $manifest=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED'
     blocker='BLOCKED_NOT_IMPLEMENTED'
     repository=[pscustomobject][ordered]@{
-        branch='feature/runtime-bringup-observer-provenance-accounting-remediation'
+        branch='feature/runtime-bringup-manifest-validator-empty-harness-remediation'
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-        prior_readiness_implementation_commit='a810d8ba3438a08cfa4742e53be61f64be5aa58e'
-        prior_readiness_finalization_commit='9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
+        prior_readiness_implementation_commit='ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10'
+        prior_readiness_finalization_commit='88e3cbba3a64828322b7c703765e6b1e2369f698'
         current_readiness_implementation_commit=$ImplementationCommit
         current_readiness_finalization_commit_source='external exact 40-character audit input after finalization commit'
     }
