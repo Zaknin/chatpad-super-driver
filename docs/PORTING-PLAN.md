@@ -5,12 +5,12 @@
 The offline runtime instrumentation milestone is accepted and frozen at
 `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned
 `AUDIT PASS WITH LIMITATIONS`. The current branch
-`feature/runtime-bringup-readiness-final-contract-remediation` repairs the
-fourth readiness audit findings with authoritative operation lifecycle
-enforcement, committed sample structural and semantic validation, wrong
-collection-shape rejection, Git-derived PowerShell inventory reconciliation,
-truthful PSScriptAnalyzer reporting, and 118 offline fixtures with 801
-assertions.
+`feature/runtime-bringup-stop-linkage-final-remediation` repairs the fifth
+readiness audit findings with canonical flat stop-condition linkage arrays,
+strict nested/wrong-path rejection, five verified runtime-observer links, and
+corrected continuity documentation. The retained lifecycle, committed-sample,
+PowerShell inventory, validator-totality, and blocked-install contracts remain
+covered by 140 offline fixtures with 921 assertions.
 
 Authoritative framework status is `PASS`; authoritative live installation
 readiness is `BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED`. Exact-instance
@@ -20,14 +20,14 @@ installation, loading, trace collection, event-log export, live device query,
 target/request operation, hardware access, Windows mutation, reboot, or
 production source change.
 
-Current phase: **Runtime bring-up readiness final-contract remediation -
+Current phase: **Runtime bring-up stop-linkage final remediation -
 exact-instance binding blocked; independent read-only two-commit audit
 pending**.
 
-The next task is independent read-only audit of both validator-totality
-remediation commits. Only after that audit passes may a separate supervised
-live session consider any signing or Windows mutation, and exact-instance
-binding would still require its own implementation and audit gate.
+The next task is an independent read-only audit of the stop-linkage
+implementation and evidence-finalization commits. Exact-instance binding still
+requires its own implementation and audit gate; this remediation does not
+authorize a live session, signing, or Windows mutation.
 
 ## Previous runtime-observation planning gate (2026-07-02)
 

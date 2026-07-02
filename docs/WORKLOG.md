@@ -5972,3 +5972,69 @@
   validation, independent enumeration/parsing of all 43 PowerShell files,
   lifecycle symmetry, malformed-input totality, executable-finalization diff,
   and blocked live-readiness confirmation.
+
+## 2026-07-02 19:51 +04:00 - Stop-linkage final remediation
+
+- **Objective:** Correct the final audit findings: valid runtime-observer
+  linkage values were double-wrapped at the validator call site, and
+  `docs/RUNTIME-BRINGUP-READINESS.md` named an obsolete next audit. Preserve
+  framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, and zero exact/broad executable operations.
+- **Starting state:** Verified branch
+  `feature/runtime-bringup-readiness-final-contract-remediation` at
+  `30da5003aba75ef0f079c9a8c2c90df3768601d5`, parent
+  `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`, clean status, upstream equality,
+  ahead/behind `0/0`, and frozen baseline hashes. Captured ignored log
+  `artifacts/logs/runtime-bringup-stop-linkage-final-remediation-start-20260702T154032Z.json`
+  and created `feature/runtime-bringup-stop-linkage-final-remediation`.
+- **Root cause:** JSON deserialization produced a flat `System.Object[]` with
+  one `System.String` for each runtime-observer linkage. `Get-ChatpadProperty`
+  returned that array with unary-comma enumeration suppression; the validator
+  then wrapped the call in `@(...)`, producing a one-item outer
+  `System.Object[]` whose item was the original `System.Object[]`.
+  `-contains` therefore compared an array object to a string and returned
+  false for all five observer IDs.
+- **Implementation:** Read linkage values directly from the property, require
+  flat string arrays, validate normalization, repository containment,
+  existence, `.ps1` type, uniqueness, classification, and exact observer
+  linkage. Updated register paths to `tools/...`; added focused flat, nested,
+  malformed, unknown, missing, duplicate, and misclassification fixtures;
+  advanced repository identity and manifest attribution to this remediation.
+- **Failed commands and corrected reruns:** The first direct validator rerun
+  rejected every valid path because Git returned the repo root with `/` while
+  `GetFullPath` produced `\`; normalizing the root through `GetFullPath`
+  corrected containment and the direct check passed. The first expanded suite
+  then failed `validator-totality-matrix` for an empty object because StrictMode
+  rejected `.PSObject.Properties.Name`; enumerating property names through the
+  pipeline corrected the exception. The rerun passed with zero uncontrolled,
+  PropertyNotFound, StrictMode, linkage, or nested-array acceptance defects.
+- **Validation:** All 43 tracked PowerShell files parsed with zero AST errors.
+  The canonical register returned `PASS` / `STOP_LINKAGE_VALID`, 20 conditions,
+  20 unique IDs, five runtime-observer links, and zero unlinked, unknown, or
+  malformed values. The exact double-wrapped probe returned controlled
+  `FAIL` / `STOP_LINKAGE_INVALID` with `linkage-nested-array`.
+- **Suite evidence:** Pre-implementation suite:
+  `artifacts/logs/runtime-bringup-stop-linkage-suite-pre-implementation-20260702T155051Z.json`.
+  Post-implementation frozen suite:
+  `artifacts/logs/runtime-bringup-stop-linkage-suite-post-implementation-a810d8b.json`.
+  Final result: framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, 140 fixtures, 921 assertions, 15 validators, 180
+  malformed-input cases, five runtime-observer links, nested-array acceptance
+  `0`, and all exception/transition counters `0`.
+- **Implementation commit:** `a810d8ba3438a08cfa4742e53be61f64be5aa58e`,
+  subject `Harden stop-condition linkage contracts`. Executable logic was
+  frozen after this commit.
+- **Finalization evidence:** Generated schema-v3 seven-entry readiness manifest
+  from the frozen post-implementation suite. It records 140 fixtures, 921
+  assertions, stop-condition totals 20/20/5, all linkage defect counts zero,
+  PowerShell 41/2/43, and PSScriptAnalyzer `SKIPPED_UNAVAILABLE`.
+- **Safety:** No production source/header, INF, project, solution, protocol,
+  transport, binary, package, credential, signing material, or `legacy/` path
+  changed. No signing, CAT generation, package creation, staging,
+  installation, binding, loading, rollback, Windows mutation, tracing,
+  event-log export, live device query, hardware access, protocol traffic,
+  input injection, or reboot occurred.
+- **Remaining blocker and next task:** Exact-instance binding/restoration is
+  not implemented. The next task is an independent read-only audit of the
+  implementation commit and its documentation/evidence finalization commit,
+  directly inspecting linkage runtime shapes and nested-array rejection.

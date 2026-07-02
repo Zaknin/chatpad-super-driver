@@ -3,113 +3,85 @@
 ## Exact current state
 
 - Required branch:
-  `feature/runtime-bringup-readiness-final-contract-remediation`.
-- Required starting point for audit: the finalization commit containing this
-  file, with subject `docs: finalize final-contract readiness evidence`.
+  `feature/runtime-bringup-stop-linkage-final-remediation`.
+- Required starting point: the evidence-finalization commit containing this
+  file, subject `docs: finalize stop-linkage readiness evidence`.
 - Required direct parent:
-  `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`.
-- Required parent chain:
-  `f0f9bf7e196a6f7cfe9b391cc4001b593016d310`
-  -> `66de13033e4ba5f67465829c25c0e6a158516044`
-  -> `7689d2cca57c485d8c0569bdcbec58e400621b20`
-  -> `bb4c06cc87150b944d04ae2135ea58b8218c5dc8`
-  -> `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`
-  -> finalization commit.
-- Current final-contract implementation:
-  `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`.
-- Accepted offline baseline:
-  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`.
-- Runtime framework status: `PASS`.
-- Authoritative live installation readiness: `BLOCKED`.
-- Exact blocker: `BLOCKED_NOT_IMPLEMENTED`.
-- Offline suite: 118 fixtures, 801 assertions, 15 public validators, 180
-  malformed-input matrix cases, uncontrolled exceptions `0`,
-  `PropertyNotFoundException` count `0`, StrictMode exception count `0`,
-  invalid lifecycle acceptance count `0`, missing-start-timestamp acceptance
-  count `0`.
-- Committed sample evidence: structural validation `PASS`; semantic
-  validation `PASS`.
-- PowerShell inventory: 41 tracked `.ps1`, 2 tracked `.psm1`, 43 total; all
-  43 parsed; AST parse errors `0`.
+  `a810d8ba3438a08cfa4742e53be61f64be5aa58e`.
+- Required prior finalization:
+  `30da5003aba75ef0f079c9a8c2c90df3768601d5`.
+- Framework status: `PASS`.
+- Live installation readiness: `BLOCKED`.
+- Blocker: `BLOCKED_NOT_IMPLEMENTED`.
+- Suite: 140 fixtures, 921 assertions, 15 validators, 180 malformed-input
+  cases, and zero uncontrolled, PropertyNotFound, StrictMode, lifecycle,
+  missing-start, linkage, or nested-array acceptance defects.
+- Stop linkage: 20 conditions, 20 unique IDs, five runtime-observer links,
+  unlinked `0`, unknown IDs `0`, malformed linkage `0`.
+- PowerShell: 41 `.ps1`, 2 `.psm1`, 43 total; all parse with zero errors.
 - Driver state remains unsigned, unpackaged, unstaged, uninstalled, unloaded,
   untraced, unqueried, and unexecuted.
 
 ## Next recommended objective
 
-Perform an independent, read-only audit of both final-contract remediation
-commits.
+Perform an independent, read-only audit of the stop-linkage implementation and
+evidence-finalization commits.
 
 The audit must directly:
 
-- rerun the executed-operation missing-start-timestamp probe;
-- validate the committed sample structurally and semantically;
-- independently enumerate and parse all 43 tracked PowerShell files;
-- verify lifecycle symmetry for planned, blocked, skipped_authorization,
-  executed, failed, rolled_back, and restored operations;
-- verify malformed-input totality across all 15 public validators and 180
-  malformed-input cases;
-- verify no executable finalization changes;
-- confirm live readiness remains `BLOCKED` with blocker
+- inspect the runtime type and nesting shape of every linkage value;
+- verify canonical flat repository-relative path arrays;
+- rerun the exact double-wrapped and three-level nested-array rejection probes;
+- verify all five runtime-observer IDs link only to
+  `tools/Test-ChatpadRuntimeObservation.ps1`;
+- verify missing, scalar, empty, null, non-string, traversal, wildcard,
+  nonexistent, duplicate, unknown, and misclassified linkage rejection;
+- confirm the finalization commit changed no executable logic;
+- verify current-state and next-task documentation;
+- confirm framework `PASS`, live readiness `BLOCKED`, and blocker
   `BLOCKED_NOT_IMPLEMENTED`.
 
 ## Preconditions
 
 1. Verify exact branch, full HEAD, direct parent, subject, upstream equality,
-   ahead/behind `0/0`, and clean index/worktree.
-2. Supply the full finalization HEAD as
-   `-CurrentReadinessFinalizationCommit` and
-   `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6` as
-   `-CurrentReadinessImplementationCommit` when running repository identity
+   ahead/behind `0/0`, and clean worktree.
+2. Supply the full finalization HEAD and implementation commit
+   `a810d8ba3438a08cfa4742e53be61f64be5aa58e` to repository identity
    validation.
 3. Rehash the accepted baseline manifest and both frozen SYS files.
-4. Inspect `bb4c06cc87150b944d04ae2135ea58b8218c5dc8..HEAD` and verify there
-   are exactly two final-contract remediation commits.
-5. Inspect the second/finalization commit's name-only diff and fail the audit
-   if it modifies `.ps1`, `.psm1`, executable schemas, test logic, validator
-   logic, the manifest generator, the manifest validator, or the committed
-   sample evidence used by tests.
+4. Verify the finalization diff changes no `.ps1`, `.psm1`, executable
+   schema, canonical policy data, tests, validators, generators, or manifest
+   validator.
 
 ## Safety restrictions
 
-- Audit only. Do not edit files or regenerate evidence.
-- Do not create/import/export/delete certificates or keys; sign; generate CATs;
-  package; stage; install; bind; load; remove; enable; disable; or roll back a
-  driver.
+- Audit only. Do not modify or regenerate repository evidence.
+- Do not sign, package, stage, install, bind, load, remove, enable, disable,
+  or roll back a driver.
 - Do not mutate Windows, boot/security/service/registry/device state; start a
-  trace; export or clear event logs; enumerate/open a live device; send a
-  request; access hardware; generate protocol traffic; inject input; or reboot.
+  trace; export event logs; query or open a live device; access hardware;
+  generate protocol traffic; inject input; or reboot.
 - Do not modify `legacy/`.
 
 ## Acceptance criteria
 
-- The exact executed-operation missing-start-timestamp probe rejects with
-  `OPERATION_LIFECYCLE_INVALID`, stop condition
-  `command-differs-from-approved-plan`, and reason
-  `start-timestamp-missing`.
-- The committed `docs/evidence/runtime-bringup-sample-evidence.json` passes
-  structural Draft 2020-12 validation and semantic validation from its actual
-  repository path.
-- Independent Git-tracked PowerShell enumeration reports 41 `.ps1`, 2 `.psm1`,
-  43 total; all 43 parse with zero AST errors and no exclusions.
-- Lifecycle validation rejects malformed planned, blocked,
-  skipped_authorization, executed, failed, rolled_back, and restored records
-  with controlled results and valid stop-condition IDs.
-- Malformed inputs across all public readiness validators produce controlled
-  result records, never unhandled exceptions.
-- The second/finalization commit changes only generated evidence and docs.
-- Manifest records PSScriptAnalyzer as `SKIPPED_UNAVAILABLE` when unavailable.
-- No prohibited operation or live Windows/device action occurred.
-- Authoritative live-readiness remains `BLOCKED`; any unsupported PASS claim is
-  an audit failure.
+- Canonical register result is `PASS` / `STOP_LINKAGE_VALID`.
+- Stop-condition count and unique count are both 20.
+- Runtime-observer linkage count is five; unlinked, unknown, and malformed
+  counts are zero.
+- Nested-array acceptance and malformed-linkage exception counts are zero.
+- All five runtime-only observations remain blocked without runtime evidence.
+- Full suite and manifest validation pass with exact derived totals.
+- No executable finalization changes or prohibited operations occurred.
+- Live readiness remains `BLOCKED`.
 
 ## Inspect first
 
-- `docs/RUNTIME-BRINGUP-READINESS.md`
-- `docs/evidence/runtime-bringup-readiness-manifest.json`
-- `docs/evidence/runtime-bringup-evidence-schema-v1.json`
-- `docs/evidence/runtime-bringup-sample-evidence.json`
 - `docs/evidence/runtime-bringup-stop-conditions.json`
 - `tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1`
 - `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
+- `tools/Test-ChatpadRuntimeObservation.ps1`
+- `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
 - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
-- `tools/Test-ChatpadRuntimeRepositoryIdentity.ps1`
+- `docs/evidence/runtime-bringup-readiness-manifest.json`
+- `docs/RUNTIME-BRINGUP-READINESS.md`

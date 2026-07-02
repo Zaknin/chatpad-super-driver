@@ -1971,3 +1971,31 @@ context, and direct compile-check project; generated trace outputs stay under
 ignored `artifacts/`. The implementation remains offline-only and does not
 authorize signing, packaging, installation, driver loading, trace collection,
 target discovery, request execution, or hardware interaction.
+
+## 2026-07-02 - Require canonical flat stop-condition linkage arrays
+
+**Decision:** Stop-condition implementation linkage values are direct,
+one-dimensional arrays of normalized repository-relative `.ps1` paths.
+Validation reads the property value directly, rejects nested arrays instead of
+flattening them, and verifies string shape, containment, existence, approved
+type, and normalized uniqueness.
+
+**Rationale:** `Get-ChatpadProperty` preserves an array-valued property by
+returning it with unary-comma enumeration suppression. Wrapping that return in
+`@(...)` creates an outer array whose only item is the original array. The
+previous stop-linkage validator therefore failed to recognize each valid
+single-item runtime-observer linkage.
+
+**Alternatives rejected:**
+
+* Silently flatten nested arrays - would allow malformed external input to
+  become valid and hide producer or parameter-boundary defects.
+* Compare stringified array values - would weaken type, path, and duplicate
+  validation.
+* Special-case only the five observer IDs - would leave executable linkage
+  paths without the same canonical contract.
+
+**Consequences:** All executable and runtime-observer linkage paths use
+`tools/...` repository-relative names. Double-wrapped and deeper arrays fail
+as `STOP_LINKAGE_INVALID`; all five runtime-only conditions link to
+`tools/Test-ChatpadRuntimeObservation.ps1` and remain unevaluated offline.

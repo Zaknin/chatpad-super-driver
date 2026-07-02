@@ -1,15 +1,15 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-02T15:15:04.1580209Z",
+    "generated_utc":  "2026-07-02T15:51:36.8827511Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
     "blocker":  "BLOCKED_NOT_IMPLEMENTED",
     "repository":  {
-                       "branch":  "feature/runtime-bringup-readiness-final-contract-remediation",
+                       "branch":  "feature/runtime-bringup-stop-linkage-final-remediation",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
-                       "prior_readiness_implementation_commit":  "7689d2cca57c485d8c0569bdcbec58e400621b20",
-                       "prior_readiness_finalization_commit":  "bb4c06cc87150b944d04ae2135ea58b8218c5dc8",
-                       "current_readiness_implementation_commit":  "4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6",
+                       "prior_readiness_implementation_commit":  "4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6",
+                       "prior_readiness_finalization_commit":  "30da5003aba75ef0f079c9a8c2c90df3768601d5",
+                       "current_readiness_implementation_commit":  "a810d8ba3438a08cfa4742e53be61f64be5aa58e",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -21,8 +21,8 @@
                                       "release_sys_sha256":  "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
                                   },
     "readiness":  {
-                      "fixture_count":  118,
-                      "assertion_count":  801,
+                      "fixture_count":  140,
+                      "assertion_count":  921,
                       "category_totals":  [
                                               {
                                                   "category":  "accepted-baseline-identity",
@@ -80,6 +80,11 @@
                                                   "assertions":  10
                                               },
                                               {
+                                                  "category":  "nested-array-rejection",
+                                                  "fixtures":  2,
+                                                  "assertions":  12
+                                              },
+                                              {
                                                   "category":  "nested-quoting",
                                                   "fixtures":  1,
                                                   "assertions":  4
@@ -125,6 +130,11 @@
                                                   "assertions":  25
                                               },
                                               {
+                                                  "category":  "runtime-observer-linkage",
+                                                  "fixtures":  6,
+                                                  "assertions":  26
+                                              },
+                                              {
                                                   "category":  "schema-semantic",
                                                   "fixtures":  4,
                                                   "assertions":  20
@@ -143,6 +153,11 @@
                                                   "category":  "signing",
                                                   "fixtures":  2,
                                                   "assertions":  10
+                                              },
+                                              {
+                                                  "category":  "stop-condition-linkage",
+                                                  "fixtures":  14,
+                                                  "assertions":  82
                                               },
                                               {
                                                   "category":  "target",
@@ -172,6 +187,12 @@
                       "unlinked_stop_condition_count":  0,
                       "invalid_lifecycle_acceptance_count":  0,
                       "missing_start_timestamp_acceptance_count":  0,
+                      "stop_condition_count":  20,
+                      "unique_stop_condition_count":  20,
+                      "runtime_observer_linkage_count":  5,
+                      "unknown_stop_condition_id_count":  0,
+                      "malformed_linkage_count":  0,
+                      "nested_array_acceptance_count":  0,
                       "uncontrolled_exception_count":  0,
                       "property_not_found_exception_count":  0,
                       "strictmode_exception_count":  0,
@@ -206,11 +227,11 @@
                   },
     "entries":  [
                     {
-                        "id":  "tracked-docs-evidence-runtime-bringup-evidence-schema-v1-json",
-                        "relative_path":  "docs/evidence/runtime-bringup-evidence-schema-v1.json",
+                        "id":  "tracked-docs-evidence-runtime-bringup-stop-conditions-json",
+                        "relative_path":  "docs/evidence/runtime-bringup-stop-conditions.json",
                         "state":  "tracked",
-                        "byte_size":  7920,
-                        "sha256":  "351CA1FFCF2045D905F45835909FBFD00C708F7DED1626DF62A1607A03FC14D6",
+                        "byte_size":  10173,
+                        "sha256":  "32CAD06BEDDC079286FA2397D3915897BA91681BA006AB6217BEB5893C93010B",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -218,8 +239,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  6772,
-                        "sha256":  "62BFA5DC94EDC9C1D2C23A8781017BB8C8AEA64A1E5A4EA9083EBBA82377E502",
+                        "byte_size":  7194,
+                        "sha256":  "0202028389B1B2DA04CD5389675B1D310FE1DDD7DAAD1CCE075B0639B65C2157",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -227,8 +248,8 @@
                         "id":  "tracked-tools-runtimebringup-chatpadruntimebringup-common-psm1",
                         "relative_path":  "tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1",
                         "state":  "tracked",
-                        "byte_size":  72035,
-                        "sha256":  "66D147C0CAA388AE1F3671D027B9425E86871D8077DE707D5BE5D010278D8865",
+                        "byte_size":  77127,
+                        "sha256":  "EEF7744B9C9AEFCF491611001E54B4D97683526232D921911DE41B818381DCFD",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -236,8 +257,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
                         "state":  "tracked",
-                        "byte_size":  63883,
-                        "sha256":  "96F695EAB0A8C5C50902BA09D29DC405FC8D7F9F3D1AAAF3E966380ADF4F10B3",
+                        "byte_size":  70281,
+                        "sha256":  "1B0F7E8BB8A2EC2803011676F4A7C8341C5D851B08141435C55C59F9ECE2C082",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -245,8 +266,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  4255,
-                        "sha256":  "04537E532BCA1F560B3D77E6C0AF0FE20D5DB75AED84738B3DE403E8A955DC1C",
+                        "byte_size":  4738,
+                        "sha256":  "D01F3C8E09DB06EF2D68B24081A791E2A31B863EB0982851E59AD47208C335D7",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -254,17 +275,17 @@
                         "id":  "tracked-tools-test-chatpadruntimerepositoryidentity-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeRepositoryIdentity.ps1",
                         "state":  "tracked",
-                        "byte_size":  845,
-                        "sha256":  "C1F8837A837980A4CB22DC1C83F0B7D07AA85405AC658EB2937EF8A85307D853",
+                        "byte_size":  839,
+                        "sha256":  "9D61C2AFC3FDE5FBD80C2033E824C549B39D8A5B9FB8BC936CA85E3E79B08925",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/runtime-bringup-final-contract-suite-post-implementation-4661c1d.json",
+                        "relative_path":  "artifacts/logs/runtime-bringup-stop-linkage-suite-post-implementation-a810d8b.json",
                         "state":  "ignored",
-                        "byte_size":  178039,
-                        "sha256":  "89599FD7312B280E2C7AFAB4112163C98D60D2888AC30D749B8D58A3516B2878",
+                        "byte_size":  209238,
+                        "sha256":  "9D92B07308149D9310A14B0A4ED0943FE31CCC547104321ABDF58882A7436F88",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }

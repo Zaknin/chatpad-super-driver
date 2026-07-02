@@ -18,19 +18,17 @@ The third independent audit found remaining uncontrolled exception paths and
 unsupported lifecycle-transition acceptances. The validator-totality
 remediation is offline-only and keeps the live gate closed.
 
-## Final-contract remediation status
+## Stop-linkage final remediation status
 
-The fourth independent audit found three final readiness-contract defects:
-`Test-ChatpadOperationPlanContract` accepted an `executed` operation without
-`start_timestamp`, the committed sample evidence was not proven structurally
-and semantically from its repository path, and repository PowerShell totals
-were reported ambiguously as 41 files instead of 41 `.ps1` plus 2 `.psm1`, 43
-total.
+The fifth independent audit confirmed the operation-lifecycle, committed
+sample, and PowerShell inventory repairs, then found two residual defects:
+stop-condition linkage arrays were double-wrapped at the validator call site,
+and this document still named an older remediation audit as the next task.
 
 - Current branch:
-  `feature/runtime-bringup-readiness-final-contract-remediation`.
+  `feature/runtime-bringup-stop-linkage-final-remediation`.
 - Current implementation commit:
-  `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`.
+  `a810d8ba3438a08cfa4742e53be61f64be5aa58e`.
 - Framework validation is `PASS`; live installation readiness is `BLOCKED`;
   blocker is `BLOCKED_NOT_IMPLEMENTED`.
 - Executable exact-instance binding operations: `0`; executable
@@ -56,6 +54,15 @@ total.
 - PowerShell inventory reporting is derived from Git-tracked paths: 41 `.ps1`,
   2 `.psm1`, 43 total tracked PowerShell files; all 43 parse with zero AST
   errors and no exclusions.
+- Stop-condition linkage uses one canonical shape: a flat repository-relative
+  array of unique normalized `.ps1` paths. The validator rejects nested
+  arrays, scalar values, null/non-string/empty items, traversal, wildcards,
+  nonexistent paths, duplicate normalized paths, unknown IDs, missing
+  linkage, and runtime-observer conditions represented as executable offline.
+- All 20 stop-condition IDs are unique and linked exactly once. The five
+  runtime-observer conditions link to
+  `tools/Test-ChatpadRuntimeObservation.ps1`; unlinked, unknown, malformed,
+  and accepted nested-array counts are all zero.
 - Exported readiness validators now reject malformed JSON-compatible values
   through controlled result records. The malformed-input matrix covers
   repository identity, target selection, driver state, rollback readiness,
@@ -83,7 +90,7 @@ total.
   `VALIDATOR_INTERNAL_ERROR` boundary with sanitized exception diagnostics.
   Normal malformed input is rejected by explicit contract logic, not by the
   boundary.
-- The final offline suite contains 118 fixtures and 801 assertions. The
+- The final offline suite contains 140 fixtures and 921 assertions. The
   malformed-input matrix covers 15 public validators and 180 cases.
   Uncontrolled exceptions:
   `0`; `PropertyNotFoundException` count: `0`; StrictMode exception count:
@@ -98,13 +105,13 @@ total.
   blocker, but machine-readable evidence must not use top-level PASS as runtime
   authorization.
 - Repository identity is dual for the current generation. Validators
-  distinguish the frozen accepted baseline, prior final-contract baseline
-  implementation commit `7689d2cca57c485d8c0569bdcbec58e400621b20`, prior
-  final-contract baseline finalization commit
-  `bb4c06cc87150b944d04ae2135ea58b8218c5dc8`, current final-contract
-  implementation commit `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`, and the
-  finalization commit supplied as an exact external audit input after commit
-  creation. The tracked manifest avoids self-reference.
+  distinguish the frozen accepted baseline, prior final-contract
+  implementation commit `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`,
+  prior final-contract finalization commit
+  `30da5003aba75ef0f079c9a8c2c90df3768601d5`, current stop-linkage
+  implementation commit `a810d8ba3438a08cfa4742e53be61f64be5aa58e`,
+  and the finalization commit supplied as an exact external audit input after
+  commit creation. The tracked manifest avoids self-reference.
 - Negative fixtures now pass only when the documented contract returns or
   throws the expected machine-readable result, result code, stop-condition IDs,
   and exception type. Harness self-tests prove unrelated StrictMode exceptions,
@@ -419,10 +426,10 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only audit of both enforcement-remediation commits. The audit
-must rerun all direct unsupported-PASS probes, verify expected-failure reasons
-rather than exceptions, verify the finalization commit changed no executable
-files, confirm the authoritative live-readiness status remains `BLOCKED`, and
-confirm no signing, packaging, staging, installation, loading, tracing,
-event-log export, live device enumeration, target operation, Windows mutation,
-hardware interaction, or reboot occurred.
+Independent read-only audit of the stop-linkage implementation commit and its
+evidence-finalization commit. The audit must inspect the runtime type and shape
+of every linkage value, verify canonical flat arrays, rerun the exact
+double-wrapped-array rejection probe, verify all five runtime-observer links,
+confirm the finalization commit changed no executable files, verify this
+next-task statement, and confirm authoritative live readiness remains
+`BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED`.
