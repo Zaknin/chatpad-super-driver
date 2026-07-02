@@ -3,14 +3,14 @@
 ## Exact current state
 
 - Required branch:
-  `feature/offline-runtime-instrumentation-evidence-guard-remediation`.
+  `feature/offline-runtime-instrumentation-dynamic-emission-remediation`.
 - Required starting commit: the final commit containing this file, with subject
-  `test: repair runtime instrumentation evidence contracts`.
-- Required parent: `709686f522eafc12913658b076bd0e001d6add32`.
+  `test: close dynamic instrumentation emission coverage`.
+- Required parent: `38d434e8f7c815f609834f79315600aa73969639`.
 - Provider GUID: `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`.
 - Trace schema/catalogue: schema `1`, 73 semantic IDs and names.
-- Emission evidence: CSV schema `2`; 94 mappings, 34 direct WPP invocations,
-  78 helper mappings, and 92 unique physical sites.
+- Emission evidence: CSV schema `2`; 95 mappings, 34 direct WPP invocations,
+  79 helper-mediated mappings, 93 unique physical sites, and two shared sites.
 - Manifest:
   `docs/evidence/runtime-instrumentation-implementation-manifest.json`, schema
   `1.2.0`.
@@ -19,21 +19,23 @@
 
 ## Next recommended objective
 
-Perform an independent read-only audit of the final remediation commit. The
-audit must independently validate model-to-catalogue semantics, matrix
-assertion accounting, concrete semantic-event-to-emission mapping, cleanup
-inclusion in the owner guard, and the final evidence manifest without
-regenerating evidence.
+An independent read-only audit of the final dynamic-emission remediation
+commit. It must independently reconstruct every reachable event from
+`ChatpadTracePreContextTerminal` and every approved dynamic emitter, verify
+event `1901` has a concrete mapping, reproduce the final mapping/site
+arithmetic, test that helper allow-listing cannot hide missing events,
+reconcile the affected guard/equality/volume/matrix evidence, and rehash the
+complete manifest without regenerating evidence.
 
 ## Preconditions
 
 1. Verify exact branch, HEAD parent and subject, upstream equality, 0/0
    ahead/behind, and clean worktree/index.
-2. Read the continuity files, accepted design, remediation document, schema-v2
-   event-site evidence, matrix reports, guard logs, and complete manifest.
+2. Read the complete dynamic-emitter contracts, production helper and callers,
+   schema-v2 inventory, final guard logs, matrices, reports, and manifest.
 3. Rehash every tracked and retained ignored manifest entry without modifying
    or regenerating evidence.
-4. Inspect the complete `709686f..HEAD` diff and confirm authorized scope.
+4. Inspect the complete `38d434e..HEAD` diff and confirm authorized scope.
 
 ## Safety restrictions
 
@@ -46,26 +48,26 @@ regenerating evidence.
 
 ## Acceptance criteria
 
-- The five formerly invalid model IDs are absent; emitted and expected events
-  are catalogue-valid, family-correct, and independently attributable.
-- Both matrices contain 13 real entries, 6 assertion suites, 7 validations,
-  6,980 real passed assertions, and zero synthetic, parse, empty, entry, or
-  assertion failures.
-- All 73 events resolve through 94 precise mappings; direct/helper/physical-site
-  totals and repeated stage sites reproduce with zero mapping defects.
-- Cleanup is inspected and limited to one diagnostic snapshot read, with no
-  mutation, completion, cancellation, transfer, operational use, or
-  unclassified reference.
+- Event 1901 has an exact source-bound mapping through
+  `ChatpadTracePreContextTerminal` and the concrete WPP sink.
+- Every dynamic helper caller and selector domain is complete, catalogue-valid,
+  family-correct, sink-resolved, and inventoried with all dynamic defect
+  counters zero.
+- Ten dynamic rejection fixtures prove missing, extra, unresolved, wrong-family,
+  stale, sink, caller, and allow-list defects fail closed.
+- Both matrices contain 13 entries, 6 assertion suites, 7 validations, 6,980
+  real passed assertions, and zero synthetic, parse, empty, entry, or assertion
+  failures.
 - Runtime, owner Full, and orchestration Full evidence is configuration-bound
   and the schema-`1.2.0` manifest rehashes with zero defects.
 
 ## Inspect first
 
-- `tests/offline/RuntimeInstrumentationModel/RuntimeInstrumentationModel.psm1`
-- `tests/offline/RuntimeInstrumentationModel/Test-RuntimeInstrumentationModel.ps1`
-- `tools/Invoke-ChatpadRuntimeInstrumentationRegressionMatrix.ps1`
+- `src/driver/ChatpadFilter/device.c`
 - `tools/Test-ChatpadRuntimeInstrumentation.ps1`
-- `tools/Test-ChatpadProductionOwnerInitialization.ps1`
+- `tools/Invoke-ChatpadRuntimeInstrumentationRegressionMatrix.ps1`
 - `docs/evidence/runtime-instrumentation-event-sites.csv`
+- `docs/evidence/runtime-instrumentation-debug-release-equality.json`
+- `docs/evidence/runtime-instrumentation-trace-volume-report.json`
 - `docs/evidence/runtime-instrumentation-implementation-manifest.json`
 - `docs/OFFLINE-RUNTIME-INSTRUMENTATION-IMPLEMENTATION.md`

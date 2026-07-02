@@ -9,11 +9,24 @@
   "stage_count_bound": 9,
   "source_emission_evidence": {
     "semantic_events": 73,
-    "semantic_emission_mappings": 94,
+    "semantic_emission_mappings": 95,
     "direct_wpp_invocations": 34,
-    "indirect_helper_mappings": 78,
-    "unique_physical_emission_sites": 92,
+    "indirect_helper_mappings": 79,
+    "unique_physical_emission_sites": 93,
     "shared_physical_sites": 2
+  },
+  "dynamic_emission_contract": {
+    "helpers_inspected": 5,
+    "callers_inspected": 78,
+    "reachable_dynamic_event_values": 79,
+    "inventoried_dynamic_mappings": 79,
+    "missing_dynamic_mappings": 0,
+    "unreachable_dynamic_mappings": 0,
+    "unresolved_dynamic_selectors": 0,
+    "dynamic_helper_to_wpp_failures": 0,
+    "stale_dynamic_locators": 0,
+    "event_1901_physical_site": "src/driver/ChatpadFilter/device.c:521:ChatpadTrace",
+    "event_1901_locator_sha256": "3387C13EA8A5F03F4154E6CA20E39B43F17F2DC8C1427E228A8044E904AA95F8"
   },
   "counts": {
     "driver_entry_maximum": {

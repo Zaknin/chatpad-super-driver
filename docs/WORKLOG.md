@@ -5268,3 +5268,126 @@
   Independently validate model-to-catalogue semantics, matrix accounting,
   concrete event-to-emission mapping, cleanup inclusion/classification, and the
   final manifest without regenerating evidence.
+
+## 2026-07-02 10:01 +04:00 - Dynamic runtime-instrumentation emission remediation
+
+- **Objective:** Correct the second independent-audit failure without modifying
+  production code: add the omitted event-1901 pre-context terminal mapping,
+  replace helper-name exemption with source-bound dynamic-emitter contracts,
+  regenerate only affected evidence, commit, and push the dedicated branch.
+- **Starting state:** Verified exact clean synchronized branch
+  `feature/offline-runtime-instrumentation-evidence-guard-remediation` at
+  `38d434e8f7c815f609834f79315600aa73969639`, parent
+  `709686f522eafc12913658b076bd0e001d6add32`, live remote equality,
+  ahead/behind `0/0`, and zero staged, unstaged, or nonignored untracked paths.
+  Captured
+  `artifacts/logs/runtime-dynamic-emission-remediation-start-20260702T054954Z.log`
+  and created
+  `feature/offline-runtime-instrumentation-dynamic-emission-remediation`.
+- **Independent-audit failure recorded:** The schema-v2 inventory omitted
+  event 1901 emitted through the dynamic `terminalEvent` WPP call in
+  `ChatpadTracePreContextTerminal`. Both production callers constrain status to
+  failure, but the runtime guard accepted the unmapped call solely because the
+  helper name appeared in an allow-list. This made the prior Debug/Release
+  runtime guards false positives and transitively tainted both matrices,
+  equality totals, trace-volume totals, and five direct semantic evidence
+  entries.
+- **Dynamic-domain reconstruction:** The pre-context helper selector contains
+  catalogue events 1900 and 1901. Its attempt-wrap and failed-device-create
+  callers both make only 1901 reachable. The same helper directly emits fixed
+  events 1713, 1902, and 1903. Event 1900 is a selector alternative but is
+  unreachable from current production callers. The independently normalized
+  event-1901 sink locator hashes to
+  `3387C13EA8A5F03F4154E6CA20E39B43F17F2DC8C1427E228A8044E904AA95F8`.
+- **Implementation:** Added the event-1901 schema-v2 inventory row at physical
+  site `src/driver/ChatpadFilter/device.c:521:ChatpadTrace`. Replaced dynamic
+  helper-name exemption with source-bound contracts for all five dynamic
+  helpers. Parameter-driven helpers require every caller event domain to be
+  catalogue-valid and mapped. The pre-context local-selector contract binds
+  both alternatives, both caller conditions, its one selector WPP sink, and
+  the reachable event. Any uncontracted dynamic WPP call, unresolved value,
+  changed caller/domain, missing sink, or mismatched inventory fails.
+- **Negative fixtures:** Ten new isolated fixtures reject removal of event
+  1901, a new unrecorded catalogue-valid selector alternative, an unreachable
+  inventory event, an out-of-catalogue selector, unresolved selector domain,
+  removed WPP sink, undeclared caller value, wrong family, stale locator, and
+  an allow-list-only contract. The prior ten mapping fixtures remain intact.
+- **Final mapping totals:** 73 semantic events, 95 mappings, 34 direct WPP
+  invocations, 79 helper-mediated mappings, 93 unique physical sites, two
+  shared sites, five dynamic helpers, 78 helper callers, and zero missing,
+  extra, phantom, stale, duplicate, collapsed, unexplained, unresolved,
+  wrong-family, sink, or allow-list suppression defects.
+- **Validation:** Final runtime guards Debug/Release PASS in
+  `runtime-dynamic-emission-runtime-{Debug,Release}-20260702T055627Z.log`.
+  Pure model remains 19/19 scenarios and 932/932 assertions with five negative
+  tests. Owner Full Debug/Release PASS with one
+  `diagnostic-read-only-object-snapshot` and seven cleanup negative tests.
+  Orchestration Full Debug/Release PASS with no SourceOnly downgrade.
+  Regenerated matrices
+  `runtime-dynamic-emission-matrix-{Debug,Release}-20260702T055758Z.{log,json}`
+  each pass 13/13 entries, six assertion suites, seven validations, and
+  6,980/6,980 assertions with zero synthetic, failed, parse, empty-result, or
+  entry failures. Repository safety PASS with all prohibited-action counters
+  zero. Production inputs and retained binaries are unchanged, so no driver or
+  full-solution rebuild was required.
+- **Intermediate failed commands and corrected reruns:** The first PowerShell
+  AST parse after adding the dynamic row builder found ten syntax errors caused
+  by a multiline `-f` expression inside an ordered object; parenthesizing the
+  expression produced zero parse errors. The first regeneration run correctly
+  failed because one existing helper caller selects two catalogue events;
+  the general caller-domain validator was corrected to require one or more
+  fully resolved values, and regeneration passed. The first dynamic-fixture run
+  showed that the removed-WPP synthetic replacement did not match source line
+  endings; a selector-bound regex replacement corrected the isolated fixture,
+  after which all ten fixtures passed. The first repository-safety capture
+  appended metadata already emitted by the script, creating duplicate fields;
+  it was excluded, and a clean corrected capture
+  `runtime-dynamic-emission-repository-safety-final-20260702T060123Z.log`
+  passed. The target/request absence log passed, then its first metadata
+  readback omitted spaces after `Get-Item` and `Get-FileHash`; the corrected
+  readback verified its hash, size, timestamp, and PASS contents. The first
+  final containment readback omitted spaces after
+  `Get-Item` and `Get-FileHash`; the three logs had already been written
+  correctly, and a corrected readback verified their 11-path PASS contents,
+  sizes, timestamps, and hashes. A final file-hygiene wrapper first failed to
+  parse because PowerShell interpreted `$file:` inside an interpolated string;
+  using `${file}` corrected the non-mutating wrapper, and the rerun passed with
+  zero BOM, final-newline, or trailing-whitespace defects. The first final
+  manifest rehash wrapper compared PowerShell-converted `timestamp_utc`
+  DateTime objects directly to ISO strings and reported only false timestamp
+  mismatches; normalizing expected timestamps with `ToString('o')` corrected
+  the wrapper, and the complete 33-entry rehash passed with zero defects. The
+  first staged-containment artifact had the correct 11-path PASS result but
+  compressed its header fields onto one line due PowerShell array construction;
+  it was excluded, and
+  `runtime-dynamic-emission-staged-containment-final-20260702T062553Z.log`
+  cleanly recorded the staged path set.
+- **Files changed:** Runtime guard, the narrow matrix compatibility check,
+  event-site CSV, equality and trace-volume reports, manifest, implementation
+  document, `PROJECT-STATE.md`, `NEXT-TASK.md`, `DECISIONS.md`, and this
+  worklog. No production source/header, INF, project, solution, protocol,
+  transport, signing, packaging, installation, hardware, or `legacy/` path
+  changed.
+- **Superseded evidence:** The false-PASS
+  `runtime-evidence-guard-runtime-{Debug,Release}-20260702T041654Z.log` and
+  transitively tainted
+  `runtime-evidence-guard-matrix-final-{Debug,Release}-20260702T042143Z.json`
+  are excluded from current acceptance, as are the earlier superseded
+  `runtime-remediation-*` and `runtime-instrumentation-matrix-*` reports already
+  recorded above.
+- **Safety:** No signing, certificate/key creation, packaging/catalog creation,
+  Driver Store staging, installation, loading, live WPP/ETW session, Windows
+  mutation, device query, target discovery/open, request operation,
+  controller/Chatpad access, protocol traffic, keyboard injection, or hardware
+  test occurred.
+- **Commit/push:** Expected one commit with subject
+  `test: close dynamic instrumentation emission coverage`, then push only
+  `origin/feature/offline-runtime-instrumentation-dynamic-emission-remediation`;
+  final hash is verified after commit.
+- **Next task:** An independent read-only audit of the final dynamic-emission
+  remediation commit. It must independently reconstruct every reachable event
+  from `ChatpadTracePreContextTerminal` and every approved dynamic emitter,
+  verify event 1901 has a concrete mapping, reproduce the final mapping/site
+  arithmetic, test that helper allow-listing cannot hide missing events,
+  reconcile affected guard/equality/volume/matrix evidence, and rehash the
+  complete manifest without regenerating evidence.

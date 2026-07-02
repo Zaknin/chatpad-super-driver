@@ -220,6 +220,46 @@ function Get-EventFamily([int]$EventId) {
     return $family
 }
 
+$script:DynamicEmitterContracts = @(
+    [pscustomobject]@{
+        helper = 'ChatpadTraceDeviceEvent'
+        source_path = 'src/driver/ChatpadFilter/device.c'
+        strategy = 'event-parameter'
+        event_parameter = 'eventId'
+    },
+    [pscustomobject]@{
+        helper = 'ChatpadTraceDeviceSnapshot'
+        source_path = 'src/driver/ChatpadFilter/device.c'
+        strategy = 'event-parameter'
+        event_parameter = 'eventId'
+    },
+    [pscustomobject]@{
+        helper = 'ChatpadTracePreContextTerminal'
+        source_path = 'src/driver/ChatpadFilter/device.c'
+        strategy = 'local-selector'
+        selector = 'terminalEvent'
+        selector_pattern = '(?s)terminalEvent\s*=\s*NT_SUCCESS\s*\(\s*status\s*\)\s*\?\s*CHATPAD_RUNTIME_EVENT_(?<success>[A-Z0-9_]+)\s*:\s*CHATPAD_RUNTIME_EVENT_(?<failure>[A-Z0-9_]+)\s*;'
+        reachable_event_names = @('DEVICE_ADD_FAILURE')
+        unreachable_event_names = @('DEVICE_ADD_SUCCESS')
+        caller_patterns = @(
+            '(?s)if\s*\(\s*attemptWrapped\s*!=\s*0u\s*\)\s*\{.*?status\s*=\s*STATUS_INTEGER_OVERFLOW\s*;.*?ChatpadTracePreContextTerminal\s*\(\s*&attemptDiagnostics\s*,\s*status\s*\)\s*;',
+            '(?s)status\s*=\s*WdfDeviceCreate\s*\(.*?if\s*\(\s*!NT_SUCCESS\s*\(\s*status\s*\)\s*\)\s*\{.*?ChatpadTracePreContextTerminal\s*\(\s*&attemptDiagnostics\s*,\s*status\s*\)\s*;'
+        )
+        discriminator = 'selector=terminalEvent;reachable=DEVICE_ADD_FAILURE;callers=attempt-wrap|device-create-failure'
+    },
+    [pscustomobject]@{
+        helper = 'ChatpadKmdfTraceOwnerEvent'
+        source_path = 'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c'
+        strategy = 'event-parameter'
+        event_parameter = 'eventId'
+    },
+    [pscustomobject]@{
+        helper = 'ChatpadKmdfTraceOwnerSnapshot'
+        source_path = 'src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c'
+        strategy = 'event-parameter'
+        event_parameter = 'eventId'
+    })
+
 function Get-EmissionMap {
     param(
         [hashtable]$Sources,
@@ -230,6 +270,7 @@ function Get-EmissionMap {
         'ChatpadTrace',
         'ChatpadTraceDeviceEvent',
         'ChatpadTraceDeviceSnapshot',
+        'ChatpadTracePreContextTerminal',
         'ChatpadKmdfTraceOwnerEvent',
         'ChatpadKmdfTraceOwnerSnapshot')
     $allInvocations = [System.Collections.Generic.List[object]]::new()
@@ -241,15 +282,16 @@ function Get-EmissionMap {
     }
 
     $directWpp = @($allInvocations | Where-Object emitter -ceq 'ChatpadTrace')
-    $approvedHelperFunctions = @(
-        'ChatpadTraceDeviceEvent',
-        'ChatpadTraceDeviceSnapshot',
-        'ChatpadTracePreContextTerminal',
-        'ChatpadKmdfTraceOwnerEvent',
-        'ChatpadKmdfTraceOwnerSnapshot')
+    $dynamicHelperNames = @($script:DynamicEmitterContracts.helper)
+    Assert-True (
+        @($dynamicHelperNames | Sort-Object -Unique).Count -eq
+        $script:DynamicEmitterContracts.Count
+    ) 'Dynamic-emitter contract contains duplicate helper names.'
+    $dynamicWpp = @($directWpp | Where-Object { $_.event_names.Count -eq 0 })
     $unexplainedDirectWpp = @($directWpp | Where-Object {
-        $_.event_names.Count -eq 0 -and $approvedHelperFunctions -cnotcontains $_.function
+        $_.event_names.Count -eq 0 -and $dynamicHelperNames -cnotcontains $_.function
     })
+    Assert-True ($unexplainedDirectWpp.Count -eq 0) 'A dynamic WPP sink has no validated dynamic-emitter contract.'
 
     $rows = [System.Collections.Generic.List[object]]::new()
     foreach ($invocation in $allInvocations) {
@@ -335,6 +377,118 @@ function Get-EmissionMap {
         }
     }
 
+    $dynamicSelectorCount = 0
+    $dynamicSelectorValueCount = 0
+    $dynamicSelectorMappingCount = 0
+    $dynamicCallerCount = 0
+    $dynamicUnresolvedSelectorCount = 0
+    $dynamicSinkFailureCount = 0
+    foreach ($contract in $script:DynamicEmitterContracts) {
+        Assert-True $Sources.ContainsKey($contract.source_path) "Dynamic helper source is missing: $($contract.helper)."
+        $sourceText = [string]$Sources[$contract.source_path]
+        $helperBody = Get-FunctionBody $sourceText $contract.helper
+        Assert-True ($null -ne $helperBody) "Dynamic helper is missing: $($contract.helper)."
+        $helperWpp = @($directWpp | Where-Object {
+            $_.source_path -ceq $contract.source_path -and
+            $_.function -ceq $contract.helper
+        })
+        Assert-True ($helperWpp.Count -gt 0) "Dynamic helper does not reach WPP: $($contract.helper)."
+
+        $helperCallers = @($allInvocations | Where-Object {
+            $_.source_path -ceq $contract.source_path -and
+            $_.emitter -ceq $contract.helper -and
+            $_.function -cne $contract.helper
+        })
+        $dynamicCallerCount += $helperCallers.Count
+        if ($contract.strategy -ceq 'event-parameter') {
+            Assert-True ($helperBody -match ('\b' + [regex]::Escape($contract.event_parameter) + '\b')) `
+                "Dynamic event parameter is absent from helper $($contract.helper)."
+            foreach ($caller in $helperCallers) {
+                Assert-True ($caller.event_names.Count -ge 1) `
+                    "Dynamic helper caller has an unresolved or unbounded event value: $($contract.helper) at line $($caller.source_line)."
+                foreach ($eventName in @($caller.event_names)) {
+                    Assert-True $IdsByName.ContainsKey($eventName) `
+                        "Dynamic helper caller uses an event outside the catalogue: $eventName."
+                    $eventId = [string]$IdsByName[$eventName]
+                    $matchingRows = @($rows | Where-Object {
+                        $_.emitter -ceq $contract.helper -and
+                        $_.source_path -ceq $caller.source_path -and
+                        $_.source_line -ceq [string]$caller.source_line -and
+                        $_.event_id -ceq $eventId
+                    })
+                    Assert-True ($matchingRows.Count -eq 1) `
+                        "Dynamic helper caller is not represented exactly once: $($contract.helper) line $($caller.source_line)."
+                    $dynamicSelectorMappingCount += 1
+                }
+            }
+            continue
+        }
+
+        Assert-True ($contract.strategy -ceq 'local-selector') `
+            "Unknown dynamic-emitter strategy for $($contract.helper)."
+        $dynamicSelectorCount += 1
+        $selectorMatch = [regex]::Match($helperBody, [string]$contract.selector_pattern)
+        Assert-True $selectorMatch.Success "Dynamic selector cannot be resolved for $($contract.helper)."
+        $selectorNames = @(
+            $selectorMatch.Groups['success'].Value,
+            $selectorMatch.Groups['failure'].Value)
+        Assert-True (@($selectorNames | Sort-Object -Unique).Count -eq 2) `
+            "Dynamic selector alternatives are incomplete for $($contract.helper)."
+        foreach ($eventName in $selectorNames) {
+            Assert-True $IdsByName.ContainsKey($eventName) `
+                "Dynamic selector uses an event outside the catalogue: $eventName."
+        }
+        $declaredDomain = @(
+            @($contract.reachable_event_names) +
+            @($contract.unreachable_event_names) |
+            Sort-Object -Unique)
+        Assert-True (($selectorNames | Sort-Object) -join "`n" -ceq
+            (($declaredDomain | Sort-Object) -join "`n")) `
+            "Dynamic selector source domain differs from its contract for $($contract.helper)."
+        Assert-True ($helperCallers.Count -eq @($contract.caller_patterns).Count) `
+            "Dynamic helper caller count differs from its contract for $($contract.helper)."
+        foreach ($callerPattern in @($contract.caller_patterns)) {
+            Assert-True ([regex]::Matches($sourceText, [string]$callerPattern).Count -eq 1) `
+                "Dynamic helper caller condition is missing or ambiguous for $($contract.helper)."
+        }
+
+        $selectorWpp = @($helperWpp | Where-Object {
+            $_.call_text -match ('\(\s*ULONG\s*\)\s*' + [regex]::Escape($contract.selector)) -and
+            $_.call_text -match ('ChatpadRuntimeTraceEventName\s*\(\s*' + [regex]::Escape($contract.selector) + '\s*\)')
+        })
+        Assert-True ($selectorWpp.Count -eq 1) `
+            "Dynamic selector does not resolve to exactly one WPP sink for $($contract.helper)."
+        $wppSite = $selectorWpp[0]
+        foreach ($eventName in @($contract.reachable_event_names)) {
+            $eventId = [int]$IdsByName[$eventName]
+            $rows.Add([pscustomobject][ordered]@{
+                schema_version = '2'
+                event_id = [string]$eventId
+                symbolic_name = $eventName
+                family = Get-EventFamily $eventId
+                source_path = $wppSite.source_path
+                function = $contract.helper
+                source_line = [string]$wppSite.source_line
+                source_locator = $wppSite.normalized_call
+                source_locator_sha256 = Get-Sha256Text $wppSite.normalized_call
+                emission_kind = 'helper-mediated'
+                emitter = $contract.helper
+                helper_chain = "$($contract.helper)>ChatpadTrace"
+                wpp_source_path = $wppSite.source_path
+                wpp_function = $wppSite.function
+                wpp_line = [string]$wppSite.source_line
+                wpp_locator_sha256 = Get-Sha256Text $wppSite.normalized_call
+                physical_site_id = ('{0}:{1}:ChatpadTrace' -f
+                    $wppSite.source_path,
+                    $wppSite.source_line)
+                shared_physical_site = 'false'
+                discriminator = [string]$contract.discriminator
+            })
+            $dynamicSelectorMappingCount += 1
+        }
+        $dynamicSelectorValueCount += @($contract.reachable_event_names).Count
+    }
+
     $sharedIds = @($rows | Group-Object physical_site_id |
         Where-Object { @($_.Group.event_id | Sort-Object -Unique).Count -gt 1 } |
         ForEach-Object { $_.Name })
@@ -348,6 +502,16 @@ function Get-EmissionMap {
         rows = @($rows | Sort-Object @{ Expression = { [int]$_.event_id } }, source_path, @{ Expression = { [int]$_.source_line } }, emitter)
         direct_wpp = $directWpp
         unexplained_direct_wpp = $unexplainedDirectWpp
+        dynamic = [pscustomobject]@{
+            helpers_inspected = $script:DynamicEmitterContracts.Count
+            callers_inspected = $dynamicCallerCount
+            local_selectors = $dynamicSelectorCount
+            reachable_local_selector_values = $dynamicSelectorValueCount
+            inventoried_dynamic_mappings = $dynamicSelectorMappingCount
+            unresolved_selectors = $dynamicUnresolvedSelectorCount
+            sink_failures = $dynamicSinkFailureCount
+            dynamic_wpp_sinks = $dynamicWpp.Count
+        }
     }
 }
 
@@ -444,9 +608,13 @@ $derivedEmission = Get-EmissionMap $sourceByRelativePath $designEvents $idsByNam
 $expectedEmissionRows = @($derivedEmission.rows)
 
 if ($RegenerateEventSiteEvidence) {
-    $expectedEmissionRows |
+    $csvLines = @($expectedEmissionRows |
         Select-Object $script:EmissionProperties |
-        Export-Csv -LiteralPath $inventoryPath -NoTypeInformation -Encoding utf8
+        ConvertTo-Csv -NoTypeInformation)
+    [System.IO.File]::WriteAllText(
+        $inventoryPath,
+        ($csvLines -join "`n") + "`n",
+        [System.Text.UTF8Encoding]::new($false))
 }
 
 $inventory = @(Import-Csv -LiteralPath $inventoryPath)
@@ -526,6 +694,113 @@ foreach ($row in $inventory) {
 }
 Assert-NegativeEmissionFixture @($fixtureList) 'collapsed repeated physical site'
 Assert-True ($negativeEmissionSelfTests -eq 10) 'All ten emission-map negative fixtures must execute.'
+
+$dynamicEmissionSelfTests = 0
+function Copy-DynamicContracts {
+    return @((($script:DynamicEmitterContracts | ConvertTo-Json -Depth 8) | ConvertFrom-Json))
+}
+function Copy-SourceMap([hashtable]$Sources) {
+    $copy = @{}
+    foreach ($key in $Sources.Keys) { $copy[$key] = [string]$Sources[$key] }
+    return $copy
+}
+function Assert-DynamicSourceRejected {
+    param(
+        [hashtable]$Sources,
+        [string]$Description,
+        [object[]]$Contracts = $script:DynamicEmitterContracts)
+    $savedContracts = $script:DynamicEmitterContracts
+    $rejected = $false
+    try {
+        $script:DynamicEmitterContracts = @($Contracts)
+        Get-EmissionMap $Sources $designEvents $idsByName | Out-Null
+    } catch {
+        $rejected = $true
+    } finally {
+        $script:DynamicEmitterContracts = $savedContracts
+    }
+    Assert-True $rejected "Dynamic-emitter fixture passed unexpectedly: $Description"
+    $script:dynamicEmissionSelfTests += 1
+}
+function Assert-DynamicInventoryRejected {
+    param([object[]]$Rows, [string]$Description)
+    $defects = Get-EmissionEvidenceDefects $expectedEmissionRows $Rows 0
+    Assert-True ($defects.total -gt 0) "Dynamic inventory fixture passed unexpectedly: $Description"
+    $script:dynamicEmissionSelfTests += 1
+}
+
+$dynamicRow = @($inventory | Where-Object {
+    $_.emitter -ceq 'ChatpadTracePreContextTerminal' -and
+    $_.event_id -ceq '1901'
+})
+Assert-True ($dynamicRow.Count -eq 1) 'Event 1901 dynamic-emitter inventory row is missing or duplicated.'
+
+$fixture = @($inventory | Where-Object {
+    -not ($_.emitter -ceq 'ChatpadTracePreContextTerminal' -and $_.event_id -ceq '1901')
+})
+Assert-DynamicInventoryRejected $fixture 'reachable event 1901 removed from inventory'
+
+$fixtureSources = Copy-SourceMap $sourceByRelativePath
+$fixtureSources['src/driver/ChatpadFilter/device.c'] = $fixtureSources['src/driver/ChatpadFilter/device.c'].Replace(
+    ': CHATPAD_RUNTIME_EVENT_DEVICE_ADD_FAILURE;',
+    ': (status == STATUS_TIMEOUT ? CHATPAD_RUNTIME_EVENT_DEVICE_ADD_FINAL_SUMMARY : CHATPAD_RUNTIME_EVENT_DEVICE_ADD_FAILURE);')
+Assert-DynamicSourceRejected $fixtureSources 'new catalogue-valid selector alternative omitted from inventory'
+
+$fixture = Copy-EmissionRows $inventory
+$extraDynamic = (Copy-EmissionRows $dynamicRow)[0]
+$extraDynamic.event_id = '1900'
+$extraDynamic.symbolic_name = 'DEVICE_ADD_SUCCESS'
+$fixture = @($fixture) + @($extraDynamic)
+Assert-DynamicInventoryRejected $fixture 'inventory declares unreachable dynamic event'
+
+$fixtureSources = Copy-SourceMap $sourceByRelativePath
+$fixtureSources['src/driver/ChatpadFilter/device.c'] = $fixtureSources['src/driver/ChatpadFilter/device.c'].Replace(
+    'CHATPAD_RUNTIME_EVENT_DEVICE_ADD_FAILURE;',
+    'CHATPAD_RUNTIME_EVENT_NOT_IN_CATALOGUE;')
+Assert-DynamicSourceRejected $fixtureSources 'selector value outside authoritative catalogue'
+
+$fixtureSources = Copy-SourceMap $sourceByRelativePath
+$fixtureSources['src/driver/ChatpadFilter/device.c'] = [regex]::Replace(
+    $fixtureSources['src/driver/ChatpadFilter/device.c'],
+    '(?s)terminalEvent\s*=\s*NT_SUCCESS\s*\(\s*status\s*\)\s*\?.*?;',
+    'terminalEvent = ChatpadResolveUnknownTerminalEvent(status);',
+    1)
+Assert-DynamicSourceRejected $fixtureSources 'selector complete domain cannot be resolved'
+
+$fixtureSources = Copy-SourceMap $sourceByRelativePath
+$fixtureSources['src/driver/ChatpadFilter/device.c'] = [regex]::Replace(
+    $fixtureSources['src/driver/ChatpadFilter/device.c'],
+    '(?s)\bChatpadTrace(?=\s*\([^;]*?\(ULONG\)terminalEvent\b)',
+    'RemovedDynamicWppSink',
+    1)
+Assert-DynamicSourceRejected $fixtureSources 'approved dynamic helper no longer reaches WPP'
+
+$fixtureSources = Copy-SourceMap $sourceByRelativePath
+$fixtureSources['src/driver/ChatpadFilter/device.c'] = $fixtureSources['src/driver/ChatpadFilter/device.c'].Replace(
+    'CHATPAD_RUNTIME_EVENT_DEVICE_CONTEXT_READY,',
+    'runtimeSelectedEvent,')
+Assert-DynamicSourceRejected $fixtureSources 'dynamic helper caller supplies undeclared event'
+
+$fixture = Copy-EmissionRows $inventory
+$wrongFamilyRow = @($fixture | Where-Object {
+    $_.emitter -ceq 'ChatpadTracePreContextTerminal' -and $_.event_id -ceq '1901'
+})[0]
+$wrongFamilyRow.family = 'lifecycle'
+Assert-DynamicInventoryRejected $fixture 'dynamic event assigned wrong family'
+
+$fixture = Copy-EmissionRows $inventory
+$staleDynamicRow = @($fixture | Where-Object {
+    $_.emitter -ceq 'ChatpadTracePreContextTerminal' -and $_.event_id -ceq '1901'
+})[0]
+$staleDynamicRow.source_line = [string]([int]$staleDynamicRow.source_line + 1)
+Assert-DynamicInventoryRejected $fixture 'dynamic row uses stale source line or locator'
+
+$fixtureContracts = Copy-DynamicContracts
+$allowOnlyContract = @($fixtureContracts | Where-Object helper -ceq 'ChatpadTracePreContextTerminal')[0]
+$allowOnlyContract.strategy = 'allow-list-only'
+Assert-DynamicSourceRejected $sourceByRelativePath 'helper allow-list entry attempts to suppress missing mapping' $fixtureContracts
+
+Assert-True ($dynamicEmissionSelfTests -eq 10) 'All ten dynamic-emitter rejection fixtures must execute.'
 
 $allSource = ($sourceByRelativePath.Values -join [Environment]::NewLine)
 $sourceEventNames = @([regex]::Matches(
@@ -648,6 +923,8 @@ $indirectHelperMappings = @($inventory | Where-Object emission_kind -ceq 'helper
 $uniquePhysicalSites = @($inventory.physical_site_id | Sort-Object -Unique).Count
 $sharedPhysicalSites = @($inventory | Where-Object shared_physical_site -ceq 'true' |
     Select-Object -ExpandProperty physical_site_id -Unique).Count
+Assert-True ($derivedEmission.dynamic.inventoried_dynamic_mappings -eq $indirectHelperMappings) `
+    'Source-derived dynamic mapping count differs from helper-mediated inventory.'
 Write-Output "SemanticEventCount=$($designEvents.Count)"
 Write-Output "EmissionMappingCount=$($inventory.Count)"
 Write-Output "DirectWppInvocationCount=$(@($derivedEmission.direct_wpp).Count)"
@@ -661,6 +938,18 @@ Write-Output "StaleSourceEvidenceCount=$($evidenceDefects.stale_source_evidence)
 Write-Output "UnexplainedWppSiteCount=$($evidenceDefects.unexplained_wpp_sites)"
 Write-Output "CollapsedPhysicalSiteCount=$($evidenceDefects.collapsed_physical_sites)"
 Write-Output "EmissionMapNegativeSelfTests=$negativeEmissionSelfTests"
+Write-Output "DynamicHelpersInspected=$($derivedEmission.dynamic.helpers_inspected)"
+Write-Output "DynamicCallersInspected=$($derivedEmission.dynamic.callers_inspected)"
+Write-Output "ReachableDynamicEventValueCount=$($derivedEmission.dynamic.inventoried_dynamic_mappings)"
+Write-Output "InventoriedDynamicEventMappingCount=$indirectHelperMappings"
+Write-Output 'MissingDynamicMappingCount=0'
+Write-Output 'UnreachableDynamicMappingCount=0'
+Write-Output "UnresolvedDynamicSelectorCount=$($derivedEmission.dynamic.unresolved_selectors)"
+Write-Output "DynamicHelperToWppFailureCount=$($derivedEmission.dynamic.sink_failures)"
+Write-Output 'StaleDynamicLocatorCount=0'
+Write-Output 'WrongDynamicFamilyCount=0'
+Write-Output 'DynamicAllowListSuppressionCount=0'
+Write-Output "DynamicEmitterNegativeSelfTests=$dynamicEmissionSelfTests"
 Write-Output "SideEffectfulTraceArgumentCount=$($sideEffectCalls.Count)"
 Write-Output "TraceUnderSpinlockCount=$spinlockTraceCount"
 Write-Output 'MissingCounterEventCount=0'
@@ -681,6 +970,8 @@ $validationReport = [ordered]@{
         'concrete-semantic-emission-map',
         'direct-wpp-site-accounting',
         'helper-to-wpp-resolution',
+        'complete-dynamic-emitter-domain',
+        'dynamic-emitter-negative-fixtures',
         'precise-source-locator-validation',
         'repeated-stage-site-preservation',
         'trace-argument-safety',

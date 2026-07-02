@@ -57,14 +57,27 @@
     "keyword_mapping_equal": true,
     "schema_v2_concrete_emission_map_equal": true,
     "direct_wpp_invocation_count": 34,
-    "semantic_emission_mapping_count": 94,
-    "unique_physical_emission_site_count": 92,
+    "semantic_emission_mapping_count": 95,
+    "helper_mediated_mapping_count": 79,
+    "unique_physical_emission_site_count": 93,
     "required_fields_equal": true,
     "generated_device_metadata_equal": true,
     "generated_driver_metadata_equal": true,
     "generated_owner_metadata_equal": true
   },
-  "derivation": "Debug and Release project nodes were inspected independently. Each configuration generated its own WPP metadata under its own object root and build log. Exact generated metadata hashes are equal across configurations; schema-v2 source evidence independently binds 73 semantic events to 94 concrete mappings, 34 direct WPP invocations, and 92 unique physical emission sites.",
+  "dynamic_emission_contract": {
+    "helpers_inspected": 5,
+    "callers_inspected": 78,
+    "reachable_dynamic_event_values": 79,
+    "inventoried_dynamic_mappings": 79,
+    "missing_dynamic_mappings": 0,
+    "unreachable_dynamic_mappings": 0,
+    "unresolved_dynamic_selectors": 0,
+    "dynamic_helper_to_wpp_failures": 0,
+    "stale_dynamic_locators": 0,
+    "event_1901_locator_sha256": "3387C13EA8A5F03F4154E6CA20E39B43F17F2DC8C1427E228A8044E904AA95F8"
+  },
+  "derivation": "Debug and Release project nodes were inspected independently. Each configuration generated its own WPP metadata under its own object root and build log. Exact generated metadata hashes are equal across configurations; schema-v2 source evidence binds 73 semantic events to 95 concrete mappings, including 79 helper-mediated mappings and the source-resolved dynamic DEVICE_ADD_FAILURE path through ChatpadTracePreContextTerminal, across 34 direct WPP invocations and 93 unique physical emission sites.",
   "limitations": "This is offline static configuration and generated-metadata equality, not runtime ETL evidence.",
   "result": "PASS"
 }

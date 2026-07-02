@@ -106,7 +106,8 @@ $commands = @(
         @{ Name = 'machine-result'; Pattern = '^CHATPAD_VALIDATION_JSON=' },
         @{ Name = 'missing-mapping-zero'; Pattern = '^MissingMappingCount=0$' },
         @{ Name = 'unexplained-wpp-zero'; Pattern = '^UnexplainedWppSiteCount=0$' },
-        @{ Name = 'negative-fixtures'; Pattern = '^EmissionMapNegativeSelfTests=10$' })
+        @{ Name = 'negative-fixtures'; Pattern = '^EmissionMapNegativeSelfTests=10$' },
+        @{ Name = 'dynamic-negative-fixtures'; Pattern = '^DynamicEmitterNegativeSelfTests=10$' })
     New-AssertionContract 'runtime-instrumentation-pure-model' 'tests\offline\RuntimeInstrumentationModel\Test-RuntimeInstrumentationModel.ps1' @('-Configuration', $Configuration) '^AssertionsExecuted=(\d+)\s*$'
 )
 

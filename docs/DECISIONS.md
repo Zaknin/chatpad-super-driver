@@ -4,6 +4,28 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Require source-bound contracts for every dynamic emitter
+
+**Decision:** A helper name may not exempt a dynamic WPP call from semantic
+emission coverage. Every dynamic emitter must have a source-bound contract that
+proves its complete caller or selector domain, catalogue and family validity,
+concrete WPP sink, and exact inventory mappings.
+
+**Rationale:** The independent audit of
+`38d434e8f7c815f609834f79315600aa73969639` found that
+`ChatpadTracePreContextTerminal` dynamically emitted event 1901 through a real
+production WPP site omitted from the inventory. The helper allow-list suppressed
+unexplained-site detection and produced false Debug/Release PASS evidence.
+
+**Alternatives rejected:** Adding only a special-case event-1901 row would
+leave future dynamic values and callers invisible. Continuing to treat helper
+allow-list membership as emission proof would preserve the blind spot.
+
+**Consequences:** All five dynamic helpers are contract-checked against source;
+new or unresolved values, callers, sinks, families, locators, or inventory rows
+fail closed. Ten isolated negative fixtures exercise the contract, and final
+acceptance requires another independent read-only audit.
+
 ## 2026-07-02 - Require independently attributable event and suite evidence
 
 **Decision:** Runtime-instrumentation acceptance uses semantic-name model
