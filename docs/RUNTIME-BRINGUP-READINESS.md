@@ -12,6 +12,55 @@ The second independent audit found unsupported PASS paths in the readiness
 framework. The enforcement remediation fixes those paths while deliberately
 keeping the live gate closed.
 
+## Validator-totality remediation status
+
+The third independent audit found remaining uncontrolled exception paths and
+unsupported lifecycle-transition acceptances. The validator-totality
+remediation is offline-only and keeps the live gate closed.
+
+- Current branch:
+  `feature/runtime-bringup-readiness-validator-totality-remediation`.
+- Current implementation commit:
+  `7689d2cca57c485d8c0569bdcbec58e400621b20`.
+- Framework validation is `PASS`; live installation readiness is `BLOCKED`;
+  blocker is `BLOCKED_NOT_IMPLEMENTED`.
+- Executable exact-instance binding operations: `0`; executable
+  exact-instance restoration operations: `0`; broad approved install
+  operations: `0`; broad approved rollback operations: `0`.
+- Exported readiness validators now reject malformed JSON-compatible values
+  through controlled result records. The malformed-input matrix covers
+  repository identity, target selection, driver state, rollback readiness,
+  package validation, signing readiness, host preflight, evidence directory,
+  install planning, WPP planning, event-log planning, post-test
+  reconciliation, runtime evidence, runtime observation, and stop-condition
+  linkage.
+- Target-selection rejects missing, null, numeric, empty, whitespace-only, and
+  malformed `candidate_set_id`/candidate structures through
+  `TARGET_SELECTION_INVALID` with target stop conditions.
+- Rollback readiness validates `rollback_operations` before operation
+  inspection and rejects absent, null, scalar, object, empty, malformed,
+  blocked, incomplete, cross-session, and wrong-target rollback structures
+  through `ROLLBACK_CONTRACT_INVALID`.
+- Operation lifecycle validation rejects executed/failed operations without
+  result or timestamps, malformed result objects, rolled-back operations
+  without rollback references/results, and restored operations without final
+  reconciliation evidence.
+- Runtime evidence semantic validation rejects invalid rollback references,
+  rollback operations in another session or host, duplicate artifact or
+  operation IDs, unresolved dependencies, synthetic artifacts in live sessions,
+  restored top-level state with planned work, and restored state without final
+  reconciliation.
+- Public validator entry scripts contain a last-resort
+  `VALIDATOR_INTERNAL_ERROR` boundary with sanitized exception diagnostics.
+  Normal malformed input is rejected by explicit contract logic, not by the
+  boundary.
+- The final offline suite contains 75 fixtures and 467 assertions. The
+  malformed-input matrix contains 90 cases. Uncontrolled exceptions:
+  `0`; `PropertyNotFoundException` count: `0`; StrictMode exception count:
+  `0`; invalid transition acceptance count: `0`.
+- PSScriptAnalyzer remains `SKIPPED_UNAVAILABLE`; no network installation was
+  attempted and unavailable static analysis is not counted as PASS.
+
 - Authoritative machine status is split: framework validation is `PASS`, live
   installation readiness is `BLOCKED`, and the blocker is
   `BLOCKED_NOT_IMPLEMENTED`. Documentation may describe this as pass with a
@@ -70,7 +119,8 @@ keeping the live gate closed.
   `Invoke-ScriptAnalyzer` was unavailable, no network install was attempted,
   the manifest records `SKIPPED_UNAVAILABLE`, and static analysis is not
   counted as PASS.
-- The final offline suite contains 31 fixtures and 158 assertions across
+- The prior enforcement-remediation offline suite contained 31 fixtures and
+  158 assertions across
   accepted-baseline-identity, authorization, binary-identity, current-driver,
   event-log, evidence, host, install, nested-quoting, operation,
   package-semantic, reconciliation, rollback, runtime-observer,

@@ -5,14 +5,12 @@
 The offline runtime instrumentation milestone is accepted and frozen at
 `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned
 `AUDIT PASS WITH LIMITATIONS`. The current branch
-`feature/runtime-bringup-readiness-enforcement-remediation` repairs the second
-readiness audit findings with strict negative-fixture semantics, dual
-prior/current implementation-finalization identity, complete operation
-lifecycle records, effective INF relationship parsing, strengthened
-target/driver-state/rollback/signing/host/evidence/WPP/event/reconciliation
-contracts, Draft 2020-12 plus semantic evidence validation, stop-condition
-observer linkage, truthful PSScriptAnalyzer reporting, and 31 offline fixtures
-with 158 assertions.
+`feature/runtime-bringup-readiness-validator-totality-remediation` repairs the
+third readiness audit findings with safe-access validator contracts,
+entry-point exception containment, target and rollback totality, lifecycle and
+semantic transition enforcement, a malformed-input matrix across public
+readiness validators, truthful PSScriptAnalyzer reporting, and 75 offline
+fixtures with 467 assertions.
 
 Authoritative framework status is `PASS`; authoritative live installation
 readiness is `BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED`. Exact-instance
@@ -22,14 +20,14 @@ installation, loading, trace collection, event-log export, live device query,
 target/request operation, hardware access, Windows mutation, reboot, or
 production source change.
 
-Current phase: **Runtime bring-up readiness enforcement remediation -
+Current phase: **Runtime bring-up readiness validator-totality remediation -
 exact-instance binding blocked; independent read-only two-commit audit
 pending**.
 
-The next task is independent read-only audit of both enforcement-remediation
-commits. Only after that audit passes may a separate supervised live session
-consider any signing or Windows mutation, and exact-instance binding would
-still require its own implementation and audit gate.
+The next task is independent read-only audit of both validator-totality
+remediation commits. Only after that audit passes may a separate supervised
+live session consider any signing or Windows mutation, and exact-instance
+binding would still require its own implementation and audit gate.
 
 ## Previous runtime-observation planning gate (2026-07-02)
 

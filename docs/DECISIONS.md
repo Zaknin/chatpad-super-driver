@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Treat readiness validators as total functions over malformed JSON-compatible input
+
+**Decision:** Exported runtime readiness validators must reject malformed
+JSON-compatible inputs with controlled machine-readable result records instead
+of exposing PowerShell property, StrictMode, null, index, conversion, parser, or
+runtime exceptions. Public validator entry scripts include a last-resort
+`VALIDATOR_INTERNAL_ERROR` boundary for unexpected internal defects.
+
+**Rationale:** The third independent readiness audit found remaining
+`PropertyNotFoundException` paths in target selection and rollback validation,
+plus lifecycle and semantic evidence validators that accepted invalid executed,
+rolled-back, and restored transitions. These defects could make audit results
+depend on incidental PowerShell behavior rather than validator contracts.
+
+**Alternatives rejected:** Preserving direct dot-property access after informal
+required-field checks, treating exception side effects as valid rejection,
+duplicating lifecycle rules in separate validators, or allowing malformed
+runtime evidence transitions to fail only in later consumers.
+
+**Consequences:** Safe property/array/object/string/timestamp access is part of
+the readiness contract. Malformed-input matrix coverage is required for public
+readiness validators, lifecycle and semantic transition checks are fail-closed,
+and live readiness still remains `BLOCKED_NOT_IMPLEMENTED` until exact-instance
+binding and restoration are separately implemented and audited.
+
 ## 2026-07-02 - Separate immutable baseline identity from approved readiness identity
 
 **Decision:** Runtime repository validation uses two identities: the frozen

@@ -1,15 +1,15 @@
 {
   "schema_version": "chatpad-runtime-bringup-readiness-manifest-v3",
-  "generated_utc": "2026-07-02T12:33:40.6132140Z",
+  "generated_utc": "2026-07-02T14:32:01.6244783Z",
   "framework_status": "PASS",
   "live_installation_readiness": "BLOCKED",
   "blocker": "BLOCKED_NOT_IMPLEMENTED",
   "repository": {
-    "branch": "feature/runtime-bringup-readiness-enforcement-remediation",
+    "branch": "feature/runtime-bringup-readiness-validator-totality-remediation",
     "frozen_baseline_commit": "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
     "prior_readiness_implementation_commit": "0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea",
     "prior_readiness_finalization_commit": "2bb08fee77125f6b5bed2774c085ce57fe192752",
-    "current_readiness_implementation_commit": "f0f9bf7e196a6f7cfe9b391cc4001b593016d310",
+    "current_readiness_implementation_commit": "7689d2cca57c485d8c0569bdcbec58e400621b20",
     "current_readiness_finalization_commit_source": "external exact 40-character audit input after finalization commit"
   },
   "accepted_offline_baseline": {
@@ -21,8 +21,8 @@
     "release_sys_sha256": "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
   },
   "readiness": {
-    "fixture_count": 31,
-    "assertion_count": 158,
+    "fixture_count": 75,
+    "assertion_count": 467,
     "category_totals": [
       {
         "category": "accepted-baseline-identity",
@@ -75,6 +75,11 @@
         "assertions": 10.0
       },
       {
+        "category": "operation-lifecycle",
+        "fixtures": 11,
+        "assertions": 55.0
+      },
+      {
         "category": "package-semantic",
         "fixtures": 1,
         "assertions": 6.0
@@ -88,6 +93,11 @@
         "category": "rollback",
         "fixtures": 2,
         "assertions": 10.0
+      },
+      {
+        "category": "rollback-totality",
+        "fixtures": 12,
+        "assertions": 60.0
       },
       {
         "category": "runtime-observer",
@@ -105,6 +115,11 @@
         "assertions": 4.0
       },
       {
+        "category": "semantic-transition",
+        "fixtures": 8,
+        "assertions": 40.0
+      },
+      {
         "category": "signing",
         "fixtures": 2,
         "assertions": 10.0
@@ -113,6 +128,16 @@
         "category": "target",
         "fixtures": 1,
         "assertions": 5.0
+      },
+      {
+        "category": "target-totality",
+        "fixtures": 12,
+        "assertions": 60.0
+      },
+      {
+        "category": "validator-totality",
+        "fixtures": 1,
+        "assertions": 94.0
       },
       {
         "category": "wpp",
@@ -125,6 +150,9 @@
     "install_plan_crash_count": 0,
     "invalid_schema_transition_acceptance_count": 0,
     "unlinked_stop_condition_count": 0,
+    "uncontrolled_exception_count": 0,
+    "property_not_found_exception_count": 0,
+    "strictmode_exception_count": 0,
     "psscriptanalyzer_status": "SKIPPED_UNAVAILABLE",
     "runtime_evidence_schema": "chatpad-runtime-evidence-schema-v3",
     "exact_instance_binding_operations": 0,
@@ -137,35 +165,8 @@
       "id": "tracked-docs-decisions-md",
       "relative_path": "docs/DECISIONS.md",
       "state": "tracked",
-      "byte_size": 107932,
-      "sha256": "2700DB6D6FEB943DD9FDE9305339C295E22505821A7C362553A631CEA315A097",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-evidence-runtime-bringup-evidence-schema-v1-json",
-      "relative_path": "docs/evidence/runtime-bringup-evidence-schema-v1.json",
-      "state": "tracked",
-      "byte_size": 6344,
-      "sha256": "5E8CACFB85844EFB1B0DF57F01D7E0056059A224075C242946F70CFD28CEF970",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-evidence-runtime-bringup-sample-evidence-json",
-      "relative_path": "docs/evidence/runtime-bringup-sample-evidence.json",
-      "state": "tracked",
-      "byte_size": 1511,
-      "sha256": "8A249C66A4459A2C87529B640FB75F3011947427DC614C05A1653F663B845764",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-evidence-runtime-bringup-stop-conditions-json",
-      "relative_path": "docs/evidence/runtime-bringup-stop-conditions.json",
-      "state": "tracked",
-      "byte_size": 9999,
-      "sha256": "D8CEED735008D1E7565D050CD595D785E6AEFB54B0DBF537B3701FB50F61A02D",
+      "byte_size": 109466,
+      "sha256": "ACED302F48555D7D295BEA1E65076BC51F96A9307297F70DA8214B3836D2006F",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -173,8 +174,8 @@
       "id": "tracked-docs-next-task-md",
       "relative_path": "docs/NEXT-TASK.md",
       "state": "tracked",
-      "byte_size": 4395,
-      "sha256": "9A153A2728806C7488D73BBFFCEA51C18C5067A597980081306F6906662F24C8",
+      "byte_size": 4629,
+      "sha256": "777D3D7836ED348EAF435BB608CF8D7A573BDF30F11EC14E212009D5FA79E46C",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -182,8 +183,8 @@
       "id": "tracked-docs-porting-plan-md",
       "relative_path": "docs/PORTING-PLAN.md",
       "state": "tracked",
-      "byte_size": 18136,
-      "sha256": "F3D18B757DA3874998BCB24E3DA48F43167F9E1A619E11FD5C323D4E2D532409",
+      "byte_size": 18014,
+      "sha256": "4D0C5FD12651CEE59B452E55AB0E111A5ECCF2CA2C661ADE48DECBDD39B2112D",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -191,8 +192,8 @@
       "id": "tracked-docs-project-state-md",
       "relative_path": "docs/PROJECT-STATE.md",
       "state": "tracked",
-      "byte_size": 3781,
-      "sha256": "3B1EC62A91590D4D7D48D52509374049828FCB91FEF1AE48D715F7D65D0ED66C",
+      "byte_size": 4479,
+      "sha256": "3894BC4F55FCF4DD0563EAA03B259F9D75372FDABD06CA85D8744963C84F2ABC",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -200,8 +201,8 @@
       "id": "tracked-docs-runtime-bringup-readiness-md",
       "relative_path": "docs/RUNTIME-BRINGUP-READINESS.md",
       "state": "tracked",
-      "byte_size": 15368,
-      "sha256": "6E1431BBEE4186BAA69A450F9618D548177D63D164C95D3AB0B5F7643B496E09",
+      "byte_size": 18232,
+      "sha256": "29DCB87125E491EB656C90620B3FF98854FAF65508271D7A2F415D724D3EA605",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -209,26 +210,8 @@
       "id": "tracked-docs-worklog-md",
       "relative_path": "docs/WORKLOG.md",
       "state": "tracked",
-      "byte_size": 377040,
-      "sha256": "7743AF0CB0A454E66A30456860D0DA97D0714B4F5B5D3508C2810749C4B672CC",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-export-chatpadruntimeeventlogplan-ps1",
-      "relative_path": "tools/Export-ChatpadRuntimeEventLogPlan.ps1",
-      "state": "tracked",
-      "byte_size": 1501,
-      "sha256": "D0DF8FF58977FC2756DD75830AA9FC6BAD7B20E2E58988CB5533193F952D846F",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-get-chatpadruntimedevicecandidateinventory-ps1",
-      "relative_path": "tools/Get-ChatpadRuntimeDeviceCandidateInventory.ps1",
-      "state": "tracked",
-      "byte_size": 1741,
-      "sha256": "9702718E2C65150032E8704CE95C1D89126CBE23F23A09B2949F4F68533F06BD",
+      "byte_size": 384958,
+      "sha256": "60426E78B25A4836006238623B8A10BD2B4726E31228EBD51089B7AB4976F389",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -236,8 +219,8 @@
       "id": "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
       "relative_path": "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
       "state": "tracked",
-      "byte_size": 4137,
-      "sha256": "922B27C68E87E12750C0543561E3E075D800FE1149354AD632E8961D5902CA67",
+      "byte_size": 4463,
+      "sha256": "4E407C818D66A9BE94F91965F528C9900031ACAAB33F221129E18DC288681AFA",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -245,44 +228,26 @@
       "id": "tracked-tools-runtimebringup-chatpadruntimebringup-common-psm1",
       "relative_path": "tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1",
       "state": "tracked",
-      "byte_size": 53860,
-      "sha256": "52EE020CC64219C7F83038E45D4BBBC63B82978CFD07682DA609A26E6B2DBD43",
+      "byte_size": 67865,
+      "sha256": "4586F2C0BDC8001C767F2AD34BA96FC811EC1920AB8F47CF84DA54CFDE00B201",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
     {
-      "id": "tracked-tools-save-chatpadcurrentdriverstate-ps1",
-      "relative_path": "tools/Save-ChatpadCurrentDriverState.ps1",
+      "id": "tracked-tools-test-chatpadposttestreconciliation-ps1",
+      "relative_path": "tools/Test-ChatpadPostTestReconciliation.ps1",
       "state": "tracked",
-      "byte_size": 1756,
-      "sha256": "036E382643D3FCD3C84CC695189F12922CD46CA0C5490913BFBD1C7D9F64EC59",
+      "byte_size": 524,
+      "sha256": "6107B54E7092B1BE83D7B1C82ED0E7B4E069C7594D18A0E1E497A53CD5C04025",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
     {
-      "id": "tracked-tools-show-chatpadinstallplan-ps1",
-      "relative_path": "tools/Show-ChatpadInstallPlan.ps1",
+      "id": "tracked-tools-test-chatpadrollbackreadiness-ps1",
+      "relative_path": "tools/Test-ChatpadRollbackReadiness.ps1",
       "state": "tracked",
-      "byte_size": 3262,
-      "sha256": "526427525D2E18389B0DA8A447EA05B5FDBF8D1A9D79A926B8B711342E79E7A7",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-show-chatpadrollbackplan-ps1",
-      "relative_path": "tools/Show-ChatpadRollbackPlan.ps1",
-      "state": "tracked",
-      "byte_size": 3216,
-      "sha256": "EB7FA153BC56369B7EDCBCE0B86205D79DF941A7F7BCD0B0C42BB6F496DAC598",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-show-chatpadwppsessionplan-ps1",
-      "relative_path": "tools/Show-ChatpadWppSessionPlan.ps1",
-      "state": "tracked",
-      "byte_size": 2766,
-      "sha256": "1CD294773383A7BF83E46744702DE4351D567F57F293E0A688F451E030053669",
+      "byte_size": 504,
+      "sha256": "6376BF99F7C612B349A7E79CB344422E37B85CE741B9972209BF7F8AD2E6B4EB",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -290,17 +255,17 @@
       "id": "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
       "relative_path": "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
       "state": "tracked",
-      "byte_size": 21698,
-      "sha256": "B5C140F6C8511DB39AD85633BEB07E89624E639808A049B12F344ED1372C867E",
+      "byte_size": 42188,
+      "sha256": "36E5B7C690BA6773BC6C71E5C452E9CE146E707653E9A1B01BB70AB0C79E93D0",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
     {
-      "id": "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
+      "id": "tracked-tools-test-chatpadruntimehostpreflight-ps1",
+      "relative_path": "tools/Test-ChatpadRuntimeHostPreflight.ps1",
       "state": "tracked",
-      "byte_size": 2914,
-      "sha256": "4D6738ADB8087F4751FE22B251CE3D2C25F7B4142F6A78E2657A33CE7DDEC9FD",
+      "byte_size": 931,
+      "sha256": "19B96F6D491225B5B3C3F0818860D9D308724BE659324B8DED31C99DA78DBB48",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -308,8 +273,8 @@
       "id": "tracked-tools-test-chatpadruntimeobservation-ps1",
       "relative_path": "tools/Test-ChatpadRuntimeObservation.ps1",
       "state": "tracked",
-      "byte_size": 363,
-      "sha256": "BE00DF80F1ADE68BFC43CDDD6BEFB8987F24FE913270771BA5111B74F7D81F21",
+      "byte_size": 513,
+      "sha256": "6AB870226A103B9FCAD626CA4FF7AB32DA9994D27EDFEBE4A1E6DA74F2880BB7",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
@@ -317,17 +282,35 @@
       "id": "tracked-tools-test-chatpadruntimerepositoryidentity-ps1",
       "relative_path": "tools/Test-ChatpadRuntimeRepositoryIdentity.ps1",
       "state": "tracked",
-      "byte_size": 842,
-      "sha256": "DD01E802FD201DC8A5B8D1E3AC75BDBA676F1B1FB0741C2929186DBB5EDC362C",
+      "byte_size": 849,
+      "sha256": "4D981E89BA2EC202570CBB4836702B73C420621E150D7E62921855DAA87E83B6",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
+    },
+    {
+      "id": "tracked-tools-test-chatpadruntimetargetselection-ps1",
+      "relative_path": "tools/Test-ChatpadRuntimeTargetSelection.ps1",
+      "state": "tracked",
+      "byte_size": 665,
+      "sha256": "B00918FF63FE58F92CE170F1504E8E12B0B9AB2334E497125D3620ACF1421D6B",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
+    },
+    {
+      "id": "tracked-tools-test-chatpadsigningreadiness-ps1",
+      "relative_path": "tools/Test-ChatpadSigningReadiness.ps1",
+      "state": "tracked",
+      "byte_size": 500,
+      "sha256": "3B7FE53549BFF929CF547E03919F8522847C1786E42B4C8FE8B6A48F02D2E205",
       "result": "VALIDATED",
       "evidence_classification": "synthetic"
     },
     {
       "id": "evidence-synthetic-suite",
-      "relative_path": "artifacts/logs/runtime-bringup-enforcement-suite-finalization-20260702T123040Z.json",
+      "relative_path": "artifacts/logs/runtime-bringup-validator-totality-suite-post-implementation-7689d2c.json",
       "state": "ignored",
-      "byte_size": 24449,
-      "sha256": "7756DEA4B7D5F5D5312D8DBC99545591023AA039101E6C18814A6B7D0FA8577F",
+      "byte_size": 56372,
+      "sha256": "4DCBDF1256B3628968CD67792F65746E6DECA48BB80A7C8BDDA98639D785BD18",
       "result": "PASS",
       "evidence_classification": "synthetic"
     }

@@ -5731,3 +5731,122 @@
   PASS probes, checking failure reasons rather than exceptions, verifying no
   executable finalization changes, and confirming live-readiness remains
   `BLOCKED`.
+
+## 2026-07-02 18:37 +04:00 - Runtime bring-up readiness validator-totality remediation
+
+- **Objective:** Remediate the third independent audit findings for the
+  Windows 11 runtime bring-up readiness framework: uncontrolled target and
+  rollback exception paths, lifecycle-transition acceptances, semantic evidence
+  transition acceptances, malformed result-object exceptions, and missing
+  rollback-operation totality. Preserve framework `PASS`, live readiness
+  `BLOCKED`, blocker `BLOCKED_NOT_IMPLEMENTED`, and zero exact/broad executable
+  install or restoration operations.
+- **Starting state:** Verified required branch
+  `feature/runtime-bringup-readiness-enforcement-remediation` at
+  `66de13033e4ba5f67465829c25c0e6a158516044`, direct parent
+  `f0f9bf7e196a6f7cfe9b391cc4001b593016d310`, full expected ancestry
+  `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb ->
+  0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea ->
+  2bb08fee77125f6b5bed2774c085ce57fe192752 ->
+  f0f9bf7e196a6f7cfe9b391cc4001b593016d310 ->
+  66de13033e4ba5f67465829c25c0e6a158516044`, clean index/worktree,
+  local/remote equality, and ahead/behind `0/0`. Captured ignored starting
+  log `artifacts/logs/runtime-bringup-validator-totality-remediation-start-20260702T141415Z.json`
+  and created
+  `feature/runtime-bringup-readiness-validator-totality-remediation`.
+- **Frozen accepted baseline:** Preserved accepted manifest size 28,088 and
+  SHA-256
+  `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`;
+  Debug SYS 68,096 bytes,
+  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`;
+  Release SYS 40,960 bytes,
+  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`.
+- **Implementation:** Added safe object, array, string, timestamp, and result
+  record helpers; removed direct dot-property exception paths from target,
+  rollback, driver-state, package, signing, host, evidence-directory, WPP,
+  event-log, install-plan, post-test reconciliation, runtime evidence, and
+  stop-condition validators; made public readiness validator parameters
+  accept malformed top-level values; and added
+  `New-ChatpadValidatorInternalError` for last-resort entry-point containment.
+- **Target and rollback totality:** Missing, null, numeric, empty,
+  whitespace-only, malformed candidate-set and candidate inputs now fail as
+  `TARGET_SELECTION_INVALID`. Missing, null, scalar, object, empty, malformed,
+  blocked, incomplete, invalid-source, cross-session, and wrong-target
+  rollback structures now fail as `ROLLBACK_CONTRACT_INVALID`; live restoration
+  remains blocked as `BLOCKED_NOT_IMPLEMENTED`.
+- **Lifecycle and semantic transitions:** Operation lifecycle validation now
+  rejects executed/failed records without result or completion timestamp,
+  malformed result records supplied as string/array/Boolean/null,
+  failed-success exits, rolled-back records without rollback operation
+  references or rollback result evidence, and restored records without final
+  reconciliation evidence. Runtime evidence semantic validation rejects
+  executed without result/timestamp, restored-with-planned, restored without
+  final reconciliation, missing rollback references, cross-session/host
+  rollback operations, duplicate operation/artifact IDs, unresolved
+  dependencies, and synthetic artifacts in live sessions.
+- **Malformed-input matrix:** Added a 90-case matrix across repository
+  identity, target selection, driver state, rollback readiness, package
+  validation, signing readiness, host preflight, evidence directory, install
+  planning, WPP planning, event-log planning, post-test reconciliation,
+  runtime evidence, runtime observation, and stop-condition linkage. Result:
+  uncontrolled exceptions `0`.
+- **Intermediate failed commands and corrected reruns:** The first expanded
+  suite run failed because target, rollback, and evidence validators still
+  exposed scalar-unrolled `.Count` StrictMode paths; wrapping helper returns in
+  arrays corrected the failures. The first semantic cross-session rollback
+  fixtures then exposed another unwrapped result-record `.Count`; wrapping that
+  result corrected the final `PropertyNotFoundException`. A Windows PowerShell
+  suite invocation failed because `Test-Json` is unavailable there; the
+  corrected validation uses PowerShell 7 (`pwsh`) and records
+  PSScriptAnalyzer truthfully as `SKIPPED_UNAVAILABLE`. No failed command
+  performed a prohibited action.
+- **Validation evidence before implementation commit:** PowerShell AST parse
+  PASS for 41 `.ps1`/`.psm1` files; shared module import PASS; expanded
+  synthetic suite PASS with framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, 75 fixtures, 467 assertions, 90 malformed-input
+  cases, uncontrolled exceptions `0`, `PropertyNotFoundException` count `0`,
+  StrictMode exception count `0`, and invalid transition acceptance count `0`;
+  `git diff --check` PASS.
+- **Implementation commit:** `7689d2cca57c485d8c0569bdcbec58e400621b20`,
+  subject `Harden runtime readiness validator totality`. It contains all
+  executable changes: shared module logic, validator wrappers, synthetic test
+  suite, manifest generator branch/base updates, and repository identity
+  wrapper branch update.
+- **Post-implementation freeze validation:** After the implementation commit,
+  reran AST parsing and the full synthetic suite into
+  `artifacts/logs/runtime-bringup-validator-totality-suite-post-implementation-7689d2c.json`;
+  result remained framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, 75 fixtures, and 467 assertions. From this point,
+  finalization changed only documentation and generated manifest evidence.
+- **Files changed by implementation commit:** `tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, validator entry wrappers for
+  target selection, rollback readiness, host preflight, signing readiness,
+  post-test reconciliation, and runtime observation, plus the readiness
+  manifest generator and repository identity wrapper. No production driver
+  source/header, INF, project, solution, protocol, transport, binary, package,
+  credential, or legacy path changed.
+- **Finalization evidence:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` from implementation
+  commit `7689d2cca57c485d8c0569bdcbec58e400621b20` and suite log
+  `artifacts/logs/runtime-bringup-validator-totality-suite-post-implementation-7689d2c.json`.
+  The manifest records 11 entries, framework `PASS`, live readiness `BLOCKED`,
+  blocker `BLOCKED_NOT_IMPLEMENTED`, fixture/assertion totals, exception
+  counts, and PSScriptAnalyzer status.
+- **Safety:** No certificate/private key creation, access, import, export, or
+  deletion occurred. No signing, CAT generation, package creation, Driver Store
+  staging, installation, binding, loading, rollback, removal, enablement,
+  disablement, service mutation, registry/policy/boot/security mutation,
+  WPP/ETW tracing, real event-log export, live device enumeration, target
+  opening, device request, controller/Chatpad access, protocol traffic,
+  keyboard injection, hardware interaction, or reboot occurred.
+- **Finalization commit/push:** Expected finalization subject is
+  `docs: finalize validator-totality readiness evidence`; final hash, manifest
+  validation, repository identity proof, executable-finalization diff, remote
+  equality, and ahead/behind are verified after the finalization commit and
+  push.
+- **Remaining blocker and next task:** Exact-instance binding/restoration is
+  not implemented. The exact next task is independent read-only audit of both
+  validator-totality remediation commits, directly rerunning missing-field
+  target and rollback probes, malformed-input validator probes, lifecycle and
+  semantic transition enforcement, executable-finalization diff checks, and
+  blocked live-readiness confirmation.
