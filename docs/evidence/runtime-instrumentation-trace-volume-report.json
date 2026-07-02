@@ -1,5 +1,5 @@
 {
-  "schema_version": "chatpad-runtime-instrumentation-trace-volume-v1",
+  "schema_version": "chatpad-runtime-instrumentation-trace-volume-v2",
   "source_basis": [
     "src/driver/ChatpadFilter/driver.c",
     "src/driver/ChatpadFilter/device.c",
@@ -7,6 +7,14 @@
     "docs/evidence/runtime-instrumentation-event-sites.csv"
   ],
   "stage_count_bound": 9,
+  "source_emission_evidence": {
+    "semantic_events": 73,
+    "semantic_emission_mappings": 94,
+    "direct_wpp_invocations": 34,
+    "indirect_helper_mappings": 78,
+    "unique_physical_emission_sites": 92,
+    "shared_physical_sites": 2
+  },
   "counts": {
     "driver_entry_maximum": {
       "value": 4,

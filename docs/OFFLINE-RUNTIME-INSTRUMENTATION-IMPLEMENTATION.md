@@ -1,121 +1,130 @@
-# Offline Runtime Instrumentation Remediation
+# Offline Runtime Instrumentation Evidence and Guard Remediation
 
-## Scope and audit disposition
+## Scope
 
-Commit `3546ace3892914935276ed74f39d2cd71a53858e` implemented the accepted
-WPP design but failed independent implementation audit. The blocking defects
-were diagnostic and evidence defects: sixteen catalogue events lacked real
-source sites, trace arguments mutated sequence state, prohibited counters and
-cleanup invariants were incomplete, event 1308 was not a report summary,
-production guards were weakened, the model tests and Debug/Release comparison
-were not independent executable evidence, and the manifest/regression evidence
-was incomplete.
+The independent audit of `709686f522eafc12913658b076bd0e001d6add32`
+found four evidence-contract defects: invalid and self-confirming model event
+IDs, synthetic matrix assertions, function-level rather than concrete emission
+mapping, and an owner guard that excluded the diagnostic cleanup callback from
+its lifecycle assertion. This checkpoint corrects those defects without
+changing production `.c`/`.h`, project, solution, INF, protocol, transport,
+signing, packaging, installation, hardware, or `legacy/` paths.
 
-This checkpoint remediates those defects without changing ordinary production
-statuses, creation order, rollback ownership or deletion order, readiness
-authority, lifecycle reachability, WDF parenting, target/request absence, or
-D0/removal behavior. Independent acceptance is still pending.
+The provider GUID remains `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, trace
+schema remains `1`, and the authoritative production catalogue remains 73
+semantic IDs and names.
 
-## Provider and source coverage
+## Pure-model correction
 
-- Provider GUID: `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`.
-- Trace schema: `1`.
-- Catalogue: all 73 accepted semantic IDs and names are preserved.
-- Actual source-site inventory: 73 rows, zero phantom sites.
-- Parsed `ChatpadTrace` invocations: 34, with zero side-effectful arguments and
-  zero trace sites under the owner spinlock.
-- Events 1310, 1701-1712, 1801, 1802, and 1804 now have real diagnostic source
-  paths. Event 1713 is emitted on pre-context and context-backed terminal paths.
+The old model used IDs that do not exist in the production catalogue:
 
-Sequence mutation now occurs in ordinary statements before trace macros.
-Attempt-local state covers failures before `WDFDEVICE` exists and is transferred
-to the device context after creation.
+| Invalid ID | Intended transition | Correct production evidence |
+|---:|---|---|
+| 1313 | request-creation stage failure | 1301 `ORCHESTRATION_STAGE_ENTERED` with request-stage discriminator, followed by 1600-1604 rollback evidence |
+| 1314 | outbound-memory stage failure | 1301 with outbound-memory discriminator, followed by 1600-1604 |
+| 1315 | inbound-memory stage failure | 1301 with inbound-memory discriminator, followed by 1600-1604 |
+| 1407 | lifecycle initialization failure | 1502 `LIFECYCLE_INIT_FAILED` |
+| 1410 | mark-device-created failure | 1505 `MARK_DEVICE_CREATED_FAILED` |
 
-## Counter, cleanup, and report semantics
+Rollback now uses 1600-1604 and cleanup uses 1605-1608. The four object-stage
+failure scenarios distinguish stages 2, 4, 6, and 8 while using the shared
+production event 1301, matching the production helper contract.
 
-One authoritative twelve-value counter enum and one twelve-counter structure
-use interlocked updates. The update helper saturates at `MAXLONG`, records
-first-transition and overflow masks, emits the corresponding 1701-1712 event on
-the first zero-to-nonzero transition, and emits 1804 on overflow attempts. It
-has no production operation callers because no prohibited operation boundary
-exists.
+Model execution retains a private numeric transition map. Expected sequences
+are separately maintained semantic-name contracts resolved through
+`docs/WINDOWS11-OFFLINE-RUNTIME-INSTRUMENTATION-DESIGN.md`; the test runner
+does not import the model's numeric map. Changing an emitted numeric constant
+therefore cannot update the expected sequence automatically. Validation rejects
+unknown emitted IDs, unknown expected names, wrong families, numeric expected
+constants, duplicate scenario names, empty scenarios, empty execution, and
+failed aggregation. Five negative fixtures cover the audit failure modes.
 
-Terminal and cleanup validation inspect all twelve counters. Cleanup records
-attempt/sequence state, first-transition and overflow masks, counter and final
-snapshot state, object presence, owner/fault state, structural readiness,
-terminal state, and terminal status. Meaningful invariants cover duplicate
-cleanup, missing terminal/final snapshots, incomplete rollback, objects left
-after completed rollback, impossible sequence state, successful terminal state
-with nonzero counters, and schema mismatch. The unused
-`RuntimeCleanupObserved` field was removed.
+All 19 intended scenarios pass with 932 executed, 932 passed, and zero failed
+assertions. A failed assertion produces a failed machine result and nonzero
+process exit.
 
-Event 1308 now emits a bounded initialized orchestration summary: function and
-report results, mismatch flag, terminal and failed stages, terminal and first
-failure classes, mapped status class, rollback flags, four object-presence
-flags, ready-attempted/published flags, object-graph completeness, structural
-readiness, and final initialization-mask class. No raw structure, padding,
-pointer, handle, or payload is logged. Unexpected orchestration taxonomy is
-logged and enters the existing fail-closed terminal path.
+## Regression-matrix accounting
 
-## Guard and executable evidence
+The matrix no longer substitutes one assertion when parsing fails. Its schema
+`chatpad-runtime-instrumentation-regression-matrix-v2` defines six
+assertion-bearing suites and seven non-assertion validations. Assertion suites
+must report explicit executed, passed, and failed totals with
+`executed = passed + failed`; zero requires explicit authorization. Validation
+suites must satisfy named machine-parseable checks and configuration binding.
+Neither validation exit codes nor check counts are added to assertion totals.
 
-`Test-ChatpadRuntimeInstrumentation.ps1` parses real trace calls, validates
-source/function inventory sites, inspects trace arguments and spinlock regions,
-checks counter/cleanup/report fields, validates independent Debug and Release
-WPP project configuration, rejects prohibited operations, and verifies that
-accepted production guards are not weakened.
+Eight negative fixtures prove rejection of empty output, malformed output,
+missing counts, unauthorized zero assertions, inconsistent totals, child
+failure under aggregate PASS, wrong configuration, and copied/relabeled
+configuration evidence. Debug and Release each pass all 13 entries with 6,980
+real assertions executed and passed, zero failed assertions, zero synthetic
+assertions, zero parse failures, and zero empty-result failures.
 
-Production orchestration Full mode remains Full. Historical tracked-input SHA
-values are cross-bound to retained A/B inventories while Git blob IDs bind the
-immutable implementation commit; the packaging-only prototype INF remains
-outside build-input inventories. Production owner initialization requires the
-instrumented binary to match a configuration-specific manifest entry and
-retains PE, import, WDF, retention, and target/request checks.
+## Concrete semantic-event emission evidence
 
-The executable pure model contains 19 scenarios and 228 assertions. It invokes
-state-transition, counter, rollback, terminal, and cleanup helpers and checks
-exact semantic-event order, terminal outcome, rollback presence/absence,
-cleanup, object/final snapshots, twelve-counter snapshots, overflow and first
-transition behavior, and returned status class.
+`runtime-instrumentation-event-sites.csv` is schema `2`. Its 94 rows bind all
+73 semantic events to exact production source paths, containing functions,
+source lines, normalized call locators and locator hashes, direct WPP or
+approved helper emission, helper-to-WPP chains, WPP lines and locator hashes,
+physical-site identities, shared-site flags, and stage discriminators.
 
-Complete Debug and Release matrices each ran 13 required entries and passed
-301/301 reported assertions with zero errors. Each matrix independently runs
-the request-owner model, protocol, transport, lifecycle, control setup,
-protocol-kernel and WDF compatibility, production linkage, production owner
-initialization Full guard, KMDF request-owner semantics, production
-orchestration Full guard, instrumentation guard, and pure model.
+The guard independently derives the same map from production source. Current
+totals are 34 direct WPP macro invocations, 78 helper-mediated semantic
+mappings, 92 unique physical semantic emission sites, and 2 shared physical
+sites. Nine stage-entered and nine stage-completed locations are represented
+separately. Every direct WPP site is either a direct semantic site or an
+approved helper endpoint. Missing, extra, phantom, stale, collapsed, duplicate,
+and unexplained counts are zero.
 
-## Build, equality, and volume evidence
+Ten negative fixtures reject function co-location without a real relationship,
+stale lines, nonexistent helpers, helpers that do not reach WPP, duplicate and
+missing IDs, extra and test-only IDs, unexplained WPP sites, and collapsed
+repeated sites.
 
+## Cleanup owner-observation contract
+
+The production-owner guard now isolates and inspects `ChatpadEvtDeviceAdd`,
+`ChatpadEvtDeviceContextCleanup`, prepare/release hardware, D0 entry/exit, and
+any declared removal or surprise-removal callback. Cleanup has exactly one
+permitted owner reference: a diagnostic read passed to
+`ChatpadRuntimeCaptureObjectSnapshot`. Mutation, completion, cancellation,
+ownership transfer, operational request/queue/target use, synchronization or
+lifetime work, callback exclusion, and unclassified references fail closed.
+Seven negative fixtures cover those prohibited classes. Full mode passes for
+Debug and Release with cleanup classified
+`diagnostic-read-only-object-snapshot`.
+
+## Offline validation and evidence
+
+- Runtime instrumentation guards: Debug PASS; Release PASS.
+- Production owner guard Full: Debug PASS; Release PASS.
+- Production orchestration guard Full: Debug PASS; Release PASS.
+- Driver and full-solution builds: Debug PASS; Release PASS, zero build errors.
 - Debug driver: 68,096 bytes, SHA-256
-  `1C62C702EC8A28CFBEEAAA96C7642DAA6D7B0120C306349C9596D8AC77BB1B8F`,
+  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`,
   Authenticode `NotSigned`.
 - Release driver: 40,960 bytes, SHA-256
-  `39BF019DC82C49639EF1977E0742168AC067005F4C7FE4257DA0DE70BD3E544C`,
+  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`,
   Authenticode `NotSigned`.
-- Debug and Release driver and full-solution builds passed with the VS 2022
-  Community WDK toolchain.
-- Static inspection confirms x64 Native images and zero prohibited
-  target/request symbols.
-- Independent Debug and Release object roots contain separately generated WPP
-  metadata with equal hashes for device, driver, and request-owner sources.
-- The trace-volume report bounds nine stages, contains no unbounded trace loop,
-  and finds zero per-byte, per-packet, payload, or recursive trace sources.
+- Static target/request symbol checks and repository safety checks pass with
+  all prohibited-action counters zero.
 
-## Manifest and limitations
+Manifest schema `1.2.0` binds the final affected evidence. The earlier guard,
+model, and matrix reports are superseded and are not current acceptance
+evidence:
 
-The implementation manifest is schema `1.1.0` and binds the mandatory evidence
-set with configuration, command, result, exit code, SHA-256, size, timestamp,
-metadata, and limitations. It excludes failed historical logs from accepted
-PASS evidence.
+- `artifacts/logs/runtime-remediation-guard-Debug-20260701T224927Z.log`
+- `artifacts/logs/runtime-remediation-guard-Release-20260701T224927Z.log`
+- `artifacts/logs/runtime-remediation-pure-model-20260701T224927Z.log`
+- `artifacts/logs/runtime-instrumentation-matrix-Debug-20260701T224235Z.json`
+- `artifacts/logs/runtime-instrumentation-matrix-Release-20260701T224337Z.json`
 
-The manifest cannot hash its own final bytes, final logs cannot validate their
-own final hashes, and the containing commit does not exist until commit time.
-An independent audit must rehash final tracked files and retained ignored
-evidence and verify the containing commit, parent, branch, upstream, and clean
-state.
+The manifest cannot hash its own final bytes or name its containing commit
+before commit. Independent audit must verify the final commit, parent, branch,
+upstream equality, tracked scope, ignored evidence, and all manifest hashes
+without regenerating evidence.
 
-This remains offline static/compile evidence, not runtime proof. The driver is
-unsigned, unpackaged, unstaged, uninstalled, unloaded, and unexecuted. No trace
-session, device query, target discovery, request operation, Windows mutation,
-controller action, Chatpad interaction, or hardware access occurred.
+This remains offline static/compile evidence. The driver is unsigned,
+unpackaged, unstaged, uninstalled, unloaded, and unexecuted. No trace session,
+Windows mutation, live device query, target/request operation, controller or
+Chatpad access, or hardware test occurred.

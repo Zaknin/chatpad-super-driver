@@ -1,5 +1,5 @@
 {
-  "schema_version": "chatpad-runtime-instrumentation-debug-release-equality-v1",
+  "schema_version": "chatpad-runtime-instrumentation-debug-release-equality-v2",
   "provider_guid": "{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}",
   "trace_schema_version": 1,
   "semantic_event_count": 73,
@@ -7,7 +7,7 @@
     "project_configuration": "Debug|x64",
     "wpp_enabled": true,
     "scan_configuration": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h",
-    "build_log": "artifacts/logs/runtime-remediation-final-driver-Debug-20260701T224455Z.log",
+    "build_log": "artifacts/logs/runtime-evidence-guard-driver-Debug-20260702T041559Z.log",
     "generated_metadata": [
       {
         "path": "artifacts/obj/x64/Debug/ChatpadFilter/device.tmh",
@@ -30,7 +30,7 @@
     "project_configuration": "Release|x64",
     "wpp_enabled": true,
     "scan_configuration": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h",
-    "build_log": "artifacts/logs/runtime-remediation-final-driver-Release-20260701T224459Z.log",
+    "build_log": "artifacts/logs/runtime-evidence-guard-driver-Release-20260702T041607Z.log",
     "generated_metadata": [
       {
         "path": "artifacts/obj/x64/Release/ChatpadFilter/device.tmh",
@@ -55,13 +55,16 @@
     "all_73_semantic_ids_equal": true,
     "all_73_semantic_names_equal": true,
     "keyword_mapping_equal": true,
-    "actual_source_site_set_equal": true,
+    "schema_v2_concrete_emission_map_equal": true,
+    "direct_wpp_invocation_count": 34,
+    "semantic_emission_mapping_count": 94,
+    "unique_physical_emission_site_count": 92,
     "required_fields_equal": true,
     "generated_device_metadata_equal": true,
     "generated_driver_metadata_equal": true,
     "generated_owner_metadata_equal": true
   },
-  "derivation": "Debug and Release project nodes were inspected independently. Each configuration generated its own WPP metadata under its own object root and its own build log. Exact generated metadata hashes are equal across configurations; the shared scan configuration independently binds each configuration to the tracked 73-event catalogue, keyword map, site inventory, and required fields.",
+  "derivation": "Debug and Release project nodes were inspected independently. Each configuration generated its own WPP metadata under its own object root and build log. Exact generated metadata hashes are equal across configurations; schema-v2 source evidence independently binds 73 semantic events to 94 concrete mappings, 34 direct WPP invocations, and 92 unique physical emission sites.",
   "limitations": "This is offline static configuration and generated-metadata equality, not runtime ETL evidence.",
   "result": "PASS"
 }

@@ -5141,3 +5141,130 @@
   remediation commit, manifest, retained ignored evidence, binary identities,
   containing commit, and clean synchronized Git state before considering any
   later gate.
+
+## 2026-07-02 08:25 +04:00 - Runtime instrumentation evidence and guard remediation
+
+- **Objective:** Remediate the four independent-audit defects in the pure
+  model, regression-matrix accounting, concrete semantic-event emission
+  evidence, and production-owner cleanup contract; regenerate affected offline
+  evidence; commit and push one coherent remediation.
+- **Starting state:** Verified exact clean branch
+  `feature/offline-runtime-instrumentation-implementation-remediation` at
+  `709686f522eafc12913658b076bd0e001d6add32`, parent
+  `3546ace3892914935276ed74f39d2cd71a53858e`, live upstream equality and
+  ahead/behind `0/0`. Created
+  `feature/offline-runtime-instrumentation-evidence-guard-remediation` and
+  captured
+  `artifacts/logs/runtime-evidence-guard-remediation-start-20260702T035655Z.log`.
+- **Baseline defect evidence:**
+  `artifacts/logs/runtime-evidence-guard-remediation-baseline-20260702T040049Z.log`
+  records unknown IDs `1313,1314,1315,1407,1410`, the synthetic assertion
+  fallback, absent precise line/locator fields, and the cleanup-excluding owner
+  boundary.
+- **Pure-model remediation:** Model emission uses a private numeric transition
+  map while expectations use separately maintained semantic names resolved
+  through the authoritative design catalogue. Object-creation failures use
+  event 1301 plus stage discriminators and 1600-1604 rollback evidence;
+  lifecycle and mark-created failures use 1502 and 1505; cleanup uses
+  1605-1608. Unknown emitted/expected events, wrong families, numeric expected
+  constants, duplicate/empty/nonexecuted scenarios, aggregation failures, and
+  failed assertions fail closed. All 19 scenarios pass with 932/932 real
+  assertions and five negative self-tests.
+- **Matrix remediation:** Removed the fallback assertion entirely. Matrix
+  schema v2 defines six assertion-bearing suites and seven non-assertion
+  validations. It requires explicit executed/passed/failed totals, configuration
+  binding, named successful validation checks, zero child/parse contradictions,
+  and eight negative contract fixtures. Final Debug and Release matrices each
+  pass 13/13 entries and 6,980/6,980 real assertions with zero synthetic,
+  failed, parse, empty-result, or entry-failure counts. Final reports:
+  `artifacts/logs/runtime-evidence-guard-matrix-final-{Debug,Release}-20260702T042143Z.{log,json}`.
+- **Emission-map remediation:** CSV schema 2 contains 94 concrete mappings for
+  73 semantic IDs: 34 direct WPP invocations, 78 helper-mediated mappings, 92
+  unique physical semantic sites, two shared sites, and separate nine-entered/
+  nine-completed stage locations. Every row includes source line, normalized
+  locator and hash, emitter/helper chain, resolved WPP line and locator hash,
+  physical identity, shared flag, and discriminator. Ten negative fixtures
+  reject co-location-only, stale, nonexistent/nonresolving helper, duplicate,
+  missing, extra, test-only, unexplained-WPP, and collapsed-site evidence.
+- **Owner-guard remediation:** The guard now isolates `DeviceAdd`, cleanup,
+  prepare/release hardware, D0 entry/exit, and any declared removal/surprise
+  callback. Cleanup permits exactly one diagnostic snapshot read of
+  `ActivationRequestOwner`; mutation, completion, cancellation, transfer,
+  operational request/queue/target work, synchronization/lifetime work,
+  exclusion, and unclassified references fail. Seven negative fixtures pass.
+- **Tracked files changed:** The two pure-model files; matrix runner; runtime
+  and owner guards; schema-v2 event-site CSV; runtime implementation manifest;
+  Debug/Release equality and trace-volume reports; implementation remediation
+  document; `PROJECT-STATE.md`, `NEXT-TASK.md`, `DECISIONS.md`, and this
+  worklog. No production source/header, project, solution, INF, protocol,
+  transport, signing, packaging, installation, hardware, or `legacy/` path
+  changed.
+- **Focused validation:** Runtime guards Debug/Release PASS with all mapping and
+  safety counters zero. Owner Full Debug/Release PASS with five callbacks
+  inspected and cleanup classified `diagnostic-read-only-object-snapshot`.
+  Orchestration Full Debug/Release PASS with no SourceOnly downgrade and all
+  102 historical provenance entries intact. Pure model PASS as above.
+- **Build validation:** `Build-Driver.ps1` Debug/Release PASS. Visual Studio
+  Community full-solution Debug/Release `/m /restore` builds PASS with zero
+  warnings/errors. Debug binary is 68,096 bytes, SHA-256
+  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`;
+  Release is 40,960 bytes, SHA-256
+  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`;
+  both are unsigned x64 Native images. Static target/request matches are zero.
+- **Accepted evidence:** Runtime guards and pure model:
+  `artifacts/logs/runtime-evidence-guard-{runtime-Debug,runtime-Release,pure-model}-20260702T041654Z.log`;
+  owner/orchestration Full logs:
+  `artifacts/logs/runtime-evidence-guard-{owner-Debug,owner-Release,orchestration-Debug,orchestration-Release}-20260702T041749Z.log`;
+  driver logs `runtime-evidence-guard-driver-{Debug,Release}-*`; solution logs
+  `runtime-evidence-guard-solution-{Debug,Release}-*`; target/request and safety
+  logs under `artifacts/logs/runtime-evidence-guard-*`.
+- **Intermediate failed commands and corrected reruns:** Two initial baseline
+  capture one-liners failed from quoting/exit handling and two follow-up log
+  reads failed because those attempts created no file; the simplified
+  `Tee-Object` baseline capture succeeded. The first runtime-guard run failed
+  on invalid `return switch` syntax; assignment then return fixed it. The next
+  failed because `CHATPAD_TRACE_PROHIBITED_COUNTERS` follows the helper's
+  terminal default branch; explicit default-branch resolution fixed it. The
+  next found one unexplained dynamic WPP call in
+  `ChatpadTracePreContextTerminal`; classifying that approved helper fixed it.
+  The next found missing completed-stage discriminators because the bounded
+  prefix was too short; using the full preceding function text fixed it. The
+  next rejected the obsolete model-scenario source pattern; the guard now
+  checks `New-Scenario` semantic contracts. Matrix self-test first failed on
+  empty `Measure-Object` under strict mode; explicit zero aggregation fixed it.
+  The first full Debug matrix then failed closed at entry 8 because
+  production-linkage reports `Debug|x64` inline; the configuration grammar was
+  extended to that existing exact token, and complete Debug/Release reruns
+  passed. The first final evidence-inventory one-liner had an empty pipeline
+  element after a `foreach`; wrapping the collection before `ConvertTo-Json`
+  corrected it. The first manifest validator treated JSON reports as text logs
+  and reported two declared-result defects for the Debug/Release matrix JSON;
+  parsing JSON `result` fields corrected the validator and the complete rehash
+  passed with every defect counter zero. The first hygiene pass found CRLF in
+  the generated schema-v2 CSV; a mechanical UTF-8/LF normalization corrected
+  it and the manifest hash was refreshed. A later compact rehash one-liner
+  omitted spaces after `Get-Item` and `Get-FileHash`, producing command-name
+  errors; the already proven full validator was rerun and all 33 entries passed
+  with every defect counter zero. The staged-containment capture wrote the
+  correct 14-path PASS log but its first readback repeated the missing-space
+  error for `Get-Item`/`Get-Content`; a corrected readback verified its hash,
+  size, timestamp, and contents. No failed command performed a prohibited
+  action.
+- **Superseded evidence:** The prior
+  `runtime-remediation-guard-{Debug,Release}-20260701T224927Z.log`,
+  `runtime-remediation-pure-model-20260701T224927Z.log`, and
+  `runtime-instrumentation-matrix-{Debug,Release}-20260701T224*.json` reports
+  are not current acceptance evidence.
+- **Safety:** No signing, certificate/key creation, packaging/catalog creation,
+  Driver Store staging, installation, loading, live WPP/ETW session, Windows
+  mutation, device query, target discovery/open, request formatting/reuse/send/
+  completion/cancellation, controller/Chatpad access, protocol traffic,
+  keyboard injection, or hardware test occurred.
+- **Commit/push:** Expected one commit with subject
+  `test: repair runtime instrumentation evidence contracts`, then push only
+  `origin/feature/offline-runtime-instrumentation-evidence-guard-remediation`;
+  final hash is reported after commit.
+- **Next task:** Independent read-only audit of the final remediation commit.
+  Independently validate model-to-catalogue semantics, matrix accounting,
+  concrete event-to-emission mapping, cleanup inclusion/classification, and the
+  final manifest without regenerating evidence.

@@ -4,6 +4,32 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Require independently attributable event and suite evidence
+
+**Decision:** Runtime-instrumentation acceptance uses semantic-name model
+expectations resolved independently from the executable model's numeric event
+map, explicit assertion-versus-validation suite contracts with no synthetic
+counts, schema-v2 concrete semantic-event emission mappings with precise source
+locators and helper-to-WPP resolution, and explicit diagnostic-read-only
+classification for cleanup owner observation.
+
+**Rationale:** Independent audit found five nonexistent model IDs, shared
+constants that made expected sequences self-confirming, eleven matrix entries
+represented by fabricated assertions, function-co-location evidence that did
+not prove event emission, collapsed repeated stage sites, and an owner guard
+that excluded the callback containing the only cleanup owner observation.
+
+**Alternatives rejected:** Preserving the historical 228/301 totals, treating
+exit zero as an assertion, requiring 73 direct WPP macros, accepting function
+co-location without a concrete call path, or deleting cleanup from the owner
+guard contract would retain the audited defects.
+
+**Consequences:** The model now reports its real strengthened assertion total;
+matrix validations contribute zero assertions; the event-site evidence schema
+is version 2; cleanup permits exactly one diagnostic snapshot read and rejects
+mutation or operational use. Final acceptance still requires independent
+read-only audit.
+
 ## 2026-07-02 - Require source-real instrumentation and hash-bound independent evidence
 
 **Decision:** Runtime-instrumentation acceptance requires real production

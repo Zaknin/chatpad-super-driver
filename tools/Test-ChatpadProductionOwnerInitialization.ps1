@@ -33,6 +33,71 @@ function Remove-CComments {
     return [regex]::Replace($withoutBlocks, '(?m)//.*$', '')
 }
 
+function Get-CFunctionBody {
+    param(
+        [Parameter(Mandatory)][string]$Text,
+        [Parameter(Mandatory)][string]$FunctionName)
+
+    $signature = [regex]::Match(
+        $Text,
+        '(?m)^' + [regex]::Escape($FunctionName) + '\s*\(')
+    if (-not $signature.Success) { return $null }
+    $open = $Text.IndexOf('{', $signature.Index + $signature.Length)
+    if ($open -lt 0) { return $null }
+    $depth = 0
+    for ($index = $open; $index -lt $Text.Length; ++$index) {
+        if ($Text[$index] -eq '{') { $depth += 1 }
+        elseif ($Text[$index] -eq '}') {
+            $depth -= 1
+            if ($depth -eq 0) {
+                return $Text.Substring($open, $index - $open + 1)
+            }
+        }
+    }
+    return $null
+}
+
+function Test-CleanupOwnerObservationContract {
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$CleanupBody)
+
+    if ([string]::IsNullOrWhiteSpace($CleanupBody)) {
+        throw 'Cleanup callback is excluded from the inspected source range.'
+    }
+    $ownerReferences = @([regex]::Matches(
+        $CleanupBody,
+        'ActivationRequestOwner|ChatpadKmdfRequestOwner'))
+    $allowedReads = @([regex]::Matches(
+        $CleanupBody,
+        'ChatpadRuntimeCaptureObjectSnapshot\s*\(\s*&context->ActivationRequestOwner\s*,'))
+    if ($allowedReads.Count -ne 1 -or $ownerReferences.Count -ne 1) {
+        throw 'Cleanup contains an unclassified request-owner reference.'
+    }
+    if ($CleanupBody -match
+        'ActivationRequestOwner(?:\.[A-Za-z_][A-Za-z0-9_]*)?\s*(?:=|\+=|-=|\|=|&=|\^=|\+\+|--)') {
+        throw 'Cleanup mutates the request owner.'
+    }
+    if ($CleanupBody -match
+        '(?is)(?:WdfRequestComplete|WdfRequestCancelSentRequest|WdfRequestSend|WdfRequestReuse|WdfIoQueue[A-Za-z0-9_]*|WdfIoTarget[A-Za-z0-9_]*|WdfObjectReference|WdfObjectDereference|WdfObjectDelete|WdfSpinLock[A-Za-z0-9_]*)\s*\([^;{}]*ActivationRequestOwner') {
+        throw 'Cleanup performs completion, cancellation, request, queue, ownership, synchronization, or lifetime work through the owner.'
+    }
+    if ($CleanupBody -match
+        '(?m)\b[A-Za-z_][A-Za-z0-9_]*\s*=\s*&?context->ActivationRequestOwner\b') {
+        throw 'Cleanup transfers request-owner ownership or storage.'
+    }
+    return [pscustomobject]@{
+        classification = 'diagnostic-read-only-object-snapshot'
+        owner_reference_count = $ownerReferences.Count
+        allowed_diagnostic_read_count = $allowedReads.Count
+        mutation_count = 0
+        completion_count = 0
+        cancellation_count = 0
+        ownership_transfer_count = 0
+        operational_request_count = 0
+        synchronization_lifetime_count = 0
+        unclassified_reference_count = 0
+    }
+}
+
 function Get-NormalizedDirectoryPath {
     param([Parameter(Mandatory)][string]$Path)
 
@@ -265,11 +330,10 @@ if ($scalarIndex -lt 0 -or
     throw 'Owner initialization order is not scalar setup, initialize, explicit validate, lifecycle.'
 }
 
-$deviceAddEnd = $deviceText.IndexOf('ChatpadEvtDevicePrepareHardware(')
-if ($deviceAddEnd -lt 0) {
-    throw 'Unable to locate the callback boundary after ChatpadEvtDeviceAdd.'
+$deviceAddText = Get-CFunctionBody $deviceText 'ChatpadEvtDeviceAdd'
+if ($null -eq $deviceAddText) {
+    throw 'Unable to isolate ChatpadEvtDeviceAdd for owner-contract inspection.'
 }
-$deviceAddText = $deviceText.Substring(0, $deviceAddEnd)
 $singleline = [System.Text.RegularExpressions.RegexOptions]::Singleline
 $ownerStorageFailureReturns = [regex]::IsMatch(
     $deviceAddText,
@@ -299,9 +363,74 @@ if ($productionText -match
     throw 'Production code duplicates initialization or publishes OWNER_READY.'
 }
 
-$postAddText = $deviceText.Substring($deviceAddEnd)
-if ($postAddText -match 'ActivationRequestOwner|ChatpadKmdfRequestOwner') {
-    throw 'A D0, hardware, cleanup, removal, or queue path observes the request owner.'
+$callbackNames = @(
+    'ChatpadEvtDeviceContextCleanup',
+    'ChatpadEvtDevicePrepareHardware',
+    'ChatpadEvtDeviceReleaseHardware',
+    'ChatpadEvtDeviceD0Entry',
+    'ChatpadEvtDeviceD0Exit')
+$callbackBodies = @{}
+foreach ($callbackName in $callbackNames) {
+    $callbackBody = Get-CFunctionBody $deviceText $callbackName
+    if ($null -eq $callbackBody) {
+        throw "Required lifecycle callback is excluded from inspection: $callbackName"
+    }
+    $callbackBodies[$callbackName] = $callbackBody
+}
+$cleanupOwnerObservation = Test-CleanupOwnerObservationContract `
+    $callbackBodies.ChatpadEvtDeviceContextCleanup
+foreach ($callbackName in @(
+        'ChatpadEvtDevicePrepareHardware',
+        'ChatpadEvtDeviceReleaseHardware',
+        'ChatpadEvtDeviceD0Entry',
+        'ChatpadEvtDeviceD0Exit')) {
+    if ($callbackBodies[$callbackName] -match
+        'ActivationRequestOwner|ChatpadKmdfRequestOwner') {
+        throw "$callbackName contains an operational or unclassified request-owner reference."
+    }
+}
+$declaredRemovalCallbacks = @([regex]::Matches(
+    $headerText,
+    '(?m)EVT_WDF_[A-Z0-9_]*(?:REMOVE|SURPRISE)[A-Z0-9_]*\s+(?<name>Chatpad[A-Za-z0-9_]+)\s*;'))
+foreach ($callbackMatch in $declaredRemovalCallbacks) {
+    $callbackName = $callbackMatch.Groups['name'].Value
+    $callbackBody = Get-CFunctionBody $deviceText $callbackName
+    if ($null -eq $callbackBody -or
+        $callbackBody -match 'ActivationRequestOwner|ChatpadKmdfRequestOwner') {
+        throw "$callbackName is absent from inspection or observes the request owner."
+    }
+}
+
+$cleanupNegativeSelfTests = 0
+function Assert-CleanupContractRejects {
+    param([string]$Fixture, [string]$Description)
+    $rejected = $false
+    try { Test-CleanupOwnerObservationContract $Fixture | Out-Null } catch { $rejected = $true }
+    if (-not $rejected) { throw "Cleanup negative fixture passed unexpectedly: $Description" }
+    $script:cleanupNegativeSelfTests += 1
+}
+$allowedCleanup = '{ ChatpadRuntimeCaptureObjectSnapshot(&context->ActivationRequestOwner, 0u); }'
+Assert-CleanupContractRejects `
+    '{ context->ActivationRequestOwner.InitializationMask = 0u; }' `
+    'owner mutation'
+Assert-CleanupContractRejects `
+    '{ WdfRequestComplete(context->ActivationRequestOwner.ReusableRequest, STATUS_SUCCESS); }' `
+    'request completion'
+Assert-CleanupContractRejects `
+    '{ WdfRequestCancelSentRequest(context->ActivationRequestOwner.ReusableRequest); }' `
+    'request cancellation'
+Assert-CleanupContractRejects `
+    '{ otherOwner = context->ActivationRequestOwner; }' `
+    'ownership transfer'
+Assert-CleanupContractRejects `
+    '{ WdfRequestSend(context->ActivationRequestOwner.ReusableRequest, target, 0); }' `
+    'operational request use'
+Assert-CleanupContractRejects '' 'excluded cleanup callback'
+Assert-CleanupContractRejects `
+    ($allowedCleanup + ' LogOwner(&context->ActivationRequestOwner);') `
+    'unclassified owner reference'
+if ($cleanupNegativeSelfTests -ne 7) {
+    throw 'All seven cleanup owner-contract negative fixtures must execute.'
 }
 if (($headerText + $deviceText) -match '(?is)0x90u?.{0,32}0x00u?|90\s+00') {
     throw 'Prohibited unconfirmed 90 00 payload appeared in production integration.'
@@ -363,7 +492,8 @@ foreach ($entry in @($manifest.evidence_entries)) {
 $directChecks = @(
     'XML project/reference/include/source cardinality',
     'comment-stripped production source cardinality/order/failure checks',
-    'forbidden owner/WDF/queue/target/request source checks',
+    'cleanup diagnostic-read classification and all lifecycle callback owner checks',
+    'forbidden owner mutation/completion/cancellation/transfer/queue/target/request source checks',
     'Git tracked/staged generated-output checks',
     'normalized manifest evidence containment and ignore checks')
 $inferredChecks = @()
@@ -628,6 +758,26 @@ Write-Output ("Inferred checks: {0}" -f $(
     if ($inferredChecks.Count -eq 0) { 'none (source-only mode)' }
     else { $inferredChecks -join '; ' }))
 Write-Output ("Limitations: {0}" -f ($limitations -join ' '))
+Write-Output "LifecycleCallbacksInspected=$($callbackNames.Count + $declaredRemovalCallbacks.Count)"
+Write-Output "CleanupOwnerObservationClassification=$($cleanupOwnerObservation.classification)"
+Write-Output "CleanupOwnerReferenceCount=$($cleanupOwnerObservation.owner_reference_count)"
+Write-Output "CleanupOwnerMutationCount=$($cleanupOwnerObservation.mutation_count)"
+Write-Output "CleanupOwnerOperationalUseCount=$($cleanupOwnerObservation.operational_request_count)"
+Write-Output "CleanupOwnerUnclassifiedReferenceCount=$($cleanupOwnerObservation.unclassified_reference_count)"
+Write-Output "CleanupNegativeSelfTests=$cleanupNegativeSelfTests"
+$validationReport = [ordered]@{
+    schema_version = 'chatpad-validation-result-v1'
+    suite_id = 'production-owner-initialization-full'
+    configuration = $Configuration
+    validation_type = 'production-owner-static-and-binary-guard'
+    inspection_mode = $InspectionMode
+    result = 'PASS'
+    successful_checks = @($directChecks)
+    failed_checks = @()
+    cleanup_owner_observation = $cleanupOwnerObservation
+}
+Write-Output ('CHATPAD_VALIDATION_JSON=' + ($validationReport | ConvertTo-Json -Depth 8 -Compress))
 Write-Output 'Result: PASS'
+Write-Output 'Result=PASS'
 Write-Output 'Exit code: 0'
 exit 0

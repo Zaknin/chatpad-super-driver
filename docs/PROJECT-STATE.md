@@ -1,51 +1,52 @@
 # Project State
 
-*Last updated: 2026-07-02 (offline runtime instrumentation remediation)*
+*Last updated: 2026-07-02 (offline instrumentation evidence/guard remediation)*
 
-## Current State
+## Current state
 
-- **Branch:** `feature/offline-runtime-instrumentation-implementation-remediation`.
-- **Parent:** `3546ace3892914935276ed74f39d2cd71a53858e`,
-  `driver: implement offline runtime instrumentation`.
-- **Expected remediation commit:** the commit containing this file, with
-  subject `driver: remediate offline runtime instrumentation`.
+- **Branch:** `feature/offline-runtime-instrumentation-evidence-guard-remediation`.
+- **Parent:** `709686f522eafc12913658b076bd0e001d6add32`, `driver:
+  remediate offline runtime instrumentation`.
+- **Expected containing commit:** the commit containing this file, subject
+  `test: repair runtime instrumentation evidence contracts`.
 - **Accepted design:** `526f6bb055b485fdb459a9d303fc3f814da15e48`.
-- **Accepted production-orchestration baseline:**
-  `4c84891ca24ef969664f53fd5e9ec2a697f2edb9`.
-- **Provider:** `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`.
-- **Trace schema / catalogue:** schema `1`; 73 preserved IDs and names.
-- **Manifest:** schema `1.1.0`; final mandatory evidence contract.
+- **Provider/schema:** `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, trace schema
+  `1`, 73 semantic events.
+- **Evidence manifest:** schema `1.2.0`; independent audit pending.
 
-## Verified implementation state
+## Verified remediation state
 
-- The failed `3546ace` implementation audit defects are remediated, but this
-  remediation is not independently accepted.
-- Actual source-site count is 73 with zero phantom sites, side-effectful trace
-  arguments, trace-under-spinlock sites, missing counter events, missing
-  pre-context 1713 paths, missing cleanup fields, or missing 1308 fields.
-- The twelve-counter saturating model, terminal/cleanup validation, sequence
-  invariants, fail-closed taxonomy handling, and bounded report summary are
-  implemented.
-- Production owner and orchestration guards pass in Full mode for Debug and
-  Release; no automatic SourceOnly downgrade remains.
-- Pure model: 19 scenarios, 228 assertions, PASS.
-- Complete matrices: Debug 13/13 and 301/301; Release 13/13 and 301/301, PASS.
-- Debug and Release driver/solution builds pass.
+- Pure model: 19 scenarios, 932/932 real assertions, five negative self-tests,
+  no unknown IDs or wrong families. Expected semantic-name sequences resolve
+  through the authoritative design and do not import emitted numeric constants.
+- Regression matrices: Debug and Release each 13/13 entries, six
+  assertion-bearing suites, seven non-assertion validations, 6,980/6,980 real
+  assertions, zero synthetic assertions, parse failures, empty results, entry
+  failures, or failed assertions.
+- Emission evidence: schema 2, 73 events, 94 semantic mappings, 34 direct WPP
+  invocations, 78 helper mappings, 92 unique physical sites, two shared sites,
+  nine entered and nine completed stage locations, and zero missing, extra,
+  phantom, stale, collapsed, duplicate, or unexplained mappings.
+- Cleanup owner observation is exactly one diagnostic read-only object snapshot;
+  five lifecycle callbacks are inspected and seven negative fixtures reject
+  excluded, mutating, completion/cancellation, transfer, operational, and
+  unclassified use.
+- Runtime, production-owner Full, and production-orchestration Full guards pass
+  for Debug and Release. Driver and full-solution builds pass for both.
 - Debug binary: 68,096 bytes, SHA-256
-  `1C62C702EC8A28CFBEEAAA96C7642DAA6D7B0120C306349C9596D8AC77BB1B8F`,
+  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`,
   unsigned x64 Native.
 - Release binary: 40,960 bytes, SHA-256
-  `39BF019DC82C49639EF1977E0742168AC067005F4C7FE4257DA0DE70BD3E544C`,
+  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`,
   unsigned x64 Native.
 
-## Safety and blockers
+## Safety and blocker
 
-- No ordinary production status, creation/rollback order, readiness,
-  lifecycle, WDF ownership, target/request, D0, or removal behavior changed.
-- No signing, packaging, certificate/key creation, staging, installation,
-  loading, trace-session start, Windows mutation, device query, target/request
-  operation, controller/Chatpad interaction, network access other than final
-  Git push, or hardware action occurred.
-- `legacy/` and all INF files are unchanged.
-- **Unresolved blocker:** independent read-only remediation audit is required
-  before any later gate is considered.
+- No production `.c`/`.h`, project, solution, INF, protocol, transport,
+  signing, packaging, installation, deployment, hardware, or `legacy/` path
+  changed.
+- No signing, certificate/key creation, packaging, staging, installation,
+  loading, live tracing, Windows mutation, device query, target/request
+  operation, controller/Chatpad access, or hardware action occurred.
+- **Blocker:** independent read-only audit of the final remediation commit and
+  schema-`1.2.0` manifest is required before any later gate.
