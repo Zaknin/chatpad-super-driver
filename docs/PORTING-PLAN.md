@@ -1,6 +1,25 @@
 # Porting Plan
 
-## Current runtime-observation planning gate (2026-07-02)
+## Current runtime bring-up readiness gate (2026-07-02)
+
+The offline runtime instrumentation milestone is accepted and frozen at
+`f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned
+`AUDIT PASS WITH LIMITATIONS`. The current branch
+`feature/runtime-bringup-readiness-scaffolding` prepares the first controlled
+Windows 11 runtime bring-up with documentation, fail-closed PowerShell
+scaffolding, synthetic offline tests, stop conditions, and a runtime evidence
+schema. This branch still performs no signing, packaging, staging,
+installation, loading, trace collection, device query, request operation,
+hardware access, Windows mutation, reboot, or production source change.
+
+Current phase: **Runtime bring-up readiness scaffolding - independent
+read-only audit pending**.
+
+The next task is independent read-only audit of the readiness commit. Only
+after that audit passes may a separate supervised live session consider any
+signing or Windows mutation.
+
+## Previous runtime-observation planning gate (2026-07-02)
 
 The offline production-orchestration evidence is accepted at commit
 `4c84891ca24ef969664f53fd5e9ec2a697f2edb9` after `AUDIT PASS WITH

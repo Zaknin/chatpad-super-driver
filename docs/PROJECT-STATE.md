@@ -1,18 +1,21 @@
 # Project State
 
-*Last updated: 2026-07-02 (dynamic-emission remediation)*
+*Last updated: 2026-07-02 (runtime bring-up readiness scaffolding)*
 
 ## Current state
 
-- **Branch:** `feature/offline-runtime-instrumentation-dynamic-emission-remediation`.
-- **Parent:** `38d434e8f7c815f609834f79315600aa73969639`, `test: repair
-  runtime instrumentation evidence contracts`.
+- **Branch:** `feature/runtime-bringup-readiness-scaffolding`.
+- **Parent:** `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`, `test: close
+  dynamic instrumentation emission coverage`.
 - **Expected containing commit:** the commit containing this file, subject
-  `test: close dynamic instrumentation emission coverage`.
+  `test: scaffold controlled runtime bring-up and rollback`.
 - **Accepted design:** `526f6bb055b485fdb459a9d303fc3f814da15e48`.
 - **Provider/schema:** `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, trace schema
   `1`, 73 semantic events.
-- **Evidence manifest:** schema `1.2.0`; independent audit pending.
+- **Accepted offline runtime-instrumentation manifest:** schema `1.2.0`;
+  independent audit returned `AUDIT PASS WITH LIMITATIONS` and is frozen.
+- **Runtime bring-up readiness manifest:** schema
+  `chatpad-runtime-bringup-readiness-manifest-v1`; independent audit pending.
 
 ## Verified remediation state
 
@@ -48,11 +51,16 @@
 ## Safety and blocker
 
 - No production `.c`/`.h`, project, solution, INF, protocol, transport,
-  signing, packaging, installation, deployment, hardware, or `legacy/` path
-  changed.
+  signing, packaging, installation, deployment, hardware, or `legacy/` path is
+  changed by the runtime bring-up readiness scaffold.
+- Runtime bring-up preparation now includes fail-closed documentation, scripts,
+  schema, stop-condition register, and offline synthetic tests for target
+  selection, rollback, package, signing, authorization, WPP planning, evidence
+  directory, and post-test reconciliation.
 - No signing, certificate/key creation, packaging, staging, installation,
   loading, live tracing, Windows mutation, device query, target/request
   operation, controller/Chatpad access, or hardware action occurred.
-- **Blocker:** independent read-only audit of the final dynamic-emission
-  remediation commit and schema-`1.2.0` manifest is required before any later
-  gate.
+- **Blocker:** independent read-only audit of the final runtime bring-up
+  readiness commit is required before any live Windows mutation, signing,
+  staging, installation, loading, tracing, device query, request operation, or
+  hardware access is authorized.

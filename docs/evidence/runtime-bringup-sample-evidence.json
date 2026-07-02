@@ -1,0 +1,35 @@
+{
+  "schema_version": "chatpad-runtime-evidence-schema-v1",
+  "session": {
+    "session_id": "SYNTHETIC-SESSION-0001",
+    "state": "planned-not-executed",
+    "repository_commit": "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
+    "provider_guid": "{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}"
+  },
+  "artifacts": [
+    {
+      "id": "sample-repository-identity",
+      "relative_path": "repository-identity.json",
+      "byte_size": 0,
+      "sha256": "PLANNED_NOT_EXECUTED",
+      "state": "planned-not-executed",
+      "producer": "tools/Test-ChatpadRuntimeRepositoryIdentity.ps1",
+      "created_utc": "PLANNED_NOT_EXECUTED",
+      "session_id": "SYNTHETIC-SESSION-0001",
+      "result": "planned-not-executed",
+      "dependency_identities": [
+        "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca"
+      ]
+    }
+  ],
+  "planned_operations": [
+    {
+      "operation_id": "sample-stage-package",
+      "command": "pnputil /add-driver \"<ABSOLUTE_PACKAGE_INF_PATH>\"",
+      "state": "planned-not-executed",
+      "target_instance_id": "<EXACT_INSTANCE_ID>",
+      "authorization_required": true
+    }
+  ],
+  "result": "PASS"
+}

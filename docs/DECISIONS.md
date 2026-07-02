@@ -4,6 +4,32 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Gate first runtime bring-up on fail-closed readiness scaffolding
+
+**Decision:** The first Windows 11 runtime bring-up must be preceded by a
+separate readiness commit containing an operator procedure, fail-closed
+PowerShell scaffolding, offline synthetic safety tests, versioned runtime
+evidence schema, stop-condition register, and manifest. The readiness scaffold
+may render future mutating commands, but execution must require explicit
+runtime authorization, exact target instance identity, and an evidence
+directory.
+
+**Rationale:** The accepted offline instrumentation proves observability and
+source/binary identity, but the first live session still carries device
+selection, signing, rollback, package binding, trace capture, and emergency
+recovery risks. Those risks need reviewable contracts before any Windows state
+or hardware is touched.
+
+**Alternatives rejected:** Proceeding directly to signing/staging would combine
+planning errors with live mutation. Relying on friendly names or broad
+wildcards would risk binding the wrong device. Creating certificates or
+packages in the readiness commit would cross the preparation-only boundary.
+
+**Consequences:** No live runtime gate opens until an independent read-only
+audit accepts the readiness commit. Future install, rollback, trace, and device
+commands must be target-specific, evidence-bound, and stop on failed
+prerequisites.
+
 ## 2026-07-02 - Require source-bound contracts for every dynamic emitter
 
 **Decision:** A helper name may not exempt a dynamic WPP call from semantic

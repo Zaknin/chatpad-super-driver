@@ -1,0 +1,60 @@
+{
+  "schema_version": "chatpad-runtime-evidence-schema-v1",
+  "record_types": [
+    "session_identity",
+    "repository_identity",
+    "binary_identity",
+    "package_identity",
+    "certificate_signature_identity",
+    "host_identity",
+    "security_state_snapshot",
+    "target_device_identity",
+    "previous_driver_identity",
+    "rollback_readiness",
+    "planned_operation",
+    "executed_operation",
+    "command_exit_code",
+    "timestamp",
+    "windows_event_log_export",
+    "code_integrity_event",
+    "setupapi_evidence",
+    "pnp_state",
+    "driver_service_state",
+    "wpp_session_configuration",
+    "wpp_output_identity",
+    "functional_observation_step",
+    "stop_condition",
+    "rollback_execution",
+    "final_restoration_result",
+    "unresolved_deviation"
+  ],
+  "artifact_required_fields": [
+    "id",
+    "relative_path",
+    "byte_size",
+    "sha256",
+    "state",
+    "producer",
+    "created_utc",
+    "session_id",
+    "result",
+    "dependency_identities"
+  ],
+  "operation_states": [
+    "planned-not-executed",
+    "executed",
+    "skipped-by-authorization",
+    "blocked-by-failed-prerequisite",
+    "failed",
+    "rolled-back",
+    "successfully-restored"
+  ],
+  "rules": [
+    "A rendered command is not evidence that the command executed.",
+    "Every mutating command must reference an approved operation ID.",
+    "Every device operation must reference an exact target instance ID.",
+    "Every artifact path must be relative to the approved evidence root.",
+    "Every artifact must be hashed after creation.",
+    "Unresolved deviations are terminal until explicitly authorized."
+  ]
+}

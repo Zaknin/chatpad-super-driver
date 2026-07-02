@@ -5391,3 +5391,97 @@
   arithmetic, test that helper allow-listing cannot hide missing events,
   reconcile affected guard/equality/volume/matrix evidence, and rehash the
   complete manifest without regenerating evidence.
+
+## 2026-07-02 11:22 +04:00 - Controlled runtime bring-up readiness scaffolding
+
+- **Objective:** Prepare, without live runtime mutation, the documentation,
+  scripts, schema, stop-condition register, synthetic tests, and evidence
+  manifest required before a first controlled Windows 11 runtime bring-up of
+  the rewritten Chatpad driver.
+- **Starting state:** Verified clean synchronized branch
+  `feature/offline-runtime-instrumentation-dynamic-emission-remediation` at
+  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`, direct parent
+  `38d434e8f7c815f609834f79315600aa73969639`, live remote equality and
+  ahead/behind `0/0`. Captured
+  `artifacts/logs/runtime-bringup-readiness-start-20260702T072211Z.log` and
+  created `feature/runtime-bringup-readiness-scaffolding`.
+- **Accepted baseline:** The offline runtime-instrumentation milestone is
+  treated as accepted and frozen after `AUDIT PASS WITH LIMITATIONS`: 73
+  semantic events, 95 mappings, 34 direct WPP invocations, 79 helper-mediated
+  mappings, 93 unique physical sites, 19 pure-model scenarios, 932 pure-model
+  assertions, 13 matrix entries per configuration, 6,980 assertions per
+  configuration, and schema-`1.2.0` manifest with 33 entries and zero integrity
+  defects.
+- **Implementation:** Added the authoritative runtime bring-up procedure with
+  Gates 0-10, a versioned runtime evidence schema, a 20-item stop-condition
+  register, a sample evidence record, a shared PowerShell runtime-bringup
+  module, and preparation scripts for host preflight, repository/binary
+  identity, synthetic device-candidate inventory, target selection,
+  current-driver capture planning, rollback readiness, package content,
+  signing readiness, install-plan rendering, rollback-plan rendering,
+  evidence-directory initialization planning, event-log capture planning, WPP
+  session planning, future runtime evidence manifest planning, and post-test
+  reconciliation.
+- **Fail-closed behavior:** Scripts that could correspond to future mutation
+  default to plan-only or fixture-only behavior. Future execution requires an
+  explicit `-ExecuteAuthorizedRuntimeStep` switch plus exact target instance
+  identity and evidence directory where applicable. No script uses broad
+  wildcard target removal or automatic all-device selection.
+- **Synthetic validation:** `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
+  runs entirely offline with 30 rejection fixtures and 46 assertions. Fixtures
+  reject no target, multiple targets, friendly-name-only selection, hardware-ID
+  mismatch, wrong instance, unexpected INF, missing rollback inputs, unsigned
+  package, wrong architecture, broader hardware-ID binding, wrong SYS hash,
+  mismatched INF/CAT/SYS, unauthorized package files, incompatible signing
+  state, missing authorization switch, missing evidence directory, missing
+  exact target identity, stale/reused evidence, wrong WPP provider, missing
+  pre-test snapshot, missing rollback plan, and unresolved post-test state.
+- **Intermediate failed commands and corrected reruns:** The first synthetic
+  test run failed because the package fixture attempted to set
+  `signature_valid` on an object that did not define that property; rebuilding
+  the fixture as an explicit object fixed it. The next two runs showed the
+  meta-check treated read-only validators as missing non-mutating guards;
+  classifying fixture-only validators separately fixed it. The first
+  repository-identity run exposed PowerShell argument/indexing mistakes in the
+  Git helper, returning only the first character of the branch; named
+  arguments and array-wrapped outputs corrected it. A subsequent run printed
+  an expected no-upstream Git warning for the new branch; suppressing that
+  lookup noise corrected the read-only identity output. During final evidence
+  capture, the first wrapper incorrectly treated the intentionally blocked
+  device-inventory result as a failure because it expected a nonzero exit code,
+  and the second wrapper expected `result=PASS` text for JSON-emitting scripts;
+  the corrected wrapper parsed result fields and produced the final PASS
+  summary. No failed command performed a prohibited action.
+- **Final validation evidence:** Final ignored logs under `artifacts/logs/`
+  record PowerShell AST parse PASS for the shared module and 16 scripts,
+  synthetic safety PASS with 30 fixtures and 46 assertions, repository identity
+  PASS, host preflight PASS, device inventory BLOCKED without enumeration, WPP,
+  install, rollback, event-log, and future-manifest plan rendering only, JSON
+  and schema PASS, changed-path containment PASS, UTF-8/no-BOM/final-newline/
+  trailing-whitespace hygiene PASS, secret/cert/key scan PASS, prohibited
+  action absence PASS, repository safety PASS, and `git diff --check` PASS.
+  `Invoke-ScriptAnalyzer` was not installed, so PSScriptAnalyzer was recorded
+  as SKIPPED rather than treated as a pass.
+- **Readiness manifest:** Added
+  `docs/evidence/runtime-bringup-readiness-manifest.json` with schema
+  `chatpad-runtime-bringup-readiness-manifest-v1` and 51 entries covering the
+  frozen starting state, accepted offline manifest and binaries, final
+  documentation, PowerShell scaffolding, and ignored validation logs. The first
+  manifest rehash wrapper had an array-flattening bug and falsely reported two
+  grouped changed-path defects; the corrected rehash reported zero missing,
+  extra, duplicate, hash, size, state, or containment defects.
+- **Safety:** No certificate/key creation, signing, catalogue generation,
+  packaging, Driver Store staging, installation, loading, WPP/ETW session,
+  Device Manager use, `pnputil` mutation, `devcon` mutation, service mutation,
+  Windows mutation, reboot, live device query, target open, request operation,
+  controller/Chatpad access, protocol traffic, keyboard injection, hardware
+  interaction, production source/header change, INF/project/solution change,
+  protocol/transport change, or `legacy/` modification occurred.
+- **Commit/push:** Expected one commit with subject
+  `test: scaffold controlled runtime bring-up and rollback`, then push only
+  `origin/feature/runtime-bringup-readiness-scaffolding`; final hash is
+  verified after commit.
+- **Next task:** Independent read-only audit of the runtime bring-up readiness
+  commit, verifying fail-closed target-selection, signing, package, rollback,
+  evidence, stop-condition, and authorization contracts before any live Windows
+  mutation is authorized.

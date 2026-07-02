@@ -1,0 +1,185 @@
+{
+  "schema_version": "chatpad-runtime-stop-condition-register-v1",
+  "stop_conditions": [
+    {
+      "id": "target-identity-ambiguous",
+      "detection_method": "target-selection contract returns zero or multiple candidates",
+      "immediate_action": "stop before mutation",
+      "evidence_to_preserve": ["candidate inventory", "target contract"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "operator plus independent audit"
+    },
+    {
+      "id": "current-driver-unidentified",
+      "detection_method": "current INF/provider/service/package cannot be captured",
+      "immediate_action": "stop before mutation",
+      "evidence_to_preserve": ["driver state query output"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "operator"
+    },
+    {
+      "id": "rollback-source-unavailable",
+      "detection_method": "rollback-readiness contract missing source or restore command",
+      "immediate_action": "stop before install",
+      "evidence_to_preserve": ["rollback readiness report"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "operator plus independent audit"
+    },
+    {
+      "id": "repository-or-binary-identity-wrong",
+      "detection_method": "commit, status, SYS hash, size, or manifest hash mismatch",
+      "immediate_action": "stop before package use",
+      "evidence_to_preserve": ["repository identity report", "binary identity report"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "independent audit"
+    },
+    {
+      "id": "signing-identity-wrong",
+      "detection_method": "certificate, signature, Secure Boot, test-signing, or HVCI mismatch",
+      "immediate_action": "stop before staging",
+      "evidence_to_preserve": ["signing readiness report", "signature verification output"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "operator plus signing owner"
+    },
+    {
+      "id": "package-validation-failed",
+      "detection_method": "package-content validation fails",
+      "immediate_action": "stop before staging",
+      "evidence_to_preserve": ["package validation report"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "independent audit"
+    },
+    {
+      "id": "windows-rejects-signature",
+      "detection_method": "Code Integrity or SetupAPI reports signature rejection",
+      "immediate_action": "stop and preserve logs",
+      "evidence_to_preserve": ["Code Integrity events", "SetupAPI log", "package identity"],
+      "rollback_required": true,
+      "reboot_permitted": false,
+      "continuation_authority": "operator plus signing owner"
+    },
+    {
+      "id": "wrong-device-binds",
+      "detection_method": "post-install target instance differs from approved identity",
+      "immediate_action": "rollback immediately",
+      "evidence_to_preserve": ["device state", "SetupAPI log", "rollback transcript"],
+      "rollback_required": true,
+      "reboot_permitted": false,
+      "continuation_authority": "independent audit"
+    },
+    {
+      "id": "unrelated-device-changed",
+      "detection_method": "pre/post device inventory diff shows unapproved device change",
+      "immediate_action": "stop and rollback if driver-related",
+      "evidence_to_preserve": ["pre inventory", "post inventory", "diff"],
+      "rollback_required": true,
+      "reboot_permitted": false,
+      "continuation_authority": "operator"
+    },
+    {
+      "id": "driver-service-fails-unexpectedly",
+      "detection_method": "service or PnP status differs from expected failure/success contract",
+      "immediate_action": "capture events and rollback decision",
+      "evidence_to_preserve": ["service state", "System events", "WPP output"],
+      "rollback_required": true,
+      "reboot_permitted": false,
+      "continuation_authority": "operator"
+    },
+    {
+      "id": "unexpected-code-integrity-error",
+      "detection_method": "Code Integrity operational log has unapproved error",
+      "immediate_action": "stop and preserve logs",
+      "evidence_to_preserve": ["Code Integrity export"],
+      "rollback_required": true,
+      "reboot_permitted": false,
+      "continuation_authority": "operator plus signing owner"
+    },
+    {
+      "id": "unexpected-setupapi-match",
+      "detection_method": "SetupAPI reports broader or different hardware-ID match",
+      "immediate_action": "stop and rollback",
+      "evidence_to_preserve": ["SetupAPI log", "INF", "target contract"],
+      "rollback_required": true,
+      "reboot_permitted": false,
+      "continuation_authority": "independent audit"
+    },
+    {
+      "id": "device-disappears-without-recovery-path",
+      "detection_method": "target absent after install and recovery path not proven",
+      "immediate_action": "stop; do not continue functional testing",
+      "evidence_to_preserve": ["device inventory", "event logs"],
+      "rollback_required": true,
+      "reboot_permitted": "operator only",
+      "continuation_authority": "operator"
+    },
+    {
+      "id": "input-behavior-unstable",
+      "detection_method": "keyboard, mouse, controller, or other input instability observed",
+      "immediate_action": "stop and rollback using non-affected input path",
+      "evidence_to_preserve": ["operator note", "event logs", "rollback transcript"],
+      "rollback_required": true,
+      "reboot_permitted": "operator only",
+      "continuation_authority": "operator"
+    },
+    {
+      "id": "unplanned-reboot-required",
+      "detection_method": "PnP, SetupAPI, or package operation reports reboot requirement not in plan",
+      "immediate_action": "stop before reboot",
+      "evidence_to_preserve": ["command transcript", "SetupAPI log"],
+      "rollback_required": true,
+      "reboot_permitted": "operator only",
+      "continuation_authority": "operator plus independent audit"
+    },
+    {
+      "id": "trace-provider-wrong",
+      "detection_method": "WPP plan provider does not equal accepted GUID",
+      "immediate_action": "do not start trace",
+      "evidence_to_preserve": ["trace plan"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "independent audit"
+    },
+    {
+      "id": "runtime-evidence-write-failed",
+      "detection_method": "evidence directory missing, stale, reused, or not writable",
+      "immediate_action": "stop before mutation or preserve partial evidence",
+      "evidence_to_preserve": ["evidence directory check"],
+      "rollback_required": "if mutation already occurred",
+      "reboot_permitted": false,
+      "continuation_authority": "operator"
+    },
+    {
+      "id": "command-differs-from-approved-plan",
+      "detection_method": "operator command text differs from rendered operation plan",
+      "immediate_action": "stop before execution",
+      "evidence_to_preserve": ["rendered plan", "attempted command text"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "operator plus independent audit"
+    },
+    {
+      "id": "prerequisite-changed-after-approval",
+      "detection_method": "pre-mutation snapshot no longer matches approved snapshot",
+      "immediate_action": "restart approval from Gate 0",
+      "evidence_to_preserve": ["old snapshot", "new snapshot", "diff"],
+      "rollback_required": false,
+      "reboot_permitted": false,
+      "continuation_authority": "independent audit"
+    },
+    {
+      "id": "rollback-cannot-be-guaranteed",
+      "detection_method": "rollback verification, source, or exact target binding becomes uncertain",
+      "immediate_action": "stop; do not proceed to next gate",
+      "evidence_to_preserve": ["rollback state", "operator note"],
+      "rollback_required": "operator decision",
+      "reboot_permitted": "operator only",
+      "continuation_authority": "operator plus independent audit"
+    }
+  ]
+}
