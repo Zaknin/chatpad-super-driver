@@ -1,10 +1,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:ReadinessBranch = 'feature/runtime-bringup-readiness-validator-totality-remediation'
+$script:ReadinessBranch = 'feature/runtime-bringup-readiness-final-contract-remediation'
 $script:FrozenBaselineCommit = 'f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-$script:PriorImplementationCommit = '0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea'
-$script:PriorFinalizationCommit = '2bb08fee77125f6b5bed2774c085ce57fe192752'
+$script:PriorImplementationCommit = '7689d2cca57c485d8c0569bdcbec58e400621b20'
+$script:PriorFinalizationCommit = 'bb4c06cc87150b944d04ae2135ea58b8218c5dc8'
 $script:AcceptedProviderGuid = '{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}'
 $script:AcceptedManifestPath = 'docs/evidence/runtime-instrumentation-implementation-manifest.json'
 $script:AcceptedManifestSize = 28088
@@ -28,9 +28,10 @@ $script:KnownStopConditionIds = @(
 
 function Get-ChatpadProperty {
     param([object]$Object,[Parameter(Mandatory)][string]$Name,[object]$Default=$null)
-    if ($null -eq $Object) { return $Default }
+    if ($null -eq $Object) { if($Default -is [array]){return ,$Default}; return $Default }
     $property = $Object.PSObject.Properties[$Name]
-    if ($null -eq $property) { return $Default }
+    if ($null -eq $property) { if($Default -is [array]){return ,$Default}; return $Default }
+    if ($property.Value -is [array]) { return ,$property.Value }
     return $property.Value
 }
 
@@ -62,6 +63,11 @@ function Test-ChatpadTimestampValue {
     param([object]$Value)
     if ($null -eq $Value -or $Value -is [array] -or [string]::IsNullOrWhiteSpace([string]$Value)) { return $false }
     try { [void][datetime]([string]$Value); return $true } catch { return $false }
+}
+
+function Compare-ChatpadTimestampOrder {
+    param([object]$Start,[object]$Completion)
+    try { return ([datetime]([string]$Completion)) -ge ([datetime]([string]$Start)) } catch { return $false }
 }
 
 function Test-ChatpadResultRecord {
@@ -192,9 +198,12 @@ function New-ChatpadOperationPlan {
         [Nullable[bool]]$ApprovedAsTargetSpecific=$null,
         [string]$Blocker='',
         [object]$ResultRecord=$null,
+        [string]$StartUtc='',
         [string]$CompletedUtc='',
         [string]$RollbackOperationId='',
+        [string]$OriginalOperationId='',
         [string]$FinalStateEvidenceId='',
+        [string]$AuthorizationEvidenceId='',
         [object]$WorkingDirectory='<APPROVED_RUNTIME_WORKING_DIRECTORY>'
     )
     $safeId=Assert-ChatpadScalar $OperationId OperationId
@@ -210,10 +219,10 @@ function New-ChatpadOperationPlan {
         if($ApprovedAsTargetSpecific -ne $true){throw [ArgumentException]::new('Exact-device operation requires approved_as_target_specific=true.')}
     } elseif(Test-ChatpadNonEmpty $TargetInstanceId){$safeTarget=Assert-ChatpadScalar $TargetInstanceId TargetInstanceId}
     if($Status -eq 'blocked' -and [string]::IsNullOrWhiteSpace($Blocker)){throw [ArgumentException]::new('Blocked operation requires a blocker.')}
-    if($Status -eq 'planned' -and ($null-ne$ResultRecord -or $CompletedUtc)){throw [ArgumentException]::new('Planned operation cannot contain execution evidence.')}
-    if($Status -in @('executed','failed') -and ($null-eq$ResultRecord -or [string]::IsNullOrWhiteSpace($CompletedUtc))){throw [ArgumentException]::new("$Status operation requires result and completion time.")}
+    if($Status -eq 'planned' -and ($null-ne$ResultRecord -or $StartUtc -or $CompletedUtc)){throw [ArgumentException]::new('Planned operation cannot contain execution evidence.')}
+    if($Status -in @('executed','failed') -and ($null-eq$ResultRecord -or [string]::IsNullOrWhiteSpace($StartUtc) -or [string]::IsNullOrWhiteSpace($CompletedUtc))){throw [ArgumentException]::new("$Status operation requires result and execution timestamps.")}
     if($Status -eq 'failed' -and [int](Get-ChatpadProperty $ResultRecord 'exit_code' 0) -in $ExpectedExitCodes){throw [ArgumentException]::new('Failed operation requires a non-success exit code.')}
-    if($Status -eq 'rolled_back' -and [string]::IsNullOrWhiteSpace($RollbackOperationId)){throw [ArgumentException]::new('Rolled-back operation requires rollback operation identity.')}
+    if($Status -eq 'rolled_back' -and ([string]::IsNullOrWhiteSpace($OriginalOperationId) -or [string]::IsNullOrWhiteSpace($RollbackOperationId))){throw [ArgumentException]::new('Rolled-back operation requires original and rollback operation identity.')}
     if($Status -eq 'restored' -and [string]::IsNullOrWhiteSpace($FinalStateEvidenceId)){throw [ArgumentException]::new('Restored operation requires final-state evidence identity.')}
     [pscustomobject][ordered]@{
         schema_version='chatpad-structured-operation-v2';operation_id=$safeId;operation_type=$OperationType
@@ -224,7 +233,9 @@ function New-ChatpadOperationPlan {
         stop_condition_ids=@($StopConditionIds);expected_exit_codes=@($ExpectedExitCodes)
         requires_authorization=$RequiresAuthorization;status=$Status;source_classification=$SourceClassification
         session_id=$safeSession;host_id=$safeHost;blocker=$Blocker;result_record=$ResultRecord
-        completed_utc=$CompletedUtc;rollback_operation_id=$RollbackOperationId;final_state_evidence_id=$FinalStateEvidenceId
+        start_timestamp=$StartUtc;completion_timestamp=$CompletedUtc;completed_utc=$CompletedUtc
+        original_operation_id=$OriginalOperationId;rollback_operation_id=$RollbackOperationId
+        final_state_evidence_id=$FinalStateEvidenceId;authorization_evidence_id=$AuthorizationEvidenceId
         command_display=(ConvertTo-ChatpadDisplayArgument $safeExe)+' '+(($safeArgs|ForEach-Object{ConvertTo-ChatpadDisplayArgument $_})-join' ')
         display_is_execution_evidence=$false
         launch_contract='Future execution must use System.Diagnostics.ProcessStartInfo.ArgumentList and must never reparse command_display.'
@@ -244,23 +255,51 @@ function Test-ChatpadOperationPlanContract {
     $status = [string](Get-ChatpadProperty $Operation status '')
     $targetScope = [string](Get-ChatpadProperty $Operation target_scope '')
     $resultRecord = Get-ChatpadProperty $Operation result_record $null
-    $completedUtc = Get-ChatpadProperty $Operation completed_utc ''
+    $startTimestamp = Get-ChatpadProperty $Operation start_timestamp ''
+    $completionTimestamp = Get-ChatpadProperty $Operation completion_timestamp (Get-ChatpadProperty $Operation completed_utc '')
+    $expectedExitCodes = @(Get-ChatpadArray $Operation expected_exit_codes)
+    $arguments = Get-ChatpadProperty $Operation arguments $null
     if($status -notin @('planned','blocked','skipped_authorization','executed','failed','rolled_back','restored')){$fail+='status-invalid'}
     if($status -eq 'blocked' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation blocker ''))){$fail+='blocked-without-blocker'}
     if($targetScope -eq 'exact-device' -and (-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation target_instance_id '')) -or (Get-ChatpadProperty $Operation approved_as_target_specific $false)-ne$true)){$fail+='exact-target-invalid'}
-    if($status -in @('planned','blocked','skipped_authorization') -and $null-ne$resultRecord){$fail+="$status-has-result"}
-    if($status -in @('executed','failed')){
+    if($null -eq $arguments -or $arguments -isnot [array]){$fail+='arguments-not-array'}
+    if($expectedExitCodes.Count -eq 0){$fail+='expected-exit-codes-missing'}
+    foreach($code in $expectedExitCodes){try{[void][int]$code}catch{$fail+='expected-exit-code-invalid'}}
+    if($status -in @('planned','blocked','skipped_authorization')){
+        if($null-ne$resultRecord){$fail+="$status-has-result"}
+        if(Test-ChatpadTimestampValue $startTimestamp -or Test-ChatpadTimestampValue $completionTimestamp){$fail+="$status-has-execution-timestamp"}
+        if(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation rollback_operation_id '')){$fail+="$status-has-rollback-reference"}
+        if(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation final_state_evidence_id '')){$fail+="$status-has-restoration-evidence"}
+    }
+    if($status -eq 'skipped_authorization' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation authorization_evidence_id ''))){$fail+='authorization-evidence-missing'}
+    if($status -in @('executed','failed','rolled_back')){
         $fail += @(Test-ChatpadResultRecord $resultRecord -RequireFailure:($status -eq 'failed'))
-        if(-not(Test-ChatpadTimestampValue $completedUtc)){$fail+='completed-timestamp-missing'}
+        if(-not(Test-ChatpadTimestampValue $startTimestamp)){$fail+='start-timestamp-missing'}
+        if(-not(Test-ChatpadTimestampValue $completionTimestamp)){$fail+='completion-timestamp-missing'}
+        elseif((Test-ChatpadTimestampValue $startTimestamp) -and -not(Compare-ChatpadTimestampOrder $startTimestamp $completionTimestamp)){$fail+='completion-before-start'}
+        if($null -ne $resultRecord -and (Test-ChatpadObject $resultRecord)){
+            $outcome = [string](Get-ChatpadProperty $resultRecord outcome '')
+            $exitCode = $null
+            try { $exitCode = [int](Get-ChatpadProperty $resultRecord exit_code $null) } catch {}
+            if((Get-ChatpadProperty $resultRecord operation_id '') -ne (Get-ChatpadProperty $Operation operation_id '')){$fail+='result-operation-id-mismatch'}
+            if($status -eq 'executed' -and ($expectedExitCodes -notcontains $exitCode -or $outcome -notin @('success','executed'))){$fail+='executed-result-inconsistent'}
+            if($status -eq 'failed' -and ($expectedExitCodes -contains $exitCode -and $outcome -in @('success','executed'))){$fail+='failed-result-success'}
+            if($status -eq 'rolled_back' -and ($expectedExitCodes -notcontains $exitCode -or $outcome -notin @('success','rolled_back','restored-baseline'))){$fail+='rollback-result-unsuccessful'}
+        }
     }
     if($status -eq 'rolled_back'){
+        if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation original_operation_id ''))){$fail+='original-mutation-reference-missing'}
         if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation rollback_operation_id ''))){$fail+='rollback-operation-reference-missing'}
-        $fail += @(Test-ChatpadResultRecord $resultRecord)
-        if(-not(Test-ChatpadTimestampValue $completedUtc)){$fail+='rollback-timestamp-missing'}
     }
     if($status -eq 'restored'){
         if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Operation final_state_evidence_id ''))){$fail+='final-reconciliation-evidence-missing'}
-        if(-not(Test-ChatpadTimestampValue $completedUtc)){$fail+='restoration-timestamp-missing'}
+        if(-not(Test-ChatpadTimestampValue $completionTimestamp)){$fail+='restoration-timestamp-missing'}
+        if($null -eq $resultRecord){$fail+='restored-result-missing'}
+        else{
+            $fail += @(Test-ChatpadResultRecord $resultRecord)
+            if((Get-ChatpadProperty $resultRecord outcome '') -ne 'restored-baseline'){$fail+='restored-baseline-result-missing'}
+        }
+        if(@(Get-ChatpadArray $Operation unresolved_deviation_ids).Count){$fail+='restored-has-unresolved-deviation'}
     }
     if((Get-ChatpadProperty $Operation display_is_execution_evidence $true)-ne$false){$fail+='display-marked-executable'}
     try{Assert-ChatpadStopConditionIds @(Get-ChatpadProperty $Operation stop_condition_ids @())|Out-Null}catch{$fail+=$_.Exception.Message}
@@ -271,7 +310,22 @@ function Test-ChatpadOperationPlanContract {
 function Read-ChatpadJson {
     param([Parameter(Mandatory)][string]$Path)
     if(-not(Test-Path -LiteralPath $Path -PathType Leaf)){throw [IO.FileNotFoundException]::new("JSON file missing: $Path")}
-    Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json
+    $raw=Get-Content -LiteralPath $Path -Raw
+    $doc=$raw|ConvertFrom-Json
+    ConvertTo-ChatpadKnownJsonArrayShape $doc
+    $doc
+}
+
+function ConvertTo-ChatpadKnownJsonArrayShape {
+    param([object]$Object)
+    if($null -eq $Object -or $Object -is [string] -or $Object -is [ValueType]){return}
+    $arrayFields=@('artifacts','operations','dependency_ids','arguments','input_artifact_ids','prerequisite_result_ids','stop_condition_ids','expected_exit_codes','unresolved_deviation_ids')
+    foreach($property in @($Object.PSObject.Properties)){
+        if($arrayFields -contains $property.Name -and $null -ne $property.Value -and $property.Value -isnot [array]){
+            $property.Value=[object[]]@($property.Value)
+        }
+        foreach($item in @($property.Value)){ConvertTo-ChatpadKnownJsonArrayShape $item}
+    }
 }
 
 function Get-ChatpadRepoRoot {
@@ -438,10 +492,11 @@ function Get-ChatpadInfAssignment {
 
 function Test-ChatpadPackageContract {
     param($Package)
-    $fail=@();$root=[string](Get-ChatpadProperty $Package package_root '');$inf=[string](Get-ChatpadProperty $Package inf_path '')
     if (-not (Test-ChatpadObject $Package)) { return New-ChatpadRuntimeCheckResult package-validation FAIL PACKAGE_SEMANTICS_INVALID 'package-not-object' @('package-validation-failed','unexpected-setupapi-match') }
-    if(-not[IO.Path]::IsPathRooted($root)-or-not(Test-ChatpadPathContained $root $inf)){$fail+='package-containment'}
-    try{$model=Read-ChatpadInfModel $inf}catch{$fail+=$_.Exception.Message;$model=$null}
+    $fail=@();$root=[string](Get-ChatpadProperty $Package package_root '');$inf=[string](Get-ChatpadProperty $Package inf_path '')
+    if(-not(Test-ChatpadNonEmpty $root)-or-not(Test-ChatpadNonEmpty $inf)){$fail+='package-containment'}
+    elseif(-not[IO.Path]::IsPathRooted($root)-or-not(Test-ChatpadPathContained $root $inf)){$fail+='package-containment'}
+    if(Test-ChatpadNonEmpty $inf){try{$model=Read-ChatpadInfModel $inf}catch{$fail+=$_.Exception.Message;$model=$null}}else{$model=$null}
     if($model){
         if($model.duplicates.Count){$fail+='duplicate-sections'}
         foreach($s in @('Version','Manufacturer','DestinationDirs','Strings')){if(-not$model.sections.Contains($s)){$fail+="missing-section:$s"}}
@@ -476,7 +531,7 @@ function Test-ChatpadPackageContract {
         if($unresolved){$fail+='unresolved-string'}
     foreach($f in $copied){if([IO.Path]::IsPathRooted($f)-or$f-match'(^|[\\/])\.\.([\\/]|$)'){$fail+='copy-path-invalid'}}
     }
-    if(Test-Path -LiteralPath $root -PathType Container){
+    if((Test-ChatpadNonEmpty $root) -and (Test-Path -LiteralPath $root -PathType Container)){
         $actual=@(Get-ChildItem $root -File -Recurse|ForEach-Object{$_.FullName.Substring($root.Length).TrimStart('\','/')-replace'\\','/'})
         $allowed=Get-ChatpadArray $Package allowed_files
         foreach($f in $actual){if($allowed-notcontains$f-or$f-match'(?i)\.(exe|dll|pfx|p12|pem|key|pvk|snk|cer|crt)$'){$fail+="unauthorized-file:$f"}}
@@ -630,6 +685,7 @@ function Test-ChatpadEvidenceDocumentContract {
     $sessionId=[string](Get-ChatpadProperty $session session_id '')
     $hostId=[string](Get-ChatpadProperty $session host_id '')
     $evidenceClassification=[string](Get-ChatpadProperty $session evidence_classification '')
+    if($null -eq (Get-ChatpadProperty $Document artifacts $null)){$fail+='artifacts-missing'}
     $artifacts=@(Get-ChatpadArray $Document artifacts)
     if($artifacts.Count -eq 1 -and $artifacts[0] -eq '__CHATPAD_WRONG_TYPE__'){$fail+='artifacts-not-array';$artifacts=@()}
     $allArtifactIds=@($artifacts|ForEach-Object{[string](Get-ChatpadProperty $_ id '')})
@@ -643,6 +699,7 @@ function Test-ChatpadEvidenceDocumentContract {
         if($evidenceClassification-eq'live'-and(Get-ChatpadProperty $a source_classification '')-ne'live'){$fail+='synthetic-in-live'}
         foreach($d in (Get-ChatpadArray $a dependency_ids)){if($allArtifactIds-notcontains[string]$d){$fail+='unresolved-artifact-dependency'}}
     }
+    if($null -eq (Get-ChatpadProperty $Document operations $null)){$fail+='operations-missing'}
     $operations=@(Get-ChatpadArray $Document operations)
     if($operations.Count -eq 1 -and $operations[0] -eq '__CHATPAD_WRONG_TYPE__'){$fail+='operations-not-array';$operations=@()}
     $opIds=@()
@@ -653,16 +710,8 @@ function Test-ChatpadEvidenceDocumentContract {
         elseif($opIds-contains$operationId){$fail+='duplicate-operation-id'}else{$opIds+=$operationId}
         if((Get-ChatpadProperty $o session_id '')-ne$sessionId-or(Get-ChatpadProperty $o host_id '')-ne$hostId){$fail+='operation-session-host'}
         if($evidenceClassification-eq'live'-and(Get-ChatpadProperty $o source_classification '')-ne'live'){$fail+='synthetic-operation-in-live'}
-        $status=[string](Get-ChatpadProperty $o status '')
-        $resultRecord=Get-ChatpadProperty $o result_record $null
-        $completedUtc=Get-ChatpadProperty $o completed_utc ''
-        if($status -notin @('planned','blocked','skipped_authorization','executed','failed','rolled_back','restored')){$fail+='operation-status-invalid'}
-        if($status -in @('planned','blocked','skipped_authorization') -and $null -ne $resultRecord){$fail+="operation-$status-has-result"}
-        if($status -eq 'blocked' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $o blocker ''))){$fail+='blocked-operation-without-blocker'}
-        if($status -in @('executed','failed','rolled_back')){$fail += @(Test-ChatpadResultRecord $resultRecord -RequireFailure:($status -eq 'failed'))}
-        if($status -in @('executed','failed','rolled_back','restored') -and -not(Test-ChatpadTimestampValue $completedUtc)){$fail+='operation-completed-timestamp-missing'}
-        if($status -eq 'rolled_back' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $o rollback_operation_id ''))){$fail+='rollback-operation-reference-missing'}
-        if($status -eq 'restored' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $o final_state_evidence_id ''))){$fail+='operation-final-evidence-missing'}
+        $operationContract = Test-ChatpadOperationPlanContract $o
+        if($operationContract.result -ne 'PASS'){$fail+="operation-lifecycle:$($operationContract.reason)"}
     }
     foreach($o in $operations){
         if (-not (Test-ChatpadObject $o)) { continue }
@@ -670,8 +719,11 @@ function Test-ChatpadEvidenceDocumentContract {
             $rollbackId=[string](Get-ChatpadProperty $o rollback_operation_id '')
             $rollbackOperation=@($operations|Where-Object{(Get-ChatpadProperty $_ operation_id '')-eq$rollbackId-and(Get-ChatpadProperty $_ status '')-eq'executed'})
             if($rollbackOperation.Count-ne1){$fail+='rollback-without-executed-operation'}
-            elseif(@(Test-ChatpadResultRecord (Get-ChatpadProperty $rollbackOperation[0] result_record $null)).Count -or -not(Test-ChatpadTimestampValue (Get-ChatpadProperty $rollbackOperation[0] completed_utc ''))){$fail+='rollback-without-execution-result'}
+            elseif((Get-ChatpadProperty $rollbackOperation[0] session_id '')-ne(Get-ChatpadProperty $o session_id '')-or(Get-ChatpadProperty $rollbackOperation[0] host_id '')-ne(Get-ChatpadProperty $o host_id '')){$fail+='rollback-session-host-mismatch'}
+            elseif((Test-ChatpadOperationPlanContract $rollbackOperation[0]).result -ne 'PASS'){$fail+='rollback-without-execution-result'}
         }
+        foreach($artifactRef in (Get-ChatpadArray $o input_artifact_ids)){if($artifactIds -notcontains [string]$artifactRef){$fail+='unresolved-operation-artifact-reference'}}
+        foreach($prereqRef in (Get-ChatpadArray $o prerequisite_result_ids)){if(($artifactIds -notcontains [string]$prereqRef) -and ($opIds -notcontains [string]$prereqRef)){$fail+='unresolved-operation-prerequisite'}}
     }
     if((Get-ChatpadProperty $Document result '')-eq'restored'){if(@($operations|Where-Object{(Get-ChatpadProperty $_ status '')-in@('planned','blocked','failed')}).Count-or-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Document final_reconciliation_evidence_id))){$fail+='invalid-restored-transition'}}
     if($fail.Count){return New-ChatpadRuntimeCheckResult runtime-evidence FAIL EVIDENCE_SEMANTICS_INVALID ($fail-join';') @('runtime-evidence-write-failed')}

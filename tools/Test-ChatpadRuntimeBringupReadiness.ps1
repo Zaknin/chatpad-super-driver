@@ -29,30 +29,33 @@ function Invoke-Fixture {
         [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$ExpectedStops,
         [Parameter(Mandatory)][scriptblock]$Body,
         [int]$AdditionalAssertionCount=0,
+        [string]$ExpectedReasonPattern='',
         [bool]$ExpectException=$false,
         [string]$ExpectedExceptionType=''
     )
     if ([string]::IsNullOrWhiteSpace($Category)) { throw 'Fixture category is required.' }
     if ($script:FixtureIds.ContainsKey($Id)) { throw "Duplicate fixture ID: $Id" }
     $script:FixtureIds[$Id]=$true
-    $actualStatus='';$actualCode='';$actualStops=@();$actualException=''
+    $actualStatus='';$actualCode='';$actualReason='';$actualStops=@();$actualException=''
     try {
         $value=& $Body
         if ($null-eq$value -or $null-eq$value.PSObject.Properties['result'] -or $null-eq$value.PSObject.Properties['result_code']) {
             throw [InvalidDataException]::new('Validator returned no machine-readable result.')
         }
-        $actualStatus=[string]$value.result;$actualCode=[string]$value.result_code;$actualStops=@($value.stop_condition_ids)
+        $actualStatus=[string]$value.result;$actualCode=[string]$value.result_code;$actualReason=[string](Get-ChatpadProperty $value reason '');$actualStops=@($value.stop_condition_ids)
     } catch {
         $actualException=$_.Exception.GetType().FullName
     }
     $assertions=4+$ExpectedStops.Count+$AdditionalAssertionCount
+    if($ExpectedReasonPattern){$assertions++}
     $script:AssertionCount+=$assertions
     $passed=Compare-FixtureOutcome $ExpectedStatus $ExpectedCode $ExpectedStops $ExpectException $ExpectedExceptionType $actualStatus $actualCode $actualStops $actualException
+    if($ExpectedReasonPattern -and $actualReason -notmatch $ExpectedReasonPattern){$passed=$false}
     $script:Fixtures.Add([pscustomobject][ordered]@{
         fixture_id=$Id;category=$Category;validator=$Validator
         expected_status=$ExpectedStatus;expected_result_code=$ExpectedCode;expected_stop_condition_ids=@($ExpectedStops)
-        exception_expected=$ExpectException;expected_exception_type=$ExpectedExceptionType
-        actual_status=$actualStatus;actual_result_code=$actualCode;actual_stop_condition_ids=@($actualStops)
+        exception_expected=$ExpectException;expected_exception_type=$ExpectedExceptionType;expected_reason_pattern=$ExpectedReasonPattern
+        actual_status=$actualStatus;actual_result_code=$actualCode;actual_reason=$actualReason;actual_stop_condition_ids=@($actualStops)
         actual_exception_type=$actualException;assertion_count=$assertions;fixture_result=$(if($passed){'PASS'}else{'FAIL'})
     })
 }
@@ -102,13 +105,106 @@ function New-OperationProbe {
         mutation_classification='offline-read-only';target_scope='none';target_instance_id='';approved_as_target_specific=$false
         input_artifact_ids=@();prerequisite_result_ids=@('p');stop_condition_ids=@('command-differs-from-approved-plan')
         expected_exit_codes=@(0);requires_authorization=$true;status=$Status;source_classification='synthetic';session_id='S';host_id='H'
-        blocker='';result_record=$null;completed_utc='';rollback_operation_id='';final_state_evidence_id='';display_is_execution_evidence=$false
+        blocker='';result_record=$null;start_timestamp='';completion_timestamp='';completed_utc=''
+        original_operation_id='';rollback_operation_id='';final_state_evidence_id='';authorization_evidence_id=''
+        unresolved_deviation_ids=@();display_is_execution_evidence=$false
     }
 }
 
 function New-ResultProbe {
     param([int]$ExitCode=0,[string]$Outcome='success',[string]$OperationId='op')
     [pscustomobject]@{operation_id=$OperationId;exit_code=$ExitCode;outcome=$Outcome}
+}
+
+function New-ExecutedOperationProbe {
+    $o=New-OperationProbe executed
+    $o.start_timestamp='2026-07-02T08:00:00Z'
+    $o.completion_timestamp='2026-07-02T08:05:00Z'
+    $o.result_record=New-ResultProbe
+    $o
+}
+
+function New-FailedOperationProbe {
+    $o=New-OperationProbe failed
+    $o.start_timestamp='2026-07-02T08:00:00Z'
+    $o.completion_timestamp='2026-07-02T08:05:00Z'
+    $o.result_record=New-ResultProbe -ExitCode 1 -Outcome failed
+    $o
+}
+
+function New-RolledBackOperationProbe {
+    $o=New-OperationProbe rolled_back
+    $o.start_timestamp='2026-07-02T08:10:00Z'
+    $o.completion_timestamp='2026-07-02T08:15:00Z'
+    $o.original_operation_id='mutation-op'
+    $o.rollback_operation_id='rollback-op'
+    $o.result_record=New-ResultProbe -Outcome rolled_back
+    $o
+}
+
+function New-RestoredOperationProbe {
+    $o=New-OperationProbe restored
+    $o.completion_timestamp='2026-07-02T08:20:00Z'
+    $o.final_state_evidence_id='final-reconciliation'
+    $o.result_record=New-ResultProbe -Outcome restored-baseline
+    $o
+}
+
+function Test-ChatpadEvidenceSchemaStructuralContract {
+    param([Parameter(Mandatory)][string]$SchemaPath,[Parameter(Mandatory)][object]$Document)
+    $fail=@()
+    $schema=Read-ChatpadJson $SchemaPath
+    if((Get-ChatpadProperty $schema '$schema' '') -ne 'https://json-schema.org/draft/2020-12/schema'){$fail+='schema-dialect'}
+    if(-not(Test-ChatpadObject $Document)){return New-ChatpadRuntimeCheckResult schema-structural FAIL SCHEMA_2020_12_INVALID 'document-not-object' @('runtime-evidence-write-failed')}
+    foreach($f in @('schema_version','session','artifacts','operations','result')){if($null -eq $Document.PSObject.Properties[$f]){$fail+="missing:$f"}}
+    $allowedTop=@('schema_version','session','artifacts','operations','result','final_reconciliation_evidence_id')
+    foreach($p in $Document.PSObject.Properties.Name){if($allowedTop -notcontains $p){$fail+="unexpected:$p"}}
+    if((Get-ChatpadProperty $Document schema_version '') -ne 'chatpad-runtime-evidence-schema-v3'){$fail+='schema-version'}
+    if((Get-ChatpadProperty $Document result '') -notin @('planned','blocked','skipped_authorization','executed','failed','rolled_back','restored')){$fail+='result-invalid'}
+    $session=Get-ChatpadProperty $Document session
+    if(-not(Test-ChatpadObject $session)){$fail+='session-not-object'}else{
+        foreach($f in @('session_id','host_id','evidence_classification','repository_identity','created_utc')){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $session $f))){$fail+="session:$f"}}
+        if((Get-ChatpadProperty $session evidence_classification '') -notin @('synthetic','live')){$fail+='session:evidence_classification'}
+        if(-not(Test-ChatpadTimestampValue (Get-ChatpadProperty $session created_utc ''))){$fail+='session:created_utc'}
+    }
+    $artifactsRaw=Get-ChatpadProperty $Document artifacts $null
+    if($null -eq $artifactsRaw){$fail+='artifacts-missing'}
+    elseif($artifactsRaw -isnot [array]){$fail+='artifacts-not-array'}
+    else{
+        foreach($a in @($artifactsRaw)){
+            if(-not(Test-ChatpadObject $a)){$fail+='artifact-not-object';continue}
+            foreach($f in @('id','relative_path','status','state','producer','session_id','host_id','source_classification','dependency_ids')){if($null -eq $a.PSObject.Properties[$f]){$fail+="artifact:$f"}}
+            if((Get-ChatpadProperty $a dependency_ids $null) -isnot [array]){$fail+='artifact-dependencies-not-array'}
+            $artifactStatus=[string](Get-ChatpadProperty $a status '')
+            if($artifactStatus -in @('executed','failed','rolled_back','restored')){
+                foreach($f in @('byte_size','sha256','created_utc')){if($null -eq $a.PSObject.Properties[$f]){$fail+="artifact-produced:$f"}}
+            }
+            if($artifactStatus -eq 'planned' -and (Get-ChatpadProperty $a state '') -ne 'pre-existing-dependency'){
+                if($null -ne $a.PSObject.Properties['byte_size'] -or $null -ne $a.PSObject.Properties['sha256']){$fail+='planned-artifact-has-produced-identity'}
+            }
+        }
+    }
+    $operationsRaw=Get-ChatpadProperty $Document operations $null
+    if($null -eq $operationsRaw){$fail+='operations-missing'}
+    elseif($operationsRaw -isnot [array]){$fail+='operations-not-array'}
+    else{
+        foreach($o in @($operationsRaw)){
+            if(-not(Test-ChatpadObject $o)){$fail+='operation-not-object';continue}
+            foreach($f in @('operation_id','operation_type','executable','arguments','mutation_classification','target_scope','prerequisite_result_ids','stop_condition_ids','expected_exit_codes','requires_authorization','status','source_classification','session_id','host_id','approved_as_target_specific','display_is_execution_evidence')){if($null -eq $o.PSObject.Properties[$f]){$fail+="operation:$f"}}
+            foreach($f in @('arguments','prerequisite_result_ids','stop_condition_ids','expected_exit_codes')){if((Get-ChatpadProperty $o $f $null) -isnot [array]){$fail+="operation-array:$f"}}
+            if((Get-ChatpadProperty $o display_is_execution_evidence $true) -ne $false){$fail+='operation-display-evidence'}
+            $status=[string](Get-ChatpadProperty $o status '')
+            if($status -eq 'blocked' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $o blocker ''))){$fail+='blocked-operation-without-blocker'}
+            if($status -eq 'skipped_authorization' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $o authorization_evidence_id ''))){$fail+='skipped-without-authorization-evidence'}
+            if($status -in @('executed','failed') -and ($null -eq $o.PSObject.Properties['start_timestamp'] -or $null -eq $o.PSObject.Properties['completion_timestamp'] -or $null -eq $o.PSObject.Properties['result_record'])){$fail+='executed-or-failed-missing-execution-fields'}
+            if($status -eq 'rolled_back' -and ($null -eq $o.PSObject.Properties['original_operation_id'] -or $null -eq $o.PSObject.Properties['rollback_operation_id'] -or $null -eq $o.PSObject.Properties['start_timestamp'] -or $null -eq $o.PSObject.Properties['completion_timestamp'] -or $null -eq $o.PSObject.Properties['result_record'])){$fail+='rolled-back-missing-fields'}
+            if($status -eq 'restored' -and ($null -eq $o.PSObject.Properties['completion_timestamp'] -or $null -eq $o.PSObject.Properties['result_record'] -or $null -eq $o.PSObject.Properties['final_state_evidence_id'])){$fail+='restored-missing-fields'}
+            if($status -in @('planned','blocked','skipped_authorization') -and ($null -ne $o.PSObject.Properties['result_record'] -or $null -ne $o.PSObject.Properties['start_timestamp'] -or $null -ne $o.PSObject.Properties['completion_timestamp'])){$fail+='non-executed-operation-has-execution-fields'}
+        }
+    }
+    if((Get-ChatpadProperty $Document result '') -eq 'restored' -and -not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Document final_reconciliation_evidence_id ''))){$fail+='restored-document-missing-final-reconciliation'}
+    if($fail.Count){New-ChatpadRuntimeCheckResult schema-structural FAIL SCHEMA_2020_12_INVALID ($fail -join ';') @('runtime-evidence-write-failed')}
+    else{New-ChatpadRuntimeCheckResult schema-structural PASS SCHEMA_2020_12_VALID -Data ([pscustomobject]@{schema_dialect='https://json-schema.org/draft/2020-12/schema'})}
 }
 
 $meta = @(
@@ -122,7 +218,7 @@ $meta = @(
 $script:AssertionCount += $meta.Count
 
 Invoke-Fixture validator-totality-matrix validator-totality AllPublicReadinessValidators PASS VALIDATOR_TOTALITY_VALID @() {
-    $inputs=@($null,$true,1,'x',@(),[pscustomobject]@{})
+    $inputs=@($null,$true,$false,0,1,'','x',@(),@('x'),[pscustomobject]@{},[pscustomobject]@{unexpected='x'},@{unexpected='x'})
     $validators=@(
         @{name='repository';script={param($x) Test-ChatpadRepositoryIdentityObject $x}},
         @{name='target';script={param($x) Test-ChatpadTargetSelectionContract $x $x}},
@@ -157,7 +253,7 @@ Invoke-Fixture validator-totality-matrix validator-totality AllPublicReadinessVa
         return New-ChatpadRuntimeCheckResult validator-totality FAIL VALIDATOR_TOTALITY_INVALID ($fail -join ';') @('command-differs-from-approved-plan') -Data ([pscustomobject]@{validators_tested=$validators.Count;malformed_inputs_per_validator=$inputs.Count;matrix_cases=$validators.Count*$inputs.Count;uncontrolled_exception_count=$fail.Count;failures=@($fail)})
     }
     New-ChatpadRuntimeCheckResult validator-totality PASS VALIDATOR_TOTALITY_VALID -Data ([pscustomobject]@{validators_tested=$validators.Count;malformed_inputs_per_validator=$inputs.Count;matrix_cases=$validators.Count*$inputs.Count;uncontrolled_exception_count=0})
-} -AdditionalAssertionCount 90
+} -AdditionalAssertionCount 180
 
 Invoke-Fixture install-empty-operations install Test-ChatpadInstallPlanContract BLOCKED BLOCKED_NOT_IMPLEMENTED @('wrong-device-binds') { Test-ChatpadInstallPlanContract (New-InstallProbe) }
 Invoke-Fixture install-boolean-bypass install Test-ChatpadInstallPlanContract BLOCKED BLOCKED_NOT_IMPLEMENTED @('command-differs-from-approved-plan') { $p=New-InstallProbe;$p.exact_instance_binding_available=$true;Test-ChatpadInstallPlanContract $p }
@@ -179,6 +275,27 @@ Invoke-Fixture operation-failed-success-exit operation-lifecycle Test-ChatpadOpe
 Invoke-Fixture operation-rolled-back-no-reference operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-OperationProbe rolled_back;$o.result_record=New-ResultProbe;$o.completed_utc='2026-07-02T08:05:00Z';Test-ChatpadOperationPlanContract $o }
 Invoke-Fixture operation-rolled-back-no-result operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-OperationProbe rolled_back;$o.rollback_operation_id='rb';$o.completed_utc='2026-07-02T08:05:00Z';Test-ChatpadOperationPlanContract $o }
 Invoke-Fixture operation-restored-no-final-evidence operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-OperationProbe restored;$o.completed_utc='2026-07-02T08:05:00Z';Test-ChatpadOperationPlanContract $o }
+Invoke-Fixture operation-executed-missing-start-timestamp operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.PSObject.Properties.Remove('start_timestamp');Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'start-timestamp-missing'
+Invoke-Fixture operation-executed-null-start-timestamp operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.start_timestamp=$null;Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'start-timestamp-missing'
+Invoke-Fixture operation-executed-empty-start-timestamp operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.start_timestamp='';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'start-timestamp-missing'
+Invoke-Fixture operation-executed-invalid-start-timestamp operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.start_timestamp='not-a-date';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'start-timestamp-missing'
+Invoke-Fixture operation-executed-missing-completion-timestamp operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.PSObject.Properties.Remove('completion_timestamp');$o.completed_utc='';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'completion-timestamp-missing'
+Invoke-Fixture operation-executed-completion-before-start operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.completion_timestamp='2026-07-02T07:59:00Z';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'completion-before-start'
+Invoke-Fixture operation-executed-null-result operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.result_record=$null;Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'result-record-not-object'
+Invoke-Fixture operation-executed-result-string operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.result_record='bad';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'result-record-not-object'
+Invoke-Fixture operation-executed-missing-exit-code operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.result_record.PSObject.Properties.Remove('exit_code');Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'result-exit-code-missing'
+Invoke-Fixture operation-executed-missing-outcome operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.result_record.PSObject.Properties.Remove('outcome');Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'result-outcome-missing'
+Invoke-Fixture operation-executed-success-status-failed-outcome operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.result_record.outcome='failed';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'executed-result-inconsistent'
+Invoke-Fixture operation-executed-session-mismatch operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-ExecutedOperationProbe;$o.result_record.operation_id='other-op';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'result-operation-id'
+Invoke-Fixture operation-executed-host-mismatch operation-lifecycle Test-ChatpadEvidenceDocumentContract FAIL EVIDENCE_SEMANTICS_INVALID @('runtime-evidence-write-failed') { $o=New-ExecutedOperationProbe;$o.host_id='OTHER';$d=[pscustomobject]@{schema_version='chatpad-runtime-evidence-schema-v3';result='blocked';session=[pscustomobject]@{session_id='S';host_id='H';evidence_classification='live';repository_identity='r'};artifacts=[object[]]@();operations=[object[]]@($o)};Test-ChatpadEvidenceDocumentContract $d } -ExpectedReasonPattern 'operation-session-host'
+Invoke-Fixture operation-failed-missing-start operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-FailedOperationProbe;$o.start_timestamp='';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'start-timestamp-missing'
+Invoke-Fixture operation-failed-success-result operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-FailedOperationProbe;$o.result_record=New-ResultProbe;Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'failed-result'
+Invoke-Fixture operation-rolled-back-missing-original operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-RolledBackOperationProbe;$o.original_operation_id='';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'original-mutation-reference-missing'
+Invoke-Fixture operation-rolled-back-missing-start operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-RolledBackOperationProbe;$o.start_timestamp='';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'start-timestamp-missing'
+Invoke-Fixture operation-rolled-back-unsuccessful-result operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-RolledBackOperationProbe;$o.result_record.exit_code=1;$o.result_record.outcome='failed';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'rollback-result-unsuccessful'
+Invoke-Fixture operation-restored-missing-result operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-RestoredOperationProbe;$o.result_record=$null;Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'restored-result-missing'
+Invoke-Fixture operation-restored-missing-timestamp operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-RestoredOperationProbe;$o.completion_timestamp='';Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'restoration-timestamp-missing'
+Invoke-Fixture operation-restored-unresolved-deviation operation-lifecycle Test-ChatpadOperationPlanContract FAIL OPERATION_LIFECYCLE_INVALID @('command-differs-from-approved-plan') { $o=New-RestoredOperationProbe;$o.unresolved_deviation_ids=@('remaining');Test-ChatpadOperationPlanContract $o } -ExpectedReasonPattern 'restored-has-unresolved-deviation'
 Invoke-Fixture target-score-only target Test-ChatpadTargetSelectionContract FAIL TARGET_SELECTION_INVALID @('target-identity-ambiguous') {
     $candidate=[pscustomobject]@{instance_id='A';selection_basis='highest-score'}
     $inventory=[pscustomobject]@{candidate_set_id='set';session_id='S';host_id='H';captured_utc='2026-07-02T08:00:00Z';fresh_until_utc='2026-07-02T09:00:00Z';source_classification='synthetic';candidate_instance_ids=@('A');candidates=@($candidate)}
@@ -260,9 +377,87 @@ Invoke-Fixture schema-duplicate-artifact-id schema-semantic Test-ChatpadEvidence
 Invoke-Fixture schema-draft-2020-12-sample schema-structural Test-Json PASS SCHEMA_2020_12_VALID @() {
     $schema=Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-evidence-schema-v1.json'
     $sample=Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-sample-evidence.json'
-    $valid=(Get-Content -LiteralPath $sample -Raw|Test-Json -SchemaFile $schema)
-    if($valid){New-ChatpadRuntimeCheckResult schema-structural PASS SCHEMA_2020_12_VALID}else{New-ChatpadRuntimeCheckResult schema-structural FAIL SCHEMA_2020_12_INVALID -StopConditionIds @('runtime-evidence-write-failed')}
+    if(Get-Command Test-Json -ErrorAction SilentlyContinue){
+        $valid=(Get-Content -LiteralPath $sample -Raw|Test-Json -SchemaFile $schema)
+        if($valid){New-ChatpadRuntimeCheckResult schema-structural PASS SCHEMA_2020_12_VALID}else{New-ChatpadRuntimeCheckResult schema-structural FAIL SCHEMA_2020_12_INVALID -StopConditionIds @('runtime-evidence-write-failed')}
+    } else {
+        Test-ChatpadEvidenceSchemaStructuralContract $schema (Read-ChatpadJson $sample)
+    }
 }
+Invoke-Fixture committed-sample-semantic committed-sample Test-ChatpadEvidenceDocumentContract PASS EVIDENCE_SEMANTICS_VALID @() {
+    $sample=Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-sample-evidence.json'
+    Test-ChatpadEvidenceDocumentContract (Read-ChatpadJson $sample)
+}
+
+foreach($case in @(
+    @{id='artifacts-missing';field='artifacts';mode='remove'},
+    @{id='artifacts-null';field='artifacts';value=$null},
+    @{id='artifacts-object';field='artifacts';value=[pscustomobject]@{id='a'}},
+    @{id='artifacts-string';field='artifacts';value='bad'},
+    @{id='artifacts-scalar';field='artifacts';value=1},
+    @{id='operations-missing';field='operations';mode='remove'},
+    @{id='operations-null';field='operations';value=$null},
+    @{id='operations-object';field='operations';value=[pscustomobject]@{operation_id='o'}},
+    @{id='operations-string';field='operations';value='bad'},
+    @{id='operations-scalar';field='operations';value=1}
+)){
+    $shapeCase=$case
+    $shapeBody={
+        $schema=Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-evidence-schema-v1.json'
+        $d=Read-ChatpadJson (Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-sample-evidence.json')
+        $field=[string]$shapeCase.field
+        if((Get-ChatpadProperty $shapeCase mode '') -eq 'remove'){$d.PSObject.Properties.Remove($field)}
+        else{$d.$field=$shapeCase.value}
+        Test-ChatpadEvidenceDocumentContract $d
+    }.GetNewClosure()
+    Invoke-Fixture "collection-shape-$($case.id)" collection-shape Test-ChatpadEvidenceDocumentContract FAIL EVIDENCE_SEMANTICS_INVALID @('runtime-evidence-write-failed') $shapeBody
+    $structuralShapeBody={
+        $schema=Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-evidence-schema-v1.json'
+        $d=Read-ChatpadJson (Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-sample-evidence.json')
+        $field=[string]$shapeCase.field
+        if((Get-ChatpadProperty $shapeCase mode '') -eq 'remove'){$d.PSObject.Properties.Remove($field)}
+        else{$d.$field=$shapeCase.value}
+        Test-ChatpadEvidenceSchemaStructuralContract $schema $d
+    }.GetNewClosure()
+    Invoke-Fixture "collection-shape-structural-$($case.id)" collection-shape-structural Test-ChatpadEvidenceSchemaStructuralContract FAIL SCHEMA_2020_12_INVALID @('runtime-evidence-write-failed') $structuralShapeBody
+}
+
+Invoke-Fixture powershell-inventory-reconciliation powershell-inventory PowerShellAstInventory PASS POWERSHELL_INVENTORY_VALID @() {
+    $root=(& git rev-parse --show-toplevel).Trim()
+    $tracked=@(& git ls-files '*.ps1' '*.psm1' | ForEach-Object { $_.Replace('\','/') } | Sort-Object)
+    $ps1=@($tracked|Where-Object{$_ -like '*.ps1'})
+    $psm1=@($tracked|Where-Object{$_ -like '*.psm1'})
+    $normalized=@($tracked|ForEach-Object{$_.ToLowerInvariant()})
+    $duplicates=@($normalized|Group-Object|Where-Object Count -gt 1)
+    $parsed=[Collections.Generic.List[string]]::new()
+    $parseErrors=[Collections.Generic.List[object]]::new()
+    foreach($path in $tracked){
+        $full=[IO.Path]::GetFullPath((Join-Path $root $path))
+        $tokens=$null;$errors=$null
+        [void][System.Management.Automation.Language.Parser]::ParseFile($full,[ref]$tokens,[ref]$errors)
+        if(@($errors).Count){$parseErrors.Add([pscustomobject]@{path=$path;errors=@($errors|ForEach-Object{$_.Message})})}
+        $parsed.Add($path)
+    }
+    $parsedNormalized=@($parsed|ForEach-Object{$_.ToLowerInvariant()})
+    $missing=@($normalized|Where-Object{$parsedNormalized -notcontains $_})
+    $extra=@($parsedNormalized|Where-Object{$normalized -notcontains $_})
+    $parsedPs1=@($parsed|Where-Object{$_ -like '*.ps1'})
+    $parsedPsm1=@($parsed|Where-Object{$_ -like '*.psm1'})
+    $defects=@()
+    if($ps1.Count -ne 41){$defects+="tracked-ps1-count:$($ps1.Count)"}
+    if($psm1.Count -ne 2){$defects+="tracked-psm1-count:$($psm1.Count)"}
+    if($tracked.Count -ne 43){$defects+="tracked-total-count:$($tracked.Count)"}
+    if($parsedPs1.Count -ne $ps1.Count){$defects+="parsed-ps1-count:$($parsedPs1.Count)"}
+    if($parsedPsm1.Count -ne $psm1.Count){$defects+="parsed-psm1-count:$($parsedPsm1.Count)"}
+    if($parsed.Count -ne $tracked.Count){$defects+="parsed-total-count:$($parsed.Count)"}
+    if($duplicates.Count){$defects+="duplicate-normalized-path:$($duplicates.Count)"}
+    if($missing.Count){$defects+="missing:$($missing.Count)"}
+    if($extra.Count){$defects+="extra:$($extra.Count)"}
+    if($parseErrors.Count){$defects+="parse-errors:$($parseErrors.Count)"}
+    $data=[pscustomobject]@{tracked_ps1_count=$ps1.Count;tracked_psm1_count=$psm1.Count;tracked_powershell_count=$tracked.Count;parsed_ps1_count=$parsedPs1.Count;parsed_psm1_count=$parsedPsm1.Count;parsed_powershell_count=$parsed.Count;parse_error_count=$parseErrors.Count;excluded_files=@();duplicate_normalized_path_count=$duplicates.Count;missing_count=$missing.Count;extra_count=$extra.Count;tracked_paths=@($tracked);parse_errors=@($parseErrors)}
+    if($defects.Count){New-ChatpadRuntimeCheckResult powershell-inventory FAIL POWERSHELL_INVENTORY_INVALID ($defects -join ';') @('command-differs-from-approved-plan') -Data $data}
+    else{New-ChatpadRuntimeCheckResult powershell-inventory PASS POWERSHELL_INVENTORY_VALID -Data $data}
+} -AdditionalAssertionCount 10
 
 foreach($id in @('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')){
     $observerBody={ Test-ChatpadRuntimeObservationContract ([pscustomobject]@{stop_condition_id=$id;evidence_available=$false}) }.GetNewClosure()
@@ -307,6 +502,10 @@ $unexpectedExceptions=@($script:Fixtures|Where-Object{$_.actual_exception_type -
 $propertyNotFoundExceptions=@($unexpectedExceptions|Where-Object{$_.actual_exception_type -match 'PropertyNotFound'})
 $strictModeExceptions=@($unexpectedExceptions|Where-Object{$_.actual_exception_type -match 'StrictMode|PropertyNotFound'})
 $invalidTransitionAcceptances=@($script:Fixtures|Where-Object{$_.category -in @('operation-lifecycle','semantic-transition','schema-semantic') -and $_.actual_status -eq 'PASS'})
+$missingStartAcceptances=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'operation-executed-missing-start-timestamp' -and $_.actual_status -eq 'PASS'})
+$sampleStructural=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'schema-draft-2020-12-sample'}|Select-Object -First 1)
+$sampleSemantic=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'committed-sample-semantic'}|Select-Object -First 1)
+$powershellInventory=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'powershell-inventory-reconciliation'}|Select-Object -First 1)
 $categories=@($script:Fixtures|Group-Object category|Sort-Object Name|ForEach-Object{[pscustomobject]@{category=$_.Name;fixtures=$_.Count;assertions=($_.Group|Measure-Object assertion_count -Sum).Sum}})
 $result=[pscustomobject][ordered]@{
     schema_version='chatpad-runtime-readiness-suite-v3'
@@ -314,8 +513,12 @@ $result=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED';blocker='BLOCKED_NOT_IMPLEMENTED'
     fixture_count=$script:Fixtures.Count;assertion_count=$script:AssertionCount
     unrelated_exception_false_positive_count=0;empty_operation_install_pass_count=0;install_plan_crash_count=0
-    invalid_schema_transition_acceptance_count=$invalidTransitionAcceptances.Count;unlinked_stop_condition_count=0
+    invalid_schema_transition_acceptance_count=$invalidTransitionAcceptances.Count;invalid_lifecycle_acceptance_count=$invalidTransitionAcceptances.Count;missing_start_timestamp_acceptance_count=$missingStartAcceptances.Count;unlinked_stop_condition_count=0
     uncontrolled_exception_count=$unexpectedExceptions.Count;property_not_found_exception_count=$propertyNotFoundExceptions.Count;strictmode_exception_count=$strictModeExceptions.Count
+    malformed_input_validator_count=15;malformed_input_case_count=180
+    committed_sample_structural_validation=$sampleStructural.actual_status
+    committed_sample_semantic_validation=$sampleSemantic.actual_status
+    powershell_inventory_result=$powershellInventory.actual_status
     harness_self_tests=$meta;category_totals=$categories;fixtures=@($script:Fixtures)
 }
 $result|ConvertTo-Json -Depth 20

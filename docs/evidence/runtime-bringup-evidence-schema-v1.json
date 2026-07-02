@@ -79,17 +79,25 @@
           "approved_as_target_specific": { "type": "boolean" },
           "display_is_execution_evidence": { "const": false },
           "blocker": { "type": "string", "minLength": 1 },
+          "start_timestamp": { "type": "string", "format": "date-time" },
+          "completion_timestamp": { "type": "string", "format": "date-time" },
           "completed_utc": { "type": "string", "format": "date-time" },
           "result_record": { "type": "object" },
+          "authorization_evidence_id": { "type": "string", "minLength": 1 },
+          "original_operation_id": { "type": "string", "minLength": 1 },
           "rollback_operation_id": { "type": "string", "minLength": 1 },
-          "final_state_evidence_id": { "type": "string", "minLength": 1 }
+          "final_state_evidence_id": { "type": "string", "minLength": 1 },
+          "unresolved_deviation_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
         },
         "allOf": [
           { "if": { "properties": { "target_scope": { "const": "exact-device" } }, "required": ["target_scope"] }, "then": { "required": ["target_instance_id"], "properties": { "approved_as_target_specific": { "const": true } } } },
+          { "if": { "properties": { "status": { "const": "planned" } }, "required": ["status"] }, "then": { "not": { "anyOf": [{ "required": ["result_record"] }, { "required": ["start_timestamp"] }, { "required": ["completion_timestamp"] }, { "required": ["completed_utc"] }, { "required": ["rollback_operation_id"] }, { "required": ["final_state_evidence_id"] }] } } },
           { "if": { "properties": { "status": { "const": "blocked" } }, "required": ["status"] }, "then": { "required": ["blocker"] } },
-          { "if": { "properties": { "status": { "enum": ["executed", "failed"] } }, "required": ["status"] }, "then": { "required": ["completed_utc", "result_record"] } },
-          { "if": { "properties": { "status": { "const": "rolled_back" } }, "required": ["status"] }, "then": { "required": ["rollback_operation_id"] } },
-          { "if": { "properties": { "status": { "const": "restored" } }, "required": ["status"] }, "then": { "required": ["final_state_evidence_id"] } }
+          { "if": { "properties": { "status": { "const": "blocked" } }, "required": ["status"] }, "then": { "not": { "anyOf": [{ "required": ["result_record"] }, { "required": ["start_timestamp"] }, { "required": ["completion_timestamp"] }, { "required": ["completed_utc"] }] } } },
+          { "if": { "properties": { "status": { "const": "skipped_authorization" } }, "required": ["status"] }, "then": { "required": ["authorization_evidence_id"], "not": { "anyOf": [{ "required": ["result_record"] }, { "required": ["start_timestamp"] }, { "required": ["completion_timestamp"] }, { "required": ["completed_utc"] }] } } },
+          { "if": { "properties": { "status": { "enum": ["executed", "failed"] } }, "required": ["status"] }, "then": { "required": ["start_timestamp", "completion_timestamp", "result_record"] } },
+          { "if": { "properties": { "status": { "const": "rolled_back" } }, "required": ["status"] }, "then": { "required": ["original_operation_id", "rollback_operation_id", "start_timestamp", "completion_timestamp", "result_record"] } },
+          { "if": { "properties": { "status": { "const": "restored" } }, "required": ["status"] }, "then": { "required": ["completion_timestamp", "result_record", "final_state_evidence_id"] } }
         ]
       }
     }

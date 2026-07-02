@@ -18,7 +18,40 @@ function New-Entry($Id,$Path,$State,$Result){
     [pscustomobject][ordered]@{id=$Id;relative_path=$Path.Replace('\','/');state=$State;byte_size=[long]$item.Length;sha256=(Get-FileHash $full -Algorithm SHA256).Hash;result=$Result;evidence_classification='synthetic'}
 }
 
-$base='66de13033e4ba5f67465829c25c0e6a158516044'
+function Get-PowerShellInventory {
+    $tracked=@(& git ls-files '*.ps1' '*.psm1' | ForEach-Object { $_.Replace('\','/') } | Sort-Object)
+    $ps1=@($tracked|Where-Object{$_ -like '*.ps1'})
+    $psm1=@($tracked|Where-Object{$_ -like '*.psm1'})
+    $parsed=[Collections.Generic.List[string]]::new()
+    $parseErrors=[Collections.Generic.List[object]]::new()
+    foreach($path in $tracked){
+        $full=[IO.Path]::GetFullPath((Join-Path $root $path))
+        $tokens=$null;$errors=$null
+        [void][System.Management.Automation.Language.Parser]::ParseFile($full,[ref]$tokens,[ref]$errors)
+        if(@($errors).Count){$parseErrors.Add([pscustomobject]@{path=$path;errors=@($errors|ForEach-Object{$_.Message})})}
+        $parsed.Add($path)
+    }
+    $parsedPs1=@($parsed|Where-Object{$_ -like '*.ps1'})
+    $parsedPsm1=@($parsed|Where-Object{$_ -like '*.psm1'})
+    $normalized=@($tracked|ForEach-Object{$_.ToLowerInvariant()})
+    $parsedNormalized=@($parsed|ForEach-Object{$_.ToLowerInvariant()})
+    [pscustomobject][ordered]@{
+        tracked_ps1_count=$ps1.Count
+        tracked_psm1_count=$psm1.Count
+        tracked_powershell_count=$tracked.Count
+        parsed_ps1_count=$parsedPs1.Count
+        parsed_psm1_count=$parsedPsm1.Count
+        parsed_powershell_count=$parsed.Count
+        parse_error_count=$parseErrors.Count
+        excluded_files=@()
+        duplicate_normalized_path_count=@($normalized|Group-Object|Where-Object Count -gt 1).Count
+        missing_count=@($normalized|Where-Object{$parsedNormalized -notcontains $_}).Count
+        extra_count=@($parsedNormalized|Where-Object{$normalized -notcontains $_}).Count
+        parse_errors=@($parseErrors)
+    }
+}
+
+$base='bb4c06cc87150b944d04ae2135ea58b8218c5dc8'
 $paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)
 $paths=@($paths|Where-Object{$_-and$_-ne$OutputPath}|Sort-Object -Unique)
 $entries=[Collections.Generic.List[object]]::new()
@@ -27,6 +60,7 @@ $suiteRelative=[IO.Path]::GetFullPath($SuiteResultPath).Substring($root.Length+1
 $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $pssa=Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue
 $pssaResult=if($null-eq$pssa){'SKIPPED_UNAVAILABLE'}else{'AVAILABLE_NOT_RUN'}
+$powershellInventory=Get-PowerShellInventory
 
 $manifest=[pscustomobject][ordered]@{
     schema_version='chatpad-runtime-bringup-readiness-manifest-v3'
@@ -35,10 +69,10 @@ $manifest=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED'
     blocker='BLOCKED_NOT_IMPLEMENTED'
     repository=[pscustomobject][ordered]@{
-        branch='feature/runtime-bringup-readiness-validator-totality-remediation'
+        branch='feature/runtime-bringup-readiness-final-contract-remediation'
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-        prior_readiness_implementation_commit='0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea'
-        prior_readiness_finalization_commit='2bb08fee77125f6b5bed2774c085ce57fe192752'
+        prior_readiness_implementation_commit='7689d2cca57c485d8c0569bdcbec58e400621b20'
+        prior_readiness_finalization_commit='bb4c06cc87150b944d04ae2135ea58b8218c5dc8'
         current_readiness_implementation_commit=$ImplementationCommit
         current_readiness_finalization_commit_source='external exact 40-character audit input after finalization commit'
     }
@@ -51,7 +85,12 @@ $manifest=[pscustomobject][ordered]@{
         fixture_count=[int]$suite.fixture_count;assertion_count=[int]$suite.assertion_count;category_totals=@($suite.category_totals)
         unrelated_exception_false_positive_count=0;empty_operation_install_pass_count=0;install_plan_crash_count=0
         invalid_schema_transition_acceptance_count=[int]$suite.invalid_schema_transition_acceptance_count;unlinked_stop_condition_count=[int]$suite.unlinked_stop_condition_count
+        invalid_lifecycle_acceptance_count=[int]$suite.invalid_lifecycle_acceptance_count;missing_start_timestamp_acceptance_count=[int]$suite.missing_start_timestamp_acceptance_count
         uncontrolled_exception_count=[int]$suite.uncontrolled_exception_count;property_not_found_exception_count=[int]$suite.property_not_found_exception_count;strictmode_exception_count=[int]$suite.strictmode_exception_count
+        malformed_input_validator_count=[int]$suite.malformed_input_validator_count;malformed_input_case_count=[int]$suite.malformed_input_case_count
+        committed_sample_structural_validation=[string]$suite.committed_sample_structural_validation
+        committed_sample_semantic_validation=[string]$suite.committed_sample_semantic_validation
+        powershell_inventory=$powershellInventory
         psscriptanalyzer_status=$pssaResult;runtime_evidence_schema='chatpad-runtime-evidence-schema-v3'
         exact_instance_binding_operations=0;exact_instance_restoration_operations=0;broad_approved_install_operations=0;broad_approved_rollback_operations=0
     }
