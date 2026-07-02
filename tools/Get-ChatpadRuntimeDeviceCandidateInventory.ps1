@@ -22,6 +22,7 @@ if (-not $ExecuteAuthorizedRuntimeStep) {
     New-ChatpadRuntimeCheckResult `
         -Check 'device-candidate-inventory' `
         -Result BLOCKED `
+        -ResultCode 'BLOCKED_NOT_IMPLEMENTED' `
         -Reason 'Live device enumeration is prohibited in this preparation task.' `
         -StopConditionIds @('target-identity-ambiguous') `
         -Data ([pscustomobject]@{
@@ -31,7 +32,11 @@ if (-not $ExecuteAuthorizedRuntimeStep) {
                 -Arguments @('-PresentOnly') `
                 -StopConditionIds @('target-identity-ambiguous') `
                 -MutationClassification 'live-device-query' `
-                -ExecutionStatus 'blocked'
+                -Status 'blocked' `
+                -SourceClassification 'synthetic' `
+                -SessionId 'SYNTHETIC-INVENTORY-PLAN' `
+                -HostId 'SYNTHETIC-HOST' `
+                -Blocker 'BLOCKED_NOT_IMPLEMENTED'
         }) | ConvertTo-Json -Depth 12
     exit 0
 }

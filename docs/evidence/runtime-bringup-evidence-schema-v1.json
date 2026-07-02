@@ -1,20 +1,22 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/chatpad/runtime-bringup-evidence-schema-v2",
-  "schema_version": "chatpad-runtime-evidence-schema-v2",
+  "$id": "https://github.com/Zaknin/chatpad-super-driver/schemas/runtime-bringup-evidence-v3.json",
+  "schema_version": "chatpad-runtime-evidence-schema-v3",
   "title": "Chatpad runtime bring-up evidence document",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "session", "artifacts", "operations", "result"],
   "properties": {
-    "schema_version": { "const": "chatpad-runtime-evidence-schema-v2" },
+    "schema_version": { "const": "chatpad-runtime-evidence-schema-v3" },
     "result": { "enum": ["planned", "blocked", "skipped_authorization", "executed", "failed", "rolled_back", "restored"] },
+    "final_reconciliation_evidence_id": { "type": "string", "minLength": 1 },
     "session": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["session_id", "evidence_classification", "repository_identity", "created_utc"],
+      "required": ["session_id", "host_id", "evidence_classification", "repository_identity", "created_utc"],
       "properties": {
-        "session_id": { "type": "string", "pattern": "^(CHATPAD-[0-9]{8}T[0-9]{6}Z-[A-Z0-9]{6,}|SYNTHETIC-[A-Z0-9-]+)$" },
+        "session_id": { "type": "string", "minLength": 1 },
+        "host_id": { "type": "string", "minLength": 1 },
         "evidence_classification": { "enum": ["synthetic", "live"] },
         "repository_identity": { "type": "string", "minLength": 1 },
         "created_utc": { "type": "string", "format": "date-time" }
@@ -22,103 +24,77 @@
     },
     "artifacts": {
       "type": "array",
-      "uniqueItems": true,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "relative_path", "status", "state", "producer", "session_id", "result", "dependency_identities", "evidence_classification"],
+        "required": ["id", "relative_path", "status", "state", "producer", "session_id", "host_id", "source_classification", "dependency_ids"],
         "properties": {
           "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$" },
-          "relative_path": {
-            "type": "string",
-            "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\\\\\)(?!.*(^|/)\\.\\.(/|$))[A-Za-z0-9_. -]+(/[A-Za-z0-9_. -]+)*$"
-          },
+          "relative_path": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(^|/)\\.\\.(/|$)).+$" },
           "status": { "enum": ["planned", "blocked", "skipped_authorization", "executed", "failed", "rolled_back", "restored"] },
-          "byte_size": { "type": ["integer", "null"], "minimum": 0 },
-          "sha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
-          "state": { "enum": ["tracked", "ignored", "runtime-produced", "planned"] },
+          "state": { "enum": ["tracked", "ignored", "runtime-produced", "planned", "pre-existing-dependency"] },
           "producer": { "type": "string", "minLength": 1 },
-          "created_utc": { "type": ["string", "null"], "format": "date-time" },
           "session_id": { "type": "string", "minLength": 1 },
-          "result": { "type": "string", "minLength": 1 },
-          "dependency_identities": {
-            "type": "array",
-            "items": { "type": "string", "minLength": 1 },
-            "uniqueItems": true
-          },
-          "evidence_classification": { "enum": ["synthetic", "live"] }
+          "host_id": { "type": "string", "minLength": 1 },
+          "source_classification": { "enum": ["synthetic", "live"] },
+          "dependency_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "byte_size": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+          "created_utc": { "type": "string", "format": "date-time" }
         },
         "allOf": [
           {
             "if": { "properties": { "status": { "enum": ["executed", "failed", "rolled_back", "restored"] } }, "required": ["status"] },
-            "then": {
-              "required": ["byte_size", "sha256", "created_utc"],
-              "properties": {
-                "byte_size": { "type": "integer", "minimum": 0 },
-                "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
-                "created_utc": { "type": "string", "format": "date-time" }
-              }
-            }
+            "then": { "required": ["byte_size", "sha256", "created_utc"] }
           },
           {
-            "if": { "properties": { "status": { "enum": ["planned", "blocked", "skipped_authorization"] } }, "required": ["status"] },
-            "then": {
-              "properties": {
-                "byte_size": { "type": ["null", "integer"] },
-                "sha256": { "type": "null" },
-                "created_utc": { "type": ["null", "string"] }
-              }
-            }
+            "if": { "properties": { "status": { "const": "planned" }, "state": { "not": { "const": "pre-existing-dependency" } } }, "required": ["status", "state"] },
+            "then": { "not": { "anyOf": [{ "required": ["byte_size"] }, { "required": ["sha256"] }] } }
           }
         ]
       }
     },
     "operations": {
       "type": "array",
-      "uniqueItems": true,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["operation_id", "status", "executable", "arguments", "rendered_display_is_execution_evidence"],
+        "required": ["operation_id", "operation_type", "executable", "arguments", "mutation_classification", "target_scope", "prerequisite_result_ids", "stop_condition_ids", "expected_exit_codes", "requires_authorization", "status", "source_classification", "session_id", "host_id", "approved_as_target_specific", "display_is_execution_evidence"],
         "properties": {
-          "operation_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$" },
-          "status": { "enum": ["planned", "blocked", "skipped_authorization", "executed", "failed", "rolled_back", "restored"] },
+          "operation_id": { "type": "string", "minLength": 1 },
+          "operation_type": { "type": "string", "minLength": 1 },
           "executable": { "type": "string", "minLength": 1 },
           "arguments": { "type": "array", "items": { "type": "string" } },
-          "rendered_display": { "type": "string" },
-          "rendered_display_is_execution_evidence": { "const": false },
-          "command_result": { "type": ["object", "null"] },
-          "rollback_evidence_id": { "type": ["string", "null"] },
-          "final_state_evidence_id": { "type": ["string", "null"] }
+          "mutation_classification": { "type": "string", "minLength": 1 },
+          "target_scope": { "enum": ["none", "host", "exact-device"] },
+          "target_instance_id": { "type": "string" },
+          "prerequisite_result_ids": { "type": "array", "items": { "type": "string" } },
+          "stop_condition_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+          "expected_exit_codes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "integer" } },
+          "requires_authorization": { "type": "boolean" },
+          "status": { "enum": ["planned", "blocked", "skipped_authorization", "executed", "failed", "rolled_back", "restored"] },
+          "source_classification": { "enum": ["synthetic", "live"] },
+          "session_id": { "type": "string", "minLength": 1 },
+          "host_id": { "type": "string", "minLength": 1 },
+          "approved_as_target_specific": { "type": "boolean" },
+          "display_is_execution_evidence": { "const": false },
+          "blocker": { "type": "string", "minLength": 1 },
+          "completed_utc": { "type": "string", "format": "date-time" },
+          "result_record": { "type": "object" },
+          "rollback_operation_id": { "type": "string", "minLength": 1 },
+          "final_state_evidence_id": { "type": "string", "minLength": 1 }
         },
         "allOf": [
-          {
-            "if": { "properties": { "status": { "const": "executed" } }, "required": ["status"] },
-            "then": {
-              "required": ["command_result"],
-              "properties": { "command_result": { "type": "object" } }
-            }
-          },
-          {
-            "if": { "properties": { "status": { "const": "rolled_back" } }, "required": ["status"] },
-            "then": {
-              "required": ["rollback_evidence_id"],
-              "properties": { "rollback_evidence_id": { "type": "string", "minLength": 1 } }
-            }
-          },
-          {
-            "if": { "properties": { "status": { "const": "restored" } }, "required": ["status"] },
-            "then": {
-              "required": ["final_state_evidence_id"],
-              "properties": { "final_state_evidence_id": { "type": "string", "minLength": 1 } }
-            }
-          }
+          { "if": { "properties": { "target_scope": { "const": "exact-device" } }, "required": ["target_scope"] }, "then": { "required": ["target_instance_id"], "properties": { "approved_as_target_specific": { "const": true } } } },
+          { "if": { "properties": { "status": { "const": "blocked" } }, "required": ["status"] }, "then": { "required": ["blocker"] } },
+          { "if": { "properties": { "status": { "enum": ["executed", "failed"] } }, "required": ["status"] }, "then": { "required": ["completed_utc", "result_record"] } },
+          { "if": { "properties": { "status": { "const": "rolled_back" } }, "required": ["status"] }, "then": { "required": ["rollback_operation_id"] } },
+          { "if": { "properties": { "status": { "const": "restored" } }, "required": ["status"] }, "then": { "required": ["final_state_evidence_id"] } }
         ]
       }
-    },
-    "unresolved_deviations": {
-      "type": "array",
-      "items": { "type": "string" }
     }
-  }
+  },
+  "allOf": [
+    { "if": { "properties": { "result": { "const": "restored" } }, "required": ["result"] }, "then": { "required": ["final_reconciliation_evidence_id"] } }
+  ]
 }

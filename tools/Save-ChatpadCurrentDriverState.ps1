@@ -21,12 +21,13 @@ if (-not $ExecuteAuthorizedRuntimeStep) {
     New-ChatpadRuntimeCheckResult `
         -Check 'current-driver-state' `
         -Result BLOCKED `
+        -ResultCode 'BLOCKED_NOT_IMPLEMENTED' `
         -Reason 'Live current-driver capture is not implemented in this offline remediation.' `
         -StopConditionIds @('current-driver-unidentified') `
         -Data ([pscustomobject]@{
             required_target_instance_id = '<EXACT_INSTANCE_ID>'
             future_operations = @(
-                New-ChatpadOperationPlan -OperationId 'future-driver-state-pnp-properties' -Executable 'Get-PnpDeviceProperty' -Arguments @('-InstanceId','<EXACT_INSTANCE_ID>') -TargetInstanceId '<EXACT_INSTANCE_ID>' -StopConditionIds @('current-driver-unidentified') -MutationClassification 'live-device-query' -ExecutionStatus 'blocked'
+                New-ChatpadOperationPlan -OperationId 'future-driver-state-pnp-properties' -OperationType observe -Executable 'Get-PnpDeviceProperty' -Arguments @('-InstanceId','<EXACT_INSTANCE_ID>') -TargetScope exact-device -TargetInstanceId '<EXACT_INSTANCE_ID>' -ApprovedAsTargetSpecific:$true -StopConditionIds @('current-driver-unidentified') -MutationClassification 'live-device-query' -Status blocked -SourceClassification synthetic -SessionId SYNTHETIC-DRIVER-PLAN -HostId SYNTHETIC-HOST -Blocker BLOCKED_NOT_IMPLEMENTED
             )
         }) | ConvertTo-Json -Depth 12
     exit 0

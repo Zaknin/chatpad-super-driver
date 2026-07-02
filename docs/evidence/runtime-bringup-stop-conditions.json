@@ -182,6 +182,14 @@
       "continuation_authority": "operator plus independent audit"
     }
   ],
+  "runtime_observer_linkage": {
+    "unrelated-device-changed": ["Test-ChatpadRuntimeObservation.ps1"],
+    "driver-service-fails-unexpectedly": ["Test-ChatpadRuntimeObservation.ps1"],
+    "unexpected-code-integrity-error": ["Test-ChatpadRuntimeObservation.ps1"],
+    "unexpected-setupapi-match": ["Test-ChatpadRuntimeObservation.ps1"],
+    "input-behavior-unstable": ["Test-ChatpadRuntimeObservation.ps1"]
+  },
+  "operator_only_conditions": [],
   "executable_linkage": {
     "target-identity-ambiguous": ["Test-ChatpadRuntimeTargetSelection.ps1", "Get-ChatpadRuntimeDeviceCandidateInventory.ps1"],
     "current-driver-unidentified": ["Save-ChatpadCurrentDriverState.ps1"],
@@ -191,12 +199,7 @@
     "package-validation-failed": ["Test-ChatpadPackageContent.ps1"],
     "windows-rejects-signature": ["Test-ChatpadSigningReadiness.ps1"],
     "wrong-device-binds": ["Show-ChatpadInstallPlan.ps1", "Show-ChatpadRollbackPlan.ps1"],
-    "unrelated-device-changed": ["Test-ChatpadPostTestReconciliation.ps1"],
-    "driver-service-fails-unexpectedly": ["Test-ChatpadPostTestReconciliation.ps1"],
-    "unexpected-code-integrity-error": ["Export-ChatpadRuntimeEventLogPlan.ps1"],
-    "unexpected-setupapi-match": ["Test-ChatpadPackageContent.ps1", "Show-ChatpadInstallPlan.ps1"],
     "device-disappears-without-recovery-path": ["Show-ChatpadRollbackPlan.ps1"],
-    "input-behavior-unstable": ["Test-ChatpadRollbackReadiness.ps1"],
     "unplanned-reboot-required": ["Show-ChatpadRollbackPlan.ps1", "Test-ChatpadRollbackReadiness.ps1"],
     "trace-provider-wrong": ["Show-ChatpadWppSessionPlan.ps1"],
     "runtime-evidence-write-failed": ["Initialize-ChatpadRuntimeEvidenceDirectory.ps1", "Export-ChatpadRuntimeEventLogPlan.ps1", "Show-ChatpadWppSessionPlan.ps1"],

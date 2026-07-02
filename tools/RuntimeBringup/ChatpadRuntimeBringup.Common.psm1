@@ -1,11 +1,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:ReadinessBranch = 'feature/runtime-bringup-readiness-remediation'
-$script:PriorReadinessBranch = 'feature/runtime-bringup-readiness-scaffolding'
-$script:AcceptedBaselineCommit = 'f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-$script:StartingReadinessCommit = 'b9990d287bee6916cc5bb4e6b7f194ee579c7fbb'
-$script:AcceptedBaselineParent = '38d434e8f7c815f609834f79315600aa73969639'
+$script:ReadinessBranch = 'feature/runtime-bringup-readiness-enforcement-remediation'
+$script:FrozenBaselineCommit = 'f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
+$script:PriorImplementationCommit = '0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea'
+$script:PriorFinalizationCommit = '2bb08fee77125f6b5bed2774c085ce57fe192752'
 $script:AcceptedProviderGuid = '{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}'
 $script:AcceptedManifestPath = 'docs/evidence/runtime-instrumentation-implementation-manifest.json'
 $script:AcceptedManifestSize = 28088
@@ -16,656 +15,535 @@ $script:AcceptedDebugSysSha256 = 'E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C4
 $script:AcceptedReleaseSysPath = 'artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys'
 $script:AcceptedReleaseSysSize = 40960
 $script:AcceptedReleaseSysSha256 = 'A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404'
-
 $script:KnownStopConditionIds = @(
-    'target-identity-ambiguous',
-    'current-driver-unidentified',
-    'rollback-source-unavailable',
-    'repository-or-binary-identity-wrong',
-    'signing-identity-wrong',
-    'package-validation-failed',
-    'windows-rejects-signature',
-    'wrong-device-binds',
-    'unrelated-device-changed',
-    'driver-service-fails-unexpectedly',
-    'unexpected-code-integrity-error',
-    'unexpected-setupapi-match',
-    'device-disappears-without-recovery-path',
-    'input-behavior-unstable',
-    'unplanned-reboot-required',
-    'trace-provider-wrong',
-    'runtime-evidence-write-failed',
-    'command-differs-from-approved-plan',
-    'prerequisite-changed-after-approval',
-    'rollback-cannot-be-guaranteed'
+    'target-identity-ambiguous','current-driver-unidentified','rollback-source-unavailable',
+    'repository-or-binary-identity-wrong','signing-identity-wrong','package-validation-failed',
+    'windows-rejects-signature','wrong-device-binds','unrelated-device-changed',
+    'driver-service-fails-unexpectedly','unexpected-code-integrity-error',
+    'unexpected-setupapi-match','device-disappears-without-recovery-path',
+    'input-behavior-unstable','unplanned-reboot-required','trace-provider-wrong',
+    'runtime-evidence-write-failed','command-differs-from-approved-plan',
+    'prerequisite-changed-after-approval','rollback-cannot-be-guaranteed'
 )
 
-function Get-ChatpadRuntimeConstants {
-    [pscustomobject]@{
-        readiness_branch = $script:ReadinessBranch
-        prior_readiness_branch = $script:PriorReadinessBranch
-        accepted_baseline_commit = $script:AcceptedBaselineCommit
-        starting_readiness_commit = $script:StartingReadinessCommit
-        accepted_baseline_parent = $script:AcceptedBaselineParent
-        accepted_provider_guid = $script:AcceptedProviderGuid
-        accepted_manifest_path = $script:AcceptedManifestPath
-        accepted_manifest_size = $script:AcceptedManifestSize
-        accepted_manifest_sha256 = $script:AcceptedManifestSha256
-        accepted_debug_sys_path = $script:AcceptedDebugSysPath
-        accepted_debug_sys_size = $script:AcceptedDebugSysSize
-        accepted_debug_sys_sha256 = $script:AcceptedDebugSysSha256
-        accepted_release_sys_path = $script:AcceptedReleaseSysPath
-        accepted_release_sys_size = $script:AcceptedReleaseSysSize
-        accepted_release_sys_sha256 = $script:AcceptedReleaseSysSha256
-        stop_condition_ids = @($script:KnownStopConditionIds)
-    }
+function Get-ChatpadProperty {
+    param([object]$Object,[Parameter(Mandatory)][string]$Name,[object]$Default=$null)
+    if ($null -eq $Object) { return $Default }
+    $property = $Object.PSObject.Properties[$Name]
+    if ($null -eq $property) { return $Default }
+    return $property.Value
 }
 
-function Get-ChatpadRepoRoot {
-    $root = @(& git rev-parse --show-toplevel)
-    if ($LASTEXITCODE -ne 0 -or $root.Count -ne 1 -or [string]::IsNullOrWhiteSpace($root[0])) {
-        throw 'Unable to resolve repository root.'
-    }
-    return [string]$root[0]
-}
-
-function Invoke-ChatpadGit {
-    param([Parameter(Mandatory)][string[]]$Arguments)
-    $output = @(& git @Arguments)
-    if ($LASTEXITCODE -ne 0) {
-        throw "git $($Arguments -join ' ') failed with exit code $LASTEXITCODE"
-    }
-    return @($output)
-}
-
-function Read-ChatpadJson {
-    param([Parameter(Mandatory)][string]$Path)
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "JSON file missing: $Path"
-    }
-    return (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json)
-}
-
-function Assert-ChatpadFullCommit {
-    param(
-        [Parameter(Mandatory)][string]$Value,
-        [Parameter(Mandatory)][string]$Name
-    )
-    if ($Value -notmatch '^[0-9a-f]{40}$') {
-        throw "$Name must be a full lowercase 40-character commit hash."
-    }
-}
-
-function Assert-ChatpadScalar {
-    param(
-        [Parameter(Mandatory)][object]$Value,
-        [Parameter(Mandatory)][string]$Name,
-        [switch]$AllowQuotes,
-        [switch]$AllowWildcards
-    )
-    if ($Value -is [array]) { throw "$Name must be a scalar value." }
-    $text = [string]$Value
-    if ([string]::IsNullOrWhiteSpace($text)) { throw "$Name is required." }
-    if ($text.IndexOf([char]0) -ge 0) { throw "$Name contains NUL." }
-    if ($text -match "[`r`n]") { throw "$Name contains a line break." }
-    if ($text -match '[\u202A-\u202E\u2066-\u2069\u200B\u200C\u200D\uFEFF]') { throw "$Name contains an unsupported Unicode control character." }
-    foreach ($ch in $text.ToCharArray()) {
-        $code = [int][char]$ch
-        if ($code -lt 32 -and $ch -notin @([char]9)) { throw "$Name contains control character U+$($code.ToString('X4'))." }
-    }
-    if (-not $AllowQuotes -and $text -match '"') { throw "$Name contains an unsupported double quote." }
-    if (-not $AllowWildcards -and $text -match '[\*\?]') { throw "$Name must not contain wildcards." }
-    if ($Name -in @('Argument','WorkingDirectory','TargetInstanceId') -and $text -match '(^|[\\/])\.\.([\\/]|$)') {
-        throw "$Name contains path traversal."
-    }
-    return $text
-}
-
-function Test-ChatpadPathContained {
-    param(
-        [Parameter(Mandatory)][object]$Root,
-        [Parameter(Mandatory)][object]$Candidate,
-        [switch]$AllowRoot
-    )
-    if ($Root -is [array] -or $Candidate -is [array]) { return $false }
-    try {
-        $rootFull = [IO.Path]::GetFullPath([string]$Root).TrimEnd('\','/')
-        $candidateFull = [IO.Path]::GetFullPath([string]$Candidate).TrimEnd('\','/')
-    } catch {
-        return $false
-    }
-    if ($AllowRoot -and $candidateFull.Equals($rootFull, [StringComparison]::OrdinalIgnoreCase)) { return $true }
-    return $candidateFull.StartsWith($rootFull + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)
-}
-
-function ConvertTo-ChatpadDisplayArgument {
-    param([Parameter(Mandatory)][string]$Value)
-    return "'" + ($Value -replace "'", "''") + "'"
-}
-
-function New-ChatpadOperationPlan {
-    param(
-        [Parameter(Mandatory)][object]$OperationId,
-        [Parameter(Mandatory)][object]$Executable,
-        [Parameter(Mandatory)][object[]]$Arguments,
-        [Parameter()][object]$WorkingDirectory = '<APPROVED_RUNTIME_WORKING_DIRECTORY>',
-        [Parameter()][object]$TargetInstanceId = '',
-        [Parameter()][string[]]$InputArtifactIds = @(),
-        [Parameter()][string[]]$PrerequisiteResultIds = @(),
-        [Parameter(Mandatory)][string[]]$StopConditionIds,
-        [Parameter()][int[]]$ExpectedExitCodes = @(0),
-        [Parameter(Mandatory)][ValidateSet('offline-read-only','live-host-read-only','live-device-query','broad-host-mutation','exact-target-mutation','render-only','blocked')]
-        [string]$MutationClassification,
-        [Parameter()][bool]$RequiresAuthorization = $true,
-        [Parameter()][ValidateSet('planned-not-executed','blocked','skipped-by-authorization')]
-        [string]$ExecutionStatus = 'planned-not-executed'
-    )
-    $safeOperationId = Assert-ChatpadScalar $OperationId 'OperationId'
-    $safeExecutable = Assert-ChatpadScalar $Executable 'Executable'
-    $safeWorkingDirectory = Assert-ChatpadScalar $WorkingDirectory 'WorkingDirectory' -AllowQuotes -AllowWildcards
-    $safeArguments = @()
-    foreach ($arg in @($Arguments)) {
-        $safeArguments += Assert-ChatpadScalar $arg 'Argument' -AllowQuotes -AllowWildcards
-    }
-    if ($MutationClassification -eq 'exact-target-mutation') {
-        $safeTarget = Assert-ChatpadScalar $TargetInstanceId 'TargetInstanceId'
-    } elseif (-not [string]::IsNullOrWhiteSpace($TargetInstanceId)) {
-        $safeTarget = Assert-ChatpadScalar $TargetInstanceId 'TargetInstanceId'
-    } else {
-        $safeTarget = ''
-    }
-    Assert-ChatpadStopConditionIds -StopConditionIds $StopConditionIds | Out-Null
-    [pscustomobject]@{
-        schema_version = 'chatpad-structured-operation-v1'
-        operation_id = $safeOperationId
-        executable = $safeExecutable
-        arguments = @($safeArguments)
-        working_directory = $safeWorkingDirectory
-        target_instance_id = $safeTarget
-        input_artifact_ids = @($InputArtifactIds)
-        prerequisite_result_ids = @($PrerequisiteResultIds)
-        stop_condition_ids = @($StopConditionIds)
-        expected_exit_codes = @($ExpectedExitCodes)
-        mutation_classification = $MutationClassification
-        requires_authorization = $RequiresAuthorization
-        execution_status = $ExecutionStatus
-        command_display = ((ConvertTo-ChatpadDisplayArgument -Value $safeExecutable) + ' ' + (($safeArguments | ForEach-Object { ConvertTo-ChatpadDisplayArgument -Value $_ }) -join ' ')).Trim()
-        display_is_execution_evidence = $false
-        launch_contract = 'Future execution, if ever authorized, must use System.Diagnostics.ProcessStartInfo.ArgumentList; rendered display text must not be reparsed by a shell.'
-    }
-}
-
-function Assert-ChatpadStopConditionIds {
-    param([Parameter(Mandatory)][string[]]$StopConditionIds)
-    if (@($StopConditionIds).Count -eq 0) { throw 'At least one stop-condition ID is required.' }
-    foreach ($id in $StopConditionIds) {
-        if ($script:KnownStopConditionIds -notcontains $id) { throw "Unknown stop-condition ID: $id" }
-    }
-    return $true
+function Test-ChatpadNonEmpty {
+    param([object]$Value)
+    if ($null -eq $Value) { return $false }
+    if ($Value -is [array]) { return @($Value).Count -gt 0 }
+    return -not [string]::IsNullOrWhiteSpace([string]$Value)
 }
 
 function New-ChatpadRuntimeCheckResult {
     param(
         [Parameter(Mandatory)][string]$Check,
-        [Parameter(Mandatory)][ValidateSet('PASS','FAIL','BLOCKED')]
-        [string]$Result,
-        [Parameter()][string]$Reason = '',
-        [Parameter()][string[]]$StopConditionIds = @(),
-        [Parameter()][object]$Data = $null
+        [Parameter(Mandatory)][ValidateSet('PASS','FAIL','BLOCKED')][string]$Result,
+        [Parameter(Mandatory)][string]$ResultCode,
+        [string]$Reason = '',
+        [string[]]$StopConditionIds = @(),
+        [object]$Data = $null
     )
-    if ($Result -ne 'PASS') { Assert-ChatpadStopConditionIds -StopConditionIds $StopConditionIds | Out-Null }
-    [pscustomobject]@{
-        schema_version = 'chatpad-runtime-check-result-v2'
+    if ($Result -ne 'PASS') { Assert-ChatpadStopConditionIds $StopConditionIds | Out-Null }
+    [pscustomobject][ordered]@{
+        schema_version = 'chatpad-runtime-check-result-v3'
         check = $Check
         result = $Result
+        result_code = $ResultCode
         reason = $Reason
         stop_condition_ids = @($StopConditionIds)
         data = $Data
     }
 }
 
-function Get-ChatpadFileIdentity {
+function Assert-ChatpadStopConditionIds {
+    param([Parameter(Mandatory)][string[]]$StopConditionIds)
+    if (@($StopConditionIds).Count -eq 0) { throw [ArgumentException]::new('At least one stop-condition ID is required.') }
+    foreach ($id in $StopConditionIds) {
+        if ($script:KnownStopConditionIds -notcontains $id) { throw [ArgumentException]::new("Unknown stop-condition ID: $id") }
+    }
+    $true
+}
+
+function Assert-ChatpadFullCommit {
+    param([Parameter(Mandatory)][string]$Value,[Parameter(Mandatory)][string]$Name)
+    if ($Value -notmatch '^[0-9a-f]{40}$') { throw [ArgumentException]::new("$Name must be a full lowercase 40-character commit hash.") }
+}
+
+function Assert-ChatpadScalar {
+    param([Parameter(Mandatory)][object]$Value,[Parameter(Mandatory)][string]$Name,[switch]$AllowQuotes,[switch]$AllowWildcards)
+    if ($Value -is [array]) { throw [ArgumentException]::new("$Name must be a scalar value.") }
+    $text = [string]$Value
+    if ([string]::IsNullOrWhiteSpace($text)) { throw [ArgumentException]::new("$Name is required.") }
+    if ($text.IndexOf([char]0) -ge 0) { throw [ArgumentException]::new("$Name contains NUL.") }
+    if ($text -match "[`r`n]") { throw [ArgumentException]::new("$Name contains a line break.") }
+    if ($text -match '[\u202A-\u202E\u2066-\u2069\u200B\u200C\u200D\uFEFF]') { throw [ArgumentException]::new("$Name contains an unsupported Unicode control character.") }
+    foreach ($ch in $text.ToCharArray()) {
+        if ([int][char]$ch -lt 32 -and $ch -ne [char]9) { throw [ArgumentException]::new("$Name contains a control character.") }
+    }
+    if (-not $AllowQuotes -and $text -match '"') { throw [ArgumentException]::new("$Name contains an unsupported double quote.") }
+    if (-not $AllowWildcards -and $text -match '[*?]') { throw [ArgumentException]::new("$Name must not contain wildcards.") }
+    if ($Name -in @('Argument','WorkingDirectory','TargetInstanceId') -and $text -match '(^|[\\/])\.\.([\\/]|$)') { throw [ArgumentException]::new("$Name contains path traversal.") }
+    $text
+}
+
+function Test-ChatpadPathContained {
+    param([Parameter(Mandatory)][object]$Root,[Parameter(Mandatory)][object]$Candidate,[switch]$AllowRoot)
+    if ($Root -is [array] -or $Candidate -is [array]) { return $false }
+    try {
+        $rootFull = [IO.Path]::GetFullPath([string]$Root).TrimEnd('\','/')
+        $candidateFull = [IO.Path]::GetFullPath([string]$Candidate).TrimEnd('\','/')
+    } catch { return $false }
+    if ($AllowRoot -and $candidateFull.Equals($rootFull,[StringComparison]::OrdinalIgnoreCase)) { return $true }
+    $candidateFull.StartsWith($rootFull + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)
+}
+
+function ConvertTo-ChatpadDisplayArgument {
+    param([Parameter(Mandatory)][string]$Value)
+    "'" + ($Value -replace "'", "''") + "'"
+}
+
+function New-ChatpadOperationPlan {
     param(
-        [Parameter(Mandatory)][string]$Path,
-        [switch]$RejectReparsePoint
+        [Parameter(Mandatory)][object]$OperationId,
+        [Parameter(Mandatory)][ValidateSet('validate','stage','bind','verify','restore','rescan','trace-start','trace-stop','preserve','hash','event-export','observe')][string]$OperationType,
+        [Parameter(Mandatory)][object]$Executable,
+        [Parameter(Mandatory)][object[]]$Arguments,
+        [ValidateSet('none','host','exact-device')][string]$TargetScope='none',
+        [object]$TargetInstanceId='',
+        [string[]]$InputArtifactIds=@(),
+        [string[]]$PrerequisiteResultIds=@(),
+        [Parameter(Mandatory)][string[]]$StopConditionIds,
+        [int[]]$ExpectedExitCodes=@(0),
+        [Parameter(Mandatory)][ValidateSet('offline-read-only','live-host-read-only','live-device-query','broad-host-mutation','exact-target-mutation','render-only')][string]$MutationClassification,
+        [bool]$RequiresAuthorization=$true,
+        [Parameter(Mandatory)][ValidateSet('planned','blocked','skipped_authorization','executed','failed','rolled_back','restored')][string]$Status,
+        [Parameter(Mandatory)][ValidateSet('synthetic','live')][string]$SourceClassification,
+        [Parameter(Mandatory)][object]$SessionId,
+        [Parameter(Mandatory)][object]$HostId,
+        [Nullable[bool]]$ApprovedAsTargetSpecific=$null,
+        [string]$Blocker='',
+        [object]$ResultRecord=$null,
+        [string]$CompletedUtc='',
+        [string]$RollbackOperationId='',
+        [string]$FinalStateEvidenceId='',
+        [object]$WorkingDirectory='<APPROVED_RUNTIME_WORKING_DIRECTORY>'
     )
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "Required file does not exist: $Path" }
-    $item = Get-Item -LiteralPath $Path -Force
-    if ($RejectReparsePoint -and (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) {
-        throw "Reparse point is not allowed: $Path"
+    $safeId=Assert-ChatpadScalar $OperationId OperationId
+    $safeExe=Assert-ChatpadScalar $Executable Executable
+    $safeSession=Assert-ChatpadScalar $SessionId SessionId
+    $safeHost=Assert-ChatpadScalar $HostId HostId
+    $safeWorking=Assert-ChatpadScalar $WorkingDirectory WorkingDirectory -AllowQuotes -AllowWildcards
+    $safeArgs=@();foreach($arg in @($Arguments)){$safeArgs+=Assert-ChatpadScalar $arg Argument -AllowQuotes -AllowWildcards}
+    Assert-ChatpadStopConditionIds $StopConditionIds|Out-Null
+    $safeTarget=''
+    if($TargetScope -eq 'exact-device'){
+        $safeTarget=Assert-ChatpadScalar $TargetInstanceId TargetInstanceId
+        if($ApprovedAsTargetSpecific -ne $true){throw [ArgumentException]::new('Exact-device operation requires approved_as_target_specific=true.')}
+    } elseif(Test-ChatpadNonEmpty $TargetInstanceId){$safeTarget=Assert-ChatpadScalar $TargetInstanceId TargetInstanceId}
+    if($Status -eq 'blocked' -and [string]::IsNullOrWhiteSpace($Blocker)){throw [ArgumentException]::new('Blocked operation requires a blocker.')}
+    if($Status -eq 'planned' -and ($null-ne$ResultRecord -or $CompletedUtc)){throw [ArgumentException]::new('Planned operation cannot contain execution evidence.')}
+    if($Status -in @('executed','failed') -and ($null-eq$ResultRecord -or [string]::IsNullOrWhiteSpace($CompletedUtc))){throw [ArgumentException]::new("$Status operation requires result and completion time.")}
+    if($Status -eq 'failed' -and [int](Get-ChatpadProperty $ResultRecord 'exit_code' 0) -in $ExpectedExitCodes){throw [ArgumentException]::new('Failed operation requires a non-success exit code.')}
+    if($Status -eq 'rolled_back' -and [string]::IsNullOrWhiteSpace($RollbackOperationId)){throw [ArgumentException]::new('Rolled-back operation requires rollback operation identity.')}
+    if($Status -eq 'restored' -and [string]::IsNullOrWhiteSpace($FinalStateEvidenceId)){throw [ArgumentException]::new('Restored operation requires final-state evidence identity.')}
+    [pscustomobject][ordered]@{
+        schema_version='chatpad-structured-operation-v2';operation_id=$safeId;operation_type=$OperationType
+        executable=$safeExe;arguments=@($safeArgs);working_directory=$safeWorking
+        mutation_classification=$MutationClassification;target_scope=$TargetScope;target_instance_id=$safeTarget
+        approved_as_target_specific=$(if($null-eq$ApprovedAsTargetSpecific){$false}else{[bool]$ApprovedAsTargetSpecific})
+        input_artifact_ids=@($InputArtifactIds);prerequisite_result_ids=@($PrerequisiteResultIds)
+        stop_condition_ids=@($StopConditionIds);expected_exit_codes=@($ExpectedExitCodes)
+        requires_authorization=$RequiresAuthorization;status=$Status;source_classification=$SourceClassification
+        session_id=$safeSession;host_id=$safeHost;blocker=$Blocker;result_record=$ResultRecord
+        completed_utc=$CompletedUtc;rollback_operation_id=$RollbackOperationId;final_state_evidence_id=$FinalStateEvidenceId
+        command_display=(ConvertTo-ChatpadDisplayArgument $safeExe)+' '+(($safeArgs|ForEach-Object{ConvertTo-ChatpadDisplayArgument $_})-join' ')
+        display_is_execution_evidence=$false
+        launch_contract='Future execution must use System.Diagnostics.ProcessStartInfo.ArgumentList and must never reparse command_display.'
     }
-    $hash = Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256
-    [pscustomobject]@{
-        path = $Path.Replace('\', '/')
-        full_name = $item.FullName
-        size = [int64]$item.Length
-        sha256 = $hash.Hash
-        attributes = [string]$item.Attributes
-        last_write_utc = $item.LastWriteTimeUtc.ToString('o')
+}
+
+function Test-ChatpadOperationPlanContract {
+    param([Parameter(Mandatory)]$Operation)
+    $fail=@()
+    foreach($f in @('operation_id','operation_type','executable','arguments','mutation_classification','target_scope','prerequisite_result_ids','stop_condition_ids','expected_exit_codes','requires_authorization','status','source_classification','session_id','host_id','approved_as_target_specific','display_is_execution_evidence')){
+        if($null-eq$Operation.PSObject.Properties[$f]){$fail+="missing:$f"}
     }
+    if($fail.Count){return New-ChatpadRuntimeCheckResult operation-plan FAIL OPERATION_FIELDS_MISSING ($fail-join';') @('command-differs-from-approved-plan')}
+    if($Operation.status -eq 'blocked' -and -not(Test-ChatpadNonEmpty $Operation.blocker)){$fail+='blocked-without-blocker'}
+    if($Operation.target_scope -eq 'exact-device' -and (-not(Test-ChatpadNonEmpty $Operation.target_instance_id) -or $Operation.approved_as_target_specific-ne$true)){$fail+='exact-target-invalid'}
+    if($Operation.status -eq 'planned' -and $null-ne$Operation.result_record){$fail+='planned-has-result'}
+    if($Operation.status -in @('executed','failed') -and ($null-eq$Operation.result_record -or -not(Test-ChatpadNonEmpty $Operation.completed_utc))){$fail+='execution-evidence-missing'}
+    if($Operation.display_is_execution_evidence-ne$false){$fail+='display-marked-executable'}
+    try{Assert-ChatpadStopConditionIds @($Operation.stop_condition_ids)|Out-Null}catch{$fail+=$_.Exception.Message}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult operation-plan FAIL OPERATION_CONTRACT_INVALID ($fail-join';') @('command-differs-from-approved-plan')}
+    New-ChatpadRuntimeCheckResult operation-plan PASS OPERATION_CONTRACT_VALID -Data $Operation
+}
+
+function Read-ChatpadJson {
+    param([Parameter(Mandatory)][string]$Path)
+    if(-not(Test-Path -LiteralPath $Path -PathType Leaf)){throw [IO.FileNotFoundException]::new("JSON file missing: $Path")}
+    Get-Content -LiteralPath $Path -Raw|ConvertFrom-Json
+}
+
+function Get-ChatpadRepoRoot {
+    $root=@(&git rev-parse --show-toplevel)
+    if($LASTEXITCODE-ne0-or$root.Count-ne1){throw 'Unable to resolve repository root.'}
+    [string]$root[0]
+}
+
+function Get-ChatpadFileIdentity {
+    param([Parameter(Mandatory)][string]$Path,[switch]$RejectReparsePoint)
+    if(-not(Test-Path -LiteralPath $Path -PathType Leaf)){throw "Required file missing: $Path"}
+    $item=Get-Item -LiteralPath $Path -Force
+    if($RejectReparsePoint-and($item.Attributes-band[IO.FileAttributes]::ReparsePoint)){throw "Reparse point is not allowed: $Path"}
+    [pscustomobject]@{path=$Path.Replace('\','/');size=[long]$item.Length;sha256=(Get-FileHash $item.FullName -Algorithm SHA256).Hash;full_name=$item.FullName}
 }
 
 function Get-ChatpadPeIdentity {
     param([Parameter(Mandatory)][string]$Path)
-    $bytes = [IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $Path))
-    if ($bytes.Length -lt 0x100 -or [Text.Encoding]::ASCII.GetString($bytes, 0, 2) -ne 'MZ') { throw "Not an MZ executable: $Path" }
-    $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
-    if ($peOffset -lt 0 -or $peOffset + 0x18 -ge $bytes.Length) { throw "Invalid PE header offset: $Path" }
-    if ([Text.Encoding]::ASCII.GetString($bytes, $peOffset, 4) -ne "PE`0`0") { throw "Missing PE signature: $Path" }
-    $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
-    $optionalOffset = $peOffset + 0x18
-    $magic = [BitConverter]::ToUInt16($bytes, $optionalOffset)
-    $subsystem = [BitConverter]::ToUInt16($bytes, $optionalOffset + 68)
-    $certSize = [BitConverter]::ToUInt32($bytes, $optionalOffset + 112 + (4 * 8) + 4)
-    [pscustomobject]@{
-        machine = ('0x{0:X4}' -f $machine)
-        machine_name = $(if ($machine -eq 0x8664) { 'x64' } else { 'unexpected' })
-        optional_header_magic = ('0x{0:X4}' -f $magic)
-        subsystem = $subsystem
-        subsystem_name = $(if ($subsystem -eq 1) { 'Native' } else { 'unexpected' })
-        authenticode_state = $(if ($certSize -eq 0) { 'Unsigned' } else { 'EmbeddedSignaturePresent' })
-    }
-}
-
-function Get-ChatpadRuntimeRepoIdentity {
-    $root = Get-ChatpadRepoRoot
-    Push-Location -LiteralPath $root
-    try {
-        $branch = @(Invoke-ChatpadGit -Arguments @('branch', '--show-current'))[0]
-        $head = @(Invoke-ChatpadGit -Arguments @('rev-parse', 'HEAD'))[0]
-        $parent = @(Invoke-ChatpadGit -Arguments @('rev-parse', 'HEAD^'))[0]
-        $status = @(Invoke-ChatpadGit -Arguments @('status', '--short'))
-        $porcelain = @(Invoke-ChatpadGit -Arguments @('status', '--porcelain=v2'))
-        $untracked = @(Invoke-ChatpadGit -Arguments @('ls-files', '--others', '--exclude-standard'))
-        $staged = @(Invoke-ChatpadGit -Arguments @('diff', '--cached', '--name-only'))
-        $unstaged = @(Invoke-ChatpadGit -Arguments @('diff', '--name-only'))
-        $upstream = ''
-        $upstreamOutput = @(& git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>$null)
-        if ($LASTEXITCODE -eq 0 -and $upstreamOutput.Count -gt 0) { $upstream = [string]$upstreamOutput[0] }
-        $aheadBehind = ''
-        if ($upstream) { $aheadBehind = @(Invoke-ChatpadGit -Arguments @('rev-list', '--left-right', '--count', 'HEAD...@{upstream}'))[0] -replace "`t", '/' }
-        [pscustomobject]@{
-            repository_root = $root
-            branch = $branch
-            head = $head
-            parent = $parent
-            upstream = $upstream
-            ahead_behind = $aheadBehind
-            status_short_count = $status.Count
-            porcelain_v2_count = $porcelain.Count
-            staged_count = $staged.Count
-            unstaged_count = $unstaged.Count
-            untracked_nonignored_count = $untracked.Count
-            clean = ($status.Count -eq 0 -and $porcelain.Count -eq 0 -and $staged.Count -eq 0 -and $unstaged.Count -eq 0 -and $untracked.Count -eq 0)
-        }
-    } finally {
-        Pop-Location
-    }
+    $b=[IO.File]::ReadAllBytes((Resolve-Path $Path));$off=[BitConverter]::ToInt32($b,0x3c)
+    if([Text.Encoding]::ASCII.GetString($b,$off,4)-ne"PE`0`0"){throw 'Invalid PE.'}
+    $machine=[BitConverter]::ToUInt16($b,$off+4);$opt=$off+0x18;$sub=[BitConverter]::ToUInt16($b,$opt+68);$cert=[BitConverter]::ToUInt32($b,$opt+148)
+    [pscustomobject]@{machine=$(if($machine-eq0x8664){'x64'}else{'unexpected'});subsystem=$(if($sub-eq1){'Native'}else{'unexpected'});signature=$(if($cert-eq0){'Unsigned'}else{'EmbeddedSignaturePresent'})}
 }
 
 function Test-ChatpadRepositoryIdentityObject {
     param([Parameter(Mandatory)]$State)
-    $failures = @()
-    foreach ($name in @('approved_readiness_commit','accepted_baseline_commit','current_head')) {
-        try { Assert-ChatpadFullCommit -Value ([string]$State.$name) -Name $name } catch { $failures += $_.Exception.Message }
+    $fail=@()
+    foreach($f in @('frozen_baseline_commit','prior_readiness_implementation_commit','prior_readiness_finalization_commit','current_readiness_implementation_commit','current_readiness_finalization_commit','current_head')){
+        $v=[string](Get-ChatpadProperty $State $f '');try{Assert-ChatpadFullCommit $v $f}catch{$fail+=$_.Exception.Message}
     }
-    if ([string]$State.current_branch -ne [string]$State.approved_readiness_branch) { $failures += 'Current branch does not match approved readiness branch.' }
-    if ([string]$State.current_head -ne [string]$State.approved_readiness_commit) { $failures += 'Current HEAD does not match approved readiness commit.' }
-    if ([string]$State.accepted_baseline_commit -ne $script:AcceptedBaselineCommit) { $failures += 'Accepted baseline commit mismatch.' }
-    if ([int]$State.staged_count -ne 0) { $failures += 'Index is dirty.' }
-    if ([int]$State.unstaged_count -ne 0) { $failures += 'Worktree is dirty.' }
-    if ([int]$State.untracked_nonignored_count -ne 0) { $failures += 'Unexpected non-ignored untracked files exist.' }
-    if ([bool]$State.detached_head) { $failures += 'Detached HEAD is not allowed.' }
-    if ([bool]$State.alternate_repository_root) { $failures += 'Alternate repository root is not approved.' }
-    if (-not [bool]$State.accepted_baseline_is_ancestor) { $failures += 'Accepted baseline is not an ancestor of current HEAD.' }
-    if ([int]$State.accepted_manifest_size -ne $script:AcceptedManifestSize -or [string]$State.accepted_manifest_sha256 -ne $script:AcceptedManifestSha256) { $failures += 'Accepted manifest identity mismatch.' }
-    if ([int]$State.debug_sys_size -ne $script:AcceptedDebugSysSize -or [string]$State.debug_sys_sha256 -ne $script:AcceptedDebugSysSha256) { $failures += 'Debug SYS identity mismatch.' }
-    if ([int]$State.release_sys_size -ne $script:AcceptedReleaseSysSize -or [string]$State.release_sys_sha256 -ne $script:AcceptedReleaseSysSha256) { $failures += 'Release SYS identity mismatch.' }
-    if ([string]$State.debug_pe_machine -ne 'x64' -or [string]$State.release_pe_machine -ne 'x64') { $failures += 'Unexpected PE machine.' }
-    if ([string]$State.debug_pe_subsystem -ne 'Native' -or [string]$State.release_pe_subsystem -ne 'Native') { $failures += 'Unexpected PE subsystem.' }
-    if ([string]$State.debug_signature_state -ne 'Unsigned' -or [string]$State.release_signature_state -ne 'Unsigned') { $failures += 'Unexpected signature state.' }
-    if ([bool]$State.binary_reparse_point -or [bool]$State.manifest_reparse_point) { $failures += 'Reparse-point identity input is not allowed.' }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'repository-identity' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('repository-or-binary-identity-wrong')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'repository-identity' -Result PASS -Data $State
+    if((Get-ChatpadProperty $State prior_readiness_implementation_commit '')-ne$script:PriorImplementationCommit-or(Get-ChatpadProperty $State prior_readiness_finalization_commit '')-ne$script:PriorFinalizationCommit){$fail+='Prior readiness identity mismatch.'}
+    if((Get-ChatpadProperty $State frozen_baseline_commit '')-ne$script:FrozenBaselineCommit){$fail+='Frozen baseline mismatch.'}
+    if((Get-ChatpadProperty $State current_head '')-ne(Get-ChatpadProperty $State current_readiness_finalization_commit '')){$fail+='Current HEAD is not approved finalization.'}
+    if((Get-ChatpadProperty $State current_finalization_parent '')-ne(Get-ChatpadProperty $State current_readiness_implementation_commit '')){$fail+='Finalization is not direct child of implementation.'}
+    if(-not[bool](Get-ChatpadProperty $State frozen_is_ancestor $false)-or-not[bool](Get-ChatpadProperty $State prior_chain_valid $false)-or-not[bool](Get-ChatpadProperty $State current_chain_valid $false)){$fail+='Commit ancestry invalid.'}
+    if((Get-ChatpadProperty $State current_branch '')-ne(Get-ChatpadProperty $State approved_branch '')-or[bool](Get-ChatpadProperty $State detached_head $false)-or[bool](Get-ChatpadProperty $State alternate_repository_root $false)){$fail+='Repository branch/root invalid.'}
+    if([int](Get-ChatpadProperty $State staged_count 0)-or[int](Get-ChatpadProperty $State unstaged_count 0)-or[int](Get-ChatpadProperty $State untracked_count 0)){$fail+='Repository is dirty.'}
+    if((Get-ChatpadProperty $State accepted_manifest_size 0)-ne$script:AcceptedManifestSize-or(Get-ChatpadProperty $State accepted_manifest_sha256 '')-ne$script:AcceptedManifestSha256){$fail+='Accepted manifest identity mismatch.'}
+    if((Get-ChatpadProperty $State debug_size 0)-ne$script:AcceptedDebugSysSize-or(Get-ChatpadProperty $State debug_sha256 '')-ne$script:AcceptedDebugSysSha256-or(Get-ChatpadProperty $State release_size 0)-ne$script:AcceptedReleaseSysSize-or(Get-ChatpadProperty $State release_sha256 '')-ne$script:AcceptedReleaseSysSha256){$fail+='Frozen binary identity mismatch.'}
+    if((Get-ChatpadProperty $State debug_machine '')-ne'x64'-or(Get-ChatpadProperty $State release_machine '')-ne'x64'-or(Get-ChatpadProperty $State debug_subsystem '')-ne'Native'-or(Get-ChatpadProperty $State release_subsystem '')-ne'Native'-or(Get-ChatpadProperty $State debug_signature '')-ne'Unsigned'-or(Get-ChatpadProperty $State release_signature '')-ne'Unsigned'){$fail+='Frozen PE identity mismatch.'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult repository-identity FAIL REPOSITORY_IDENTITY_INVALID ($fail-join'; ') @('repository-or-binary-identity-wrong')}
+    New-ChatpadRuntimeCheckResult repository-identity PASS REPOSITORY_IDENTITY_VALID -Data $State
 }
 
 function Test-ChatpadCurrentRepositoryIdentity {
     param(
-        [Parameter(Mandatory)][string]$ApprovedReadinessCommit,
-        [Parameter()][string]$ApprovedReadinessBranch = $script:ReadinessBranch,
-        [Parameter()][string]$AcceptedBaselineCommit = $script:AcceptedBaselineCommit,
-        [Parameter()][string]$ApprovedRepositoryRoot = 'C:\Dev\chatpad-super-driver'
+        [Parameter(Mandatory)][string]$CurrentReadinessImplementationCommit,
+        [Parameter(Mandatory)][string]$CurrentReadinessFinalizationCommit,
+        [string]$ApprovedBranch=$script:ReadinessBranch,
+        [string]$ApprovedRepositoryRoot='C:\Dev\chatpad-super-driver'
     )
-    Assert-ChatpadFullCommit -Value $ApprovedReadinessCommit -Name 'ApprovedReadinessCommit'
-    Assert-ChatpadFullCommit -Value $AcceptedBaselineCommit -Name 'AcceptedBaselineCommit'
-    $repo = Get-ChatpadRuntimeRepoIdentity
-    $root = $repo.repository_root
-    $manifest = Get-ChatpadFileIdentity (Join-Path $root $script:AcceptedManifestPath) -RejectReparsePoint
-    $debug = Get-ChatpadFileIdentity (Join-Path $root $script:AcceptedDebugSysPath) -RejectReparsePoint
-    $release = Get-ChatpadFileIdentity (Join-Path $root $script:AcceptedReleaseSysPath) -RejectReparsePoint
-    $debugPe = Get-ChatpadPeIdentity $debug.full_name
-    $releasePe = Get-ChatpadPeIdentity $release.full_name
-    & git -C $root merge-base --is-ancestor $AcceptedBaselineCommit HEAD
-    $acceptedBaselineIsAncestor = ($LASTEXITCODE -eq 0)
-    $state = [pscustomobject]@{
-        approved_readiness_branch = $ApprovedReadinessBranch
-        approved_readiness_commit = $ApprovedReadinessCommit
-        accepted_baseline_commit = $AcceptedBaselineCommit
-        current_branch = $repo.branch
-        current_head = $repo.head
-        current_parent = $repo.parent
-        staged_count = $repo.staged_count
-        unstaged_count = $repo.unstaged_count
-        untracked_nonignored_count = $repo.untracked_nonignored_count
-        detached_head = [string]::IsNullOrWhiteSpace($repo.branch)
-        alternate_repository_root = -not (([IO.Path]::GetFullPath($root) -replace '^\\\\\?\\','').Equals(([IO.Path]::GetFullPath($ApprovedRepositoryRoot) -replace '^\\\\\?\\',''), [StringComparison]::OrdinalIgnoreCase))
-        accepted_baseline_is_ancestor = $acceptedBaselineIsAncestor
-        accepted_manifest_size = $manifest.size
-        accepted_manifest_sha256 = $manifest.sha256
-        debug_sys_size = $debug.size
-        debug_sys_sha256 = $debug.sha256
-        release_sys_size = $release.size
-        release_sys_sha256 = $release.sha256
-        debug_pe_machine = $debugPe.machine_name
-        release_pe_machine = $releasePe.machine_name
-        debug_pe_subsystem = $debugPe.subsystem_name
-        release_pe_subsystem = $releasePe.subsystem_name
-        debug_signature_state = $debugPe.authenticode_state
-        release_signature_state = $releasePe.authenticode_state
-        binary_reparse_point = $false
-        manifest_reparse_point = $false
-        accepted_baseline_path = $script:AcceptedManifestPath
-        debug_binary_path = $script:AcceptedDebugSysPath
-        release_binary_path = $script:AcceptedReleaseSysPath
+    Assert-ChatpadFullCommit $CurrentReadinessImplementationCommit CurrentReadinessImplementationCommit
+    Assert-ChatpadFullCommit $CurrentReadinessFinalizationCommit CurrentReadinessFinalizationCommit
+    $root=Get-ChatpadRepoRoot;$head=(&git -C $root rev-parse HEAD).Trim();$branch=(&git -C $root branch --show-current).Trim()
+    $status=@(&git -C $root status --porcelain=v2);$staged=@(&git -C $root diff --cached --name-only);$unstaged=@(&git -C $root diff --name-only);$untracked=@(&git -C $root ls-files --others --exclude-standard)
+    $manifest=Get-ChatpadFileIdentity (Join-Path $root $script:AcceptedManifestPath) -RejectReparsePoint
+    $debug=Get-ChatpadFileIdentity (Join-Path $root $script:AcceptedDebugSysPath) -RejectReparsePoint;$release=Get-ChatpadFileIdentity (Join-Path $root $script:AcceptedReleaseSysPath) -RejectReparsePoint
+    $dp=Get-ChatpadPeIdentity $debug.full_name;$rp=Get-ChatpadPeIdentity $release.full_name
+    &git -C $root merge-base --is-ancestor $script:FrozenBaselineCommit $head;$frozen=$LASTEXITCODE-eq0
+    &git -C $root merge-base --is-ancestor $script:PriorImplementationCommit $script:PriorFinalizationCommit;$prior=$LASTEXITCODE-eq0
+    $parent=(&git -C $root rev-parse "$CurrentReadinessFinalizationCommit^").Trim()
+    &git -C $root merge-base --is-ancestor $CurrentReadinessImplementationCommit $CurrentReadinessFinalizationCommit;$current=$LASTEXITCODE-eq0
+    $state=[pscustomobject]@{
+        frozen_baseline_commit=$script:FrozenBaselineCommit;prior_readiness_implementation_commit=$script:PriorImplementationCommit;prior_readiness_finalization_commit=$script:PriorFinalizationCommit
+        current_readiness_implementation_commit=$CurrentReadinessImplementationCommit;current_readiness_finalization_commit=$CurrentReadinessFinalizationCommit;current_head=$head;current_branch=$branch;approved_branch=$ApprovedBranch
+        current_finalization_parent=$parent;frozen_is_ancestor=$frozen;prior_chain_valid=$prior;current_chain_valid=$current;detached_head=[string]::IsNullOrWhiteSpace($branch)
+        alternate_repository_root=-not([IO.Path]::GetFullPath($root).Equals([IO.Path]::GetFullPath($ApprovedRepositoryRoot),[StringComparison]::OrdinalIgnoreCase))
+        staged_count=$staged.Count;unstaged_count=$unstaged.Count;untracked_count=$untracked.Count
+        accepted_manifest_size=$manifest.size;accepted_manifest_sha256=$manifest.sha256;debug_size=$debug.size;debug_sha256=$debug.sha256;release_size=$release.size;release_sha256=$release.sha256
+        debug_machine=$dp.machine;release_machine=$rp.machine;debug_subsystem=$dp.subsystem;release_subsystem=$rp.subsystem;debug_signature=$dp.signature;release_signature=$rp.signature
     }
-    Test-ChatpadRepositoryIdentityObject -State $state
+    Test-ChatpadRepositoryIdentityObject $state
 }
 
 function Test-ChatpadTargetSelectionContract {
-    param([Parameter(Mandatory)]$Inventory, [Parameter(Mandatory)]$Contract)
-    $failures = @()
-    if ([string]$Inventory.source_classification -notin @('synthetic','live')) { $failures += 'Inventory source classification is missing or invalid.' }
-    if ([string]$Inventory.source_classification -eq 'synthetic' -and [bool]$Inventory.claims_live) { $failures += 'Synthetic inventory is represented as live.' }
-    if ([datetime]$Inventory.captured_utc -lt [datetime]$Contract.min_capture_utc) { $failures += 'Inventory is stale.' }
-    $candidates = @($Inventory.candidates)
-    if ($candidates.Count -eq 0) { $failures += 'No candidate devices found.' }
-    if ($candidates.Count -ne 1) { $failures += 'Candidate set is not exactly one unresolved device.' }
-    $ids = @($candidates | ForEach-Object { [string]$_.instance_id })
-    if (@($ids | Sort-Object -Unique).Count -ne $ids.Count) { $failures += 'Duplicate device instance identity.' }
-    if ($candidates.Count -eq 1) {
-        $candidate = $candidates[0]
-        foreach ($field in @('instance_id','class_guid','class_name','parent_id','container_id','bus_topology','current_inf','current_service','current_provider','vendor_id','product_id')) {
-            if ([string]::IsNullOrWhiteSpace([string]$candidate.$field)) { $failures += "Candidate missing $field." }
-            elseif ([string]$candidate.$field -ne [string]$Contract.$field) { $failures += "Candidate $field mismatch." }
-        }
-        $actualHardware = @($candidate.hardware_ids | Sort-Object)
-        $expectedHardware = @($Contract.hardware_ids | Sort-Object)
-        if (($actualHardware -join "`n") -ne ($expectedHardware -join "`n")) { $failures += 'Hardware-ID set mismatch.' }
-        $actualCompatible = @($candidate.compatible_ids | Sort-Object)
-        $expectedCompatible = @($Contract.compatible_ids | Sort-Object)
-        if (($actualCompatible -join "`n") -ne ($expectedCompatible -join "`n")) { $failures += 'Compatible-ID set mismatch.' }
-        if (($actualHardware + $actualCompatible + @($candidate.instance_id)) -match '[\*\?]') { $failures += 'Wildcard identity is not allowed.' }
-        if ([string]$candidate.selection_basis -eq 'friendly-name-only') { $failures += 'Friendly-name-only selection is not allowed.' }
+    param([Parameter(Mandatory)]$Inventory,[Parameter(Mandatory)]$Contract)
+    $fail=@()
+    foreach($f in @('candidate_set_id','session_id','host_id','captured_utc','fresh_until_utc','source_classification','candidate_instance_ids','candidates')){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Inventory $f))){$fail+="missing:$f"}}
+    if((Get-ChatpadProperty $Inventory source_classification)-notin@('synthetic','live')){$fail+='invalid-source'}
+    if([bool](Get-ChatpadProperty $Inventory claims_live $false)-and$Inventory.source_classification-ne'live'){$fail+='synthetic-as-live'}
+    try{if([datetime]$Contract.validation_time_utc-gt[datetime]$Inventory.fresh_until_utc-or[datetime]$Inventory.captured_utc-gt[datetime]$Inventory.fresh_until_utc){$fail+='stale'}}catch{$fail+='invalid-time'}
+    $candidates=@($Inventory.candidates);if($candidates.Count-ne1){$fail+='candidate-count'}
+    $ids=@($candidates|ForEach-Object{[string](Get-ChatpadProperty $_ instance_id '')})
+    if(($ids-join'|')-ne(@($Inventory.candidate_instance_ids)-join'|')-or$Inventory.candidate_set_id-ne$Contract.candidate_set_id){$fail+='candidate-set-mismatch'}
+    if($candidates.Count-eq1){$c=$candidates[0];if((Get-ChatpadProperty $c selection_basis)-ne'exact-contract'){$fail+='selection-not-exact'}
+        foreach($f in @('instance_id','class_guid','class_name','parent_id','container_id','bus_topology','current_inf','current_service','current_provider','vendor_id','product_id')){if([string](Get-ChatpadProperty $c $f '')-ne[string](Get-ChatpadProperty $Contract $f '')){$fail+="mismatch:$f"}}
+        if((@(Get-ChatpadProperty $c hardware_ids @())-join'|')-ne(@(Get-ChatpadProperty $Contract hardware_ids @())-join'|')-or(@(Get-ChatpadProperty $c compatible_ids @())-join'|')-ne(@(Get-ChatpadProperty $Contract compatible_ids @())-join'|')){$fail+='id-set-mismatch'}
     }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'target-selection' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('target-identity-ambiguous')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'target-selection' -Result PASS -Data $candidates[0]
+    if($fail.Count){return New-ChatpadRuntimeCheckResult target-selection FAIL TARGET_SELECTION_INVALID ($fail-join';') @('target-identity-ambiguous')}
+    New-ChatpadRuntimeCheckResult target-selection PASS TARGET_SELECTION_VALID -Data $candidates[0]
 }
 
 function Test-ChatpadDriverStateContract {
     param([Parameter(Mandatory)]$State)
-    $required = @('instance_id','hardware_ids','compatible_ids','class_guid','class_name','parent_id','container_id','bus_topology','current_inf','original_inf_name','provider','driver_version','driver_date','service','package_identity','recovery_source','driver_stack_identities','service_state','collected_utc','host_id','session_id','field_provenance','source_classification','command_result_id')
-    $missing = @()
-    foreach ($field in $required) {
-        if ($null -eq $State.$field -or ([string]$State.$field).Trim().Length -eq 0) { $missing += $field }
-    }
-    if ($missing.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'current-driver-state' -Result FAIL -Reason "Missing fields: $($missing -join ', ')" -StopConditionIds @('current-driver-unidentified')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'current-driver-state' -Result PASS -Data $State
+    $required=@('instance_id','candidate_set_id','hardware_ids','compatible_ids','class_guid','class_name','parent_id','container_id','bus_topology','current_inf','original_inf_name','provider','driver_version','driver_date','service','package_identity','recovery_source','recovery_source_size','recovery_source_sha256','driver_stack_identities','service_state','collected_utc','fresh_until_utc','validation_time_utc','host_id','session_id','field_provenance','source_classification','command_result_id')
+    $fail=@();foreach($f in $required){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $State $f))){$fail+="missing:$f"}}
+    if((Get-ChatpadProperty $State source_classification)-notin@('synthetic','live')){$fail+='invalid-source'}
+    if([bool](Get-ChatpadProperty $State claims_live $false)-and$State.source_classification-ne'live'){$fail+='synthetic-as-live'}
+    try{if([datetime]$State.validation_time_utc-gt[datetime]$State.fresh_until_utc){$fail+='stale'}}catch{$fail+='invalid-time'}
+    if([string]$State.recovery_source_sha256-notmatch'^[A-Fa-f0-9]{64}$'-or[long]$State.recovery_source_size-lt0){$fail+='invalid-recovery-identity'}
+    foreach($f in $required){if($f-ne'field_provenance'-and$State.field_provenance.PSObject.Properties.Name-notcontains$f){$fail+="missing-provenance:$f";break}}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult current-driver-state FAIL DRIVER_STATE_INVALID ($fail-join';') @('current-driver-unidentified')}
+    New-ChatpadRuntimeCheckResult current-driver-state PASS DRIVER_STATE_VALID -Data $State
 }
 
 function Test-ChatpadRollbackContract {
     param([Parameter(Mandatory)]$State)
-    $driver = Test-ChatpadDriverStateContract -State $State.pre_test_snapshot
-    $failures = @()
-    if ($driver.result -ne 'PASS') { $failures += 'Pre-test snapshot is incomplete.' }
-    foreach ($field in @('target_instance_id','previous_package_identity','previous_provider','previous_version','previous_service','recovery_source_path','recovery_source_sha256','test_package_identity','evidence_directory','session_id','emergency_recovery.safe_mode','emergency_recovery.winre','emergency_recovery.input_device')) {
-        $value = $State
-        foreach ($part in $field.Split('.')) { if ($null -ne $value) { $value = $value.$part } }
-        if ($null -eq $value -or [string]::IsNullOrWhiteSpace([string]$value)) { $failures += "Missing $field." }
-    }
-    foreach ($op in @($State.rollback_operations)) {
-        if ([string]$op.target_instance_id -ne [string]$State.target_instance_id) { $failures += 'Rollback operation targets a different instance.' }
-        if ([string]$op.mutation_classification -notin @('exact-target-mutation','blocked')) { $failures += 'Rollback operation is not exact-target classified.' }
-        if (@($op.arguments) -match '[\*\?]') { $failures += 'Rollback operation contains a wildcard.' }
-    }
-    if (@($State.rollback_operations).Count -eq 0) { $failures += 'Rollback operations are missing.' }
-    if ([bool]$State.unplanned_reboot_required) { $failures += 'Unplanned reboot requirement is present.' }
-    if ([bool]$State.stale_snapshot) { $failures += 'Rollback snapshot is stale.' }
-    if ([string]$State.snapshot_session_id -ne [string]$State.session_id) { $failures += 'Snapshot belongs to another session.' }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'rollback-readiness' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('rollback-source-unavailable','rollback-cannot-be-guaranteed')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'rollback-readiness' -Result PASS -Data $State
+    $fail=@();$driver=Test-ChatpadDriverStateContract (Get-ChatpadProperty $State pre_test_snapshot)
+    if($driver.result-ne'PASS'){$fail+='snapshot-invalid'}
+    foreach($f in @('target_instance_id','previous_package_identity','previous_provider','previous_version','previous_service','recovery_source_path','recovery_source_size','recovery_source_sha256','test_package_identity','evidence_directory','session_id','host_id','snapshot_session_id','source_classification','emergency_recovery')){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $State $f))){$fail+="missing:$f"}}
+    if((Get-ChatpadProperty $State source_classification)-notin@('synthetic','live')){$fail+='invalid-source'}
+    if($State.snapshot_session_id-ne$State.session_id-or$State.pre_test_snapshot.session_id-ne$State.session_id){$fail+='cross-session'}
+    if([string]$State.recovery_source_sha256-notmatch'^[A-Fa-f0-9]{64}$'-or[long]$State.recovery_source_size-lt0){$fail+='recovery-unverifiable'}
+    if($State.source_classification-eq'synthetic'){if(-not[bool](Get-ChatpadProperty $State recovery_source_verified $false)){$fail+='recovery-unverified'}}
+    else{if(-not(Test-Path -LiteralPath $State.recovery_source_path -PathType Leaf)){$fail+='recovery-source-missing'}}
+    $ops=@($State.rollback_operations);$restore=@($ops|Where-Object{$_.operation_type-eq'restore'-and$_.target_scope-eq'exact-device'-and$_.target_instance_id-eq$State.target_instance_id-and$_.status-eq'planned'});$verify=@($ops|Where-Object{$_.operation_type-eq'verify'-and$_.target_instance_id-eq$State.target_instance_id-and$_.status-eq'planned'})
+    if($ops.Count-eq0-or$restore.Count-ne1){$fail+='exact-restoration-missing'}
+    if($verify.Count-ne1){$fail+='post-rollback-verification-missing'}
+    if(@($ops|Where-Object{$_.status-eq'blocked'}).Count){$fail+='blocked-operation-cannot-satisfy'}
+    if($State.source_classification-eq'live'){return New-ChatpadRuntimeCheckResult rollback-readiness BLOCKED BLOCKED_NOT_IMPLEMENTED 'Exact-instance restoration is not implemented.' @('rollback-cannot-be-guaranteed') -Data $State}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult rollback-readiness FAIL ROLLBACK_CONTRACT_INVALID ($fail-join';') @('rollback-source-unavailable','rollback-cannot-be-guaranteed')}
+    New-ChatpadRuntimeCheckResult rollback-readiness PASS ROLLBACK_CONTRACT_VALID -Data $State
 }
 
 function Read-ChatpadInfModel {
     param([Parameter(Mandatory)][string]$InfPath)
-    if (-not (Test-Path -LiteralPath $InfPath -PathType Leaf)) { throw "INF missing: $InfPath" }
-    $content = Get-Content -LiteralPath $InfPath -Raw
-    if ($content -match '[\u0000]') { throw 'INF contains NUL.' }
-    $sections = @{}
-    $current = ''
-    foreach ($line in ($content -split "`r?`n")) {
-        $trim = ($line -replace ';.*$','').Trim()
-        if ($trim -eq '') { continue }
-        if ($trim -match '^\[(.+)\]$') { $current = $Matches[1]; if (-not $sections.ContainsKey($current)) { $sections[$current] = @() } else { $sections[$current] += '__DUPLICATE_SECTION__' }; continue }
-        if ($current) { $sections[$current] += $trim }
-    }
-    [pscustomobject]@{ path=$InfPath; content=$content; sections=$sections }
+    if(-not(Test-Path $InfPath -PathType Leaf)){throw "INF missing: $InfPath"}
+    $bytes=[IO.File]::ReadAllBytes($InfPath);$utf8=[Text.UTF8Encoding]::new($false,$true)
+    try{$content=$utf8.GetString($bytes)}catch{throw 'INF encoding is not valid UTF-8.'}
+    if($content.Contains([char]0)){throw 'INF contains NUL.'}
+    $sections=[ordered]@{};$duplicates=@();$current=''
+    foreach($line in($content-split"`r?`n")){$trim=($line-replace';.*$','').Trim();if(-not$trim){continue};if($trim-match'^\[([^\]]+)\]$'){$current=$Matches[1];if($sections.Contains($current)){$duplicates+=$current}else{$sections[$current]=[System.Collections.Generic.List[string]]::new()};continue};if(-not$current){throw 'INF content appears before a section.'};$sections[$current].Add($trim)}
+    $strings=@{};if($sections.Contains('Strings')){foreach($line in $sections['Strings']){if($line-match'^([^=]+)=(.*)$'){$strings[$Matches[1].Trim()]=($Matches[2].Trim().Trim('\"'))}}}
+    [pscustomobject]@{content=$content;sections=$sections;duplicates=$duplicates;strings=$strings}
+}
+
+function Expand-ChatpadInfValue {
+    param([string]$Value,$Model,[ref]$Unresolved)
+    [regex]::Replace($Value,'%([^%]+)%',{param($m)if($Model.strings.ContainsKey($m.Groups[1].Value)){$Model.strings[$m.Groups[1].Value]}else{$Unresolved.Value=$true;$m.Value}})
+}
+
+function Get-ChatpadInfAssignment {
+    param($Model,[string]$Section,[string]$Key)
+    if(-not$Model.sections.Contains($Section)){return $null}
+    foreach($line in $Model.sections[$Section]){if($line-match('^'+[regex]::Escape($Key)+'\s*=\s*(.+)$')){return $Matches[1].Trim()}}
+    $null
 }
 
 function Test-ChatpadPackageContract {
     param([Parameter(Mandatory)]$Package)
-    $failures = @()
-    $root = [string]$Package.package_root
-    $inf = [string]$Package.inf_path
-    if (-not [IO.Path]::IsPathRooted($root)) { $failures += 'Package root must be absolute.' }
-    if (-not [IO.Path]::IsPathRooted($inf)) { $failures += 'INF path must be absolute.' }
-    if (-not (Test-ChatpadPathContained -Root $root -Candidate $inf)) { $failures += 'INF path escapes package root.' }
-    try { $model = Read-ChatpadInfModel -InfPath $inf } catch { $failures += $_.Exception.Message; $model = $null }
-    if ($model) {
-        if (@($model.sections.Values | ForEach-Object { @($_) } | Where-Object { $_ -eq '__DUPLICATE_SECTION__' }).Count -gt 0) { $failures += 'Duplicate INF section detected.' }
-        foreach ($required in @('Version','Manufacturer','DestinationDirs')) { if (-not $model.sections.ContainsKey($required)) { $failures += "Missing INF section [$required]." } }
-        if ($model.sections.ContainsKey('Manufacturer')) {
-            foreach ($manufacturerLine in @($model.sections['Manufacturer'])) {
-                if ($manufacturerLine -match '^[^=]+=[^,]+$') { $failures += 'Undecorated manufacturer model section is not allowed.' }
-            }
-        }
-        if (-not $model.sections.ContainsKey('Models.NTamd64')) { $failures += 'Decorated x64 model section [Models.NTamd64] is missing.' }
-        if ($model.content -notmatch 'Provider\s*=\s*%ChatpadProvider%') { $failures += 'Provider mismatch.' }
-        if ($model.content -notmatch 'DriverVer\s*=') { $failures += 'DriverVer missing.' }
-        if ($model.content -notmatch 'CatalogFile\s*=') { $failures += 'CatalogFile missing.' }
-        if ($model.content -notmatch 'NTamd64') { $failures += 'Architecture decoration NTamd64 missing.' }
-        if ($model.content -match 'NTx86|NTarm|NTarm64') { $failures += 'Unexpected alternate architecture section.' }
-        if ($model.content -match 'USB\\VID_[^&\s]+&PID_\*|USB\\Class_') { $failures += 'Broad or wildcard hardware binding detected.' }
-        if ($model.content -notmatch [regex]::Escape([string]$Package.expected_hardware_id)) { $failures += 'Expected hardware ID missing.' }
-        if ($model.content -notmatch [regex]::Escape([string]$Package.expected_service_binary)) { $failures += 'Expected service binary missing.' }
-        if ($model.content -notmatch 'KmdfLibraryVersion') { $failures += 'KMDF declaration missing.' }
+    $fail=@();$root=[string](Get-ChatpadProperty $Package package_root '');$inf=[string](Get-ChatpadProperty $Package inf_path '')
+    if(-not[IO.Path]::IsPathRooted($root)-or-not(Test-ChatpadPathContained $root $inf)){$fail+='package-containment'}
+    try{$model=Read-ChatpadInfModel $inf}catch{$fail+=$_.Exception.Message;$model=$null}
+    if($model){
+        if($model.duplicates.Count){$fail+='duplicate-sections'}
+        foreach($s in @('Version','Manufacturer','DestinationDirs','Strings')){if(-not$model.sections.Contains($s)){$fail+="missing-section:$s"}}
+        $unresolved=$false;$provider=Expand-ChatpadInfValue (Get-ChatpadInfAssignment $model Version Provider) $model ([ref]$unresolved)
+        $catalogValue=Get-ChatpadInfAssignment $model Version 'CatalogFile.NTamd64'
+        if(-not$catalogValue){$catalogValue=Get-ChatpadInfAssignment $model Version CatalogFile}
+        $catalog=Expand-ChatpadInfValue $catalogValue $model ([ref]$unresolved)
+        if((Get-ChatpadInfAssignment $model Version Signature)-ne'"$WINDOWS NT$"'){$fail+='signature-invalid'}
+        if($provider-ne$Package.expected_provider){$fail+='provider-mismatch'}
+        if(-not(Get-ChatpadInfAssignment $model Version DriverVer)){$fail+='driverver-missing'}
+        if($catalog-ne$Package.expected_catalog_file-or-not(Test-Path (Join-Path $root $catalog) -PathType Leaf)){$fail+='catalog-relationship-invalid'}
+        $manufacturer=@($model.sections['Manufacturer']);$modelSection=$null
+    foreach($line in $manufacturer){if($line-match'^[^=]+=\s*([^,]+),\s*NTamd64$'){$modelSection=$Matches[1]+'.NTamd64'}}
+        if(-not$modelSection-or-not$model.sections.Contains($modelSection)){$fail+='effective-model-section-missing'}
+        $installBase=$null
+    if($modelSection){foreach($line in $model.sections[$modelSection]){if($line-match'^[^=]+=\s*([^,]+),\s*(.+)$'){$hw=Expand-ChatpadInfValue $Matches[2].Trim() $model ([ref]$unresolved);if($hw-eq$Package.expected_hardware_id){$installBase=$Matches[1].Trim()};if($hw-match'[*?]|^USB\\Class_'){$fail+='broad-hardware-match'}}}}
+        if(-not$installBase){$fail+='model-install-link-missing'}
+        $installSection=if($model.sections.Contains($installBase+'.NT')){$installBase+'.NT'}elseif($model.sections.Contains($installBase)){$installBase}else{$null}
+        if(-not$installSection-or$installSection-eq$installBase){$fail+='decorated-install-section-missing'}
+        $copyRef=if($installSection){Get-ChatpadInfAssignment $model $installSection CopyFiles}else{$null}
+        if(-not$copyRef-or-not$model.sections.Contains($copyRef)){$fail+='copyfiles-link-missing'}
+        $copied=@();if($copyRef-and$model.sections.Contains($copyRef)){$copied=@($model.sections[$copyRef]|ForEach-Object{($_-split',')[0].Trim()})}
+        $services=$installBase+'.NT.Services';$addService=Get-ChatpadInfAssignment $model $services AddService;$serviceSection=$null
+        if($addService){$parts=$addService-split',';if($parts.Count-ge3){$serviceSection=$parts[2].Trim()}}
+        if(-not$serviceSection-or-not$model.sections.Contains($serviceSection)){$fail+='service-link-missing'}
+        $serviceBinary=if($serviceSection){Get-ChatpadInfAssignment $model $serviceSection ServiceBinary}else{$null}
+        $serviceFile=if($serviceBinary){[IO.Path]::GetFileName(($serviceBinary-replace'^%[^%]+%\\',''))}else{$null}
+        if($serviceFile-ne$Package.expected_service_binary){$fail+='service-binary-mismatch'}
+        if($copied-notcontains$serviceFile){$fail+='service-binary-not-copied'}
+        $wdf=$installBase+'.NT.Wdf';$kmdf=Get-ChatpadInfAssignment $model $wdf KmdfService;$kmdfSection=$null;if($kmdf){$kp=$kmdf-split',';if($kp.Count-ge2){$kmdfSection=$kp[1].Trim()}}
+        if(-not$kmdfSection-or-not$model.sections.Contains($kmdfSection)-or-not(Get-ChatpadInfAssignment $model $kmdfSection KmdfLibraryVersion)){$fail+='kmdf-link-missing'}
+        if($unresolved){$fail+='unresolved-string'}
+    foreach($f in $copied){if([IO.Path]::IsPathRooted($f)-or$f-match'(^|[\\/])\.\.([\\/]|$)'){$fail+='copy-path-invalid'}}
     }
-    $allowed = @($Package.allowed_files)
-    $actual = @(Get-ChildItem -LiteralPath $root -File -Recurse | ForEach-Object { $_.FullName.Substring($root.Length).TrimStart('\','/') -replace '\\','/' })
-    foreach ($file in $actual) {
-        if ($allowed -notcontains $file) { $failures += "Unauthorized package file: $file" }
-        if ($file -match '(?i)\.(exe|dll|pfx|p12|pem|key|pvk|snk|cer|crt)$') { $failures += "Forbidden package file type: $file" }
-        if ($file -match '\.\.') { $failures += "Package path traversal: $file" }
-    }
-    foreach ($file in $allowed) { if ($actual -notcontains $file) { $failures += "Allowed package file missing: $file" } }
-    $sysPath = Join-Path $root ([string]$Package.sys_relative_path)
-    if (-not (Test-Path -LiteralPath $sysPath -PathType Leaf)) { $failures += 'SYS file missing.' }
-    else {
-        $sysHash = (Get-FileHash -LiteralPath $sysPath -Algorithm SHA256).Hash
-        if ($sysHash -ne [string]$Package.expected_sys_sha256) { $failures += 'SYS hash mismatch.' }
-    }
-    if ([bool]$Package.signature_required) {
-        if (-not [bool]$Package.cat_present) { $failures += 'CAT is required but absent.' }
-        if (-not [bool]$Package.signature_identity_present) { $failures += 'Signature identity is required but absent.' }
-    }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'package-validation' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('package-validation-failed')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'package-validation' -Result PASS -Data $Package
+    $actual=@(Get-ChildItem $root -File -Recurse|ForEach-Object{$_.FullName.Substring($root.Length).TrimStart('\','/')-replace'\\','/'})
+    foreach($f in $actual){if(@($Package.allowed_files)-notcontains$f-or$f-match'(?i)\.(exe|dll|pfx|p12|pem|key|pvk|snk|cer|crt)$'){$fail+="unauthorized-file:$f"}}
+    $sys=Join-Path $root ([string]$Package.sys_relative_path)
+    if(-not(Test-Path $sys -PathType Leaf)-or(Get-FileHash $sys -Algorithm SHA256).Hash-ne$Package.expected_sys_sha256){$fail+='sys-identity-invalid'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult package-validation FAIL PACKAGE_SEMANTICS_INVALID ($fail-join';') @('package-validation-failed','unexpected-setupapi-match')}
+    New-ChatpadRuntimeCheckResult package-validation PASS PACKAGE_SEMANTICS_VALID -Data $Package
 }
 
 function Test-ChatpadSigningContract {
     param([Parameter(Mandatory)]$State)
-    $failures = @()
-    foreach ($field in @('method','certificate_thumbprint','subject','issuer','trust_status','private_key_present','eku','valid_from_utc','valid_to_utc','timestamping_plan','sys_signature_state','cat_signature_state','test_signing_state','secure_boot_state','hvci_state','code_integrity_state','credential_scope','evidence_object_id')) {
-        if ($null -eq $State.$field -or [string]::IsNullOrWhiteSpace([string]$State.$field)) { $failures += "Missing $field." }
-    }
-    if ([string]$State.trust_status -ne 'trusted') { $failures += 'Certificate is not trusted.' }
-    if (-not [bool]$State.private_key_present) { $failures += 'Private key is missing.' }
-    if (@($State.eku) -notcontains 'Code Signing') { $failures += 'Code Signing EKU is missing.' }
-    $now = [datetime]$State.validation_time_utc
-    if ($now -lt [datetime]$State.valid_from_utc -or $now -gt [datetime]$State.valid_to_utc) { $failures += 'Certificate validity window does not include validation time.' }
-    if ([string]$State.sys_signature_state -ne 'signed' -or [string]$State.cat_signature_state -ne 'signed') { $failures += 'SYS and CAT signatures must be signed for selected method.' }
-    if ([string]$State.method -eq 'LocalTestCertificate' -and [string]$State.credential_scope -ne 'local-test') { $failures += 'Local test must not use release credentials.' }
-    if ([string]$State.method -eq 'LocalTestCertificate' -and [string]$State.test_signing_state -ne 'planned-enabled') { $failures += 'Local test certificate requires planned test-signing state.' }
-    if ([string]$State.secure_boot_state -eq 'enabled' -and [string]$State.method -eq 'LocalTestCertificate') { $failures += 'Secure Boot is incompatible with this local test-signing plan.' }
-    if ([string]$State.hvci_state -eq 'enabled-incompatible') { $failures += 'HVCI state is incompatible.' }
-    if ([string]$State.timestamping_plan -eq 'missing') { $failures += 'Timestamping plan is missing.' }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'signing-readiness' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('signing-identity-wrong','windows-rejects-signature')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'signing-readiness' -Result PASS -Data $State
+    $required=@('method','package_identity','sys_identity','cat_identity','certificate_thumbprint','certificate_subject','certificate_issuer','signature_thumbprint','signature_subject','signature_issuer','trust_status','private_key_present','key_usage','eku','valid_from_utc','valid_to_utc','validation_time_utc','fresh_until_utc','timestamping_policy','sys_signature_identity','cat_signature_identity','test_signing_state','secure_boot_state','hvci_state','code_integrity_state','credential_scope','session_id','host_id','source_classification')
+    $fail=@();foreach($f in $required){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $State $f))){$fail+="missing:$f"}}
+    if($State.source_classification-notin@('synthetic','live')){$fail+='invalid-source'}
+    if($State.trust_status-ne'trusted'-or-not[bool]$State.private_key_present-or@($State.eku)-notcontains'Code Signing'-or@($State.key_usage)-notcontains'digitalSignature'){$fail+='certificate-capability-invalid'}
+    if($State.certificate_thumbprint-ne$State.signature_thumbprint-or$State.certificate_subject-ne$State.signature_subject-or$State.certificate_issuer-ne$State.signature_issuer){$fail+='certificate-signature-identity-mismatch'}
+    if($State.sys_signature_identity-ne$State.sys_identity-or$State.cat_signature_identity-ne$State.package_identity){$fail+='signature-package-identity-mismatch'}
+    try{if([datetime]$State.validation_time_utc-lt[datetime]$State.valid_from_utc-or[datetime]$State.validation_time_utc-gt[datetime]$State.valid_to_utc-or[datetime]$State.validation_time_utc-gt[datetime]$State.fresh_until_utc){$fail+='stale-or-invalid-time'}}catch{$fail+='invalid-time'}
+    if($State.timestamping_policy-ne'required-before-runtime'){$fail+='timestamp-policy-invalid'}
+    if($State.code_integrity_state-ne'compatible'-or$State.hvci_state-notin@('disabled','enabled-compatible')-or$State.secure_boot_state-notin@('disabled','enabled-compatible')-or$State.test_signing_state-ne'planned-enabled'){$fail+='host-security-incompatible'}
+    if($State.method-eq'LocalTestCertificate'-and$State.credential_scope-ne'local-test'){$fail+='credential-scope-invalid'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult signing-readiness FAIL SIGNING_STATE_INVALID ($fail-join';') @('signing-identity-wrong','windows-rejects-signature')}
+    New-ChatpadRuntimeCheckResult signing-readiness PASS SIGNING_STATE_VALID -Data $State
 }
 
 function Test-ChatpadHostStateContract {
     param([Parameter(Mandatory)]$State)
-    $required = @('os_edition','os_version','os_build','architecture','is_administrator','powershell_version','system_time_utc','timezone','secure_boot','test_signing','code_integrity','hvci','device_guard','boot_configuration_id','wdk_tools','debugging_tools','required_commands','evidence_root_writable','evidence_root_contained','host_id','capture_timestamp_utc','fresh_until_utc','source_classification')
-    $missing = @()
-    foreach ($field in $required) { if ($null -eq $State.$field -or [string]::IsNullOrWhiteSpace([string]$State.$field)) { $missing += $field } }
-    if ([datetime]$State.capture_timestamp_utc -gt [datetime]$State.fresh_until_utc) { $missing += 'Host capture freshness window invalid.' }
-    if (-not [bool]$State.evidence_root_writable -or -not [bool]$State.evidence_root_contained) { $missing += 'Evidence root is not ready.' }
-    if ($missing.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'host-preflight' -Result FAIL -Reason ($missing -join '; ') -StopConditionIds @('prerequisite-changed-after-approval','runtime-evidence-write-failed')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'host-preflight' -Result PASS -Data $State
+    $required=@('os_edition','os_version','os_build','architecture','is_administrator','powershell_version','system_time_utc','timezone','secure_boot','test_signing','code_integrity','hvci','device_guard','boot_configuration_id','boot_evidence_id','wdk_tool_identities','debug_tool_identities','required_command_identities','evidence_root_writable','evidence_root_contained','host_id','session_id','capture_timestamp_utc','fresh_until_utc','validation_time_utc','source_classification')
+    $fail=@();foreach($f in $required){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $State $f))){$fail+="missing:$f"}}
+    if(-not[bool]$State.is_administrator){$fail+='administrator-required'}
+    if($State.architecture-ne'x64'){$fail+='architecture-unsupported'}
+    if($State.source_classification-notin@('synthetic','live')){$fail+='invalid-source'}
+    if($State.secure_boot-notin@('disabled','enabled-compatible')-or$State.test_signing-ne'planned-enabled'-or$State.code_integrity-ne'compatible'-or$State.hvci-notin@('disabled','enabled-compatible')-or$State.device_guard-notin@('disabled','enabled-compatible')){$fail+='security-state-unknown-or-incompatible'}
+    try{if([datetime]$State.validation_time_utc-gt[datetime]$State.fresh_until_utc){$fail+='stale'}}catch{$fail+='invalid-time'}
+    if(-not[bool]$State.evidence_root_writable-or-not[bool]$State.evidence_root_contained){$fail+='evidence-root-not-ready'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult host-preflight FAIL HOST_STATE_INVALID ($fail-join';') @('prerequisite-changed-after-approval','runtime-evidence-write-failed')}
+    New-ChatpadRuntimeCheckResult host-preflight PASS HOST_STATE_VALID -Data $State
 }
 
 function Test-ChatpadEvidenceDirectoryContract {
     param([Parameter(Mandatory)]$State)
-    $failures = @()
-    foreach ($field in @('approved_root','evidence_directory','session_id','source_classification')) {
-        if ([string]::IsNullOrWhiteSpace([string]$State.$field)) { $failures += "Missing $field." }
-    }
-    if (-not [IO.Path]::IsPathRooted([string]$State.approved_root) -or -not [IO.Path]::IsPathRooted([string]$State.evidence_directory)) { $failures += 'Evidence paths must be absolute.' }
-    if (-not (Test-ChatpadPathContained -Root $State.approved_root -Candidate $State.evidence_directory)) { $failures += 'Evidence directory escapes approved root.' }
-    if ([string]$State.evidence_directory -match '\.\.') { $failures += 'Evidence directory contains traversal.' }
-    foreach ($flag in @('exists_before_session','stale_session','session_id_reused','has_reparse_point','has_symlink_or_junction','is_unc_path','inside_repository','lock_exists')) {
-        if ([bool]$State.$flag) { $failures += "$flag is not allowed." }
-    }
-    if ([string]$State.session_id -notmatch '^CHATPAD-[0-9]{8}T[0-9]{6}Z-[A-Z0-9]{6,}$') { $failures += 'Session ID format is invalid.' }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'evidence-directory' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('runtime-evidence-write-failed')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'evidence-directory' -Result PASS -Data $State
+    $fail=@();foreach($f in @('approved_root','evidence_directory','session_id','host_id','source_classification','session_marker_id','created_utc','fresh_until_utc','validation_time_utc')){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $State $f))){$fail+="missing:$f"}}
+    $source=[string](Get-ChatpadProperty $State source_classification '')
+    $root=[string](Get-ChatpadProperty $State approved_root '')
+    $path=[string](Get-ChatpadProperty $State evidence_directory '')
+    $session=[string](Get-ChatpadProperty $State session_id '')
+    if($source-notin@('synthetic','live')){$fail+='invalid-source'}
+    if(-not[IO.Path]::IsPathRooted($root)-or-not[IO.Path]::IsPathRooted($path)-or-not(Test-ChatpadPathContained $root $path)){$fail+='path-not-contained'}
+    try{if([IO.Path]::GetFileName([IO.Path]::GetFullPath($path))-ne$session){$fail+='session-path-unlinked'}}catch{$fail+='session-path-unlinked'}
+    foreach($flag in @('stale_session','session_id_reused','has_reparse_point','has_symlink_or_junction','inside_repository','lock_owned_by_other')){if([bool](Get-ChatpadProperty $State $flag $false)){$fail+=$flag}}
+    if([bool](Get-ChatpadProperty $State is_unc_path $false)-and-not[bool](Get-ChatpadProperty $State unc_allowed $false)){$fail+='unc-not-allowed'}
+    if([bool](Get-ChatpadProperty $State exists_before_session $false)-and-not[bool](Get-ChatpadProperty $State existing_empty_approved $false)){$fail+='existing-directory-not-approved'}
+    try{if([datetime]$State.validation_time_utc-gt[datetime]$State.fresh_until_utc){$fail+='stale'}}catch{$fail+='invalid-time'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult evidence-directory FAIL EVIDENCE_DIRECTORY_INVALID ($fail-join';') @('runtime-evidence-write-failed')}
+    New-ChatpadRuntimeCheckResult evidence-directory PASS EVIDENCE_DIRECTORY_VALID -Data $State
 }
 
 function Test-ChatpadWppPlanContract {
     param([Parameter(Mandatory)]$Plan)
-    $failures = @()
-    if ([string]$Plan.provider_guid -ne $script:AcceptedProviderGuid) { $failures += 'Trace provider GUID is not accepted.' }
-    if ([string]$Plan.provider_guid -match '[\*\?]') { $failures += 'Wildcard provider is not allowed.' }
-    if ([string]::IsNullOrWhiteSpace([string]$Plan.session_name) -or [bool]$Plan.session_name_reused) { $failures += 'Trace session name is not unique.' }
-    if ([bool]$Plan.output_exists -or [bool]$Plan.reuses_stale_output) { $failures += 'Trace output path is stale or already exists.' }
-    if (-not [bool]$Plan.output_under_evidence_root) { $failures += 'Trace output escapes evidence root.' }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'wpp-plan' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('trace-provider-wrong','runtime-evidence-write-failed')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'wpp-plan' -Result PASS -Data $Plan
+    $fail=@();foreach($f in @('session_id','host_id','source_classification','provider_guid','session_name','output_path','approved_root','start_timestamp_plan','stop_timestamp_plan','prerequisite_identities','operations')){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Plan $f))){$fail+="missing:$f"}}
+    $provider=[string](Get-ChatpadProperty $Plan provider_guid '')
+    $source=[string](Get-ChatpadProperty $Plan source_classification '')
+    $root=[string](Get-ChatpadProperty $Plan approved_root '')
+    $output=[string](Get-ChatpadProperty $Plan output_path '')
+    if($provider-ne$script:AcceptedProviderGuid){$fail+='provider-invalid'}
+    if($source-notin@('synthetic','live')){$fail+='invalid-source'}
+    if(-not(Test-ChatpadPathContained $root $output)-or[bool](Get-ChatpadProperty $Plan output_exists $false)-or[bool](Get-ChatpadProperty $Plan stale_output $false)){$fail+='output-path-invalid'}
+    $ops=@(Get-ChatpadProperty $Plan operations @());foreach($type in @('trace-start','trace-stop','preserve','hash')){if(@($ops|Where-Object{(Get-ChatpadProperty $_ operation_type '')-eq$type}).Count-ne1){$fail+="missing-operation:$type"}}
+    $session=[string](Get-ChatpadProperty $Plan session_id '');$host=[string](Get-ChatpadProperty $Plan host_id '')
+    if(@($ops|Where-Object{(Get-ChatpadProperty $_ session_id '')-ne$session-or(Get-ChatpadProperty $_ host_id '')-ne$host}).Count){$fail+='operation-linkage-invalid'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult wpp-plan FAIL WPP_PLAN_INVALID ($fail-join';') @('trace-provider-wrong','runtime-evidence-write-failed')}
+    New-ChatpadRuntimeCheckResult wpp-plan PASS WPP_PLAN_VALID -Data $Plan
 }
 
 function Test-ChatpadEventLogPlanContract {
     param([Parameter(Mandatory)]$Plan)
-    $failures = @()
-    foreach ($channel in @('System','Microsoft-Windows-CodeIntegrity/Operational','Microsoft-Windows-Kernel-PnP/Configuration')) {
-        if (@($Plan.required_channels) -notcontains $channel) { $failures += "Required channel missing: $channel" }
-    }
-    if ([string]$Plan.capture_phase -notin @('baseline','post-test')) { $failures += 'Capture phase must be baseline or post-test.' }
-    if (-not [bool]$Plan.session_bound_time_window) { $failures += 'Time window is not session-bound.' }
-    if (-not [bool]$Plan.outputs_fresh_and_contained) { $failures += 'Event-log outputs are not fresh and contained.' }
-    if ([bool]$Plan.clears_logs -or [bool]$Plan.configures_channels) { $failures += 'Log clearing or channel configuration is forbidden.' }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'event-log-plan' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('runtime-evidence-write-failed')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'event-log-plan' -Result PASS -Data $Plan
+    $fail=@();foreach($f in @('session_id','host_id','source_classification','capture_phase','window_start_utc','window_end_utc','required_channels','channel_availability','approved_root','output_paths','operations')){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Plan $f))){$fail+="missing:$f"}}
+    $source=[string](Get-ChatpadProperty $Plan source_classification '');$phase=[string](Get-ChatpadProperty $Plan capture_phase '')
+    if($source-notin@('synthetic','live')-or$phase-notin@('baseline','post-test')){$fail+='classification-invalid'}
+    $channels=@(Get-ChatpadProperty $Plan required_channels @());$availability=Get-ChatpadProperty $Plan channel_availability
+    foreach($channel in @('System','Microsoft-Windows-CodeIntegrity/Operational','Microsoft-Windows-Kernel-PnP/Configuration')){if($channels-notcontains$channel){$fail+="missing-channel:$channel"};if(-not[bool](Get-ChatpadProperty $availability $channel $false)){$fail+="channel-unavailable:$channel"}}
+    try{if([datetime](Get-ChatpadProperty $Plan window_start_utc '')-ge[datetime](Get-ChatpadProperty $Plan window_end_utc '')){$fail+='window-invalid'}}catch{$fail+='window-invalid'}
+    $paths=@(Get-ChatpadProperty $Plan output_paths @());if(@($paths|Sort-Object -Unique).Count-ne$paths.Count){$fail+='duplicate-output'}
+    $root=[string](Get-ChatpadProperty $Plan approved_root '');foreach($p in $paths){if(-not(Test-ChatpadPathContained $root $p)){$fail+='output-not-contained'}}
+    $ops=@(Get-ChatpadProperty $Plan operations @());if($ops.Count-ne$paths.Count-or@($ops|Where-Object{(Get-ChatpadProperty $_ operation_type '')-ne'event-export'-or(Get-ChatpadProperty $_ status '')-ne'blocked'}).Count){$fail+='export-operations-invalid'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult event-log-plan FAIL EVENT_LOG_PLAN_INVALID ($fail-join';') @('runtime-evidence-write-failed','unexpected-code-integrity-error')}
+    New-ChatpadRuntimeCheckResult event-log-plan PASS EVENT_LOG_PLAN_VALID -Data $Plan
 }
 
 function Test-ChatpadInstallPlanContract {
     param([Parameter(Mandatory)]$Plan)
-    $requiredPasses = @('repository_identity','accepted_baseline_identity','package_validation','signing_readiness','host_preflight','target_selection','current_driver_capture','rollback_readiness','evidence_directory')
-    $failures = @()
-    foreach ($field in $requiredPasses) {
-        if ([string]$Plan.$field -ne 'PASS') { $failures += "Prerequisite is not PASS: $field" }
-    }
-    if (-not [bool]$Plan.exact_instance_binding_available) { $failures += 'Exact-instance binding method is not implemented.' }
-    foreach ($op in @($Plan.operations)) {
-        if ([string]$op.mutation_classification -eq 'broad-host-mutation' -and [bool]$op.approved_as_target_specific) { $failures += 'Broad operation is incorrectly approved as target-specific.' }
-        if (@($op.arguments) -match '[\*\?]') { $failures += 'Install operation contains wildcard.' }
-    }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'install-plan' -Result BLOCKED -Reason ($failures -join '; ') -StopConditionIds @('command-differs-from-approved-plan','wrong-device-binds')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'install-plan' -Result PASS -Data $Plan
+    $fail=@();foreach($f in @('repository_identity','accepted_baseline_identity','package_validation','signing_readiness','host_preflight','target_selection','current_driver_capture','rollback_readiness','evidence_directory')){if((Get-ChatpadProperty $Plan $f)-ne'PASS'){$fail+="prerequisite:$f"}}
+    if((Get-ChatpadProperty $Plan source_classification '')-ne'live'){$fail+='live-prerequisites-required'}
+    $ops=@(Get-ChatpadProperty $Plan operations @());if($ops.Count-eq0){$fail+='operation-list-empty'}
+    foreach($op in $ops){$c=Test-ChatpadOperationPlanContract $op;if($c.result-ne'PASS'){$fail+="invalid-operation:$([string](Get-ChatpadProperty $op operation_id '<missing>'))"}}
+    $bind=@($ops|Where-Object{(Get-ChatpadProperty $_ operation_type '')-eq'bind'-and(Get-ChatpadProperty $_ target_scope '')-eq'exact-device'-and(Get-ChatpadProperty $_ approved_as_target_specific $false)-eq$true-and(Get-ChatpadProperty $_ status '')-eq'planned'})
+    $verify=@($ops|Where-Object{$_.operation_type-eq'verify'-and$_.target_scope-eq'exact-device'-and$_.status-eq'planned'})
+    $restore=@($ops|Where-Object{$_.operation_type-eq'restore'-and$_.target_scope-eq'exact-device'-and$_.status-eq'planned'})
+    if($bind.Count-ne1){$fail+='executable-exact-binding-missing'};if($verify.Count-ne1){$fail+='verification-missing'};if($restore.Count-ne1){$fail+='rollback-missing'}
+    if(@($ops|Where-Object{(Get-ChatpadProperty $_ status '')-eq'blocked'}).Count){$fail+='blocked-operation-present'}
+    $targets=@($ops|Where-Object{(Get-ChatpadProperty $_ target_scope '')-eq'exact-device'}|ForEach-Object{Get-ChatpadProperty $_ target_instance_id ''}|Sort-Object -Unique);if($targets.Count-ne1){$fail+='target-mismatch'}
+    $sessions=@($ops|ForEach-Object{Get-ChatpadProperty $_ session_id ''}|Sort-Object -Unique);if($sessions.Count-ne1){$fail+='session-mismatch'}
+    if($fail.Count-eq0){$fail+='exact-instance-binding-implementation-not-authorized'}
+    New-ChatpadRuntimeCheckResult install-plan BLOCKED BLOCKED_NOT_IMPLEMENTED ($fail-join';') @('command-differs-from-approved-plan','wrong-device-binds') -Data ([pscustomobject]@{framework_validation='PASS';live_installation_readiness='BLOCKED';blocker='BLOCKED_NOT_IMPLEMENTED';executable_exact_binding_operations=0;executable_exact_restoration_operations=0;broad_approved_install_operations=0;broad_approved_rollback_operations=0;downstream_live_gates='BLOCKED'})
 }
 
 function Test-ChatpadPostTestReconciliationContract {
     param([Parameter(Mandatory)]$State)
-    $failures = @()
-    foreach ($field in @('approved_readiness_identity','accepted_baseline_identity','host_baseline','host_final','target_baseline','target_final','previous_driver','test_driver','service_state','package_state','boot_security_state','trace_state','event_log_evidence','executed_operations','rollback_operations','residual_packages','residual_services','unresolved_deviations','expected_mode')) {
-        if ($null -eq $State.$field) { $failures += "Missing $field." }
-    }
-    $classification = [string]$State.final_classification
-    if ($classification -notin @('approved-test-state','fully-restored-baseline','partial-rollback','unexplained-deviation','blocked-missing-evidence')) { $failures += 'Unknown final classification.' }
-    if ($classification -in @('partial-rollback','unexplained-deviation','blocked-missing-evidence')) { $failures += "Final classification is not passable: $classification" }
-    if ([string]$State.expected_mode -eq 'restored-baseline' -and $classification -ne 'fully-restored-baseline') { $failures += 'Expected restored baseline was not reached.' }
-    if ([string]$State.expected_mode -eq 'test-state' -and $classification -ne 'approved-test-state') { $failures += 'Expected approved test state was not reached.' }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'post-test-reconciliation' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('rollback-cannot-be-guaranteed','prerequisite-changed-after-approval')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'post-test-reconciliation' -Result PASS -Data $State
+    $fail=@();foreach($f in @('session_id','host_id','source_classification','expected_mode','final_classification','host_baseline','host_final','target_baseline','target_final','previous_driver','final_driver','service_baseline','service_final','package_baseline','package_final','boot_security_baseline','boot_security_final','trace_state','executed_operations','rollback_operations','final_state_evidence_id','residual_packages','residual_services','unresolved_deviations')){if($null-eq$State.PSObject.Properties[$f]){$fail+="missing:$f"}}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult post-test-reconciliation FAIL RECONCILIATION_INVALID ($fail-join';') @('rollback-cannot-be-guaranteed','prerequisite-changed-after-approval')}
+    if($State.source_classification-notin@('synthetic','live')){$fail+='invalid-source'}
+    if($State.final_classification-eq'fully-restored-baseline'){
+        foreach($pair in @(@('host_baseline','host_final'),@('target_baseline','target_final'),@('previous_driver','final_driver'),@('service_baseline','service_final'),@('package_baseline','package_final'),@('boot_security_baseline','boot_security_final'))){if(((Get-ChatpadProperty $State $pair[0])|ConvertTo-Json -Compress -Depth 10)-ne((Get-ChatpadProperty $State $pair[1])|ConvertTo-Json -Compress -Depth 10)){$fail+="not-restored:$($pair[0])"}}
+        if($State.trace_state-ne'stopped'-or@($State.residual_packages).Count-or@($State.residual_services).Count-or@($State.unresolved_deviations).Count){$fail+='residual-state'}
+        $mutations=@($State.executed_operations|Where-Object{(Get-ChatpadProperty $_ status '')-eq'executed'});$rollbacks=@($State.rollback_operations|Where-Object{(Get-ChatpadProperty $_ status '')-eq'executed'})
+        if($mutations.Count-and$rollbacks.Count-lt$mutations.Count){$fail+='rollback-not-executed'}
+        if(-not(Test-ChatpadNonEmpty $State.final_state_evidence_id)){$fail+='final-evidence-missing'}
+    } elseif($State.final_classification-eq'approved-test-state'){if($State.expected_mode-ne'test-state'-or@($State.unresolved_deviations).Count){$fail+='test-state-invalid'}}
+    else{$fail+='non-passable-classification'}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult post-test-reconciliation FAIL RECONCILIATION_INVALID ($fail-join';') @('rollback-cannot-be-guaranteed','prerequisite-changed-after-approval','unrelated-device-changed','driver-service-fails-unexpectedly')}
+    New-ChatpadRuntimeCheckResult post-test-reconciliation PASS RECONCILIATION_VALID -Data $State
 }
 
 function Test-ChatpadEvidenceDocumentContract {
     param([Parameter(Mandatory)]$Document)
-    $failures = @()
-    if ([string]$Document.schema_version -ne 'chatpad-runtime-evidence-schema-v2') { $failures += 'Evidence document schema mismatch.' }
-    if ([string]$Document.session.session_id -notmatch '^CHATPAD-|^SYNTHETIC-') { $failures += 'Missing valid session ID.' }
-    $artifactIds = @()
-    foreach ($artifact in @($Document.artifacts)) {
-        if ($artifactIds -contains [string]$artifact.id) { $failures += "Duplicate artifact ID: $($artifact.id)" }
-        $artifactIds += [string]$artifact.id
-        if ([string]$artifact.relative_path -match '(^/|^[A-Za-z]:|\\\\|\.\.)') { $failures += "Artifact path is not contained: $($artifact.relative_path)" }
-        if ([string]$artifact.status -in @('executed','restored')) {
-            if ($null -eq $artifact.byte_size -or [int64]$artifact.byte_size -lt 0) { $failures += "Produced artifact lacks size: $($artifact.id)" }
-            if ([string]$artifact.sha256 -notmatch '^[A-Fa-f0-9]{64}$') { $failures += "Produced artifact lacks SHA-256: $($artifact.id)" }
-        }
-        if ([string]$artifact.evidence_classification -eq 'synthetic' -and [string]$Document.session.evidence_classification -eq 'live') { $failures += 'Synthetic artifact cannot satisfy live evidence.' }
+    $fail=@();if($Document.schema_version-ne'chatpad-runtime-evidence-schema-v3'){$fail+='schema-version'}
+    $session=Get-ChatpadProperty $Document session
+    foreach($f in @('session_id','host_id','evidence_classification','repository_identity')){if(-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $session $f))){$fail+="session:$f"}}
+    $artifactIds=@();foreach($a in @($Document.artifacts)){if($artifactIds-contains$a.id){$fail+='duplicate-artifact-id'}else{$artifactIds+=$a.id};if($a.session_id-ne$session.session_id-or$a.host_id-ne$session.host_id){$fail+='artifact-session-host'};if($session.evidence_classification-eq'live'-and$a.source_classification-ne'live'){$fail+='synthetic-in-live'};foreach($d in @($a.dependency_ids)){if($artifactIds-notcontains$d-and@($Document.artifacts.id)-notcontains$d){$fail+='unresolved-artifact-dependency'}}}
+    $opIds=@();foreach($o in @($Document.operations)){if($opIds-contains$o.operation_id){$fail+='duplicate-operation-id'}else{$opIds+=$o.operation_id};if($o.session_id-ne$session.session_id-or$o.host_id-ne$session.host_id){$fail+='operation-session-host'};if($session.evidence_classification-eq'live'-and$o.source_classification-ne'live'){$fail+='synthetic-operation-in-live'}}
+    foreach($o in @($Document.operations)){if($o.status-eq'rolled_back'){if(@($Document.operations|Where-Object{$_.operation_id-eq$o.rollback_operation_id-and$_.status-eq'executed'}).Count-ne1){$fail+='rollback-without-executed-operation'}}}
+    if($Document.result-eq'restored'){if(@($Document.operations|Where-Object{$_.status-in@('planned','blocked','failed')}).Count-or-not(Test-ChatpadNonEmpty (Get-ChatpadProperty $Document final_reconciliation_evidence_id))){$fail+='invalid-restored-transition'}}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult runtime-evidence FAIL EVIDENCE_SEMANTICS_INVALID ($fail-join';') @('runtime-evidence-write-failed')}
+    New-ChatpadRuntimeCheckResult runtime-evidence PASS EVIDENCE_SEMANTICS_VALID -Data $Document
+}
+
+function Test-ChatpadRuntimeObservationContract {
+    param([Parameter(Mandatory)]$Observation)
+    $id=[string](Get-ChatpadProperty $Observation stop_condition_id '')
+    if($id-notin@('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')){return New-ChatpadRuntimeCheckResult runtime-observer FAIL OBSERVER_CONDITION_INVALID 'Unknown runtime observation condition.' @('prerequisite-changed-after-approval')}
+    if(-not[bool](Get-ChatpadProperty $Observation evidence_available $false)){return New-ChatpadRuntimeCheckResult runtime-observer BLOCKED RUNTIME_EVIDENCE_NOT_AVAILABLE 'Runtime-only condition has not been evaluated.' @($id)}
+    if([bool](Get-ChatpadProperty $Observation triggered $false)){return New-ChatpadRuntimeCheckResult runtime-observer FAIL RUNTIME_STOP_CONDITION_TRIGGERED 'Runtime stop condition triggered.' @($id)}
+    New-ChatpadRuntimeCheckResult runtime-observer PASS RUNTIME_OBSERVATION_CLEAR -Data $Observation
+}
+
+function Test-ChatpadStopConditionRegisterContract {
+    param([Parameter(Mandatory)]$Register)
+    $conditions=@($Register.stop_conditions);$ids=@($conditions.id);$fail=@()
+    if($conditions.Count-ne20-or@($ids|Sort-Object -Unique).Count-ne20){$fail+='condition-count-or-duplicate'}
+    $executable=Get-ChatpadProperty $Register executable_linkage ([pscustomobject]@{})
+    $observers=Get-ChatpadProperty $Register runtime_observer_linkage ([pscustomobject]@{})
+    $operatorOnly=@(Get-ChatpadProperty $Register operator_only_conditions @())
+    foreach($c in $conditions){
+        foreach($f in @('id','detection_method','immediate_action','evidence_to_preserve','rollback_required','reboot_permitted','continuation_authority')){if($null-eq$c.PSObject.Properties[$f]){$fail+="missing:$($c.id):$f"}}
+        $classCount=0
+        if($null-ne$executable.PSObject.Properties[$c.id]){$classCount++}
+        if($null-ne$observers.PSObject.Properties[$c.id]){$classCount++}
+        if($operatorOnly-contains$c.id){$classCount++}
+        if($classCount-ne1){$fail+="classification:$($c.id)"}
     }
-    foreach ($op in @($Document.operations)) {
-        if ([string]$op.status -eq 'executed' -and $null -eq $op.command_result) { $failures += "Executed operation lacks command result: $($op.operation_id)" }
-        if ([string]$op.status -eq 'rolled_back' -and [string]::IsNullOrWhiteSpace([string]$op.rollback_evidence_id)) { $failures += "Rolled-back operation lacks rollback evidence: $($op.operation_id)" }
-        if ([string]$op.status -eq 'restored' -and [string]::IsNullOrWhiteSpace([string]$op.final_state_evidence_id)) { $failures += "Restored operation lacks final-state evidence: $($op.operation_id)" }
-    }
-    if ($failures.Count -gt 0) {
-        return New-ChatpadRuntimeCheckResult -Check 'runtime-evidence-schema' -Result FAIL -Reason ($failures -join '; ') -StopConditionIds @('runtime-evidence-write-failed')
-    }
-    return New-ChatpadRuntimeCheckResult -Check 'runtime-evidence-schema' -Result PASS -Data $Document
+    foreach($name in @($executable.PSObject.Properties.Name)+@($observers.PSObject.Properties.Name)+$operatorOnly){if($ids-notcontains$name){$fail+="unknown-link:$name"}}
+    foreach($name in @($observers.PSObject.Properties.Name)){if(@($observers.$name)-notcontains'Test-ChatpadRuntimeObservation.ps1'){$fail+="observer-missing:$name"}}
+    if($fail.Count){return New-ChatpadRuntimeCheckResult stop-condition-linkage FAIL STOP_LINKAGE_INVALID ($fail-join';') @('prerequisite-changed-after-approval')}
+    New-ChatpadRuntimeCheckResult stop-condition-linkage PASS STOP_LINKAGE_VALID -Data $Register
+}
+
+function Get-ChatpadRuntimeConstants {
+    [pscustomobject]@{readiness_branch=$script:ReadinessBranch;frozen_baseline_commit=$script:FrozenBaselineCommit;prior_implementation_commit=$script:PriorImplementationCommit;prior_finalization_commit=$script:PriorFinalizationCommit;accepted_provider_guid=$script:AcceptedProviderGuid;stop_condition_ids=@($script:KnownStopConditionIds)}
 }
 
 Export-ModuleMember -Function *-Chatpad*
