@@ -1,10 +1,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:ReadinessBranch = 'feature/runtime-bringup-stop-linkage-final-remediation'
+$script:ReadinessBranch = 'feature/runtime-bringup-observer-provenance-accounting-remediation'
 $script:FrozenBaselineCommit = 'f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-$script:PriorImplementationCommit = '4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6'
-$script:PriorFinalizationCommit = '30da5003aba75ef0f079c9a8c2c90df3768601d5'
+$script:PriorImplementationCommit = 'a810d8ba3438a08cfa4742e53be61f64be5aa58e'
+$script:PriorFinalizationCommit = '9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
 $script:AcceptedProviderGuid = '{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}'
 $script:AcceptedManifestPath = 'docs/evidence/runtime-instrumentation-implementation-manifest.json'
 $script:AcceptedManifestSize = 28088
@@ -730,13 +730,153 @@ function Test-ChatpadEvidenceDocumentContract {
     New-ChatpadRuntimeCheckResult runtime-evidence PASS EVIDENCE_SEMANTICS_VALID -Data $Document
 }
 
+function Get-ChatpadRuntimeObservationRequirement {
+    param([Parameter(Mandatory)][string]$ConditionId)
+    $requirements = @{
+        'unrelated-device-changed' = [pscustomobject]@{
+            evidence_type = 'device-inventory-diff'
+            payload_fields = @('condition_id','session_id','host_id','baseline_inventory_id','post_inventory_id','difference_analysis_id')
+            timestamp_pairs = @()
+        }
+        'driver-service-fails-unexpectedly' = [pscustomobject]@{
+            evidence_type = 'driver-service-transition'
+            payload_fields = @('condition_id','session_id','host_id','expected_service_identity','observed_service_state','expected_transition','observed_transition','result_or_event_id')
+            timestamp_pairs = @()
+        }
+        'unexpected-code-integrity-error' = [pscustomobject]@{
+            evidence_type = 'code-integrity-event'
+            payload_fields = @('condition_id','session_id','host_id','source_channel','event_id','event_timestamp','package_or_binary_correlation','session_window_start_utc','session_window_end_utc')
+            timestamp_pairs = @([pscustomobject]@{start='session_window_start_utc';end='session_window_end_utc'})
+        }
+        'unexpected-setupapi-match' = [pscustomobject]@{
+            evidence_type = 'setupapi-match-analysis'
+            payload_fields = @('condition_id','session_id','host_id','setupapi_source','target_instance_id','expected_package_or_inf','observed_match','session_window_start_utc','session_window_end_utc')
+            timestamp_pairs = @([pscustomobject]@{start='session_window_start_utc';end='session_window_end_utc'})
+        }
+        'input-behavior-unstable' = [pscustomobject]@{
+            evidence_type = 'input-behavior-observation'
+            payload_fields = @('condition_id','session_id','host_id','observation_method','observation_window_start_utc','observation_window_end_utc','expected_input_behavior','observed_instability','target_or_session_linkage')
+            timestamp_pairs = @([pscustomobject]@{start='observation_window_start_utc';end='observation_window_end_utc'})
+        }
+    }
+    if($requirements.ContainsKey($ConditionId)){return $requirements[$ConditionId]}
+    return $null
+}
+
+function Test-ChatpadRuntimeObservationRecordShape {
+    param($Observation)
+    $fail = [Collections.Generic.List[string]]::new()
+    if(-not(Test-ChatpadObject $Observation)){
+        return New-ChatpadRuntimeCheckResult runtime-observation-record FAIL OBSERVATION_RECORD_SHAPE_INVALID 'observation-not-object' @('prerequisite-changed-after-approval') -Data ([pscustomobject]@{record_structure_valid=$false;provenance_valid=$false})
+    }
+    $conditionId = [string](Get-ChatpadProperty $Observation stop_condition_id '')
+    $requirement = Get-ChatpadRuntimeObservationRequirement $conditionId
+    if($null-eq$requirement){$fail.Add('condition-id-unknown')}
+    foreach($field in @('observation_id','stop_condition_id','session_id','host_id','producer_identity','observer_script_path','capture_started_utc','capture_completed_utc','validation_time_utc','evidence_artifact_id','evidence_artifact_relative_path','evidence_artifact_sha256','evidence_type','applicable_stop_condition_id')){
+        if(-not(Test-ChatpadStringField $Observation $field)){$fail.Add("missing-or-invalid:$field")}
+    }
+    $source = [string](Get-ChatpadProperty $Observation source_classification '')
+    if($source-notin@('live','synthetic','sample','planned','unknown')){$fail.Add('source-classification-invalid')}
+    $mode = [string](Get-ChatpadProperty $Observation observation_mode '')
+    if($mode-notin@('runtime-evaluation','contract-only-fixture-validation','synthetic-negative-testing')){$fail.Add('observation-mode-invalid')}
+    $evidenceAvailableProperty = $Observation.PSObject.Properties['evidence_available']
+    $triggeredProperty = $Observation.PSObject.Properties['triggered']
+    $syntheticProperty = $Observation.PSObject.Properties['synthetic']
+    if($null-eq$evidenceAvailableProperty-or$evidenceAvailableProperty.Value-isnot[bool]){$fail.Add('evidence-available-not-boolean')}
+    if($null-eq$triggeredProperty-or$triggeredProperty.Value-isnot[bool]){$fail.Add('triggered-not-boolean')}
+    if($null-eq$syntheticProperty-or$syntheticProperty.Value-isnot[bool]){$fail.Add('synthetic-marker-not-boolean')}
+    elseif(($source-eq'live'-and$syntheticProperty.Value)-or($source-ne'live'-and-not$syntheticProperty.Value)){$fail.Add('synthetic-marker-source-mismatch')}
+    if(($source-eq'live'-and$mode-ne'runtime-evaluation')-or($source-ne'live'-and$mode-eq'runtime-evaluation')){$fail.Add('observation-mode-source-mismatch')}
+    if((Get-ChatpadProperty $Observation producer_identity '')-ne'ChatpadRuntimeObservation/v1'){$fail.Add('producer-identity-invalid')}
+    if((Get-ChatpadProperty $Observation observer_script_path '')-ne'tools/Test-ChatpadRuntimeObservation.ps1'){$fail.Add('observer-script-identity-invalid')}
+    if((Get-ChatpadProperty $Observation applicable_stop_condition_id '')-ne$conditionId){$fail.Add('applicable-stop-condition-mismatch')}
+
+    $start=$null;$completion=$null;$validation=$null
+    try{$start=[datetimeoffset]([string](Get-ChatpadProperty $Observation capture_started_utc ''))}catch{$fail.Add('capture-start-invalid')}
+    try{$completion=[datetimeoffset]([string](Get-ChatpadProperty $Observation capture_completed_utc ''))}catch{$fail.Add('capture-completion-invalid')}
+    try{$validation=[datetimeoffset]([string](Get-ChatpadProperty $Observation validation_time_utc ''))}catch{$fail.Add('validation-time-invalid')}
+    if($null-ne$start-and$null-ne$completion-and$completion-lt$start){$fail.Add('capture-completion-before-start')}
+    $maximumAgeSeconds=$null
+    $maximumAgeValue=Get-ChatpadProperty $Observation maximum_age_seconds $null
+    if($maximumAgeValue-is[bool]-or$maximumAgeValue-is[array]){$fail.Add('maximum-age-invalid')}
+    else{try{$maximumAgeSeconds=[int]$maximumAgeValue;if($maximumAgeSeconds-le0){throw 'invalid'}}catch{$fail.Add('maximum-age-invalid')}}
+    if($null-ne$completion-and$null-ne$validation-and$null-ne$maximumAgeSeconds){
+        if(($validation-$completion).TotalSeconds-gt$maximumAgeSeconds){$fail.Add('evidence-stale')}
+        if(($completion-$validation).TotalSeconds-gt300){$fail.Add('evidence-future-dated')}
+    }
+
+    $artifact = Get-ChatpadProperty $Observation evidence_artifact $null
+    if(-not(Test-ChatpadObject $artifact)){$fail.Add('evidence-artifact-not-object')}
+    else{
+        foreach($field in @('artifact_id','relative_path','sha256','evidence_type','session_id','host_id','condition_id','collection_result')){
+            if(-not(Test-ChatpadStringField $artifact $field)){$fail.Add("artifact-missing-or-invalid:$field")}
+        }
+        if((Get-ChatpadProperty $artifact artifact_id '')-ne(Get-ChatpadProperty $Observation evidence_artifact_id '')){$fail.Add('artifact-id-mismatch')}
+        if((Get-ChatpadProperty $artifact relative_path '')-ne(Get-ChatpadProperty $Observation evidence_artifact_relative_path '')){$fail.Add('artifact-path-mismatch')}
+        if((Get-ChatpadProperty $artifact sha256 '')-ne(Get-ChatpadProperty $Observation evidence_artifact_sha256 '')){$fail.Add('artifact-hash-mismatch')}
+        if((Get-ChatpadProperty $artifact evidence_type '')-ne(Get-ChatpadProperty $Observation evidence_type '')){$fail.Add('artifact-evidence-type-mismatch')}
+        if((Get-ChatpadProperty $artifact session_id '')-ne(Get-ChatpadProperty $Observation session_id '')){$fail.Add('artifact-session-mismatch')}
+        if((Get-ChatpadProperty $artifact host_id '')-ne(Get-ChatpadProperty $Observation host_id '')){$fail.Add('artifact-host-mismatch')}
+        if((Get-ChatpadProperty $artifact condition_id '')-ne$conditionId){$fail.Add('artifact-condition-mismatch')}
+        if((Get-ChatpadProperty $artifact collection_result '')-ne'collected'){$fail.Add('artifact-not-collected')}
+        $sizeValue=Get-ChatpadProperty $artifact byte_size $null
+        if($null-eq$sizeValue-or$sizeValue-is[bool]-or$sizeValue-is[array]){$fail.Add('artifact-size-invalid')}
+        else{try{if([long]$sizeValue-lt0){throw 'invalid'}}catch{$fail.Add('artifact-size-invalid')}}
+    }
+    $relativePath=[string](Get-ChatpadProperty $Observation evidence_artifact_relative_path '')
+    $normalizedPath=$relativePath.Replace('\','/')
+    if($normalizedPath-ne$relativePath-or[IO.Path]::IsPathRooted($normalizedPath)-or@($normalizedPath-split'/')-contains'..'-or$normalizedPath-match'[\*\?\[]'-or-not$normalizedPath.StartsWith('artifacts/runtime-evidence/',[StringComparison]::OrdinalIgnoreCase)){$fail.Add('artifact-path-invalid')}
+    if([string](Get-ChatpadProperty $Observation evidence_artifact_sha256 '')-notmatch'^[A-Fa-f0-9]{64}$'){$fail.Add('artifact-sha256-invalid')}
+    if($null-ne$requirement-and(Get-ChatpadProperty $Observation evidence_type '')-ne$requirement.evidence_type){$fail.Add('evidence-type-condition-mismatch')}
+
+    $payload=Get-ChatpadProperty $Observation condition_evidence $null
+    if(-not(Test-ChatpadObject $payload)){$fail.Add('condition-evidence-not-object')}
+    elseif($null-ne$requirement){
+        foreach($field in $requirement.payload_fields){
+            if(-not(Test-ChatpadStringField $payload $field)){$fail.Add("condition-evidence-missing:$field")}
+        }
+        if((Get-ChatpadProperty $payload condition_id '')-ne$conditionId){$fail.Add('condition-evidence-condition-mismatch')}
+        if((Get-ChatpadProperty $payload session_id '')-ne(Get-ChatpadProperty $Observation session_id '')){$fail.Add('condition-evidence-session-mismatch')}
+        if((Get-ChatpadProperty $payload host_id '')-ne(Get-ChatpadProperty $Observation host_id '')){$fail.Add('condition-evidence-host-mismatch')}
+        foreach($pair in $requirement.timestamp_pairs){
+            $payloadStart=$null;$payloadEnd=$null
+            try{$payloadStart=[datetimeoffset]([string](Get-ChatpadProperty $payload $pair.start ''))}catch{$fail.Add("condition-evidence-time-invalid:$($pair.start)")}
+            try{$payloadEnd=[datetimeoffset]([string](Get-ChatpadProperty $payload $pair.end ''))}catch{$fail.Add("condition-evidence-time-invalid:$($pair.end)")}
+            if($null-ne$payloadStart-and$null-ne$payloadEnd-and$payloadEnd-lt$payloadStart){$fail.Add("condition-evidence-time-order:$($pair.start)")}
+        }
+    }
+    $data=[pscustomobject][ordered]@{
+        record_structure_valid=($fail.Count-eq0)
+        provenance_valid=($fail.Count-eq0-and$source-eq'live')
+        live_evidence_available=($fail.Count-eq0-and$source-eq'live'-and[bool](Get-ChatpadProperty $Observation evidence_available $false))
+        runtime_condition_evaluated=$false
+        runtime_condition_triggered=$false
+        continuation_allowed=$false
+    }
+    if($fail.Count){return New-ChatpadRuntimeCheckResult runtime-observation-record FAIL OBSERVATION_RECORD_SHAPE_INVALID ($fail-join';') @($(if($conditionId-in$script:KnownStopConditionIds){$conditionId}else{'prerequisite-changed-after-approval'})) -Data $data}
+    New-ChatpadRuntimeCheckResult runtime-observation-record PASS OBSERVATION_RECORD_SHAPE_VALID -Data $data
+}
+
 function Test-ChatpadRuntimeObservationContract {
     param($Observation)
     $id=[string](Get-ChatpadProperty $Observation stop_condition_id '')
-    if($id-notin@('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')){return New-ChatpadRuntimeCheckResult runtime-observer FAIL OBSERVER_CONDITION_INVALID 'Unknown runtime observation condition.' @('prerequisite-changed-after-approval')}
-    if(-not[bool](Get-ChatpadProperty $Observation evidence_available $false)){return New-ChatpadRuntimeCheckResult runtime-observer BLOCKED RUNTIME_EVIDENCE_NOT_AVAILABLE 'Runtime-only condition has not been evaluated.' @($id)}
-    if([bool](Get-ChatpadProperty $Observation triggered $false)){return New-ChatpadRuntimeCheckResult runtime-observer FAIL RUNTIME_STOP_CONDITION_TRIGGERED 'Runtime stop condition triggered.' @($id)}
-    New-ChatpadRuntimeCheckResult runtime-observer PASS RUNTIME_OBSERVATION_CLEAR -Data $Observation
+    if($id-notin@('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')){return New-ChatpadRuntimeCheckResult runtime-observer FAIL OBSERVER_CONDITION_INVALID 'Unknown runtime observation condition.' @('prerequisite-changed-after-approval') -Data ([pscustomobject]@{record_structure_valid=$false;provenance_valid=$false;live_evidence_available=$false;runtime_condition_evaluated=$false;runtime_condition_triggered=$false;continuation_allowed=$false})}
+    if((Get-ChatpadProperty $Observation evidence_available $false)-ne$true){return New-ChatpadRuntimeCheckResult runtime-observer BLOCKED RUNTIME_EVIDENCE_NOT_AVAILABLE 'Runtime-only condition has not been evaluated.' @($id) -Data ([pscustomobject]@{record_structure_valid=$false;provenance_valid=$false;live_evidence_available=$false;runtime_condition_evaluated=$false;runtime_condition_triggered=$false;continuation_allowed=$false})}
+    $shape=Test-ChatpadRuntimeObservationRecordShape $Observation
+    if($shape.result-ne'PASS'){return New-ChatpadRuntimeCheckResult runtime-observer FAIL RUNTIME_OBSERVATION_PROVENANCE_INVALID $shape.reason @($id) -Data ([pscustomobject]@{record_structure_valid=$false;provenance_valid=$false;live_evidence_available=$false;runtime_condition_evaluated=$false;runtime_condition_triggered=$false;continuation_allowed=$false})}
+    if((Get-ChatpadProperty $Observation source_classification '')-ne'live'-or(Get-ChatpadProperty $Observation observation_mode '')-ne'runtime-evaluation'-or(Get-ChatpadProperty $Observation synthetic $true)-ne$false){return New-ChatpadRuntimeCheckResult runtime-observer BLOCKED RUNTIME_EVIDENCE_NOT_AVAILABLE 'Only authentic live runtime evidence may satisfy a runtime observation.' @($id) -Data ([pscustomobject]@{record_structure_valid=$true;provenance_valid=$false;live_evidence_available=$false;runtime_condition_evaluated=$false;runtime_condition_triggered=$false;continuation_allowed=$false})}
+    $root=[IO.Path]::GetFullPath((Get-ChatpadRepoRoot))
+    $artifactPath=[IO.Path]::GetFullPath((Join-Path $root ([string](Get-ChatpadProperty $Observation evidence_artifact_relative_path ''))))
+    $artifact=Get-ChatpadProperty $Observation evidence_artifact $null
+    if(-not$artifactPath.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not(Test-Path -LiteralPath $artifactPath -PathType Leaf)){
+        return New-ChatpadRuntimeCheckResult runtime-observer FAIL RUNTIME_OBSERVATION_PROVENANCE_INVALID 'Live evidence artifact is missing or outside the repository evidence root.' @($id) -Data ([pscustomobject]@{record_structure_valid=$true;provenance_valid=$false;live_evidence_available=$false;runtime_condition_evaluated=$false;runtime_condition_triggered=$false;continuation_allowed=$false})
+    }
+    $artifactItem=Get-Item -LiteralPath $artifactPath
+    if($artifactItem.Length-ne[long](Get-ChatpadProperty $artifact byte_size -1)-or(Get-FileHash -LiteralPath $artifactPath -Algorithm SHA256).Hash-cne[string](Get-ChatpadProperty $artifact sha256 '')){
+        return New-ChatpadRuntimeCheckResult runtime-observer FAIL RUNTIME_OBSERVATION_PROVENANCE_INVALID 'Live evidence artifact size or SHA-256 does not match the observation record.' @($id) -Data ([pscustomobject]@{record_structure_valid=$true;provenance_valid=$false;live_evidence_available=$false;runtime_condition_evaluated=$false;runtime_condition_triggered=$false;continuation_allowed=$false})
+    }
+    if([bool](Get-ChatpadProperty $Observation triggered $false)){return New-ChatpadRuntimeCheckResult runtime-observer FAIL RUNTIME_STOP_CONDITION_TRIGGERED 'Runtime stop condition triggered.' @($id) -Data ([pscustomobject]@{record_structure_valid=$true;provenance_valid=$true;live_evidence_available=$true;runtime_condition_evaluated=$true;runtime_condition_triggered=$true;continuation_allowed=$false})}
+    New-ChatpadRuntimeCheckResult runtime-observer PASS RUNTIME_OBSERVATION_CLEAR -Data ([pscustomobject]@{record_structure_valid=$true;provenance_valid=$true;live_evidence_available=$true;runtime_condition_evaluated=$true;runtime_condition_triggered=$false;continuation_allowed=$true})
 }
 
 function Test-ChatpadStopConditionRegisterContract {

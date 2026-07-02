@@ -51,7 +51,7 @@ function Get-PowerShellInventory {
     }
 }
 
-$base='30da5003aba75ef0f079c9a8c2c90df3768601d5'
+$base='9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
 $paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)
 $paths=@($paths|Where-Object{$_-and$_-ne$OutputPath}|Sort-Object -Unique)
 $entries=[Collections.Generic.List[object]]::new()
@@ -69,10 +69,10 @@ $manifest=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED'
     blocker='BLOCKED_NOT_IMPLEMENTED'
     repository=[pscustomobject][ordered]@{
-        branch='feature/runtime-bringup-stop-linkage-final-remediation'
+        branch='feature/runtime-bringup-observer-provenance-accounting-remediation'
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-        prior_readiness_implementation_commit='4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6'
-        prior_readiness_finalization_commit='30da5003aba75ef0f079c9a8c2c90df3768601d5'
+        prior_readiness_implementation_commit='a810d8ba3438a08cfa4742e53be61f64be5aa58e'
+        prior_readiness_finalization_commit='9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
         current_readiness_implementation_commit=$ImplementationCommit
         current_readiness_finalization_commit_source='external exact 40-character audit input after finalization commit'
     }
@@ -82,7 +82,21 @@ $manifest=[pscustomobject][ordered]@{
         release_sys_size=40960;release_sys_sha256='A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404'
     }
     readiness=[pscustomobject][ordered]@{
-        fixture_count=[int]$suite.fixture_count;assertion_count=[int]$suite.assertion_count;category_totals=@($suite.category_totals)
+        fixture_count=[int]$suite.fixture_count
+        fixture_assertion_sum=[int]$suite.fixture_assertion_sum
+        harness_result_record_count=[int]$suite.harness_result_record_count
+        harness_assertion_sum=[int]$suite.harness_assertion_sum
+        total_result_record_count=[int]$suite.total_result_record_count
+        assertion_count=[int]$suite.assertion_count
+        record_assertion_sum=[int]$suite.record_assertion_sum
+        category_record_sum=[int]$suite.category_record_sum
+        category_assertion_sum=[int]$suite.category_assertion_sum
+        assertion_accounting_result=[string]$suite.assertion_accounting_result
+        unassigned_assertion_count=[int]$suite.unassigned_assertion_count
+        off_ledger_assertion_count=[int]$suite.off_ledger_assertion_count
+        duplicate_counted_assertion_count=[int]$suite.duplicate_counted_assertion_count
+        category_reconciliation_defect_count=[int]$suite.category_reconciliation_defect_count
+        category_totals=@($suite.category_totals)
         unrelated_exception_false_positive_count=0;empty_operation_install_pass_count=0;install_plan_crash_count=0
         invalid_schema_transition_acceptance_count=[int]$suite.invalid_schema_transition_acceptance_count;unlinked_stop_condition_count=[int]$suite.unlinked_stop_condition_count
         invalid_lifecycle_acceptance_count=[int]$suite.invalid_lifecycle_acceptance_count;missing_start_timestamp_acceptance_count=[int]$suite.missing_start_timestamp_acceptance_count
@@ -90,6 +104,14 @@ $manifest=[pscustomobject][ordered]@{
         runtime_observer_linkage_count=[int]$suite.runtime_observer_linkage_count;unknown_stop_condition_id_count=[int]$suite.unknown_stop_condition_id_count
         malformed_linkage_count=[int]$suite.malformed_linkage_count;nested_array_acceptance_count=[int]$suite.nested_array_acceptance_count
         uncontrolled_exception_count=[int]$suite.uncontrolled_exception_count;property_not_found_exception_count=[int]$suite.property_not_found_exception_count;strictmode_exception_count=[int]$suite.strictmode_exception_count
+        observer_provenance_contract_result=[string]$suite.observer_provenance_contract_result
+        missing_provenance_probe_count=[int]$suite.missing_provenance_probe_count
+        missing_provenance_pass_count=[int]$suite.missing_provenance_pass_count
+        synthetic_source_probe_count=[int]$suite.synthetic_source_probe_count
+        synthetic_runtime_observer_pass_count=[int]$suite.synthetic_runtime_observer_pass_count
+        unsupported_runtime_observer_pass_count=[int]$suite.unsupported_runtime_observer_pass_count
+        runtime_observations_evaluated_live=[int]$suite.runtime_observations_evaluated_live
+        runtime_observation_gates_blocked_or_unavailable=[int]$suite.runtime_observation_gates_blocked_or_unavailable
         malformed_input_validator_count=[int]$suite.malformed_input_validator_count;malformed_input_case_count=[int]$suite.malformed_input_case_count
         committed_sample_structural_validation=[string]$suite.committed_sample_structural_validation
         committed_sample_semantic_validation=[string]$suite.committed_sample_semantic_validation

@@ -7,7 +7,6 @@ Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Com
 
 $script:FixtureIds = @{}
 $script:Fixtures = [Collections.Generic.List[object]]::new()
-$script:AssertionCount = 0
 
 function Compare-FixtureOutcome {
     param($ExpectedStatus,$ExpectedCode,[string[]]$ExpectedStops,[bool]$ExpectException,[string]$ExpectedExceptionType,$ActualStatus,$ActualCode,[string[]]$ActualStops,[string]$ActualExceptionType)
@@ -29,6 +28,7 @@ function Invoke-Fixture {
         [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$ExpectedStops,
         [Parameter(Mandatory)][scriptblock]$Body,
         [int]$AdditionalAssertionCount=0,
+        [int]$AssertionCountOverride=-1,
         [string]$ExpectedReasonPattern='',
         [bool]$ExpectException=$false,
         [string]$ExpectedExceptionType=''
@@ -48,11 +48,11 @@ function Invoke-Fixture {
     }
     $assertions=4+$ExpectedStops.Count+$AdditionalAssertionCount
     if($ExpectedReasonPattern){$assertions++}
-    $script:AssertionCount+=$assertions
+    if($AssertionCountOverride-ge0){$assertions=$AssertionCountOverride}
     $passed=Compare-FixtureOutcome $ExpectedStatus $ExpectedCode $ExpectedStops $ExpectException $ExpectedExceptionType $actualStatus $actualCode $actualStops $actualException
     if($ExpectedReasonPattern -and $actualReason -notmatch $ExpectedReasonPattern){$passed=$false}
     $script:Fixtures.Add([pscustomobject][ordered]@{
-        fixture_id=$Id;category=$Category;validator=$Validator
+        record_type='fixture';fixture_id=$Id;category=$Category;validator=$Validator
         expected_status=$ExpectedStatus;expected_result_code=$ExpectedCode;expected_stop_condition_ids=@($ExpectedStops)
         exception_expected=$ExpectException;expected_exception_type=$ExpectedExceptionType;expected_reason_pattern=$ExpectedReasonPattern
         actual_status=$actualStatus;actual_result_code=$actualCode;actual_reason=$actualReason;actual_stop_condition_ids=@($actualStops)
@@ -154,6 +154,153 @@ function New-StopConditionRegisterProbe {
     Read-ChatpadJson (Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-stop-conditions.json')
 }
 
+function Copy-ChatpadProbe {
+    param([Parameter(Mandatory)]$Value)
+    $Value | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+}
+
+function New-RuntimeObservationProbe {
+    param([Parameter(Mandatory)][string]$ConditionId,[string]$SourceClassification='synthetic')
+    $sessionId='SYNTHETIC-SESSION'
+    $hostId='SYNTHETIC-HOST'
+    $payload = switch($ConditionId){
+        'unrelated-device-changed' {[pscustomobject]@{condition_id=$ConditionId;session_id=$sessionId;host_id=$hostId;baseline_inventory_id='inventory-before';post_inventory_id='inventory-after';difference_analysis_id='diff-analysis'}}
+        'driver-service-fails-unexpectedly' {[pscustomobject]@{condition_id=$ConditionId;session_id=$sessionId;host_id=$hostId;expected_service_identity='ChatpadFilter';observed_service_state='stopped';expected_transition='running-to-running';observed_transition='running-to-stopped';result_or_event_id='event-service-1'}}
+        'unexpected-code-integrity-error' {[pscustomobject]@{condition_id=$ConditionId;session_id=$sessionId;host_id=$hostId;source_channel='Microsoft-Windows-CodeIntegrity/Operational';event_id='ci-event-1';event_timestamp='2026-07-02T08:04:00Z';package_or_binary_correlation='ChatpadFilter.sys';session_window_start_utc='2026-07-02T08:00:00Z';session_window_end_utc='2026-07-02T08:05:00Z'}}
+        'unexpected-setupapi-match' {[pscustomobject]@{condition_id=$ConditionId;session_id=$sessionId;host_id=$hostId;setupapi_source='setupapi.dev.log';target_instance_id='USB\VID_045E&PID_028E\EXACT';expected_package_or_inf='ChatpadFilter.inf';observed_match='unexpected-compatible-id';session_window_start_utc='2026-07-02T08:00:00Z';session_window_end_utc='2026-07-02T08:05:00Z'}}
+        'input-behavior-unstable' {[pscustomobject]@{condition_id=$ConditionId;session_id=$sessionId;host_id=$hostId;observation_method='operator-observation';observation_window_start_utc='2026-07-02T08:00:00Z';observation_window_end_utc='2026-07-02T08:05:00Z';expected_input_behavior='stable-input';observed_instability='synthetic-contract-description';target_or_session_linkage=$sessionId}}
+        default {[pscustomobject]@{condition_id=$ConditionId;session_id=$sessionId;host_id=$hostId}}
+    }
+    $evidenceType = switch($ConditionId){
+        'unrelated-device-changed' {'device-inventory-diff'}
+        'driver-service-fails-unexpectedly' {'driver-service-transition'}
+        'unexpected-code-integrity-error' {'code-integrity-event'}
+        'unexpected-setupapi-match' {'setupapi-match-analysis'}
+        'input-behavior-unstable' {'input-behavior-observation'}
+        default {'unknown'}
+    }
+    $artifactId="artifact-$ConditionId"
+    $artifactPath="artifacts/runtime-evidence/SYNTHETIC-SESSION/$ConditionId.json"
+    [pscustomobject][ordered]@{
+        observation_id="observation-$ConditionId"
+        stop_condition_id=$ConditionId
+        session_id=$sessionId
+        host_id=$hostId
+        source_classification=$SourceClassification
+        observation_mode='contract-only-fixture-validation'
+        evidence_available=$true
+        triggered=$false
+        producer_identity='ChatpadRuntimeObservation/v1'
+        observer_script_path='tools/Test-ChatpadRuntimeObservation.ps1'
+        capture_started_utc='2026-07-02T08:00:00Z'
+        capture_completed_utc='2026-07-02T08:05:00Z'
+        validation_time_utc='2026-07-02T08:10:00Z'
+        maximum_age_seconds=3600
+        evidence_artifact_id=$artifactId
+        evidence_artifact_relative_path=$artifactPath
+        evidence_artifact_sha256=('A'*64)
+        evidence_type=$evidenceType
+        condition_evidence=$payload
+        applicable_stop_condition_id=$ConditionId
+        synthetic=$true
+        evidence_artifact=[pscustomobject][ordered]@{
+            artifact_id=$artifactId
+            relative_path=$artifactPath
+            byte_size=128
+            sha256=('A'*64)
+            evidence_type=$evidenceType
+            session_id=$sessionId
+            host_id=$hostId
+            condition_id=$ConditionId
+            collection_result='collected'
+        }
+    }
+}
+
+function Get-ChatpadAccountingCategoryTotals {
+    param([Parameter(Mandatory)][object[]]$Records)
+    @($Records|Group-Object category|Sort-Object Name|ForEach-Object{
+        [pscustomobject][ordered]@{
+            category=$_.Name
+            record_count=$_.Count
+            assertion_count=[int](($_.Group|Measure-Object assertion_count -Sum).Sum)
+        }
+    })
+}
+
+function Test-ChatpadResultAccountingContract {
+    param($Records,$CategoryTotals,$ReportedRecordCount,$ReportedAssertionCount)
+    $fail=[Collections.Generic.List[string]]::new()
+    $recordArray=if($Records-is[array]){@($Records)}else{@()}
+    $categoryArray=if($CategoryTotals-is[array]){@($CategoryTotals)}else{@()}
+    if($Records-isnot[array]){$fail.Add('records-not-array')}
+    if($CategoryTotals-isnot[array]){$fail.Add('categories-not-array')}
+    $ids=[Collections.Generic.List[string]]::new()
+    $recordAssertionSum=0
+    foreach($record in $recordArray){
+        if(-not(Test-ChatpadObject $record)){$fail.Add('record-not-object');continue}
+        $id=[string](Get-ChatpadProperty $record fixture_id '')
+        if([string]::IsNullOrWhiteSpace($id)){$fail.Add('record-id-missing')}elseif($ids-contains$id){$fail.Add("duplicate-record-id:$id")}else{$ids.Add($id)}
+        $category=Get-ChatpadProperty $record category $null
+        if($category-is[array]){$fail.Add("record-multiple-categories:$id")}
+        elseif([string]::IsNullOrWhiteSpace([string]$category)){$fail.Add("record-category-missing:$id")}
+        $assertionValue=Get-ChatpadProperty $record assertion_count $null
+        $assertionCount=$null
+        if($assertionValue-is[bool]-or$assertionValue-is[array]){$fail.Add("record-assertions-nonnumeric:$id")}
+        else{try{$assertionCount=[int]$assertionValue;if($assertionCount-lt0){$fail.Add("record-assertions-negative:$id")}}catch{$fail.Add("record-assertions-nonnumeric:$id")}}
+        if($null-ne$assertionCount){
+            $recordAssertionSum+=$assertionCount
+            if((Get-ChatpadProperty $record fixture_result '')-eq'PASS'-and$assertionCount-eq0){$fail.Add("pass-record-zero-assertions:$id")}
+        }
+    }
+    $categoryNames=[Collections.Generic.List[string]]::new()
+    $categoryRecordSum=0
+    $categoryAssertionSum=0
+    foreach($categoryRecord in $categoryArray){
+        if(-not(Test-ChatpadObject $categoryRecord)){$fail.Add('category-not-object');continue}
+        $name=[string](Get-ChatpadProperty $categoryRecord category '')
+        if([string]::IsNullOrWhiteSpace($name)){$fail.Add('category-name-missing')}elseif($categoryNames-contains$name){$fail.Add("duplicate-category:$name")}else{$categoryNames.Add($name)}
+        try{$categoryRecordSum+=[int](Get-ChatpadProperty $categoryRecord record_count $null)}catch{$fail.Add("category-record-count-invalid:$name")}
+        try{$categoryAssertionSum+=[int](Get-ChatpadProperty $categoryRecord assertion_count $null)}catch{$fail.Add("category-assertion-count-invalid:$name")}
+    }
+    $derived=if($fail.Count-eq0){Get-ChatpadAccountingCategoryTotals $recordArray}else{@()}
+    foreach($expected in $derived){
+        $actual=@($categoryArray|Where-Object{(Get-ChatpadProperty $_ category '')-eq$expected.category})
+        if($actual.Count-ne1){$fail.Add("category-coverage:$($expected.category)");continue}
+        if([int](Get-ChatpadProperty $actual[0] record_count -1)-ne$expected.record_count){$fail.Add("category-record-count-mismatch:$($expected.category)")}
+        if([int](Get-ChatpadProperty $actual[0] assertion_count -1)-ne$expected.assertion_count){$fail.Add("category-assertion-count-mismatch:$($expected.category)")}
+    }
+    foreach($actual in $categoryArray){
+        if(@($derived|Where-Object{$_.category-eq(Get-ChatpadProperty $actual category '')}).Count-ne1){$fail.Add("category-without-records:$([string](Get-ChatpadProperty $actual category ''))")}
+    }
+    try{$reportedRecords=[int]$ReportedRecordCount}catch{$reportedRecords=-1;$fail.Add('reported-record-count-invalid')}
+    try{$reportedAssertions=[int]$ReportedAssertionCount}catch{$reportedAssertions=-1;$fail.Add('reported-assertion-count-invalid')}
+    if($reportedRecords-ne$recordArray.Count){$fail.Add('reported-record-count-mismatch')}
+    if($reportedAssertions-ne$recordAssertionSum){$fail.Add('reported-assertion-count-mismatch')}
+    if($categoryRecordSum-ne$recordArray.Count){$fail.Add('category-record-sum-mismatch')}
+    if($categoryAssertionSum-ne$recordAssertionSum){$fail.Add('category-assertion-sum-mismatch')}
+    $unassignedAssertions=[Math]::Max(0,$reportedAssertions-$recordAssertionSum)
+    $duplicateCountedAssertions=[Math]::Max(0,$recordAssertionSum-$reportedAssertions)
+    $data=[pscustomobject][ordered]@{
+        result_record_count=$recordArray.Count
+        record_assertion_sum=$recordAssertionSum
+        category_record_sum=$categoryRecordSum
+        category_assertion_sum=$categoryAssertionSum
+        unassigned_assertion_count=$unassignedAssertions
+        duplicate_counted_assertion_count=$duplicateCountedAssertions
+        category_reconciliation_defect_count=@($fail|Where-Object{$_-like'category-*'}).Count
+    }
+    if($fail.Count){return New-ChatpadRuntimeCheckResult assertion-accounting FAIL ASSERTION_ACCOUNTING_INVALID ($fail-join';') @('command-differs-from-approved-plan') -Data $data}
+    New-ChatpadRuntimeCheckResult assertion-accounting PASS ASSERTION_ACCOUNTING_VALID -Data $data
+}
+
+function New-AccountingProbe {
+    [object[]]@(
+        [pscustomobject]@{record_type='fixture';fixture_id='accounting-a';category='alpha';assertion_count=2;fixture_result='PASS'},
+        [pscustomobject]@{record_type='fixture';fixture_id='accounting-b';category='beta';assertion_count=3;fixture_result='PASS'}
+    )
+}
+
 function Test-ChatpadEvidenceSchemaStructuralContract {
     param([Parameter(Mandatory)][string]$SchemaPath,[Parameter(Mandatory)][object]$Document)
     $fail=@()
@@ -211,15 +358,22 @@ function Test-ChatpadEvidenceSchemaStructuralContract {
     else{New-ChatpadRuntimeCheckResult schema-structural PASS SCHEMA_2020_12_VALID -Data ([pscustomobject]@{schema_dialect='https://json-schema.org/draft/2020-12/schema'})}
 }
 
-$meta = @(
-    @{id='meta-unrelated-strictmode';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @('target-identity-ambiguous') $false '' '' '' @() 'System.Management.Automation.PropertyNotFoundStrictModeException')},
-    @{id='meta-wrong-exception-type';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @() $true 'System.ArgumentException' '' '' @() 'System.InvalidOperationException')},
-    @{id='meta-wrong-reason';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @() $false '' FAIL WRONG @() '')},
-    @{id='meta-missing-stop-id';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @('wrong-device-binds') $false '' FAIL EXPECTED @() '')},
-    @{id='meta-parser-crash';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @() $false '' '' '' @() 'System.Management.Automation.ParseException')},
-    @{id='meta-missing-expected-result';ok=-not(Compare-FixtureOutcome '' EXPECTED @() $false '' FAIL EXPECTED @() '')}
+$harnessChecks = @(
+    @{id='harness-unrelated-strictmode';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @('target-identity-ambiguous') $false '' '' '' @() 'System.Management.Automation.PropertyNotFoundStrictModeException')},
+    @{id='harness-wrong-exception-type';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @() $true 'System.ArgumentException' '' '' @() 'System.InvalidOperationException')},
+    @{id='harness-wrong-reason';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @() $false '' FAIL WRONG @() '')},
+    @{id='harness-missing-stop-id';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @('wrong-device-binds') $false '' FAIL EXPECTED @() '')},
+    @{id='harness-parser-crash';ok=-not(Compare-FixtureOutcome FAIL EXPECTED @() $false '' '' '' @() 'System.Management.Automation.ParseException')},
+    @{id='harness-missing-expected-result';ok=-not(Compare-FixtureOutcome '' EXPECTED @() $false '' FAIL EXPECTED @() '')}
 )
-$script:AssertionCount += $meta.Count
+foreach($harnessCheck in $harnessChecks){
+    $check=$harnessCheck
+    $body={
+        if($check.ok){New-ChatpadRuntimeCheckResult harness-self-test PASS HARNESS_SELF_TEST_VALID}
+        else{New-ChatpadRuntimeCheckResult harness-self-test FAIL HARNESS_SELF_TEST_INVALID 'Harness accepted an invalid comparison.' @('command-differs-from-approved-plan')}
+    }.GetNewClosure()
+    Invoke-Fixture $check.id harness-self-test Compare-FixtureOutcome PASS HARNESS_SELF_TEST_VALID @() $body -AssertionCountOverride 1
+}
 
 Invoke-Fixture validator-totality-matrix validator-totality AllPublicReadinessValidators PASS VALIDATOR_TOTALITY_VALID @() {
     $inputs=@($null,$true,$false,0,1,'','x',@(),@('x'),[pscustomobject]@{},[pscustomobject]@{unexpected='x'},@{unexpected='x'})
@@ -535,10 +689,90 @@ Invoke-Fixture powershell-inventory-reconciliation powershell-inventory PowerShe
     else{New-ChatpadRuntimeCheckResult powershell-inventory PASS POWERSHELL_INVENTORY_VALID -Data $data}
 } -AdditionalAssertionCount 10
 
-foreach($id in @('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')){
-    $observerBody={ Test-ChatpadRuntimeObservationContract ([pscustomobject]@{stop_condition_id=$id;evidence_available=$false}) }.GetNewClosure()
-    Invoke-Fixture "observer-$id" runtime-observer Test-ChatpadRuntimeObservationContract BLOCKED RUNTIME_EVIDENCE_NOT_AVAILABLE @($id) $observerBody
+$runtimeObserverIds=@('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')
+foreach($id in $runtimeObserverIds){
+    $shapeId=$id
+    $shapeBody={Test-ChatpadRuntimeObservationRecordShape (New-RuntimeObservationProbe $shapeId)}.GetNewClosure()
+    Invoke-Fixture "observer-shape-$id" runtime-observer-shape Test-ChatpadRuntimeObservationRecordShape PASS OBSERVATION_RECORD_SHAPE_VALID @() $shapeBody
+
+    $observerCases=@(
+        @{name='no-provenance';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) [pscustomobject]@{stop_condition_id=$x.stop_condition_id;evidence_available=$true}}},
+        @{name='missing-source';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.PSObject.Properties.Remove('source_classification');$x}},
+        @{name='source-synthetic';expected='BLOCKED';code='RUNTIME_EVIDENCE_NOT_AVAILABLE';stop=$id;mutate={param($x) $x}},
+        @{name='source-sample';expected='BLOCKED';code='RUNTIME_EVIDENCE_NOT_AVAILABLE';stop=$id;mutate={param($x) $x.source_classification='sample';$x}},
+        @{name='source-planned';expected='BLOCKED';code='RUNTIME_EVIDENCE_NOT_AVAILABLE';stop=$id;mutate={param($x) $x.source_classification='planned';$x}},
+        @{name='source-unknown';expected='BLOCKED';code='RUNTIME_EVIDENCE_NOT_AVAILABLE';stop=$id;mutate={param($x) $x.source_classification='unknown';$x}},
+        @{name='synthetic-represented-live';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.source_classification='live';$x}},
+        @{name='missing-session';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.PSObject.Properties.Remove('session_id');$x}},
+        @{name='missing-host';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.PSObject.Properties.Remove('host_id');$x}},
+        @{name='missing-producer';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.PSObject.Properties.Remove('producer_identity');$x}},
+        @{name='wrong-observer-path';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.observer_script_path='tools/Wrong-Observer.ps1';$x}},
+        @{name='missing-timestamps';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.PSObject.Properties.Remove('capture_started_utc');$x.PSObject.Properties.Remove('capture_completed_utc');$x}},
+        @{name='stale-timestamps';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.validation_time_utc='2026-07-03T08:10:00Z';$x}},
+        @{name='future-dated-timestamps';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.capture_started_utc='2026-07-02T09:00:00Z';$x.capture_completed_utc='2026-07-02T09:05:00Z';$x}},
+        @{name='missing-artifact';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.PSObject.Properties.Remove('evidence_artifact');$x}},
+        @{name='missing-artifact-identity';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.PSObject.Properties.Remove('evidence_artifact_id');$x.evidence_artifact.PSObject.Properties.Remove('artifact_id');$x}},
+        @{name='missing-artifact-size';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.evidence_artifact.PSObject.Properties.Remove('byte_size');$x}},
+        @{name='invalid-sha256';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.evidence_artifact_sha256='BAD';$x.evidence_artifact.sha256='BAD';$x}},
+        @{name='cross-session-artifact';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.evidence_artifact.session_id='OTHER-SESSION';$x}},
+        @{name='cross-host-artifact';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.evidence_artifact.host_id='OTHER-HOST';$x}},
+        @{name='missing-condition-payload';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.condition_evidence=[pscustomobject]@{};$x}},
+        @{name='generic-condition-payload';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.condition_evidence=[pscustomobject]@{value='generic'};$x}},
+        @{name='wrong-evidence-type';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.evidence_type='wrong-type';$x.evidence_artifact.evidence_type='wrong-type';$x}},
+        @{name='other-condition-payload';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $other=if($x.stop_condition_id-ne'unrelated-device-changed'){'unrelated-device-changed'}else{'input-behavior-unstable'};$x.condition_evidence=(New-RuntimeObservationProbe $other).condition_evidence;$x}},
+        @{name='mismatched-artifact-condition';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.evidence_artifact.condition_id='other-condition';$x}},
+        @{name='artifact-not-collected';expected='FAIL';code='RUNTIME_OBSERVATION_PROVENANCE_INVALID';stop=$id;mutate={param($x) $x.evidence_artifact.collection_result='not-collected';$x}},
+        @{name='missing-evidence';expected='BLOCKED';code='RUNTIME_EVIDENCE_NOT_AVAILABLE';stop=$id;mutate={param($x) $x.evidence_available=$false;$x}},
+        @{name='unknown-condition';expected='FAIL';code='OBSERVER_CONDITION_INVALID';stop='prerequisite-changed-after-approval';mutate={param($x) $x.stop_condition_id='unknown-condition';$x}}
+    )
+    foreach($observerCase in $observerCases){
+        $case=$observerCase
+        $conditionId=$id
+        $observerBody={
+            $probe=New-RuntimeObservationProbe $conditionId
+            $probe=& $case.mutate $probe
+            Test-ChatpadRuntimeObservationContract $probe
+        }.GetNewClosure()
+        Invoke-Fixture "observer-$id-$($case.name)" runtime-observer-provenance Test-ChatpadRuntimeObservationContract $case.expected $case.code @($case.stop) $observerBody
+    }
 }
+
+$accountingCases=@(
+    @{name='assertion-outside-record';reason='reported-assertion-count-mismatch';mutate={param($x)$x.reported_assertions=6}},
+    @{name='record-omitted-category';reason='category-coverage';mutate={param($x)$x.categories=[object[]]@($x.categories|Where-Object category -eq 'alpha')}},
+    @{name='assertion-omitted-category';reason='category-assertion-count-mismatch';mutate={param($x)($x.categories|Where-Object category -eq 'beta').assertion_count=2}},
+    @{name='category-count-high';reason='category-record-count-mismatch';mutate={param($x)($x.categories|Where-Object category -eq 'alpha').record_count=2}},
+    @{name='category-count-low';reason='category-record-count-mismatch';mutate={param($x)($x.categories|Where-Object category -eq 'alpha').record_count=0}},
+    @{name='category-assertions-high';reason='category-assertion-count-mismatch';mutate={param($x)($x.categories|Where-Object category -eq 'alpha').assertion_count=3}},
+    @{name='category-assertions-low';reason='category-assertion-count-mismatch';mutate={param($x)($x.categories|Where-Object category -eq 'alpha').assertion_count=1}},
+    @{name='duplicate-record-id';reason='duplicate-record-id';mutate={param($x)$x.records[1].fixture_id='accounting-a'}},
+    @{name='record-two-categories';reason='record-multiple-categories';mutate={param($x)$x.records[1].category=[object[]]@('alpha','beta')}},
+    @{name='record-no-category';reason='record-category-missing';mutate={param($x)$x.records[1].category=''}},
+    @{name='negative-assertions';reason='record-assertions-negative';mutate={param($x)$x.records[1].assertion_count=-1}},
+    @{name='nonnumeric-assertions';reason='record-assertions-nonnumeric';mutate={param($x)$x.records[1].assertion_count='not-a-number'}},
+    @{name='zero-assertion-pass';reason='pass-record-zero-assertions';mutate={param($x)$x.records[1].assertion_count=0}},
+    @{name='hardcoded-record-total';reason='reported-record-count-mismatch';mutate={param($x)$x.reported_records=140}},
+    @{name='harness-not-included';reason='category-coverage';mutate={param($x)$x.records[1].category='harness-self-test'}},
+    @{name='fixture-sum-differs-aggregate';reason='reported-assertion-count-mismatch';mutate={param($x)$x.reported_assertions=4}},
+    @{name='category-sum-differs-aggregate';reason='category-assertion-sum-mismatch';mutate={param($x)($x.categories|Where-Object category -eq 'beta').assertion_count=4}},
+    @{name='auditor-140-915-plus-six';reason='reported-assertion-count-mismatch';mutate={param($x)$x.records=[object[]]@([pscustomobject]@{record_type='fixture';fixture_id='historical-ledger-a';category='historical';assertion_count=900;fixture_result='PASS'},[pscustomobject]@{record_type='fixture';fixture_id='historical-ledger-b';category='historical';assertion_count=15;fixture_result='PASS'});$x.categories=[object[]]@([pscustomobject]@{category='historical';record_count=2;assertion_count=915});$x.reported_records=140;$x.reported_assertions=921}}
+)
+foreach($accountingCase in $accountingCases){
+    $case=$accountingCase
+    $accountingBody={
+        $records=[object[]](New-AccountingProbe)
+        $context=[pscustomobject]@{
+            records=$records
+            categories=[object[]](Get-ChatpadAccountingCategoryTotals $records)
+            reported_records=$records.Count
+            reported_assertions=[int](($records|Measure-Object assertion_count -Sum).Sum)
+        }
+        & $case.mutate $context
+        Test-ChatpadResultAccountingContract $context.records $context.categories $context.reported_records $context.reported_assertions
+    }.GetNewClosure()
+    Invoke-Fixture "accounting-$($case.name)" assertion-accounting-negative Test-ChatpadResultAccountingContract FAIL ASSERTION_ACCOUNTING_INVALID @('command-differs-from-approved-plan') $accountingBody -ExpectedReasonPattern $case.reason
+}
+
 Invoke-Fixture authorization-scalar authorization Assert-ChatpadScalar FAIL EXPECTED_ARGUMENT_EXCEPTION @() { Assert-ChatpadScalar '' Argument } -ExpectException $true -ExpectedExceptionType 'System.ArgumentException'
 Invoke-Fixture binary-hash-mismatch binary-identity Test-ChatpadRepositoryIdentityObject FAIL REPOSITORY_IDENTITY_INVALID @('repository-or-binary-identity-wrong') { Test-ChatpadRepositoryIdentityObject ([pscustomobject]@{}) }
 Invoke-Fixture baseline-hash-abbreviated accepted-baseline-identity Assert-ChatpadFullCommit FAIL EXPECTED_ARGUMENT_EXCEPTION @() { Assert-ChatpadFullCommit 'f49b5cbe' FrozenBaselineCommit } -ExpectException $true -ExpectedExceptionType 'System.ArgumentException'
@@ -573,7 +807,6 @@ Device="Chatpad"
 } finally { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 
 $failed=@($script:Fixtures|Where-Object{$_.fixture_result-ne'PASS'})
-$metaFailed=@($meta|Where-Object{-not$_.ok})
 $unexpectedExceptions=@($script:Fixtures|Where-Object{$_.actual_exception_type -and -not $_.exception_expected})
 $propertyNotFoundExceptions=@($unexpectedExceptions|Where-Object{$_.actual_exception_type -match 'PropertyNotFound'})
 $strictModeExceptions=@($unexpectedExceptions|Where-Object{$_.actual_exception_type -match 'StrictMode|PropertyNotFound'})
@@ -585,12 +818,33 @@ $powershellInventory=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'powershe
 $stopLinkageResult=Test-ChatpadStopConditionRegisterContract (New-StopConditionRegisterProbe)
 $nestedArrayAcceptances=@($script:Fixtures|Where-Object{$_.category-eq'nested-array-rejection'-and$_.actual_status-eq'PASS'})
 $malformedLinkageExceptions=@($script:Fixtures|Where-Object{$_.category-in@('stop-condition-linkage','nested-array-rejection','runtime-observer-linkage')-and$_.actual_exception_type})
-$categories=@($script:Fixtures|Group-Object category|Sort-Object Name|ForEach-Object{[pscustomobject]@{category=$_.Name;fixtures=$_.Count;assertions=($_.Group|Measure-Object assertion_count -Sum).Sum}})
+$categories=Get-ChatpadAccountingCategoryTotals ([object[]]$script:Fixtures)
+$assertionCount=[int](($script:Fixtures|Measure-Object assertion_count -Sum).Sum)
+$accountingResult=Test-ChatpadResultAccountingContract ([object[]]$script:Fixtures) ([object[]]$categories) $script:Fixtures.Count $assertionCount
+$harnessRecords=@($script:Fixtures|Where-Object category -eq 'harness-self-test')
+$observerProvenanceRecords=@($script:Fixtures|Where-Object category -eq 'runtime-observer-provenance')
+$missingProvenanceRecords=@($observerProvenanceRecords|Where-Object fixture_id -like '*-no-provenance')
+$syntheticSourceRecords=@($observerProvenanceRecords|Where-Object fixture_id -like '*-source-synthetic')
+$unsupportedRuntimePasses=@($observerProvenanceRecords|Where-Object actual_status -eq 'PASS')
 $result=[pscustomobject][ordered]@{
     schema_version='chatpad-runtime-readiness-suite-v3'
-    framework_status=$(if($failed.Count-or$metaFailed.Count){'FAIL'}else{'PASS'})
+    framework_status=$(if($failed.Count-or$accountingResult.result-ne'PASS'){'FAIL'}else{'PASS'})
     live_installation_readiness='BLOCKED';blocker='BLOCKED_NOT_IMPLEMENTED'
-    fixture_count=$script:Fixtures.Count;assertion_count=$script:AssertionCount
+    fixture_count=$script:Fixtures.Count
+    fixture_assertion_sum=$assertionCount
+    harness_result_record_count=$harnessRecords.Count
+    harness_assertion_sum=[int](($harnessRecords|Measure-Object assertion_count -Sum).Sum)
+    total_result_record_count=$script:Fixtures.Count
+    assertion_count=$assertionCount
+    assertion_accounting_result=$accountingResult.result
+    assertion_accounting_result_code=$accountingResult.result_code
+    unassigned_assertion_count=[int]$accountingResult.data.unassigned_assertion_count
+    off_ledger_assertion_count=[int]$accountingResult.data.unassigned_assertion_count
+    duplicate_counted_assertion_count=[int]$accountingResult.data.duplicate_counted_assertion_count
+    category_reconciliation_defect_count=[int]$accountingResult.data.category_reconciliation_defect_count
+    record_assertion_sum=[int]$accountingResult.data.record_assertion_sum
+    category_record_sum=[int]$accountingResult.data.category_record_sum
+    category_assertion_sum=[int]$accountingResult.data.category_assertion_sum
     unrelated_exception_false_positive_count=0;empty_operation_install_pass_count=0;install_plan_crash_count=0
     invalid_schema_transition_acceptance_count=$invalidTransitionAcceptances.Count;invalid_lifecycle_acceptance_count=$invalidTransitionAcceptances.Count;missing_start_timestamp_acceptance_count=$missingStartAcceptances.Count
     stop_condition_count=[int]$stopLinkageResult.data.stop_condition_count;unique_stop_condition_count=[int]$stopLinkageResult.data.unique_stop_condition_count
@@ -598,11 +852,20 @@ $result=[pscustomobject][ordered]@{
     unknown_stop_condition_id_count=[int]$stopLinkageResult.data.unknown_id_count;malformed_linkage_count=[int]$stopLinkageResult.data.malformed_linkage_count
     nested_array_acceptance_count=$nestedArrayAcceptances.Count;malformed_linkage_exception_count=$malformedLinkageExceptions.Count
     uncontrolled_exception_count=$unexpectedExceptions.Count;property_not_found_exception_count=$propertyNotFoundExceptions.Count;strictmode_exception_count=$strictModeExceptions.Count
+    observer_provenance_contract_result=$(if(@($observerProvenanceRecords|Where-Object fixture_result -ne 'PASS').Count){'FAIL'}else{'PASS'})
+    missing_provenance_probe_count=$missingProvenanceRecords.Count
+    missing_provenance_pass_count=@($missingProvenanceRecords|Where-Object actual_status -eq 'PASS').Count
+    synthetic_source_probe_count=$syntheticSourceRecords.Count
+    synthetic_runtime_observer_pass_count=@($syntheticSourceRecords|Where-Object actual_status -eq 'PASS').Count
+    unsupported_runtime_observer_pass_count=$unsupportedRuntimePasses.Count
+    runtime_observations_evaluated_live=$unsupportedRuntimePasses.Count
+    runtime_observation_gates_blocked_or_unavailable=@($observerProvenanceRecords|Where-Object actual_status -eq 'BLOCKED').Count
     malformed_input_validator_count=15;malformed_input_case_count=180
     committed_sample_structural_validation=$sampleStructural.actual_status
     committed_sample_semantic_validation=$sampleSemantic.actual_status
     powershell_inventory_result=$powershellInventory.actual_status
-    harness_self_tests=$meta;category_totals=$categories;fixtures=@($script:Fixtures)
+    category_totals=$categories
+    fixtures=@($script:Fixtures)
 }
 $result|ConvertTo-Json -Depth 20
 if($result.framework_status-ne'PASS'){exit 1}
