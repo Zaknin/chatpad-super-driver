@@ -1,318 +1,272 @@
 {
-  "schema_version": "chatpad-runtime-bringup-readiness-manifest-v3",
-  "generated_utc": "2026-07-02T14:32:01.6244783Z",
-  "framework_status": "PASS",
-  "live_installation_readiness": "BLOCKED",
-  "blocker": "BLOCKED_NOT_IMPLEMENTED",
-  "repository": {
-    "branch": "feature/runtime-bringup-readiness-validator-totality-remediation",
-    "frozen_baseline_commit": "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
-    "prior_readiness_implementation_commit": "0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea",
-    "prior_readiness_finalization_commit": "2bb08fee77125f6b5bed2774c085ce57fe192752",
-    "current_readiness_implementation_commit": "7689d2cca57c485d8c0569bdcbec58e400621b20",
-    "current_readiness_finalization_commit_source": "external exact 40-character audit input after finalization commit"
-  },
-  "accepted_offline_baseline": {
-    "manifest_size": 28088,
-    "manifest_sha256": "35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088",
-    "debug_sys_size": 68096,
-    "debug_sys_sha256": "E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097",
-    "release_sys_size": 40960,
-    "release_sys_sha256": "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
-  },
-  "readiness": {
-    "fixture_count": 75,
-    "assertion_count": 467,
-    "category_totals": [
-      {
-        "category": "accepted-baseline-identity",
-        "fixtures": 1,
-        "assertions": 4.0
-      },
-      {
-        "category": "authorization",
-        "fixtures": 1,
-        "assertions": 4.0
-      },
-      {
-        "category": "binary-identity",
-        "fixtures": 1,
-        "assertions": 5.0
-      },
-      {
-        "category": "current-driver",
-        "fixtures": 1,
-        "assertions": 5.0
-      },
-      {
-        "category": "event-log",
-        "fixtures": 1,
-        "assertions": 5.0
-      },
-      {
-        "category": "evidence",
-        "fixtures": 2,
-        "assertions": 10.0
-      },
-      {
-        "category": "host",
-        "fixtures": 1,
-        "assertions": 5.0
-      },
-      {
-        "category": "install",
-        "fixtures": 2,
-        "assertions": 10.0
-      },
-      {
-        "category": "nested-quoting",
-        "fixtures": 1,
-        "assertions": 4.0
-      },
-      {
-        "category": "operation",
-        "fixtures": 2,
-        "assertions": 10.0
-      },
-      {
-        "category": "operation-lifecycle",
-        "fixtures": 11,
-        "assertions": 55.0
-      },
-      {
-        "category": "package-semantic",
-        "fixtures": 1,
-        "assertions": 6.0
-      },
-      {
-        "category": "reconciliation",
-        "fixtures": 1,
-        "assertions": 5.0
-      },
-      {
-        "category": "rollback",
-        "fixtures": 2,
-        "assertions": 10.0
-      },
-      {
-        "category": "rollback-totality",
-        "fixtures": 12,
-        "assertions": 60.0
-      },
-      {
-        "category": "runtime-observer",
-        "fixtures": 5,
-        "assertions": 25.0
-      },
-      {
-        "category": "schema-semantic",
-        "fixtures": 4,
-        "assertions": 20.0
-      },
-      {
-        "category": "schema-structural",
-        "fixtures": 1,
-        "assertions": 4.0
-      },
-      {
-        "category": "semantic-transition",
-        "fixtures": 8,
-        "assertions": 40.0
-      },
-      {
-        "category": "signing",
-        "fixtures": 2,
-        "assertions": 10.0
-      },
-      {
-        "category": "target",
-        "fixtures": 1,
-        "assertions": 5.0
-      },
-      {
-        "category": "target-totality",
-        "fixtures": 12,
-        "assertions": 60.0
-      },
-      {
-        "category": "validator-totality",
-        "fixtures": 1,
-        "assertions": 94.0
-      },
-      {
-        "category": "wpp",
-        "fixtures": 1,
-        "assertions": 5.0
-      }
-    ],
-    "unrelated_exception_false_positive_count": 0,
-    "empty_operation_install_pass_count": 0,
-    "install_plan_crash_count": 0,
-    "invalid_schema_transition_acceptance_count": 0,
-    "unlinked_stop_condition_count": 0,
-    "uncontrolled_exception_count": 0,
-    "property_not_found_exception_count": 0,
-    "strictmode_exception_count": 0,
-    "psscriptanalyzer_status": "SKIPPED_UNAVAILABLE",
-    "runtime_evidence_schema": "chatpad-runtime-evidence-schema-v3",
-    "exact_instance_binding_operations": 0,
-    "exact_instance_restoration_operations": 0,
-    "broad_approved_install_operations": 0,
-    "broad_approved_rollback_operations": 0
-  },
-  "entries": [
-    {
-      "id": "tracked-docs-decisions-md",
-      "relative_path": "docs/DECISIONS.md",
-      "state": "tracked",
-      "byte_size": 109466,
-      "sha256": "ACED302F48555D7D295BEA1E65076BC51F96A9307297F70DA8214B3836D2006F",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-next-task-md",
-      "relative_path": "docs/NEXT-TASK.md",
-      "state": "tracked",
-      "byte_size": 4629,
-      "sha256": "777D3D7836ED348EAF435BB608CF8D7A573BDF30F11EC14E212009D5FA79E46C",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-porting-plan-md",
-      "relative_path": "docs/PORTING-PLAN.md",
-      "state": "tracked",
-      "byte_size": 18014,
-      "sha256": "4D0C5FD12651CEE59B452E55AB0E111A5ECCF2CA2C661ADE48DECBDD39B2112D",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-project-state-md",
-      "relative_path": "docs/PROJECT-STATE.md",
-      "state": "tracked",
-      "byte_size": 4479,
-      "sha256": "3894BC4F55FCF4DD0563EAA03B259F9D75372FDABD06CA85D8744963C84F2ABC",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-runtime-bringup-readiness-md",
-      "relative_path": "docs/RUNTIME-BRINGUP-READINESS.md",
-      "state": "tracked",
-      "byte_size": 18232,
-      "sha256": "29DCB87125E491EB656C90620B3FF98854FAF65508271D7A2F415D724D3EA605",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-docs-worklog-md",
-      "relative_path": "docs/WORKLOG.md",
-      "state": "tracked",
-      "byte_size": 384958,
-      "sha256": "60426E78B25A4836006238623B8A10BD2B4726E31228EBD51089B7AB4976F389",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
-      "relative_path": "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
-      "state": "tracked",
-      "byte_size": 4463,
-      "sha256": "4E407C818D66A9BE94F91965F528C9900031ACAAB33F221129E18DC288681AFA",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-runtimebringup-chatpadruntimebringup-common-psm1",
-      "relative_path": "tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1",
-      "state": "tracked",
-      "byte_size": 67865,
-      "sha256": "4586F2C0BDC8001C767F2AD34BA96FC811EC1920AB8F47CF84DA54CFDE00B201",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadposttestreconciliation-ps1",
-      "relative_path": "tools/Test-ChatpadPostTestReconciliation.ps1",
-      "state": "tracked",
-      "byte_size": 524,
-      "sha256": "6107B54E7092B1BE83D7B1C82ED0E7B4E069C7594D18A0E1E497A53CD5C04025",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadrollbackreadiness-ps1",
-      "relative_path": "tools/Test-ChatpadRollbackReadiness.ps1",
-      "state": "tracked",
-      "byte_size": 504,
-      "sha256": "6376BF99F7C612B349A7E79CB344422E37B85CE741B9972209BF7F8AD2E6B4EB",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-      "state": "tracked",
-      "byte_size": 42188,
-      "sha256": "36E5B7C690BA6773BC6C71E5C452E9CE146E707653E9A1B01BB70AB0C79E93D0",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadruntimehostpreflight-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeHostPreflight.ps1",
-      "state": "tracked",
-      "byte_size": 931,
-      "sha256": "19B96F6D491225B5B3C3F0818860D9D308724BE659324B8DED31C99DA78DBB48",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadruntimeobservation-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeObservation.ps1",
-      "state": "tracked",
-      "byte_size": 513,
-      "sha256": "6AB870226A103B9FCAD626CA4FF7AB32DA9994D27EDFEBE4A1E6DA74F2880BB7",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadruntimerepositoryidentity-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeRepositoryIdentity.ps1",
-      "state": "tracked",
-      "byte_size": 849,
-      "sha256": "4D981E89BA2EC202570CBB4836702B73C420621E150D7E62921855DAA87E83B6",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadruntimetargetselection-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeTargetSelection.ps1",
-      "state": "tracked",
-      "byte_size": 665,
-      "sha256": "B00918FF63FE58F92CE170F1504E8E12B0B9AB2334E497125D3620ACF1421D6B",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "tracked-tools-test-chatpadsigningreadiness-ps1",
-      "relative_path": "tools/Test-ChatpadSigningReadiness.ps1",
-      "state": "tracked",
-      "byte_size": 500,
-      "sha256": "3B7FE53549BFF929CF547E03919F8522847C1786E42B4C8FE8B6A48F02D2E205",
-      "result": "VALIDATED",
-      "evidence_classification": "synthetic"
-    },
-    {
-      "id": "evidence-synthetic-suite",
-      "relative_path": "artifacts/logs/runtime-bringup-validator-totality-suite-post-implementation-7689d2c.json",
-      "state": "ignored",
-      "byte_size": 56372,
-      "sha256": "4DCBDF1256B3628968CD67792F65746E6DECA48BB80A7C8BDDA98639D785BD18",
-      "result": "PASS",
-      "evidence_classification": "synthetic"
-    }
-  ]
+    "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
+    "generated_utc":  "2026-07-02T15:15:04.1580209Z",
+    "framework_status":  "PASS",
+    "live_installation_readiness":  "BLOCKED",
+    "blocker":  "BLOCKED_NOT_IMPLEMENTED",
+    "repository":  {
+                       "branch":  "feature/runtime-bringup-readiness-final-contract-remediation",
+                       "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
+                       "prior_readiness_implementation_commit":  "7689d2cca57c485d8c0569bdcbec58e400621b20",
+                       "prior_readiness_finalization_commit":  "bb4c06cc87150b944d04ae2135ea58b8218c5dc8",
+                       "current_readiness_implementation_commit":  "4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6",
+                       "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
+                   },
+    "accepted_offline_baseline":  {
+                                      "manifest_size":  28088,
+                                      "manifest_sha256":  "35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088",
+                                      "debug_sys_size":  68096,
+                                      "debug_sys_sha256":  "E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097",
+                                      "release_sys_size":  40960,
+                                      "release_sys_sha256":  "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
+                                  },
+    "readiness":  {
+                      "fixture_count":  118,
+                      "assertion_count":  801,
+                      "category_totals":  [
+                                              {
+                                                  "category":  "accepted-baseline-identity",
+                                                  "fixtures":  1,
+                                                  "assertions":  4
+                                              },
+                                              {
+                                                  "category":  "authorization",
+                                                  "fixtures":  1,
+                                                  "assertions":  4
+                                              },
+                                              {
+                                                  "category":  "binary-identity",
+                                                  "fixtures":  1,
+                                                  "assertions":  5
+                                              },
+                                              {
+                                                  "category":  "collection-shape",
+                                                  "fixtures":  10,
+                                                  "assertions":  50
+                                              },
+                                              {
+                                                  "category":  "collection-shape-structural",
+                                                  "fixtures":  10,
+                                                  "assertions":  50
+                                              },
+                                              {
+                                                  "category":  "committed-sample",
+                                                  "fixtures":  1,
+                                                  "assertions":  4
+                                              },
+                                              {
+                                                  "category":  "current-driver",
+                                                  "fixtures":  1,
+                                                  "assertions":  5
+                                              },
+                                              {
+                                                  "category":  "event-log",
+                                                  "fixtures":  1,
+                                                  "assertions":  5
+                                              },
+                                              {
+                                                  "category":  "evidence",
+                                                  "fixtures":  2,
+                                                  "assertions":  10
+                                              },
+                                              {
+                                                  "category":  "host",
+                                                  "fixtures":  1,
+                                                  "assertions":  5
+                                              },
+                                              {
+                                                  "category":  "install",
+                                                  "fixtures":  2,
+                                                  "assertions":  10
+                                              },
+                                              {
+                                                  "category":  "nested-quoting",
+                                                  "fixtures":  1,
+                                                  "assertions":  4
+                                              },
+                                              {
+                                                  "category":  "operation",
+                                                  "fixtures":  2,
+                                                  "assertions":  10
+                                              },
+                                              {
+                                                  "category":  "operation-lifecycle",
+                                                  "fixtures":  32,
+                                                  "assertions":  181
+                                              },
+                                              {
+                                                  "category":  "package-semantic",
+                                                  "fixtures":  1,
+                                                  "assertions":  6
+                                              },
+                                              {
+                                                  "category":  "powershell-inventory",
+                                                  "fixtures":  1,
+                                                  "assertions":  14
+                                              },
+                                              {
+                                                  "category":  "reconciliation",
+                                                  "fixtures":  1,
+                                                  "assertions":  5
+                                              },
+                                              {
+                                                  "category":  "rollback",
+                                                  "fixtures":  2,
+                                                  "assertions":  10
+                                              },
+                                              {
+                                                  "category":  "rollback-totality",
+                                                  "fixtures":  12,
+                                                  "assertions":  60
+                                              },
+                                              {
+                                                  "category":  "runtime-observer",
+                                                  "fixtures":  5,
+                                                  "assertions":  25
+                                              },
+                                              {
+                                                  "category":  "schema-semantic",
+                                                  "fixtures":  4,
+                                                  "assertions":  20
+                                              },
+                                              {
+                                                  "category":  "schema-structural",
+                                                  "fixtures":  1,
+                                                  "assertions":  4
+                                              },
+                                              {
+                                                  "category":  "semantic-transition",
+                                                  "fixtures":  8,
+                                                  "assertions":  40
+                                              },
+                                              {
+                                                  "category":  "signing",
+                                                  "fixtures":  2,
+                                                  "assertions":  10
+                                              },
+                                              {
+                                                  "category":  "target",
+                                                  "fixtures":  1,
+                                                  "assertions":  5
+                                              },
+                                              {
+                                                  "category":  "target-totality",
+                                                  "fixtures":  12,
+                                                  "assertions":  60
+                                              },
+                                              {
+                                                  "category":  "validator-totality",
+                                                  "fixtures":  1,
+                                                  "assertions":  184
+                                              },
+                                              {
+                                                  "category":  "wpp",
+                                                  "fixtures":  1,
+                                                  "assertions":  5
+                                              }
+                                          ],
+                      "unrelated_exception_false_positive_count":  0,
+                      "empty_operation_install_pass_count":  0,
+                      "install_plan_crash_count":  0,
+                      "invalid_schema_transition_acceptance_count":  0,
+                      "unlinked_stop_condition_count":  0,
+                      "invalid_lifecycle_acceptance_count":  0,
+                      "missing_start_timestamp_acceptance_count":  0,
+                      "uncontrolled_exception_count":  0,
+                      "property_not_found_exception_count":  0,
+                      "strictmode_exception_count":  0,
+                      "malformed_input_validator_count":  15,
+                      "malformed_input_case_count":  180,
+                      "committed_sample_structural_validation":  "PASS",
+                      "committed_sample_semantic_validation":  "PASS",
+                      "powershell_inventory":  {
+                                                   "tracked_ps1_count":  41,
+                                                   "tracked_psm1_count":  2,
+                                                   "tracked_powershell_count":  43,
+                                                   "parsed_ps1_count":  41,
+                                                   "parsed_psm1_count":  2,
+                                                   "parsed_powershell_count":  43,
+                                                   "parse_error_count":  0,
+                                                   "excluded_files":  [
+
+                                                                      ],
+                                                   "duplicate_normalized_path_count":  0,
+                                                   "missing_count":  0,
+                                                   "extra_count":  0,
+                                                   "parse_errors":  [
+
+                                                                    ]
+                                               },
+                      "psscriptanalyzer_status":  "SKIPPED_UNAVAILABLE",
+                      "runtime_evidence_schema":  "chatpad-runtime-evidence-schema-v3",
+                      "exact_instance_binding_operations":  0,
+                      "exact_instance_restoration_operations":  0,
+                      "broad_approved_install_operations":  0,
+                      "broad_approved_rollback_operations":  0
+                  },
+    "entries":  [
+                    {
+                        "id":  "tracked-docs-evidence-runtime-bringup-evidence-schema-v1-json",
+                        "relative_path":  "docs/evidence/runtime-bringup-evidence-schema-v1.json",
+                        "state":  "tracked",
+                        "byte_size":  7920,
+                        "sha256":  "351CA1FFCF2045D905F45835909FBFD00C708F7DED1626DF62A1607A03FC14D6",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
+                        "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
+                        "state":  "tracked",
+                        "byte_size":  6772,
+                        "sha256":  "62BFA5DC94EDC9C1D2C23A8781017BB8C8AEA64A1E5A4EA9083EBBA82377E502",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-runtimebringup-chatpadruntimebringup-common-psm1",
+                        "relative_path":  "tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1",
+                        "state":  "tracked",
+                        "byte_size":  72035,
+                        "sha256":  "66D147C0CAA388AE1F3671D027B9425E86871D8077DE707D5BE5D010278D8865",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
+                        "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
+                        "state":  "tracked",
+                        "byte_size":  63883,
+                        "sha256":  "96F695EAB0A8C5C50902BA09D29DC405FC8D7F9F3D1AAAF3E966380ADF4F10B3",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
+                        "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
+                        "state":  "tracked",
+                        "byte_size":  4255,
+                        "sha256":  "04537E532BCA1F560B3D77E6C0AF0FE20D5DB75AED84738B3DE403E8A955DC1C",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-test-chatpadruntimerepositoryidentity-ps1",
+                        "relative_path":  "tools/Test-ChatpadRuntimeRepositoryIdentity.ps1",
+                        "state":  "tracked",
+                        "byte_size":  845,
+                        "sha256":  "C1F8837A837980A4CB22DC1C83F0B7D07AA85405AC658EB2937EF8A85307D853",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "evidence-synthetic-suite",
+                        "relative_path":  "artifacts/logs/runtime-bringup-final-contract-suite-post-implementation-4661c1d.json",
+                        "state":  "ignored",
+                        "byte_size":  178039,
+                        "sha256":  "89599FD7312B280E2C7AFAB4112163C98D60D2888AC30D749B8D58A3516B2878",
+                        "result":  "PASS",
+                        "evidence_classification":  "synthetic"
+                    }
+                ]
 }

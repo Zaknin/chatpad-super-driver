@@ -4,6 +4,34 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Centralize final operation lifecycle and evidence inventory truth
+
+**Decision:** Operation lifecycle validity is enforced by the shared
+`Test-ChatpadOperationPlanContract` contract and reused by runtime evidence
+semantic validation. Executed, failed, and rolled-back operations require
+explicit start and completion timestamps; committed sample evidence must pass
+both structural and semantic validation from its repository path; PowerShell
+inventory reporting must derive separate tracked `.ps1`, tracked `.psm1`, and
+total counts from Git-tracked paths and reconcile those counts with AST parse
+results.
+
+**Rationale:** The fourth readiness audit found that executed operations could
+be accepted without `start_timestamp`, the committed sample evidence had not
+been proven against both validators as committed, and the manifest/docs
+collapsed 41 `.ps1` plus 2 `.psm1` files into an ambiguous 41-file
+PowerShell total.
+
+**Alternatives rejected:** Adding a wrapper-only missing-start check, treating
+semantic validation as separate lifecycle logic, validating only in-memory
+sample equivalents, hardcoding PowerShell totals without Git enumeration, or
+silently excluding `.psm1` files from AST parsing.
+
+**Consequences:** Lifecycle fixtures must cover status symmetry directly, the
+missing-start-timestamp probe is a permanent regression, sample validation is
+part of the suite and manifest truthfulness checks, and all 43 tracked
+PowerShell files are expected to parse unless an explicit reported exclusion is
+added and justified.
+
 ## 2026-07-02 - Treat readiness validators as total functions over malformed JSON-compatible input
 
 **Decision:** Exported runtime readiness validators must reject malformed

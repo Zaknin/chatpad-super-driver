@@ -5,12 +5,12 @@
 The offline runtime instrumentation milestone is accepted and frozen at
 `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned
 `AUDIT PASS WITH LIMITATIONS`. The current branch
-`feature/runtime-bringup-readiness-validator-totality-remediation` repairs the
-third readiness audit findings with safe-access validator contracts,
-entry-point exception containment, target and rollback totality, lifecycle and
-semantic transition enforcement, a malformed-input matrix across public
-readiness validators, truthful PSScriptAnalyzer reporting, and 75 offline
-fixtures with 467 assertions.
+`feature/runtime-bringup-readiness-final-contract-remediation` repairs the
+fourth readiness audit findings with authoritative operation lifecycle
+enforcement, committed sample structural and semantic validation, wrong
+collection-shape rejection, Git-derived PowerShell inventory reconciliation,
+truthful PSScriptAnalyzer reporting, and 118 offline fixtures with 801
+assertions.
 
 Authoritative framework status is `PASS`; authoritative live installation
 readiness is `BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED`. Exact-instance
@@ -20,7 +20,7 @@ installation, loading, trace collection, event-log export, live device query,
 target/request operation, hardware access, Windows mutation, reboot, or
 production source change.
 
-Current phase: **Runtime bring-up readiness validator-totality remediation -
+Current phase: **Runtime bring-up readiness final-contract remediation -
 exact-instance binding blocked; independent read-only two-commit audit
 pending**.
 

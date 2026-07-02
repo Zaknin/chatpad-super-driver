@@ -5850,3 +5850,125 @@
   target and rollback probes, malformed-input validator probes, lifecycle and
   semantic transition enforcement, executable-finalization diff checks, and
   blocked live-readiness confirmation.
+
+## 2026-07-02 19:13 +04:00 - Final runtime readiness contract remediation
+
+- **Objective:** Remediate the final three audit defects: executed operations
+  missing `start_timestamp` could pass lifecycle validation, the committed
+  sample evidence needed direct structural and semantic validation, and
+  PowerShell totals needed reconciliation from 41 `.ps1` plus 2 `.psm1` files
+  to 43 total tracked PowerShell files. Preserve framework `PASS`, live
+  readiness `BLOCKED`, blocker `BLOCKED_NOT_IMPLEMENTED`, and zero exact/broad
+  executable install or restoration operations.
+- **Starting state:** Verified required branch
+  `feature/runtime-bringup-readiness-validator-totality-remediation` at
+  `bb4c06cc87150b944d04ae2135ea58b8218c5dc8`, direct parent
+  `7689d2cca57c485d8c0569bdcbec58e400621b20`, recent ancestry
+  `f0f9bf7e196a6f7cfe9b391cc4001b593016d310 ->
+  66de13033e4ba5f67465829c25c0e6a158516044 ->
+  7689d2cca57c485d8c0569bdcbec58e400621b20 ->
+  bb4c06cc87150b944d04ae2135ea58b8218c5dc8`, clean tracked status,
+  local/remote equality, and ahead/behind `0/0`. Retained ignored starting
+  log:
+  `artifacts/logs/runtime-bringup-final-contract-remediation-start-20260702T145738Z.json`.
+  Created branch
+  `feature/runtime-bringup-readiness-final-contract-remediation`.
+- **Implementation:** Centralized final lifecycle enforcement in
+  `Test-ChatpadOperationPlanContract`, added explicit start/completion
+  timestamp requirements and ordering checks, result identity/outcome/exit-code
+  consistency, status symmetry for planned/blocked/skipped_authorization,
+  rolled-back original/rollback references, restored-baseline result evidence,
+  and no-unresolved-deviation checks. Runtime evidence semantic validation now
+  calls the same operation lifecycle contract and adds operation dependency
+  reference checks.
+- **Sample and collection shapes:** Added committed-sample structural and
+  semantic fixtures that load
+  `docs/evidence/runtime-bringup-sample-evidence.json` from the repository.
+  Added structural and semantic wrong-shape fixtures for missing, null,
+  object, string, and scalar `artifacts` and `operations` values. The committed
+  sample passes both validators and remains explicitly synthetic with blocked
+  live readiness.
+- **PowerShell inventory:** Added Git-derived inventory reconciliation for
+  tracked PowerShell files. Result: 41 `.ps1`, 2 `.psm1`, 43 total tracked
+  PowerShell files; 41 parsed `.ps1`, 2 parsed `.psm1`, 43 parsed total; parse
+  errors `0`; exclusions `0`; duplicate normalized paths `0`; missing `0`;
+  extra `0`.
+- **Malformed-input and direct probes:** Expanded the malformed-input matrix to
+  15 public validators and 180 cases. Preserved previous direct probes for
+  target, rollback, install blocker, package semantics, driver state, signing,
+  host, evidence directory, WPP, event logs, reconciliation, runtime
+  observation, repository/binary/baseline identity, stop linkage, and manifest
+  truthfulness. Added permanent missing-start-timestamp regression with
+  controlled `OPERATION_LIFECYCLE_INVALID`, stop condition
+  `command-differs-from-approved-plan`, and reason `start-timestamp-missing`.
+- **Intermediate failed commands and corrected reruns:** An unquoted
+  `git rev-list --left-right --count HEAD...@{u}` preflight failed because
+  PowerShell parsed `@{u}`; quoting `@{u}` returned ahead/behind `0/0`.
+  `pwsh` failed in this desktop execution context with a terminated logon
+  session, so the suite now runs under Windows PowerShell with a repository
+  schema-surface fallback for Draft 2020-12 structural checks. The first suite
+  invocation failed because execution policy blocked script loading; rerunning
+  via `powershell.exe -NoProfile -ExecutionPolicy Bypass` executed without
+  changing machine policy. Draft suite reruns exposed package validator empty
+  path parameter-binding, Windows PowerShell JSON single-item array unrolling,
+  and nested expected-exit-code array handling; package path guards,
+  JSON array-shape normalization, atomic array property returns, and
+  `Get-ChatpadArray` use for exit codes corrected the failures. Initial `git
+  add` failed in the sandbox because `.git/index.lock` could not be created;
+  the approved escalated Git staging command succeeded. A final hygiene scan
+  found the regenerated manifest had a UTF-8 BOM and found trailing whitespace
+  in documentation; rewriting only finalization docs/manifest with UTF-8
+  no-BOM and trimmed trailing whitespace corrected the hygiene failure. The
+  first duplicate-key scan used unavailable `Newtonsoft.Json` types under
+  Windows PowerShell; the corrected duplicate-key scan used the local Python
+  JSON parser. No failed command performed a prohibited live or
+  Windows-mutating action.
+- **Validation evidence before implementation commit:** PowerShell AST parse
+  PASS for 43 tracked PowerShell files with 41 `.ps1`, 2 `.psm1`, and zero
+  parse errors. Full synthetic suite PASS in
+  `artifacts/logs/runtime-bringup-final-contract-suite-draft-20260702T151316Z.json`:
+  framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, 118 fixtures, 801 assertions, 180 malformed-input
+  cases, uncontrolled exceptions `0`, `PropertyNotFoundException` count `0`,
+  StrictMode exception count `0`, invalid lifecycle acceptance count `0`,
+  missing-start-timestamp acceptance count `0`, committed sample structural
+  `PASS`, committed sample semantic `PASS`, PowerShell inventory `PASS`.
+  `git diff --check` passed.
+- **Implementation commit:** `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`,
+  subject `Harden final runtime readiness contracts`. It contains executable
+  changes in the runtime evidence schema, shared runtime module, readiness
+  suite, manifest generator, manifest validator, and repository identity
+  wrapper. No production driver source/header, INF, project, solution,
+  protocol, transport, binary, package, credential, or legacy path changed.
+- **Post-implementation freeze validation:** After the implementation commit,
+  reran AST parsing and the full synthetic suite into
+  `artifacts/logs/runtime-bringup-final-contract-suite-post-implementation-4661c1d.json`.
+  Result: framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, 118 fixtures, 801 assertions, 15 validators, 180
+  malformed-input cases, all exception counters `0`, sample structural and
+  semantic `PASS`, PowerShell inventory `PASS`. From this point, finalization
+  changed only finalized evidence and documentation.
+- **Finalization evidence:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` from implementation
+  commit `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6` and the post-implementation
+  suite log. Manifest validation returned `PASS`, schema
+  `chatpad-runtime-bringup-readiness-manifest-v3`, 7 entries, and total defects
+  `0`.
+- **Safety:** No certificate/private key creation, access, import, export, or
+  deletion occurred. No signing, CAT generation, package creation, Driver
+  Store staging, installation, binding, loading, rollback, removal, enablement,
+  disablement, service mutation, registry/policy/boot/security mutation,
+  WPP/ETW tracing, real event-log export, live device enumeration, target
+  opening, device request, controller/Chatpad access, protocol traffic,
+  keyboard injection, hardware interaction, or reboot occurred.
+- **Finalization commit/push:** Expected finalization subject is
+  `docs: finalize final-contract readiness evidence`; final hash, repository
+  identity proof, executable-finalization diff, remote equality, and
+  ahead/behind are verified after the finalization commit and push.
+- **Remaining blocker and next task:** Exact-instance binding/restoration is
+  not implemented. The exact next task is independent read-only audit of both
+  final-contract remediation commits, directly rerunning the executed-operation
+  missing-start-timestamp probe, committed sample structural and semantic
+  validation, independent enumeration/parsing of all 43 PowerShell files,
+  lifecycle symmetry, malformed-input totality, executable-finalization diff,
+  and blocked live-readiness confirmation.

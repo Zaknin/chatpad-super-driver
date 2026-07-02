@@ -18,15 +18,44 @@ The third independent audit found remaining uncontrolled exception paths and
 unsupported lifecycle-transition acceptances. The validator-totality
 remediation is offline-only and keeps the live gate closed.
 
+## Final-contract remediation status
+
+The fourth independent audit found three final readiness-contract defects:
+`Test-ChatpadOperationPlanContract` accepted an `executed` operation without
+`start_timestamp`, the committed sample evidence was not proven structurally
+and semantically from its repository path, and repository PowerShell totals
+were reported ambiguously as 41 files instead of 41 `.ps1` plus 2 `.psm1`, 43
+total.
+
 - Current branch:
-  `feature/runtime-bringup-readiness-validator-totality-remediation`.
+  `feature/runtime-bringup-readiness-final-contract-remediation`.
 - Current implementation commit:
-  `7689d2cca57c485d8c0569bdcbec58e400621b20`.
+  `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`.
 - Framework validation is `PASS`; live installation readiness is `BLOCKED`;
   blocker is `BLOCKED_NOT_IMPLEMENTED`.
 - Executable exact-instance binding operations: `0`; executable
   exact-instance restoration operations: `0`; broad approved install
   operations: `0`; broad approved rollback operations: `0`.
+- Operation lifecycle validation now requires explicit `start_timestamp` and
+  `completion_timestamp` for executed, failed, and rolled-back operations,
+  validates timestamp syntax and order, checks result object identity, exit
+  code, and outcome consistency, and rejects the exact missing-start-timestamp
+  probe with reason `start-timestamp-missing`.
+- Lifecycle validation is centralized in `Test-ChatpadOperationPlanContract`
+  and reused by runtime evidence semantic validation. Planned, blocked, and
+  skipped_authorization states reject execution evidence; blocked states
+  require valid stop-condition IDs; skipped_authorization requires
+  authorization evidence; rolled_back and restored states require their
+  lifecycle-specific evidence.
+- The committed sample
+  `docs/evidence/runtime-bringup-sample-evidence.json` is explicitly
+  synthetic, keeps live readiness blocked, uses `artifacts` and `operations`
+  arrays, contains unique IDs and valid session/host/dependency linkage, and
+  passes both structural schema validation and semantic validation from its
+  actual repository path.
+- PowerShell inventory reporting is derived from Git-tracked paths: 41 `.ps1`,
+  2 `.psm1`, 43 total tracked PowerShell files; all 43 parse with zero AST
+  errors and no exclusions.
 - Exported readiness validators now reject malformed JSON-compatible values
   through controlled result records. The malformed-input matrix covers
   repository identity, target selection, driver state, rollback readiness,
@@ -54,10 +83,12 @@ remediation is offline-only and keeps the live gate closed.
   `VALIDATOR_INTERNAL_ERROR` boundary with sanitized exception diagnostics.
   Normal malformed input is rejected by explicit contract logic, not by the
   boundary.
-- The final offline suite contains 75 fixtures and 467 assertions. The
-  malformed-input matrix contains 90 cases. Uncontrolled exceptions:
+- The final offline suite contains 118 fixtures and 801 assertions. The
+  malformed-input matrix covers 15 public validators and 180 cases.
+  Uncontrolled exceptions:
   `0`; `PropertyNotFoundException` count: `0`; StrictMode exception count:
-  `0`; invalid transition acceptance count: `0`.
+  `0`; invalid lifecycle acceptance count: `0`; missing-start-timestamp
+  acceptance count: `0`.
 - PSScriptAnalyzer remains `SKIPPED_UNAVAILABLE`; no network installation was
   attempted and unavailable static analysis is not counted as PASS.
 
@@ -66,14 +97,14 @@ remediation is offline-only and keeps the live gate closed.
   `BLOCKED_NOT_IMPLEMENTED`. Documentation may describe this as pass with a
   blocker, but machine-readable evidence must not use top-level PASS as runtime
   authorization.
-- Repository identity is dual for both generations. Validators distinguish the
-  frozen accepted baseline, prior readiness implementation commit
-  `0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea`, prior readiness finalization
-  commit `2bb08fee77125f6b5bed2774c085ce57fe192752`, current remediation
-  implementation commit
-  `f0f9bf7e196a6f7cfe9b391cc4001b593016d310`, and the finalization commit
-  supplied as an exact external audit input after commit creation. The tracked
-  manifest avoids self-reference.
+- Repository identity is dual for the current generation. Validators
+  distinguish the frozen accepted baseline, prior final-contract baseline
+  implementation commit `7689d2cca57c485d8c0569bdcbec58e400621b20`, prior
+  final-contract baseline finalization commit
+  `bb4c06cc87150b944d04ae2135ea58b8218c5dc8`, current final-contract
+  implementation commit `4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6`, and the
+  finalization commit supplied as an exact external audit input after commit
+  creation. The tracked manifest avoids self-reference.
 - Negative fixtures now pass only when the documented contract returns or
   throws the expected machine-readable result, result code, stop-condition IDs,
   and exception type. Harness self-tests prove unrelated StrictMode exceptions,
