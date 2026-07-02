@@ -4,6 +4,7 @@ param([string]$ManifestPath = 'docs/evidence/runtime-bringup-readiness-manifest.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'ExactInstance\ChatpadExactInstance.OfflineSuite.psm1') -Force
 
 $script:FixtureIds = @{}
 $script:Fixtures = [Collections.Generic.List[object]]::new()
@@ -674,9 +675,9 @@ Invoke-Fixture powershell-inventory-reconciliation powershell-inventory PowerShe
     $parsedPs1=@($parsed|Where-Object{$_ -like '*.ps1'})
     $parsedPsm1=@($parsed|Where-Object{$_ -like '*.psm1'})
     $defects=@()
-    if($ps1.Count -ne 41){$defects+="tracked-ps1-count:$($ps1.Count)"}
-    if($psm1.Count -ne 2){$defects+="tracked-psm1-count:$($psm1.Count)"}
-    if($tracked.Count -ne 43){$defects+="tracked-total-count:$($tracked.Count)"}
+    if($ps1.Count -ne 43){$defects+="tracked-ps1-count:$($ps1.Count)"}
+    if($psm1.Count -ne 6){$defects+="tracked-psm1-count:$($psm1.Count)"}
+    if($tracked.Count -ne 49){$defects+="tracked-total-count:$($tracked.Count)"}
     if($parsedPs1.Count -ne $ps1.Count){$defects+="parsed-ps1-count:$($parsedPs1.Count)"}
     if($parsedPsm1.Count -ne $psm1.Count){$defects+="parsed-psm1-count:$($parsedPsm1.Count)"}
     if($parsed.Count -ne $tracked.Count){$defects+="parsed-total-count:$($parsed.Count)"}
@@ -806,6 +807,14 @@ Device="Chatpad"
     Invoke-Fixture package-token-only package-semantic Test-ChatpadPackageContract FAIL PACKAGE_SEMANTICS_INVALID @('package-validation-failed','unexpected-setupapi-match') $packageBody
 } finally { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 
+$exactImplementationCommit=(&git rev-parse HEAD).Trim()
+$exactInstanceSuite=Invoke-ChatpadExactInstanceOfflineSuite -ImplementationCommit $exactImplementationCommit
+foreach($exactRecord in @($exactInstanceSuite.tests)){
+    if($script:FixtureIds.ContainsKey([string]$exactRecord.fixture_id)){throw "Duplicate exact-instance fixture ID: $($exactRecord.fixture_id)"}
+    $script:FixtureIds[[string]$exactRecord.fixture_id]=$true
+    $script:Fixtures.Add($exactRecord)
+}
+
 $failed=@($script:Fixtures|Where-Object{$_.fixture_result-ne'PASS'})
 $unexpectedExceptions=@($script:Fixtures|Where-Object{$_.actual_exception_type -and -not $_.exception_expected})
 $propertyNotFoundExceptions=@($unexpectedExceptions|Where-Object{$_.actual_exception_type -match 'PropertyNotFound'})
@@ -829,7 +838,7 @@ $unsupportedRuntimePasses=@($observerProvenanceRecords|Where-Object actual_statu
 $result=[pscustomobject][ordered]@{
     schema_version='chatpad-runtime-readiness-suite-v3'
     framework_status=$(if($failed.Count-or$accountingResult.result-ne'PASS'){'FAIL'}else{'PASS'})
-    live_installation_readiness='BLOCKED';blocker='BLOCKED_NOT_IMPLEMENTED'
+    live_installation_readiness='BLOCKED';blocker='BLOCKED_PENDING_INDEPENDENT_AUDIT'
     fixture_count=$script:Fixtures.Count
     fixture_assertion_sum=$assertionCount
     harness_result_record_count=$harnessRecords.Count
@@ -860,6 +869,18 @@ $result=[pscustomobject][ordered]@{
     unsupported_runtime_observer_pass_count=$unsupportedRuntimePasses.Count
     runtime_observations_evaluated_live=$unsupportedRuntimePasses.Count
     runtime_observation_gates_blocked_or_unavailable=@($observerProvenanceRecords|Where-Object actual_status -eq 'BLOCKED').Count
+    exact_instance_framework_result=$exactInstanceSuite.result
+    exact_instance_offline_test_count=[int]$exactInstanceSuite.test_count
+    exact_instance_offline_assertion_count=[int]$exactInstanceSuite.assertion_count
+    synthetic_exact_binding_attempt_count=[int]$exactInstanceSuite.accounting.synthetic_exact_binding_attempts
+    synthetic_exact_restoration_attempt_count=[int]$exactInstanceSuite.accounting.synthetic_exact_restoration_attempts
+    synthetic_exact_restart_attempt_count=[int]$exactInstanceSuite.accounting.synthetic_exact_restart_attempts
+    exact_instance_binding_operations=0
+    exact_instance_restoration_operations=0
+    exact_instance_restart_operations=0
+    broad_approved_install_operations=0
+    broad_approved_rollback_operations=0
+    windows_mutation_count=0
     malformed_input_validator_count=15;malformed_input_case_count=180
     committed_sample_structural_validation=$sampleStructural.actual_status
     committed_sample_semantic_validation=$sampleSemantic.actual_status

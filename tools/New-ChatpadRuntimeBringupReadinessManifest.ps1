@@ -9,7 +9,7 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full commit hash.'}
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
-if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.blocker-ne'BLOCKED_NOT_IMPLEMENTED'){throw 'Suite result is not an accepted blocked result.'}
+if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.blocker-ne'BLOCKED_PENDING_INDEPENDENT_AUDIT'){throw 'Suite result is not an accepted pending-audit blocked result.'}
 
 function Get-CheckedOutLocalBranch {
     $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
@@ -81,7 +81,7 @@ $manifest=[pscustomobject][ordered]@{
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    blocker='BLOCKED_NOT_IMPLEMENTED'
+    blocker='BLOCKED_PENDING_INDEPENDENT_AUDIT'
     repository=[pscustomobject][ordered]@{
         branch=$checkedOutBranch
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
@@ -126,12 +126,23 @@ $manifest=[pscustomobject][ordered]@{
         unsupported_runtime_observer_pass_count=[int]$suite.unsupported_runtime_observer_pass_count
         runtime_observations_evaluated_live=[int]$suite.runtime_observations_evaluated_live
         runtime_observation_gates_blocked_or_unavailable=[int]$suite.runtime_observation_gates_blocked_or_unavailable
+        exact_instance_framework_result=[string]$suite.exact_instance_framework_result
+        exact_instance_offline_test_count=[int]$suite.exact_instance_offline_test_count
+        exact_instance_offline_assertion_count=[int]$suite.exact_instance_offline_assertion_count
+        synthetic_exact_binding_attempt_count=[int]$suite.synthetic_exact_binding_attempt_count
+        synthetic_exact_restoration_attempt_count=[int]$suite.synthetic_exact_restoration_attempt_count
+        synthetic_exact_restart_attempt_count=[int]$suite.synthetic_exact_restart_attempt_count
         malformed_input_validator_count=[int]$suite.malformed_input_validator_count;malformed_input_case_count=[int]$suite.malformed_input_case_count
         committed_sample_structural_validation=[string]$suite.committed_sample_structural_validation
         committed_sample_semantic_validation=[string]$suite.committed_sample_semantic_validation
         powershell_inventory=$powershellInventory
         psscriptanalyzer_status=$pssaResult;runtime_evidence_schema='chatpad-runtime-evidence-schema-v3'
-        exact_instance_binding_operations=0;exact_instance_restoration_operations=0;broad_approved_install_operations=0;broad_approved_rollback_operations=0
+        exact_instance_binding_operations=[int]$suite.exact_instance_binding_operations
+        exact_instance_restoration_operations=[int]$suite.exact_instance_restoration_operations
+        exact_instance_restart_operations=[int]$suite.exact_instance_restart_operations
+        broad_approved_install_operations=[int]$suite.broad_approved_install_operations
+        broad_approved_rollback_operations=[int]$suite.broad_approved_rollback_operations
+        windows_mutation_count=[int]$suite.windows_mutation_count
     }
     entries=@($entries)
 }
