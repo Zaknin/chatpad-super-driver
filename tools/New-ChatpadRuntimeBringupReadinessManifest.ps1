@@ -11,6 +11,19 @@ if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit m
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
 if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.blocker-ne'BLOCKED_NOT_IMPLEMENTED'){throw 'Suite result is not an accepted blocked result.'}
 
+function Get-CheckedOutLocalBranch {
+    $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
+    $exitCode=$LASTEXITCODE
+    if($exitCode -ne 0){
+        throw 'Detached HEAD is not supported for readiness-manifest generation; check out a named local branch and rerun.'
+    }
+    $branch=($branchLines -join "`n").Trim()
+    if([string]::IsNullOrWhiteSpace($branch) -or $branch -match "[`r`n]"){
+        throw 'Could not derive a single checked-out local branch name from Git.'
+    }
+    return $branch
+}
+
 function New-Entry($Id,$Path,$State,$Result){
     $full=[IO.Path]::GetFullPath((Join-Path $root $Path))
     if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not(Test-Path -LiteralPath $full -PathType Leaf)){throw "Invalid manifest path: $Path"}
@@ -61,6 +74,7 @@ $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $pssa=Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue
 $pssaResult=if($null-eq$pssa){'SKIPPED_UNAVAILABLE'}else{'AVAILABLE_NOT_RUN'}
 $powershellInventory=Get-PowerShellInventory
+$checkedOutBranch=Get-CheckedOutLocalBranch
 
 $manifest=[pscustomobject][ordered]@{
     schema_version='chatpad-runtime-bringup-readiness-manifest-v3'
@@ -69,7 +83,7 @@ $manifest=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED'
     blocker='BLOCKED_NOT_IMPLEMENTED'
     repository=[pscustomobject][ordered]@{
-        branch='feature/runtime-bringup-manifest-validator-empty-harness-remediation'
+        branch=$checkedOutBranch
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
         prior_readiness_implementation_commit='ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10'
         prior_readiness_finalization_commit='88e3cbba3a64828322b7c703765e6b1e2369f698'
