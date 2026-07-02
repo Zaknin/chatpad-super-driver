@@ -6,8 +6,11 @@
 
 - **Branch:** `feature/runtime-bringup-readiness-remediation`.
 - **Starting commit:** `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb`.
-- **Expected containing commit:** the commit containing this file, subject
+- **Implementation commit:**
+  `0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea`, subject
   `test: remediate controlled runtime bring-up readiness`.
+- **Expected containing finalization commit:** the commit containing this file,
+  subject `docs: finalize runtime bring-up remediation evidence`.
 - **Accepted offline baseline:** commit
   `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`; manifest SHA-256
   `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`.

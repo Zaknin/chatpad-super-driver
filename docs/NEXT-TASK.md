@@ -4,8 +4,12 @@
 
 - Required branch: `feature/runtime-bringup-readiness-remediation`.
 - Required starting commit: the final commit containing this file, with subject
-  `test: remediate controlled runtime bring-up readiness`.
-- Required direct parent: `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb`.
+  `docs: finalize runtime bring-up remediation evidence`.
+- Required direct parent:
+  `0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea`.
+- Implementation commit:
+  `0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea`, direct parent
+  `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb`.
 - Accepted offline baseline:
   `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`.
 - Runtime readiness status: `PASS WITH BLOCKER`; exact-instance binding and

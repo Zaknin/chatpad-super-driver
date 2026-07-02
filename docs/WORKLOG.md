@@ -5587,10 +5587,23 @@
   security, registry, service, event-log, trace, or device state changed. No
   live device query, target/interface open, request, hardware access, protocol
   traffic, keyboard injection, or reboot occurred.
-- **Commit/push:** Expected one commit with subject
-  `test: remediate controlled runtime bring-up readiness`, then push only
+- **Commit/push:** Implementation commit
+  `0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea`, subject
+  `test: remediate controlled runtime bring-up readiness`. Its first
+  post-commit identity proof failed because the approved-root comparison did
+  not normalize the repository's `\\?\` path prefix; the first post-commit
+  manifest validation also treated the 26 now-committed candidate files as
+  extra because it inspected only the unstaged diff. A narrow evidence
+  finalization commit normalizes comparison paths and derives the manifest
+  candidate set from `b9990d2..HEAD` plus pending changes. The first
+  finalization AST wrapper then tokenized `Resolve-Path$p` as a command name
+  after the suite and manifest had passed; restoring the missing space allowed
+  the AST and diff checks to rerun. The first post-finalization identity proof
+  still failed because Git returned `C:/Dev/...` while the approved root used
+  backslashes; applying `GetFullPath` to both values corrected separator
+  normalization before the finalization commit was amended. Push only
   `origin/feature/runtime-bringup-readiness-remediation`; final hash and remote
-  equality are verified after commit.
+  equality are verified after that commit.
 - **Remaining blocker and next task:** Exact-instance binding/restoration is not
   implemented. The exact next task is an independent, read-only audit of the
   final remediation commit, including dual identity, structured argument

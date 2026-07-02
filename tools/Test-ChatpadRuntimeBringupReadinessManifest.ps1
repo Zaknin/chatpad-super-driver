@@ -29,7 +29,9 @@ $defects = [ordered]@{
 }
 
 $listedPaths = @($entries | ForEach-Object { ([string]$_.relative_path).Replace('\','/') })
-$requiredTracked = @(& git diff HEAD --name-only) + @(
+$candidateBaseCommit = [string]$manifest.repository.candidate_base_commit
+$requiredTracked = @(& git diff "$candidateBaseCommit..HEAD" --name-only) +
+    @(& git diff HEAD --name-only) + @(
     'tools/New-ChatpadRuntimeBringupReadinessManifest.ps1',
     'tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1'
 )

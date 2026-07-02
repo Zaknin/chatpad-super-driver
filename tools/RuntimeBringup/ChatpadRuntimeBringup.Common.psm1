@@ -360,7 +360,7 @@ function Test-ChatpadCurrentRepositoryIdentity {
         unstaged_count = $repo.unstaged_count
         untracked_nonignored_count = $repo.untracked_nonignored_count
         detached_head = [string]::IsNullOrWhiteSpace($repo.branch)
-        alternate_repository_root = -not $root.Equals([IO.Path]::GetFullPath($ApprovedRepositoryRoot), [StringComparison]::OrdinalIgnoreCase)
+        alternate_repository_root = -not (([IO.Path]::GetFullPath($root) -replace '^\\\\\?\\','').Equals(([IO.Path]::GetFullPath($ApprovedRepositoryRoot) -replace '^\\\\\?\\',''), [StringComparison]::OrdinalIgnoreCase))
         accepted_baseline_is_ancestor = $acceptedBaselineIsAncestor
         accepted_manifest_size = $manifest.size
         accepted_manifest_sha256 = $manifest.sha256

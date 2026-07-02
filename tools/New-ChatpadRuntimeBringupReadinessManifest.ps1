@@ -58,7 +58,9 @@ $entries.Add((New-IdentityEntry 'debug-sys-frozen-binary' 'artifacts/bin/x64/Deb
 $entries.Add((New-IdentityEntry 'release-sys-frozen-binary' 'artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys' ignored 'accepted-offline-runtime-instrumentation' 'FROZEN_DEPENDENCY'))
 $entries.Add((New-IdentityEntry 'remediation-start-state' 'artifacts/logs/runtime-bringup-readiness-remediation-start-20260702T082439Z.log' ignored 'start-state-capture' 'PASS'))
 
-$trackedPaths = @(& git diff HEAD --name-only) + @(
+$candidateBaseCommit = 'b9990d287bee6916cc5bb4e6b7f194ee579c7fbb'
+$trackedPaths = @(& git diff "$candidateBaseCommit..HEAD" --name-only) +
+    @(& git diff HEAD --name-only) + @(
     'tools/New-ChatpadRuntimeBringupReadinessManifest.ps1',
     'tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1'
 )
@@ -89,10 +91,11 @@ $manifest = [pscustomobject][ordered]@{
     result = 'PASS_WITH_BLOCKER'
     repository = [pscustomobject][ordered]@{
         branch = 'feature/runtime-bringup-readiness-remediation'
-        candidate_base_commit = 'b9990d287bee6916cc5bb4e6b7f194ee579c7fbb'
+        candidate_base_commit = $candidateBaseCommit
         accepted_baseline_commit = 'f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
         approved_readiness_commit_source = 'external exact 40-character audit/session input'
-        expected_commit_subject = 'test: remediate controlled runtime bring-up readiness'
+        implementation_commit = '0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea'
+        expected_finalization_subject = 'docs: finalize runtime bring-up remediation evidence'
     }
     accepted_offline_baseline = [pscustomobject][ordered]@{
         manifest_sha256 = '35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088'
