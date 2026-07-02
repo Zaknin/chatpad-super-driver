@@ -5,22 +5,31 @@
 The offline runtime instrumentation milestone is accepted and frozen at
 `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned
 `AUDIT PASS WITH LIMITATIONS`. The current branch
-`feature/runtime-bringup-readiness-remediation` repairs the failed first
-readiness audit with dual repository identity, structured operation plans,
-effective package/signing/rollback/host/evidence validation, a Draft 2020-12
-evidence schema, stable stop-condition linkage, and 177 offline fixtures with
-203 assertions. Exact-instance install and restoration remain explicitly
-blocked because the helper is designed but not implemented. This branch still
-performs no signing, packaging, staging, installation, loading, trace
-collection, device query, request operation, hardware access, Windows
-mutation, reboot, or production source change.
+`feature/runtime-bringup-readiness-enforcement-remediation` repairs the second
+readiness audit findings with strict negative-fixture semantics, dual
+prior/current implementation-finalization identity, complete operation
+lifecycle records, effective INF relationship parsing, strengthened
+target/driver-state/rollback/signing/host/evidence/WPP/event/reconciliation
+contracts, Draft 2020-12 plus semantic evidence validation, stop-condition
+observer linkage, truthful PSScriptAnalyzer reporting, and 31 offline fixtures
+with 158 assertions.
 
-Current phase: **Runtime bring-up readiness remediation - exact-instance
-binding blocked; independent read-only audit pending**.
+Authoritative framework status is `PASS`; authoritative live installation
+readiness is `BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED`. Exact-instance
+install and restoration remain explicitly blocked because the helper is not
+implemented. This branch still performs no signing, packaging, staging,
+installation, loading, trace collection, event-log export, live device query,
+target/request operation, hardware access, Windows mutation, reboot, or
+production source change.
 
-The next task is independent read-only audit of the readiness commit. Only
-after that audit passes may a separate supervised live session consider any
-signing or Windows mutation.
+Current phase: **Runtime bring-up readiness enforcement remediation -
+exact-instance binding blocked; independent read-only two-commit audit
+pending**.
+
+The next task is independent read-only audit of both enforcement-remediation
+commits. Only after that audit passes may a separate supervised live session
+consider any signing or Windows mutation, and exact-instance binding would
+still require its own implementation and audit gate.
 
 ## Previous runtime-observation planning gate (2026-07-02)
 

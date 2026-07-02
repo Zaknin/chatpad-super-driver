@@ -5610,3 +5610,124 @@
   boundaries, injection resistance, explicit binding blocker, effective
   package/signing/host/evidence/schema/stop-linkage checks, synthetic totals,
   manifest truthfulness, and prohibited-operation absence.
+
+## 2026-07-02 16:31 +04:00 - Controlled runtime bring-up readiness enforcement remediation
+
+- **Objective:** Implement the final enforcement remediation for the controlled
+  Windows 11 runtime bring-up readiness framework, repair every unsupported
+  PASS path from the second independent audit, keep exact-instance binding and
+  restoration intentionally blocked, use two commits, and push only
+  `feature/runtime-bringup-readiness-enforcement-remediation`.
+- **Starting state:** Verified required start branch
+  `feature/runtime-bringup-readiness-remediation` at
+  `2bb08fee77125f6b5bed2774c085ce57fe192752`, direct parent
+  `0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea`, grandparent
+  `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb`, clean index/worktree, live
+  remote equality, and ahead/behind `0/0`. Captured ignored start log
+  `artifacts/logs/runtime-bringup-enforcement-remediation-start-20260702T120341Z.log`
+  and created `feature/runtime-bringup-readiness-enforcement-remediation`.
+- **Frozen accepted baseline:** Preserved accepted manifest size 28,088 and
+  SHA-256
+  `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`;
+  Debug SYS 68,096 bytes,
+  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`;
+  Release SYS 40,960 bytes,
+  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`.
+- **Implementation:** Replaced fail-open readiness behavior with v3
+  machine-readable results, strict stop-condition checking, complete operation
+  lifecycle records, dual prior/current implementation-finalization repository
+  identity, effective INF relationship parsing, and strengthened validators for
+  target selection, current-driver state, rollback, package semantics, signing,
+  host state, evidence directories, WPP, event logs, install plans,
+  post-test reconciliation, runtime evidence documents, runtime observation,
+  stop-condition linkage, and manifest truthfulness.
+- **Negative harness correction:** `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
+  now records fixture ID, category, validator, expected status/code/stop IDs,
+  expected exception contract, actual status/code/stop IDs/exception type,
+  assertion count, and final fixture result. A fixture cannot pass due to an
+  unrelated StrictMode exception, wrong exception type, wrong result reason,
+  omitted stop condition, parser crash, missing expected result, duplicate ID,
+  skipped status, or zero assertions.
+- **Install and operation enforcement:** `Test-ChatpadInstallPlanContract`
+  cannot pass for empty operations, caller-supplied Boolean binding
+  availability, missing `approved_as_target_specific`, staging-only plans,
+  blocked binding, wrong target instance, synthetic live prerequisites, missing
+  rollback, missing verification, or mixed sessions. The official
+  `Show-ChatpadInstallPlan.ps1` synthetic invocation returns `BLOCKED` with
+  `BLOCKED_NOT_IMPLEMENTED`, zero executable exact-instance binding
+  operations, and zero broad approved install operations.
+- **Package semantics:** INF validation resolves the effective chain from
+  selected architecture model entry through install section, AddService,
+  service-install section, ServiceBinary, CopyFiles, DestinationDirs, KMDF
+  relationship, referenced SYS, referenced CAT, package files, and expected SYS
+  hash. Token-only, orphan, comment-only, wrong-CAT, wrong-architecture,
+  traversal, absolute-copy, wildcard, and broad hardware-match probes fail.
+- **Schema and stop conditions:** The runtime evidence schema remains Draft
+  2020-12 and is now schema v3 with repository-specific `$id`. Semantic
+  validation rejects rollback without prior execution, restored top-level state
+  with planned/blocked/failed operations, synthetic artifacts in live sessions,
+  duplicate artifact or operation IDs, unresolved references, cross-session
+  records, and invalid transition graphs. The stop-condition register preserves
+  exactly 20 IDs and classifies each exactly once as executable,
+  runtime-observer, or operator-only; the five previously unlinked runtime
+  conditions are handled by `tools/Test-ChatpadRuntimeObservation.ps1`.
+- **PSScriptAnalyzer and readiness semantics:** `Invoke-ScriptAnalyzer` was
+  unavailable and was not installed. Manifest evidence records
+  `SKIPPED_UNAVAILABLE`. Authoritative machine-readable status is framework
+  `PASS`, live installation readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`; top-level PASS is not runtime authorization.
+- **Intermediate failed commands and corrected reruns:** The first module
+  rewrite produced cascading AST parse failures due to stray quoting and split
+  delimiter errors; the corrected module parsed with zero AST errors. A later
+  suite rerun failed because `Where-Object status-eq ...` was parsed as an
+  invalid runtime expression in reconciliation logic; correcting the predicate
+  made the suite pass. The first official synthetic
+  `Show-ChatpadInstallPlan.ps1` invocation threw because the input plan lacked
+  an `operations` property; using `Add-Member` for missing operations fixed the
+  crash and returned the intended blocked result. During final validation, an
+  invocation wrapper used obsolete `-OutputJsonPath` and then treated null
+  `$LASTEXITCODE` from a PowerShell script as failure; both wrappers were
+  corrected and the suite JSON passed. The first safety scan incorrectly
+  counted pre-existing unmodified legacy binaries/cert-like files and Git
+  normalized LF text as defects; the corrected scan scoped checks to changed
+  paths and passed. No failed command performed a prohibited action.
+- **Validation evidence before implementation commit:** Ignored logs under
+  `artifacts/logs/` record PowerShell AST parse PASS for 43 `.ps1`/`.psm1`
+  files, suite PASS with 31 fixtures and 158 assertions, stop-condition
+  register PASS with 20 conditions, Draft 2020-12 sample schema PASS,
+  synthetic install-plan BLOCKED, `git diff --check` PASS, scoped safety scan
+  PASS, zero prohibited changed paths, zero sensitive changed paths, zero
+  secret hits, zero text hygiene issues, and zero live operations performed.
+- **Implementation commit:** `f0f9bf7e196a6f7cfe9b391cc4001b593016d310`,
+  subject `fix: enforce runtime bring-up readiness contracts`. It contains all
+  executable changes, including `.ps1`, `.psm1`, schema, synthetic fixtures,
+  validator logic, manifest generator, and manifest validator changes.
+- **Post-implementation freeze validation:** After the implementation commit,
+  reran the complete synthetic suite into
+  `artifacts/logs/runtime-bringup-enforcement-suite-finalization-20260702T123040Z.json`;
+  result was framework `PASS`, live installation readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, 31 fixtures, and 158 assertions. From this point,
+  finalization changed only documentation and finalized manifest evidence.
+- **Files changed by implementation commit:** Evidence schema/sample/stop
+  register, shared runtime module, readiness suite, runtime observation wrapper,
+  manifest generator/validator, repository identity validator, and plan
+  wrappers for install, rollback, WPP, event-log, current-driver, and device
+  inventory. No production driver source/header, INF, project, solution,
+  protocol, transport, binary, package, credential, or legacy path changed.
+- **Safety:** No certificate/private key creation, access, import, export, or
+  deletion occurred. No signing, CAT generation, package creation, Driver Store
+  staging, installation, binding, loading, rollback, removal, enablement,
+  disablement, service mutation, registry/policy/boot/security mutation,
+  WPP/ETW tracing, real event-log export, live device enumeration, target
+  opening, device request, controller/Chatpad access, protocol traffic,
+  keyboard injection, hardware interaction, or reboot occurred.
+- **Finalization commit/push:** Expected finalization subject is
+  `docs: finalize runtime bring-up enforcement evidence`; final hash, manifest
+  validation, repository identity proof, remote equality, and ahead/behind are
+  verified after the finalization commit and push.
+- **Remaining blocker and next task:** Exact-instance binding/restoration is
+  not implemented. The exact next task is independent read-only audit of both
+  enforcement-remediation commits, including rerunning all direct unsupported
+  PASS probes, checking failure reasons rather than exceptions, verifying no
+  executable finalization changes, and confirming live-readiness remains
+  `BLOCKED`.

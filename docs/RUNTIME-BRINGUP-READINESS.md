@@ -6,68 +6,81 @@ preparation only: it does not sign, package, stage, install, load, trace, query
 devices, send requests, access a controller or Chatpad, mutate Windows, reboot,
 or touch hardware.
 
-## Audit remediation status
+## Enforcement remediation status
 
-The independent audit of the first scaffold failed. This remediation replaces
-the fail-open parts of that scaffold while deliberately keeping the live gate
-closed.
+The second independent audit found unsupported PASS paths in the readiness
+framework. The enforcement remediation fixes those paths while deliberately
+keeping the live gate closed.
 
-- Repository identity is dual: the immutable accepted offline baseline remains
-  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`, while a future session must
-  supply the exact 40-character approved readiness commit and exact readiness
-  branch as external approval inputs. Current HEAD is not hardcoded into a
-  tracked self-referential file.
-- Every future operation is a
-  `chatpad-structured-operation-v1` object. Its executable and argument array
-  are authoritative; `command_display` is display-only and explicitly is not
-  execution evidence. Future launch code must use
-  `System.Diagnostics.ProcessStartInfo.ArgumentList`.
-- The renderer rejects arrays in scalar fields, empty values, whitespace-only
-  values, NUL, CR/LF, unsupported Unicode controls, exact-target wildcards, and
-  path traversal. Shell metacharacters remain one argument and are never
-  reparsed.
-- Package staging is separated from binding. `pnputil /add-driver` has no
-  `/install` and is classified as a separately authorized broad host mutation.
-  No exact-instance binding implementation exists yet, so install and rollback
-  plans remain `BLOCKED`. `pnputil /scan-devices` is only an optional,
-  separately authorized broad recovery operation and cannot satisfy rollback.
-- Target identity includes the exact instance, complete ID sets, class,
-  parent, container, topology, current driver, service, provider, VID/PID,
-  source classification, and freshness. No first/best candidate selection is
-  permitted.
-- Current-driver and rollback contracts require exact prior/test package
-  identities, recovery source and hash, service/provider/version, session,
-  evidence destination, emergency recovery, ordered exact-target operations,
-  and final verification.
-- Package validation parses effective INF sections and rejects architecture
-  broadening, undecorated models, duplicate sections, wildcard/class matching,
-  missing KMDF/service/copy declarations, wrong SYS identity, unauthorized
-  package files, credentials, traversal, sibling-prefix escapes, and incomplete
-  signing identity.
-- Signing readiness requires the certificate identity, trust, private key,
-  Code Signing EKU, validity window, timestamp plan, SYS/CAT signature state,
-  local-test scope, and compatible Secure Boot, test-signing, HVCI, and Code
-  Integrity state. This remediation does not create or use a credential.
-- Host preflight, evidence-directory, WPP, event-log, and reconciliation
-  contracts include freshness, containment, reparse/reuse/session-lock
-  rejection, security state, tool availability, session binding, channel/time
-  windows, and explicit final-state classification.
-- `runtime-bringup-evidence-schema-v1.json` now contains a machine-enforceable
-  JSON Schema Draft 2020-12 document with identifier
-  `https://example.invalid/chatpad/runtime-bringup-evidence-schema-v2`.
-  Planned artifacts use null hashes and sizes; produced states require real
-  sizes and SHA-256 values. The committed sample is synthetic and validates.
-- All 20 stop conditions have stable IDs. Failed or blocked validator results
-  carry executable stop-condition IDs checked against the register.
-- The final offline suite contains 177 fixtures and 203 assertions, including
-  21 command-injection fixtures. Exact-instance binding is the intentional
-  remaining blocker.
+- Authoritative machine status is split: framework validation is `PASS`, live
+  installation readiness is `BLOCKED`, and the blocker is
+  `BLOCKED_NOT_IMPLEMENTED`. Documentation may describe this as pass with a
+  blocker, but machine-readable evidence must not use top-level PASS as runtime
+  authorization.
+- Repository identity is dual for both generations. Validators distinguish the
+  frozen accepted baseline, prior readiness implementation commit
+  `0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea`, prior readiness finalization
+  commit `2bb08fee77125f6b5bed2774c085ce57fe192752`, current remediation
+  implementation commit
+  `f0f9bf7e196a6f7cfe9b391cc4001b593016d310`, and the finalization commit
+  supplied as an exact external audit input after commit creation. The tracked
+  manifest avoids self-reference.
+- Negative fixtures now pass only when the documented contract returns or
+  throws the expected machine-readable result, result code, stop-condition IDs,
+  and exception type. Harness self-tests prove unrelated StrictMode exceptions,
+  wrong exception types, wrong reasons, missing stop IDs, parser crashes,
+  missing expected results, duplicate IDs, skipped fixtures, and zero-assertion
+  cases cannot be counted as PASS.
+- Structured operations now use a v3 lifecycle contract covering `planned`,
+  `blocked`, `skipped_authorization`, `executed`, `failed`, `rolled_back`,
+  `restored`, session and host IDs, source classification, target scope,
+  explicit target-specific approval, result/timestamp requirements, rollback
+  references, restoration evidence, and blocked stop-condition IDs.
+- Install readiness cannot pass for empty operations, a caller-supplied Boolean
+  binding flag, staging-only plans, blocked binding, wrong instance, synthetic
+  live prerequisites, missing rollback, missing verification, mixed sessions,
+  or operations missing `approved_as_target_specific`. Exact-instance binding
+  remains unimplemented, so executable exact-instance binding operations,
+  executable restoration operations, broad approved install operations, and
+  broad approved rollback operations are all zero.
+- Package validation now resolves effective INF relationships instead of token
+  presence: Version, provider, catalog declarations, manufacturer and
+  architecture-decorated model selection, hardware IDs, install sections,
+  AddService/service-install sections, ServiceBinary, CopyFiles,
+  DestinationDirs, KMDF relationships, SYS/CAT identities, and selected
+  architecture must form a consistent chain.
+- Target, current-driver, rollback, signing, host, evidence-directory, WPP,
+  event-log, and post-test reconciliation validators reject the direct
+  unsupported-PASS probes reproduced by the audit. Freshness and source
+  classification are derived from evidence fields and closed enums rather than
+  caller-provided PASS booleans.
+- `runtime-bringup-evidence-schema-v1.json` remains Draft 2020-12 and now uses
+  repository-specific ID
+  `https://github.com/Zaknin/chatpad-super-driver/schemas/runtime-bringup-evidence-v3.json`.
+  Structural schema validation is paired with semantic cross-record validation
+  for duplicate artifact and operation IDs, dependency existence,
+  rollback-to-executed-operation references, session/host consistency,
+  synthetic/live consistency, and the allowed transition graph.
+- All 20 stop conditions are classified exactly once as executable,
+  runtime-observer, or operator-only. The five audit findings that were falsely
+  claimed as executable are now linked to the future runtime observation
+  contract `tools/Test-ChatpadRuntimeObservation.ps1`; without runtime evidence
+  the observer blocks with the stable stop-condition ID.
+- PSScriptAnalyzer is reported truthfully. On this machine
+  `Invoke-ScriptAnalyzer` was unavailable, no network install was attempted,
+  the manifest records `SKIPPED_UNAVAILABLE`, and static analysis is not
+  counted as PASS.
+- The final offline suite contains 31 fixtures and 158 assertions across
+  accepted-baseline-identity, authorization, binary-identity, current-driver,
+  event-log, evidence, host, install, nested-quoting, operation,
+  package-semantic, reconciliation, rollback, runtime-observer,
+  schema-semantic, schema-structural, signing, target, and WPP categories.
 
 The readiness manifest uses a non-self-referential candidate-tree model. It
 binds the final tracked file content, accepted baseline identities, branch,
-fixture totals, and ignored validation evidence, but excludes its own hash and
-requires the final approved commit to be supplied externally to the repository
-identity validator.
+fixture totals, category totals, PSScriptAnalyzer status, and ignored suite
+evidence, but excludes its own hash and requires the final approved commit to
+be supplied externally to the repository identity validator.
 
 ## Accepted offline baseline
 
@@ -325,7 +338,10 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only audit of the runtime-bring-up readiness commit. The audit
-must verify fail-closed target-selection, signing, package, rollback, evidence,
-stop-condition, and authorization contracts before any live Windows mutation is
-authorized.
+Independent read-only audit of both enforcement-remediation commits. The audit
+must rerun all direct unsupported-PASS probes, verify expected-failure reasons
+rather than exceptions, verify the finalization commit changed no executable
+files, confirm the authoritative live-readiness status remains `BLOCKED`, and
+confirm no signing, packaging, staging, installation, loading, tracing,
+event-log export, live device enumeration, target operation, Windows mutation,
+hardware interaction, or reboot occurred.

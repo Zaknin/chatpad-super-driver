@@ -1,527 +1,335 @@
 {
-  "schema_version": "chatpad-runtime-bringup-readiness-manifest-v2",
-  "generated_utc": "2026-07-02T09:51:47.6030471Z",
-  "result": "PASS_WITH_BLOCKER",
+  "schema_version": "chatpad-runtime-bringup-readiness-manifest-v3",
+  "generated_utc": "2026-07-02T12:33:40.6132140Z",
+  "framework_status": "PASS",
+  "live_installation_readiness": "BLOCKED",
+  "blocker": "BLOCKED_NOT_IMPLEMENTED",
   "repository": {
-    "branch": "feature/runtime-bringup-readiness-remediation",
-    "candidate_base_commit": "b9990d287bee6916cc5bb4e6b7f194ee579c7fbb",
-    "accepted_baseline_commit": "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
-    "approved_readiness_commit_source": "external exact 40-character audit/session input",
-    "implementation_commit": "0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea",
-    "expected_finalization_subject": "docs: finalize runtime bring-up remediation evidence"
+    "branch": "feature/runtime-bringup-readiness-enforcement-remediation",
+    "frozen_baseline_commit": "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
+    "prior_readiness_implementation_commit": "0d7f5677c214ebd2081ba40a169e0fc6d1efc0ea",
+    "prior_readiness_finalization_commit": "2bb08fee77125f6b5bed2774c085ce57fe192752",
+    "current_readiness_implementation_commit": "f0f9bf7e196a6f7cfe9b391cc4001b593016d310",
+    "current_readiness_finalization_commit_source": "external exact 40-character audit input after finalization commit"
   },
   "accepted_offline_baseline": {
+    "manifest_size": 28088,
     "manifest_sha256": "35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088",
     "debug_sys_size": 68096,
     "debug_sys_sha256": "E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097",
     "release_sys_size": 40960,
     "release_sys_sha256": "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
   },
-  "readiness_results": {
-    "synthetic_fixture_count": 177,
-    "synthetic_assertion_count": 203,
-    "command_injection_fixture_count": 21,
-    "raw_command_concatenation_count": 0,
-    "broad_approved_install_operation_count": 0,
-    "broad_approved_rollback_operation_count": 0,
-    "stop_condition_count": 20,
-    "runtime_evidence_schema": "chatpad-runtime-evidence-schema-v2",
-    "json_schema_draft": "https://json-schema.org/draft/2020-12/schema",
-    "exact_instance_binding_status": "BLOCKED_NOT_IMPLEMENTED"
+  "readiness": {
+    "fixture_count": 31,
+    "assertion_count": 158,
+    "category_totals": [
+      {
+        "category": "accepted-baseline-identity",
+        "fixtures": 1,
+        "assertions": 4.0
+      },
+      {
+        "category": "authorization",
+        "fixtures": 1,
+        "assertions": 4.0
+      },
+      {
+        "category": "binary-identity",
+        "fixtures": 1,
+        "assertions": 5.0
+      },
+      {
+        "category": "current-driver",
+        "fixtures": 1,
+        "assertions": 5.0
+      },
+      {
+        "category": "event-log",
+        "fixtures": 1,
+        "assertions": 5.0
+      },
+      {
+        "category": "evidence",
+        "fixtures": 2,
+        "assertions": 10.0
+      },
+      {
+        "category": "host",
+        "fixtures": 1,
+        "assertions": 5.0
+      },
+      {
+        "category": "install",
+        "fixtures": 2,
+        "assertions": 10.0
+      },
+      {
+        "category": "nested-quoting",
+        "fixtures": 1,
+        "assertions": 4.0
+      },
+      {
+        "category": "operation",
+        "fixtures": 2,
+        "assertions": 10.0
+      },
+      {
+        "category": "package-semantic",
+        "fixtures": 1,
+        "assertions": 6.0
+      },
+      {
+        "category": "reconciliation",
+        "fixtures": 1,
+        "assertions": 5.0
+      },
+      {
+        "category": "rollback",
+        "fixtures": 2,
+        "assertions": 10.0
+      },
+      {
+        "category": "runtime-observer",
+        "fixtures": 5,
+        "assertions": 25.0
+      },
+      {
+        "category": "schema-semantic",
+        "fixtures": 4,
+        "assertions": 20.0
+      },
+      {
+        "category": "schema-structural",
+        "fixtures": 1,
+        "assertions": 4.0
+      },
+      {
+        "category": "signing",
+        "fixtures": 2,
+        "assertions": 10.0
+      },
+      {
+        "category": "target",
+        "fixtures": 1,
+        "assertions": 5.0
+      },
+      {
+        "category": "wpp",
+        "fixtures": 1,
+        "assertions": 5.0
+      }
+    ],
+    "unrelated_exception_false_positive_count": 0,
+    "empty_operation_install_pass_count": 0,
+    "install_plan_crash_count": 0,
+    "invalid_schema_transition_acceptance_count": 0,
+    "unlinked_stop_condition_count": 0,
+    "psscriptanalyzer_status": "SKIPPED_UNAVAILABLE",
+    "runtime_evidence_schema": "chatpad-runtime-evidence-schema-v3",
+    "exact_instance_binding_operations": 0,
+    "exact_instance_restoration_operations": 0,
+    "broad_approved_install_operations": 0,
+    "broad_approved_rollback_operations": 0
   },
-  "self_reference_policy": "The manifest excludes its own hash and final commit. It binds the candidate-tree files and requires the exact final commit as an external repository-identity input.",
   "entries": [
-    {
-      "id": "accepted-offline-manifest",
-      "relative_path": "docs/evidence/runtime-instrumentation-implementation-manifest.json",
-      "state": "tracked",
-      "byte_size": 28088,
-      "sha256": "35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088",
-      "timestamp_utc": "2026-07-02T06:26:06.2527154Z",
-      "producer": "accepted-offline-runtime-instrumentation",
-      "result": "FROZEN_DEPENDENCY",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "debug-sys-frozen-binary",
-      "relative_path": "artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys",
-      "state": "ignored",
-      "byte_size": 68096,
-      "sha256": "E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097",
-      "timestamp_utc": "2026-07-02T04:16:24.1560973Z",
-      "producer": "accepted-offline-runtime-instrumentation",
-      "result": "FROZEN_DEPENDENCY",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "release-sys-frozen-binary",
-      "relative_path": "artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys",
-      "state": "ignored",
-      "byte_size": 40960,
-      "sha256": "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404",
-      "timestamp_utc": "2026-07-02T04:16:31.9034323Z",
-      "producer": "accepted-offline-runtime-instrumentation",
-      "result": "FROZEN_DEPENDENCY",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "remediation-start-state",
-      "relative_path": "artifacts/logs/runtime-bringup-readiness-remediation-start-20260702T082439Z.log",
-      "state": "ignored",
-      "byte_size": 708,
-      "sha256": "E58DDF3983688510C35A3E6917DDFA15C91103AB4518AD761239D95CC0DA60D0",
-      "timestamp_utc": "2026-07-02T08:24:40.0875200Z",
-      "producer": "start-state-capture",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
     {
       "id": "tracked-docs-decisions-md",
       "relative_path": "docs/DECISIONS.md",
       "state": "tracked",
-      "byte_size": 106600,
-      "sha256": "8436A62937B275D2C0DDE47840442D5E7653710F5FE449BC51726B071E6AF111",
-      "timestamp_utc": "2026-07-02T09:42:30.0193583Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 107932,
+      "sha256": "2700DB6D6FEB943DD9FDE9305339C295E22505821A7C362553A631CEA315A097",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-evidence-runtime-bringup-evidence-schema-v1-json",
       "relative_path": "docs/evidence/runtime-bringup-evidence-schema-v1.json",
       "state": "tracked",
-      "byte_size": 5625,
-      "sha256": "B6EC8EBB7BC4F0658FEFE7DAB5DF6ED2484C6CA56514B1E31D486BF180BF7B96",
-      "timestamp_utc": "2026-07-02T09:40:58.0103383Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 6344,
+      "sha256": "5E8CACFB85844EFB1B0DF57F01D7E0056059A224075C242946F70CFD28CEF970",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-evidence-runtime-bringup-sample-evidence-json",
       "relative_path": "docs/evidence/runtime-bringup-sample-evidence.json",
       "state": "tracked",
-      "byte_size": 1352,
-      "sha256": "FB248A74AB5562579D48986B255B80D71860833DA6FB5A7E612E59E08CC37CF2",
-      "timestamp_utc": "2026-07-02T08:34:24.8947075Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 1511,
+      "sha256": "8A249C66A4459A2C87529B640FB75F3011947427DC614C05A1653F663B845764",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-evidence-runtime-bringup-stop-conditions-json",
       "relative_path": "docs/evidence/runtime-bringup-stop-conditions.json",
       "state": "tracked",
-      "byte_size": 9966,
-      "sha256": "24A8F93BE6BF38158233B929F713287417B7224B8366B7356B11CD42B9D8D910",
-      "timestamp_utc": "2026-07-02T08:34:43.9762949Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 9999,
+      "sha256": "D8CEED735008D1E7565D050CD595D785E6AEFB54B0DBF537B3701FB50F61A02D",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-next-task-md",
       "relative_path": "docs/NEXT-TASK.md",
       "state": "tracked",
-      "byte_size": 3283,
-      "sha256": "38C673721BAB2BE637CE5473F93EFAC7B8C0522DD2B56F4AA53E83D9C3CAFD68",
-      "timestamp_utc": "2026-07-02T09:50:30.9634299Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 4395,
+      "sha256": "9A153A2728806C7488D73BBFFCEA51C18C5067A597980081306F6906662F24C8",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-porting-plan-md",
       "relative_path": "docs/PORTING-PLAN.md",
       "state": "tracked",
-      "byte_size": 17636,
-      "sha256": "CDAD478B726B9DAFE66E4546C0515EC6E015392F771077778C348E8288206907",
-      "timestamp_utc": "2026-07-02T09:42:30.0193583Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 18136,
+      "sha256": "F3D18B757DA3874998BCB24E3DA48F43167F9E1A619E11FD5C323D4E2D532409",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-project-state-md",
       "relative_path": "docs/PROJECT-STATE.md",
       "state": "tracked",
-      "byte_size": 2566,
-      "sha256": "4BB723ABA17F67AC2CE610C9D9A44D9696DCA7CC41D4C6E038A87B730AD652FA",
-      "timestamp_utc": "2026-07-02T09:50:30.9634299Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 3781,
+      "sha256": "3B1EC62A91590D4D7D48D52509374049828FCB91FEF1AE48D715F7D65D0ED66C",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-runtime-bringup-readiness-md",
       "relative_path": "docs/RUNTIME-BRINGUP-READINESS.md",
       "state": "tracked",
-      "byte_size": 14103,
-      "sha256": "835209EF4B77E360251D333FCEAEDDF6DD9D2C214C1FBB769AF96347E9F6D0FB",
-      "timestamp_utc": "2026-07-02T09:42:30.0163582Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 15368,
+      "sha256": "6E1431BBEE4186BAA69A450F9618D548177D63D164C95D3AB0B5F7643B496E09",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-docs-worklog-md",
       "relative_path": "docs/WORKLOG.md",
       "state": "tracked",
-      "byte_size": 368557,
-      "sha256": "F9FEAEF8400DEEDB89FA52ABF452F455DB336D36DB8E9207EB8024E692582B20",
-      "timestamp_utc": "2026-07-02T09:51:38.6641557Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 377040,
+      "sha256": "7743AF0CB0A454E66A30456860D0DA97D0714B4F5B5D3508C2810749C4B672CC",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-export-chatpadruntimeeventlogplan-ps1",
       "relative_path": "tools/Export-ChatpadRuntimeEventLogPlan.ps1",
       "state": "tracked",
-      "byte_size": 1139,
-      "sha256": "115265C8D98983C6CA74DD8DBB19657BEB55167605795EB4919FF6626A5D1070",
-      "timestamp_utc": "2026-07-02T08:30:22.5231466Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 1501,
+      "sha256": "D0DF8FF58977FC2756DD75830AA9FC6BAD7B20E2E58988CB5533193F952D846F",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-get-chatpadruntimedevicecandidateinventory-ps1",
       "relative_path": "tools/Get-ChatpadRuntimeDeviceCandidateInventory.ps1",
       "state": "tracked",
-      "byte_size": 1498,
-      "sha256": "C2AB562B871F0E1F7C8A6A3D172B6C162B769D077D6E97371E0259FD66B163F2",
-      "timestamp_utc": "2026-07-02T08:29:28.7941144Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "tracked-tools-initialize-chatpadruntimeevidencedirectory-ps1",
-      "relative_path": "tools/Initialize-ChatpadRuntimeEvidenceDirectory.ps1",
-      "state": "tracked",
-      "byte_size": 379,
-      "sha256": "74570681698921E544F960931061F2B9578079FE559168B968EB3BB3E8BD74B0",
-      "timestamp_utc": "2026-07-02T08:30:22.5221422Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 1741,
+      "sha256": "9702718E2C65150032E8704CE95C1D89126CBE23F23A09B2949F4F68533F06BD",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
       "relative_path": "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
       "state": "tracked",
-      "byte_size": 6949,
-      "sha256": "6BC10390D248EE5BF17049CA8FBDBA8973FC154883BAAF4CF03D5BA72A9D8106",
-      "timestamp_utc": "2026-07-02T09:50:30.9624314Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "tracked-tools-new-chatpadruntimeevidencemanifest-ps1",
-      "relative_path": "tools/New-ChatpadRuntimeEvidenceManifest.ps1",
-      "state": "tracked",
-      "byte_size": 375,
-      "sha256": "8ABCD4BDC5861C83F33052622AEC7F3B7A5C4537CB2A08C4411BB7490F9A0ABB",
-      "timestamp_utc": "2026-07-02T08:30:22.5251464Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 4137,
+      "sha256": "922B27C68E87E12750C0543561E3E075D800FE1149354AD632E8961D5902CA67",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-runtimebringup-chatpadruntimebringup-common-psm1",
       "relative_path": "tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1",
       "state": "tracked",
-      "byte_size": 43303,
-      "sha256": "AA1A23FF0D4E5C6FACB77A9B6F868B24F5D0E9016183E4CDB9B489CCEC3188B3",
-      "timestamp_utc": "2026-07-02T09:51:38.6631556Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 53860,
+      "sha256": "52EE020CC64219C7F83038E45D4BBBC63B82978CFD07682DA609A26E6B2DBD43",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-save-chatpadcurrentdriverstate-ps1",
       "relative_path": "tools/Save-ChatpadCurrentDriverState.ps1",
       "state": "tracked",
-      "byte_size": 1517,
-      "sha256": "544C437131DE1E2368AC5A54968727A2D65801FFBA85D7E92695B3B44DD48A1C",
-      "timestamp_utc": "2026-07-02T08:29:28.7961146Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 1756,
+      "sha256": "036E382643D3FCD3C84CC695189F12922CD46CA0C5490913BFBD1C7D9F64EC59",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-show-chatpadinstallplan-ps1",
       "relative_path": "tools/Show-ChatpadInstallPlan.ps1",
       "state": "tracked",
-      "byte_size": 2205,
-      "sha256": "76BE1901F4956FEE58E59E9A3AA1AF7B80BEAA18C040DD8C5E462DD97F6B7CF9",
-      "timestamp_utc": "2026-07-02T08:30:22.5196378Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 3262,
+      "sha256": "526427525D2E18389B0DA8A447EA05B5FDBF8D1A9D79A926B8B711342E79E7A7",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-show-chatpadrollbackplan-ps1",
       "relative_path": "tools/Show-ChatpadRollbackPlan.ps1",
       "state": "tracked",
-      "byte_size": 2440,
-      "sha256": "B2DA76565CDB8CB7D665AC628C63F5142A1AC4DD7AB757AD2038972754718C24",
-      "timestamp_utc": "2026-07-02T08:30:22.5206387Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 3216,
+      "sha256": "EB7FA153BC56369B7EDCBCE0B86205D79DF941A7F7BCD0B0C42BB6F496DAC598",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-show-chatpadwppsessionplan-ps1",
       "relative_path": "tools/Show-ChatpadWppSessionPlan.ps1",
       "state": "tracked",
-      "byte_size": 1837,
-      "sha256": "2D788A059808B884F69B1CF7EABFCB5E6A5C66B803B880FBA92E8A0EA42F8269",
-      "timestamp_utc": "2026-07-02T08:30:22.5241471Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "tracked-tools-test-chatpadpackagecontent-ps1",
-      "relative_path": "tools/Test-ChatpadPackageContent.ps1",
-      "state": "tracked",
-      "byte_size": 361,
-      "sha256": "634096EC49FB30838DA5365FE262948C9DBF61025F3342DC717151C7189F2540",
-      "timestamp_utc": "2026-07-02T08:29:28.7986167Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "tracked-tools-test-chatpadposttestreconciliation-ps1",
-      "relative_path": "tools/Test-ChatpadPostTestReconciliation.ps1",
-      "state": "tracked",
-      "byte_size": 366,
-      "sha256": "845CF5CF1AAB4E141B84CC8434A9A097415B19005578CC23DE635F4DF571EC12",
-      "timestamp_utc": "2026-07-02T08:30:22.5251464Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "tracked-tools-test-chatpadrollbackreadiness-ps1",
-      "relative_path": "tools/Test-ChatpadRollbackReadiness.ps1",
-      "state": "tracked",
-      "byte_size": 352,
-      "sha256": "2F9DA255B189A8772D095ADD243D3B59B8D97D3B809289E7C6B1D079A3CD11DD",
-      "timestamp_utc": "2026-07-02T08:29:28.7971143Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 2766,
+      "sha256": "1CD294773383A7BF83E46744702DE4351D567F57F293E0A688F451E030053669",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
       "relative_path": "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
       "state": "tracked",
-      "byte_size": 39167,
-      "sha256": "8FA310DD6920D172EED21E50A60C8967E20701A19BB4F018C40D5244F8A7F626",
-      "timestamp_utc": "2026-07-02T09:48:53.3197400Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 21698,
+      "sha256": "B5C140F6C8511DB39AD85633BEB07E89624E639808A049B12F344ED1372C867E",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
       "relative_path": "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
       "state": "tracked",
-      "byte_size": 4368,
-      "sha256": "370C315C407CF9A4A1C8FD0E1689D0EFE750B14947B9813366F9CA6DD8E65A16",
-      "timestamp_utc": "2026-07-02T09:50:30.9624314Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 2914,
+      "sha256": "4D6738ADB8087F4751FE22B251CE3D2C25F7B4142F6A78E2657A33CE7DDEC9FD",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
-      "id": "tracked-tools-test-chatpadruntimehostpreflight-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeHostPreflight.ps1",
+      "id": "tracked-tools-test-chatpadruntimeobservation-ps1",
+      "relative_path": "tools/Test-ChatpadRuntimeObservation.ps1",
       "state": "tracked",
-      "byte_size": 763,
-      "sha256": "67C3870278C3FD7FE19DF33B1E4E99A6F0F5C32C72866573C057C7570017EEA3",
-      "timestamp_utc": "2026-07-02T08:29:28.8006207Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 363,
+      "sha256": "BE00DF80F1ADE68BFC43CDDD6BEFB8987F24FE913270771BA5111B74F7D81F21",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "tracked-tools-test-chatpadruntimerepositoryidentity-ps1",
       "relative_path": "tools/Test-ChatpadRuntimeRepositoryIdentity.ps1",
       "state": "tracked",
-      "byte_size": 782,
-      "sha256": "DC263477ECBA4140352E0675E07C6D4400BDCC0FD12420414A9A112B6890717A",
-      "timestamp_utc": "2026-07-02T09:48:53.3187394Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "tracked-tools-test-chatpadruntimetargetselection-ps1",
-      "relative_path": "tools/Test-ChatpadRuntimeTargetSelection.ps1",
-      "state": "tracked",
-      "byte_size": 511,
-      "sha256": "7C40900E9F48EEB7F4782032665951A6085F0EB0CEB176138FF87ED80F7B3CB1",
-      "timestamp_utc": "2026-07-02T08:29:28.7951134Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "tracked-tools-test-chatpadsigningreadiness-ps1",
-      "relative_path": "tools/Test-ChatpadSigningReadiness.ps1",
-      "state": "tracked",
-      "byte_size": 349,
-      "sha256": "BD1BBAB0DFCA2118EE9F754F9EF6CB101AB7A58E874495FD092E29E0AC7D329A",
-      "timestamp_utc": "2026-07-02T08:29:28.7996193Z",
-      "producer": "runtime-bringup-readiness-remediation",
-      "result": "CANDIDATE_TREE_VALIDATED",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-ast-parse",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-ast-final-20260702T094913Z.log",
-      "state": "ignored",
-      "byte_size": 33,
-      "sha256": "D4A5B05B527BF52940D3151D57D819797FBF0012B5A413147DE4BAA0C381E784",
-      "timestamp_utc": "2026-07-02T09:49:13.6924271Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "byte_size": 842,
+      "sha256": "DD01E802FD201DC8A5B8D1E3AC75BDBA676F1B1FB0741C2929186DBB5EDC362C",
+      "result": "VALIDATED",
+      "evidence_classification": "synthetic"
     },
     {
       "id": "evidence-synthetic-suite",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-synthetic-final-20260702T094913Z.json",
+      "relative_path": "artifacts/logs/runtime-bringup-enforcement-suite-finalization-20260702T123040Z.json",
       "state": "ignored",
-      "byte_size": 1222,
-      "sha256": "9FA4C3921494E17C4E8FF3497F7219BD299651E7D5F17678B7D1989C689F81DC",
-      "timestamp_utc": "2026-07-02T09:49:14.4830998Z",
-      "producer": "offline-validation",
+      "byte_size": 24449,
+      "sha256": "7756DEA4B7D5F5D5312D8DBC99545591023AA039101E6C18814A6B7D0FA8577F",
       "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-json-schema",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-schema-final-20260702T094659Z.log",
-      "state": "ignored",
-      "byte_size": 154,
-      "sha256": "98D60025679EBAC11B2402A3353DFDE0E5E3C31D3B42180E8E5F42EF2FFF0051",
-      "timestamp_utc": "2026-07-02T09:47:00.1488135Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-repository-safety",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-repository-safety-final-20260702T094659Z.log",
-      "state": "ignored",
-      "byte_size": 1165,
-      "sha256": "7355CD6ED8A919BA0DF75221273C7789AD2F17B161CBBA40B0F452E0778C4A75",
-      "timestamp_utc": "2026-07-02T09:47:00.5748244Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-changed-path-containment",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-containment-final-20260702T094659Z.log",
-      "state": "ignored",
-      "byte_size": 1271,
-      "sha256": "D19B150E04013FA07B4F9511B8ABC247D94DAE60C8A286553E63A564597F780B",
-      "timestamp_utc": "2026-07-02T09:47:00.5828467Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-prohibited-operation-scan",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-prohibited-scan-corrected-final-20260702T094659Z.log",
-      "state": "ignored",
-      "byte_size": 122,
-      "sha256": "72EC12CEA20F065DCE4EF50E69C47AE5F9CC75D5B08D58C563277AE1591E6593",
-      "timestamp_utc": "2026-07-02T09:47:00.6448338Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-file-hygiene",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-file-hygiene-corrected-final-20260702T094754Z.log",
-      "state": "ignored",
-      "byte_size": 34,
-      "sha256": "15CFC43D5D5681079143DB8C1C4266E20844FD506A96BAFAE89A357C3D8B41BB",
-      "timestamp_utc": "2026-07-02T09:47:54.4777922Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-git-diff-check",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-diff-check-final-20260702T094754Z.log",
-      "state": "ignored",
-      "byte_size": 3468,
-      "sha256": "D933C79A5559CA6BA66FDCC30B857352A0DFFECC2192EDAC92668BE04AB7D8A7",
-      "timestamp_utc": "2026-07-02T09:47:54.5169000Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
-    },
-    {
-      "id": "evidence-psscriptanalyzer-status",
-      "relative_path": "artifacts/logs/runtime-bringup-remediation-psscriptanalyzer-final-20260702T094754Z.log",
-      "state": "ignored",
-      "byte_size": 72,
-      "sha256": "380815FC3E4B7535EE6ED49D1771B6801FF244847FC2E0B9E5BC9B3533452615",
-      "timestamp_utc": "2026-07-02T09:47:54.5342837Z",
-      "producer": "offline-validation",
-      "result": "PASS",
-      "evidence_classification": "synthetic",
-      "dependency_identities": []
+      "evidence_classification": "synthetic"
     }
   ]
 }

@@ -23,6 +23,31 @@ post-commit tree.
 approved readiness commit and branch. Candidate content and final Git identity
 are independently attributable without self-reference.
 
+## 2026-07-02 - Use BLOCKED as authoritative live readiness until exact binding exists
+
+**Decision:** Runtime readiness evidence separates framework validation from
+live authorization. The framework may report `PASS`, but live installation
+readiness reports `BLOCKED` with blocker `BLOCKED_NOT_IMPLEMENTED` until an
+audited exact-instance binding and exact-instance restoration implementation
+exists. PSScriptAnalyzer absence is recorded as `SKIPPED_UNAVAILABLE`, not
+PASS.
+
+**Rationale:** The second independent audit found unsupported PASS paths caused
+by unrelated exception handling, Boolean binding availability, empty operation
+lists, token-only package checks, unlinked stop conditions, and ambiguous
+top-level PASS-with-blocker semantics.
+
+**Alternatives rejected:** Treating any negative-test exception as rejection,
+allowing callers to set binding availability with a Boolean, accepting package
+token presence without effective INF relationships, preserving top-level
+`PASS_WITH_BLOCKER` in machine-readable evidence, or counting unavailable
+static analysis as PASS.
+
+**Consequences:** Future runtime consumers must gate on
+`live_installation_readiness`, not framework status alone. Any future exact
+binding implementation must be added in a separate implementation commit and
+audited before live mutation is authorized.
+
 ## 2026-07-02 - Make argument vectors authoritative and keep exact binding blocked
 
 **Decision:** Future runtime actions are versioned structured operation plans.
