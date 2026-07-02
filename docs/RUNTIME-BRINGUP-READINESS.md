@@ -18,6 +18,34 @@ The third independent audit found remaining uncontrolled exception paths and
 unsupported lifecycle-transition acceptances. The validator-totality
 remediation is offline-only and keeps the live gate closed.
 
+## Manifest-validator empty-subset remediation status
+
+The independent read-only audit of runtime-observer provenance and assertion
+accounting accepted the prior implementation but found one remaining
+manifest-validator totality defect. In an isolated corrupted manifest copy,
+removing all `harness-self-test` records caused the validator to hit a
+StrictMode `PropertyNotFoundException` while summing an empty subset instead
+of returning a controlled accounting failure.
+
+- Current branch:
+  `feature/runtime-bringup-manifest-validator-empty-harness-remediation`.
+- Corrective manifest-validator implementation commit:
+  `eef5b9c151c884eefaa0157e32446e481db73bb4`.
+- Corrective manifest-generator identity commit:
+  `f4e98e5719230bd40c7096d2a48efb788eeb5a7d`.
+- The manifest validator now aggregates record and assertion counts with an
+  explicit integer-sum helper. Empty subsets sum to zero, while missing, null,
+  Boolean, array, nonnumeric, and negative count values are controlled
+  accounting defects.
+- The opt-in corruption regression uses temporary isolated manifest copies and
+  does not mutate tracked evidence. The cases for all omitted harness records,
+  one omitted harness record, and all omitted `assertion-accounting-negative`
+  records fail with controlled accounting defects, zero uncontrolled
+  exceptions, and no `PropertyNotFoundException`.
+- Canonical framework status remains `PASS`; live readiness remains
+  `BLOCKED`; blocker remains `BLOCKED_NOT_IMPLEMENTED`; the suite remains 304
+  records and 1,724 assertions.
+
 ## Runtime-observer provenance and assertion-accounting remediation status
 
 The independent stop-linkage audit accepted the flat linkage remediation but
@@ -519,14 +547,14 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only audit of runtime-observer provenance and
-assertion-accounting implementation commits
-`b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb` and
-`ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`, plus the
-evidence-finalization commit. The audit must test all five observer IDs with missing provenance and
-synthetic source classification; inspect session/host/artifact enforcement;
-confirm no live observation is claimed; independently sum every fixture
-record and category; prove both assertion sums equal 1,724; verify the
-finalization commit changed no executable files; preserve stop-linkage
-rejection; and confirm authoritative live readiness remains `BLOCKED` with
+Independent read-only audit of manifest-validator empty-subset remediation
+commit `eef5b9c151c884eefaa0157e32446e481db73bb4`, manifest-generator identity
+commit `f4e98e5719230bd40c7096d2a48efb788eeb5a7d`, plus the
+evidence-finalization commit. The audit must corrupt only isolated manifest
+copies, remove harness and accounting record subsets, confirm all corruptions
+produce controlled accounting failures with zero uncontrolled exceptions and
+no `PropertyNotFoundException`, revalidate canonical manifest hashes, branch
+identity, and category totals, preserve runtime-observer provenance and
+stop-linkage contracts, verify the finalization commit changes no executable
+files, and confirm authoritative live readiness remains `BLOCKED` with
 blocker `BLOCKED_NOT_IMPLEMENTED`.

@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Treat empty manifest accounting subsets as validation defects
+
+**Decision:** Manifest-readiness accounting must be total over empty record
+subsets. Empty subsets aggregate to numeric zero, and mismatches against the
+expected suite/category/harness totals are reported as controlled accounting
+defects. Missing, null, Boolean, array, nonnumeric, and negative count values
+remain invalid data and cannot be silently coerced into PASS.
+
+**Rationale:** The independent manifest-validator audit showed that removing
+all `harness-self-test` records from an isolated manifest copy reached an
+uncaught `PropertyNotFoundException` because empty `Measure-Object -Sum`
+results expose no `.Sum` property under StrictMode. That made a corrupt
+manifest fail as an internal tool error instead of as a controlled accounting
+failure.
+
+**Alternatives rejected:** Disabling StrictMode, catching and suppressing all
+property exceptions, treating omitted categories as absent-but-valid, or
+normalizing corrupted tracked evidence in place instead of using isolated
+corruption copies.
+
+**Consequences:** Manifest arithmetic uses an explicit integer-sum helper,
+corrupt empty-subset cases remain expected FAIL results, and regression
+coverage must prove omitted harness/accounting records do not surface
+uncontrolled exceptions or `PropertyNotFoundException`.
+
 ## 2026-07-02 - Separate runtime-observation shape from live evaluation and account every assertion
 
 **Decision:** Runtime-observation record structure is validated separately from

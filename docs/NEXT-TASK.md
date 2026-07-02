@@ -3,16 +3,16 @@
 ## Exact current state
 
 - Required branch:
-  `feature/runtime-bringup-observer-provenance-accounting-remediation`.
+  `feature/runtime-bringup-manifest-validator-empty-harness-remediation`.
 - Required starting point: the evidence-finalization commit containing this
-  file, subject `docs: finalize observer provenance and accounting evidence`.
+  file, subject `docs: finalize empty-harness manifest validator evidence`.
 - Required direct parent:
-  `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`.
+  `f4e98e5719230bd40c7096d2a48efb788eeb5a7d`.
 - Required implementation chain:
-  `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb` →
-  `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10`.
-- Prior finalization:
-  `9b5c8f3b4ac8c0dc0453da693266a82fea636ec0`.
+  `88e3cbba3a64828322b7c703765e6b1e2369f698` ->
+  `eef5b9c151c884eefaa0157e32446e481db73bb4` ->
+  `f4e98e5719230bd40c7096d2a48efb788eeb5a7d` ->
+  finalization commit containing this file.
 - Framework status: `PASS`.
 - Live installation readiness: `BLOCKED`.
 - Blocker: `BLOCKED_NOT_IMPLEMENTED`.
@@ -20,6 +20,9 @@
 - Accounting: record/category counts `304/304`; record/category assertions
   `1,724/1,724`; unassigned, off-ledger, duplicate-counted, and reconciliation
   defects `0`.
+- Empty-subset regression: isolated corrupt manifests with omitted harness and
+  accounting records fail through controlled accounting defects; uncontrolled
+  exception count `0`; `PropertyNotFoundException` `false`.
 - Runtime observers: missing-provenance PASS `0`; synthetic-source PASS `0`;
   unsupported runtime-observer PASS `0`; live observations `0`.
 - Stop linkage: 20 conditions, 20 unique IDs, five runtime-observer links,
@@ -30,25 +33,27 @@
 
 ## Next recommended objective
 
-Perform an independent, read-only audit of both runtime-observer provenance and
-assertion-accounting implementation commits and the evidence-finalization
-commit.
+Perform an independent, read-only audit of the manifest-validator empty-subset
+remediation implementation commit and the evidence-finalization commit.
 
 The audit must directly:
 
-- test all five runtime-observer IDs with `evidence_available=true` and missing
-  provenance;
-- test all five IDs with `source_classification=synthetic`;
-- inspect session, host, producer, observer path, timestamps, freshness,
-  artifact identity/path/size/SHA-256, collection result, evidence type, and
-  condition-specific payload enforcement;
-- confirm structural synthetic PASS is separate from runtime evaluation and
-  cannot authorize continuation;
-- confirm no live observation is claimed or performed;
-- independently sum every fixture record assertion and every category;
-- prove both record and category sums equal the reported totals;
-- verify no assertion is off-ledger, unassigned, or duplicate-counted;
-- preserve the flat stop-linkage and nested-array rejection contracts;
+- verify the exact branch, full HEAD, direct parent, upstream equality, and
+  clean worktree;
+- confirm implementation commit
+  `eef5b9c151c884eefaa0157e32446e481db73bb4` contains the manifest-validator
+  logic change and commit `f4e98e5719230bd40c7096d2a48efb788eeb5a7d` contains
+  only the manifest-generator branch/prior-commit identity correction after
+  starting commit `88e3cbba3a64828322b7c703765e6b1e2369f698`;
+- corrupt only isolated manifest copies, never tracked evidence;
+- remove all `harness-self-test` records, one `harness-self-test` record, and
+  all `assertion-accounting-negative` records;
+- confirm each corrupted copy fails with controlled accounting defects, zero
+  uncontrolled exceptions, and no `PropertyNotFoundException`;
+- independently sum every fixture record and category in the canonical suite;
+- prove record and category sums equal 304 records and 1,724 assertions;
+- preserve runtime-observer missing-provenance, synthetic-source, provenance,
+  stop-linkage, lifecycle, and malformed-input contracts;
 - verify the finalization commit changes no executable file;
 - confirm live readiness remains `BLOCKED`.
 
@@ -56,13 +61,10 @@ The audit must directly:
 
 1. Verify the exact branch, full HEAD, direct parent, upstream equality,
    ahead/behind `0/0`, and clean worktree.
-2. Supply the full finalization HEAD and final implementation commit
-   `ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10` to repository identity
-   validation; verify its direct parent is
-   `b6b62a974bf7705e4cabc0bc98ffa44bf0718ddb`.
-3. Rehash the accepted baseline manifest, both frozen SYS files, the finalized
-   manifest, and all manifest entries.
-4. Inspect complete call paths before executing only offline synthetic modes.
+2. Rehash the accepted baseline manifest, both frozen SYS files, the finalized
+   readiness manifest, and all manifest entries.
+3. Inspect the manifest validator and generator before executing only offline
+   synthetic or isolated-corruption modes.
 
 ## Safety restrictions
 
@@ -76,9 +78,9 @@ The audit must directly:
 
 ## Acceptance criteria
 
-- All five missing-provenance probes produce zero PASS results.
-- All five synthetic-source probes produce zero PASS results.
-- Unsupported runtime-observer PASS and live-observation counts are zero.
+- Corrupted-copy omitted-record cases produce controlled accounting failures.
+- Uncontrolled exception and `PropertyNotFoundException` counts are zero.
+- Canonical manifest validation passes.
 - Record count equals category record sum.
 - Record assertion sum equals category assertion sum and reported total.
 - Accounting, observer provenance, manifest, lifecycle, totality, and
@@ -88,10 +90,7 @@ The audit must directly:
 
 ## Inspect first
 
-- `tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1`
-- `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
-- `tools/Test-ChatpadRuntimeObservation.ps1`
-- `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
 - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+- `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`
 - `docs/RUNTIME-BRINGUP-READINESS.md`

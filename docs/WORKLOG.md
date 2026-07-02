@@ -6155,3 +6155,74 @@
   missing/synthetic observer paths, artifact provenance, record/category
   arithmetic, executable-finalization isolation, and authoritative blocked
   live readiness.
+
+## 2026-07-03 00:57 +04:00 - Manifest-validator empty-subset remediation
+
+- **Objective:** Correct the independent read-only audit defect where
+  corrupting an isolated readiness manifest by omitting harness/accounting
+  records could surface an uncaught `PropertyNotFoundException` instead of a
+  controlled accounting failure. Preserve StrictMode, canonical manifest PASS,
+  framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, and all no-live-driver safety gates.
+- **Starting state:** Verified starting branch
+  `feature/runtime-bringup-observer-provenance-accounting-remediation` at
+  `88e3cbba3a64828322b7c703765e6b1e2369f698` with clean tracked state and
+  upstream equality. Verified required ancestry from prior remediation commits
+  through `88e3cbba3a64828322b7c703765e6b1e2369f698`. Created
+  `feature/runtime-bringup-manifest-validator-empty-harness-remediation`
+  from that exact commit.
+- **Investigation:** Reproduced the failure mode in both PowerShell 7.6.3 and
+  Windows PowerShell 5.1: an empty collection piped to
+  `Measure-Object assertion_count -Sum` returns no `.Sum` property under
+  StrictMode, so direct `.Sum` access throws `PropertyNotFoundException`.
+- **Implementation:** Updated
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1` to aggregate record
+  and assertion counts through an explicit integer-sum helper. Empty
+  collections now sum to zero, while missing, null, Boolean, array,
+  nonnumeric, and negative values increment controlled accounting-defect
+  counters. Added an opt-in corruption-regression mode that copies manifest
+  inputs into a temporary isolated Git repository, mutates only the copy, runs
+  the validator as a child process, and removes the temporary root.
+- **Regression cases:** The isolated corruption regression covers all omitted
+  `harness-self-test` records, one omitted `harness-self-test` record, and all
+  omitted `assertion-accounting-negative` records. Each case exits nonzero
+  through manifest `FAIL`, reports accounting defects, parses JSON output, and
+  records zero uncontrolled exceptions and no `PropertyNotFoundException`.
+- **Implementation validation:** Parsed the changed validator with zero AST
+  errors. Parsed all 41 tracked `.ps1` and 2 tracked `.psm1` files with zero
+  AST errors. Ran
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1 -RunCorruptionRegression`
+  successfully for all three corruption cases. Ran the complete runtime
+  bring-up readiness suite successfully with 304 records, 1,724 assertions,
+  framework `PASS`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NOT_IMPLEMENTED`, assertion accounting `PASS`, missing-provenance
+  PASS `0`, synthetic-source PASS `0`, unsupported runtime-observer PASS `0`,
+  live observations `0`, nested-array acceptance `0`, malformed-input cases
+  `180`, and uncontrolled exceptions `0`.
+- **Implementation commit:** `eef5b9c151c884eefaa0157e32446e481db73bb4`,
+  subject `Handle empty manifest accounting subsets`.
+- **Corrective generator identity commit:**
+  `f4e98e5719230bd40c7096d2a48efb788eeb5a7d`, subject
+  `Bind manifest generator to empty-harness branch`. Regenerating evidence
+  after the validator commit exposed that the manifest generator still
+  hardcoded the previous branch and prior-readiness commits. The correction is
+  limited to those metadata constants so generated evidence can accurately
+  bind this branch.
+- **Finalization scope:** Finalization is limited to continuity documents and
+  regenerated readiness manifest evidence. The expected finalization commit is
+  the commit containing this entry, subject
+  `docs: finalize empty-harness manifest validator evidence`.
+- **Safety:** No production source/header, INF, project, solution, protocol,
+  transport, binary, package, credential, signing material, or `legacy/` path
+  changed. No certificate/private-key operation, signing, CAT generation,
+  package creation, staging, installation, binding, loading, rollback,
+  Windows/service/registry/boot/security mutation, tracing, event-log export,
+  live device query, hardware access, protocol traffic, input injection, or
+  reboot occurred.
+- **Remaining blocker and next task:** Exact-instance binding/restoration is
+  not implemented. The exact next task is an independent read-only audit of
+  implementation commit `eef5b9c151c884eefaa0157e32446e481db73bb4`,
+  generator identity commit `f4e98e5719230bd40c7096d2a48efb788eeb5a7d`, and
+  the evidence-finalization commit, corrupting only isolated manifest copies
+  and proving omitted harness/accounting subsets fail through controlled
+  accounting defects while canonical readiness remains blocked for live use.

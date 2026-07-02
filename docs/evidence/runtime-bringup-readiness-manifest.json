@@ -1,15 +1,15 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-02T19:08:37.0080286Z",
+    "generated_utc":  "2026-07-02T21:02:33.1714216Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
     "blocker":  "BLOCKED_NOT_IMPLEMENTED",
     "repository":  {
-                       "branch":  "feature/runtime-bringup-observer-provenance-accounting-remediation",
+                       "branch":  "feature/runtime-bringup-manifest-validator-empty-harness-remediation",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
-                       "prior_readiness_implementation_commit":  "a810d8ba3438a08cfa4742e53be61f64be5aa58e",
-                       "prior_readiness_finalization_commit":  "9b5c8f3b4ac8c0dc0453da693266a82fea636ec0",
-                       "current_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
+                       "prior_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
+                       "prior_readiness_finalization_commit":  "88e3cbba3a64828322b7c703765e6b1e2369f698",
+                       "current_readiness_implementation_commit":  "f4e98e5719230bd40c7096d2a48efb788eeb5a7d",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -265,8 +265,8 @@
                         "id":  "tracked-docs-decisions-md",
                         "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  114304,
-                        "sha256":  "ACE63090B6F899790F252ED91F47C6C6728FFBC63785297B9C7A504CB047F51B",
+                        "byte_size":  115657,
+                        "sha256":  "A39AD465555A965D25C7EE87F87298610F6E725427C5B6A75F26C81ABC6F311E",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -274,8 +274,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  4431,
-                        "sha256":  "DAC55927914E7895C2A82AA1B076817ABFC875AB62D3D322D8D0F253DAB40AAF",
+                        "byte_size":  4573,
+                        "sha256":  "130A3A0B81375ECE39B58824AFAB4F5483242FE237EA7A2A9EBAC9533CB88F11",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -292,8 +292,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  4219,
-                        "sha256":  "87247496D5C23F1898CDE0C1950198023DBC97E9FE72C16F3602A05380F8E615",
+                        "byte_size":  4298,
+                        "sha256":  "6247C17C357A4D5F3279C145D722B0549B80CC6CC018799919807402CFF487C3",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -301,8 +301,8 @@
                         "id":  "tracked-docs-runtime-bringup-readiness-md",
                         "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
                         "state":  "tracked",
-                        "byte_size":  25087,
-                        "sha256":  "32F9A2851B6E39AAEF96DB4A9598CCA6BAAFBE47747EFA342E3BF0289F517C14",
+                        "byte_size":  26699,
+                        "sha256":  "7EA20CB37DE8363BD6873D555437187ECE2BAE77885949A0E8504B5396F8487F",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -310,8 +310,8 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  405720,
-                        "sha256":  "BEBEC6277BD04436DBC120DFC3A9E4E2E6D780C7BDC9EBF55172C156DA36FE83",
+                        "byte_size":  410392,
+                        "sha256":  "E9D65310061F27888263F9560354D4C3E3079D7C02A7DB7DA98A133D969CDC87",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -319,8 +319,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  8905,
-                        "sha256":  "791DAA01463B096BFD259D7CF12DFFE674BBC877F82E59D0E613B645C7250349",
+                        "byte_size":  8907,
+                        "sha256":  "931E9908D70C1CE67EC4B0DEFA954D244215FD97AB5C6927B50524EC75B61579",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -346,8 +346,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  9903,
-                        "sha256":  "6BF7879D67D1317D3930C14609CE4FFF9C18DA0A1801E6F723C009D47420F90A",
+                        "byte_size":  19999,
+                        "sha256":  "5C7438A3812890F2DF7B90C7A029EC970CCE2DC0D0A2F9F8B5F8AF7285631370",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -362,7 +362,7 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/runtime-bringup-observer-provenance-accounting-suite-post-implementation-ac0e25c.json",
+                        "relative_path":  "artifacts/logs/runtime-bringup-manifest-validator-empty-harness-suite-post-implementation-f4e98e5.json",
                         "state":  "ignored",
                         "byte_size":  470214,
                         "sha256":  "63BBC80C60B7B7FA029FF2534070F8CC3104BD7DDBBEF17E165F29E8FEFDC633",
