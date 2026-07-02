@@ -5,7 +5,7 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 $manifest=Get-Content -LiteralPath (Join-Path $root $ManifestPath) -Raw|ConvertFrom-Json
 $entries=@($manifest.entries)
-$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;state=0;containment=0;declared_result=0;top_level=0;fixture_totals=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0}
+$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;state=0;containment=0;declared_result=0;top_level=0;fixture_totals=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
 foreach($entry in $entries){
     $full=[IO.Path]::GetFullPath((Join-Path $root ([string]$entry.relative_path)))
     if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){$defects.containment++;continue}
@@ -21,6 +21,7 @@ if($manifest.readiness.psscriptanalyzer_status-eq'PASS'-and$null-eq(Get-Command 
 foreach($name in @('frozen_baseline_commit','prior_readiness_implementation_commit','prior_readiness_finalization_commit','current_readiness_implementation_commit')){if([string]$manifest.repository.$name-notmatch'^[0-9a-f]{40}$'){$defects.identity++}}
 if([int]$manifest.readiness.exact_instance_binding_operations-or[int]$manifest.readiness.exact_instance_restoration_operations-or[int]$manifest.readiness.broad_approved_install_operations-or[int]$manifest.readiness.broad_approved_rollback_operations){$defects.unsupported_pass++}
 if([int]$manifest.readiness.invalid_lifecycle_acceptance_count -ne 0 -or [int]$manifest.readiness.missing_start_timestamp_acceptance_count -ne 0){$defects.lifecycle++}
+if([int]$manifest.readiness.stop_condition_count -ne 20 -or [int]$manifest.readiness.unique_stop_condition_count -ne 20 -or [int]$manifest.readiness.runtime_observer_linkage_count -ne 5 -or [int]$manifest.readiness.unlinked_stop_condition_count -ne 0 -or [int]$manifest.readiness.unknown_stop_condition_id_count -ne 0 -or [int]$manifest.readiness.malformed_linkage_count -ne 0 -or [int]$manifest.readiness.nested_array_acceptance_count -ne 0){$defects.stop_linkage++}
 if([int]$manifest.readiness.malformed_input_validator_count -ne 15 -or [int]$manifest.readiness.malformed_input_case_count -ne 180 -or [int]$manifest.readiness.uncontrolled_exception_count -ne 0 -or [int]$manifest.readiness.property_not_found_exception_count -ne 0 -or [int]$manifest.readiness.strictmode_exception_count -ne 0){$defects.malformed_totality++}
 if([string]$manifest.readiness.committed_sample_structural_validation -ne 'PASS' -or [string]$manifest.readiness.committed_sample_semantic_validation -ne 'PASS'){$defects.sample_validation++}
 $inventory=$manifest.readiness.powershell_inventory

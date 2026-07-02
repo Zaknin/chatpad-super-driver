@@ -1,10 +1,10 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:ReadinessBranch = 'feature/runtime-bringup-readiness-final-contract-remediation'
+$script:ReadinessBranch = 'feature/runtime-bringup-stop-linkage-final-remediation'
 $script:FrozenBaselineCommit = 'f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-$script:PriorImplementationCommit = '7689d2cca57c485d8c0569bdcbec58e400621b20'
-$script:PriorFinalizationCommit = 'bb4c06cc87150b944d04ae2135ea58b8218c5dc8'
+$script:PriorImplementationCommit = '4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6'
+$script:PriorFinalizationCommit = '30da5003aba75ef0f079c9a8c2c90df3768601d5'
 $script:AcceptedProviderGuid = '{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}'
 $script:AcceptedManifestPath = 'docs/evidence/runtime-instrumentation-implementation-manifest.json'
 $script:AcceptedManifestSize = 28088
@@ -742,27 +742,95 @@ function Test-ChatpadRuntimeObservationContract {
 function Test-ChatpadStopConditionRegisterContract {
     param($Register)
     if (-not (Test-ChatpadObject $Register)) { return New-ChatpadRuntimeCheckResult stop-condition-linkage FAIL STOP_LINKAGE_INVALID 'register-not-object' @('prerequisite-changed-after-approval') }
-    $conditions=@(Get-ChatpadArray $Register stop_conditions);$ids=@($conditions|ForEach-Object{Get-ChatpadProperty $_ id ''});$fail=@()
-    if($conditions.Count-ne20-or@($ids|Sort-Object -Unique).Count-ne20){$fail+='condition-count-or-duplicate'}
+    $fail=[Collections.Generic.List[string]]::new()
+    $malformedLinkageCount=0
+    $unknownIdCount=0
+    $unlinkedCount=0
+    $conditions=@(Get-ChatpadArray $Register stop_conditions)
+    $ids=@($conditions|ForEach-Object{[string](Get-ChatpadProperty $_ id '')})
+    $uniqueIds=@($ids|Where-Object{$_}|Sort-Object -Unique)
+    if($conditions.Count-ne20){$fail.Add("condition-count:$($conditions.Count)")}
+    if($uniqueIds.Count-ne20){$fail.Add("unique-condition-count:$($uniqueIds.Count)")}
+    foreach($id in $ids){
+        if([string]::IsNullOrWhiteSpace($id)){$fail.Add('condition-id-empty');$unknownIdCount++}
+        elseif($script:KnownStopConditionIds-notcontains$id){$fail.Add("unknown-condition-id:$id");$unknownIdCount++}
+    }
+    foreach($id in $script:KnownStopConditionIds){
+        if($ids-notcontains$id){$fail.Add("missing-condition-id:$id")}
+    }
     $executable=Get-ChatpadProperty $Register executable_linkage ([pscustomobject]@{})
     $observers=Get-ChatpadProperty $Register runtime_observer_linkage ([pscustomobject]@{})
-    $operatorOnly=@(Get-ChatpadProperty $Register operator_only_conditions @())
+    $operatorOnlyProperty=$Register.PSObject.Properties['operator_only_conditions']
+    $operatorOnly=if($null-ne$operatorOnlyProperty-and$operatorOnlyProperty.Value-is[array]){@($operatorOnlyProperty.Value)}else{@()}
+    if($null-eq$operatorOnlyProperty-or$operatorOnlyProperty.Value-isnot[array]){$fail.Add('operator-only-not-array');$malformedLinkageCount++}
+    if(-not(Test-ChatpadObject $executable)){$fail.Add('executable-linkage-not-object');$malformedLinkageCount++}
+    if(-not(Test-ChatpadObject $observers)){$fail.Add('runtime-observer-linkage-not-object');$malformedLinkageCount++}
+    $allowedTopLevel=@('schema_version','stop_conditions','runtime_observer_linkage','operator_only_conditions','executable_linkage')
+    foreach($propertyName in @($Register.PSObject.Properties|ForEach-Object Name)){
+        if($propertyName-notin$allowedTopLevel){$fail.Add("unknown-linkage-classification:$propertyName")}
+    }
     foreach($c in $conditions){
-        if (-not (Test-ChatpadObject $c)) { $fail+='condition-not-object'; continue }
-        foreach($f in @('id','detection_method','immediate_action','evidence_to_preserve','rollback_required','reboot_permitted','continuation_authority')){if($null-eq$c.PSObject.Properties[$f]){$fail+="missing:$([string](Get-ChatpadProperty $c id '<missing>')):$f"}}
+        if (-not (Test-ChatpadObject $c)) { $fail.Add('condition-not-object'); continue }
+        foreach($f in @('id','detection_method','immediate_action','evidence_to_preserve','rollback_required','reboot_permitted','continuation_authority')){if($null-eq$c.PSObject.Properties[$f]){$fail.Add("missing:$([string](Get-ChatpadProperty $c id '<missing>')):$f")}}
         $classCount=0
         $conditionId=[string](Get-ChatpadProperty $c id '')
         if((Test-ChatpadObject $executable)-and$null-ne$executable.PSObject.Properties[$conditionId]){$classCount++}
         if((Test-ChatpadObject $observers)-and$null-ne$observers.PSObject.Properties[$conditionId]){$classCount++}
         if($operatorOnly-contains$conditionId){$classCount++}
-        if($classCount-ne1){$fail+="classification:$conditionId"}
+        if($classCount-ne1){$fail.Add("classification:$conditionId");if($classCount-eq0){$unlinkedCount++}}
     }
     $executableNames=if(Test-ChatpadObject $executable){@($executable.PSObject.Properties|ForEach-Object Name)}else{@()}
     $observerNames=if(Test-ChatpadObject $observers){@($observers.PSObject.Properties|ForEach-Object Name)}else{@()}
-    foreach($name in @($executableNames)+@($observerNames)+$operatorOnly){if($ids-notcontains$name){$fail+="unknown-link:$name"}}
-    foreach($name in @($observerNames)){if(@(Get-ChatpadProperty $observers $name @())-notcontains'Test-ChatpadRuntimeObservation.ps1'){$fail+="observer-missing:$name"}}
-    if($fail.Count){return New-ChatpadRuntimeCheckResult stop-condition-linkage FAIL STOP_LINKAGE_INVALID ($fail-join';') @('prerequisite-changed-after-approval')}
-    New-ChatpadRuntimeCheckResult stop-condition-linkage PASS STOP_LINKAGE_VALID -Data $Register
+    foreach($name in @($executableNames)+@($observerNames)+$operatorOnly){
+        if($ids-notcontains$name){$fail.Add("unknown-link:$name");$unknownIdCount++}
+    }
+    $root=[IO.Path]::GetFullPath((Get-ChatpadRepoRoot))
+    foreach($group in @(
+        [pscustomobject]@{name='executable';value=$executable;names=$executableNames},
+        [pscustomobject]@{name='runtime-observer';value=$observers;names=$observerNames}
+    )){
+        foreach($name in $group.names){
+            $property=$group.value.PSObject.Properties[$name]
+            if($null-eq$property){$fail.Add("missing-linkage:$($group.name):$name");$unlinkedCount++;continue}
+            $paths=$property.Value
+            if($paths-isnot[array]){$fail.Add("linkage-not-array:$($group.name):$name");$malformedLinkageCount++;continue}
+            if($paths.Count-eq0){$fail.Add("linkage-empty:$($group.name):$name");$malformedLinkageCount++;continue}
+            $normalizedPaths=[Collections.Generic.List[string]]::new()
+            foreach($path in $paths){
+                if($path-is[array]){$fail.Add("linkage-nested-array:$($group.name):$name");$malformedLinkageCount++;continue}
+                if($path-isnot[string]){$fail.Add("linkage-non-string:$($group.name):$name");$malformedLinkageCount++;continue}
+                if([string]::IsNullOrWhiteSpace($path)){$fail.Add("linkage-empty-string:$($group.name):$name");$malformedLinkageCount++;continue}
+                $normalized=$path.Replace('\','/')
+                if($normalized-ne$path){$fail.Add("linkage-path-not-normalized:$($group.name):$name");$malformedLinkageCount++}
+                if($normalized-match'[\*\?\[]'){$fail.Add("linkage-wildcard:$($group.name):$name");$malformedLinkageCount++;continue}
+                if([IO.Path]::IsPathRooted($normalized)-or@($normalized-split'/')-contains'..'){$fail.Add("linkage-traversal:$($group.name):$name");$malformedLinkageCount++;continue}
+                if([IO.Path]::GetExtension($normalized)-ne'.ps1'){$fail.Add("linkage-type-not-approved:$($group.name):$name");$malformedLinkageCount++;continue}
+                $full=[IO.Path]::GetFullPath((Join-Path $root $normalized))
+                if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){$fail.Add("linkage-not-contained:$($group.name):$name");$malformedLinkageCount++;continue}
+                if(-not(Test-Path -LiteralPath $full -PathType Leaf)){$fail.Add("linkage-path-missing:$($group.name):$name");$malformedLinkageCount++;continue}
+                $normalizedPaths.Add($normalized.ToLowerInvariant())
+            }
+            if(@($normalizedPaths|Group-Object|Where-Object Count -gt 1).Count){$fail.Add("linkage-duplicate-normalized:$($group.name):$name");$malformedLinkageCount++}
+            if($group.name-eq'runtime-observer'){
+                if($paths.Count-ne1-or$paths[0]-isnot[string]-or$paths[0]-ne'tools/Test-ChatpadRuntimeObservation.ps1'){$fail.Add("observer-path-invalid:$name");$malformedLinkageCount++}
+            }
+        }
+    }
+    $runtimeObserverIds=@('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')
+    foreach($id in $runtimeObserverIds){
+        if($observerNames-notcontains$id){$fail.Add("observer-missing:$id");$unlinkedCount++}
+        if($executableNames-contains$id-or$operatorOnly-contains$id){$fail.Add("runtime-observer-misclassified:$id")}
+    }
+    $data=[pscustomobject][ordered]@{
+        stop_condition_count=$conditions.Count
+        unique_stop_condition_count=$uniqueIds.Count
+        runtime_observer_linkage_count=@($observerNames|Where-Object{$runtimeObserverIds-contains$_}).Count
+        unlinked_count=$unlinkedCount
+        unknown_id_count=$unknownIdCount
+        malformed_linkage_count=$malformedLinkageCount
+    }
+    if($fail.Count){return New-ChatpadRuntimeCheckResult stop-condition-linkage FAIL STOP_LINKAGE_INVALID ($fail-join';') @('prerequisite-changed-after-approval') -Data $data}
+    New-ChatpadRuntimeCheckResult stop-condition-linkage PASS STOP_LINKAGE_VALID -Data $data
 }
 
 function Get-ChatpadRuntimeConstants {

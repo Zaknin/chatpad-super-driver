@@ -183,28 +183,28 @@
     }
   ],
   "runtime_observer_linkage": {
-    "unrelated-device-changed": ["Test-ChatpadRuntimeObservation.ps1"],
-    "driver-service-fails-unexpectedly": ["Test-ChatpadRuntimeObservation.ps1"],
-    "unexpected-code-integrity-error": ["Test-ChatpadRuntimeObservation.ps1"],
-    "unexpected-setupapi-match": ["Test-ChatpadRuntimeObservation.ps1"],
-    "input-behavior-unstable": ["Test-ChatpadRuntimeObservation.ps1"]
+    "unrelated-device-changed": ["tools/Test-ChatpadRuntimeObservation.ps1"],
+    "driver-service-fails-unexpectedly": ["tools/Test-ChatpadRuntimeObservation.ps1"],
+    "unexpected-code-integrity-error": ["tools/Test-ChatpadRuntimeObservation.ps1"],
+    "unexpected-setupapi-match": ["tools/Test-ChatpadRuntimeObservation.ps1"],
+    "input-behavior-unstable": ["tools/Test-ChatpadRuntimeObservation.ps1"]
   },
   "operator_only_conditions": [],
   "executable_linkage": {
-    "target-identity-ambiguous": ["Test-ChatpadRuntimeTargetSelection.ps1", "Get-ChatpadRuntimeDeviceCandidateInventory.ps1"],
-    "current-driver-unidentified": ["Save-ChatpadCurrentDriverState.ps1"],
-    "rollback-source-unavailable": ["Test-ChatpadRollbackReadiness.ps1"],
-    "repository-or-binary-identity-wrong": ["Test-ChatpadRuntimeRepositoryIdentity.ps1"],
-    "signing-identity-wrong": ["Test-ChatpadSigningReadiness.ps1"],
-    "package-validation-failed": ["Test-ChatpadPackageContent.ps1"],
-    "windows-rejects-signature": ["Test-ChatpadSigningReadiness.ps1"],
-    "wrong-device-binds": ["Show-ChatpadInstallPlan.ps1", "Show-ChatpadRollbackPlan.ps1"],
-    "device-disappears-without-recovery-path": ["Show-ChatpadRollbackPlan.ps1"],
-    "unplanned-reboot-required": ["Show-ChatpadRollbackPlan.ps1", "Test-ChatpadRollbackReadiness.ps1"],
-    "trace-provider-wrong": ["Show-ChatpadWppSessionPlan.ps1"],
-    "runtime-evidence-write-failed": ["Initialize-ChatpadRuntimeEvidenceDirectory.ps1", "Export-ChatpadRuntimeEventLogPlan.ps1", "Show-ChatpadWppSessionPlan.ps1"],
-    "command-differs-from-approved-plan": ["Show-ChatpadInstallPlan.ps1", "Show-ChatpadRollbackPlan.ps1"],
-    "prerequisite-changed-after-approval": ["Test-ChatpadRuntimeHostPreflight.ps1", "Test-ChatpadPostTestReconciliation.ps1"],
-    "rollback-cannot-be-guaranteed": ["Test-ChatpadRollbackReadiness.ps1", "Show-ChatpadRollbackPlan.ps1", "Test-ChatpadPostTestReconciliation.ps1"]
+    "target-identity-ambiguous": ["tools/Test-ChatpadRuntimeTargetSelection.ps1", "tools/Get-ChatpadRuntimeDeviceCandidateInventory.ps1"],
+    "current-driver-unidentified": ["tools/Save-ChatpadCurrentDriverState.ps1"],
+    "rollback-source-unavailable": ["tools/Test-ChatpadRollbackReadiness.ps1"],
+    "repository-or-binary-identity-wrong": ["tools/Test-ChatpadRuntimeRepositoryIdentity.ps1"],
+    "signing-identity-wrong": ["tools/Test-ChatpadSigningReadiness.ps1"],
+    "package-validation-failed": ["tools/Test-ChatpadPackageContent.ps1"],
+    "windows-rejects-signature": ["tools/Test-ChatpadSigningReadiness.ps1"],
+    "wrong-device-binds": ["tools/Show-ChatpadInstallPlan.ps1", "tools/Show-ChatpadRollbackPlan.ps1"],
+    "device-disappears-without-recovery-path": ["tools/Show-ChatpadRollbackPlan.ps1"],
+    "unplanned-reboot-required": ["tools/Show-ChatpadRollbackPlan.ps1", "tools/Test-ChatpadRollbackReadiness.ps1"],
+    "trace-provider-wrong": ["tools/Show-ChatpadWppSessionPlan.ps1"],
+    "runtime-evidence-write-failed": ["tools/Initialize-ChatpadRuntimeEvidenceDirectory.ps1", "tools/Export-ChatpadRuntimeEventLogPlan.ps1", "tools/Show-ChatpadWppSessionPlan.ps1"],
+    "command-differs-from-approved-plan": ["tools/Show-ChatpadInstallPlan.ps1", "tools/Show-ChatpadRollbackPlan.ps1"],
+    "prerequisite-changed-after-approval": ["tools/Test-ChatpadRuntimeHostPreflight.ps1", "tools/Test-ChatpadPostTestReconciliation.ps1"],
+    "rollback-cannot-be-guaranteed": ["tools/Test-ChatpadRollbackReadiness.ps1", "tools/Show-ChatpadRollbackPlan.ps1", "tools/Test-ChatpadPostTestReconciliation.ps1"]
   }
 }

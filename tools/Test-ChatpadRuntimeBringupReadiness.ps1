@@ -150,6 +150,10 @@ function New-RestoredOperationProbe {
     $o
 }
 
+function New-StopConditionRegisterProbe {
+    Read-ChatpadJson (Join-Path $PSScriptRoot '..\docs\evidence\runtime-bringup-stop-conditions.json')
+}
+
 function Test-ChatpadEvidenceSchemaStructuralContract {
     param([Parameter(Mandatory)][string]$SchemaPath,[Parameter(Mandatory)][object]$Document)
     $fail=@()
@@ -254,6 +258,78 @@ Invoke-Fixture validator-totality-matrix validator-totality AllPublicReadinessVa
     }
     New-ChatpadRuntimeCheckResult validator-totality PASS VALIDATOR_TOTALITY_VALID -Data ([pscustomobject]@{validators_tested=$validators.Count;malformed_inputs_per_validator=$inputs.Count;matrix_cases=$validators.Count*$inputs.Count;uncontrolled_exception_count=0})
 } -AdditionalAssertionCount 180
+
+Invoke-Fixture stop-linkage-canonical-flat stop-condition-linkage Test-ChatpadStopConditionRegisterContract PASS STOP_LINKAGE_VALID @() {
+    Test-ChatpadStopConditionRegisterContract (New-StopConditionRegisterProbe)
+}
+
+foreach($id in @('unrelated-device-changed','driver-service-fails-unexpectedly','unexpected-code-integrity-error','unexpected-setupapi-match','input-behavior-unstable')){
+    $observerLinkageBody={
+        $register=New-StopConditionRegisterProbe
+        Test-ChatpadStopConditionRegisterContract $register
+    }.GetNewClosure()
+    Invoke-Fixture "stop-linkage-observer-$id" runtime-observer-linkage Test-ChatpadStopConditionRegisterContract PASS STOP_LINKAGE_VALID @() $observerLinkageBody
+}
+
+Invoke-Fixture stop-linkage-double-wrapped nested-array-rejection Test-ChatpadStopConditionRegisterContract FAIL STOP_LINKAGE_INVALID @('prerequisite-changed-after-approval') {
+    $register=New-StopConditionRegisterProbe
+    $flat=[object[]]@('tools/Test-ChatpadRuntimeObservation.ps1')
+    $register.runtime_observer_linkage.PSObject.Properties['unrelated-device-changed'].Value=[object[]]@(,$flat)
+    Test-ChatpadStopConditionRegisterContract $register
+} -ExpectedReasonPattern 'linkage-nested-array'
+
+Invoke-Fixture stop-linkage-three-level-nested nested-array-rejection Test-ChatpadStopConditionRegisterContract FAIL STOP_LINKAGE_INVALID @('prerequisite-changed-after-approval') {
+    $register=New-StopConditionRegisterProbe
+    $flat=[object[]]@('tools/Test-ChatpadRuntimeObservation.ps1')
+    $double=[object[]]@(,$flat)
+    $register.runtime_observer_linkage.PSObject.Properties['unrelated-device-changed'].Value=[object[]]@(,$double)
+    Test-ChatpadStopConditionRegisterContract $register
+} -ExpectedReasonPattern 'linkage-nested-array'
+
+foreach($case in @(
+    @{id='string';value='tools/Test-ChatpadRuntimeObservation.ps1';reason='linkage-not-array'},
+    @{id='empty-array';value=[object[]]@();reason='linkage-empty'},
+    @{id='null-item';value=[object[]]@($null);reason='linkage-non-string'},
+    @{id='non-string';value=[object[]]@(42);reason='linkage-non-string'},
+    @{id='empty-string';value=[object[]]@('');reason='linkage-empty-string'},
+    @{id='whitespace-string';value=[object[]]@('   ');reason='linkage-empty-string'},
+    @{id='nonexistent';value=[object[]]@('tools/Does-Not-Exist.ps1');reason='linkage-path-missing'},
+    @{id='traversal';value=[object[]]@('../tools/Test-ChatpadRuntimeObservation.ps1');reason='linkage-traversal'},
+    @{id='duplicate';value=[object[]]@('tools/Test-ChatpadRuntimeObservation.ps1','tools/Test-ChatpadRuntimeObservation.ps1');reason='linkage-duplicate-normalized'},
+    @{id='duplicate-normalized';value=[object[]]@('tools/Test-ChatpadRuntimeObservation.ps1','TOOLS/TEST-CHATPADRUNTIMEOBSERVATION.PS1');reason='linkage-duplicate-normalized'}
+)){
+    $linkageCase=$case
+    $linkageBody={
+        $register=New-StopConditionRegisterProbe
+        $register.runtime_observer_linkage.PSObject.Properties['unrelated-device-changed'].Value=$linkageCase.value
+        Test-ChatpadStopConditionRegisterContract $register
+    }.GetNewClosure()
+    Invoke-Fixture "stop-linkage-$($case.id)" stop-condition-linkage Test-ChatpadStopConditionRegisterContract FAIL STOP_LINKAGE_INVALID @('prerequisite-changed-after-approval') $linkageBody -ExpectedReasonPattern $case.reason
+}
+
+Invoke-Fixture stop-linkage-unknown-id stop-condition-linkage Test-ChatpadStopConditionRegisterContract FAIL STOP_LINKAGE_INVALID @('prerequisite-changed-after-approval') {
+    $register=New-StopConditionRegisterProbe
+    $register.runtime_observer_linkage|Add-Member -NotePropertyName 'unknown-stop-condition' -NotePropertyValue ([object[]]@('tools/Test-ChatpadRuntimeObservation.ps1'))
+    Test-ChatpadStopConditionRegisterContract $register
+} -ExpectedReasonPattern 'unknown-link'
+
+Invoke-Fixture stop-linkage-missing-runtime-observer stop-condition-linkage Test-ChatpadStopConditionRegisterContract FAIL STOP_LINKAGE_INVALID @('prerequisite-changed-after-approval') {
+    $register=New-StopConditionRegisterProbe
+    $register.runtime_observer_linkage.PSObject.Properties.Remove('unrelated-device-changed')
+    Test-ChatpadStopConditionRegisterContract $register
+} -ExpectedReasonPattern 'observer-missing|classification'
+
+Invoke-Fixture stop-linkage-runtime-observer-evaluated-offline runtime-observer-linkage Test-ChatpadStopConditionRegisterContract FAIL STOP_LINKAGE_INVALID @('prerequisite-changed-after-approval') {
+    $register=New-StopConditionRegisterProbe
+    $register.executable_linkage|Add-Member -NotePropertyName 'unrelated-device-changed' -NotePropertyValue ([object[]]@('tools/Test-ChatpadRuntimeObservation.ps1'))
+    Test-ChatpadStopConditionRegisterContract $register
+} -ExpectedReasonPattern 'runtime-observer-misclassified|classification'
+
+Invoke-Fixture stop-linkage-unknown-classification stop-condition-linkage Test-ChatpadStopConditionRegisterContract FAIL STOP_LINKAGE_INVALID @('prerequisite-changed-after-approval') {
+    $register=New-StopConditionRegisterProbe
+    $register|Add-Member -NotePropertyName 'unknown_linkage' -NotePropertyValue ([pscustomobject]@{})
+    Test-ChatpadStopConditionRegisterContract $register
+} -ExpectedReasonPattern 'unknown-linkage-classification'
 
 Invoke-Fixture install-empty-operations install Test-ChatpadInstallPlanContract BLOCKED BLOCKED_NOT_IMPLEMENTED @('wrong-device-binds') { Test-ChatpadInstallPlanContract (New-InstallProbe) }
 Invoke-Fixture install-boolean-bypass install Test-ChatpadInstallPlanContract BLOCKED BLOCKED_NOT_IMPLEMENTED @('command-differs-from-approved-plan') { $p=New-InstallProbe;$p.exact_instance_binding_available=$true;Test-ChatpadInstallPlanContract $p }
@@ -506,6 +582,9 @@ $missingStartAcceptances=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'oper
 $sampleStructural=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'schema-draft-2020-12-sample'}|Select-Object -First 1)
 $sampleSemantic=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'committed-sample-semantic'}|Select-Object -First 1)
 $powershellInventory=@($script:Fixtures|Where-Object{$_.fixture_id -eq 'powershell-inventory-reconciliation'}|Select-Object -First 1)
+$stopLinkageResult=Test-ChatpadStopConditionRegisterContract (New-StopConditionRegisterProbe)
+$nestedArrayAcceptances=@($script:Fixtures|Where-Object{$_.category-eq'nested-array-rejection'-and$_.actual_status-eq'PASS'})
+$malformedLinkageExceptions=@($script:Fixtures|Where-Object{$_.category-in@('stop-condition-linkage','nested-array-rejection','runtime-observer-linkage')-and$_.actual_exception_type})
 $categories=@($script:Fixtures|Group-Object category|Sort-Object Name|ForEach-Object{[pscustomobject]@{category=$_.Name;fixtures=$_.Count;assertions=($_.Group|Measure-Object assertion_count -Sum).Sum}})
 $result=[pscustomobject][ordered]@{
     schema_version='chatpad-runtime-readiness-suite-v3'
@@ -513,7 +592,11 @@ $result=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED';blocker='BLOCKED_NOT_IMPLEMENTED'
     fixture_count=$script:Fixtures.Count;assertion_count=$script:AssertionCount
     unrelated_exception_false_positive_count=0;empty_operation_install_pass_count=0;install_plan_crash_count=0
-    invalid_schema_transition_acceptance_count=$invalidTransitionAcceptances.Count;invalid_lifecycle_acceptance_count=$invalidTransitionAcceptances.Count;missing_start_timestamp_acceptance_count=$missingStartAcceptances.Count;unlinked_stop_condition_count=0
+    invalid_schema_transition_acceptance_count=$invalidTransitionAcceptances.Count;invalid_lifecycle_acceptance_count=$invalidTransitionAcceptances.Count;missing_start_timestamp_acceptance_count=$missingStartAcceptances.Count
+    stop_condition_count=[int]$stopLinkageResult.data.stop_condition_count;unique_stop_condition_count=[int]$stopLinkageResult.data.unique_stop_condition_count
+    runtime_observer_linkage_count=[int]$stopLinkageResult.data.runtime_observer_linkage_count;unlinked_stop_condition_count=[int]$stopLinkageResult.data.unlinked_count
+    unknown_stop_condition_id_count=[int]$stopLinkageResult.data.unknown_id_count;malformed_linkage_count=[int]$stopLinkageResult.data.malformed_linkage_count
+    nested_array_acceptance_count=$nestedArrayAcceptances.Count;malformed_linkage_exception_count=$malformedLinkageExceptions.Count
     uncontrolled_exception_count=$unexpectedExceptions.Count;property_not_found_exception_count=$propertyNotFoundExceptions.Count;strictmode_exception_count=$strictModeExceptions.Count
     malformed_input_validator_count=15;malformed_input_case_count=180
     committed_sample_structural_validation=$sampleStructural.actual_status

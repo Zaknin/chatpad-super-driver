@@ -51,7 +51,7 @@ function Get-PowerShellInventory {
     }
 }
 
-$base='bb4c06cc87150b944d04ae2135ea58b8218c5dc8'
+$base='30da5003aba75ef0f079c9a8c2c90df3768601d5'
 $paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)
 $paths=@($paths|Where-Object{$_-and$_-ne$OutputPath}|Sort-Object -Unique)
 $entries=[Collections.Generic.List[object]]::new()
@@ -69,10 +69,10 @@ $manifest=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED'
     blocker='BLOCKED_NOT_IMPLEMENTED'
     repository=[pscustomobject][ordered]@{
-        branch='feature/runtime-bringup-readiness-final-contract-remediation'
+        branch='feature/runtime-bringup-stop-linkage-final-remediation'
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
-        prior_readiness_implementation_commit='7689d2cca57c485d8c0569bdcbec58e400621b20'
-        prior_readiness_finalization_commit='bb4c06cc87150b944d04ae2135ea58b8218c5dc8'
+        prior_readiness_implementation_commit='4661c1d2a4ce94bd1d7852c716b885c03b8ad7d6'
+        prior_readiness_finalization_commit='30da5003aba75ef0f079c9a8c2c90df3768601d5'
         current_readiness_implementation_commit=$ImplementationCommit
         current_readiness_finalization_commit_source='external exact 40-character audit input after finalization commit'
     }
@@ -86,6 +86,9 @@ $manifest=[pscustomobject][ordered]@{
         unrelated_exception_false_positive_count=0;empty_operation_install_pass_count=0;install_plan_crash_count=0
         invalid_schema_transition_acceptance_count=[int]$suite.invalid_schema_transition_acceptance_count;unlinked_stop_condition_count=[int]$suite.unlinked_stop_condition_count
         invalid_lifecycle_acceptance_count=[int]$suite.invalid_lifecycle_acceptance_count;missing_start_timestamp_acceptance_count=[int]$suite.missing_start_timestamp_acceptance_count
+        stop_condition_count=[int]$suite.stop_condition_count;unique_stop_condition_count=[int]$suite.unique_stop_condition_count
+        runtime_observer_linkage_count=[int]$suite.runtime_observer_linkage_count;unknown_stop_condition_id_count=[int]$suite.unknown_stop_condition_id_count
+        malformed_linkage_count=[int]$suite.malformed_linkage_count;nested_array_acceptance_count=[int]$suite.nested_array_acceptance_count
         uncontrolled_exception_count=[int]$suite.uncontrolled_exception_count;property_not_found_exception_count=[int]$suite.property_not_found_exception_count;strictmode_exception_count=[int]$suite.strictmode_exception_count
         malformed_input_validator_count=[int]$suite.malformed_input_validator_count;malformed_input_case_count=[int]$suite.malformed_input_case_count
         committed_sample_structural_validation=[string]$suite.committed_sample_structural_validation
