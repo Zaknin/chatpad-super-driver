@@ -121,5 +121,6 @@ $manifest=[pscustomobject][ordered]@{
     }
     entries=@($entries)
 }
-$manifest|ConvertTo-Json -Depth 20|Set-Content -LiteralPath (Join-Path $root $OutputPath) -Encoding utf8
+$manifestJson=$manifest|ConvertTo-Json -Depth 20
+[IO.File]::WriteAllText((Join-Path $root $OutputPath),$manifestJson+[Environment]::NewLine,[Text.UTF8Encoding]::new($false))
 "Manifest=$OutputPath";"Entries=$($entries.Count)";'FrameworkStatus=PASS';'LiveInstallationReadiness=BLOCKED'
