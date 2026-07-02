@@ -10,4 +10,4 @@ Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Com
 
 $inventory = Read-ChatpadJson $CandidateInventoryPath
 $contract = Read-ChatpadJson $TargetContractPath
-Test-ChatpadTargetSelectionContract -Candidates @($inventory.candidates) -Contract $contract | ConvertTo-Json -Depth 8
+Test-ChatpadTargetSelectionContract -Inventory $inventory -Contract $contract | ConvertTo-Json -Depth 12

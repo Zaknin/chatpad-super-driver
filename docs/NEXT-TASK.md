@@ -2,71 +2,68 @@
 
 ## Exact current state
 
-- Required branch: `feature/runtime-bringup-readiness-scaffolding`.
+- Required branch: `feature/runtime-bringup-readiness-remediation`.
 - Required starting commit: the final commit containing this file, with subject
-  `test: scaffold controlled runtime bring-up and rollback`.
-- Required parent: `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`.
-- Accepted offline runtime-instrumentation baseline:
-  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`, audited as
-  `AUDIT PASS WITH LIMITATIONS`.
-- Provider GUID: `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`.
-- Driver state: unsigned, unpackaged, unstaged, uninstalled, unloaded, and
-  unexecuted.
-- Runtime bring-up readiness evidence manifest:
-  `docs/evidence/runtime-bringup-readiness-manifest.json`, schema
-  `chatpad-runtime-bringup-readiness-manifest-v1`.
+  `test: remediate controlled runtime bring-up readiness`.
+- Required direct parent: `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb`.
+- Accepted offline baseline:
+  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`.
+- Runtime readiness status: `PASS WITH BLOCKER`; exact-instance binding and
+  exact-instance restoration are intentionally not implemented.
+- Offline suite: 177 fixtures, 203 assertions, 21 command-injection fixtures.
+- Driver state remains unsigned, unpackaged, unstaged, uninstalled, unloaded,
+  and unexecuted.
 
 ## Next recommended objective
 
-Independent read-only audit of the runtime bring-up readiness commit. The audit
-must verify the fail-closed target-selection, signing, package, rollback,
-evidence, stop-condition, and authorization contracts before any live Windows
-mutation is authorized.
+Perform an independent, read-only audit of the final remediation commit. Verify
+dual repository identity, structured argument boundaries and injection
+resistance, explicit exact-instance blocking, effective package semantics,
+signing/host/evidence contracts, Draft 2020-12 schema enforcement,
+stop-condition linkage, synthetic totals, manifest truthfulness, and complete
+absence of prohibited operations.
 
 ## Preconditions
 
-1. Verify exact branch, HEAD parent and subject, upstream equality, 0/0
-   ahead/behind, and clean worktree/index.
-2. Inspect the complete `f49b5cbe..HEAD` diff and confirm no production source,
-   header, INF, project, solution, protocol, transport, signing credential,
-   package, device state, Windows state, or `legacy/` content changed.
-3. Rehash every readiness manifest entry without modifying or regenerating
-   evidence.
-4. Read the runtime bring-up procedure, schema, stop-condition register,
-   PowerShell scaffolding, and offline synthetic test log.
+1. Verify the exact branch, full HEAD, direct parent, subject, upstream
+   equality, ahead/behind `0/0`, and clean index/worktree.
+2. Supply that full HEAD as `-ApprovedReadinessCommit` when running the
+   repository identity validator; do not infer or abbreviate it.
+3. Rehash the accepted baseline manifest and both frozen SYS files.
+4. Inspect the complete `b9990d2..HEAD` diff and the readiness manifest without
+   regenerating evidence.
 
 ## Safety restrictions
 
-- Audit only. Do not modify files, regenerate evidence, or run live runtime
-  scripts.
-- Do not sign, package, create certificates/keys, stage, install, load, start a
-  trace session, mutate Windows, query devices, access USB/HID/XUSB/controller/
-  Chatpad state, discover/open targets, or perform request operations.
+- Audit only. Do not edit files or regenerate evidence.
+- Do not create/import/export certificates or keys; sign, package, stage,
+  install, bind, load, remove, or roll back a driver.
+- Do not mutate Windows, boot/security/service/registry/device state, start a
+  trace, export/clear event logs, query/open a live device, send a request,
+  access hardware, generate protocol traffic, inject input, or reboot.
 - Do not modify `legacy/`.
 
 ## Acceptance criteria
 
-- All potentially mutating scripts default to plan-only or fixture-only modes.
-- Every mutating future action requires an explicit authorization switch,
-  exact target instance identity, and evidence directory.
-- Target selection rejects zero, multiple, friendly-name-only, hardware-ID
-  mismatch, wrong-instance, and unexpected-driver cases.
-- Rollback readiness, package validation, signing readiness, WPP planning,
-  evidence directory, and post-test reconciliation fail closed in synthetic
-  fixtures.
-- Runtime evidence schema and stop-condition register cover the required live
-  session artifacts and stop boundaries.
-- The readiness manifest rehashes with zero missing, duplicate, hash, size,
-  state, or containment defects.
+- Repository identity independently proves the accepted baseline and exact
+  approved readiness revision.
+- Hostile values cannot add arguments or operations, and no rendered display
+  text is executable evidence.
+- Broad package staging and optional rescan remain separately classified and
+  blocked; install/rollback cannot pass without an implemented exact-instance
+  mechanism.
+- All validator fixtures, schema/sample checks, stop-condition links, manifest
+  counts/hashes/states/containment, and prohibited-action scans reproduce.
+- Any unsupported PASS claim is reported as an audit failure.
 
 ## Inspect first
 
 - `docs/RUNTIME-BRINGUP-READINESS.md`
+- `docs/evidence/runtime-bringup-readiness-manifest.json`
 - `docs/evidence/runtime-bringup-evidence-schema-v1.json`
 - `docs/evidence/runtime-bringup-stop-conditions.json`
-- `docs/evidence/runtime-bringup-readiness-manifest.json`
 - `tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1`
 - `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
+- `tools/Test-ChatpadRuntimeRepositoryIdentity.ps1`
 - `tools/Show-ChatpadInstallPlan.ps1`
 - `tools/Show-ChatpadRollbackPlan.ps1`
-- `tools/Show-ChatpadWppSessionPlan.ps1`

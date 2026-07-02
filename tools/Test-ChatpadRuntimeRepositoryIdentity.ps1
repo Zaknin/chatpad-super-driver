@@ -1,19 +1,19 @@
 [CmdletBinding()]
-param([switch]$AllowScaffoldingBranch)
+param(
+    [Parameter(Mandatory)]
+    [string]$ApprovedReadinessCommit,
+    [string]$ApprovedReadinessBranch = 'feature/runtime-bringup-readiness-remediation',
+    [string]$AcceptedBaselineCommit = 'f49b5cbe9e6bba423cfb59313dbdc9be92c785ca',
+    [string]$ApprovedRepositoryRoot = 'C:\Dev\chatpad-super-driver'
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 
-$identity = Assert-ChatpadAcceptedRepoIdentity -AllowScaffoldingBranch:$AllowScaffoldingBranch -RequireClean:$false
-$root = Get-ChatpadRepoRoot
-$debug = Get-ChatpadFileIdentity (Join-Path $root 'artifacts/bin/x64/Debug/ChatpadFilter/ChatpadFilter.sys')
-$release = Get-ChatpadFileIdentity (Join-Path $root 'artifacts/bin/x64/Release/ChatpadFilter/ChatpadFilter.sys')
-[pscustomobject]@{
-    schema_version = 'chatpad-runtime-repository-identity-v1'
-    result = 'PASS'
-    repository = $identity
-    debug_binary = $debug
-    release_binary = $release
-    accepted_manifest = Get-ChatpadFileIdentity (Join-Path $root 'docs/evidence/runtime-instrumentation-implementation-manifest.json')
-} | ConvertTo-Json -Depth 8
+Test-ChatpadCurrentRepositoryIdentity `
+    -ApprovedReadinessCommit $ApprovedReadinessCommit `
+    -ApprovedReadinessBranch $ApprovedReadinessBranch `
+    -AcceptedBaselineCommit $AcceptedBaselineCommit `
+    -ApprovedRepositoryRoot $ApprovedRepositoryRoot |
+    ConvertTo-Json -Depth 12

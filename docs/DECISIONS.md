@@ -4,6 +4,45 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-02 - Separate immutable baseline identity from approved readiness identity
+
+**Decision:** Runtime repository validation uses two identities: the frozen
+accepted offline baseline and an exact readiness branch/full commit supplied as
+an external approval input. The tracked manifest binds candidate-tree content
+but neither hashes itself nor embeds its own final commit.
+
+**Rationale:** The first scaffold hardcoded the baseline commit as current HEAD,
+so it failed on the readiness commit. A tracked file cannot truthfully contain
+both its own final hash and its own final commit.
+
+**Alternatives rejected:** Accepting commit prefixes, validating only ancestry,
+hardcoding the baseline as HEAD, or claiming a pre-commit identity result for a
+post-commit tree.
+
+**Consequences:** A future audit/session must provide the exact 40-character
+approved readiness commit and branch. Candidate content and final Git identity
+are independently attributable without self-reference.
+
+## 2026-07-02 - Make argument vectors authoritative and keep exact binding blocked
+
+**Decision:** Future runtime actions are versioned structured operation plans.
+Executable identity and argument arrays are authoritative; display text is
+non-executable. Package staging is separate from exact-device binding, broad
+rescan is separate recovery authorization, and install/rollback remain blocked
+until an exact-instance helper is implemented and audited.
+
+**Rationale:** Raw command strings permit shell injection and broad
+`pnputil /install` or `/scan-devices` operations do not prove which device is
+bound or restored.
+
+**Alternatives rejected:** Escaping a shell command string, reparsing display
+text, treating package staging as binding, or relying on Windows to choose any
+compatible rollback driver.
+
+**Consequences:** Future launch code must use
+`ProcessStartInfo.ArgumentList`. The framework can pass offline readiness
+checks while still returning `BLOCKED_NOT_IMPLEMENTED` for live mutation.
+
 ## 2026-07-02 - Gate first runtime bring-up on fail-closed readiness scaffolding
 
 **Decision:** The first Windows 11 runtime bring-up must be preceded by a

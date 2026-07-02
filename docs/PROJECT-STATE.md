@@ -1,66 +1,48 @@
 # Project State
 
-*Last updated: 2026-07-02 (runtime bring-up readiness scaffolding)*
+*Last updated: 2026-07-02 (runtime bring-up readiness remediation)*
 
 ## Current state
 
-- **Branch:** `feature/runtime-bringup-readiness-scaffolding`.
-- **Parent:** `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`, `test: close
-  dynamic instrumentation emission coverage`.
+- **Branch:** `feature/runtime-bringup-readiness-remediation`.
+- **Starting commit:** `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb`.
 - **Expected containing commit:** the commit containing this file, subject
-  `test: scaffold controlled runtime bring-up and rollback`.
-- **Accepted design:** `526f6bb055b485fdb459a9d303fc3f814da15e48`.
-- **Provider/schema:** `{1B3D3598-9D78-4F3E-9DB2-95BB9344A731}`, trace schema
-  `1`, 73 semantic events.
-- **Accepted offline runtime-instrumentation manifest:** schema `1.2.0`;
-  independent audit returned `AUDIT PASS WITH LIMITATIONS` and is frozen.
-- **Runtime bring-up readiness manifest:** schema
-  `chatpad-runtime-bringup-readiness-manifest-v1`; independent audit pending.
+  `test: remediate controlled runtime bring-up readiness`.
+- **Accepted offline baseline:** commit
+  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`; manifest SHA-256
+  `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`.
+- **Frozen binaries:** Debug 68,096 bytes,
+  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`;
+  Release 40,960 bytes,
+  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`.
+- **Readiness evidence schema:** JSON Schema Draft 2020-12,
+  `chatpad-runtime-evidence-schema-v2`.
+- **Offline remediation suite:** 177/177 fixtures, 203 assertions, 21
+  command-injection fixtures, zero raw command concatenation, zero broad
+  approved install operations, and zero broad approved rollback operations.
 
-## Verified remediation state
+## Implementation truth
 
-- Pure model: 19 scenarios, 932/932 real assertions, five negative self-tests,
-  no unknown IDs or wrong families. Expected semantic-name sequences resolve
-  through the authoritative design and do not import emitted numeric constants.
-- Regression matrices: Debug and Release each 13/13 entries, six
-  assertion-bearing suites, seven non-assertion validations, 6,980/6,980 real
-  assertions, zero synthetic assertions, parse failures, empty results, entry
-  failures, or failed assertions.
-- Emission evidence: schema 2, 73 events, 95 semantic mappings, 34 direct WPP
-  invocations, 79 helper mappings, 93 unique physical sites, two shared sites,
-  nine entered and nine completed stage locations, and zero missing, extra,
-  phantom, stale, collapsed, duplicate, or unexplained mappings.
-- Five dynamic helpers and 78 callers are source-bound. Event 1901 is mapped
-  to the pre-context terminal WPP sink; ten dynamic rejection fixtures pass
-  with zero unresolved selectors, unreachable rows, sink failures, stale
-  locators, wrong families, or allow-list suppression.
-- Cleanup owner observation is exactly one diagnostic read-only object snapshot;
-  five lifecycle callbacks are inspected and seven negative fixtures reject
-  excluded, mutating, completion/cancellation, transfer, operational, and
-  unclassified use.
-- Runtime, production-owner Full, and production-orchestration Full guards pass
-  for Debug and Release. Production inputs and retained binaries are unchanged;
-  no new driver or full-solution build was required.
-- Debug binary: 68,096 bytes, SHA-256
-  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`,
-  unsigned x64 Native.
-- Release binary: 40,960 bytes, SHA-256
-  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`,
-  unsigned x64 Native.
+- Repository validation separates the frozen accepted baseline from an exact,
+  externally supplied approved readiness branch and full commit.
+- Future actions are structured operation objects with authoritative argument
+  arrays; rendered text is never execution evidence.
+- Target, driver-state, rollback, package, signing, host, evidence-directory,
+  WPP, event-log, schema, stop-condition, install-plan, and reconciliation
+  contracts fail closed in synthetic fixtures.
+- Package staging is separate from binding. Exact-instance install and rollback
+  helper operations are designed but not implemented.
+- The readiness manifest uses a candidate-tree contract and does not hash
+  itself or embed its final commit.
 
 ## Safety and blocker
 
-- No production `.c`/`.h`, project, solution, INF, protocol, transport,
-  signing, packaging, installation, deployment, hardware, or `legacy/` path is
-  changed by the runtime bring-up readiness scaffold.
-- Runtime bring-up preparation now includes fail-closed documentation, scripts,
-  schema, stop-condition register, and offline synthetic tests for target
-  selection, rollback, package, signing, authorization, WPP planning, evidence
-  directory, and post-test reconciliation.
-- No signing, certificate/key creation, packaging, staging, installation,
-  loading, live tracing, Windows mutation, device query, target/request
-  operation, controller/Chatpad access, or hardware action occurred.
-- **Blocker:** independent read-only audit of the final runtime bring-up
-  readiness commit is required before any live Windows mutation, signing,
-  staging, installation, loading, tracing, device query, request operation, or
-  hardware access is authorized.
+- No production `.c`/`.h`, INF, project, solution, protocol, transport,
+  binary, package, credential, or `legacy/` path changed.
+- No certificate/key creation, signing, packaging, staging, installation,
+  loading, tracing, event-log export, Windows mutation, live device query,
+  target/request operation, hardware access, protocol traffic, keyboard
+  injection, or reboot occurred.
+- **Blocker:** exact-instance binding and restoration are not implemented.
+  Runtime mutation remains prohibited. The next task is an independent,
+  read-only audit of this remediation commit.

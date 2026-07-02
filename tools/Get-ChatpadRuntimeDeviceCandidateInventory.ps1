@@ -11,18 +11,29 @@ Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Com
 
 if ($SyntheticInventoryPath) {
     $inventory = Read-ChatpadJson $SyntheticInventoryPath
-    $inventory | ConvertTo-Json -Depth 8
+    if ([string]$inventory.source_classification -ne 'synthetic') {
+        throw 'Synthetic inventory mode requires source_classification=synthetic.'
+    }
+    $inventory | ConvertTo-Json -Depth 12
     exit 0
 }
+
 if (-not $ExecuteAuthorizedRuntimeStep) {
-    [pscustomobject]@{
-        result = 'BLOCKED'
-        reason = 'Live device enumeration is prohibited in this preparation task.'
-        planned_future_commands = @(
-            'Get-PnpDevice -PresentOnly',
-            'Get-PnpDeviceProperty -InstanceId <EXACT_INSTANCE_ID>'
-        )
-    } | ConvertTo-Json -Depth 5
+    New-ChatpadRuntimeCheckResult `
+        -Check 'device-candidate-inventory' `
+        -Result BLOCKED `
+        -Reason 'Live device enumeration is prohibited in this preparation task.' `
+        -StopConditionIds @('target-identity-ambiguous') `
+        -Data ([pscustomobject]@{
+            planned_future_operation = New-ChatpadOperationPlan `
+                -OperationId 'future-device-inventory' `
+                -Executable 'Get-PnpDevice' `
+                -Arguments @('-PresentOnly') `
+                -StopConditionIds @('target-identity-ambiguous') `
+                -MutationClassification 'live-device-query' `
+                -ExecutionStatus 'blocked'
+        }) | ConvertTo-Json -Depth 12
     exit 0
 }
-throw 'Live device enumeration requires a separately audited runtime session and is not implemented in this preparation scaffold.'
+
+throw 'Live device enumeration requires a separately audited runtime session and is not implemented in this remediation commit.'

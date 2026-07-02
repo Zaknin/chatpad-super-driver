@@ -5485,3 +5485,115 @@
   commit, verifying fail-closed target-selection, signing, package, rollback,
   evidence, stop-condition, and authorization contracts before any live Windows
   mutation is authorized.
+
+## 2026-07-02 13:48 +04:00 - Controlled runtime bring-up readiness remediation
+
+- **Objective:** Remediate all defects from the independent readiness audit
+  while remaining offline, preserve the accepted runtime-instrumentation
+  baseline, leave exact-instance binding explicitly blocked, commit, and push
+  only the dedicated remediation branch.
+- **Starting state:** Verified required start branch
+  `feature/runtime-bringup-readiness-scaffolding` at
+  `b9990d287bee6916cc5bb4e6b7f194ee579c7fbb`, direct parent
+  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`, clean index/worktree,
+  live remote equality, and ahead/behind `0/0`. Captured ignored start log
+  `artifacts/logs/runtime-bringup-readiness-remediation-start-20260702T082439Z.log`
+  and created `feature/runtime-bringup-readiness-remediation`.
+- **Accepted baseline:** Preserved accepted manifest SHA-256
+  `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`;
+  Debug SYS 68,096 bytes,
+  `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`;
+  Release SYS 40,960 bytes,
+  `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`.
+- **Implementation:** Split immutable accepted-baseline identity from the
+  externally supplied exact readiness branch/full commit. Added individual
+  machine-readable identity checks, PE/signature/reparse checks, structured
+  operation schema `chatpad-structured-operation-v1`, a central one-argument-
+  per-element renderer, `ArgumentList` launch contract, control/wildcard/
+  scalar/traversal rejection, exact path containment, and stable
+  stop-condition linkage.
+- **Install/rollback status:** Removed broad `/install` approval. Package
+  staging uses `/add-driver` without binding and remains a separately
+  authorized broad host mutation. Exact-instance install/restore helper
+  operations are designed but `BLOCKED_NOT_IMPLEMENTED`. Optional
+  `/scan-devices` is a separate blocked broad recovery operation and cannot
+  satisfy rollback.
+- **Validation contracts:** Expanded exact target identity, current-driver
+  capture, rollback source/session/recovery, effective INF/package parsing,
+  certificate/trust/private-key/EKU/validity/timestamp/SYS/CAT/host-security
+  signing readiness, host security/tool/freshness, evidence containment/
+  uniqueness/reparse/session locking, WPP identity/freshness, event-log
+  channels/time windows, and final-state reconciliation.
+- **Evidence schema:** Replaced descriptive JSON with machine-enforceable JSON
+  Schema Draft 2020-12, identifier
+  `https://example.invalid/chatpad/runtime-bringup-evidence-schema-v2`.
+  Produced artifacts require real nonnegative sizes and 64-hex SHA-256 values;
+  planned artifacts use null production identities. Executed, rolled-back, and
+  restored operations require their corresponding evidence. The committed
+  sample is explicitly synthetic and validates with `Test-Json`.
+- **Synthetic result:** 177/177 fixtures PASS with 203 assertions. Category
+  totals: repository identity 16, target selection 17, current-driver capture
+  11, rollback 14, package 20, signing 16, host 12, evidence directory 13,
+  command injection 21, WPP 6, event log 7, exact-instance install planning 2,
+  operation rendering 1, evidence schema 11, stop linkage 2, reconciliation 7,
+  and manifest truthfulness 1. Raw command concatenation, broad approved
+  install operations, and broad approved rollback operations are all zero.
+- **Hostile rendering coverage:** Preserved as single arguments: double/single
+  quotes, ampersands, pipes, semicolons, backticks, `$()` syntax, redirection,
+  spaces, parentheses, percent and environment syntax. Rejected: CR, LF, NUL,
+  Unicode controls, wildcard exact targets, scalar/array confusion, empty and
+  whitespace-only required values, and path traversal.
+- **Intermediate failures and corrected reruns:** The first AST wrapper used
+  `Get-ChildItem -Filter` with an array and failed before parsing; the corrected
+  file-list loop passed. The first synthetic run failed at `target-valid`
+  because strict mode exposed scalar `.Count`; array-wrapping fixed it. A later
+  combined AST wrapper parsed `$relative:` as a scoped variable; `${relative}:`
+  fixed the wrapper and AST passed. The next synthetic run exposed display
+  renderer pipeline binding without `Value`; explicit named binding fixed it.
+  Subsequent runs exposed fail-open acceptance of an undecorated manufacturer
+  model and `..` artifact path; both validators were corrected. A PowerShell
+  search wrapper used Bash brace expansion and failed to parse; a normal
+  `--glob` search reran successfully. The first manifest-validator parse found
+  invalid statement grouping around `git check-ignore`; separating the command
+  from the exit-code assignment fixed the syntax and the validator passed. The
+  first final prohibited scan counted
+  two documented/rejected `/install` strings as execution; the corrected scan
+  inspects executable PowerShell lines and passed with every execution counter
+  zero. The first final hygiene reporter again interpolated `$relative:` as a
+  scoped variable and emitted 25 blank false defects; delimiting
+  `${relative}:` and testing bare LF after removing CRLF produced zero defects.
+  The first corrected-log wrapper then tokenized `Join-Path$logRoot` as a
+  command name; restoring the missing space produced final hygiene,
+  `git diff --check`, and PSScriptAnalyzer-status logs.
+  No failed command performed a prohibited action.
+- **Offline validation evidence:** Fresh ignored remediation logs record AST,
+  synthetic, JSON Schema/sample, repository safety, changed-path containment,
+  corrected prohibited-operation scan, and `git diff --check` results.
+  PSScriptAnalyzer remains unavailable and was not installed.
+- **Manifest model:** Added a deterministic readiness-manifest generator. The
+  schema-v2 manifest labels committed/candidate files `tracked`, never
+  `tracked-pending`, hashes every candidate-tree input and ignored validation
+  artifact, excludes its own hash, and requires the exact final commit as an
+  external audit/session input.
+- **Files changed:** Runtime readiness procedure, project state, decisions,
+  porting plan, next task, this worklog, evidence schema/sample/stop register/
+  manifest, shared runtime module, readiness-manifest generator, plan scripts,
+  validators, and synthetic suite. No production source/header, INF, project,
+  solution, protocol, transport, binary, package, credential, or `legacy/`
+  path changed.
+- **Safety:** No certificate/private key was created, imported, exported, or
+  deleted. No file was signed. No package was created, staged, or installed.
+  No driver was bound, loaded, removed, or rolled back. No Windows, boot,
+  security, registry, service, event-log, trace, or device state changed. No
+  live device query, target/interface open, request, hardware access, protocol
+  traffic, keyboard injection, or reboot occurred.
+- **Commit/push:** Expected one commit with subject
+  `test: remediate controlled runtime bring-up readiness`, then push only
+  `origin/feature/runtime-bringup-readiness-remediation`; final hash and remote
+  equality are verified after commit.
+- **Remaining blocker and next task:** Exact-instance binding/restoration is not
+  implemented. The exact next task is an independent, read-only audit of the
+  final remediation commit, including dual identity, structured argument
+  boundaries, injection resistance, explicit binding blocker, effective
+  package/signing/host/evidence/schema/stop-linkage checks, synthetic totals,
+  manifest truthfulness, and prohibited-operation absence.

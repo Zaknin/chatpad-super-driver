@@ -1,60 +1,124 @@
 {
-  "schema_version": "chatpad-runtime-evidence-schema-v1",
-  "record_types": [
-    "session_identity",
-    "repository_identity",
-    "binary_identity",
-    "package_identity",
-    "certificate_signature_identity",
-    "host_identity",
-    "security_state_snapshot",
-    "target_device_identity",
-    "previous_driver_identity",
-    "rollback_readiness",
-    "planned_operation",
-    "executed_operation",
-    "command_exit_code",
-    "timestamp",
-    "windows_event_log_export",
-    "code_integrity_event",
-    "setupapi_evidence",
-    "pnp_state",
-    "driver_service_state",
-    "wpp_session_configuration",
-    "wpp_output_identity",
-    "functional_observation_step",
-    "stop_condition",
-    "rollback_execution",
-    "final_restoration_result",
-    "unresolved_deviation"
-  ],
-  "artifact_required_fields": [
-    "id",
-    "relative_path",
-    "byte_size",
-    "sha256",
-    "state",
-    "producer",
-    "created_utc",
-    "session_id",
-    "result",
-    "dependency_identities"
-  ],
-  "operation_states": [
-    "planned-not-executed",
-    "executed",
-    "skipped-by-authorization",
-    "blocked-by-failed-prerequisite",
-    "failed",
-    "rolled-back",
-    "successfully-restored"
-  ],
-  "rules": [
-    "A rendered command is not evidence that the command executed.",
-    "Every mutating command must reference an approved operation ID.",
-    "Every device operation must reference an exact target instance ID.",
-    "Every artifact path must be relative to the approved evidence root.",
-    "Every artifact must be hashed after creation.",
-    "Unresolved deviations are terminal until explicitly authorized."
-  ]
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/chatpad/runtime-bringup-evidence-schema-v2",
+  "schema_version": "chatpad-runtime-evidence-schema-v2",
+  "title": "Chatpad runtime bring-up evidence document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "session", "artifacts", "operations", "result"],
+  "properties": {
+    "schema_version": { "const": "chatpad-runtime-evidence-schema-v2" },
+    "result": { "enum": ["planned", "blocked", "skipped_authorization", "executed", "failed", "rolled_back", "restored"] },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "evidence_classification", "repository_identity", "created_utc"],
+      "properties": {
+        "session_id": { "type": "string", "pattern": "^(CHATPAD-[0-9]{8}T[0-9]{6}Z-[A-Z0-9]{6,}|SYNTHETIC-[A-Z0-9-]+)$" },
+        "evidence_classification": { "enum": ["synthetic", "live"] },
+        "repository_identity": { "type": "string", "minLength": 1 },
+        "created_utc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "relative_path", "status", "state", "producer", "session_id", "result", "dependency_identities", "evidence_classification"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$" },
+          "relative_path": {
+            "type": "string",
+            "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\\\\\)(?!.*(^|/)\\.\\.(/|$))[A-Za-z0-9_. -]+(/[A-Za-z0-9_. -]+)*$"
+          },
+          "status": { "enum": ["planned", "blocked", "skipped_authorization", "executed", "failed", "rolled_back", "restored"] },
+          "byte_size": { "type": ["integer", "null"], "minimum": 0 },
+          "sha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
+          "state": { "enum": ["tracked", "ignored", "runtime-produced", "planned"] },
+          "producer": { "type": "string", "minLength": 1 },
+          "created_utc": { "type": ["string", "null"], "format": "date-time" },
+          "session_id": { "type": "string", "minLength": 1 },
+          "result": { "type": "string", "minLength": 1 },
+          "dependency_identities": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "evidence_classification": { "enum": ["synthetic", "live"] }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "status": { "enum": ["executed", "failed", "rolled_back", "restored"] } }, "required": ["status"] },
+            "then": {
+              "required": ["byte_size", "sha256", "created_utc"],
+              "properties": {
+                "byte_size": { "type": "integer", "minimum": 0 },
+                "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+                "created_utc": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          {
+            "if": { "properties": { "status": { "enum": ["planned", "blocked", "skipped_authorization"] } }, "required": ["status"] },
+            "then": {
+              "properties": {
+                "byte_size": { "type": ["null", "integer"] },
+                "sha256": { "type": "null" },
+                "created_utc": { "type": ["null", "string"] }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "operations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation_id", "status", "executable", "arguments", "rendered_display_is_execution_evidence"],
+        "properties": {
+          "operation_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$" },
+          "status": { "enum": ["planned", "blocked", "skipped_authorization", "executed", "failed", "rolled_back", "restored"] },
+          "executable": { "type": "string", "minLength": 1 },
+          "arguments": { "type": "array", "items": { "type": "string" } },
+          "rendered_display": { "type": "string" },
+          "rendered_display_is_execution_evidence": { "const": false },
+          "command_result": { "type": ["object", "null"] },
+          "rollback_evidence_id": { "type": ["string", "null"] },
+          "final_state_evidence_id": { "type": ["string", "null"] }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "status": { "const": "executed" } }, "required": ["status"] },
+            "then": {
+              "required": ["command_result"],
+              "properties": { "command_result": { "type": "object" } }
+            }
+          },
+          {
+            "if": { "properties": { "status": { "const": "rolled_back" } }, "required": ["status"] },
+            "then": {
+              "required": ["rollback_evidence_id"],
+              "properties": { "rollback_evidence_id": { "type": "string", "minLength": 1 } }
+            }
+          },
+          {
+            "if": { "properties": { "status": { "const": "restored" } }, "required": ["status"] },
+            "then": {
+              "required": ["final_state_evidence_id"],
+              "properties": { "final_state_evidence_id": { "type": "string", "minLength": 1 } }
+            }
+          }
+        ]
+      }
+    },
+    "unresolved_deviations": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
 }

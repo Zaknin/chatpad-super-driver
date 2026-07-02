@@ -5,15 +5,18 @@
 The offline runtime instrumentation milestone is accepted and frozen at
 `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned
 `AUDIT PASS WITH LIMITATIONS`. The current branch
-`feature/runtime-bringup-readiness-scaffolding` prepares the first controlled
-Windows 11 runtime bring-up with documentation, fail-closed PowerShell
-scaffolding, synthetic offline tests, stop conditions, and a runtime evidence
-schema. This branch still performs no signing, packaging, staging,
-installation, loading, trace collection, device query, request operation,
-hardware access, Windows mutation, reboot, or production source change.
+`feature/runtime-bringup-readiness-remediation` repairs the failed first
+readiness audit with dual repository identity, structured operation plans,
+effective package/signing/rollback/host/evidence validation, a Draft 2020-12
+evidence schema, stable stop-condition linkage, and 177 offline fixtures with
+203 assertions. Exact-instance install and restoration remain explicitly
+blocked because the helper is designed but not implemented. This branch still
+performs no signing, packaging, staging, installation, loading, trace
+collection, device query, request operation, hardware access, Windows
+mutation, reboot, or production source change.
 
-Current phase: **Runtime bring-up readiness scaffolding - independent
-read-only audit pending**.
+Current phase: **Runtime bring-up readiness remediation - exact-instance
+binding blocked; independent read-only audit pending**.
 
 The next task is independent read-only audit of the readiness commit. Only
 after that audit passes may a separate supervised live session consider any

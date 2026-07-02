@@ -6,6 +6,69 @@ preparation only: it does not sign, package, stage, install, load, trace, query
 devices, send requests, access a controller or Chatpad, mutate Windows, reboot,
 or touch hardware.
 
+## Audit remediation status
+
+The independent audit of the first scaffold failed. This remediation replaces
+the fail-open parts of that scaffold while deliberately keeping the live gate
+closed.
+
+- Repository identity is dual: the immutable accepted offline baseline remains
+  `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`, while a future session must
+  supply the exact 40-character approved readiness commit and exact readiness
+  branch as external approval inputs. Current HEAD is not hardcoded into a
+  tracked self-referential file.
+- Every future operation is a
+  `chatpad-structured-operation-v1` object. Its executable and argument array
+  are authoritative; `command_display` is display-only and explicitly is not
+  execution evidence. Future launch code must use
+  `System.Diagnostics.ProcessStartInfo.ArgumentList`.
+- The renderer rejects arrays in scalar fields, empty values, whitespace-only
+  values, NUL, CR/LF, unsupported Unicode controls, exact-target wildcards, and
+  path traversal. Shell metacharacters remain one argument and are never
+  reparsed.
+- Package staging is separated from binding. `pnputil /add-driver` has no
+  `/install` and is classified as a separately authorized broad host mutation.
+  No exact-instance binding implementation exists yet, so install and rollback
+  plans remain `BLOCKED`. `pnputil /scan-devices` is only an optional,
+  separately authorized broad recovery operation and cannot satisfy rollback.
+- Target identity includes the exact instance, complete ID sets, class,
+  parent, container, topology, current driver, service, provider, VID/PID,
+  source classification, and freshness. No first/best candidate selection is
+  permitted.
+- Current-driver and rollback contracts require exact prior/test package
+  identities, recovery source and hash, service/provider/version, session,
+  evidence destination, emergency recovery, ordered exact-target operations,
+  and final verification.
+- Package validation parses effective INF sections and rejects architecture
+  broadening, undecorated models, duplicate sections, wildcard/class matching,
+  missing KMDF/service/copy declarations, wrong SYS identity, unauthorized
+  package files, credentials, traversal, sibling-prefix escapes, and incomplete
+  signing identity.
+- Signing readiness requires the certificate identity, trust, private key,
+  Code Signing EKU, validity window, timestamp plan, SYS/CAT signature state,
+  local-test scope, and compatible Secure Boot, test-signing, HVCI, and Code
+  Integrity state. This remediation does not create or use a credential.
+- Host preflight, evidence-directory, WPP, event-log, and reconciliation
+  contracts include freshness, containment, reparse/reuse/session-lock
+  rejection, security state, tool availability, session binding, channel/time
+  windows, and explicit final-state classification.
+- `runtime-bringup-evidence-schema-v1.json` now contains a machine-enforceable
+  JSON Schema Draft 2020-12 document with identifier
+  `https://example.invalid/chatpad/runtime-bringup-evidence-schema-v2`.
+  Planned artifacts use null hashes and sizes; produced states require real
+  sizes and SHA-256 values. The committed sample is synthetic and validates.
+- All 20 stop conditions have stable IDs. Failed or blocked validator results
+  carry executable stop-condition IDs checked against the register.
+- The final offline suite contains 177 fixtures and 203 assertions, including
+  21 command-injection fixtures. Exact-instance binding is the intentional
+  remaining blocker.
+
+The readiness manifest uses a non-self-referential candidate-tree model. It
+binds the final tracked file content, accepted baseline identities, branch,
+fixture totals, and ignored validation evidence, but excludes its own hash and
+requires the final approved commit to be supplied externally to the repository
+identity validator.
+
 ## Accepted offline baseline
 
 - Accepted commit:
