@@ -18,6 +18,47 @@ The third independent audit found remaining uncontrolled exception paths and
 unsupported lifecycle-transition acceptances. The validator-totality
 remediation is offline-only and keeps the live gate closed.
 
+## Manifest count-validation and branch-provenance remediation status
+
+The independent corrective audit of the empty-subset remediation found two
+readiness-evidence defects. First, a corrupted isolated manifest with
+`assertion_count = 1.5` failed only because aggregate totals no longer matched;
+when dependent totals were adjusted to the value PowerShell would coerce, the
+validator passed. Second, the readiness-manifest generator recorded the correct
+branch only because the prior branch name was hard-coded.
+
+- Current branch:
+  `feature/runtime-bringup-manifest-validator-integral-count-remediation`.
+- Corrective implementation commit:
+  `72abd0695e34e27d075cb10fdf5b381418bcce1d`.
+- The validator now validates count-like fields before conversion. Valid count
+  values must be JSON numeric scalars, non-negative where used as counts, in
+  signed 64-bit integer range, and have no nonzero fractional component.
+  Numeric-looking strings, Boolean values, nulls, arrays, objects, missing
+  count fields, fractional values such as `1.5`, `0.1`, `-0.5`, and `2.0001`,
+  and oversized values are explicit invalid-integer defects.
+- Integer-valued numeric representations such as `1.0` are accepted
+  deliberately; this is the documented schema rule for numeric JSON values
+  whose fractional component is zero.
+- The regression suite creates only temporary isolated manifest copies. F1
+  through F4 fail with explicit invalid-integer defects, F5 proves `1.0`
+  behavior, and the self-consistent `1.5` coerced-total bypass fails instead
+  of passing.
+- The malformed-count matrix covers missing property, null, nonnumeric string,
+  numeric-looking string, Boolean, array, object, negative integer, fractional
+  number, and oversized numeric value. These cases report controlled defects,
+  zero uncontrolled exceptions, and no `PropertyNotFoundException`.
+- Empty-subset regressions remain preserved: omitted harness and
+  `assertion-accounting-negative` subsets fail through controlled accounting
+  defects.
+- The manifest generator derives the checked-out local branch using Git
+  symbolic-ref behavior. Detached HEAD is rejected with a clear failure rather
+  than recording a stale hard-coded branch. A local/upstream name mismatch is
+  expected to record the local branch name.
+- Canonical framework status remains `PASS`; live readiness remains
+  `BLOCKED`; blocker remains `BLOCKED_NOT_IMPLEMENTED`; the suite remains 304
+  records and 1,724 assertions.
+
 ## Manifest-validator empty-subset remediation status
 
 The independent read-only audit of runtime-observer provenance and assertion

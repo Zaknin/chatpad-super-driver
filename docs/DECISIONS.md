@@ -4,6 +4,36 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Require exact numeric manifest counts and derived local branch provenance
+
+**Decision:** Manifest count fields are valid only when they are JSON numeric
+scalars in signed 64-bit range with no nonzero fractional component. The
+validator rejects strings, numeric-looking strings, Boolean values, nulls,
+arrays, objects, missing count properties, negative counts, non-finite values,
+fractional values, and oversized values before any integer conversion or
+aggregate arithmetic. Integer-valued numeric representations such as `1.0` are
+accepted deliberately. The readiness-manifest generator derives the checked-out
+local branch from Git and rejects detached HEAD.
+
+**Rationale:** The independent corrective audit showed that `assertion_count =
+1.5` was converted by PowerShell before validation. With unchanged totals the
+manifest failed only through aggregate mismatch, and with dependent totals
+adjusted to the coerced value the validator passed. The same audit showed the
+canonical branch identity was correct only because the generator hard-coded the
+prior feature branch.
+
+**Alternatives rejected:** Relying on `[int]` or `[long]` casts, parsing
+numeric strings, rounding or truncating fractional values, accepting Boolean
+conversion, treating oversized values as saturated integers, inferring branch
+identity from upstream names or stale documentation, or silently recording a
+previous branch in detached HEAD.
+
+**Consequences:** Count validation is centralized and field-level defects
+survive before reconciliation. The malformed-copy regression suite includes
+F1-F5, the self-consistent fractional bypass, and the malformed-count matrix.
+Manifest generation now follows the checked-out local branch and remains
+blocked in detached HEAD. Live readiness stays `BLOCKED_NOT_IMPLEMENTED`.
+
 ## 2026-07-03 - Treat empty manifest accounting subsets as validation defects
 
 **Decision:** Manifest-readiness accounting must be total over empty record

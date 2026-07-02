@@ -6226,3 +6226,58 @@
   the evidence-finalization commit, corrupting only isolated manifest copies
   and proving omitted harness/accounting subsets fail through controlled
   accounting defects while canonical readiness remains blocked for live use.
+
+## 2026-07-03T02:42+04:00 - Integral-count manifest validator and dynamic branch provenance remediation
+
+- **Objective:** Correct two readiness-evidence defects: fractional count
+  values were accepted after PowerShell integer coercion when dependent totals
+  were adjusted, and the readiness-manifest generator recorded a hard-coded
+  branch name.
+- **Starting branch and commit:**
+  `feature/runtime-bringup-manifest-validator-empty-harness-remediation` /
+  `b4cfe8473500073bebacc807230d4f1af2f5e09e`, clean and aligned with
+  `origin/feature/runtime-bringup-manifest-validator-empty-harness-remediation`.
+- **Working branch:**
+  `feature/runtime-bringup-manifest-validator-integral-count-remediation`.
+- **Required ancestry verified:**
+  `88e3cbba3a64828322b7c703765e6b1e2369f698` ->
+  `eef5b9c151c884eefaa0157e32446e481db73bb4` ->
+  `f4e98e5719230bd40c7096d2a48efb788eeb5a7d` ->
+  `b4cfe8473500073bebacc807230d4f1af2f5e09e`.
+- **Root cause:** The manifest validator cast count fields with `[int]`
+  before proving type, range, sign, and integrality. The audited
+  `assertion_count = 1.5` corruption could pass when totals were adjusted to
+  match the coerced value. The generator root cause was a literal prior branch
+  string in production manifest output.
+- **Implementation commit:** `72abd0695e34e27d075cb10fdf5b381418bcce1d`,
+  subject `Fix manifest count validation and branch provenance`.
+- **Validation rule:** Count-like manifest and suite fields must be numeric
+  JSON scalars, non-negative where used as counts, in signed 64-bit integer
+  range, and integral before normalization. Numeric-looking strings, Boolean
+  values, nulls, arrays, objects, missing properties, negative counts,
+  fractional counts, non-finite values, and oversized values are rejected.
+  Integer-valued numeric forms such as `1.0` are accepted deliberately.
+- **Regression coverage:** The isolated corruption suite now covers omitted
+  harness/accounting subsets, F1-F5, the self-consistent `1.5` coerced-total
+  bypass, and missing/null/string/numeric-string/Boolean/array/object/negative/
+  fractional/oversized malformed count cases. The suite result was `PASS`, 18
+  cases, 0 failed cases.
+- **Generator behavior:** `New-ChatpadRuntimeBringupReadinessManifest.ps1`
+  derives the checked-out local branch from Git symbolic-ref behavior and
+  rejects detached HEAD with a clear error instead of recording a stale branch.
+- **Readiness suite:** Full runtime-bringup readiness suite remained `PASS`,
+  live readiness `BLOCKED`, blocker `BLOCKED_NOT_IMPLEMENTED`, 304 records,
+  1,724 assertions.
+- **Evidence artifact:**
+  `artifacts/logs/runtime-bringup-manifest-validator-integral-count-evidence-post-implementation-72abd06.json`,
+  50,298 bytes,
+  `8E9514481A3D4CA0A4E2848B05E9B68184D5A19FC000B202C5BF12F0BE25343E`,
+  JSON valid, UTF-8 without BOM.
+- **Safety:** No production source/header, INF, project, solution, protocol,
+  transport, binary, package, credential, signing material, or `legacy/` path
+  changed. No signing, CAT generation, packaging, staging, installation,
+  binding, loading, rollback, Windows mutation, tracing, event-log export,
+  live device query, hardware access, protocol traffic, input injection, or
+  reboot occurred.
+- **Next task:** Independent read-only audit of this corrective branch and the
+  evidence-finalization commit. Exact-instance binding remains unauthorized.

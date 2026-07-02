@@ -1,19 +1,17 @@
 # Project State
 
-*Last updated: 2026-07-03 (manifest-validator empty-subset remediation)*
+*Last updated: 2026-07-03 (manifest count validation and branch provenance remediation)*
 
 ## Current state
 
-- **Branch:** `feature/runtime-bringup-manifest-validator-empty-harness-remediation`.
-- **Starting commit:** `88e3cbba3a64828322b7c703765e6b1e2369f698`.
-- **Manifest-validator implementation commit:**
-  `eef5b9c151c884eefaa0157e32446e481db73bb4`, subject
-  `Handle empty manifest accounting subsets`.
-- **Manifest-generator identity correction commit:**
-  `f4e98e5719230bd40c7096d2a48efb788eeb5a7d`, subject
-  `Bind manifest generator to empty-harness branch`.
+- **Branch:**
+  `feature/runtime-bringup-manifest-validator-integral-count-remediation`.
+- **Starting commit:** `b4cfe8473500073bebacc807230d4f1af2f5e09e`.
+- **Corrective implementation commit:**
+  `72abd0695e34e27d075cb10fdf5b381418bcce1d`, subject
+  `Fix manifest count validation and branch provenance`.
 - **Expected evidence-finalization commit:** the commit containing this file,
-  subject `docs: finalize empty-harness manifest validator evidence`.
+  subject `docs: finalize integral-count manifest evidence`.
 - **Accepted offline baseline:**
   `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`; manifest SHA-256
   `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`.
@@ -28,10 +26,17 @@
   assertion sum `1,724`; category assertion sum `1,724`; unassigned,
   off-ledger, duplicate-counted, and category-reconciliation defects all `0`.
 - **Manifest-validator regression:** isolated corrupted-copy cases for all
-  omitted harness records, one omitted harness record, and all omitted
-  `assertion-accounting-negative` records fail through controlled accounting
-  defects. Uncontrolled exception count `0`; `PropertyNotFoundException`
+  omitted harness records, one omitted harness record, all omitted
+  `assertion-accounting-negative` records, fractional counts, oversized
+  counts, and malformed count types fail through controlled validation or
+  accounting defects. The self-consistent `assertion_count = 1.5` bypass is
+  closed. Uncontrolled exception count `0`; `PropertyNotFoundException`
   detected `false`.
+- **Ignored evidence artifact:**
+  `artifacts/logs/runtime-bringup-manifest-validator-integral-count-evidence-post-implementation-72abd06.json`,
+  50,298 bytes,
+  `8E9514481A3D4CA0A4E2848B05E9B68184D5A19FC000B202C5BF12F0BE25343E`,
+  JSON valid, UTF-8 without BOM.
 - **Runtime observers:** five missing-provenance and five synthetic-source
   probes produce zero runtime PASS results; unsupported runtime-observer PASS
   count `0`; live observations performed `0`.
@@ -43,18 +48,21 @@
 ## Implementation truth
 
 - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1` keeps StrictMode
-  enabled and now treats empty accounting subsets as numeric zero for
-  aggregation while recording explicit validation defects for missing or
-  mismatched expected record/assertion totals.
-- Manifest accounting sums are derived through a bounded helper that rejects
-  missing, null, Boolean, array, nonnumeric, and negative count values instead
-  of relying on `Measure-Object` output shape for empty collections.
+  enabled and validates every count-like manifest and suite field before any
+  integer conversion or aggregate arithmetic.
+- The exact integer contract accepts only JSON numeric scalars in signed
+  64-bit range with no nonzero fractional component. Numeric-looking strings,
+  Boolean values, nulls, arrays, objects, missing properties, negative counts,
+  fractional values such as `1.5` or `0.1`, and oversized values are controlled
+  defects. Integer-valued numeric representations such as `1.0` are accepted
+  deliberately and documented in the defect reason text.
 - The new corruption regression mode copies manifest inputs into a temporary
   isolated Git repository under the user temp directory, mutates only that
   copy, runs the validator as a child process, and removes the temporary root.
 - The canonical readiness manifest remains generated evidence. It is not
-  manually edited or self-hashed, and its generator now records this branch and
-  previous finalization commit accurately.
+  manually edited or self-hashed. Its generator derives the checked-out local
+  branch with Git symbolic-ref and rejects detached HEAD instead of recording a
+  hard-coded branch.
 - Runtime-observer provenance, assertion-accounting, lifecycle, committed
   sample, malformed-input, target, rollback, package, signing, host, evidence,
   install-blocker, WPP, event-log, reconciliation, stop-linkage, and prior
@@ -73,5 +81,6 @@
   live device query, hardware access, protocol traffic, input injection, or
   reboot occurred.
 - **Blocker:** exact-instance binding and restoration are not implemented.
-  The next task is an independent read-only audit of the empty-subset
-  manifest-validator remediation and its evidence-finalization commit.
+  The next task is an independent read-only audit of this integral-count
+  manifest-validator remediation, dynamic branch provenance, and the
+  evidence-finalization commit.

@@ -1,15 +1,15 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-02T21:02:33.1714216Z",
+    "generated_utc":  "2026-07-02T22:41:56.4347617Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
     "blocker":  "BLOCKED_NOT_IMPLEMENTED",
     "repository":  {
-                       "branch":  "feature/runtime-bringup-manifest-validator-empty-harness-remediation",
+                       "branch":  "feature/runtime-bringup-manifest-validator-integral-count-remediation",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
                        "prior_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
                        "prior_readiness_finalization_commit":  "88e3cbba3a64828322b7c703765e6b1e2369f698",
-                       "current_readiness_implementation_commit":  "f4e98e5719230bd40c7096d2a48efb788eeb5a7d",
+                       "current_readiness_implementation_commit":  "72abd0695e34e27d075cb10fdf5b381418bcce1d",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -265,8 +265,8 @@
                         "id":  "tracked-docs-decisions-md",
                         "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  115657,
-                        "sha256":  "A39AD465555A965D25C7EE87F87298610F6E725427C5B6A75F26C81ABC6F311E",
+                        "byte_size":  117464,
+                        "sha256":  "085ED06E64633BD3DB9C8D3E1D544B2BAEC3DAC0474D5C4D029D273D51A1897B",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -274,8 +274,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  4573,
-                        "sha256":  "130A3A0B81375ECE39B58824AFAB4F5483242FE237EA7A2A9EBAC9533CB88F11",
+                        "byte_size":  5771,
+                        "sha256":  "B6AD55D9C19560CF938EC7F0C6F7F98A6BE1224E9CA8ABCECFCCBD59F69C09FC",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -292,8 +292,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  4298,
-                        "sha256":  "6247C17C357A4D5F3279C145D722B0549B80CC6CC018799919807402CFF487C3",
+                        "byte_size":  4796,
+                        "sha256":  "A431C207979530335DF9F104DE6FEBBFC84FE156062A0C76F9978F4E87030748",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -301,8 +301,8 @@
                         "id":  "tracked-docs-runtime-bringup-readiness-md",
                         "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
                         "state":  "tracked",
-                        "byte_size":  26699,
-                        "sha256":  "7EA20CB37DE8363BD6873D555437187ECE2BAE77885949A0E8504B5396F8487F",
+                        "byte_size":  29159,
+                        "sha256":  "9ADC27EB089AF138EA5153092B08964CC893434CF66A985C9EFBCCC727922CDC",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -310,8 +310,8 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  410392,
-                        "sha256":  "E9D65310061F27888263F9560354D4C3E3079D7C02A7DB7DA98A133D969CDC87",
+                        "byte_size":  413788,
+                        "sha256":  "6F52C68D61F041D686FB242BA3BDA92B97775101EB754495A881D99E83018BD3",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -319,8 +319,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  8907,
-                        "sha256":  "931E9908D70C1CE67EC4B0DEFA954D244215FD97AB5C6927B50524EC75B61579",
+                        "byte_size":  9416,
+                        "sha256":  "54016D0F8C0E68ED71852B954EB0E5CB13E695E03BB4B01E9C744583A2E88969",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -346,8 +346,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  19999,
-                        "sha256":  "5C7438A3812890F2DF7B90C7A029EC970CCE2DC0D0A2F9F8B5F8AF7285631370",
+                        "byte_size":  48318,
+                        "sha256":  "D90199A1F4369FB33800A6E1F59A290D6D192D10329313B237B34905BC54734F",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -362,7 +362,7 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/runtime-bringup-manifest-validator-empty-harness-suite-post-implementation-f4e98e5.json",
+                        "relative_path":  "artifacts/logs/runtime-bringup-manifest-validator-integral-count-suite-post-implementation-72abd06.json",
                         "state":  "ignored",
                         "byte_size":  470214,
                         "sha256":  "63BBC80C60B7B7FA029FF2534070F8CC3104BD7DDBBEF17E165F29E8FEFDC633",
