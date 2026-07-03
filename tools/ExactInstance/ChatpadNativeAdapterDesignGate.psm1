@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'NativeInterop\ChatpadNativeInteropSourceBoundary.psm1') -Force
 
 function Get-NativeScaffoldConstants {
     [pscustomobject][ordered]@{
@@ -10,7 +11,7 @@ function Get-NativeScaffoldConstants {
         production_adapter_id = 'chatpad-windows-exact-instance-adapter-v1'
         synthetic_adapter_id = 'chatpad-fake-exact-instance-adapter-v1'
         execution_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
-        scaffold_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT'
+        scaffold_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT'
         supported_operations = @('Apply', 'Restore', 'Restart')
     }
 }
@@ -48,10 +49,11 @@ function New-ChatpadNativeZeroCounters {
 
 function New-ChatpadProductionNativeAdapter {
     $constants = Get-NativeScaffoldConstants
+    $interop = Get-ChatpadNativeInteropSourceBoundaryContract
     [pscustomobject][ordered]@{
         schema_version = $constants.adapter_contract_schema
         adapter_identity = $constants.production_adapter_id
-        adapter_implementation_kind = 'production-native-composition-scaffold'
+        adapter_implementation_kind = 'production-native-interop-source-boundary'
         adapter_mode = 'windows-native-nonexecuting'
         contract_version = '1'
         evidence_contract_version = $constants.operation_evidence_schema
@@ -61,6 +63,12 @@ function New-ChatpadProductionNativeAdapter {
         native_execution_status = 'NOT_IMPLEMENTED'
         live_execution_available = $false
         native_interop_implemented = $false
+        native_source_declarations_present = [bool]$interop.native_source_declarations_present
+        native_source_boundary_status = [string]$interop.source_boundary_status
+        native_declaration_api_count = [int]$interop.declaration_inventory.api_count
+        native_compilation_permitted = $false
+        native_loading_permitted = $false
+        native_invocation_permitted = $false
         device_queries_available = $false
         windows_mutation_available = $false
         future_elevation_required = $true
@@ -210,6 +218,7 @@ function Invoke-ChatpadNativeAdapterOperation {
     )
     $constants = Get-NativeScaffoldConstants
     $selection = Resolve-ChatpadNativeAdapter -AdapterName $AdapterName -Synthetic:$Synthetic -RequireExplicitSelection
+    $interop = Get-ChatpadNativeInteropSourceBoundaryContract
     $operationIdentifier = ConvertTo-NativeIdentifierRecord -Value $Operation
     $canonicalOperation = ''
     if ($operationIdentifier.valid) {
@@ -254,6 +263,12 @@ function Invoke-ChatpadNativeAdapterOperation {
         execution_state = if ($null -eq $selection.selected_adapter) { 'not-selected' } else { [string]$selection.selected_adapter.execution_state }
         live_execution_available = $false
         native_interop_implemented = $false
+        native_source_declarations_present = [bool]$interop.native_source_declarations_present
+        native_source_boundary_status = [string]$interop.source_boundary_status
+        native_declaration_api_count = [int]$interop.declaration_inventory.api_count
+        native_compilation_permitted = $false
+        native_loading_permitted = $false
+        native_invocation_permitted = $false
         device_queries_available = $false
         windows_mutation_available = $false
         execution_attempted = $false
@@ -281,6 +296,7 @@ function Invoke-ChatpadNativeAdapterOperation {
             caller_adapter_object_supplied = -not [object]::ReferenceEquals($null, $AdapterObject)
             caller_evidence_supplied = -not [object]::ReferenceEquals($null, $Evidence)
             caller_inputs_authoritative = $false
+            native_call_plan = if ($knownOperation) { Get-ChatpadNativeInteropCallPlan -Operation $canonicalOperation } else { $null }
         }
     }
 }
@@ -368,21 +384,22 @@ function Test-ChatpadNativeAdapterOperationGate {
 
 function Get-ChatpadNativeAdapterDesignContract {
     $constants = Get-NativeScaffoldConstants
+    $interop = Get-ChatpadNativeInteropSourceBoundaryContract
     $readOnlyCalls = @(
         @{ id='device-information-set-create'; dll='setupapi.dll'; entry_point='SetupDiCreateDeviceInfoList'; purpose='Create one transaction-scoped device information set'; read_only=$true; mutating=$false; cleanup='SetupDiDestroyDeviceInfoList' },
         @{ id='exact-device-open'; dll='setupapi.dll'; entry_point='SetupDiOpenDeviceInfoW'; purpose='Open one complete Plug and Play instance ID into the retained set'; read_only=$true; mutating=$false; cleanup='device-information-set owner' },
         @{ id='canonical-instance-query'; dll='setupapi.dll'; entry_point='SetupDiGetDeviceInstanceIdW'; purpose='Retrieve adapter-returned canonical instance ID for ordinal-ignore-case comparison'; read_only=$true; mutating=$false; cleanup='caller-owned Unicode buffer' },
-        @{ id='device-property-query'; dll='setupapi.dll/cfgmgr32.dll'; entry_point='SetupDiGetDevicePropertyW, SetupDiGetDeviceRegistryPropertyW, CM_Get_DevNode_Status'; purpose='Capture class, container, parent, location, IDs, status, problem code, and current driver identity'; read_only=$true; mutating=$false; cleanup='caller-owned typed buffers' },
+        @{ id='device-property-query'; dll='setupapi.dll'; entry_point='SetupDiGetDevicePropertyW, SetupDiGetDeviceRegistryPropertyW'; purpose='Capture class, container, parent, location, IDs, and current driver identity without Configuration Manager declarations in this phase'; read_only=$true; mutating=$false; cleanup='caller-owned typed buffers' },
         @{ id='driver-list-build'; dll='setupapi.dll'; entry_point='SetupDiBuildDriverInfoList'; purpose='Build driver nodes only for the retained exact device element'; read_only=$true; mutating=$false; cleanup='SetupDiDestroyDriverInfoList' },
         @{ id='driver-node-enumeration'; dll='setupapi.dll'; entry_point='SetupDiEnumDriverInfoW, SetupDiGetDriverInfoDetailW, SetupDiGetDriverInstallParamsW'; purpose='Collect immutable candidate identity without first or best fallback'; read_only=$true; mutating=$false; cleanup='driver-list owner' }
     )
     $mutatingCalls = @(
         @{ id='selected-driver-association'; dll='setupapi.dll'; entry_point='SetupDiSetSelectedDriverW'; purpose='Associate the exact enumerated driver node with the retained exact device element'; read_only=$false; mutating=$true; cleanup='driver-list owner' },
         @{ id='exact-device-install'; dll='newdev.dll'; entry_point='DiInstallDevice'; purpose='Bind only the retained exact device element to the selected driver node'; read_only=$false; mutating=$true; cleanup='preserve NeedReboot and last-error' },
-        @{ id='postcondition-query'; dll='setupapi.dll/cfgmgr32.dll'; entry_point='property and driver identity queries'; purpose='Verify complete expected driver identity after API return'; read_only=$true; mutating=$false; cleanup='caller-owned buffers' },
+        @{ id='postcondition-query'; dll='setupapi.dll'; entry_point='property and driver identity queries'; purpose='Verify complete expected driver identity after API return'; read_only=$true; mutating=$false; cleanup='caller-owned buffers' },
         @{ id='driver-list-destroy'; dll='setupapi.dll'; entry_point='SetupDiDestroyDriverInfoList'; purpose='Destroy the device-specific SPDIT_COMPATDRIVER list exactly once'; read_only=$true; mutating=$false; cleanup='idempotent owner state' },
         @{ id='device-information-set-destroy'; dll='setupapi.dll'; entry_point='SetupDiDestroyDeviceInfoList'; purpose='Release HDEVINFO in deterministic cleanup'; read_only=$true; mutating=$false; cleanup='final HDEVINFO owner' },
-        @{ id='exact-device-restart'; dll='setupapi.dll/cfgmgr32.dll'; entry_point='future exact-device restart sequence'; purpose='Restart only the exact retained instance when separately authorized'; read_only=$false; mutating=$true; cleanup='preserve restart and reboot state' }
+        @{ id='exact-device-restart'; dll='future source audit'; entry_point='future exact-device restart sequence; no declaration in this phase'; purpose='Restart only the exact retained instance when separately authorized'; read_only=$false; mutating=$true; cleanup='preserve restart and reboot state' }
     )
     $structures = @(
         @{ name='HDEVINFO'; ownership='single transaction owner'; size_rule='opaque handle'; lifetime='destroy once through SetupDiDestroyDeviceInfoList' },
@@ -447,6 +464,7 @@ function Get-ChatpadNativeAdapterDesignContract {
         native_execution_status = 'NOT_IMPLEMENTED'
         current_gate = $constants.scaffold_gate
         capability_blocker = $constants.execution_blocker
+        source_boundary = $interop
         module_state_introspectable_by_same_process_callers = $true
         caller_supplied_mutation_capability_accepted = $false
         production_adapter = New-ChatpadProductionNativeAdapter
@@ -551,17 +569,23 @@ function Test-ChatpadNativeDesignContractCompleteness {
     $gateCount = @($Contract.operation_gates).Count
     $production = $Contract.production_adapter
     $composition = $Contract.composition_root
+    $sourceBoundary = $Contract.source_boundary
     $scaffoldComplete = (
         $null -ne $production -and
         [string]$production.adapter_identity -eq 'chatpad-windows-exact-instance-adapter-v1' -and
         [bool]$production.production -eq $true -and
         [bool]$production.synthetic -eq $false -and
         [bool]$production.native_interop_implemented -eq $false -and
+        [bool]$production.native_source_declarations_present -eq $true -and
+        [int]$production.native_declaration_api_count -eq 13 -and
         [bool]$production.device_queries_available -eq $false -and
         [bool]$production.windows_mutation_available -eq $false -and
         [string]$production.execution_state -eq 'non-executing-scaffold' -and
         [bool]$composition.present_in_this_task -eq $true -and
-        [bool]$composition.implicit_synthetic_fallback -eq $false
+        [bool]$composition.implicit_synthetic_fallback -eq $false -and
+        $null -ne $sourceBoundary -and
+        [bool]$sourceBoundary.native_source_declarations_present -eq $true -and
+        [bool]$sourceBoundary.native_invocation_permitted -eq $false
     )
     $result = ($missingCalls.Count -eq 0 -and $missingErrors.Count -eq 0 -and $gateCount -eq 18 -and [bool]$Contract.exact_device_opening.retains_one_device_set_and_element -and $scaffoldComplete)
     [pscustomobject][ordered]@{
@@ -583,7 +607,9 @@ function Test-ChatpadNativeExecutableGuard {
     if (-not $RepositoryRoot) {
         $RepositoryRoot = [IO.Path]::GetFullPath((& git rev-parse --show-toplevel).Trim())
     }
-    $paths = @(& git -C $RepositoryRoot ls-files '*.ps1' '*.psm1')
+    $RepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
+    $constants = Get-ChatpadNativeInteropConstants
+    $paths = @(& git -C $RepositoryRoot ls-files '*.ps1' '*.psm1' '*.cs' '*.csproj' '*.vcxproj' '*.sln' '*.props' '*.targets')
     $declarationPatterns = @(
         '\[DllImport\s*\(',
         '\[LibraryImport\s*\(',
@@ -607,28 +633,47 @@ function Test-ChatpadNativeExecutableGuard {
         'sc\.exe\s+(create|delete|start|stop|config)'
     )
     $guardMatches = [Collections.Generic.List[object]]::new()
+    $approvedDeclarationMatches = [Collections.Generic.List[object]]::new()
     foreach ($relative in $paths) {
+        $isApprovedDeclarationPath = ($relative.Replace('\','/') -eq $constants.declaration_relative_path)
         $path = Join-Path $RepositoryRoot $relative
         $text = [IO.File]::ReadAllText($path)
         foreach ($pattern in $declarationPatterns) {
             if ($text -match $pattern) {
-                $guardMatches.Add([pscustomobject][ordered]@{ relative_path = $relative; guard = 'native-declaration'; pattern = $pattern })
+                if ($isApprovedDeclarationPath) {
+                    $approvedDeclarationMatches.Add([pscustomobject][ordered]@{ relative_path = $relative; guard = 'approved-native-source-declaration'; pattern = $pattern })
+                } else {
+                    $guardMatches.Add([pscustomobject][ordered]@{ relative_path = $relative; guard = 'native-declaration-outside-allowlist'; pattern = $pattern })
+                }
             }
         }
         $lines = [IO.File]::ReadAllLines($path)
         for ($index = 0; $index -lt $lines.Count; $index++) {
             foreach ($pattern in $invocationPatterns) {
                 if ($lines[$index] -match $pattern) {
+                    if ($isApprovedDeclarationPath -and $lines[$index] -match '\bextern\b') {
+                        continue
+                    }
                     $guardMatches.Add([pscustomobject][ordered]@{ relative_path = $relative; line = $index + 1; guard = 'native-invocation'; pattern = $pattern })
                 }
             }
         }
     }
+    $sourceBoundary = Test-ChatpadNativeInteropSourceBoundary -RepositoryRoot $RepositoryRoot
+    if ($sourceBoundary.result -ne 'PASS') {
+        foreach ($defect in @($sourceBoundary.defects)) {
+            $guardMatches.Add([pscustomobject][ordered]@{ relative_path = $sourceBoundary.declaration_relative_path; guard = 'native-source-boundary'; pattern = [string]$defect.id })
+        }
+    }
     [pscustomobject][ordered]@{
         result = if ($guardMatches.Count) { 'FAIL' } else { 'PASS' }
-        result_code = if ($guardMatches.Count) { 'NATIVE_EXECUTABLE_GUARD_FAILED' } else { 'NATIVE_EXECUTABLE_GUARD_VALID' }
+        result_code = if ($guardMatches.Count) { 'NATIVE_SOURCE_BOUNDARY_GUARD_FAILED' } else { 'NATIVE_SOURCE_BOUNDARY_GUARD_VALID' }
         scanned_file_count = $paths.Count
+        approved_declaration_match_count = $approvedDeclarationMatches.Count
+        forbidden_match_count = $guardMatches.Count
         match_count = $guardMatches.Count
+        source_boundary = $sourceBoundary
+        approved_declarations = @($approvedDeclarationMatches)
         matches = @($guardMatches)
     }
 }

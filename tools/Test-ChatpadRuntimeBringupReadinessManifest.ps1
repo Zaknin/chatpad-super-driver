@@ -515,7 +515,7 @@ foreach($entry in $entries){
     if($entry.state-notin@('tracked','ignored')){$defects.state++}
     if($entry.evidence_classification-ne'synthetic'){$defects.declared_result++}
 }
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v3'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v3'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
 $suiteEntry=@($entries|Where-Object id -eq 'evidence-synthetic-suite')
 if($suiteEntry.Count-ne1){$defects.evidence_binding++}
 else{
@@ -635,7 +635,7 @@ if($manifest.readiness.psscriptanalyzer_status-notin@('SKIPPED_UNAVAILABLE','PAS
 if($manifest.readiness.psscriptanalyzer_status-eq'PASS'-and$null-eq(Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue)){$defects.psscriptanalyzer++}
 foreach($name in @('frozen_baseline_commit','prior_readiness_implementation_commit','prior_readiness_finalization_commit','current_readiness_implementation_commit')){if([string]$manifest.repository.$name-notmatch'^[0-9a-f]{40}$'){$defects.identity++}}
 if($readinessCounts.exact_instance_binding_operations-or$readinessCounts.exact_instance_restoration_operations-or$readinessCounts.exact_instance_restart_operations-or$readinessCounts.broad_approved_install_operations-or$readinessCounts.broad_approved_rollback_operations-or$readinessCounts.windows_mutation_count){$defects.unsupported_pass++}
-if([string]$manifest.readiness.exact_instance_framework_result-ne'PASS'-or$readinessCounts.exact_instance_offline_test_count-ne116-or$readinessCounts.exact_instance_offline_assertion_count-ne492-or$readinessCounts.synthetic_exact_binding_attempt_count-le0-or$readinessCounts.synthetic_exact_restoration_attempt_count-le0-or$readinessCounts.synthetic_exact_restart_attempt_count-ne0){$defects.unsupported_pass++}
+if([string]$manifest.readiness.exact_instance_framework_result-ne'PASS'-or$readinessCounts.exact_instance_offline_test_count-ne171-or$readinessCounts.exact_instance_offline_assertion_count-ne709-or$readinessCounts.synthetic_exact_binding_attempt_count-le0-or$readinessCounts.synthetic_exact_restoration_attempt_count-le0-or$readinessCounts.synthetic_exact_restart_attempt_count-ne0){$defects.unsupported_pass++}
 if([string]$manifest.readiness.assertion_accounting_result-ne'PASS'-or$readinessCounts.unassigned_assertion_count-or$readinessCounts.off_ledger_assertion_count-or$readinessCounts.duplicate_counted_assertion_count-or$readinessCounts.category_reconciliation_defect_count){$defects.accounting++}
 if($readinessCounts.invalid_lifecycle_acceptance_count -ne 0 -or $readinessCounts.missing_start_timestamp_acceptance_count -ne 0){$defects.lifecycle++}
 if($readinessCounts.stop_condition_count -ne 20 -or $readinessCounts.unique_stop_condition_count -ne 20 -or $readinessCounts.runtime_observer_linkage_count -ne 5 -or $readinessCounts.unlinked_stop_condition_count -ne 0 -or $readinessCounts.unknown_stop_condition_id_count -ne 0 -or $readinessCounts.malformed_linkage_count -ne 0 -or $readinessCounts.nested_array_acceptance_count -ne 0){$defects.stop_linkage++}
@@ -648,10 +648,10 @@ $inventoryCounts=[ordered]@{}
 foreach($name in @('tracked_ps1_count','tracked_psm1_count','tracked_powershell_count','parsed_ps1_count','parsed_psm1_count','parsed_powershell_count','parse_error_count','duplicate_normalized_path_count','missing_count','extra_count')){
     $inventoryCounts[$name]=Get-ChatpadValidatedIntegerProperty -Item $inventory -PropertyName $name -Location 'manifest.readiness.powershell_inventory' -RecordId 'powershell_inventory' -DefectCount ([ref]$inventoryDefectCount) -Defects $inventoryDefects -AllowZero
 }
-if($inventoryDefectCount -or $inventoryCounts.tracked_ps1_count -ne 45 -or $inventoryCounts.tracked_psm1_count -ne 7 -or$inventoryCounts.tracked_powershell_count-ne52-or$inventoryCounts.parsed_ps1_count-ne45-or$inventoryCounts.parsed_psm1_count-ne7-or$inventoryCounts.parsed_powershell_count-ne52-or$inventoryCounts.parse_error_count-ne0-or$inventoryCounts.duplicate_normalized_path_count-ne0-or$inventoryCounts.missing_count-ne0-or$inventoryCounts.extra_count-ne0){$defects.powershell_inventory++}
+if($inventoryDefectCount -or $inventoryCounts.tracked_ps1_count -ne 45 -or $inventoryCounts.tracked_psm1_count -ne 8 -or$inventoryCounts.tracked_powershell_count-ne53-or$inventoryCounts.parsed_ps1_count-ne45-or$inventoryCounts.parsed_psm1_count-ne8-or$inventoryCounts.parsed_powershell_count-ne53-or$inventoryCounts.parse_error_count-ne0-or$inventoryCounts.duplicate_normalized_path_count-ne0-or$inventoryCounts.missing_count-ne0-or$inventoryCounts.extra_count-ne0){$defects.powershell_inventory++}
 $analyzer=$manifest.readiness.psscriptanalyzer
 if($manifest.readiness.psscriptanalyzer_status-eq'PASS'){
-    if($null-eq$analyzer-or[int]$analyzer.analyzed_file_count-ne52-or[int]$analyzer.error_count-ne0-or[int]$analyzer.tool_failure_count-ne0-or[bool]$analyzer.blanket_suppression_used){$defects.psscriptanalyzer++}
+    if($null-eq$analyzer-or[int]$analyzer.analyzed_file_count-ne53-or[int]$analyzer.error_count-ne0-or[int]$analyzer.tool_failure_count-ne0-or[bool]$analyzer.blanket_suppression_used){$defects.psscriptanalyzer++}
     if(@($analyzer.findings|Where-Object{$_.severity-notin@('Error','Warning','Information')}).Count){$defects.psscriptanalyzer++}
 }
 $total=($defects.Values|Measure-Object -Sum).Sum

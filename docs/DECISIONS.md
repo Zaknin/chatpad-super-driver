@@ -4,6 +4,32 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Keep SetupAPI/Newdev interop as declaration-only source until independent audit
+
+**Decision:** The native SetupAPI/Newdev boundary may declare allowlisted
+`setupapi.dll` and `newdev.dll` P/Invoke signatures and typed structure
+contracts in isolated source under `tools/ExactInstance/NativeInterop/`, but it
+must not compile, load, invoke, reference from build files, generate binaries,
+query devices, or mutate Windows in this phase. The final gate is
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
+
+**Rationale:** The next useful step after accepting the non-executing adapter
+scaffold is source-level review of the exact Win32 signatures, ownership
+tokens, planned call sequences, cleanup obligations, and error mapping. Keeping
+the declarations isolated lets the project audit correctness without creating
+an executable native adapter or widening the live surface.
+
+**Alternatives rejected:** Adding `Add-Type`, `LibraryImport`, runtime
+compilation, project references, generated native interop binaries,
+Configuration Manager declarations without a proved need, PnPUtil/DevCon/DIFx
+fallbacks, or any direct SetupAPI/Newdev invocation.
+
+**Consequences:** G78-G132 permanently cover declaration inventory, build
+isolation, non-execution call plans, caller-boundary integrity, error mapping,
+and zero live counters. A later native implementation still requires separate
+authorization, implementation, evidence, independent audit, and explicit live
+authorization.
+
 ## 2026-07-03 - Require explicit primitive native adapter and operation selection
 
 **Decision:** Public native adapter scaffold operations require explicit

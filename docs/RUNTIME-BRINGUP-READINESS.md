@@ -8,19 +8,18 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`
-implements integrity remediation for the first non-executing production native
-SetupAPI/Newdev adapter scaffold and composition-root wiring after the initial
-scaffold audit found fail-open object and mutable-state gaps.
-The future API sequence, structures, driver-node identity evidence,
-exact-instance binding/restoration proof, restart/reboot separation, error
-taxonomy, and composition-root boundary are documented in
+Branch `feature/runtime-bringup-native-interop-source-boundary` implements a
+declaration-only SetupAPI/Newdev source boundary for the non-executing
+production native adapter. The future API sequence, structures, driver-node
+identity evidence, exact-instance binding/restoration proof, restart/reboot
+separation, error taxonomy, and source-boundary guard are documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
+The declaration source and static boundary validator live under
+`tools/ExactInstance/NativeInterop/`.
 
-- Starting accepted commit: `b7f5f700c68af3846850b7ba69a34f7c8dd66614`.
-- Current remediation implementation commit:
-  `60da3ee244eaa5c28cb5022748a41ca95e6474cc`.
+- Starting accepted commit: `b7672d123200f13e95353d2505bb813843ac3f7c`.
+- Current implementation commit: pending final commit for this branch.
 - Expected finalization commit: the commit containing this document, the
   regenerated readiness manifest, and continuity updates.
 - Production adapter identity: `chatpad-windows-exact-instance-adapter-v1`.
@@ -31,22 +30,18 @@ offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 - No exported native adapter gate function accepts a caller-supplied mutation
   capability, token, sentinel, secret, object, or equivalent authorization
   value.
-- Exact-instance suite: `PASS`, 116 tests and 492 assertions under both
-  Windows PowerShell 5.1 and PowerShell 7.
-- Full readiness suite: framework `PASS`, 420 fixtures and 2,216 assertions
-  under both Windows PowerShell 5.1 and PowerShell 7.
-- PowerShell inventory: 45 `.ps1`, seven `.psm1`, 52 total; AST errors `0`.
-- Complete PSScriptAnalyzer: errors `0`, warnings `187`, information `989`,
-  tool failures `0`.
-- Native executable guard: `PASS`, 52 files scanned, zero native declaration or
-  invocation matches.
-- Manifest generation: 25 entries, framework `PASS`, live readiness `BLOCKED`.
-- Manifest validation and corruption regression: `PASS`, 18 cases, zero failed
-  cases.
+- Exact-instance suite: `PASS`, 171 tests and 709 assertions under Windows
+  PowerShell 5.1 during implementation smoke validation; dual-runtime final
+  validation is required before commit.
+- PowerShell inventory: 45 `.ps1`, eight `.psm1`, 53 total; AST errors `0`.
+- Native source-boundary guard: `PASS`, 71 tracked source/build files scanned,
+  one approved declaration match, zero forbidden matches.
+- Manifest generation and full readiness validation are regenerated before the
+  final commit.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 
@@ -676,14 +671,11 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only re-audit of the remediated non-executing production
-native SetupAPI/Newdev adapter scaffold and composition-root wiring on
-`feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`,
-starting from the finalization commit that contains implementation commit
-`60da3ee244eaa5c28cb5022748a41ca95e6474cc` and the regenerated readiness
-manifest. The audit must confirm explicit primitive adapter/operation
-selection, no implicit production default, no implicit synthetic fallback,
+Independent read-only source audit of the native SetupAPI/Newdev declaration
+and wrapper boundary on `feature/runtime-bringup-native-interop-source-boundary`,
+starting from the finalization commit for this branch. The audit must confirm
+allowlisted declaration isolation, no build references, no native compilation,
+loading, invocation, device query, Windows mutation, or generated binaries,
 deterministic blocked operation evidence for `Apply`, `Restore`, and
-`Restart`, no caller-controlled authorization boundary, no mutable module-state
-trust root, zero live/device/Windows/native-operation counters, and the final
-blocker `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
+`Restart`, zero live/device/Windows/native-operation counters, and the final
+blocker `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.

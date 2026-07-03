@@ -28,13 +28,12 @@ The implementation contains:
   adapter in this phase;
 - T1-T39 offline regression coverage under Windows PowerShell and PowerShell 7.
 
-It does not contain or invoke a live SetupAPI/Newdev adapter. The current
-production adapter is a non-executing composition-root scaffold only. No driver
-or driver-store operation is authorized. Live readiness is `BLOCKED`; the
-current gate is
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`, and the
-downstream capability blocker is
-`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+It does not compile, load, or invoke a live SetupAPI/Newdev adapter. The
+current production adapter has a declaration-only native interop source
+boundary and deterministic non-executing call plans. No driver or driver-store
+operation is authorized. Live readiness is `BLOCKED`; the current gate is
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`, and the downstream
+capability blocker is `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ### Remediated trust and serialization contracts
 
@@ -209,14 +208,18 @@ manual-recovery lineage states. Apply and restore replay is rejected.
 
 ## 7. Future Windows adapter design
 
-The dedicated non-executing native adapter design gate is
+The dedicated declaration-only native adapter source-boundary design gate is
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`. The executable contract
 for the capability boundary, API sequence inventory, structure ownership
 model, error taxonomy, evidence fields, operation gates, and static
 native-code guards is
-`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. G1-G25 in the
-offline exact-instance suite prove that the current branch still has no live
-capability and cannot invoke a native adapter. G16-G25 specifically prove that
+`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. The source-only
+declarations and boundary validator are under
+`tools/ExactInstance/NativeInterop/`. G1-G77 in the offline exact-instance
+suite preserve the prior no-live-capability guarantees. G78-G132 additionally
+prove that the SetupAPI/Newdev declarations are isolated, non-compiling,
+non-loading, non-invoking, build-unreferenced, and still blocked by the
+independent source-audit gate. G16-G25 specifically prove that
 module session-state extraction, module-context invocation, non-exported
 function discovery, reference wrapping, `PSCustomObject`, `PSTypeNames`,
 `Add-Member`, serialization, scalar/object spoofing, and unexpected legacy
@@ -311,12 +314,9 @@ harness exceptions, and zero live or Windows mutation counters.
 
 ## 10. Remaining gates
 
-The independent read-only re-audit of the remediated production native adapter
-scaffold and composition-root wiring passed from starting commit
-`77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6`. It revalidated the exact-instance
-contracts, manifest reconciliation, executable native guard, and all zero live
-counters without implementing or invoking native behavior.
-
-Only a later separately authorized task may implement and audit the native
-Windows adapter. That task must not reuse synthetic authorization and must not
-perform live mutation merely because the offline framework passed.
+The current branch implements only the source declaration and wrapper boundary
+for a future native Windows adapter. It still has no native execution path.
+The next task is an independent read-only source audit of this boundary. A
+future implementation task must not reuse synthetic authorization and must not
+perform live mutation merely because the offline framework or source audit
+passed.
