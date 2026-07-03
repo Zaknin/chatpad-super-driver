@@ -206,6 +206,15 @@ manual-recovery lineage states. Apply and restore replay is rejected.
 
 ## 7. Future Windows adapter design
 
+The dedicated non-executing native adapter design gate is
+`docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`. The executable contract
+for the trusted capability boundary, API sequence inventory, structure
+ownership model, error taxonomy, evidence fields, operation gates, and static
+native-code guards is
+`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. G1-G15 in the
+offline exact-instance suite prove that the current branch still has no live
+capability and cannot invoke a native adapter.
+
 The future user-mode adapter must use Unicode Windows APIs and keep a single
 `HDEVINFO` plus `SP_DEVINFO_DATA` pair alive for the transaction:
 
