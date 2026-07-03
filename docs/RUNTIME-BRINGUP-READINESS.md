@@ -18,10 +18,10 @@ taxonomy, and composition-root boundary are documented in
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 
 - Starting accepted commit: `a23259a73dc27f332a98f292e90866b0db42a764`.
-- Current scaffold implementation commit: expected from this task's
-  implementation commit.
-- Expected finalization commit: the commit containing this document and the
-  regenerated readiness manifest.
+- Current scaffold implementation commit:
+  `9ea29a8a29379a55747c6cf53112379aeb03b9e0`.
+- Expected finalization commit: the commit containing this document, the
+  regenerated readiness manifest, and continuity updates.
 - Production adapter identity: `chatpad-windows-exact-instance-adapter-v1`.
 - Synthetic adapter identity: `chatpad-fake-exact-instance-adapter-v1`,
   selectable only with explicit synthetic mode.
@@ -30,17 +30,18 @@ offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 - No exported native adapter gate function accepts a caller-supplied mutation
   capability, token, sentinel, secret, object, or equivalent authorization
   value.
-- Exact-instance suite smoke: `PASS`, 106 tests, 385 assertions under Windows
-  PowerShell 5.1.
-- Full readiness suite smoke: `PASS`, 410 fixtures and 2,109 assertions under
-  Windows PowerShell 5.1; final dual-runtime validation is still required
-  before closeout.
+- Exact-instance suite: `PASS`, 106 tests and 385 assertions under both
+  Windows PowerShell 5.1 and PowerShell 7.
+- Full readiness suite: framework `PASS`, 410 fixtures and 2,109 assertions
+  under both Windows PowerShell 5.1 and PowerShell 7.
 - PowerShell inventory: 45 `.ps1`, seven `.psm1`, 52 total; AST errors `0`.
-- Complete PSScriptAnalyzer: errors `0`, warnings `168`, information `937`,
+- Complete PSScriptAnalyzer: errors `0`, warnings `175`, information `979`,
   tool failures `0`.
 - Native executable guard: `PASS`, 52 files scanned, zero native declaration or
   invocation matches.
-- Manifest validation and corruption regression: `PASS`.
+- Manifest generation: 25 entries, framework `PASS`, live readiness `BLOCKED`.
+- Manifest validation and corruption regression: `PASS`, 18 cases, zero failed
+  cases.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
@@ -674,12 +675,14 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only re-audit of the remediated native adapter
-capability-boundary gate on
-`feature/runtime-bringup-native-adapter-capability-boundary-remediation`.
-The audit must reproduce the former module `SessionState` sentinel-extraction
-finding against the old audited commit, verify that no exported/public
-mutation gate now accepts caller-supplied capability-like values, validate the
-new G16-G25 adversarial regressions under Windows PowerShell 5.1 and
-PowerShell 7, confirm all live/device/Windows mutation counters remain zero,
-and keep the final blocker `BLOCKED_PENDING_INDEPENDENT_REAUDIT`.
+Independent read-only audit of the non-executing production native
+SetupAPI/Newdev adapter scaffold and composition-root wiring on
+`feature/runtime-bringup-native-adapter-composition-root`, starting from the
+finalization commit that contains implementation commit
+`9ea29a8a29379a55747c6cf53112379aeb03b9e0` and the regenerated readiness
+manifest. The audit must confirm deterministic production/synthetic adapter
+selection, no implicit synthetic fallback, deterministic blocked operation
+evidence for `Apply`, `Restore`, and `Restart`, no caller-controlled
+authorization boundary, zero live/device/Windows/native-operation counters, and
+the final blocker
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.

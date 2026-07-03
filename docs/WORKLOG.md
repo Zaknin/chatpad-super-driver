@@ -6879,3 +6879,147 @@
   Live readiness remains `BLOCKED_PENDING_INDEPENDENT_REAUDIT`; do not proceed
   to native adapter implementation until that re-audit passes and a later task
   explicitly authorizes implementation.
+
+## 2026-07-03T13:37+04:00 - Native adapter composition-root scaffold
+
+- **Objective:** Implement the first non-live production scaffold for the
+  native SetupAPI/Newdev adapter: stable production adapter identity and
+  metadata, deterministic composition-root selection and operation-result
+  mapping, fail-closed execution policy, offline synthetic/adversarial
+  regressions, and readiness/evidence/manifest documentation integration. Do
+  not implement, load, invoke, or expose executable native SetupAPI/Newdev
+  mutation code.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`, branch
+  `feature/runtime-bringup-native-adapter-capability-boundary-remediation`,
+  HEAD and upstream
+  `a23259a73dc27f332a98f292e90866b0db42a764`, clean tree, and ahead/behind
+  `0/0`. Created
+  `feature/runtime-bringup-native-adapter-composition-root` from that exact
+  commit.
+- **Documentation discrepancy corrected:** Start-of-task continuity documents
+  still described the prior `BLOCKED_PENDING_INDEPENDENT_REAUDIT` gate as the
+  next continuation point even though the accepted capability-boundary
+  finalization commit was already the branch starting point. The current task
+  updated project state, readiness, porting, and next-task documents to the
+  new scaffold gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
+- **Implementation commit:**
+  `9ea29a8a29379a55747c6cf53112379aeb03b9e0` (`feat: scaffold native adapter
+  composition root`) adds production adapter identity
+  `chatpad-windows-exact-instance-adapter-v1`, explicit synthetic identity
+  `chatpad-fake-exact-instance-adapter-v1`, composition-root selection,
+  schema-tagged operation evidence, deterministic blocked `Apply`, `Restore`,
+  and `Restart` operation mapping to
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, unsupported-operation and
+  unknown/missing-adapter fail-closed results, and zero native-operation,
+  device-query, and Windows-mutation counters.
+- **Files modified by implementation and continuity:** `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/WORKLOG.md`,
+  `docs/evidence/exact-instance-operation-evidence-schema-v1.json`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Regression details:** Added G26-G67 coverage for production/synthetic
+  adapter metadata, deterministic selection, no implicit synthetic fallback,
+  missing/unknown adapter rejection, production selected as synthetic and
+  synthetic selected without synthetic mode rejection, operation evidence
+  identity binding, recognized operations blocked by the native execution
+  blocker, unsupported operation mapping, zero live/device/native/Windows
+  counters, no execution or device-state claims, compatibility API
+  non-authorization, splatted/positional/pipeline/caller-object/module-state
+  adversarial probes, no capability-like exported authority, no exported
+  variables, no executable native declaration, and final scaffold-audit gate.
+- **Exact-suite validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit 9ea29a8a29379a55747c6cf53112379aeb03b9e0 -OutputPath artifacts\logs\native-adapter-composition-root-exact-suite-wps-9ea29a8.json`
+  and the matching `pwsh.exe` command. Both returned exit code `0` and
+  reported `PASS`, 106 tests, 385 assertions, and zero failed tests.
+- **Full-readiness validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadiness.ps1`
+  and the matching `pwsh.exe` command. Both returned exit code `0` with
+  framework status `PASS`, live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`, blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, status
+  `SCAFFOLD_NON_EXECUTING`, 410 fixtures, 2,109 assertions, exact suite
+  106/385, and `windows_mutation_count=0`.
+- **Manifest validation:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` with
+  `New-ChatpadRuntimeBringupReadinessManifest.ps1 -ImplementationCommit 9ea29a8a29379a55747c6cf53112379aeb03b9e0`
+  from the Windows PowerShell readiness artifact. The manifest contains 25
+  entries and binds `current_readiness_implementation_commit` to
+  `9ea29a8a29379a55747c6cf53112379aeb03b9e0`. Corruption regression returned
+  `PASS`, 18 cases, zero failed cases.
+- **Additional validation:** Complete PSScriptAnalyzer returned exit code `0`,
+  analyzed 52 tracked files, and reported errors `0`, warnings `175`,
+  information `979`, tool failures `0`, and blanket suppression `false`.
+  Native executable guard returned `PASS`, 52 scanned files, zero forbidden
+  native declaration or invocation matches. AST parse inventory returned
+  `PASS`, 45 `.ps1`, seven `.psm1`, 52 total files, and zero parse-error
+  files. `git diff --check` returned exit code `0` and no output.
+- **Repository safety:** `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-RepositorySafety.ps1`
+  reported `REPOSITORY SAFETY: PASS`, deployment actions `0`, signing actions
+  `0`, packaging actions `0`, certificate/key creation actions `0`, Windows
+  mutations `0`, device queries `0`, hardware accesses `0`, unexpected tracked
+  artifacts `0`, tracked evidence files `0`, and non-ignored evidence files
+  `0`.
+- **Ignored evidence artifacts:**
+  `artifacts/logs/native-adapter-composition-root-exact-suite-wps-9ea29a8.json`,
+  3,563,569 bytes,
+  `362602A415F42A9066DF66E759EC2BFBB95F823F3A82C7B0B1F85676D7889314`;
+  `artifacts/logs/native-adapter-composition-root-exact-suite-pwsh-9ea29a8.json`,
+  1,652,595 bytes,
+  `FE005E39B1B7C2620896C549F9DF2FF1283FFFC9C87B52C3CC6B07E1CE05266D`;
+  `artifacts/logs/native-adapter-composition-root-readiness-wps-9ea29a8.json`,
+  3,066,844 bytes,
+  `CD0406E8AE0B4896D85B3FC74AEFC6DB8BAD8D7E033B482BA28508D6EA3A7813`;
+  `artifacts/logs/native-adapter-composition-root-readiness-pwsh-9ea29a8.json`,
+  1,446,211 bytes,
+  `9676F9BE53588E65F2740EE87576A7FEA3D23EB467B4A583DB447F3DDE18435B`;
+  `artifacts/logs/native-adapter-composition-root-manifest-generation-9ea29a8.json`,
+  133 bytes,
+  `1A8D4E54DBA88FA9118BC0C820F42ADAE4CE72013057F1AD532D603BE57C9B7C`;
+  `artifacts/logs/native-adapter-composition-root-manifest-validation-9ea29a8.json`,
+  78,042 bytes,
+  `393886609B032D9C23B68C3F8A29787F701C1FA211B21F4E56D017D98C2457C6`;
+  `artifacts/logs/native-adapter-composition-root-psscriptanalyzer-9ea29a8.json`,
+  575,120 bytes,
+  `F08C89D9606CD80B89832CF8DFCE01A1FBC0F827CCB6166DEAA9187C45028CEC`;
+  `artifacts/logs/native-adapter-composition-root-native-guard-9ea29a8.json`,
+  180 bytes,
+  `AE2488F6E1DBB25080E52E140A462A061044036954D3A2514ACD593EE714E07E`;
+  `artifacts/logs/native-adapter-composition-root-ast-parse-9ea29a8.json`,
+  14,478 bytes,
+  `041EC89954DA7B19CB5B59D232DE59AFAD959E80075E20DD8CA216BE09832CF4`;
+  `artifacts/logs/native-adapter-composition-root-repository-safety-9ea29a8.txt`,
+  1,189 bytes,
+  `D39B068815D7EEE645CC7BF96C2954C628AB9FC75BC768A2BA1B9A63A7CF70B0`;
+  and `artifacts/logs/native-adapter-composition-root-git-diff-check-9ea29a8.txt`,
+  0 bytes,
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`.
+- **Safety:** No native API implementation, declaration, P/Invoke, Add-Type,
+  C# shim, DLL import, driver build/link, signing, CAT generation, packaging,
+  staging, driver-store mutation, installation, binding, loading, restoration,
+  restart, reboot, device query, hardware access, Windows/service/registry/boot
+  mutation, tracing, event-log export, protocol traffic, input injection,
+  certificate/credential change, production source/INF/frozen binary change,
+  or `legacy/` change occurred.
+- **Finalization and next task:** The expected finalization commit contains the
+  regenerated manifest and continuity updates. The exact next task is an
+  independent read-only audit of the non-executing production native
+  SetupAPI/Newdev adapter scaffold and composition-root wiring on
+  `feature/runtime-bringup-native-adapter-composition-root`, starting from the
+  finalization commit that contains implementation commit
+  `9ea29a8a29379a55747c6cf53112379aeb03b9e0` and the regenerated readiness
+  manifest. Live readiness remains
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`; do not proceed
+  to executable native adapter implementation until that scaffold audit passes
+  and a later task explicitly authorizes implementation.

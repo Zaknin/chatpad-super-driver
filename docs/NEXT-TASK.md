@@ -9,8 +9,9 @@ or execute native adapter behavior.
 ## Required Starting Point
 
 - Branch: `feature/runtime-bringup-native-adapter-composition-root`.
-- Starting commit: the finalization commit for this scaffold task, after the
-  implementation commit and regenerated readiness manifest are present.
+- Starting commit: the finalization commit for this scaffold task, after
+  implementation commit `9ea29a8a29379a55747c6cf53112379aeb03b9e0` and the
+  regenerated readiness manifest are present.
 - Before audit work, verify a clean tree, configured upstream, local/remote
   equality, and ancestry from
   `a23259a73dc27f332a98f292e90866b0db42a764`.
@@ -22,6 +23,8 @@ or execute native adapter behavior.
   `BLOCKED_PENDING_INDEPENDENT_REAUDIT` continuation text.
 - The current phase adds a production adapter identity and deterministic
   composition-root selection, but only as a non-executing scaffold.
+- Implementation commit:
+  `9ea29a8a29379a55747c6cf53112379aeb03b9e0`.
 - Production adapter identity:
   `chatpad-windows-exact-instance-adapter-v1`.
 - Synthetic adapter identity:

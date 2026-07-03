@@ -7,7 +7,8 @@ The native adapter composition-root scaffold is implemented on
 capability-boundary finalization commit
 `a23259a73dc27f332a98f292e90866b0db42a764`. The production adapter identity is
 `chatpad-windows-exact-instance-adapter-v1`; the synthetic test identity is
-`chatpad-fake-exact-instance-adapter-v1`.
+`chatpad-fake-exact-instance-adapter-v1`. The scaffold implementation commit is
+`9ea29a8a29379a55747c6cf53112379aeb03b9e0`.
 
 The framework uses one complete canonical Plug and Play instance ID, immutable
 target and restoration driver-node identities, precondition and snapshot
@@ -21,9 +22,10 @@ production scaffold has deterministic adapter selection, no implicit synthetic
 fallback, no executable native operation path, and zero mutation/device/native
 operation counters.
 
-The exact-instance suite passes in smoke with 106 records and 385 assertions.
-The authoritative readiness ledger passes in smoke with 410 records and 2,109
-assertions. Framework status is `PASS`. Live readiness remains `BLOCKED` with
+The exact-instance suite passes under Windows PowerShell 5.1 and PowerShell 7
+with 106 records and 385 assertions. The authoritative readiness ledger passes
+under both runtimes with 410 records and 2,109 assertions. Framework status is
+`PASS`. Live readiness remains `BLOCKED` with
 current gate
 `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` and blocker
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live binding,
