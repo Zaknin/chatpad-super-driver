@@ -6548,3 +6548,88 @@
   next task is an independent read-only audit of this remediation. Even after
   an audit pass, live execution remains blocked until a separately authorized
   native-adapter implementation and audit phase.
+
+## 2026-07-03T10:35+04:00 - Independent exact-instance remediation audit
+
+- **Objective:** Continue the previous task by performing the independent
+  read-only audit of the offline exact-instance contract remediation. Do not
+  implement the native SetupAPI/Newdev adapter.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`, branch
+  `feature/runtime-bringup-exact-instance-contract-remediation`, exact HEAD
+  `d22ba050a6f5fea0ab9e8a71470c90a474d7b548`, clean tree, configured
+  upstream
+  `origin/feature/runtime-bringup-exact-instance-contract-remediation`,
+  local/upstream equality `0/0`, and ancestry from
+  `9b380ef6e070311d682866a5f130b51a44f8485a`. HEAD is the remediation
+  finalization commit directly on parent
+  `fd70e9779056b336b43d09be97e686fa61ed5514`.
+- **Documentation discrepancy corrected:** `docs/PROJECT-STATE.md` still
+  described the remediation finalization commit as expected rather than naming
+  the actual finalized commit. This entry and the project-state update now record
+  `d22ba050a6f5fea0ab9e8a71470c90a474d7b548` as the accepted finalization
+  point.
+- **Investigation:** Inspected the continuation instructions, latest worklog,
+  manifest summary, exact-instance contracts, orchestrator, offline suite, and
+  cross-runtime test entry point. T26-T39 directly cover the prior fail-open
+  audit paths: restoration-identity tampering, coordinated evidence spoofing,
+  caller-controlled real-gate spoofing, cross-runtime canonicalization,
+  duplicate JSON names, required-field deletion after rehash, hidden Unicode
+  instance IDs, fake-adapter live-capability spoofing, canonical stability,
+  and complete analyzer scope.
+- **Validation commands and results:**
+  - `git rev-parse --abbrev-ref --symbolic-full-name '@{u}'`: `origin/feature/runtime-bringup-exact-instance-contract-remediation`.
+  - `git rev-list --left-right --count HEAD...'@{u}'`: `0 0`.
+  - `git merge-base --is-ancestor 9b380ef6e070311d682866a5f130b51a44f8485a HEAD`: `PASS`.
+  - `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-RepositorySafety.ps1`: `REPOSITORY SAFETY: PASS`; deployment, signing, packaging, certificate, key, Windows mutation, device query, and hardware-access counters all `0`.
+  - `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadinessManifest.ps1 -ManifestPath docs/evidence/runtime-bringup-readiness-manifest.json -RunCorruptionRegression`: manifest validation `PASS`; corruption regression `PASS`, 18 cases, zero failed cases.
+  - `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceCrossRuntime.ps1 -ImplementationCommit fd70e9779056b336b43d09be97e686fa61ed5514 -OutputPath artifacts/logs/independent-audit-cross-runtime-d22ba05.json`: `PASS`, four directions, zero failed directions. Plan SHA-256 `c2495c7961a2bd6b976556170c252550239c963a97b2ed4f53d8e62896ae0a04`; snapshot SHA-256 `d7c8a3fdef0ce2095e8faf980319354988db940e3fc4011c297de1b97fb941bb`.
+  - `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit fd70e9779056b336b43d09be97e686fa61ed5514 -OutputPath artifacts/logs/independent-audit-exact-suite-wps-d22ba05.json`: `PASS`, 39 tests, 155 assertions, zero failed tests. T26-T39 all `PASS`.
+  - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit fd70e9779056b336b43d09be97e686fa61ed5514 -OutputPath artifacts/logs/independent-audit-exact-suite-pwsh-d22ba05.json`: `PASS`, 39 tests, 155 assertions, zero failed tests.
+  - `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadiness.ps1`: `PASS` by exit code; 343 fixtures, 1,879 assertions, zero failed fixtures.
+  - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadiness.ps1`: `PASS` by exit code; 343 fixtures, 1,879 assertions, zero failed fixtures.
+- **Audit conclusions:** Every audited fail-open path remained controlled and
+  fail-closed. Full readiness remained offline-only with exact-instance
+  framework `PASS`, live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_AUDIT`, capability blocker
+  `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`, live adapter status
+  `NOT_IMPLEMENTED`, and live authorization `false`. Accounting remained 14
+  synthetic bind attempts, four synthetic restoration attempts, zero synthetic
+  restart attempts, zero live binding/restoration/restart operations, zero
+  broad approved install/rollback operations, zero Windows mutations, zero
+  off-ledger assertions, and zero duplicate-counted assertions.
+- **Analyzer and inventory:** Manifest evidence reports 45 tracked `.ps1`
+  files, six tracked `.psm1` files, 51 tracked PowerShell files, all parsed
+  with zero AST errors. Complete PSScriptAnalyzer status is `PASS` with
+  errors `0`, warnings `166`, information `910`, tool failures `0`, and no
+  blanket suppression.
+- **Ignored audit artifacts:**
+  `artifacts/logs/independent-audit-exact-suite-wps-d22ba05.json`,
+  2,481,348 bytes,
+  `01416D71CED00D8BAB511BCD8E769721C615D12F22ED009FD9584FCCEAA7147F`;
+  `artifacts/logs/independent-audit-exact-suite-pwsh-d22ba05.json`,
+  1,179,946 bytes,
+  `DA4299689343710E4EE39C65DB2306FBF5A1D9CCA8586D4B82AC85095D9C2F99`;
+  `artifacts/logs/independent-audit-cross-runtime-d22ba05.json`, 3,462 bytes,
+  `3F5BB85AB4E4FCDADDEC49E385675E4AAFC9A278E791CDD50E83C3AE7CB88F8A`;
+  `artifacts/logs/independent-audit-readiness-wps-d22ba05.json`, 2,001,811
+  bytes,
+  `FE3BB41A0F7D184385F159731EB005139B6A53AF6E81BECFD7BE50DBA2E7E3FB`;
+  and `artifacts/logs/independent-audit-readiness-pwsh-d22ba05.json`,
+  998,951 bytes,
+  `22697C83A0A793FD20953FE6190720A0A532217140DDDCB1C694711AC402E652`.
+- **Files changed:** `docs/PROJECT-STATE.md`, `docs/WORKLOG.md`, and
+  `docs/NEXT-TASK.md` only. No `docs/DECISIONS.md` update was made because the
+  audit did not create a durable new technical or workflow decision.
+- **Safety:** No native adapter implementation, driver build/link, signing,
+  CAT generation, package creation/staging, driver-store mutation,
+  installation, binding, loading, restoration, restart, reboot, device query,
+  hardware access, Windows/service/registry/boot/security mutation, tracing,
+  event-log export, protocol traffic, input injection, certificate/credential
+  change, production source/INF/frozen binary change, or `legacy/` change
+  occurred.
+- **Commit and next task:** The expected audit closeout commit contains only
+  these continuity-document updates. The next task is a separately authorized
+  design-and-gate task for a future native SetupAPI/Newdev adapter opening;
+  live execution remains blocked until a later explicit implementation and
+  audit phase.

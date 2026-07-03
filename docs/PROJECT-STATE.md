@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-03 (offline exact-instance contract remediation)*
+*Last updated: 2026-07-03 (independent exact-instance remediation audit)*
 
 ## Current state
 
@@ -10,8 +10,11 @@
   `a969745f589a55243ca9f9e964a45d7104f9a5e8` and
   `c3c0930db1326d56808879f12a9e8951f0051e80`, followed by deterministic
   analyzer-evidence commit `fd70e9779056b336b43d09be97e686fa61ed5514`.
-- **Expected finalization commit:** the commit containing this file, with no
-  executable changes.
+- **Remediation finalization commit:**
+  `d22ba050a6f5fea0ab9e8a71470c90a474d7b548`.
+- **Expected audit closeout commit:** the commit containing this file, with no
+  executable source, build, package, driver, frozen-binary, or `legacy/`
+  changes.
 - **Accepted offline baseline:** commit
   `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`; manifest SHA-256
   `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`.
@@ -43,9 +46,11 @@
 ## Verified results
 
 - T1-T39: `PASS`; 39 records; 155 assertions under Windows PowerShell 5.1
-  and PowerShell 7.
+  and PowerShell 7, independently rerun from finalization commit `d22ba05`.
 - Four-direction plan/snapshot matrix: `PASS`; identical canonical bytes and
-  SHA-256 values in all directions.
+  SHA-256 values in all directions. Audit hashes:
+  plan `c2495c7961a2bd6b976556170c252550239c963a97b2ed4f53d8e62896ae0a04`;
+  snapshot `d7c8a3fdef0ce2095e8faf980319354988db940e3fc4011c297de1b97fb941bb`.
 - State-machine contract: 50 allowed edges, zero allowed-edge failures, five
   prohibited probes, zero prohibited acceptances.
 - Full readiness ledger: 343 records and 1,879 assertions, increased from
@@ -58,11 +63,16 @@
 - Complete PSScriptAnalyzer: errors `0`, warnings `166`, information `910`,
   tool failures `0`; no blanket suppression.
 - Canonical manifest validation and isolated corruption regression: `PASS`.
+- Independent read-only audit result: `PASS`. T26-T39 all passed, including
+  restoration-identity tampering, coordinated evidence spoofing, public
+  real-gate spoofing, duplicate JSON names, required-field deletion,
+  hidden-Unicode instance IDs, canonical stability, and analyzer scope.
 
 ## Readiness and safety
 
-- Offline framework status: implemented; remediation pending independent
-  read-only audit.
+- Offline framework status: implemented; independent read-only audit completed
+  and passed for remediation commit `fd70e9779056b336b43d09be97e686fa61ed5514`
+  plus finalization commit `d22ba050a6f5fea0ab9e8a71470c90a474d7b548`.
 - Live readiness: `BLOCKED`.
 - Current gate: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
 - Capability blocker: `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
