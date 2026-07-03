@@ -1,7 +1,6 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'NativeInterop\ChatpadNativeInteropSourceBoundary.psm1') -Force
-Import-Module (Join-Path $PSScriptRoot '..\RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force -Prefix EvidenceIdentity
 $script:NativeCompileOnlyEvidenceCache = $null
 
 function Get-NativeScaffoldConstants {
@@ -76,6 +75,17 @@ function Read-NativeCompileOnlyValidationEvidence {
         $EvidencePath = Get-NativeCompileOnlyValidationEvidencePath
     }
     Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
+}
+
+function Get-NativeCanonicalTextIdentity {
+    param([Parameter(Mandatory)][string]$Path)
+    $rawBytes=[IO.File]::ReadAllBytes($Path)
+    $text=[Text.UTF8Encoding]::new($false,$true).GetString($rawBytes)
+    if($text.Length -gt 0-and$text[0]-eq[char]0xFEFF){$text=$text.Substring(1)}
+    $canonicalBytes=[Text.UTF8Encoding]::new($false).GetBytes($text.Replace("`r`n","`n").Replace("`r","`n"))
+    $sha=[Security.Cryptography.SHA256]::Create()
+    try{$hash=(($sha.ComputeHash($canonicalBytes)|ForEach-Object{$_.ToString('X2')})-join'')}finally{$sha.Dispose()}
+    [pscustomobject]@{canonical_sha256=$hash;canonical_byte_size=[long]$canonicalBytes.Length}
 }
 
 function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
@@ -188,7 +198,7 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
             $defects.Add([pscustomobject][ordered]@{id='input-file-commit-invalid';value=$requiredPath})
             continue
         }
-        $actualIdentity=Get-EvidenceIdentityChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $full -HashPolicy canonical_lf_text -CommitRepresented ([string]$record.commit_represented) -State tracked
+        $actualIdentity=Get-NativeCanonicalTextIdentity -Path $full
         $actualHash=$actualIdentity.canonical_sha256
         if($null-eq$record.PSObject.Properties['canonical_sha256']-or$null-eq$record.PSObject.Properties['canonical_byte_size']-or[string]$record.canonical_sha256-cne$actualHash-or[long]$record.canonical_byte_size-ne[long]$actualIdentity.canonical_byte_size){
             $defects.Add([pscustomobject][ordered]@{id='input-file-canonical-identity-mismatch';value=$requiredPath})
