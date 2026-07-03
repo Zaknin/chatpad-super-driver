@@ -9,7 +9,7 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full commit hash.'}
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
-if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.blocker-ne'BLOCKED_PENDING_INDEPENDENT_AUDIT'){throw 'Suite result is not an accepted pending-audit blocked result.'}
+if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_AUDIT'-or$suite.capability_blocker-ne'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'NOT_IMPLEMENTED'-or$suite.live_binding_authorized-ne$false){throw 'Suite result is not an accepted pending-audit, missing-live-adapter blocked result.'}
 
 function Get-CheckedOutLocalBranch {
     $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
@@ -64,6 +64,37 @@ function Get-PowerShellInventory {
     }
 }
 
+function Get-PSScriptAnalyzerInventory {
+    param([Parameter(Mandatory)][string[]]$TrackedPaths)
+    $command=Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue
+    if($null-eq$command){
+        return [pscustomobject][ordered]@{status='SKIPPED_UNAVAILABLE';analyzed_file_count=0;error_count=0;warning_count=0;information_count=0;tool_failure_count=0;findings=@();tool_failures=@();blanket_suppression_used=$false}
+    }
+    $findings=[Collections.Generic.List[object]]::new()
+    $failures=[Collections.Generic.List[object]]::new()
+    foreach($path in $TrackedPaths){
+        try {
+            foreach($finding in @(Invoke-ScriptAnalyzer -Path (Join-Path $root $path) -ErrorAction Stop)){
+                $findings.Add([pscustomobject][ordered]@{rule_name=[string]$finding.RuleName;file=$path;line=[int]$finding.Line;severity=[string]$finding.Severity;message=[string]$finding.Message})
+            }
+        } catch {
+            $failures.Add([pscustomobject][ordered]@{file=$path;exception_type=$_.Exception.GetType().FullName;message=$_.Exception.Message})
+        }
+    }
+    $errors=@($findings|Where-Object severity -eq Error)
+    [pscustomobject][ordered]@{
+        status=if($errors.Count-or$failures.Count){'FAIL'}else{'PASS'}
+        analyzed_file_count=$TrackedPaths.Count
+        error_count=$errors.Count
+        warning_count=@($findings|Where-Object severity -eq Warning).Count
+        information_count=@($findings|Where-Object severity -eq Information).Count
+        tool_failure_count=$failures.Count
+        findings=@($findings)
+        tool_failures=@($failures)
+        blanket_suppression_used=$false
+    }
+}
+
 $base='9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
 $paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)
 $paths=@($paths|Where-Object{$_-and$_-ne$OutputPath}|Sort-Object -Unique)
@@ -72,16 +103,7 @@ foreach($path in $paths){$entries.Add((New-Entry ('tracked-'+(($path.ToLowerInva
 $suiteRelative=[IO.Path]::GetFullPath($SuiteResultPath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $powershellInventory=Get-PowerShellInventory
-$pssa=Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue
-$pssaResult=if($null-eq$pssa){
-    'SKIPPED_UNAVAILABLE'
-} else {
-    $pssaErrors=[Collections.Generic.List[object]]::new()
-    foreach($path in @(& git ls-files '*.ps1' '*.psm1')){
-        foreach($finding in @(Invoke-ScriptAnalyzer -Path (Join-Path $root $path) -Severity Error -ErrorAction Stop)){$pssaErrors.Add($finding)}
-    }
-    if($pssaErrors.Count){'FAIL'}else{'PASS'}
-}
+$pssaInventory=Get-PSScriptAnalyzerInventory @(&git ls-files '*.ps1' '*.psm1'|Sort-Object)
 $checkedOutBranch=Get-CheckedOutLocalBranch
 
 $manifest=[pscustomobject][ordered]@{
@@ -89,7 +111,10 @@ $manifest=[pscustomobject][ordered]@{
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    blocker='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+    current_gate='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+    capability_blocker='BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
+    live_adapter_status='NOT_IMPLEMENTED'
+    live_binding_authorized=$false
     repository=[pscustomobject][ordered]@{
         branch=$checkedOutBranch
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'
@@ -144,7 +169,9 @@ $manifest=[pscustomobject][ordered]@{
         committed_sample_structural_validation=[string]$suite.committed_sample_structural_validation
         committed_sample_semantic_validation=[string]$suite.committed_sample_semantic_validation
         powershell_inventory=$powershellInventory
-        psscriptanalyzer_status=$pssaResult;runtime_evidence_schema='chatpad-runtime-evidence-schema-v3'
+        psscriptanalyzer_status=$pssaInventory.status
+        psscriptanalyzer=$pssaInventory
+        runtime_evidence_schema='chatpad-runtime-evidence-schema-v3'
         exact_instance_binding_operations=[int]$suite.exact_instance_binding_operations
         exact_instance_restoration_operations=[int]$suite.exact_instance_restoration_operations
         exact_instance_restart_operations=[int]$suite.exact_instance_restart_operations

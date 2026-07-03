@@ -675,9 +675,9 @@ Invoke-Fixture powershell-inventory-reconciliation powershell-inventory PowerShe
     $parsedPs1=@($parsed|Where-Object{$_ -like '*.ps1'})
     $parsedPsm1=@($parsed|Where-Object{$_ -like '*.psm1'})
     $defects=@()
-    if($ps1.Count -ne 43){$defects+="tracked-ps1-count:$($ps1.Count)"}
+    if($ps1.Count -ne 44){$defects+="tracked-ps1-count:$($ps1.Count)"}
     if($psm1.Count -ne 6){$defects+="tracked-psm1-count:$($psm1.Count)"}
-    if($tracked.Count -ne 49){$defects+="tracked-total-count:$($tracked.Count)"}
+    if($tracked.Count -ne 50){$defects+="tracked-total-count:$($tracked.Count)"}
     if($parsedPs1.Count -ne $ps1.Count){$defects+="parsed-ps1-count:$($parsedPs1.Count)"}
     if($parsedPsm1.Count -ne $psm1.Count){$defects+="parsed-psm1-count:$($parsedPsm1.Count)"}
     if($parsed.Count -ne $tracked.Count){$defects+="parsed-total-count:$($parsed.Count)"}
@@ -838,7 +838,11 @@ $unsupportedRuntimePasses=@($observerProvenanceRecords|Where-Object actual_statu
 $result=[pscustomobject][ordered]@{
     schema_version='chatpad-runtime-readiness-suite-v3'
     framework_status=$(if($failed.Count-or$accountingResult.result-ne'PASS'){'FAIL'}else{'PASS'})
-    live_installation_readiness='BLOCKED';blocker='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+    live_installation_readiness='BLOCKED'
+    current_gate='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+    capability_blocker='BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
+    live_adapter_status='NOT_IMPLEMENTED'
+    live_binding_authorized=$false
     fixture_count=$script:Fixtures.Count
     fixture_assertion_sum=$assertionCount
     harness_result_record_count=$harnessRecords.Count

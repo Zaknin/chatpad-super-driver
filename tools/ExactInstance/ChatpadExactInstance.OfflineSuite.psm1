@@ -7,7 +7,7 @@ Import-Module (Join-Path $PSScriptRoot 'ChatpadExactInstance.Orchestrator.psm1')
 $script:Generated='2026-07-03T00:00:00Z'
 $script:Validation='2026-07-03T00:05:00Z'
 $script:Expires='2026-07-03T01:00:00Z'
-$script:Branch='feature/runtime-bringup-exact-instance-binding-restoration'
+$script:Branch='feature/runtime-bringup-exact-instance-contract-remediation'
 
 function New-ChatpadExactSuiteEnvironment {
     param([hashtable]$Behavior=@{},[switch]$DuplicateTargetPackage,[switch]$WithoutPriorPackage,[switch]$WithoutTargetPackage)
@@ -87,6 +87,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     param([Parameter(Mandatory)][string]$ImplementationCommit)
     if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full lowercase commit hash.'}
     $results=[Collections.Generic.List[object]]::new()
+    $script:CrossRuntimeMatrix=$null
 
     $results.Add((Invoke-ChatpadExactCase T1 'two devices with identical hardware IDs' {
         $e=New-ChatpadExactSuiteEnvironment
@@ -156,7 +157,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         $restorePlan=New-ChatpadExactSuitePlan $e 'a0000000-0000-0000-0000-000000000011' $ImplementationCommit -OperationType restore -RestorationSnapshot $snapshot
         $restore=Invoke-ChatpadSyntheticExactRestore $e.adapter $restorePlan.plan $restorePlan.plan.plan_sha256 $restorePlan.plan.operation_id $script:Validation -OfflineSyntheticAuthorization
         $calls=@($e.adapter.call_log|Where-Object{$_.operation-eq'restore-exact-device'})
-        [pscustomobject]@{checks=@(($bind.final_classification-eq'PASS'),($restore.final_classification-eq'PASS'),($calls.Count-eq1),($calls[0].canonical_instance_id-ceq$e.target_id),(Test-ChatpadFakeDriverIdentityMatch $restore.after_driver_identity $e.prior));details=[pscustomobject]@{restore_calls=$calls;evidence=$restore}}
+        [pscustomobject]@{checks=@(($bind.final_classification-eq'PASS'),($restore.final_classification-eq'PASS'),($calls.Count-eq1),($calls[0].canonical_instance_id-ceq$e.target_id),(Test-ChatpadFakeDriverIdentityMatch $restore.after_driver_identity $e.prior),($restore.restoration_identity.exact_equality-eq$true),(Test-ChatpadFakeDriverIdentityMatch $restore.restoration_identity.effective_restoration_driver_identity $snapshot.driver_identity),($restore.restoration_identity.restoration_adapter_argument-eq$snapshot.driver_identity.driver_node_id));details=[pscustomobject]@{restore_calls=$calls;evidence=$restore}}
     }))
 
     $results.Add((Invoke-ChatpadExactCase T11 'prior driver unavailable' {
@@ -187,7 +188,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     $results.Add((Invoke-ChatpadExactCase T14 'restoration failure retains manual recovery blocker' {
         $e=New-ChatpadExactSuiteEnvironment -Behavior @{bind_api_failure_after_mutation=$true;restore_failure=$true};$p=New-ChatpadExactSuitePlan $e 'e0000000-0000-0000-0000-000000000014' $ImplementationCommit
         $r=Invoke-ChatpadSyntheticExactApply $e.adapter $p.plan $p.plan.plan_sha256 $p.plan.operation_id $script:Validation -OfflineSyntheticAuthorization -AutoRestoreOnFailure
-        [pscustomobject]@{checks=@(($r.final_classification-eq'BLOCKED'),($r.restoration_outcome-eq'RESTORE_API_FAILED'),($r.stop_condition-eq'manual-recovery-required'),(@($r.state_transitions|Where-Object{$_.state-eq'RESTORE_FAILED'}).Count-eq1));details=$r}
+        [pscustomobject]@{checks=@(($r.final_classification-eq'BLOCKED'),($r.restoration_outcome-eq'RESTORE_API_FAILED'),($r.stop_condition-eq'manual-recovery-required'),(@($r.state_transitions|Where-Object{$_.state-eq'RESTORE_FAILED'}).Count-eq1),($r.mutation_may_have_occurred-eq$true),($r.uncertainty_status-eq'active'),(@($r.state_transitions|Where-Object{$_.state-eq'COMPLETED'}).Count-eq0));details=$r}
     }))
 
     $results.Add((Invoke-ChatpadExactCase T15 'replayed apply rejected' {
@@ -258,17 +259,136 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         $spoof=Test-ChatpadRealExecutionAuthorization Apply $p.plan $p.plan.plan_sha256 $p.plan.operation_id $auth -AllowWindowsMutation -IsElevated $true -AdapterIdentity 'chatpad-fake-exact-instance-adapter-v1' -SyntheticAdapter $true -CleanPreflight $true -ValidationTimeUtc $script:Validation
         $evidence=Invoke-ChatpadSyntheticExactApply $e.adapter $p.plan $p.plan.plan_sha256 $p.plan.operation_id $script:Validation -OfflineSyntheticAuthorization
         $valid=Test-ChatpadExactInstanceEvidence $evidence
-        $fakeAsLive=Copy-ChatpadExactObject $evidence;$fakeAsLive.synthetic=$false;$fakeAsLive.source_classification='live'
+        $fakeAsLive=Copy-ChatpadExactObject $evidence;$fakeAsLive.adapter_identity='chatpad-windows-exact-instance-adapter-v1';$fakeAsLive.adapter_mode='windows-exact-instance';$fakeAsLive.synthetic=$false;$fakeAsLive.source_classification='live';$fakeAsLive.producer='trusted-live-producer';$fakeAsLive.evidence_mode='live'
         $wrongAdapter=Copy-ChatpadExactObject $evidence;$wrongAdapter.adapter_identity='chatpad-windows-exact-instance-adapter-v1'
         $fakeAsLiveResult=Test-ChatpadExactInstanceEvidence $fakeAsLive
         $wrongAdapterResult=Test-ChatpadExactInstanceEvidence $wrongAdapter
-        [pscustomobject]@{checks=@(($spoof.result-eq'BLOCKED'),($spoof.result_code-eq'EXECUTION_GATES_INCOMPLETE'),($spoof.defects-contains'REAL_ADAPTER_REQUIRED'),($valid.result-eq'PASS'),($fakeAsLiveResult.result-eq'FAIL'),($wrongAdapterResult.result-eq'FAIL'),($evidence.live_readiness_satisfied-eq$false));details=[pscustomobject]@{execution_gate=$spoof;evidence=$evidence;fake_as_live_validation=$fakeAsLiveResult;wrong_adapter_validation=$wrongAdapterResult}}
+        [pscustomobject]@{checks=@(($spoof.result-eq'BLOCKED'),($spoof.result_code-eq'LIVE_ADAPTER_NOT_IMPLEMENTED'),($spoof.defects-contains'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($valid.result-eq'PASS'),($fakeAsLiveResult.result-eq'FAIL'),($wrongAdapterResult.result-eq'FAIL'),($evidence.live_readiness_satisfied-eq$false));details=[pscustomobject]@{execution_gate=$spoof;evidence=$evidence;fake_as_live_validation=$fakeAsLiveResult;wrong_adapter_validation=$wrongAdapterResult}}
     }))
 
     $results.Add((Invoke-ChatpadExactCase T25 'uncontrolled adapter exception remains visible' {
         $e=New-ChatpadExactSuiteEnvironment -Behavior @{bind_throw_after_mutation=$true};$p=New-ChatpadExactSuitePlan $e '19000000-0000-0000-0000-000000000025' $ImplementationCommit
         $r=Invoke-ChatpadSyntheticExactApply $e.adapter $p.plan $p.plan.plan_sha256 $p.plan.operation_id $script:Validation -OfflineSyntheticAuthorization
-        [pscustomobject]@{checks=@(($r.result_code-eq'ADAPTER_EXCEPTION_UNCERTAIN'),($r.uncontrolled_exception_count-eq1),($r.final_classification-eq'BLOCKED'),(@($r.state_transitions|Where-Object{$_.state-eq'RESTORE_REQUIRED'}).Count-eq1),($r.stop_condition-eq'manual-recovery-required'));details=$r}
+        [pscustomobject]@{checks=@(($r.result_code-eq'ADAPTER_EXCEPTION_UNCERTAIN'),($r.uncontrolled_exception_count-eq1),($r.final_classification-eq'BLOCKED'),(@($r.state_transitions|Where-Object{$_.state-eq'RESTORE_REQUIRED'}).Count-eq1),($r.stop_condition-eq'manual-recovery-required'),($r.mutation_may_have_occurred-eq$true),($r.uncertainty_status-eq'active'),(@($r.state_transitions|Where-Object{$_.state-eq'COMPLETED'}).Count-eq0));details=$r}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T26 'restoration identity changed and plan rehashed' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '26000000-0000-0000-0000-000000000026' $ImplementationCommit -OperationType restore
+        $tampered=Copy-ChatpadExactObject $p.plan
+        $tampered.exact_restoration_driver_identity=Copy-ChatpadExactObject $e.target
+        $tampered.plan_sha256=Get-ChatpadExactObjectHash $tampered -ExcludedProperties @('plan_sha256')
+        $r=Invoke-ChatpadSyntheticExactRestore $e.adapter $tampered $tampered.plan_sha256 $tampered.operation_id $script:Validation -OfflineSyntheticAuthorization
+        $calls=@($e.adapter.call_log|Where-Object{$_.operation-eq'restore-exact-device'})
+        [pscustomobject]@{checks=@(($r.result_code-eq'RESTORATION_IDENTITY_SNAPSHOT_MISMATCH'),($calls.Count-eq0),($r.final_classification-ne'PASS'),($r.restoration_identity.exact_equality-eq$false));details=[pscustomobject]@{evidence=$r;restore_calls=$calls}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T27 'nested restoration identity changed' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '27000000-0000-0000-0000-000000000027' $ImplementationCommit -OperationType restore
+        $tampered=Copy-ChatpadExactObject $p.plan
+        $tampered.exact_restoration_driver_identity.inf_sha256='f'*64
+        $tampered.plan_sha256=Get-ChatpadExactObjectHash $tampered -ExcludedProperties @('plan_sha256')
+        $r=Test-ChatpadExactInstancePlan $tampered -ExpectedPlanSha256 $tampered.plan_sha256 -ExpectedOperationId $tampered.operation_id -ValidationTimeUtc $script:Validation
+        [pscustomobject]@{checks=@(($r.result_code-eq'RESTORATION_IDENTITY_SNAPSHOT_MISMATCH'),($r.defects-contains'RESTORATION_IDENTITY_SNAPSHOT_MISMATCH'),(@($e.adapter.call_log|Where-Object{$_.operation-eq'restore-exact-device'}).Count-eq0));details=$r}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T28 'coordinated synthetic-to-live spoof rejected' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '28000000-0000-0000-0000-000000000028' $ImplementationCommit
+        $evidence=Invoke-ChatpadSyntheticExactApply $e.adapter $p.plan $p.plan.plan_sha256 $p.plan.operation_id $script:Validation -OfflineSyntheticAuthorization
+        $spoof=Copy-ChatpadExactObject $evidence
+        $spoof.adapter_identity='chatpad-windows-exact-instance-adapter-v1';$spoof.adapter_mode='windows-exact-instance';$spoof.synthetic=$false;$spoof.source_classification='live';$spoof.producer='trusted-live-producer';$spoof.evidence_mode='live'
+        $r=Test-ChatpadExactInstanceEvidence $spoof
+        [pscustomobject]@{checks=@(($r.result-eq'FAIL'),($r.defects-contains'UNTRUSTED_EVIDENCE_ORIGIN'),($spoof.live_readiness_satisfied-eq$false),($evidence.source_classification-eq'synthetic'));details=[pscustomobject]@{validation=$r;spoof=$spoof}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T29 'caller-controlled real gate spoof rejected' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '29000000-0000-0000-0000-000000000029' $ImplementationCommit
+        $auth=Get-ChatpadExactSha256Text ("$($p.plan.operation_id)|$($p.plan.plan_sha256)|Apply")
+        $r=Test-ChatpadRealExecutionAuthorization Apply $p.plan $p.plan.plan_sha256 $p.plan.operation_id $auth -AllowWindowsMutation -IsElevated $true -AdapterIdentity 'chatpad-windows-exact-instance-adapter-v1' -SyntheticAdapter $false -CleanPreflight $true -ValidationTimeUtc $script:Validation
+        [pscustomobject]@{checks=@(($r.result-eq'BLOCKED'),($r.result_code-eq'LIVE_ADAPTER_NOT_IMPLEMENTED'),($r.live_adapter_capability_present-eq$false),(@($e.adapter.call_log|Where-Object{$_.operation-match'bind|restore|restart'}).Count-eq0));details=$r}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T30 'Windows PowerShell plan validates in both runtimes' {
+        $matrixPath=Join-Path (Split-Path $PSScriptRoot -Parent) 'Test-ChatpadExactInstanceCrossRuntime.ps1'
+        $raw=@(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $matrixPath -ImplementationCommit $ImplementationCommit)
+        if($LASTEXITCODE-ne0){throw 'Cross-runtime matrix failed.'}
+        $script:CrossRuntimeMatrix=($raw -join"`n")|ConvertFrom-Json
+        $directions=@($script:CrossRuntimeMatrix.matrix|Where-Object{$_.producer_runtime-eq'windows-powershell'})
+        [pscustomobject]@{checks=@(($script:CrossRuntimeMatrix.result-eq'PASS'),($directions.Count-eq2),(@($directions|Where-Object{$_.result-ne'PASS'-or-not$_.hashes_identical}).Count-eq0));details=$script:CrossRuntimeMatrix}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T31 'PowerShell 7 plan validates in both runtimes' {
+        if($null-eq$script:CrossRuntimeMatrix){throw 'T30 cross-runtime matrix unavailable.'}
+        $directions=@($script:CrossRuntimeMatrix.matrix|Where-Object{$_.producer_runtime-eq'powershell-7'})
+        [pscustomobject]@{checks=@(($script:CrossRuntimeMatrix.result-eq'PASS'),($directions.Count-eq2),(@($directions|Where-Object{$_.result-ne'PASS'-or-not$_.hashes_identical}).Count-eq0));details=$script:CrossRuntimeMatrix}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T32 'duplicate JSON root property rejected' {
+        $r=Test-ChatpadExactJsonDocument '{"operation_type":"bind","operation_type":"bind"}'
+        $case=Test-ChatpadExactJsonDocument '{"operation_type":"bind","Operation_Type":"bind"}'
+        [pscustomobject]@{checks=@(($r.result_code-eq'DUPLICATE_JSON_PROPERTY'),($case.result_code-eq'DUPLICATE_JSON_PROPERTY'),($r.defects[0].Contains('path=$.operation_type')));details=[pscustomobject]@{equal_value=$r;case_variant=$case}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T33 'duplicate nested restoration property rejected' {
+        $equal=Test-ChatpadExactJsonDocument '{"restoration_snapshot":{"driver_identity":{"driver_node_id":"prior","driver_node_id":"prior"}}}'
+        $different=Test-ChatpadExactJsonDocument '{"restoration_snapshot":{"driver_identity":{"driver_node_id":"prior","driver_node_id":"target"}}}'
+        [pscustomobject]@{checks=@(($equal.result_code-eq'DUPLICATE_JSON_PROPERTY'),($different.result_code-eq'DUPLICATE_JSON_PROPERTY'),($different.defects[0]-match'restoration_snapshot.driver_identity.driver_node_id'));details=[pscustomobject]@{equal=$equal;different=$different}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T34 'required host identity deletion remains invalid after rehash' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '34000000-0000-0000-0000-000000000034' $ImplementationCommit
+        $tampered=Copy-ChatpadExactObject $p.plan;$tampered.PSObject.Properties.Remove('host_identity');$tampered.plan_sha256=Get-ChatpadExactObjectHash $tampered -ExcludedProperties @('plan_sha256')
+        $r=Test-ChatpadExactInstancePlan $tampered -ExpectedPlanSha256 $tampered.plan_sha256 -ExpectedOperationId $tampered.operation_id -ValidationTimeUtc $script:Validation
+        [pscustomobject]@{checks=@(($r.result_code-eq'PLAN_SCHEMA_INVALID'),($r.defects-contains'schema-required-missing:plan.host_identity'),($r.result-ne'PASS'));details=$r}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T35 'required nested driver identity deletion rejected' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '35000000-0000-0000-0000-000000000035' $ImplementationCommit
+        $tampered=Copy-ChatpadExactObject $p.plan
+        $tampered.restoration_snapshot.driver_identity.PSObject.Properties.Remove('driver_node_id')
+        $tampered.restoration_snapshot.snapshot_sha256=Get-ChatpadExactObjectHash $tampered.restoration_snapshot -ExcludedProperties @('snapshot_sha256')
+        $tampered.restoration_snapshot_fingerprint=$tampered.restoration_snapshot.snapshot_sha256
+        $tampered.plan_sha256=Get-ChatpadExactObjectHash $tampered -ExcludedProperties @('plan_sha256')
+        $r=Test-ChatpadExactInstancePlan $tampered -ExpectedPlanSha256 $tampered.plan_sha256 -ExpectedOperationId $tampered.operation_id -ValidationTimeUtc $script:Validation
+        $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim());$schema=Get-Content (Join-Path $root 'docs\evidence\exact-instance-operation-plan-schema-v1.json') -Raw|ConvertFrom-Json
+        $planNames=@($p.plan.PSObject.Properties.Name|Sort-Object);$schemaNames=@($schema.required|Sort-Object)
+        $snapshotNames=@($p.plan.restoration_snapshot.PSObject.Properties.Name|Sort-Object);$schemaSnapshotNames=@($schema.'$defs'.restorationSnapshot.required|Sort-Object)
+        $parity=@(Compare-Object $planNames $schemaNames).Count-eq0-and@(Compare-Object $snapshotNames $schemaSnapshotNames).Count-eq0
+        [pscustomobject]@{checks=@(($r.result-ne'PASS'),(@($r.defects|Where-Object{$_-match'driver_node_id'}).Count-gt0),($parity-and@($e.adapter.call_log|Where-Object{$_.operation-match'bind|restore'}).Count-eq0));details=[pscustomobject]@{validation=$r;schema_runtime_parity=$parity}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T36 'hidden Unicode and non-ASCII instance IDs rejected' {
+        $characters=@([char]0x200B,[char]0x00A0,[char]0x200C,[char]0x200D,[char]0x202E,[char]0x2066,[char]0x2067,[char]0x2068,[char]0x2069,[char]0xFEFF,"`t","`n",[char]0xFF3C,[char]0x0410)
+        $codes=@();$adapterCalls=0
+        foreach($character in $characters){$e=New-ChatpadExactSuiteEnvironment;$id="USB\VID_045E&PID_028E\TARGET$character-0001";$p=New-ChatpadExactSuitePlan $e '36000000-0000-0000-0000-000000000036' $ImplementationCommit -RequestedInstanceId $id;$codes+=$p.result_code;$adapterCalls+=$e.adapter.call_log.Count}
+        [pscustomobject]@{checks=@(($codes.Count-eq$characters.Count),(@($codes|Where-Object{$_-ne'INSTANCE_ID_CHARACTER_INVALID'}).Count-eq0),($adapterCalls-eq0));details=[pscustomobject]@{case_count=$characters.Count;result_codes=$codes;adapter_call_count=$adapterCalls}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T37 'fake adapter property spoof cannot acquire live capability' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '37000000-0000-0000-0000-000000000037' $ImplementationCommit
+        $e.adapter.adapter_identity='chatpad-windows-exact-instance-adapter-v1';$e.adapter.adapter_mode='windows-exact-instance';$e.adapter.synthetic=$false
+        $gate=Test-ChatpadRealExecutionAuthorization Apply $p.plan $p.plan.plan_sha256 $p.plan.operation_id 'caller-value' -AllowWindowsMutation -IsElevated $true -AdapterIdentity $e.adapter.adapter_identity -SyntheticAdapter $false -CleanPreflight $true -ValidationTimeUtc $script:Validation
+        [pscustomobject]@{checks=@(($gate.result_code-eq'LIVE_ADAPTER_NOT_IMPLEMENTED'),($gate.caller_execution_claims_trusted-eq$false),($gate.live_adapter_capability_present-eq$false),(@($e.adapter.call_log|Where-Object{$_.operation-match'bind|restore|restart'}).Count-eq0));details=$gate}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T38 'canonical serialization stability' {
+        $e=New-ChatpadExactSuiteEnvironment;$p=New-ChatpadExactSuitePlan $e '38000000-0000-0000-0000-000000000038' $ImplementationCommit
+        $bytes=@();$hashes=@()
+        1..4|ForEach-Object{$canonical=ConvertTo-ChatpadExactCanonicalJson $p.plan;$bytes+=[Convert]::ToBase64String([Text.UTF8Encoding]::new($false).GetBytes($canonical));$hashes+=Get-ChatpadExactObjectHash $p.plan -ExcludedProperties @('plan_sha256')}
+        $parsed=(Test-ChatpadExactJsonDocument (ConvertTo-ChatpadExactCanonicalJson $p.plan)).value
+        [pscustomobject]@{checks=@((@($bytes|Select-Object -Unique).Count-eq1),(@($hashes|Select-Object -Unique).Count-eq1),((Get-ChatpadExactObjectHash $parsed -ExcludedProperties @('plan_sha256'))-ceq$p.plan.plan_sha256));details=[pscustomobject]@{unique_byte_sequence_count=@($bytes|Select-Object -Unique).Count;unique_hash_count=@($hashes|Select-Object -Unique).Count;plan_sha256=$p.plan.plan_sha256}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase T39 'complete PSScriptAnalyzer scope' {
+        $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
+        if($PSVersionTable.PSEdition-eq'Core'){
+            $modulePath=Join-Path $PSScriptRoot 'ChatpadExactInstance.Contracts.psm1'
+            $command="Import-Module '$($modulePath.Replace("'","''"))' -Force; Get-ChatpadTrackedScriptAnalyzerResult '$($root.Replace("'","''"))'|ConvertTo-Json -Depth 10 -Compress"
+            $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
+            $raw=@(&powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded)
+            if($LASTEXITCODE-ne0){throw 'Supported-runtime PSScriptAnalyzer child process failed.'}
+            $analysis=($raw-join"`n")|ConvertFrom-Json
+        } else {$analysis=Get-ChatpadTrackedScriptAnalyzerResult $root}
+        [pscustomobject]@{checks=@(($analysis.tracked_total-eq@(&git ls-files '*.ps1' '*.psm1').Count),($analysis.tool_failure_count-eq0),($analysis.error_count-eq0),(@($analysis.findings|Where-Object{$_.rule_name-eq'PSAvoidAssignmentToAutomaticVariable'-and$_.file-like'*ChatpadRuntimeBringup.Common.psm1'}).Count-eq0));details=$analysis}
     }))
 
     $failed=@($results|Where-Object{$_.fixture_result-ne'PASS'})
@@ -322,6 +442,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     $contractPass=($allowedEdgeFailures-eq0-and$invalidEdgeAcceptances-eq0-and$staticGuardMatches.Count-eq0)
     [pscustomobject][ordered]@{
         schema_version='chatpad-exact-instance-offline-suite-v1'
+        canonical_json_version='chatpad-canonical-json-v1'
         producer='tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1'
         implementation_commit=$ImplementationCommit
         branch=$script:Branch
@@ -334,6 +455,8 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         assertion_count=$assertions
         category_totals=@([pscustomobject]@{category='exact-instance-offline';record_count=$results.Count;assertion_count=$assertions})
         tests=@($results)
+        cross_runtime_hash_matrix=$script:CrossRuntimeMatrix
+        psscriptanalyzer_scope=($results|Where-Object fixture_id -eq T39|Select-Object -ExpandProperty details)
         critical_call_traces=@($critical|ForEach-Object{[pscustomobject]@{test_id=$_.fixture_id;details=$_.details}})
         state_machine_contract=[pscustomobject][ordered]@{
             result=if($allowedEdgeFailures-or$invalidEdgeAcceptances){'FAIL'}else{'PASS'}
@@ -370,7 +493,10 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
             skipped_as_pass_count=0
         }
         live_installation_readiness='BLOCKED'
-        blocker='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+        current_gate='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+        capability_blocker='BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
+        live_adapter_status='NOT_IMPLEMENTED'
+        live_binding_authorized=$false
     }
 }
 

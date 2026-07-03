@@ -18,8 +18,17 @@ function New-ChatpadExactEvidence {
         [string]$ExceptionType=''
     )
     $c=$Adapter.counters
+    $snapshotIdentity=Get-ChatpadExactProperty (Get-ChatpadExactProperty $Plan 'restoration_snapshot' $null) 'driver_identity' $null
+    $planIdentity=Get-ChatpadExactProperty $Plan 'exact_restoration_driver_identity' $null
+    $restoreCall=@($Adapter.call_log|Where-Object{$_.operation-eq'restore-exact-device'}|Select-Object -Last 1)
+    $adapterArgument=if($restoreCall.Count){[string](Get-ChatpadExactProperty $restoreCall[0].arguments 'driver_node_id' '')}else{''}
+    $mutationMayHaveOccurred=@($Transitions|Where-Object{$_.state-in@('BIND_STARTED','BIND_API_SUCCEEDED','BIND_FAILED_AFTER_MUTATION','RESTORE_STARTED','RESTORE_API_SUCCEEDED')}).Count-gt0
+    $uncertaintyStatus=if($UncontrolledExceptions-gt0-or@($Transitions|Where-Object{$_.state-eq'RESTORE_FAILED'}).Count){'active'}elseif($mutationMayHaveOccurred-and$RestorationOutcome-eq'RESTORED'){'recovered'}else{'none'}
     [pscustomobject][ordered]@{
         schema_id=(Get-ChatpadExactInstanceConstants).evidence_schema
+        canonical_json_version=(Get-ChatpadExactInstanceConstants).canonical_json_version
+        producer='tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1'
+        evidence_mode='offline-synthetic'
         operation_id=[string]$Plan.operation_id
         plan_sha256=[string]$Plan.plan_sha256
         implementation_commit=[string]$Plan.implementation_commit
@@ -59,9 +68,20 @@ function New-ChatpadExactEvidence {
         result_code=$ResultCode
         stop_condition=$StopCondition
         restoration_outcome=$RestorationOutcome
+        restoration_identity=[pscustomobject][ordered]@{
+            snapshot_prior_driver_identity=if($null-eq$snapshotIdentity){$null}else{Copy-ChatpadExactObject $snapshotIdentity}
+            plan_restoration_driver_identity=if($null-eq$planIdentity){$null}else{Copy-ChatpadExactObject $planIdentity}
+            effective_restoration_driver_identity=if($null-eq$snapshotIdentity){$null}else{Copy-ChatpadExactObject $snapshotIdentity}
+            exact_equality=(Test-ChatpadExactDeepEqual $snapshotIdentity $planIdentity)
+            restoration_adapter_argument=$adapterArgument
+        }
+        mutation_may_have_occurred=$mutationMayHaveOccurred
+        uncertainty_status=$uncertaintyStatus
         final_classification=$FinalClassification
         live_readiness_satisfied=$false
-        blocker=(Get-ChatpadExactInstanceConstants).pending_audit_blocker
+        readiness='BLOCKED'
+        current_gate=(Get-ChatpadExactInstanceConstants).pending_audit_blocker
+        capability_blocker=(Get-ChatpadExactInstanceConstants).live_adapter_blocker
     }
 }
 
@@ -244,14 +264,20 @@ function Invoke-ChatpadSyntheticInlineRestore {
         [Parameter(Mandatory)][Collections.Generic.List[object]]$Transitions,
         [Parameter(Mandatory)][string]$Timestamp
     )
+    $snapshotIdentity=Get-ChatpadExactProperty (Get-ChatpadExactProperty $Plan 'restoration_snapshot' $null) 'driver_identity' $null
+    $planIdentity=Get-ChatpadExactProperty $Plan 'exact_restoration_driver_identity' $null
+    if(-not(Test-ChatpadExactDeepEqual $snapshotIdentity $planIdentity)){
+        Add-ChatpadExactTransition $Transitions BLOCKED $Timestamp 'RESTORATION_IDENTITY_SNAPSHOT_MISMATCH'
+        return [pscustomobject]@{restoration_outcome='RESTORATION_IDENTITY_SNAPSHOT_MISMATCH';after=$null}
+    }
     Add-ChatpadExactTransition $Transitions RESTORE_STARTED $Timestamp
-    $package=Invoke-ChatpadFakeResolvePackage $Adapter $Plan.exact_restoration_driver_identity restoration
+    $package=Invoke-ChatpadFakeResolvePackage $Adapter $snapshotIdentity restoration
     if($package.result-ne'PASS'){
         Add-ChatpadExactTransition $Transitions RESTORE_FAILED $Timestamp $package.result_code
         Add-ChatpadExactTransition $Transitions BLOCKED $Timestamp 'manual-recovery-required'
         return [pscustomobject]@{restoration_outcome=$package.result_code;after=$null}
     }
-    $restore=Invoke-ChatpadFakeRestoreExactDevice $Adapter $Plan.canonical_instance_id $Plan.exact_restoration_driver_identity
+    $restore=Invoke-ChatpadFakeRestoreExactDevice $Adapter $Plan.canonical_instance_id $snapshotIdentity
     if($restore.result-ne'PASS'){
         Add-ChatpadExactTransition $Transitions RESTORE_FAILED $Timestamp $restore.result_code
         Add-ChatpadExactTransition $Transitions BLOCKED $Timestamp 'manual-recovery-required'
@@ -261,7 +287,7 @@ function Invoke-ChatpadSyntheticInlineRestore {
     Add-ChatpadExactTransition $Transitions POST_RESTORE_VERIFY_STARTED $Timestamp
     $post=Invoke-ChatpadFakeOpenExactDevice $Adapter $Plan.canonical_instance_id
     $after=if($post.result-eq'PASS'){Copy-ChatpadExactObject $post.device}else{$null}
-    if($post.result-ne'PASS'-or-not(Test-ChatpadFakeDriverIdentityMatch $post.device.driver_identity $Plan.exact_restoration_driver_identity)){
+    if($post.result-ne'PASS'-or-not(Test-ChatpadFakeDriverIdentityMatch $post.device.driver_identity $snapshotIdentity)){
         Add-ChatpadExactTransition $Transitions RESTORE_FAILED $Timestamp 'post-restoration-verification-failed'
         Add-ChatpadExactTransition $Transitions BLOCKED $Timestamp 'manual-recovery-required'
         return [pscustomobject]@{restoration_outcome='RESTORE_VERIFICATION_FAILED';after=$after}

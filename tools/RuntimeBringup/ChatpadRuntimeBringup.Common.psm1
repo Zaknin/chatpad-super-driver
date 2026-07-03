@@ -611,8 +611,8 @@ function Test-ChatpadWppPlanContract {
     if($source-notin@('synthetic','live')){$fail+='invalid-source'}
     if(-not(Test-ChatpadPathContained $root $output)-or[bool](Get-ChatpadProperty $Plan output_exists $false)-or[bool](Get-ChatpadProperty $Plan stale_output $false)){$fail+='output-path-invalid'}
     $ops=@(Get-ChatpadProperty $Plan operations @());foreach($type in @('trace-start','trace-stop','preserve','hash')){if(@($ops|Where-Object{(Get-ChatpadProperty $_ operation_type '')-eq$type}).Count-ne1){$fail+="missing-operation:$type"}}
-    $session=[string](Get-ChatpadProperty $Plan session_id '');$host=[string](Get-ChatpadProperty $Plan host_id '')
-    if(@($ops|Where-Object{(Get-ChatpadProperty $_ session_id '')-ne$session-or(Get-ChatpadProperty $_ host_id '')-ne$host}).Count){$fail+='operation-linkage-invalid'}
+    $session=[string](Get-ChatpadProperty $Plan session_id '');$planHostId=[string](Get-ChatpadProperty $Plan host_id '')
+    if(@($ops|Where-Object{(Get-ChatpadProperty $_ session_id '')-ne$session-or(Get-ChatpadProperty $_ host_id '')-ne$planHostId}).Count){$fail+='operation-linkage-invalid'}
     if($fail.Count){return New-ChatpadRuntimeCheckResult wpp-plan FAIL WPP_PLAN_INVALID ($fail-join';') @('trace-provider-wrong','runtime-evidence-write-failed')}
     New-ChatpadRuntimeCheckResult wpp-plan PASS WPP_PLAN_VALID -Data $Plan
 }
