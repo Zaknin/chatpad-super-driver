@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'NativeInterop\ChatpadNativeInteropSourceBoundary.psm1') -Force
-Import-Module (Join-Path $PSScriptRoot '..\RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '..\RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force -Prefix EvidenceIdentity
 $script:NativeCompileOnlyEvidenceCache = $null
 
 function Get-NativeScaffoldConstants {
@@ -188,7 +188,7 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
             $defects.Add([pscustomobject][ordered]@{id='input-file-commit-invalid';value=$requiredPath})
             continue
         }
-        $actualIdentity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $full -HashPolicy canonical_lf_text -CommitRepresented ([string]$record.commit_represented) -State tracked
+        $actualIdentity=Get-EvidenceIdentityChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $full -HashPolicy canonical_lf_text -CommitRepresented ([string]$record.commit_represented) -State tracked
         $actualHash=$actualIdentity.canonical_sha256
         if($null-eq$record.PSObject.Properties['canonical_sha256']-or$null-eq$record.PSObject.Properties['canonical_byte_size']-or[string]$record.canonical_sha256-cne$actualHash-or[long]$record.canonical_byte_size-ne[long]$actualIdentity.canonical_byte_size){
             $defects.Add([pscustomobject][ordered]@{id='input-file-canonical-identity-mismatch';value=$requiredPath})
