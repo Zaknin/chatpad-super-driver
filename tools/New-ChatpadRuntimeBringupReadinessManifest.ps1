@@ -71,9 +71,17 @@ $entries=[Collections.Generic.List[object]]::new()
 foreach($path in $paths){$entries.Add((New-Entry ('tracked-'+(($path.ToLowerInvariant()-replace'[^a-z0-9]+','-').Trim('-'))) $path tracked VALIDATED))}
 $suiteRelative=[IO.Path]::GetFullPath($SuiteResultPath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
-$pssa=Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue
-$pssaResult=if($null-eq$pssa){'SKIPPED_UNAVAILABLE'}else{'AVAILABLE_NOT_RUN'}
 $powershellInventory=Get-PowerShellInventory
+$pssa=Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue
+$pssaResult=if($null-eq$pssa){
+    'SKIPPED_UNAVAILABLE'
+} else {
+    $pssaErrors=[Collections.Generic.List[object]]::new()
+    foreach($path in @(& git ls-files '*.ps1' '*.psm1')){
+        foreach($finding in @(Invoke-ScriptAnalyzer -Path (Join-Path $root $path) -Severity Error -ErrorAction Stop)){$pssaErrors.Add($finding)}
+    }
+    if($pssaErrors.Count){'FAIL'}else{'PASS'}
+}
 $checkedOutBranch=Get-CheckedOutLocalBranch
 
 $manifest=[pscustomobject][ordered]@{
