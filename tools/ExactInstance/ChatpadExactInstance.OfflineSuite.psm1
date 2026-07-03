@@ -17,6 +17,20 @@ function Get-ChatpadExactSuiteBranch {
     $branch.Trim()
 }
 
+function Invoke-ChatpadIsolatedIntegrityProbe {
+    param([Parameter(Mandatory)][string]$Script)
+
+    $executableName=if($PSVersionTable.PSEdition -eq 'Core'){'pwsh.exe'}else{'powershell.exe'}
+    $executable=Join-Path $PSHOME $executableName
+    if(-not(Test-Path -LiteralPath $executable -PathType Leaf)){
+        $executable=(Get-Command $executableName -ErrorAction Stop).Source
+    }
+    $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($Script))
+    $raw=@(& $executable -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded)
+    if($LASTEXITCODE-ne0){throw "Isolated native probe failed with exit code $LASTEXITCODE."}
+    ($raw-join"`n")|ConvertFrom-Json
+}
+
 $script:Branch=Get-ChatpadExactSuiteBranch
 
 function New-ChatpadExactSuiteEnvironment {
@@ -99,7 +113,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     $results=[Collections.Generic.List[object]]::new()
     $script:CrossRuntimeMatrix=$null
     $nativeOperationBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
-    $scaffoldAuditGate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT'
+    $scaffoldAuditGate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT'
 
     $results.Add((Invoke-ChatpadExactCase T1 'two devices with identical hardware IDs' {
         $e=New-ChatpadExactSuiteEnvironment
@@ -464,7 +478,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
 
     $results.Add((Invoke-ChatpadExactCase G11 'exact API sequence completeness' {
         $contract=Get-ChatpadNativeAdapterDesignContract
-        $complete=Test-ChatpadNativeDesignContractCompleteness $contract
+        $complete=Test-ChatpadNativeDesignContractCompleteness
         [pscustomobject]@{checks=@(($complete.result-eq'PASS'),($complete.required_call_count-eq12),($complete.operation_gate_count-eq18),($complete.structure_count-ge8));details=[pscustomobject]@{contract=$contract;completeness=$complete}}
     }))
 
@@ -599,8 +613,20 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         [pscustomobject]@{checks=@(($r.result_code-eq'UNKNOWN_NATIVE_ADAPTER_IDENTIFIER'),($r.fallback_used-eq$false),($r.synthetic-eq$false),($r.native_operations_performed-eq0));details=$r}
     }))
     $results.Add((Invoke-ChatpadExactCase G30 'missing required adapter selection fails closed' {
-        $r=Resolve-ChatpadNativeAdapter -AdapterName '' -RequireExplicitSelection
-        [pscustomobject]@{checks=@(($r.result-eq'BLOCKED'),($r.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),($r.adapter_identity-eq''),($r.counters.windows_mutations_performed-eq0));details=$r}
+        $resolver=Resolve-ChatpadNativeAdapter -AdapterName '' -RequireExplicitSelection
+        $public=Invoke-ChatpadNativeAdapterOperation -Operation Apply
+        [pscustomobject]@{checks=@(
+            ($resolver.result-eq'BLOCKED'),
+            ($resolver.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),
+            ($public.result-eq'BLOCKED'),
+            ($public.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),
+            ($public.selected_adapter_identity-eq''),
+            ($public.production-eq$false),
+            ($public.synthetic-eq$false),
+            ($public.native_operations_performed-eq0),
+            ($public.live_device_queries_performed-eq0),
+            ($public.windows_mutations_performed-eq0)
+        );details=[pscustomobject]@{resolver=$resolver;public_entry=$public}}
     }))
     $results.Add((Invoke-ChatpadExactCase G31 'selected adapter identity appears in operation evidence' {
         $r=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Synthetic:$false
@@ -666,11 +692,31 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         $r=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Synthetic:$false -AdapterObject ([object]::new())
         [pscustomobject]@{checks=@(($r.result_code-eq$nativeOperationBlocker),($r.caller_object_trusted-eq$false),($r.native_operations_performed-eq0));details=$r}
     }))
-    $results.Add((Invoke-ChatpadExactCase G46 'extracted module variables cannot authorize scaffold execution' {
-        $module=Get-Module ChatpadNativeAdapterDesignGate
-        $vars=@($module.SessionState.InvokeCommand.InvokeScript('Get-Variable | Where-Object Name -match "Adapter|Blocker|Gate"'))
-        $r=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Synthetic:$false -AdapterObject $vars
-        [pscustomobject]@{checks=@(($r.result_code-eq$nativeOperationBlocker),($r.caller_object_trusted-eq$false),($r.windows_mutations_performed-eq0));details=[pscustomobject]@{variable_count=$vars.Count;result=$r}}
+    $results.Add((Invoke-ChatpadExactCase G46 'module variable mutation cannot alter public composition or evidence' {
+        $modulePath=(Join-Path $PSScriptRoot 'ChatpadNativeAdapterDesignGate.psm1').Replace("'","''")
+        $probe=Invoke-ChatpadIsolatedIntegrityProbe @"
+Import-Module '$modulePath' -Force
+`$module=Get-Module ChatpadNativeAdapterDesignGate
+foreach(`$name in @('ProductionNativeAdapterId','SyntheticAdapterId','SupportedNativeOperations','NativeExecutionBlocker','LiveAdapterBlocker','ScaffoldAuditGate','NativeDesignSchema','NativeAdapterContractSchema','NativeCompositionSchema','NativeOperationEvidenceSchema','AdapterKind','NativeInteropImplemented','SyntheticMode','WindowsMutationCount')){
+    `$module.SessionState.PSVariable.Set(`$name,'PASS')
+}
+`$unknown=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'audit-controlled'
+`$apply=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+`$install=Invoke-ChatpadNativeAdapterOperation -Operation InstallPackage -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+[pscustomobject]@{unknown=`$unknown;apply=`$apply;install=`$install}|ConvertTo-Json -Depth 20
+"@
+        [pscustomobject]@{checks=@(
+            ($probe.unknown.result_code-eq'UNKNOWN_NATIVE_ADAPTER_IDENTIFIER'),
+            ($probe.unknown.selected_adapter_identity-eq''),
+            ($probe.apply.result_code-eq$nativeOperationBlocker),
+            ($probe.apply.current_gate-eq$scaffoldAuditGate),
+            ($probe.apply.selected_adapter_identity-eq'chatpad-windows-exact-instance-adapter-v1'),
+            ($probe.apply.native_operations_performed-eq0),
+            ($probe.apply.live_device_queries_performed-eq0),
+            ($probe.apply.windows_mutations_performed-eq0),
+            ($probe.install.result_code-eq'UNSUPPORTED_NATIVE_ADAPTER_OPERATION'),
+            ($probe.install.operation_known-eq$false)
+        );details=$probe}
     }))
     $results.Add((Invoke-ChatpadExactCase G47 'module-context invocation cannot authorize scaffold execution' {
         $module=Get-Module ChatpadNativeAdapterDesignGate
@@ -782,6 +828,234 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         [pscustomobject]@{checks=@(($contract.current_gate-eq$scaffoldAuditGate),($adapter.current_gate-eq$scaffoldAuditGate),($contract.live_adapter_status-eq'SCAFFOLD_NON_EXECUTING'),($adapter.native_interop_implemented-eq$false));details=[pscustomobject]@{contract=$contract;adapter=$adapter}}
     }))
 
+    $results.Add((Invoke-ChatpadExactCase G68 'public operation entry requires explicit primitive adapter selection' {
+        $omitted=Invoke-ChatpadNativeAdapterOperation -Operation Apply
+        $nullValue=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName $null
+        $empty=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName ''
+        $white=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName '   '
+        $emptyArray=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName @()
+        $object=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName ([pscustomobject]@{adapter_identity='chatpad-windows-exact-instance-adapter-v1'})
+        $unknown=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'unknown-adapter'
+        $production=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+        $synthetic=Resolve-ChatpadNativeAdapter -AdapterName 'chatpad-fake-exact-instance-adapter-v1' -Synthetic -RequireExplicitSelection
+        $syntheticBlocked=Resolve-ChatpadNativeAdapter -AdapterName 'chatpad-fake-exact-instance-adapter-v1' -RequireExplicitSelection
+        $invalid=@($omitted,$nullValue,$empty,$white,$emptyArray,$object,$unknown)
+        [pscustomobject]@{checks=@(
+            ($omitted.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),
+            ($nullValue.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),
+            ($empty.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),
+            ($white.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),
+            ($emptyArray.result_code-eq'INVALID_NATIVE_ADAPTER_IDENTIFIER'),
+            ($object.result_code-eq'INVALID_NATIVE_ADAPTER_IDENTIFIER'),
+            ($unknown.result_code-eq'UNKNOWN_NATIVE_ADAPTER_IDENTIFIER'),
+            (@($invalid|Where-Object selected_adapter_identity -ne '').Count-eq0),
+            (@($invalid|Where-Object production -eq $true).Count-eq0),
+            (@($invalid|Where-Object synthetic -eq $true).Count-eq0),
+            ($production.result_code-eq$nativeOperationBlocker),
+            ($production.production-eq$true),
+            ($synthetic.result_code-eq'SYNTHETIC_ADAPTER_SELECTED'),
+            ($synthetic.selected_adapter.synthetic-eq$true),
+            ($syntheticBlocked.result_code-eq'SYNTHETIC_ADAPTER_REQUIRES_EXPLICIT_SYNTHETIC_MODE'),
+            ([int](($invalid|Measure-Object native_operations_performed -Sum).Sum)-eq0),
+            ([int](($invalid|Measure-Object live_device_queries_performed -Sum).Sum)-eq0),
+            ([int](($invalid|Measure-Object windows_mutations_performed -Sum).Sum)-eq0)
+        );details=[pscustomobject]@{invalid=$invalid;production=$production;synthetic=$synthetic;synthetic_blocked=$syntheticBlocked}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G69 'all legacy module-state mutation forms remain non-authoritative' {
+        $modulePath=(Join-Path $PSScriptRoot 'ChatpadNativeAdapterDesignGate.psm1').Replace("'","''")
+        $probe=Invoke-ChatpadIsolatedIntegrityProbe @"
+Import-Module '$modulePath' -Force
+`$module=Get-Module ChatpadNativeAdapterDesignGate
+`$names=@('ProductionNativeAdapterId','SyntheticAdapterId','SupportedNativeOperations','NativeExecutionBlocker','LiveAdapterBlocker','ScaffoldAuditGate','NativeDesignSchema','NativeAdapterContractSchema','NativeCompositionSchema','NativeOperationEvidenceSchema','AdapterKind','NativeInteropImplemented','SyntheticMode','ExecutionPerformed','NativeOperationsPerformed','LiveDeviceQueriesPerformed','WindowsMutationsPerformed')
+foreach(`$name in `$names){`$module.SessionState.PSVariable.Set(`$name,'PASS')}
+`$variable=`$module.SessionState.PSVariable.Get('ProductionNativeAdapterId')
+`$variable.Value='value-setter-controlled'
+& `$module { Set-Variable -Scope Script -Name SupportedNativeOperations -Value @('InstallPackage'); Set-Variable -Scope Script -Name ScaffoldAuditGate -Value 'PASS' }
+`$unknown=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'value-setter-controlled'
+`$production=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+`$install=Invoke-ChatpadNativeAdapterOperation -Operation InstallPackage -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+[pscustomobject]@{unknown=`$unknown;production=`$production;install=`$install;mutated_names=`$names}|ConvertTo-Json -Depth 20
+"@
+        [pscustomobject]@{checks=@(
+            ($probe.unknown.result_code-eq'UNKNOWN_NATIVE_ADAPTER_IDENTIFIER'),
+            ($probe.production.result_code-eq$nativeOperationBlocker),
+            ($probe.production.current_gate-eq$scaffoldAuditGate),
+            ($probe.production.execution_attempted-eq$false),
+            ($probe.production.production-eq$true),
+            ($probe.production.synthetic-eq$false),
+            ($probe.production.native_interop_implemented-eq$false),
+            ($probe.production.native_operations_performed-eq0),
+            ($probe.production.live_device_queries_performed-eq0),
+            ($probe.production.windows_mutations_performed-eq0),
+            ($probe.install.result_code-eq'UNSUPPORTED_NATIVE_ADAPTER_OPERATION'),
+            ($probe.install.operation_known-eq$false),
+            (@($probe.mutated_names).Count-ge17)
+        );details=$probe}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G70 'caller-extensible values are rejected without invoking caller behavior' {
+        $global:ChatpadNativeCallerSideEffects=0
+        $candidate=[pscustomobject]@{}
+        $candidate.PSTypeNames.Insert(0,'Chatpad.Native.Adapter.Authority')
+        $candidate|Add-Member -MemberType ScriptMethod -Name ToString -Value {$global:ChatpadNativeCallerSideEffects++;'chatpad-windows-exact-instance-adapter-v1'} -Force
+        $candidate|Add-Member -MemberType ScriptMethod -Name Equals -Value {$global:ChatpadNativeCallerSideEffects++;$true} -Force
+        $candidate|Add-Member -MemberType ScriptMethod -Name GetType -Value {$global:ChatpadNativeCallerSideEffects++;[string]} -Force
+        $candidate|Add-Member -MemberType ScriptMethod -Name GetEnumerator -Value {$global:ChatpadNativeCallerSideEffects++;@().GetEnumerator()} -Force
+        $candidate|Add-Member -MemberType ScriptProperty -Name DangerousProperty -Value {$global:ChatpadNativeCallerSideEffects++;throw 'CALLER_PROPERTY_INVOKED'}
+        $dictionary=[Collections.Generic.Dictionary[string,object]]::new()
+        $dictionary['adapter_identity']='chatpad-windows-exact-instance-adapter-v1'
+        $delegate=[Action]{$global:ChatpadNativeCallerSideEffects++}
+        $serialized=[Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize([pscustomobject]@{adapter_identity='chatpad-windows-exact-instance-adapter-v1'},4))
+        $values=@($candidate,@($candidate),[pscustomobject]@{inner=$candidate},@{adapter_identity='chatpad-windows-exact-instance-adapter-v1'},$dictionary,{ 'chatpad-windows-exact-instance-adapter-v1' },$delegate,$serialized)
+        $adapterResults=@($values|ForEach-Object{Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName $_})
+        $operationResults=@($values|ForEach-Object{Invoke-ChatpadNativeAdapterOperation -Operation $_ -AdapterName 'chatpad-windows-exact-instance-adapter-v1'})
+        [pscustomobject]@{checks=@(
+            ($global:ChatpadNativeCallerSideEffects-eq0),
+            (@($adapterResults|Where-Object{$_.result_code-ne'INVALID_NATIVE_ADAPTER_IDENTIFIER'}).Count-eq0),
+            (@($adapterResults|Where-Object{$_.selected_adapter_identity-ne''}).Count-eq0),
+            (@($operationResults|Where-Object{$_.result_code-ne'INVALID_NATIVE_ADAPTER_OPERATION_IDENTIFIER'}).Count-eq0),
+            (@($operationResults|Where-Object{$_.operation_known-ne$false}).Count-eq0),
+            ([int](($adapterResults|Measure-Object native_operations_performed -Sum).Sum)-eq0),
+            ([int](($operationResults|Measure-Object windows_mutations_performed -Sum).Sum)-eq0)
+        );details=[pscustomobject]@{side_effect_count=$global:ChatpadNativeCallerSideEffects;adapter_results=$adapterResults;operation_results=$operationResults}}
+        Remove-Variable ChatpadNativeCallerSideEffects -Scope Global -ErrorAction SilentlyContinue
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G71 'caller evidence cannot override authoritative operation evidence' {
+        $conflict=[pscustomobject]@{
+            adapter_identity='chatpad-fake-exact-instance-adapter-v1'
+            adapter_implementation_kind='live-native'
+            synthetic=$true
+            production=$false
+            result='PASS'
+            result_code='PASS'
+            current_gate='PASS'
+            execution_attempted=$true
+            native_interop_implemented=$true
+            native_operations_performed=7
+            live_device_queries_performed=8
+            windows_mutations_performed=9
+            nested=[pscustomobject]@{result_code='PASS';windows_mutations_performed=-1}
+        }
+        $result=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -AdapterObject $conflict -Evidence $conflict
+        [pscustomobject]@{checks=@(
+            ($result.adapter_identity-eq'chatpad-windows-exact-instance-adapter-v1'),
+            ($result.adapter_implementation_kind-eq'production-native-composition-scaffold'),
+            ($result.synthetic-eq$false),
+            ($result.production-eq$true),
+            ($result.result-eq'BLOCKED'),
+            ($result.result_code-eq$nativeOperationBlocker),
+            ($result.current_gate-eq$scaffoldAuditGate),
+            ($result.execution_attempted-eq$false),
+            ($result.native_interop_implemented-eq$false),
+            ($result.native_operations_performed-eq0),
+            ($result.live_device_queries_performed-eq0),
+            ($result.windows_mutations_performed-eq0),
+            ($result.details.caller_inputs_authoritative-eq$false)
+        );details=$result}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G72 'supported operations and result mapping are code-local and canonical' {
+        $operations=Get-ChatpadNativeSupportedOperationIdentifiers
+        $records=@($operations|ForEach-Object{Invoke-ChatpadNativeAdapterOperation -Operation $_ -AdapterName 'chatpad-windows-exact-instance-adapter-v1'})
+        $caseVariant=Invoke-ChatpadNativeAdapterOperation -Operation 'apply' -AdapterName 'CHATPAD-WINDOWS-EXACT-INSTANCE-ADAPTER-V1'
+        $padded=Invoke-ChatpadNativeAdapterOperation -Operation ' Restore ' -AdapterName ' chatpad-windows-exact-instance-adapter-v1 '
+        $missing=Invoke-ChatpadNativeAdapterOperation -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+        $unknown=Invoke-ChatpadNativeAdapterOperation -Operation InstallPackage -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+        [pscustomobject]@{checks=@(
+            ($operations.Count-eq3),
+            ($operations[0]-ceq'Apply'),
+            ($operations[1]-ceq'Restore'),
+            ($operations[2]-ceq'Restart'),
+            (@($records|Where-Object{$_.result_code-ne$nativeOperationBlocker}).Count-eq0),
+            (@($records|Where-Object{$_.operation_known-ne$true}).Count-eq0),
+            ($caseVariant.operation-ceq'Apply'),
+            ($caseVariant.result_code-eq$nativeOperationBlocker),
+            ($padded.operation-ceq'Restore'),
+            ($padded.result_code-eq$nativeOperationBlocker),
+            ($missing.result_code-eq'NATIVE_ADAPTER_OPERATION_REQUIRED'),
+            ($unknown.result_code-eq'UNSUPPORTED_NATIVE_ADAPTER_OPERATION'),
+            ($unknown.operation_known-eq$false)
+        );details=[pscustomobject]@{operations=$operations;records=$records;case_variant=$caseVariant;padded=$padded;missing=$missing;unknown=$unknown}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G73 'public native API exposes no default production or generic contract override' {
+        $commands=@(Get-Command -Module ChatpadNativeAdapterDesignGate)
+        $invoke=$commands|Where-Object{$_.Name-eq'Invoke-ChatpadNativeAdapterOperation'}|Select-Object -First 1
+        $complete=$commands|Where-Object{$_.Name-eq'Test-ChatpadNativeDesignContractCompleteness'}|Select-Object -First 1
+        $omitted=Invoke-ChatpadNativeAdapterOperation -Operation Apply
+        $contractRejected=$false
+        try{[void](Test-ChatpadNativeDesignContractCompleteness -Contract ([pscustomobject]@{result='PASS'}))}catch{$contractRejected=$_.Exception.GetType().FullName-match'ParameterBinding'}
+        [pscustomobject]@{checks=@(
+            ($null-ne$invoke),
+            ($invoke.Parameters['AdapterName'].ParameterType-eq[object]),
+            ($invoke.Parameters['Operation'].ParameterType-eq[object]),
+            ($omitted.result_code-eq'NATIVE_ADAPTER_SELECTION_REQUIRED'),
+            ($omitted.selected_adapter_identity-eq''),
+            ($null-ne$complete),
+            ($complete.Parameters.Keys -notcontains 'Contract'),
+            ($contractRejected-eq$true)
+        );details=[pscustomobject]@{invoke_parameters=@($invoke.Parameters.Keys);completeness_parameters=@($complete.Parameters.Keys);omitted=$omitted;contract_parameter_rejected=$contractRejected}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G74 'native module contains no trusted decision variables' {
+        $module=Get-Module ChatpadNativeAdapterDesignGate
+        $names=@($module.SessionState.InvokeCommand.InvokeScript('Get-Variable -Scope Script | Select-Object -ExpandProperty Name'))
+        $trustedNames=@($names|Where-Object{$_-match'ProductionNativeAdapterId|SyntheticAdapterId|SupportedNativeOperations|NativeExecutionBlocker|LiveAdapterBlocker|ScaffoldAuditGate|NativeDesignSchema|NativeAdapterContractSchema|NativeCompositionSchema|NativeOperationEvidenceSchema|AdapterKind|NativeInteropImplemented|SyntheticMode|ExecutionPerformed|NativeOperationsPerformed|LiveDeviceQueriesPerformed|WindowsMutationsPerformed'})
+        $contract=Get-ChatpadNativeAdapterDesignContract
+        [pscustomobject]@{checks=@(
+            ($trustedNames.Count-eq0),
+            ($contract.module_state_introspectable_by_same_process_callers-eq$true),
+            ($contract.composition_root.mutable_module_state_trusted-eq$false),
+            ($contract.composition_root.code_integrity_prerequisite-eq$true)
+        );details=[pscustomobject]@{trusted_names=$trustedNames;module_variable_count=$names.Count;composition_root=$contract.composition_root}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G75 'remediated scaffold remains blocked pending independent re-audit' {
+        $adapter=New-ChatpadProductionNativeAdapter
+        $operation=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+        [pscustomobject]@{checks=@(
+            ($adapter.current_gate-eq$scaffoldAuditGate),
+            ($adapter.native_execution_status-eq'NOT_IMPLEMENTED'),
+            ($adapter.native_interop_implemented-eq$false),
+            ($operation.current_gate-eq$scaffoldAuditGate),
+            ($operation.capability_blocker-eq$nativeOperationBlocker),
+            ($operation.execution_attempted-eq$false),
+            ($operation.native_operations_performed-eq0),
+            ($operation.live_device_queries_performed-eq0),
+            ($operation.windows_mutations_performed-eq0)
+        );details=[pscustomobject]@{adapter=$adapter;operation=$operation}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G76 'integrity remediation fixtures have unique identifiers and assertions' {
+        $new=@($results|Where-Object{$_.fixture_id-match'^G(6[8-9]|7[0-5])$'})
+        $ids=@($new|ForEach-Object fixture_id)
+        [pscustomobject]@{checks=@(
+            ($new.Count-eq8),
+            (@($new|Where-Object{$_.assertion_count-le0}).Count-eq0),
+            ($ids.Count-eq@($ids|Select-Object -Unique).Count),
+            (@($new|Where-Object{$_.fixture_result-ne'PASS'}).Count-eq0)
+        );details=[pscustomobject]@{ids=$ids;assertion_sum=[int](($new|Measure-Object assertion_count -Sum).Sum)}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G77 'integrity remediation authoritative counters remain zero' {
+        $records=@(
+            (Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'),
+            (Invoke-ChatpadNativeAdapterOperation -Operation Restore -AdapterName 'chatpad-windows-exact-instance-adapter-v1'),
+            (Invoke-ChatpadNativeAdapterOperation -Operation Restart -AdapterName 'chatpad-windows-exact-instance-adapter-v1'),
+            (Invoke-ChatpadNativeAdapterOperation -Operation InstallPackage -AdapterName 'chatpad-windows-exact-instance-adapter-v1'),
+            (Invoke-ChatpadNativeAdapterOperation -Operation Apply)
+        )
+        [pscustomobject]@{checks=@(
+            ([int](($records|Measure-Object native_operations_performed -Sum).Sum)-eq0),
+            ([int](($records|Measure-Object live_device_queries_performed -Sum).Sum)-eq0),
+            ([int](($records|Measure-Object windows_mutations_performed -Sum).Sum)-eq0),
+            (@($records|Where-Object{$_.execution_attempted-ne$false}).Count-eq0),
+            (@($records|Where-Object{$_.result-ne'BLOCKED'}).Count-eq0)
+        );details=[pscustomobject]@{records=$records}}
+    }))
+
     $failed=@($results|Where-Object{$_.fixture_result-ne'PASS'})
     $assertions=[int](($results|Measure-Object assertion_count -Sum).Sum)
     $critical=@($results|Where-Object{$_.fixture_id-in@('T1','T4','T8','T10','T13','T25')})
@@ -884,7 +1158,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
             skipped_as_pass_count=0
         }
         live_installation_readiness='BLOCKED'
-        current_gate='BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT'
+        current_gate='BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT'
         capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         live_adapter_status='SCAFFOLD_NON_EXECUTING'
         live_binding_authorized=$false

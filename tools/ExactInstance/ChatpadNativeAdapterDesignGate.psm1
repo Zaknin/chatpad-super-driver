@@ -1,19 +1,38 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:NativeDesignSchema = 'chatpad-native-adapter-design-gate-v2'
-$script:NativeAdapterContractSchema = 'chatpad-native-adapter-contract-v1'
-$script:NativeCompositionSchema = 'chatpad-native-adapter-composition-root-v1'
-$script:NativeOperationEvidenceSchema = 'chatpad-native-adapter-operation-evidence-v1'
-$script:ProductionNativeAdapterId = 'chatpad-windows-exact-instance-adapter-v1'
-$script:SyntheticAdapterId = 'chatpad-fake-exact-instance-adapter-v1'
-$script:LiveAdapterBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
-$script:NativeExecutionBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
-$script:ScaffoldAuditGate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT'
-$script:SupportedNativeOperations = @('Apply', 'Restore', 'Restart')
+function Get-NativeScaffoldConstants {
+    [pscustomobject][ordered]@{
+        design_schema = 'chatpad-native-adapter-design-gate-v2'
+        adapter_contract_schema = 'chatpad-native-adapter-contract-v1'
+        composition_schema = 'chatpad-native-adapter-composition-root-v1'
+        operation_evidence_schema = 'chatpad-native-adapter-operation-evidence-v1'
+        production_adapter_id = 'chatpad-windows-exact-instance-adapter-v1'
+        synthetic_adapter_id = 'chatpad-fake-exact-instance-adapter-v1'
+        execution_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        scaffold_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT'
+        supported_operations = @('Apply', 'Restore', 'Restart')
+    }
+}
+
+function ConvertTo-NativeIdentifierRecord {
+    param([AllowNull()][object]$Value)
+
+    if ([object]::ReferenceEquals($null, $Value)) {
+        return [pscustomobject][ordered]@{ valid = $false; missing = $true; value = '' }
+    }
+    if ($Value -isnot [string]) {
+        return [pscustomobject][ordered]@{ valid = $false; missing = $false; value = '' }
+    }
+    $normalized = $Value.Trim()
+    if ([string]::IsNullOrWhiteSpace($normalized)) {
+        return [pscustomobject][ordered]@{ valid = $false; missing = $true; value = '' }
+    }
+    [pscustomobject][ordered]@{ valid = $true; missing = $false; value = $normalized }
+}
 
 function Get-ChatpadNativeSupportedOperationIdentifiers {
-    @($script:SupportedNativeOperations)
+    @('Apply', 'Restore', 'Restart')
 }
 
 function New-ChatpadNativeZeroCounters {
@@ -28,16 +47,18 @@ function New-ChatpadNativeZeroCounters {
 }
 
 function New-ChatpadProductionNativeAdapter {
+    $constants = Get-NativeScaffoldConstants
     [pscustomobject][ordered]@{
-        schema_version = $script:NativeAdapterContractSchema
-        adapter_identity = $script:ProductionNativeAdapterId
+        schema_version = $constants.adapter_contract_schema
+        adapter_identity = $constants.production_adapter_id
         adapter_implementation_kind = 'production-native-composition-scaffold'
         adapter_mode = 'windows-native-nonexecuting'
         contract_version = '1'
-        evidence_contract_version = $script:NativeOperationEvidenceSchema
+        evidence_contract_version = $constants.operation_evidence_schema
         result_code_contract_version = 'chatpad-native-adapter-result-codes-v1'
-        supported_operation_identifiers = Get-ChatpadNativeSupportedOperationIdentifiers
+        supported_operation_identifiers = @('Apply', 'Restore', 'Restart')
         execution_state = 'non-executing-scaffold'
+        native_execution_status = 'NOT_IMPLEMENTED'
         live_execution_available = $false
         native_interop_implemented = $false
         device_queries_available = $false
@@ -49,16 +70,17 @@ function New-ChatpadProductionNativeAdapter {
         mutation_counter_fields = @('windows_mutations_performed')
         device_query_counter_fields = @('live_device_queries_performed')
         native_operation_counter_fields = @('native_operations_performed')
-        current_gate = $script:ScaffoldAuditGate
-        capability_blocker = $script:NativeExecutionBlocker
+        current_gate = $constants.scaffold_gate
+        capability_blocker = $constants.execution_blocker
         compatibility_capability_api_authorizes_mutation = $false
     }
 }
 
 function New-ChatpadSyntheticAdapterMetadata {
+    $constants = Get-NativeScaffoldConstants
     [pscustomobject][ordered]@{
-        schema_version = $script:NativeAdapterContractSchema
-        adapter_identity = $script:SyntheticAdapterId
+        schema_version = $constants.adapter_contract_schema
+        adapter_identity = $constants.synthetic_adapter_id
         adapter_implementation_kind = 'offline-synthetic-test-adapter'
         adapter_mode = 'offline-fake'
         contract_version = '1'
@@ -72,77 +94,92 @@ function New-ChatpadSyntheticAdapterMetadata {
         synthetic = $true
         production = $false
         fail_closed = $false
-        current_gate = $script:ScaffoldAuditGate
-        capability_blocker = $script:NativeExecutionBlocker
+        current_gate = $constants.scaffold_gate
+        capability_blocker = $constants.execution_blocker
     }
 }
 
 function Resolve-ChatpadNativeAdapter {
     [CmdletBinding(PositionalBinding = $false)]
     param(
-        [string]$AdapterName = '',
-        [bool]$Synthetic = $false,
+        [AllowNull()][object]$AdapterName = $null,
+        [switch]$Synthetic,
         [switch]$RequireExplicitSelection
     )
-    if ([string]::IsNullOrWhiteSpace($AdapterName)) {
+    $constants = Get-NativeScaffoldConstants
+    $identifier = ConvertTo-NativeIdentifierRecord -Value $AdapterName
+    if ($identifier.missing) {
         return [pscustomobject][ordered]@{
-            schema_version = $script:NativeCompositionSchema
+            schema_version = $constants.composition_schema
             result = 'BLOCKED'
             result_code = 'NATIVE_ADAPTER_SELECTION_REQUIRED'
             reason = 'An explicit native adapter identifier is required; no implicit production or synthetic fallback is allowed.'
             adapter_identity = ''
             selected_adapter = $null
-            synthetic_requested = $Synthetic
+            synthetic_requested = [bool]$Synthetic
             fallback_used = $false
             counters = New-ChatpadNativeZeroCounters
         }
     }
-    if ($AdapterName -eq $script:ProductionNativeAdapterId) {
+    if (-not $identifier.valid) {
+        return [pscustomobject][ordered]@{
+            schema_version = $constants.composition_schema
+            result = 'BLOCKED'
+            result_code = 'INVALID_NATIVE_ADAPTER_IDENTIFIER'
+            reason = 'Native adapter identifiers must be primitive strings.'
+            adapter_identity = ''
+            selected_adapter = $null
+            synthetic_requested = [bool]$Synthetic
+            fallback_used = $false
+            counters = New-ChatpadNativeZeroCounters
+        }
+    }
+    if ([string]::Equals($identifier.value, $constants.production_adapter_id, [StringComparison]::OrdinalIgnoreCase)) {
         if ($Synthetic) {
             return [pscustomobject][ordered]@{
-                schema_version = $script:NativeCompositionSchema
+                schema_version = $constants.composition_schema
                 result = 'BLOCKED'
                 result_code = 'PRODUCTION_ADAPTER_REQUIRES_NON_SYNTHETIC_MODE'
                 reason = 'The production native scaffold cannot be selected as a synthetic adapter.'
-                adapter_identity = $AdapterName
+                adapter_identity = $constants.production_adapter_id
                 selected_adapter = $null
-                synthetic_requested = $Synthetic
+                synthetic_requested = [bool]$Synthetic
                 fallback_used = $false
                 counters = New-ChatpadNativeZeroCounters
             }
         }
         return [pscustomobject][ordered]@{
-            schema_version = $script:NativeCompositionSchema
+            schema_version = $constants.composition_schema
             result = 'PASS'
             result_code = 'NATIVE_ADAPTER_SELECTED'
             reason = 'Production native adapter scaffold selected without enabling execution.'
-            adapter_identity = $script:ProductionNativeAdapterId
+            adapter_identity = $constants.production_adapter_id
             selected_adapter = New-ChatpadProductionNativeAdapter
             synthetic_requested = $false
             fallback_used = $false
             counters = New-ChatpadNativeZeroCounters
         }
     }
-    if ($AdapterName -eq $script:SyntheticAdapterId) {
+    if ([string]::Equals($identifier.value, $constants.synthetic_adapter_id, [StringComparison]::OrdinalIgnoreCase)) {
         if (-not $Synthetic) {
             return [pscustomobject][ordered]@{
-                schema_version = $script:NativeCompositionSchema
+                schema_version = $constants.composition_schema
                 result = 'BLOCKED'
                 result_code = 'SYNTHETIC_ADAPTER_REQUIRES_EXPLICIT_SYNTHETIC_MODE'
                 reason = 'Synthetic adapters require explicit synthetic selection and are never substituted for production.'
-                adapter_identity = $AdapterName
+                adapter_identity = $constants.synthetic_adapter_id
                 selected_adapter = $null
-                synthetic_requested = $Synthetic
+                synthetic_requested = [bool]$Synthetic
                 fallback_used = $false
                 counters = New-ChatpadNativeZeroCounters
             }
         }
         return [pscustomobject][ordered]@{
-            schema_version = $script:NativeCompositionSchema
+            schema_version = $constants.composition_schema
             result = 'PASS'
             result_code = 'SYNTHETIC_ADAPTER_SELECTED'
             reason = 'Offline synthetic adapter metadata selected explicitly.'
-            adapter_identity = $script:SyntheticAdapterId
+            adapter_identity = $constants.synthetic_adapter_id
             selected_adapter = New-ChatpadSyntheticAdapterMetadata
             synthetic_requested = $true
             fallback_used = $false
@@ -150,13 +187,13 @@ function Resolve-ChatpadNativeAdapter {
         }
     }
     [pscustomobject][ordered]@{
-        schema_version = $script:NativeCompositionSchema
+        schema_version = $constants.composition_schema
         result = 'BLOCKED'
         result_code = 'UNKNOWN_NATIVE_ADAPTER_IDENTIFIER'
         reason = 'Unknown native adapter identifier rejected without fallback.'
-        adapter_identity = $AdapterName
+        adapter_identity = $identifier.value
         selected_adapter = $null
-        synthetic_requested = $Synthetic
+        synthetic_requested = [bool]$Synthetic
         fallback_used = $false
         counters = New-ChatpadNativeZeroCounters
     }
@@ -165,27 +202,52 @@ function Resolve-ChatpadNativeAdapter {
 function Invoke-ChatpadNativeAdapterOperation {
     [CmdletBinding(PositionalBinding = $false)]
     param(
-        [string]$Operation = '',
-        [string]$AdapterName = $script:ProductionNativeAdapterId,
-        [bool]$Synthetic = $false,
+        [AllowNull()][object]$Operation = $null,
+        [AllowNull()][object]$AdapterName = $null,
+        [switch]$Synthetic,
         [AllowNull()][object]$AdapterObject = $null,
         [AllowNull()][object]$Evidence = $null
     )
+    $constants = Get-NativeScaffoldConstants
     $selection = Resolve-ChatpadNativeAdapter -AdapterName $AdapterName -Synthetic:$Synthetic -RequireExplicitSelection
-    $knownOperation = $script:SupportedNativeOperations -contains $Operation
-    $resultCode = if (-not $knownOperation) { 'UNSUPPORTED_NATIVE_ADAPTER_OPERATION' } elseif ($selection.result -ne 'PASS') { $selection.result_code } else { $script:NativeExecutionBlocker }
-    $resultReason = if (-not $knownOperation) { 'Requested operation identifier is not supported by the native adapter scaffold.' } elseif ($selection.result -ne 'PASS') { $selection.reason } else { 'Native SetupAPI/Newdev execution is not implemented in this non-live production scaffold.' }
+    $operationIdentifier = ConvertTo-NativeIdentifierRecord -Value $Operation
+    $canonicalOperation = ''
+    if ($operationIdentifier.valid) {
+        foreach ($supported in @('Apply', 'Restore', 'Restart')) {
+            if ([string]::Equals($operationIdentifier.value, $supported, [StringComparison]::OrdinalIgnoreCase)) {
+                $canonicalOperation = $supported
+                break
+            }
+        }
+    }
+    $knownOperation = -not [string]::IsNullOrEmpty($canonicalOperation)
+    if ($selection.result -ne 'PASS') {
+        $resultCode = $selection.result_code
+        $resultReason = $selection.reason
+    } elseif ($operationIdentifier.missing) {
+        $resultCode = 'NATIVE_ADAPTER_OPERATION_REQUIRED'
+        $resultReason = 'An explicit native adapter operation identifier is required.'
+    } elseif (-not $operationIdentifier.valid) {
+        $resultCode = 'INVALID_NATIVE_ADAPTER_OPERATION_IDENTIFIER'
+        $resultReason = 'Native adapter operation identifiers must be primitive strings.'
+    } elseif (-not $knownOperation) {
+        $resultCode = 'UNSUPPORTED_NATIVE_ADAPTER_OPERATION'
+        $resultReason = 'Requested operation identifier is not supported by the native adapter scaffold.'
+    } else {
+        $resultCode = $constants.execution_blocker
+        $resultReason = 'Native SetupAPI/Newdev execution is not implemented in this non-live production scaffold.'
+    }
     $counters = New-ChatpadNativeZeroCounters
     [pscustomobject][ordered]@{
-        schema_version = $script:NativeOperationEvidenceSchema
+        schema_version = $constants.operation_evidence_schema
         result = 'BLOCKED'
         result_code = $resultCode
-        operation = $Operation
+        operation = if ($knownOperation) { $canonicalOperation } elseif ($operationIdentifier.valid) { $operationIdentifier.value } else { '' }
         operation_known = $knownOperation
-        adapter_identity = $AdapterName
-        selected_adapter_identity = [string]$selection.adapter_identity
+        adapter_identity = [string]$selection.adapter_identity
+        selected_adapter_identity = if ($null -eq $selection.selected_adapter) { '' } else { [string]$selection.selected_adapter.adapter_identity }
         adapter_implementation_kind = if ($null -eq $selection.selected_adapter) { '' } else { [string]$selection.selected_adapter.adapter_implementation_kind }
-        synthetic_requested = $Synthetic
+        synthetic_requested = [bool]$Synthetic
         synthetic = if ($null -eq $selection.selected_adapter) { $false } else { [bool]$selection.selected_adapter.synthetic }
         production = if ($null -eq $selection.selected_adapter) { $false } else { [bool]$selection.selected_adapter.production }
         fallback_used = $false
@@ -211,21 +273,23 @@ function Invoke-ChatpadNativeAdapterOperation {
         live_device_queries_performed = $counters.live_device_queries_performed
         windows_mutations_performed = $counters.windows_mutations_performed
         native_operations_performed = $counters.native_operations_performed
-        current_gate = $script:ScaffoldAuditGate
-        capability_blocker = $script:NativeExecutionBlocker
+        current_gate = $constants.scaffold_gate
+        capability_blocker = $constants.execution_blocker
         reason = $resultReason
         composition = $selection
         details = [pscustomobject][ordered]@{
-            adapter_object_type = if ($null -eq $AdapterObject) { '' } else { $AdapterObject.GetType().FullName }
-            evidence_type = if ($null -eq $Evidence) { '' } else { $Evidence.GetType().FullName }
+            caller_adapter_object_supplied = -not [object]::ReferenceEquals($null, $AdapterObject)
+            caller_evidence_supplied = -not [object]::ReferenceEquals($null, $Evidence)
+            caller_inputs_authoritative = $false
         }
     }
 }
 
 function Test-ChatpadNativeMutationCapability {
+    $constants = Get-NativeScaffoldConstants
     [pscustomobject][ordered]@{
         result = 'BLOCKED'
-        result_code = $script:LiveAdapterBlocker
+        result_code = $constants.execution_blocker
         capability_present = $false
         caller_supplied_capability_accepted = $false
         capability_serializable = $false
@@ -236,11 +300,8 @@ function Test-ChatpadNativeMutationCapability {
 
 function Test-ChatpadNativeReadOnlyCapability {
     param([AllowNull()][object]$Probe)
-    $present = ($null -ne $Probe -and
-        $null -ne $Probe.PSObject.Properties['schema_version'] -and
-        [string]$Probe.schema_version -eq $script:NativeDesignSchema -and
-        $null -ne $Probe.PSObject.Properties['authorizes_mutation'] -and
-        $Probe.authorizes_mutation -eq $false)
+    $present = ($Probe -is [string] -and
+        [string]::Equals($Probe, 'chatpad-native-read-only-design-probe-v1', [StringComparison]::Ordinal))
     [pscustomobject][ordered]@{
         result = if ($present) { 'PASS' } else { 'BLOCKED' }
         result_code = if ($present) { 'READ_ONLY_DESIGN_PROBE_PRESENT' } else { 'READ_ONLY_DESIGN_PROBE_ABSENT' }
@@ -251,26 +312,21 @@ function Test-ChatpadNativeReadOnlyCapability {
 }
 
 function New-ChatpadNativeReadOnlyDesignProbe {
-    [pscustomobject][ordered]@{
-        schema_version = $script:NativeDesignSchema
-        probe_type = 'read-only-design-contract'
-        authorizes_mutation = $false
-        caller_supplied_mutation_boundary = $false
-    }
+    'chatpad-native-read-only-design-probe-v1'
 }
 
 function New-ChatpadNativeMutationCapability {
-    throw $script:LiveAdapterBlocker
+    throw 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
 }
 
 function Test-ChatpadNativeAdapterOperationGate {
     param(
-        [Parameter(Mandatory)][string]$Operation,
-        [string]$AdapterName = '',
-        [string]$Mode = '',
-        [bool]$Synthetic = $true,
-        [bool]$IsElevated = $false,
-        [bool]$AllowWindowsMutation = $false,
+        [Parameter(Mandatory)][AllowNull()][object]$Operation,
+        [AllowNull()][object]$AdapterName = $null,
+        [AllowNull()][object]$Mode = $null,
+        [switch]$Synthetic,
+        [AllowNull()][object]$IsElevated = $false,
+        [AllowNull()][object]$AllowWindowsMutation = $false,
         [AllowNull()][object]$AdapterObject = $null,
         [AllowNull()][object]$Evidence = $null
     )
@@ -299,18 +355,19 @@ function Test-ChatpadNativeAdapterOperationGate {
         capability_boundary = $capability
         operation_evidence = $operationResult
         details = [pscustomobject][ordered]@{
-            adapter_name = $AdapterName
-            mode = $Mode
-            synthetic = $Synthetic
-            is_elevated = $IsElevated
-            allow_windows_mutation = $AllowWindowsMutation
-            adapter_object_type = if ($null -eq $AdapterObject) { '' } else { $AdapterObject.GetType().FullName }
-            evidence_type = if ($null -eq $Evidence) { '' } else { $Evidence.GetType().FullName }
+            adapter_selection_explicit = ($AdapterName -is [string] -and -not [string]::IsNullOrWhiteSpace($AdapterName))
+            mode_is_primitive_string = $Mode -is [string]
+            synthetic = [bool]$Synthetic
+            elevation_claim_accepted = $false
+            mutation_switch_accepted = $false
+            caller_adapter_object_supplied = -not [object]::ReferenceEquals($null, $AdapterObject)
+            caller_evidence_supplied = -not [object]::ReferenceEquals($null, $Evidence)
         }
     }
 }
 
 function Get-ChatpadNativeAdapterDesignContract {
+    $constants = Get-NativeScaffoldConstants
     $readOnlyCalls = @(
         @{ id='device-information-set-create'; dll='setupapi.dll'; entry_point='SetupDiCreateDeviceInfoList'; purpose='Create one transaction-scoped device information set'; read_only=$true; mutating=$false; cleanup='SetupDiDestroyDeviceInfoList' },
         @{ id='exact-device-open'; dll='setupapi.dll'; entry_point='SetupDiOpenDeviceInfoW'; purpose='Open one complete Plug and Play instance ID into the retained set'; read_only=$true; mutating=$false; cleanup='device-information-set owner' },
@@ -385,10 +442,11 @@ function Get-ChatpadNativeAdapterDesignContract {
         'audit-approved-implementation-version'
     )
     [pscustomobject][ordered]@{
-        schema_version = $script:NativeDesignSchema
+        schema_version = $constants.design_schema
         live_adapter_status = 'SCAFFOLD_NON_EXECUTING'
-        current_gate = $script:ScaffoldAuditGate
-        capability_blocker = $script:NativeExecutionBlocker
+        native_execution_status = 'NOT_IMPLEMENTED'
+        current_gate = $constants.scaffold_gate
+        capability_blocker = $constants.execution_blocker
         module_state_introspectable_by_same_process_callers = $true
         caller_supplied_mutation_capability_accepted = $false
         production_adapter = New-ChatpadProductionNativeAdapter
@@ -428,18 +486,23 @@ function Get-ChatpadNativeAdapterDesignContract {
             public_or_exported_caller_supplied_capability_parameter = $false
             module_private_object_trust_boundary = $false
             purpose = 'deterministic dependency selection and wiring, not authorization'
-            production_adapter_identity = $script:ProductionNativeAdapterId
-            synthetic_adapter_identity = $script:SyntheticAdapterId
+            production_adapter_identity = $constants.production_adapter_id
+            synthetic_adapter_identity = $constants.synthetic_adapter_id
             implicit_synthetic_fallback = $false
             environment_variable_authorization = $false
             call_stack_authorization = $false
             caller_name_authorization = $false
+            mutable_module_state_trusted = $false
+            code_integrity_prerequisite = $true
         }
     }
 }
 
 function Test-ChatpadNativeDesignContractCompleteness {
-    param([object]$Contract = (Get-ChatpadNativeAdapterDesignContract))
+    [CmdletBinding(PositionalBinding = $false)]
+    param()
+
+    $Contract = Get-ChatpadNativeAdapterDesignContract
     $requiredCalls = @(
         'device-information-set-create',
         'exact-device-open',
@@ -490,7 +553,7 @@ function Test-ChatpadNativeDesignContractCompleteness {
     $composition = $Contract.composition_root
     $scaffoldComplete = (
         $null -ne $production -and
-        [string]$production.adapter_identity -eq $script:ProductionNativeAdapterId -and
+        [string]$production.adapter_identity -eq 'chatpad-windows-exact-instance-adapter-v1' -and
         [bool]$production.production -eq $true -and
         [bool]$production.synthetic -eq $false -and
         [bool]$production.native_interop_implemented -eq $false -and

@@ -176,6 +176,11 @@ function Invoke-ChatpadManifestCorruptionRegression {
     $sourceSuiteRelative=[string]$suiteEntry[0].relative_path
     $sourceSuitePath=[IO.Path]::GetFullPath((Join-Path $repoRoot $sourceSuiteRelative))
     $validatorRelative='tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1'
+    $childExecutableName=if($PSVersionTable.PSEdition -eq 'Core'){'pwsh.exe'}else{'powershell.exe'}
+    $childPowerShell=Join-Path $PSHOME $childExecutableName
+    if(-not(Test-Path -LiteralPath $childPowerShell -PathType Leaf)){
+        $childPowerShell=(Get-Command $childExecutableName -ErrorAction Stop).Source
+    }
     $copyPaths=@($validatorRelative,$ManifestPath)+@($sourceManifest.entries|ForEach-Object{[string]$_.relative_path})
     $tempRoot=Join-Path ([IO.Path]::GetTempPath()) ('chatpad-manifest-regression-'+[guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tempRoot | Out-Null
@@ -251,7 +256,7 @@ function Invoke-ChatpadManifestCorruptionRegression {
             try {
                 $previousErrorActionPreference=$ErrorActionPreference
                 $ErrorActionPreference='Continue'
-                $outputLines=@(& powershell -NoProfile -ExecutionPolicy Bypass -File $validatorRelative 2>&1)
+                $outputLines=@(& $childPowerShell -NoProfile -ExecutionPolicy Bypass -File $validatorRelative -ManifestPath $ManifestPath 2>&1)
                 $exitCode=$LASTEXITCODE
             } finally {
                 $ErrorActionPreference=$previousErrorActionPreference
@@ -295,6 +300,9 @@ function Invoke-ChatpadManifestCorruptionRegression {
                 uncontrolled_exception_count=if($null-ne$parsed -and -not $propertyNotFound){0}else{1}
                 property_not_found=$propertyNotFound
                 output_parsed=[bool]($null-ne$parsed)
+                child_runtime_executable=$childPowerShell
+                child_manifest_path=$ManifestPath
+                child_manifest_argument_forwarded=$true
             })
         }
 
@@ -381,7 +389,7 @@ function Invoke-ChatpadManifestCorruptionRegression {
             try {
                 $previousErrorActionPreference=$ErrorActionPreference
                 $ErrorActionPreference='Continue'
-                $outputLines=@(& powershell -NoProfile -ExecutionPolicy Bypass -File $validatorRelative 2>&1)
+                $outputLines=@(& $childPowerShell -NoProfile -ExecutionPolicy Bypass -File $validatorRelative -ManifestPath $ManifestPath 2>&1)
                 $exitCode=$LASTEXITCODE
             } finally {
                 $ErrorActionPreference=$previousErrorActionPreference
@@ -425,6 +433,9 @@ function Invoke-ChatpadManifestCorruptionRegression {
                 rounded_or_coerced_value_accepted=($null-ne$parsed -and $parsed.result -eq 'PASS' -and $null -ne $CoercedTotalValue)
                 output_parsed=[bool]($null-ne$parsed)
                 case_passed=$casePassed
+                child_runtime_executable=$childPowerShell
+                child_manifest_path=$ManifestPath
+                child_manifest_argument_forwarded=$true
             }
         }
 
@@ -473,6 +484,9 @@ function Invoke-ChatpadManifestCorruptionRegression {
             result=if($failed.Count){'FAIL'}else{'PASS'}
             case_count=$results.Count
             failed_case_count=$failed.Count
+            parent_runtime=$PSVersionTable.PSVersion.ToString()
+            child_runtime_executable=$childPowerShell
+            requested_manifest_path=$ManifestPath
             cases=@($results)
         }
     } finally {
@@ -501,7 +515,7 @@ foreach($entry in $entries){
     if($entry.state-notin@('tracked','ignored')){$defects.state++}
     if($entry.evidence_classification-ne'synthetic'){$defects.declared_result++}
 }
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v3'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v3'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
 $suiteEntry=@($entries|Where-Object id -eq 'evidence-synthetic-suite')
 if($suiteEntry.Count-ne1){$defects.evidence_binding++}
 else{
@@ -621,7 +635,7 @@ if($manifest.readiness.psscriptanalyzer_status-notin@('SKIPPED_UNAVAILABLE','PAS
 if($manifest.readiness.psscriptanalyzer_status-eq'PASS'-and$null-eq(Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue)){$defects.psscriptanalyzer++}
 foreach($name in @('frozen_baseline_commit','prior_readiness_implementation_commit','prior_readiness_finalization_commit','current_readiness_implementation_commit')){if([string]$manifest.repository.$name-notmatch'^[0-9a-f]{40}$'){$defects.identity++}}
 if($readinessCounts.exact_instance_binding_operations-or$readinessCounts.exact_instance_restoration_operations-or$readinessCounts.exact_instance_restart_operations-or$readinessCounts.broad_approved_install_operations-or$readinessCounts.broad_approved_rollback_operations-or$readinessCounts.windows_mutation_count){$defects.unsupported_pass++}
-if([string]$manifest.readiness.exact_instance_framework_result-ne'PASS'-or$readinessCounts.exact_instance_offline_test_count-ne106-or$readinessCounts.exact_instance_offline_assertion_count-ne385-or$readinessCounts.synthetic_exact_binding_attempt_count-le0-or$readinessCounts.synthetic_exact_restoration_attempt_count-le0-or$readinessCounts.synthetic_exact_restart_attempt_count-ne0){$defects.unsupported_pass++}
+if([string]$manifest.readiness.exact_instance_framework_result-ne'PASS'-or$readinessCounts.exact_instance_offline_test_count-ne116-or$readinessCounts.exact_instance_offline_assertion_count-ne492-or$readinessCounts.synthetic_exact_binding_attempt_count-le0-or$readinessCounts.synthetic_exact_restoration_attempt_count-le0-or$readinessCounts.synthetic_exact_restart_attempt_count-ne0){$defects.unsupported_pass++}
 if([string]$manifest.readiness.assertion_accounting_result-ne'PASS'-or$readinessCounts.unassigned_assertion_count-or$readinessCounts.off_ledger_assertion_count-or$readinessCounts.duplicate_counted_assertion_count-or$readinessCounts.category_reconciliation_defect_count){$defects.accounting++}
 if($readinessCounts.invalid_lifecycle_acceptance_count -ne 0 -or $readinessCounts.missing_start_timestamp_acceptance_count -ne 0){$defects.lifecycle++}
 if($readinessCounts.stop_condition_count -ne 20 -or $readinessCounts.unique_stop_condition_count -ne 20 -or $readinessCounts.runtime_observer_linkage_count -ne 5 -or $readinessCounts.unlinked_stop_condition_count -ne 0 -or $readinessCounts.unknown_stop_condition_id_count -ne 0 -or $readinessCounts.malformed_linkage_count -ne 0 -or $readinessCounts.nested_array_acceptance_count -ne 0){$defects.stop_linkage++}
