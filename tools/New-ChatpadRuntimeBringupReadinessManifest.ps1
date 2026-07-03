@@ -7,9 +7,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
+Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full commit hash.'}
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
-if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false){throw 'Suite result is not an accepted compile-only validation, blocked native-execution result.'}
+if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false){throw 'Suite result is not an accepted remediated compile-only validation pending independent re-audit.'}
 
 function Get-CheckedOutLocalBranch {
     $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
@@ -27,8 +28,26 @@ function Get-CheckedOutLocalBranch {
 function New-Entry($Id,$Path,$State,$Result){
     $full=[IO.Path]::GetFullPath((Join-Path $root $Path))
     if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not(Test-Path -LiteralPath $full -PathType Leaf)){throw "Invalid manifest path: $Path"}
-    $item=Get-Item -LiteralPath $full
-    [pscustomobject][ordered]@{id=$Id;relative_path=$Path.Replace('\','/');state=$State;byte_size=[long]$item.Length;sha256=(Get-FileHash $full -Algorithm SHA256).Hash;result=$Result;evidence_classification='synthetic'}
+    $identity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $full -HashPolicy auto -CommitRepresented $ImplementationCommit -State $State
+    [pscustomobject][ordered]@{
+        id=$Id
+        relative_path=$identity.relative_path
+        state=$State
+        content_classification=$identity.content_classification
+        hash_policy=$identity.hash_policy
+        canonical_byte_size=$identity.canonical_byte_size
+        canonical_sha256=$identity.canonical_sha256
+        raw_working_tree_byte_size=$identity.raw_working_tree_byte_size
+        raw_working_tree_sha256=$identity.raw_working_tree_sha256
+        byte_size=$identity.canonical_byte_size
+        sha256=$identity.canonical_sha256
+        commit_represented=$identity.commit_represented
+        line_ending_policy=$identity.line_ending_policy
+        working_tree_line_endings=$identity.working_tree_line_endings
+        raw_and_canonical_differ=$identity.raw_and_canonical_differ
+        result=$Result
+        evidence_classification='synthetic'
+    }
 }
 
 function Get-PowerShellInventory {
@@ -89,11 +108,19 @@ $pssaInventory=Get-PSScriptAnalyzerInventory
 $checkedOutBranch=Get-CheckedOutLocalBranch
 
 $manifest=[pscustomobject][ordered]@{
-    schema_version='chatpad-runtime-bringup-readiness-manifest-v3'
+    schema_version='chatpad-runtime-bringup-readiness-manifest-v4'
+    identity_policy=[pscustomobject][ordered]@{
+        schema_version='chatpad-evidence-file-identity-policy-v1'
+        supported_hash_policies=@('git_blob_bytes','canonical_lf_text','raw_file_bytes')
+        tracked_text_input_policy='canonical_lf_text'
+        binary_output_policy='raw_file_bytes'
+        canonical_text_encoding='UTF-8 without BOM'
+        canonical_text_line_endings='LF'
+    }
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+    current_gate='BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     live_adapter_status='SCAFFOLD_NON_EXECUTING'
     live_binding_authorized=$false

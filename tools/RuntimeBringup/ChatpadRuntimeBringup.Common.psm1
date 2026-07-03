@@ -977,4 +977,90 @@ function Get-ChatpadRuntimeConstants {
     [pscustomobject]@{readiness_branch=$script:ReadinessBranch;frozen_baseline_commit=$script:FrozenBaselineCommit;prior_implementation_commit=$script:PriorImplementationCommit;prior_finalization_commit=$script:PriorFinalizationCommit;accepted_provider_guid=$script:AcceptedProviderGuid;stop_condition_ids=@($script:KnownStopConditionIds)}
 }
 
+function Get-ChatpadSha256Bytes {
+    param([Parameter(Mandatory)][byte[]]$Bytes)
+    $sha256=[Security.Cryptography.SHA256]::Create()
+    try {
+        (($sha256.ComputeHash($Bytes)|ForEach-Object{$_.ToString('X2')})-join'')
+    } finally {
+        $sha256.Dispose()
+    }
+}
+
+function ConvertTo-ChatpadCanonicalLfBytes {
+    param([Parameter(Mandatory)][byte[]]$Bytes)
+    $utf8=[Text.UTF8Encoding]::new($false,$true)
+    $text=$utf8.GetString($Bytes)
+    if($text.Length -gt 0 -and $text[0] -eq [char]0xFEFF){$text=$text.Substring(1)}
+    $text=$text.Replace("`r`n","`n").Replace("`r","`n")
+    [Text.UTF8Encoding]::new($false).GetBytes($text)
+}
+
+function Get-ChatpadTextLineEndingKind {
+    param([Parameter(Mandatory)][byte[]]$Bytes)
+    $text=[Text.UTF8Encoding]::new($false,$true).GetString($Bytes)
+    $crlf=[regex]::Matches($text,"`r`n").Count
+    $withoutCrlf=$text.Replace("`r`n",'')
+    $lf=[regex]::Matches($withoutCrlf,"`n").Count
+    $cr=[regex]::Matches($withoutCrlf,"`r").Count
+    $kinds=@()
+    if($crlf){$kinds+='CRLF'}
+    if($lf){$kinds+='LF'}
+    if($cr){$kinds+='CR'}
+    if(-not$kinds.Count){return 'none'}
+    if($kinds.Count -eq 1){return $kinds[0]}
+    'mixed'
+}
+
+function Test-ChatpadTextEvidencePath {
+    param([Parameter(Mandatory)][string]$Path)
+    [IO.Path]::GetExtension($Path).ToLowerInvariant() -in @(
+        '.cs','.csproj','.inf','.json','.md','.props','.ps1','.psd1','.psm1',
+        '.sln','.targets','.txt','.vcxproj','.xml','.yaml','.yml'
+    )
+}
+
+function Get-ChatpadEvidenceFileIdentity {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$RepositoryRoot,
+        [Parameter(Mandatory)][string]$Path,
+        [ValidateSet('auto','canonical_lf_text','raw_file_bytes')][string]$HashPolicy='auto',
+        [Parameter(Mandatory)][string]$CommitRepresented,
+        [string]$State=''
+    )
+    $root=[IO.Path]::GetFullPath($RepositoryRoot)
+    $full=if([IO.Path]::IsPathRooted($Path)){[IO.Path]::GetFullPath($Path)}else{[IO.Path]::GetFullPath((Join-Path $root $Path))}
+    if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){
+        throw "Evidence identity path must remain inside the repository: $Path"
+    }
+    if(-not(Test-Path -LiteralPath $full -PathType Leaf)){throw "Evidence identity path is missing: $Path"}
+    if($CommitRepresented-notmatch'^[0-9a-f]{40}$'){throw 'CommitRepresented must be a full lowercase commit hash.'}
+    $relative=$full.Substring($root.Length+1).Replace('\','/')
+    $isText=Test-ChatpadTextEvidencePath -Path $relative
+    if($HashPolicy-eq'auto'){$HashPolicy=if($isText){'canonical_lf_text'}else{'raw_file_bytes'}}
+    if($HashPolicy-eq'canonical_lf_text'-and-not$isText){throw "Canonical text policy is not allowed for a non-text path: $relative"}
+    if($HashPolicy-eq'raw_file_bytes'-and$isText-and$State-eq'tracked'){throw "Tracked text evidence must use canonical_lf_text: $relative"}
+    $rawBytes=[IO.File]::ReadAllBytes($full)
+    $canonicalBytes=if($HashPolicy-eq'canonical_lf_text'){ConvertTo-ChatpadCanonicalLfBytes -Bytes $rawBytes}else{$rawBytes}
+    $rawHash=Get-ChatpadSha256Bytes -Bytes $rawBytes
+    $canonicalHash=Get-ChatpadSha256Bytes -Bytes $canonicalBytes
+    $tracked=@(&git -C $root ls-files -- $relative).Count -eq 1
+    [pscustomobject][ordered]@{
+        relative_path=$relative
+        tracked=$tracked
+        state=if($State){$State}else{if($tracked){'tracked'}else{'ignored'}}
+        content_classification=if($isText){'text'}else{'binary'}
+        hash_policy=$HashPolicy
+        canonical_sha256=$canonicalHash
+        canonical_byte_size=[long]$canonicalBytes.Length
+        raw_working_tree_sha256=$rawHash
+        raw_working_tree_byte_size=[long]$rawBytes.Length
+        commit_represented=$CommitRepresented
+        line_ending_policy=if($HashPolicy-eq'canonical_lf_text'){'utf8_no_bom_lf'}else{'raw_preserved'}
+        working_tree_line_endings=if($isText){Get-ChatpadTextLineEndingKind -Bytes $rawBytes}else{'not_applicable'}
+        raw_and_canonical_differ=($rawHash-cne$canonicalHash-or$rawBytes.Length-ne$canonicalBytes.Length)
+    }
+}
+
 Export-ModuleMember -Function *-Chatpad*

@@ -1,29 +1,72 @@
 [CmdletBinding()]
 param(
     [string]$ProjectPath = 'tools/ExactInstance/CompileOnlyValidation/Chatpad.NativeInterop.CompileOnlyValidation.csproj',
-    [string]$EvidencePath = 'docs/evidence/native-interop-compile-only-validation.json',
+    [string]$EvidencePath = '',
+    [string]$OutputRoot = '',
+    [switch]$NoLoad,
+    [switch]$NoReflection,
+    [switch]$NoInvoke,
     [ValidateSet('Debug','Release')][string]$Configuration = 'Release',
     [ValidateSet('x64')][string]$Platform = 'x64'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 
 function Get-RelativePath {
     param([Parameter(Mandatory)][string]$Root,[Parameter(Mandatory)][string]$Path)
     $rootFull = [IO.Path]::GetFullPath($Root).TrimEnd('\') + '\'
     $pathFull = [IO.Path]::GetFullPath($Path)
-    ([Uri]$rootFull).MakeRelativeUri([Uri]$pathFull).ToString().Replace('/','\')
+    [Uri]::UnescapeDataString(([Uri]$rootFull).MakeRelativeUri([Uri]$pathFull).ToString()).Replace('/','\')
 }
 
-function Get-FileHashRecord {
+function Get-RawFileHashRecord {
     param([Parameter(Mandatory)][string]$Root,[Parameter(Mandatory)][string]$Path,[string]$Role = 'input')
     $item = Get-Item -LiteralPath $Path -ErrorAction Stop
+    $relative=(Get-RelativePath -Root $Root -Path $item.FullName).Replace('\','/')
     [pscustomobject][ordered]@{
         role = $Role
-        relative_path = (Get-RelativePath -Root $Root -Path $item.FullName).Replace('\','/')
+        relative_path = $relative
+        tracked = @(&git -C $Root ls-files -- $relative).Count -eq 1
+        content_classification = 'compile-output-artifact'
+        hash_policy = 'raw_file_bytes'
         byte_size = [long]$item.Length
         sha256 = (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash
+        raw_file_byte_size = [long]$item.Length
+        raw_file_sha256 = (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash
+        ignored = [bool](@(&git -C $Root check-ignore -- $relative 2>$null).Count)
+        assembly_loaded = $false
+        reflection_inspection_used = $false
+        managed_code_executed = $false
+        native_api_invoked = $false
+    }
+}
+
+function Get-TextInputHashRecord {
+    param(
+        [Parameter(Mandatory)][string]$Root,
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Role,
+        [Parameter(Mandatory)][string]$CommitRepresented
+    )
+    $identity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $Root -Path $Path -HashPolicy canonical_lf_text -CommitRepresented $CommitRepresented -State tracked
+    [pscustomobject][ordered]@{
+        role=$Role
+        relative_path=$identity.relative_path
+        tracked=$identity.tracked
+        content_classification=$identity.content_classification
+        hash_policy=$identity.hash_policy
+        canonical_sha256=$identity.canonical_sha256
+        canonical_byte_size=$identity.canonical_byte_size
+        raw_working_tree_sha256=$identity.raw_working_tree_sha256
+        raw_working_tree_byte_size=$identity.raw_working_tree_byte_size
+        commit_represented=$identity.commit_represented
+        line_ending_policy=$identity.line_ending_policy
+        working_tree_line_endings=$identity.working_tree_line_endings
+        raw_and_canonical_differ=$identity.raw_and_canonical_differ
+        sha256=$identity.canonical_sha256
+        byte_size=$identity.canonical_byte_size
     }
 }
 
@@ -52,12 +95,40 @@ $root = [IO.Path]::GetFullPath((& git rev-parse --show-toplevel).Trim())
 $branch = (& git branch --show-current).Trim()
 $head = (& git rev-parse HEAD).Trim()
 $projectFull = [IO.Path]::GetFullPath((Join-Path $root $ProjectPath))
-$evidenceFull = [IO.Path]::GetFullPath((Join-Path $root $EvidencePath))
 $validationId = 'native-interop-compile-only-' + (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
-$artifactRoot = Join-Path $root 'artifacts\compile-only\native-interop'
-$logRoot = Join-Path $root ('artifacts\logs\' + $validationId)
-if (Test-Path -LiteralPath $artifactRoot) {
-    Remove-Item -LiteralPath $artifactRoot -Recurse -Force
+$canonicalArtifactRoot = [IO.Path]::GetFullPath((Join-Path $root 'artifacts\compile-only\native-interop'))
+$auditOutputMode = -not [string]::IsNullOrWhiteSpace($OutputRoot)
+if($auditOutputMode){
+    if(-not$NoLoad-or-not$NoReflection-or-not$NoInvoke){throw 'Audit output mode requires -NoLoad, -NoReflection, and -NoInvoke.'}
+    $auditRunRoot=if([IO.Path]::IsPathRooted($OutputRoot)){[IO.Path]::GetFullPath($OutputRoot)}else{[IO.Path]::GetFullPath((Join-Path $root $OutputRoot))}
+    $allowedArtifactsRoot=[IO.Path]::GetFullPath((Join-Path $root 'artifacts'))
+    if(-not$auditRunRoot.StartsWith($allowedArtifactsRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){
+        throw 'OutputRoot must remain under the repository artifacts directory.'
+    }
+    if([string]::Equals($auditRunRoot,$canonicalArtifactRoot,[StringComparison]::OrdinalIgnoreCase)){
+        throw 'Explicit audit OutputRoot must differ from the canonical compile-only output root.'
+    }
+    if(-not @(&git -C $root check-ignore -- $auditRunRoot 2>$null).Count){throw 'OutputRoot must be ignored by Git.'}
+    $artifactRoot=Join-Path $auditRunRoot 'compile-output'
+    $logRoot=Join-Path $auditRunRoot 'logs'
+    $cleanupRoot=$auditRunRoot
+    if(-not$EvidencePath){$EvidencePath=(Get-RelativePath -Root $root -Path (Join-Path $auditRunRoot 'compile-only-validation.json'))}
+} else {
+    $auditRunRoot=''
+    $artifactRoot=$canonicalArtifactRoot
+    $logRoot=Join-Path $root ('artifacts\logs\' + $validationId)
+    $cleanupRoot=$artifactRoot
+    if(-not$EvidencePath){$EvidencePath='docs/evidence/native-interop-compile-only-validation.json'}
+}
+$evidenceFull = if([IO.Path]::IsPathRooted($EvidencePath)){[IO.Path]::GetFullPath($EvidencePath)}else{[IO.Path]::GetFullPath((Join-Path $root $EvidencePath))}
+if($auditOutputMode-and-not$evidenceFull.StartsWith($auditRunRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){
+    throw 'Audit output mode requires EvidencePath to remain under OutputRoot.'
+}
+if($auditOutputMode-and@(&git -C $root ls-files -- (Get-RelativePath -Root $root -Path $evidenceFull)).Count){
+    throw 'Audit output mode cannot write a tracked evidence file.'
+}
+if (Test-Path -LiteralPath $cleanupRoot) {
+    Remove-Item -LiteralPath $cleanupRoot -Recurse -Force
 }
 New-Item -ItemType Directory -Force -Path $artifactRoot,$logRoot,(Split-Path $evidenceFull -Parent) | Out-Null
 
@@ -67,8 +138,8 @@ $contractPath = Join-Path $root 'tools\ExactInstance\CompileOnlyValidation\Compi
 $propsPath = Join-Path $root 'tools\ExactInstance\CompileOnlyValidation\Directory.Build.props'
 $expectedDeclarationHash = '127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA'
 $expectedBoundaryHash = '3E7E3119A467330A413280658503B294C0FFB38271A9CA847056BAF6B2E778D3'
-$actualDeclarationHash = (Get-FileHash -LiteralPath $declarationPath -Algorithm SHA256).Hash
-$actualBoundaryHash = (Get-FileHash -LiteralPath $boundaryPath -Algorithm SHA256).Hash
+$actualDeclarationHash = (Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $declarationPath -HashPolicy canonical_lf_text -CommitRepresented $head -State tracked).canonical_sha256
+$actualBoundaryHash = (Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $boundaryPath -HashPolicy canonical_lf_text -CommitRepresented $head -State tracked).canonical_sha256
 if ($actualDeclarationHash -cne $expectedDeclarationHash -or $actualBoundaryHash -cne $expectedBoundaryHash) {
     throw 'Audited NativeInterop source hashes do not match the accepted compile-only validation precondition.'
 }
@@ -98,7 +169,8 @@ $ppArgs = @(
     '/nologo',
     "/pp:$preprocessedPath",
     "/p:Configuration=$Configuration",
-    "/p:Platform=$Platform"
+    "/p:Platform=$Platform",
+    "/p:ValidationArtifactRoot=$($artifactRoot.Replace('\','/').TrimEnd('/'))/"
 )
 $commands.Add((Invoke-CapturedCommand -Tool 'dotnet' -Arguments $ppArgs -WorkingDirectory $root -OutputPath (Join-Path $logRoot 'msbuild-preprocess-output.txt') -Purpose 'preprocess-effective-msbuild-graph-before-build'))
 if ($commands[$commands.Count - 1].exit_code -ne 0) {
@@ -133,6 +205,7 @@ $buildArgs = @(
     '/t:Restore,Build',
     "/p:Configuration=$Configuration",
     "/p:Platform=$Platform",
+    "/p:ValidationArtifactRoot=$($artifactRoot.Replace('\','/').TrimEnd('/'))/",
     '/v:minimal',
     '/clp:Summary',
     "/bl:$binaryLogPath"
@@ -148,15 +221,15 @@ $buildSucceeded = ($buildCommand.exit_code -eq 0)
 $producedFiles = @()
 if (Test-Path -LiteralPath $artifactRoot) {
     $producedFiles = @(Get-ChildItem -LiteralPath $artifactRoot -File -Recurse | Sort-Object FullName | ForEach-Object {
-        Get-FileHashRecord -Root $root -Path $_.FullName -Role 'compile-output'
+        Get-RawFileHashRecord -Root $root -Path $_.FullName -Role 'compile-output'
     })
 }
 $logFiles = @(Get-ChildItem -LiteralPath $logRoot -File -Recurse | Sort-Object FullName | ForEach-Object {
-    Get-FileHashRecord -Root $root -Path $_.FullName -Role 'validation-log'
+    Get-RawFileHashRecord -Root $root -Path $_.FullName -Role 'validation-log'
 })
 
 $evidence = [pscustomobject][ordered]@{
-    schema_version = 'chatpad-native-interop-compile-only-validation-v1'
+    schema_version = 'chatpad-native-interop-compile-only-validation-v2'
     validation_id = $validationId
     generated_utc = (Get-Date).ToUniversalTime().ToString('o')
     repository = [pscustomobject][ordered]@{
@@ -166,6 +239,8 @@ $evidence = [pscustomobject][ordered]@{
     }
     scope = [pscustomobject][ordered]@{
         non_production_compile_only = $true
+        audit_output_mode = $auditOutputMode
+        audit_run_root = if($auditOutputMode){(Get-RelativePath -Root $root -Path $auditRunRoot).Replace('\','/')}else{''}
         harness_project_path = $ProjectPath.Replace('\','/')
         output_artifact_root = (Get-RelativePath -Root $root -Path $artifactRoot).Replace('\','/')
         target_framework = 'net9.0-windows10.0.26100.0'
@@ -177,6 +252,17 @@ $evidence = [pscustomobject][ordered]@{
         warnings_as_errors = $true
         analyzers_enabled = $false
     }
+    identity_policy = [pscustomobject][ordered]@{
+        schema_version = 'chatpad-evidence-file-identity-policy-v1'
+        supported_hash_policies = @('git_blob_bytes','canonical_lf_text','raw_file_bytes')
+        tracked_text_input_policy = 'canonical_lf_text'
+        tracked_text_encoding = 'UTF-8 without BOM'
+        tracked_text_line_endings = 'LF'
+        compile_output_policy = 'raw_file_bytes'
+        git_blob_bytes_definition = 'Raw Git blob bytes at commit_represented.'
+        canonical_lf_text_definition = 'Strict UTF-8 text with an optional UTF-8 BOM removed and CRLF or CR normalized to LF, encoded as UTF-8 without BOM.'
+        raw_file_bytes_definition = 'Exact bytes read from the output file.'
+    }
     toolchain = [pscustomobject][ordered]@{
         dotnet_info_path = (Get-RelativePath -Root $root -Path (Join-Path $logRoot 'dotnet-info.txt')).Replace('\','/')
         msbuild_version_path = (Get-RelativePath -Root $root -Path (Join-Path $logRoot 'msbuild-version.txt')).Replace('\','/')
@@ -185,17 +271,18 @@ $evidence = [pscustomobject][ordered]@{
         process_architecture = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString()
     }
     input_files = @(
-        (Get-FileHashRecord -Root $root -Path $declarationPath -Role 'audited-declaration-source'),
-        (Get-FileHashRecord -Root $root -Path $boundaryPath -Role 'audited-source-boundary-record'),
-        (Get-FileHashRecord -Root $root -Path $projectFull -Role 'compile-only-harness-project'),
-        (Get-FileHashRecord -Root $root -Path $contractPath -Role 'compile-only-contract-source'),
-        (Get-FileHashRecord -Root $root -Path $propsPath -Role 'compile-only-artifact-path-props')
+        (Get-TextInputHashRecord -Root $root -Path $declarationPath -Role 'audited-declaration-source' -CommitRepresented $head),
+        (Get-TextInputHashRecord -Root $root -Path $boundaryPath -Role 'audited-source-boundary-record' -CommitRepresented $head),
+        (Get-TextInputHashRecord -Root $root -Path $projectFull -Role 'compile-only-harness-project' -CommitRepresented $head),
+        (Get-TextInputHashRecord -Root $root -Path $contractPath -Role 'compile-only-contract-source' -CommitRepresented $head),
+        (Get-TextInputHashRecord -Root $root -Path $propsPath -Role 'compile-only-artifact-path-props' -CommitRepresented $head)
     )
     expected_native_source_hashes = [pscustomobject][ordered]@{
         declaration_sha256 = $expectedDeclarationHash
         source_boundary_record_sha256 = $expectedBoundaryHash
         matched_before_compile = $true
-        matched_after_compile = ((Get-FileHash -LiteralPath $declarationPath -Algorithm SHA256).Hash -cne $expectedDeclarationHash -or (Get-FileHash -LiteralPath $boundaryPath -Algorithm SHA256).Hash -cne $expectedBoundaryHash) -eq $false
+        hash_policy = 'canonical_lf_text'
+        matched_after_compile = ((Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $declarationPath -HashPolicy canonical_lf_text -CommitRepresented $head -State tracked).canonical_sha256 -cne $expectedDeclarationHash -or (Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $boundaryPath -HashPolicy canonical_lf_text -CommitRepresented $head -State tracked).canonical_sha256 -cne $expectedBoundaryHash) -eq $false
     }
     msbuild_graph = [pscustomobject][ordered]@{
         preprocessed_graph_path = (Get-RelativePath -Root $root -Path $preprocessedPath).Replace('\','/')
@@ -242,11 +329,15 @@ $evidence = [pscustomobject][ordered]@{
         testHostExecuted = $false
         reflectionInspectionUsed = $false
         postBuildExecutionOccurred = $false
+        driverBuildOccurred = $false
+        driverSigningOccurred = $false
+        driverPackagingOccurred = $false
+        driverInstallationOccurred = $false
         proof = 'After the compile-only MSBuild command, this script performs only file hashing and JSON evidence writing; it does not run dotnet test/run, vstest, Add-Type, Assembly.Load, reflection, P/Invoke, device tools, or produced binaries.'
     }
     readiness_transition = [pscustomobject][ordered]@{
         previous_gate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
-        resulting_readiness_gate = if ($buildSucceeded) { 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' } else { 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED' }
+        resulting_readiness_gate = if ($buildSucceeded) { 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT' } else { 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED' }
         remaining_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         transition_allowed = [bool]$buildSucceeded
     }

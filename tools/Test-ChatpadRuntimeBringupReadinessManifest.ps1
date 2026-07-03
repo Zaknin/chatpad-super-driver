@@ -5,6 +5,7 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
+Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 
 function New-ChatpadCountValidationDefect {
     param(
@@ -205,9 +206,15 @@ function Invoke-ChatpadManifestCorruptionRegression {
             $entry=@($Manifest.entries|Where-Object relative_path -eq $RelativePath.Replace('\','/'))
             if($entry.Count -ne 1){return}
             $fullPath=[IO.Path]::GetFullPath((Join-Path $tempRoot $RelativePath))
-            $item=Get-Item -LiteralPath $fullPath
-            $entry[0].byte_size=[long]$item.Length
-            $entry[0].sha256=(Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash
+            $identity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $tempRoot -Path $fullPath -HashPolicy ([string]$entry[0].hash_policy) -CommitRepresented ([string]$entry[0].commit_represented) -State ([string]$entry[0].state)
+            $entry[0].canonical_byte_size=[long]$identity.canonical_byte_size
+            $entry[0].canonical_sha256=$identity.canonical_sha256
+            $entry[0].raw_working_tree_byte_size=[long]$identity.raw_working_tree_byte_size
+            $entry[0].raw_working_tree_sha256=$identity.raw_working_tree_sha256
+            $entry[0].byte_size=[long]$identity.canonical_byte_size
+            $entry[0].sha256=$identity.canonical_sha256
+            $entry[0].working_tree_line_endings=$identity.working_tree_line_endings
+            $entry[0].raw_and_canonical_differ=$identity.raw_and_canonical_differ
         }
         $cases=@(
             [pscustomobject]@{
@@ -243,11 +250,8 @@ function Invoke-ChatpadManifestCorruptionRegression {
             $script:SkippedOneHarnessRecord=$false
             $suite.fixtures=@(foreach($fixture in @($suite.fixtures)){if(& $case.keep $fixture){$fixture}})
             Write-ChatpadUtf8NoBomJson $tempSuitePath $suite
-            $changedSuite=Get-Item -LiteralPath $tempSuitePath
-            $changedSuiteHash=(Get-FileHash -LiteralPath $tempSuitePath -Algorithm SHA256).Hash
             $entry=@($manifest.entries|Where-Object id -eq 'evidence-synthetic-suite')
-            $entry[0].byte_size=[long]$changedSuite.Length
-            $entry[0].sha256=$changedSuiteHash
+            Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$entry[0].relative_path)
             foreach($manifestEntry in @($manifest.entries|Where-Object id -ne 'evidence-synthetic-suite')){
                 Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$manifestEntry.relative_path)
             }
@@ -376,11 +380,8 @@ function Invoke-ChatpadManifestCorruptionRegression {
                 $dependentChanges=Set-AssertionDependentTotals -Manifest $manifest -Suite $suite -Category $category -OldValue $originalValue -NewValue $CoercedTotalValue
             }
             Write-ChatpadUtf8NoBomJson $tempSuitePath $suite
-            $changedSuite=Get-Item -LiteralPath $tempSuitePath
-            $changedSuiteHash=(Get-FileHash -LiteralPath $tempSuitePath -Algorithm SHA256).Hash
             $entry=@($manifest.entries|Where-Object id -eq 'evidence-synthetic-suite')
-            $entry[0].byte_size=[long]$changedSuite.Length
-            $entry[0].sha256=$changedSuiteHash
+            Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$entry[0].relative_path)
             foreach($manifestEntry in @($manifest.entries|Where-Object id -ne 'evidence-synthetic-suite')){
                 Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$manifestEntry.relative_path)
             }
@@ -469,6 +470,56 @@ function Invoke-ChatpadManifestCorruptionRegression {
             if($caseSpec.ContainsKey('CoercedTotalValue')){$invokeParams.CoercedTotalValue=$caseSpec.CoercedTotalValue}
             $results.Add((Invoke-CountCorruptionCase @invokeParams))
         }
+        function Invoke-HashPolicyCorruptionCase {
+            param(
+                [Parameter(Mandatory)][string]$CaseId,
+                [Parameter(Mandatory)][scriptblock]$Mutate,
+                [Parameter(Mandatory)][string]$ExpectedDefect
+            )
+            [IO.File]::WriteAllText($tempManifestPath,$baselineManifestText,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($tempSuitePath,$baselineSuiteText,[Text.UTF8Encoding]::new($false))
+            $manifest=Get-Content -LiteralPath $tempManifestPath -Raw|ConvertFrom-Json
+            foreach($manifestEntry in @($manifest.entries)){
+                Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$manifestEntry.relative_path)
+            }
+            $target=@($manifest.entries|Where-Object state -eq 'tracked'|Where-Object content_classification -eq 'text'|Select-Object -First 1)
+            if($target.Count-ne1){throw "Cannot locate tracked text identity for $CaseId."}
+            & $Mutate $manifest $target[0]
+            Write-ChatpadUtf8NoBomJson $tempManifestPath $manifest
+            Push-Location $tempRoot
+            try {
+                $previousErrorActionPreference=$ErrorActionPreference
+                $ErrorActionPreference='Continue'
+                $outputLines=@(& $childPowerShell -NoProfile -ExecutionPolicy Bypass -File $validatorRelative -ManifestPath $ManifestPath 2>&1)
+                $exitCode=$LASTEXITCODE
+            } finally {
+                $ErrorActionPreference=$previousErrorActionPreference
+                Pop-Location
+            }
+            $outputText=($outputLines|Out-String)
+            try{$parsed=$outputText|ConvertFrom-Json}catch{$parsed=$null}
+            $observed=if($null-ne$parsed){[int]$parsed.defects.$ExpectedDefect}else{0}
+            [pscustomobject][ordered]@{
+                case=$CaseId
+                group='hash-policy'
+                process_exit_code=$exitCode
+                validator_result=if($null-ne$parsed){$parsed.result}else{'UNPARSED'}
+                expected_defect=$ExpectedDefect
+                expected_defect_count=$observed
+                uncontrolled_exception_count=if($null-ne$parsed){0}else{1}
+                property_not_found=[bool]($outputText-match'PropertyNotFound')
+                output_parsed=[bool]($null-ne$parsed)
+                case_passed=($exitCode-eq1-and$null-ne$parsed-and$parsed.result-eq'FAIL'-and$observed-ge1-and$outputText-notmatch'PropertyNotFound')
+                child_runtime_executable=$childPowerShell
+                child_manifest_path=$ManifestPath
+                child_manifest_argument_forwarded=$true
+            }
+        }
+        $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H1-missing-hash-policy' -ExpectedDefect hash_policy -Mutate {param($manifest,$entry) [void]$entry.PSObject.Properties.Remove('hash_policy')}))
+        $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H2-unknown-hash-policy' -ExpectedDefect hash_policy -Mutate {param($manifest,$entry) $entry.hash_policy='unknown_policy'}))
+        $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H3-raw-policy-on-tracked-text' -ExpectedDefect hash_policy -Mutate {param($manifest,$entry) $entry.hash_policy='raw_file_bytes'}))
+        $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H4-canonical-hash-mismatch' -ExpectedDefect hash -Mutate {param($manifest,$entry) $entry.canonical_sha256=('0'*64);$entry.sha256=('0'*64)}))
+        $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H5-canonical-size-mismatch' -ExpectedDefect size -Mutate {param($manifest,$entry) $entry.canonical_byte_size=[long]$entry.canonical_byte_size+1;$entry.byte_size=[long]$entry.byte_size+1}))
         $failed=@($results|Where-Object{
             if($null -ne $_.PSObject.Properties['case_passed']){-not $_.case_passed}
             else {
@@ -504,18 +555,39 @@ if($RunCorruptionRegression){
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 $manifest=Get-Content -LiteralPath (Join-Path $root $ManifestPath) -Raw|ConvertFrom-Json
 $entries=@($manifest.entries)
-$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;state=0;containment=0;declared_result=0;top_level=0;compile_validation=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
+$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;hash_policy=0;state=0;containment=0;declared_result=0;top_level=0;compile_validation=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
 $accountingDetails=[ordered]@{}
 $readinessCounts=[ordered]@{}
 foreach($entry in $entries){
     $full=[IO.Path]::GetFullPath((Join-Path $root ([string]$entry.relative_path)))
     if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){$defects.containment++;continue}
     if(-not(Test-Path -LiteralPath $full -PathType Leaf)){$defects.missing++;continue}
-    $item=Get-Item $full;if([long]$entry.byte_size-ne$item.Length){$defects.size++};if([string]$entry.sha256-cne(Get-FileHash $full -Algorithm SHA256).Hash){$defects.hash++}
     if($entry.state-notin@('tracked','ignored')){$defects.state++}
+    $policyProperty=$entry.PSObject.Properties['hash_policy']
+    $classificationProperty=$entry.PSObject.Properties['content_classification']
+    $commitProperty=$entry.PSObject.Properties['commit_represented']
+    if($null-eq$policyProperty-or$policyProperty.Value-notin@('canonical_lf_text','raw_file_bytes')-or$null-eq$classificationProperty-or$null-eq$commitProperty-or[string]$commitProperty.Value-notmatch'^[0-9a-f]{40}$'){
+        $defects.hash_policy++
+    } else {
+        $policy=[string]$policyProperty.Value
+        $classification=[string]$classificationProperty.Value
+        if(($classification-eq'text'-and$policy-ne'canonical_lf_text')-or($classification-eq'binary'-and$policy-ne'raw_file_bytes')-or($classification-notin@('text','binary'))){$defects.hash_policy++}
+        else {
+            try {
+                $actual=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $full -HashPolicy $policy -CommitRepresented ([string]$commitProperty.Value) -State ([string]$entry.state)
+                if($null-eq$entry.PSObject.Properties['canonical_byte_size']-or$null-eq$entry.PSObject.Properties['byte_size']-or[long]$entry.canonical_byte_size-ne[long]$actual.canonical_byte_size-or[long]$entry.byte_size-ne[long]$actual.canonical_byte_size){$defects.size++}
+                if($null-eq$entry.PSObject.Properties['canonical_sha256']-or$null-eq$entry.PSObject.Properties['sha256']-or[string]$entry.canonical_sha256-cne$actual.canonical_sha256-or[string]$entry.sha256-cne$actual.canonical_sha256){$defects.hash++}
+                if($null-eq$entry.PSObject.Properties['raw_working_tree_byte_size']-or$null-eq$entry.PSObject.Properties['raw_working_tree_sha256']-or$null-eq$entry.PSObject.Properties['raw_and_canonical_differ']-or$null-eq$entry.PSObject.Properties['line_ending_policy']){$defects.hash_policy++}
+            } catch {
+                $defects.hash_policy++
+            }
+        }
+    }
     if($entry.evidence_classification-ne'synthetic'){$defects.declared_result++}
 }
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v3'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
+$manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
+if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
 $auditProperty=$manifest.PSObject.Properties['native_interop_source_audit']
 if($null -eq $auditProperty -or $null -eq $auditProperty.Value -or $auditProperty.Value -is [array]){$defects.top_level++}
 else{
@@ -539,8 +611,8 @@ else{
             $compileEvidence=$recordEvidence.Value
         }
     }
-    if($compileEvidence.schema_version-ne'chatpad-native-interop-compile-only-validation-v1'-or$compileEvidence.build_result.result-ne'PASS'-or[int]$compileEvidence.build_result.compiler_exit_code-ne0-or[int]$compileEvidence.build_result.warning_count-ne0-or[int]$compileEvidence.build_result.error_count-ne0){$defects.compile_validation++}
-    if($compileEvidence.readiness_transition.previous_gate-ne'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'-or$compileEvidence.readiness_transition.resulting_readiness_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$compileEvidence.readiness_transition.remaining_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$compileEvidence.readiness_transition.transition_allowed-ne$true){$defects.compile_validation++}
+    if($compileEvidence.schema_version-ne'chatpad-native-interop-compile-only-validation-v2'-or$compileEvidence.build_result.result-ne'PASS'-or[int]$compileEvidence.build_result.compiler_exit_code-ne0-or[int]$compileEvidence.build_result.warning_count-ne0-or[int]$compileEvidence.build_result.error_count-ne0){$defects.compile_validation++}
+    if($compileEvidence.readiness_transition.previous_gate-ne'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'-or$compileEvidence.readiness_transition.resulting_readiness_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'-or$compileEvidence.readiness_transition.remaining_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$compileEvidence.readiness_transition.transition_allowed-ne$true){$defects.compile_validation++}
     foreach($name in @('assemblyLoaded','managedCodeExecuted','nativeInvocationOccurred','deviceQueryOccurred','exactInstanceAccessed','windowsMutationOccurred','producedAssemblyExecuted','testHostExecuted','reflectionInspectionUsed','postBuildExecutionOccurred')){
         if($null -eq $compileEvidence.prohibited_actions.PSObject.Properties[$name] -or [bool]$compileEvidence.prohibited_actions.$name -ne $false){$defects.compile_validation++}
     }
@@ -664,7 +736,7 @@ if($manifest.readiness.psscriptanalyzer_status-notin@('SKIPPED_UNAVAILABLE','PAS
 if($manifest.readiness.psscriptanalyzer_status-eq'PASS'-and$null-eq(Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue)){$defects.psscriptanalyzer++}
 foreach($name in @('frozen_baseline_commit','prior_readiness_implementation_commit','prior_readiness_finalization_commit','current_readiness_implementation_commit')){if([string]$manifest.repository.$name-notmatch'^[0-9a-f]{40}$'){$defects.identity++}}
 if($readinessCounts.exact_instance_binding_operations-or$readinessCounts.exact_instance_restoration_operations-or$readinessCounts.exact_instance_restart_operations-or$readinessCounts.broad_approved_install_operations-or$readinessCounts.broad_approved_rollback_operations-or$readinessCounts.windows_mutation_count){$defects.unsupported_pass++}
-if([string]$manifest.readiness.exact_instance_framework_result-ne'PASS'-or$readinessCounts.exact_instance_offline_test_count-ne191-or$readinessCounts.exact_instance_offline_assertion_count-ne793-or$readinessCounts.synthetic_exact_binding_attempt_count-le0-or$readinessCounts.synthetic_exact_restoration_attempt_count-le0-or$readinessCounts.synthetic_exact_restart_attempt_count-ne0){$defects.unsupported_pass++}
+if([string]$manifest.readiness.exact_instance_framework_result-ne'PASS'-or$readinessCounts.exact_instance_offline_test_count-ne209-or$readinessCounts.exact_instance_offline_assertion_count-ne838-or$readinessCounts.synthetic_exact_binding_attempt_count-le0-or$readinessCounts.synthetic_exact_restoration_attempt_count-le0-or$readinessCounts.synthetic_exact_restart_attempt_count-ne0){$defects.unsupported_pass++}
 if([string]$manifest.readiness.assertion_accounting_result-ne'PASS'-or$readinessCounts.unassigned_assertion_count-or$readinessCounts.off_ledger_assertion_count-or$readinessCounts.duplicate_counted_assertion_count-or$readinessCounts.category_reconciliation_defect_count){$defects.accounting++}
 if($readinessCounts.invalid_lifecycle_acceptance_count -ne 0 -or $readinessCounts.missing_start_timestamp_acceptance_count -ne 0){$defects.lifecycle++}
 if($readinessCounts.stop_condition_count -ne 20 -or $readinessCounts.unique_stop_condition_count -ne 20 -or $readinessCounts.runtime_observer_linkage_count -ne 5 -or $readinessCounts.unlinked_stop_condition_count -ne 0 -or $readinessCounts.unknown_stop_condition_id_count -ne 0 -or $readinessCounts.malformed_linkage_count -ne 0 -or $readinessCounts.nested_array_acceptance_count -ne 0){$defects.stop_linkage++}
@@ -684,5 +756,5 @@ if($manifest.readiness.psscriptanalyzer_status-eq'PASS'){
     if(@($analyzer.findings|Where-Object{$_.severity-notin@('Error','Warning','Information')}).Count){$defects.psscriptanalyzer++}
 }
 $total=($defects.Values|Measure-Object -Sum).Sum
-[pscustomobject][ordered]@{schema_version='chatpad-runtime-bringup-readiness-manifest-validation-v2';result=$(if($total){'FAIL'}else{'PASS'});manifest_schema=$manifest.schema_version;entry_count=$entries.Count;defects=[pscustomobject]$defects;total_defects=$total;accounting_details=[pscustomobject]$accountingDetails}|ConvertTo-Json -Depth 8
+[pscustomobject][ordered]@{schema_version='chatpad-runtime-bringup-readiness-manifest-validation-v3';result=$(if($total){'FAIL'}else{'PASS'});manifest_schema=$manifest.schema_version;entry_count=$entries.Count;defects=[pscustomobject]$defects;total_defects=$total;accounting_details=[pscustomobject]$accountingDetails}|ConvertTo-Json -Depth 8
 if($total){exit 1}

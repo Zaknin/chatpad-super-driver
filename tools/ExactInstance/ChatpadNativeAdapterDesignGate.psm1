@@ -1,6 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'NativeInterop\ChatpadNativeInteropSourceBoundary.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '..\RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 $script:NativeCompileOnlyEvidenceCache = $null
 
 function Get-NativeScaffoldConstants {
@@ -13,7 +14,7 @@ function Get-NativeScaffoldConstants {
         synthetic_adapter_id = 'chatpad-fake-exact-instance-adapter-v1'
         execution_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         prior_compile_only_gate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
-        scaffold_gate = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        scaffold_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
         source_audit_result = 'AUDIT PASS'
         source_audit_branch = 'feature/runtime-bringup-native-interop-source-boundary'
         source_audit_commit = 'dbba70d74e99c211d47187697e19e528b381520a'
@@ -128,11 +129,11 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
         }
     }
 
-    if ([string]$evidence.schema_version -ne 'chatpad-native-interop-compile-only-validation-v1') { $defects.Add([pscustomobject][ordered]@{ id = 'schema-version-invalid'; value = [string]$evidence.schema_version }) }
+    if ([string]$evidence.schema_version -ne 'chatpad-native-interop-compile-only-validation-v2') { $defects.Add([pscustomobject][ordered]@{ id = 'schema-version-invalid'; value = [string]$evidence.schema_version }) }
     if ([string]$evidence.build_result.result -ne 'PASS' -or [int]$evidence.build_result.compiler_exit_code -ne 0 -or [int]$evidence.build_result.warning_count -ne 0 -or [int]$evidence.build_result.error_count -ne 0) {
         $defects.Add([pscustomobject][ordered]@{ id = 'compile-result-not-clean-pass'; value = $evidence.build_result })
     }
-    if ([string]$evidence.readiness_transition.previous_gate -ne $constants.prior_compile_only_gate -or [string]$evidence.readiness_transition.resulting_readiness_gate -ne $constants.execution_blocker -or [string]$evidence.readiness_transition.remaining_blocker -ne $constants.execution_blocker -or [bool]$evidence.readiness_transition.transition_allowed -ne $true) {
+    if ([string]$evidence.readiness_transition.previous_gate -ne $constants.prior_compile_only_gate -or [string]$evidence.readiness_transition.resulting_readiness_gate -ne $constants.scaffold_gate -or [string]$evidence.readiness_transition.remaining_blocker -ne $constants.execution_blocker -or [bool]$evidence.readiness_transition.transition_allowed -ne $true) {
         $defects.Add([pscustomobject][ordered]@{ id = 'gate-transition-invalid'; value = $evidence.readiness_transition })
     }
     if ([string]$evidence.scope.harness_project_path -ne 'tools/ExactInstance/CompileOnlyValidation/Chatpad.NativeInterop.CompileOnlyValidation.csproj' -or [string]$evidence.scope.target_framework -ne 'net9.0-windows10.0.26100.0' -or [string]$evidence.scope.platform -ne 'x64' -or [string]$evidence.scope.output_type -ne 'Library' -or [bool]$evidence.scope.warnings_as_errors -ne $true -or [string]$evidence.scope.nullable -ne 'enable') {
@@ -140,6 +141,16 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
     }
     if ([bool]$evidence.msbuild_graph.inspected_before_build -ne $true -or [int]$evidence.msbuild_graph.project_forbidden_pattern_count -ne 0 -or [int]$evidence.msbuild_graph.preprocessed_forbidden_pattern_count -ne 0 -or [bool]$evidence.msbuild_graph.test_project_detected -ne $false -or [bool]$evidence.msbuild_graph.executable_entry_point_declared -ne $false) {
         $defects.Add([pscustomobject][ordered]@{ id = 'msbuild-graph-inspection-invalid'; value = $evidence.msbuild_graph })
+    }
+    $identityPolicy=if($null-ne$evidence.PSObject.Properties['identity_policy']){$evidence.identity_policy}else{$null}
+    if($null-eq$identityPolicy-or
+        [string]$identityPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or
+        [string]$identityPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or
+        [string]$identityPolicy.compile_output_policy-ne'raw_file_bytes'-or
+        @($identityPolicy.supported_hash_policies)-notcontains'git_blob_bytes'-or
+        @($identityPolicy.supported_hash_policies)-notcontains'canonical_lf_text'-or
+        @($identityPolicy.supported_hash_policies)-notcontains'raw_file_bytes'){
+        $defects.Add([pscustomobject][ordered]@{id='identity-policy-invalid';value=$identityPolicy})
     }
 
     $requiredInputHashes = @{
@@ -165,9 +176,28 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
             $defects.Add([pscustomobject][ordered]@{ id = 'input-file-not-found'; value = $requiredPath })
             continue
         }
-        $actualHash = (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash
-        if ([string]$records[0].sha256 -cne $actualHash) {
-            $defects.Add([pscustomobject][ordered]@{ id = 'input-file-hash-mismatch'; value = $requiredPath })
+        $record=$records[0]
+        if($null-eq$record.PSObject.Properties['hash_policy']-or[string]$record.hash_policy-ne'canonical_lf_text'){
+            $defects.Add([pscustomobject][ordered]@{id='input-file-hash-policy-invalid';value=$requiredPath})
+            continue
+        }
+        if($null-eq$record.PSObject.Properties['content_classification']-or$null-eq$record.PSObject.Properties['tracked']-or$null-eq$record.PSObject.Properties['line_ending_policy']-or[string]$record.content_classification-ne'text'-or[bool]$record.tracked-ne$true-or[string]$record.line_ending_policy-ne'utf8_no_bom_lf'){
+            $defects.Add([pscustomobject][ordered]@{id='input-file-classification-invalid';value=$requiredPath})
+        }
+        if($null-eq$record.PSObject.Properties['commit_represented']-or[string]$record.commit_represented-notmatch'^[0-9a-f]{40}$'){
+            $defects.Add([pscustomobject][ordered]@{id='input-file-commit-invalid';value=$requiredPath})
+            continue
+        }
+        $actualIdentity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $full -HashPolicy canonical_lf_text -CommitRepresented ([string]$record.commit_represented) -State tracked
+        $actualHash=$actualIdentity.canonical_sha256
+        if($null-eq$record.PSObject.Properties['canonical_sha256']-or$null-eq$record.PSObject.Properties['canonical_byte_size']-or[string]$record.canonical_sha256-cne$actualHash-or[long]$record.canonical_byte_size-ne[long]$actualIdentity.canonical_byte_size){
+            $defects.Add([pscustomobject][ordered]@{id='input-file-canonical-identity-mismatch';value=$requiredPath})
+        }
+        if($null-eq$record.PSObject.Properties['sha256']-or$null-eq$record.PSObject.Properties['byte_size']-or[string]$record.sha256-cne[string]$record.canonical_sha256-or[long]$record.byte_size-ne[long]$record.canonical_byte_size){
+            $defects.Add([pscustomobject][ordered]@{id='input-file-identity-alias-mismatch';value=$requiredPath})
+        }
+        if($null-eq$record.PSObject.Properties['raw_working_tree_sha256']-or$null-eq$record.PSObject.Properties['raw_working_tree_byte_size']-or[string]$record.raw_working_tree_sha256-notmatch'^[A-F0-9]{64}$'-or[long]$record.raw_working_tree_byte_size-lt0-or$null-eq$record.PSObject.Properties['raw_and_canonical_differ']){
+            $defects.Add([pscustomobject][ordered]@{id='input-file-raw-identity-invalid';value=$requiredPath})
         }
         $expectedHash = $requiredInputHashes[$requiredPath]
         if ($expectedHash -and $actualHash -cne $expectedHash) {
@@ -199,10 +229,15 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
     if ([int]$evidence.build_result.produced_file_count -ne $producedFiles.Count -or $producedFiles.Count -lt 1) {
         $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-count-invalid'; value = $evidence.build_result.produced_file_count })
     }
+    $declaredOutputRoot=[IO.Path]::GetFullPath((Join-Path $root ([string]$evidence.scope.output_artifact_root)))
+    $allowedArtifactRoot=[IO.Path]::GetFullPath((Join-Path $root 'artifacts'))
+    if(-not$declaredOutputRoot.StartsWith($allowedArtifactRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not @(&git -C $root check-ignore -- $declaredOutputRoot 2>$null).Count){
+        $defects.Add([pscustomobject][ordered]@{id='output-root-invalid';value=$evidence.scope.output_artifact_root})
+    }
     foreach ($file in $producedFiles) {
         $relative = [string]$file.relative_path
         $full = [IO.Path]::GetFullPath((Join-Path $root $relative))
-        if (-not $full.StartsWith([IO.Path]::GetFullPath((Join-Path $root 'artifacts\compile-only\native-interop')) + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        if (-not $full.StartsWith($declaredOutputRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
             $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-outside-isolated-artifacts'; value = $relative })
             continue
         }
@@ -211,8 +246,15 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
             continue
         }
         $item = Get-Item -LiteralPath $full
-        if ([long]$file.byte_size -ne [long]$item.Length -or [string]$file.sha256 -cne (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash) {
+        $rawHash=(Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash
+        if($null-eq$file.PSObject.Properties['hash_policy']-or$null-eq$file.PSObject.Properties['content_classification']-or$null-eq$file.PSObject.Properties['ignored']-or[string]$file.hash_policy-ne'raw_file_bytes'-or[string]$file.content_classification-ne'compile-output-artifact'-or[bool]$file.ignored-ne$true){
+            $defects.Add([pscustomobject][ordered]@{id='produced-file-policy-invalid';value=$relative})
+        }
+        if($null-eq$file.PSObject.Properties['byte_size']-or$null-eq$file.PSObject.Properties['sha256']-or$null-eq$file.PSObject.Properties['raw_file_byte_size']-or$null-eq$file.PSObject.Properties['raw_file_sha256']-or[long]$file.byte_size -ne [long]$item.Length -or [string]$file.sha256 -cne $rawHash -or [long]$file.raw_file_byte_size-ne[long]$item.Length-or[string]$file.raw_file_sha256-cne$rawHash) {
             $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-identity-mismatch'; value = $relative })
+        }
+        foreach($flag in @('assembly_loaded','reflection_inspection_used','managed_code_executed','native_api_invoked')){
+            if($null-eq$file.PSObject.Properties[$flag]-or[bool]$file.$flag-ne$false){$defects.Add([pscustomobject][ordered]@{id='produced-file-prohibited-action-invalid';value="$relative::$flag"})}
         }
     }
 
