@@ -4,6 +4,70 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Treat snapshot identity and offline producer context as the only current trust roots
+
+**Decision:** Restoration uses the exact prior-driver identity read from a
+validated, hash-authenticated snapshot. The plan's restoration identity is a
+non-authoritative comparison copy and must be deeply equal. Evidence schema v1
+is permanently synthetic/offline, and the production composition root
+unconditionally reports `LIVE_ADAPTER_NOT_IMPLEMENTED` for real Apply/Restore.
+
+**Rationale:** Independent audit showed that an outer plan rehash authorized a
+changed restoration node, coordinated serialized-origin changes produced
+apparently live evidence, and public adapter strings plus a reproducible hash
+could satisfy the former real-execution gate.
+
+**Alternatives rejected:** Trusting a caller-editable restoration field,
+inferring live origin from serialized strings or Booleans, reserving a magic
+future adapter name, accepting elevation/switches as capability, or retaining a
+deterministic public authorization hash.
+
+**Consequences:** T26-T29 and T37 are permanent adversarial regressions. A
+future native adapter requires a separately authorized implementation, an
+internally controlled capability, a separately audited live-evidence contract,
+and cannot reuse evidence schema v1 to claim live origin.
+
+## 2026-07-03 - Canonicalize from a duplicate-aware raw JSON model
+
+**Decision:** `chatpad-canonical-json-v1` parses raw JSON before ordinary
+PowerShell deserialization, rejects duplicate names case-insensitively at every
+object depth, preserves strings as strings, accepts only unambiguous finite
+JSON numbers, sorts object names ordinally, preserves array order, applies
+explicit JSON escaping, and hashes UTF-8 bytes without BOM.
+
+**Rationale:** PowerShell 7 converted ISO strings to DateTime values and changed
+hash inputs, while ordinary deserialization discarded duplicate-property
+evidence. Culture-sensitive property sorting and runtime object conversions
+were not a stable security boundary.
+
+**Alternatives rejected:** Hashing `ConvertFrom-Json` output, last-value-wins or
+first-value-wins duplicate handling, culture-sensitive sorting, non-finite
+numbers, and timestamp-type normalization during hashing.
+
+**Consequences:** Plan/snapshot creation and validation are stable in all four
+Windows PowerShell/PowerShell 7 directions. Raw plan entry points use the
+duplicate-aware parser, and T30-T33/T38 permanently cover the canonical
+contract.
+
+## 2026-07-03 - Model audit gate and live-adapter absence as separate blockers
+
+**Decision:** Readiness records expose `readiness=BLOCKED`,
+`current_gate=BLOCKED_PENDING_INDEPENDENT_AUDIT`, and
+`capability_blocker=BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`; live-adapter status
+is `NOT_IMPLEMENTED` and live binding authorization is false.
+
+**Rationale:** Passing an audit of offline contracts cannot create the absent
+SetupAPI/Newdev implementation or its canonical opening, node enumeration,
+binding, restoration, postcondition, and restart capabilities.
+
+**Alternatives rejected:** Describing the independent audit as the only
+remaining live prerequisite or implying that a successful audit authorizes
+hardware execution.
+
+**Consequences:** A future audit may accept the offline framework, but live
+readiness remains blocked until a separate native-adapter implementation and
+audit phase is explicitly authorized and completed.
+
 ## 2026-07-03 - Separate the offline exact-instance transaction framework from the native Windows adapter
 
 **Decision:** Exact-instance selection is defined by one complete canonical

@@ -8,6 +8,16 @@ or touch hardware.
 
 ## Exact-instance framework status
 
+The independent audit of the initial T1-T25 framework failed because
+restoration identity, evidence origin, execution authorization, cross-runtime
+hashing, duplicate JSON handling, runtime schema parity, Unicode identifiers,
+analyzer scope, and readiness blockers were fail-open or incomplete.
+
+Remediation commits `a969745f589a55243ca9f9e964a45d7104f9a5e8` and
+`c3c0930db1326d56808879f12a9e8951f0051e80` implement the offline corrections.
+Commit `fd70e9779056b336b43d09be97e686fa61ed5514` makes complete analyzer
+evidence isolated and deterministic. None implements or invokes SetupAPI/Newdev.
+
 Commit `0060cd91be7d460f1a4141f6bf893bd56b32bf35` implements the
 offline exact-instance binding and restoration framework. It adds pure plan,
 snapshot, path, identity, evidence, authorization, and transition contracts;
@@ -20,17 +30,21 @@ updates the authoritative 43/6/49 PowerShell inventory and makes manifest
 generation run PSScriptAnalyzer error-severity checks when the analyzer is
 available.
 
-- Exact-instance suite: `PASS`, 25 records, 99 assertions.
-- Full readiness suite: `PASS`, 329 records, 1,823 assertions.
-- Added category: `exact-instance-offline`, 25 records, 99 assertions.
+- Exact-instance suite: `PASS`, 39 records, 155 assertions.
+- Full readiness suite: `PASS`, 343 records, 1,879 assertions.
+- Category `exact-instance-offline`: 39 records, 155 assertions.
 - State machine: all 50 allowed edges accepted; five prohibited probes
   rejected.
-- Windows PowerShell and PowerShell 7: both `PASS`; plan/snapshot hashes match
-  across runtimes.
+- Four-direction Windows PowerShell/PowerShell 7 plan and snapshot validation:
+  `PASS`; canonical bytes and hashes match in all directions.
+- Complete PSScriptAnalyzer scope: 45 `.ps1` and six `.psm1`; errors `0`,
+  warnings `166`, information `910`, tool failures `0`.
 - Live binding/restoration/restart, live observations, and Windows mutations:
   all `0`.
 - Live readiness: `BLOCKED`.
-- Blocker: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+- Capability blocker: `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+- Live adapter status: `NOT_IMPLEMENTED`; live authorization: `false`.
 
 The exact-instance definition, Windows API design, operation-plan and snapshot
 contracts, failure model, and remaining gates are authoritative in

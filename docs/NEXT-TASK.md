@@ -1,97 +1,68 @@
 # Next Task
 
-## Exact current state
+## Objective
 
-- Required branch:
-  `feature/runtime-bringup-exact-instance-binding-restoration`.
-- Required implementation commit:
-  `0060cd91be7d460f1a4141f6bf893bd56b32bf35`.
-- Required corrective implementation commit:
-  `fdcd9448a3dc172213c07928af45d2e68fd0197a`.
-- Required starting point: the evidence-finalization commit containing this
-  file, subject `docs: finalize exact-instance framework evidence`.
-- Required ancestry:
-  `b9374d8a98392de67824aac4235021b5bd90d284` ->
-  `0060cd91be7d460f1a4141f6bf893bd56b32bf35` ->
-  `fdcd9448a3dc172213c07928af45d2e68fd0197a` ->
-  finalization commit.
-- Exact-instance suite: `PASS`, 25 records, 99 assertions.
-- Readiness suite: framework `PASS`, 329 records, 1,823 assertions.
-- Live installation readiness: `BLOCKED`.
-- Blocker: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
-- Live binding, restoration, restart, observation, broad-success, and Windows
-  mutation counters are all zero.
+Perform an independent read-only audit of the offline exact-instance contract
+remediation. Do not implement the native SetupAPI/Newdev adapter.
 
-## Next recommended objective
+## Required starting point
 
-Perform an independent, read-only audit of the offline exact-instance binding
-and restoration implementation, schemas, generated manifest, evidence, and
-finalization commit.
+- Branch: `feature/runtime-bringup-exact-instance-contract-remediation`
+- Starting commit: the finalization commit whose parents include
+  `a969745f589a55243ca9f9e964a45d7104f9a5e8` and
+  `c3c0930db1326d56808879f12a9e8951f0051e80`, followed by
+  `fd70e9779056b336b43d09be97e686fa61ed5514`
+- Verify a clean tree, configured upstream, local/remote equality, exact
+  ancestry from `9b380ef6e070311d682866a5f130b51a44f8485a`, and manifest validity.
 
-The audit must directly:
+## Audit focus
 
-- verify exact branch, HEAD, direct parent, ancestry, clean worktree, upstream,
-  ahead/behind `0/0`, and live remote equality;
-- confirm the implementation commit contains only the declared executable and
-  schema paths and the finalization commit contains no executable changes;
-- independently inspect the exact-instance normalization, path, plan, snapshot,
-  evidence, authorization, adapter, and state-machine contracts;
-- rerun T1-T25 under Windows PowerShell and PowerShell 7;
-- independently prove same-hardware-ID and same-container sibling isolation
-  from call traces and before/after bytes;
-- verify partial/wildcard rejection, drift, target/restoration absence and
-  ambiguity, postcondition failure, exact restoration, replay, expiry, hash and
-  operation-ID mismatch, restart/reboot behavior, broad-operation rejection,
-  evidence spoof rejection, and adapter-exception uncertainty;
-- enumerate all 50 allowed transition edges and verify prohibited transitions
-  remain rejected;
-- inspect the production static broad-operation guard and confirm negative-test
-  references cannot become execution paths;
-- verify deterministic plan/snapshot hashes across runtimes and repeated runs;
-- independently reconcile 329 records and 1,823 assertions, including the
-  exact 25/99 category increment;
-- validate every manifest entry, JSON file, UTF-8 BOM state, ignored evidence
-  identity, and zero live/Windows-mutation counters;
-- confirm live readiness remains blocked and no independent-audit pass is
-  claimed by the implementation branch.
-
-## Preconditions
-
-1. Rehash the accepted baseline manifest, frozen Debug/Release SYS files,
-   exact-instance evidence, full-readiness evidence, and readiness manifest.
-2. Inspect the implementation and finalization diffs before executing tests.
-3. Execute only pure, synthetic, or isolated-copy validation.
-4. Preserve the tracked readiness manifest; corrupt only isolated copies.
+1. Reproduce T26/T27 restoration-identity tampering with all caller-accessible
+   hashes recomputed; require zero restoration calls.
+2. Reproduce coordinated synthetic-to-live evidence spoofing; require
+   `UNTRUSTED_EVIDENCE_ORIGIN`.
+3. Supply every prior public real-execution gate input; require
+   `LIVE_ADAPTER_NOT_IMPLEMENTED`.
+4. Independently verify the four-direction Windows PowerShell/PowerShell 7
+   canonical plan and snapshot matrix.
+5. Test duplicate names at root and nested depths, including equal, different,
+   and case-variant names.
+6. Delete required plan/snapshot/driver fields, recompute hashes, and require
+   controlled schema failure.
+7. Exercise the complete hidden-Unicode instance-ID matrix before adapter
+   access.
+8. Run complete PSScriptAnalyzer coverage over all 45 `.ps1` and six `.psm1`
+   files; require zero errors and zero tool failures while reporting warnings
+   and information findings.
+9. Verify 343 records/1,879 assertions, exact-instance 39/155, unique IDs,
+   zero off-ledger/duplicate-counted assertions, and zero live/Windows
+   operations.
 
 ## Safety restrictions
 
-- Audit only. Do not implement the native Windows adapter.
-- Do not build, sign, package, stage, install, bind, load, restore, restart, or
-  reboot a driver or device.
-- Do not query a live device or mutate the driver store, registry, services,
-  boot/security state, tracing, event logs, hardware, protocols, or input.
-- Do not modify production source, INF, project/solution, frozen binaries, or
-  `legacy/`.
+- Read-only audit only.
+- Create malformed data only in isolated temporary locations.
+- No native adapter implementation, build, signing, CAT generation,
+  packaging, staging, driver-store mutation, installation, binding, loading,
+  restoration, restart, reboot, device query, hardware access, Windows
+  mutation, production source/INF/frozen binary change, or `legacy/` change.
 
 ## Acceptance criteria
 
-- T1-T25 and both PowerShell runtimes pass.
-- Critical call traces identify only the authorized synthetic instance.
-- All schema, state, replay, evidence-provenance, static broad-action,
-  accounting, manifest, AST, and repository-safety checks pass.
-- Finalization executable change count is zero.
-- Live readiness remains `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
-- Every live and Windows-mutation counter remains zero.
+- Every audited fail-open path is controlled and fail-closed.
+- Canonical hashes are identical across all four runtime directions.
+- T1-T39 and full readiness remain PASS.
+- Readiness remains blocked by both the pending audit gate and the separately
+  unimplemented live adapter capability.
+- Audit output makes no live-readiness or hardware-observation claim.
 
 ## Inspect first
 
-- `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`
+- `docs/PROJECT-STATE.md`
+- `docs/DECISIONS.md`
+- latest `docs/WORKLOG.md` entry
 - `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`
-- `tools/ExactInstance/ChatpadExactInstance.FakeAdapter.psm1`
 - `tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1`
 - `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
-- `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`
-- `tools/Test-ChatpadExactInstanceBindingRestoration.ps1`
-- `docs/evidence/exact-instance-operation-plan-schema-v1.json`
-- `docs/evidence/exact-instance-operation-evidence-schema-v1.json`
+- `tools/Test-ChatpadExactInstanceCrossRuntime.ps1`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`

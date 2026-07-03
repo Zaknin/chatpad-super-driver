@@ -6423,3 +6423,128 @@
   `fdcd9448a3dc172213c07928af45d2e68fd0197a`, plus the
   evidence-finalization commit. A native Windows adapter remains a
   separate future implementation and authorization boundary.
+
+## 2026-07-03T08:57+04:00 - Offline exact-instance contract remediation
+
+- **Objective:** Correct all nine fail-open defects found by the independent
+  audit while remaining offline-only and leaving the native SetupAPI/Newdev
+  adapter unimplemented.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`, branch
+  `feature/runtime-bringup-exact-instance-binding-restoration`, exact HEAD
+  `9b380ef6e070311d682866a5f130b51a44f8485a`, clean tree, configured
+  upstream, local/upstream/live-remote equality, ahead/behind `0/0`, and exact
+  direct-parent ancestry
+  `b9374d8a98392de67824aac4235021b5bd90d284` ->
+  `0060cd91be7d460f1a4141f6bf893bd56b32bf35` ->
+  `fdcd9448a3dc172213c07928af45d2e68fd0197a` ->
+  `9b380ef6e070311d682866a5f130b51a44f8485a`. Created
+  `feature/runtime-bringup-exact-instance-contract-remediation` directly from
+  that commit without rewrite, amend, squash, or rebase.
+- **Previous-result verification:** Before editing, T1-T25 passed under
+  Windows PowerShell 5.1 and PowerShell 7 with 25 records and 99 assertions.
+  Code inspection confirmed the audit root causes: plan-authoritative
+  restoration identity, serialized origin trust, public execution-gate trust,
+  timestamp conversion during JSON deserialization, no raw duplicate
+  inspection, partial runtime schema checks, permissive Unicode identifiers,
+  error-only analyzer execution plus `$host` assignment, and one incomplete
+  readiness blocker.
+- **Implementation commit:**
+  `a969745f589a55243ca9f9e964a45d7104f9a5e8`, subject
+  `Harden exact-instance offline contracts`. Changed paths:
+  `docs/evidence/exact-instance-operation-evidence-schema-v1.json`,
+  `docs/evidence/exact-instance-operation-plan-schema-v1.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1`,
+  `tools/Test-ChatpadExactInstanceCrossRuntime.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Corrective implementation commit:**
+  `c3c0930db1326d56808879f12a9e8951f0051e80`, subject
+  `Isolate complete analyzer execution`. Changed only
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`. A complete
+  analyzer run inside the already-loaded suite process exposed intermittent
+  PSScriptAnalyzer `NullReferenceException` behavior. T39 now invokes one clean
+  supported Windows PowerShell process for the complete tracked inventory,
+  preserving honest tool-failure accounting without omitting files.
+- **Deterministic analyzer commit:**
+  `fd70e9779056b336b43d09be97e686fa61ed5514`, subject
+  `Make analyzer evidence deterministic`. Changed
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/Invoke-ChatpadCompletePSScriptAnalyzer.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`. Each tracked file is
+  analyzed in a clean child process to contain an intermittent analyzer
+  `NullReferenceException`; findings are sorted by file, line, rule, severity,
+  and message so repeated generation is stable.
+- **Restoration and trust remediation:** The effective restoration identity is
+  derived from the validated snapshot; the plan copy must be exactly deeply
+  equal; mismatch returns `RESTORATION_IDENTITY_SNAPSHOT_MISMATCH` before
+  restoration. Evidence schema v1 accepts only trusted offline-synthetic
+  context and rejects coordinated origin rewrites with
+  `UNTRUSTED_EVIDENCE_ORIGIN`. Real Apply/Restore always returns
+  `LIVE_ADAPTER_NOT_IMPLEMENTED`, regardless of public caller inputs.
+- **Canonical JSON and schema remediation:** Added
+  `chatpad-canonical-json-v1`, a raw duplicate-aware parser, ordinal property
+  sorting, invariant finite-number handling, explicit escaping, UTF-8-no-BOM
+  hashing, full plan/snapshot/identity runtime validation, schema/runtime
+  parity checks, and a printable-ASCII device-instance-ID allowlist.
+  Duplicate names are rejected case-insensitively at every depth before
+  ordinary deserialization.
+- **Adversarial results:** T26/T27 restoration tampering, T28 coordinated
+  evidence spoof, T29 public real-gate spoof, T30/T31 cross-runtime validation,
+  T32/T33 duplicate properties, T34/T35 rehashed required-field deletion,
+  T36 hidden Unicode, T37 fake-adapter property spoof, T38 repeated canonical
+  serialization, and T39 analyzer scope all passed. T10 proves snapshot,
+  effective identity, and adapter argument equality. T24 now performs a
+  coordinated origin spoof. T14/T25 prove active uncertainty survives failure
+  and cannot complete or pass.
+- **Validation:** T1-T39 passed under both runtimes with 39 records and 155
+  assertions. The four-direction plan/snapshot matrix passed with identical
+  hashes. Full readiness passed with 343 records and 1,879 assertions.
+  Exact-instance category moved from 25/99 to 39/155; the overall ledger moved
+  from 329/1,823 to 343/1,879. Unique IDs, record/category sums, off-ledger,
+  duplicate-counted, zero-assertion PASS, skipped-as-PASS, malformed-input,
+  lifecycle, and stop-linkage checks reconciled with zero defects.
+- **Analyzer and inventory:** All 45 tracked `.ps1` and six tracked `.psm1`
+  files parsed with zero AST errors. Complete PSScriptAnalyzer results:
+  errors `0`, warnings `166`, information `910`, tool failures `0`, no blanket
+  suppression. The automatic-variable `$host` assignment was renamed to
+  `$planHostId`.
+- **Accounting and readiness:** Synthetic bind/restoration/restart attempts are
+  `14/4/0`. Live binding/restoration/restart operations, live observations,
+  and Windows mutations are all `0`. Readiness is `BLOCKED`; current gate is
+  `BLOCKED_PENDING_INDEPENDENT_AUDIT`; capability blocker is
+  `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`; live adapter status is
+  `NOT_IMPLEMENTED`; live authorization is false.
+- **Ignored evidence:**
+  `artifacts/logs/exact-instance-contract-remediation-suite-post-implementation-fd70e97.json`,
+  2,481,348 bytes,
+  `01416D71CED00D8BAB511BCD8E769721C615D12F22ED009FD9584FCCEAA7147F`;
+  and
+  `artifacts/logs/runtime-bringup-contract-remediation-suite-post-implementation-fd70e97.json`,
+  2,001,811 bytes,
+  `15574A86EE699D8BDCC2AF9E01D06237447ADB891479BB3F6A1B04C788ED2C86`.
+  Both are valid JSON, UTF-8 without BOM, ignored, untracked, and repository
+  contained.
+- **Manifest:** Regenerated only through the authoritative generator for
+  implementation commit `fd70e9779056b336b43d09be97e686fa61ed5514`.
+  Canonical validation passed with 23 entries and zero defects; the isolated
+  corruption regression passed.
+- **Safety:** Repository safety passed. No driver build/link, signing, CAT
+  generation, package creation/staging, driver-store mutation, installation,
+  binding, loading, restoration, restart, reboot, device query, hardware
+  access, Windows/service/registry/boot/security mutation, tracing, event-log
+  export, protocol traffic, input injection, certificate/credential change,
+  production source/INF/frozen binary change, or `legacy/` change occurred.
+- **Finalization and next task:** The expected finalization commit contains
+  only the regenerated manifest and continuity/design documentation. The exact
+  next task is an independent read-only audit of this remediation. Even after
+  an audit pass, live execution remains blocked until a separately authorized
+  native-adapter implementation and audit phase.

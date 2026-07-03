@@ -8,6 +8,12 @@ framework implemented in commit
 Corrective readiness integration commit
 `fdcd9448a3dc172213c07928af45d2e68fd0197a` verifies PSScriptAnalyzer
 error-severity results and the updated tracked PowerShell inventory.
+Independent audit then found nine fail-open contract and evidence defects.
+Remediation commits `a969745f589a55243ca9f9e964a45d7104f9a5e8` and
+`c3c0930db1326d56808879f12a9e8951f0051e80` close those defects without
+adding or invoking a native adapter. Commit
+`fd70e9779056b336b43d09be97e686fa61ed5514` isolates each analyzed file in a
+clean Windows PowerShell process and sorts findings for deterministic evidence.
 
 The implementation contains:
 
@@ -20,11 +26,43 @@ The implementation contains:
 - versioned operation-plan and evidence schemas;
 - a public entry point whose default is `Plan` and which cannot invoke a live
   adapter in this phase;
-- T1-T25 offline regression coverage under Windows PowerShell and PowerShell 7.
+- T1-T39 offline regression coverage under Windows PowerShell and PowerShell 7.
 
 It does not contain or invoke a live SetupAPI/Newdev adapter. No driver or
-driver-store operation is authorized. Live readiness is `BLOCKED` with blocker
-`BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+driver-store operation is authorized. Live readiness is `BLOCKED`; the current
+gate is `BLOCKED_PENDING_INDEPENDENT_AUDIT`, and the independent downstream
+capability blocker is `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+
+### Remediated trust and serialization contracts
+
+- The snapshot is authenticated before use. Restoration resolves, invokes,
+  and verifies the exact prior-driver identity derived from
+  `restoration_snapshot.driver_identity`. The plan copy is comparison-only;
+  deep inequality fails with `RESTORATION_IDENTITY_SNAPSHOT_MISMATCH`.
+- Evidence schema v1 has one trusted validation context:
+  `OfflineSyntheticFramework`. Its permitted origin is synthetic/offline.
+  Serialized adapter, mode, synthetic, source, producer, and evidence-mode
+  fields are descriptive outputs and cannot establish live trust.
+- Real Apply/Restore authorization is unavailable by construction.
+  `LIVE_ADAPTER_NOT_IMPLEMENTED` is returned regardless of caller adapter
+  names, Booleans, elevation, switches, preflight claims, or deterministic
+  authorization values.
+- `chatpad-canonical-json-v1` parses raw JSON without timestamp conversion,
+  rejects case-insensitive duplicate names at every depth, preserves JSON
+  scalar/array/object types, sorts property names by ordinal comparison,
+  preserves array order, uses invariant finite numeric forms, applies explicit
+  JSON escaping, and hashes UTF-8 without BOM.
+- Runtime validation mirrors every required plan, snapshot, authorization, and
+  driver-identity field in the checked-in schema, rejects additional
+  properties, and enforces cross-field identity, action, provenance, time, and
+  hash relationships.
+- Complete instance IDs use the ASCII allowlist
+  `[A-Za-z0-9_&\\#{}().,+:;=@%!-]` after length checks. Hidden Unicode,
+  controls, format/separator/combining characters, whitespace, wildcards, and
+  non-ASCII confusables are rejected rather than normalized.
+- Evidence records `mutation_may_have_occurred` and an explicit
+  `uncertainty_status` of `none`, `active`, or `recovered`. Active uncertainty
+  cannot reach `COMPLETED` or PASS.
 
 ## 2. Exact-instance definition
 
