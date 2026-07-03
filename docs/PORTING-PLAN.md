@@ -2,14 +2,13 @@
 
 ## Current runtime bring-up readiness gate (2026-07-03)
 
-The native SetupAPI/Newdev interop source boundary is implemented on
-`feature/runtime-bringup-native-interop-source-boundary` from accepted
-starting commit `b7672d123200f13e95353d2505bb813843ac3f7c`. The production
-adapter identity is `chatpad-windows-exact-instance-adapter-v1`; the synthetic
-test identity is `chatpad-fake-exact-instance-adapter-v1`. The implementation
-commits are `2730d037bcbccf4de3dc51e4961922eff98fff7b` and
-`a05c7e3fffa2968777824a3a2efe4f286449bdc5`; the final continuity commit is
-the commit containing this update and the regenerated readiness manifest.
+The native SetupAPI/Newdev interop source boundary passed independent source
+audit and was then compiled only through the isolated non-production harness on
+`feature/runtime-bringup-native-interop-compile-only-validation`, starting from
+`a5a1ddfe055481eec4ea4da57b664c0bd3189d22`. The production adapter identity is
+`chatpad-windows-exact-instance-adapter-v1`; the synthetic test identity is
+`chatpad-fake-exact-instance-adapter-v1`. The final continuity commit is the
+commit containing this update and the regenerated readiness manifest.
 
 The framework uses one complete canonical Plug and Play instance ID, immutable
 target and restoration driver-node identities, precondition and snapshot
@@ -25,27 +24,29 @@ operation counters. G68-G77 prove explicit primitive adapter/operation
 selection, no implicit production default, no mutable module-state trust root,
 caller-object fail-closed behavior, and custom manifest path forwarding.
 G78-G132 prove the declaration-only SetupAPI/Newdev source boundary is
-allowlisted, isolated from build/loading/invocation paths, explicitly
-non-executing, independently source-audited, and still blocked before
-compile-only validation authorization.
+allowlisted, isolated from production build/loading/invocation paths,
+explicitly non-executing, and independently source-audited. G133-G152 prove the
+isolated compile-only harness links the audited source without copying it,
+compiles cleanly, records source and output hashes, and still performs no
+loading, reflection, native invocation, device query, exact-instance access, or
+Windows mutation.
 
 The exact-instance suite passes under Windows PowerShell 5.1 and PowerShell 7
-with 171 records and 718 assertions after the source-audit acceptance fixtures are
-added. The full readiness suite passes under Windows PowerShell 5.1 and
-PowerShell 7 with 475 fixtures and 2,442 assertions. The authoritative
-readiness ledger is regenerated with 27 entries.
+with 191 records and 793 assertions after the compile-only validation fixtures
+are added. The full readiness suite passes under Windows PowerShell 5.1 and
+PowerShell 7 with 495 fixtures and 2,517 assertions. The authoritative
+readiness ledger is regenerated with 32 entries.
 Framework status remains `PASS`. Live readiness remains `BLOCKED` with current
-gate `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED` and blocker
-`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live binding,
-restoration, restart, observation, broad-success, device-query, native-
-operation, and Windows-mutation counter remains zero.
+gate and blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live
+binding, restoration, restart, observation, broad-success, device-query,
+native-operation, and Windows-mutation counter remains zero.
 
 The declaration and wrapper boundary passed independent source audit at
-`dbba70d74e99c211d47187697e19e528b381520a`. The next task is a separately
-authorized compile-only validation phase in an isolated non-production harness.
-A native Windows SetupAPI/Newdev adapter implementation remains a later
-separately authorized boundary; this phase does not authorize any live driver
-or device operation.
+`dbba70d74e99c211d47187697e19e528b381520a`. Compile-only validation evidence is
+tracked at `docs/evidence/native-interop-compile-only-validation.json` with
+validation ID `native-interop-compile-only-20260703T170511Z`. A native Windows
+SetupAPI/Newdev adapter implementation remains a later separately authorized
+boundary; this phase does not authorize any live driver or device operation.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

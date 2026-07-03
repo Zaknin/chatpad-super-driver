@@ -9,7 +9,7 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full commit hash.'}
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
-if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$false-or$suite.native_compilation_performed-ne$false-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false){throw 'Suite result is not an accepted source-audit, compile-only-validation-not-authorized, blocked native-execution result.'}
+if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false){throw 'Suite result is not an accepted compile-only validation, blocked native-execution result.'}
 
 function Get-CheckedOutLocalBranch {
     $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
@@ -77,7 +77,7 @@ function Get-PSScriptAnalyzerInventory {
 }
 
 $base='9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
-$paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)
+$paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)+@(&git ls-files --others --exclude-standard)
 $normalizedOutputPath=$OutputPath.Replace('\','/')
 $paths=@($paths|Where-Object{$_-and$_.Replace('\','/')-ne$normalizedOutputPath}|Sort-Object -Unique)
 $entries=[Collections.Generic.List[object]]::new()
@@ -93,7 +93,7 @@ $manifest=[pscustomobject][ordered]@{
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
+    current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     live_adapter_status='SCAFFOLD_NON_EXECUTING'
     live_binding_authorized=$false
@@ -115,6 +115,7 @@ $manifest=[pscustomobject][ordered]@{
         compile_only_validation_performed=$false
         structure_layout_cbsize_validated=$false
     }
+    native_interop_compile_only_validation=$suite.native_interop_compile_only_validation
     repository=[pscustomobject][ordered]@{
         branch=$checkedOutBranch
         frozen_baseline_commit='f49b5cbe9e6bba423cfb59313dbdc9be92c785ca'

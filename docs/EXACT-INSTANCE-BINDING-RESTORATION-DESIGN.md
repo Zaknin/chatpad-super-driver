@@ -28,12 +28,12 @@ The implementation contains:
   adapter in this phase;
 - T1-T39 offline regression coverage under Windows PowerShell and PowerShell 7.
 
-It does not compile, load, or invoke a live SetupAPI/Newdev adapter. The
-current production adapter has a declaration-only native interop source
-boundary and deterministic non-executing call plans. No driver or driver-store
-operation is authorized. Live readiness is `BLOCKED`; the current gate is
-`BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`, and the downstream
-capability blocker is `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+It does not load or invoke a live SetupAPI/Newdev adapter. The current
+production adapter has a declaration-only native interop source boundary,
+deterministic non-executing call plans, and an isolated non-production
+compile-only validation harness. No driver or driver-store operation is
+authorized. Live readiness is `BLOCKED`; the current gate and capability
+blocker are both `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ### Remediated trust and serialization contracts
 
@@ -215,11 +215,17 @@ model, error taxonomy, evidence fields, operation gates, and static
 native-code guards is
 `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. The source-only
 declarations and boundary validator are under
-`tools/ExactInstance/NativeInterop/`. G1-G77 in the offline exact-instance
-suite preserve the prior no-live-capability guarantees. G78-G132 additionally
-prove that the SetupAPI/Newdev declarations are isolated, non-compiling,
-non-loading, non-invoking, build-unreferenced, and still blocked by the
-independent source-audit gate. G16-G25 specifically prove that
+`tools/ExactInstance/NativeInterop/`. The isolated compile-only harness is
+under `tools/ExactInstance/CompileOnlyValidation/`, with tracked validation
+evidence in `docs/evidence/native-interop-compile-only-validation.json`.
+G1-G77 in the offline exact-instance suite preserve the prior
+no-live-capability guarantees. G78-G132 additionally prove that the
+SetupAPI/Newdev declarations are isolated from production build, loading, and
+invocation paths and passed independent source audit. G133-G152 prove the
+isolated compile-only harness references the audited source, compiles cleanly,
+records input/output/toolchain hashes, and still performs no loading,
+reflection, native invocation, device query, exact-instance access, or Windows
+mutation. G16-G25 specifically prove that
 module session-state extraction, module-context invocation, non-exported
 function discovery, reference wrapping, `PSCustomObject`, `PSTypeNames`,
 `Add-Member`, serialization, scalar/object spoofing, and unexpected legacy
@@ -314,9 +320,11 @@ harness exceptions, and zero live or Windows mutation counters.
 
 ## 10. Remaining gates
 
-The current branch implements only the source declaration and wrapper boundary
-for a future native Windows adapter. It still has no native execution path.
-The next task is an independent read-only source audit of this boundary. A
-future implementation task must not reuse synthetic authorization and must not
-perform live mutation merely because the offline framework or source audit
+The current branch implements only the source declaration, wrapper boundary,
+and isolated compile-only validation harness for a future native Windows
+adapter. It still has no native execution path. The next task is an independent
+audit of the compile-only validation evidence or a separately authorized
+source/design phase for native adapter execution. A future implementation task
+must not reuse synthetic authorization and must not perform live mutation
+merely because the offline framework, source audit, or compile-only validation
 passed.

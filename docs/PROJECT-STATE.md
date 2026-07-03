@@ -1,54 +1,53 @@
 # Project State
 
-*Last updated: 2026-07-03 (native interop source audit accepted; compile-only validation not authorized)*
+*Last updated: 2026-07-03 (native interop compile-only validation accepted; native adapter execution not implemented)*
 
 ## Current State
 
-- **Branch:** `feature/runtime-bringup-native-interop-source-audit-acceptance`.
-- **Accepted native source audit commit:** `dbba70d74e99c211d47187697e19e528b381520a`.
-- **Native source implementation commits:** `2730d037bcbccf4de3dc51e4961922eff98fff7b` and `a05c7e3fffa2968777824a3a2efe4f286449bdc5`.
-- **Documentation/status transition commit:** the commit containing this document, the regenerated readiness manifest, and continuity updates.
+- **Branch:** `feature/runtime-bringup-native-interop-compile-only-validation`.
+- **Starting branch:** `feature/runtime-bringup-native-interop-source-audit-acceptance`.
+- **Starting commit:** `a5a1ddfe055481eec4ea4da57b664c0bd3189d22`.
+- **Compile-only validation evidence:** `docs/evidence/native-interop-compile-only-validation.json`, schema `chatpad-native-interop-compile-only-validation-v1`, validation ID `native-interop-compile-only-20260703T170511Z`.
+- **Readiness manifest:** `docs/evidence/runtime-bringup-readiness-manifest.json`, regenerated with 32 entries.
 - **Accepted offline baseline:** commit `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`; manifest SHA-256 `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`.
 
-## Native Interop Source Boundary
+## Native Interop Compile-Only Boundary
 
-- The declaration-only SetupAPI/Newdev source boundary under `tools/ExactInstance/NativeInterop/` passed independent strict read-only source audit.
-- Audit verdict: `AUDIT PASS`.
-- Audited branch: `feature/runtime-bringup-native-interop-source-boundary`.
-- Audited commit: `dbba70d74e99c211d47187697e19e528b381520a`.
-- Audit artifacts: `artifacts/logs/independent-native-interop-source-audit-dbba70d/`.
-- Artifact inventory: `artifact-inventory.json`; SHA-256 `198124D0949A9DD987CD154A09D0DC55DDFEB79C6A2E63839E8FB19BD2202967`.
-- The audit was strict read-only: no compilation, loading, native invocation, device query, build, package, installation, binding, or Windows mutation occurred.
-- Native source remains only in the approved source boundary and is not included in production build inputs.
-- The source remains uncompiled, unloaded, and uninvoked.
-- Structure layout, marshaling, size, `cbSize`, and compiler diagnostics remain unvalidated until a separately authorized compile-only phase.
+- The accepted declaration-only SetupAPI/Newdev source boundary under `tools/ExactInstance/NativeInterop/` was compiled only by an isolated non-production harness under `tools/ExactInstance/CompileOnlyValidation/`.
+- The harness links the audited declaration source by reference; it does not copy the declaration source and does not participate in production driver builds.
+- Target framework/platform/configuration: `net9.0-windows10.0.26100.0`, `x64`, `Release`.
+- Toolchain: .NET SDK `9.0.315`, MSBuild `17.14.43+2a0eb78b3`, Roslyn `4.14.0-3.26064.1 (450493a9)`.
+- Build result: `PASS`; compiler exit code `0`; warnings `0`; errors `0`; produced file count `18`.
+- Primary compile output hash: `artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll` SHA-256 `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA`.
+- Audited source hashes matched before and after compilation:
+  - `tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs` SHA-256 `127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA`.
+  - `tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1` SHA-256 `3E7E3119A467330A413280658503B294C0FFB38271A9CA847056BAF6B2E778D3`.
+- No compiled output was loaded, executed, reflected over, tested, or invoked.
 
 ## Readiness And Safety
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`.
+- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live binding authorization: `false`.
 - Production adapter identity remains `chatpad-windows-exact-instance-adapter-v1`.
 - Synthetic adapter identity remains `chatpad-fake-exact-instance-adapter-v1`.
-- `Apply`, `Restore`, and `Restart` expose deterministic non-executing call plans but still return `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- `native_interop_implemented`, `native_compilation_permitted`, `native_loading_permitted`, `native_invocation_permitted`, `device_queries_available`, and `windows_mutation_available` remain `false`.
-- No driver build/link, signing, CAT generation, packaging, staging, installation, binding, loading, restoration, restart, reboot, driver-store mutation, device query, hardware access, registry, service, boot, security, trace, event-log, protocol, input, certificate, credential, production driver source/INF, frozen binary, or `legacy/` action is authorized.
+- `Apply`, `Restore`, and `Restart` expose deterministic non-executing call plans and still return `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Compile-only validation is authorized and performed; native source compilation evidence is available.
+- Native loading, entry-point resolution, native invocation, device queries, exact-instance access, Windows mutation, driver build/link, signing, CAT generation, packaging, staging, installation, binding, restoration, restart, reboot, hardware access, registry/service/boot mutation, production driver source/INF changes, frozen binary changes, and `legacy/` changes remain unauthorized and were not performed.
 
 ## Verified Results
 
-- Exact-instance suite under Windows PowerShell 5.1 and PowerShell 7: `PASS`; 171 tests, 718 assertions, zero failed tests in each runtime.
-- Full readiness under Windows PowerShell 5.1 and PowerShell 7: `PASS`; 475 fixtures, 2,442 assertions, exact-instance subtotal 171 tests and 718 assertions, live readiness `BLOCKED`, and Windows mutation count `0` in each runtime.
-- Readiness manifest regenerated with 27 entries, framework status `PASS`, live installation readiness `BLOCKED`, current gate `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`, and implementation binding `a05c7e3fffa2968777824a3a2efe4f286449bdc5`.
-- Manifest validation default path under Windows PowerShell 5.1 and PowerShell 7: `PASS`; 27 entries and zero defects in each runtime.
-- Manifest corruption regression under Windows PowerShell 5.1 and PowerShell 7: `PASS`; 18 cases and zero failed cases in each runtime.
+- Compile-only native interop validation: `PASS`; warning count `0`; error count `0`; produced file count `18`.
+- Exact-instance suite under Windows PowerShell 5.1 and PowerShell 7: `PASS`; 191 tests, 793 assertions, zero failed tests in each runtime.
+- Full readiness under Windows PowerShell 5.1 and PowerShell 7: `PASS`; 495 fixtures, 2,517 assertions, exact-instance subtotal 191 tests and 793 assertions, live readiness `BLOCKED`, current gate `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and Windows mutation count `0` in each runtime.
+- Readiness manifest generation: `PASS`; 32 entries, framework status `PASS`, live installation readiness `BLOCKED`.
+- Manifest default validation and corruption regression passed under Windows PowerShell 5.1 and PowerShell 7 after final staging/regeneration with the new compile-only validation script included in tracked PowerShell inventory.
 - Native source-boundary guard: `PASS`; approved declaration matches unchanged and forbidden matches remain zero.
 - Repository safety: `PASS`.
 
 ## Unresolved Blockers
 
-- Compile-only native interop validation has not been authorized or performed.
-- Native SetupAPI/Newdev execution remains unimplemented and explicitly blocked.
-- A compile-only validation phase must use an isolated non-production harness, produce temporary artifacts outside production build/package paths, avoid loading compiled output, avoid native invocation, and validate structure sizes, `cbSize`, marshaling metadata, and compiler diagnostics.
-- Any compiled artifact requires a separate independent audit before loading or invocation.
+- Native SetupAPI/Newdev adapter execution remains unimplemented and explicitly blocked.
+- The compile-only artifacts require a separate independent audit before any loading, reflection inspection, entry-point resolution, native invocation, device query, or live adapter implementation can rely on them.
 - Live readiness remains blocked until later implementation, independent audit, and explicit live authorization complete.

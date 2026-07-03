@@ -8,25 +8,27 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-interop-source-audit-acceptance` records
-acceptance of the declaration-only SetupAPI/Newdev source boundary for the non-executing
-production native adapter. The future API sequence, structures, driver-node
-identity evidence, exact-instance binding/restoration proof, restart/reboot
-separation, error taxonomy, and source-boundary guard are documented in
+Branch `feature/runtime-bringup-native-interop-compile-only-validation` records
+the separately authorized compile-only validation of the accepted
+declaration-only SetupAPI/Newdev source boundary. The future API sequence,
+structures, driver-node identity evidence, exact-instance binding/restoration
+proof, restart/reboot separation, error taxonomy, source-boundary guard, and
+compile-only evidence validator are documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 The declaration source and static boundary validator live under
-`tools/ExactInstance/NativeInterop/`.
+`tools/ExactInstance/NativeInterop/`; the isolated compile-only harness lives
+under `tools/ExactInstance/CompileOnlyValidation/`.
 
-- Starting accepted commit: `b7672d123200f13e95353d2505bb813843ac3f7c`.
-- Implementation commits:
-  `2730d037bcbccf4de3dc51e4961922eff98fff7b` and
-  `a05c7e3fffa2968777824a3a2efe4f286449bdc5`.
-- Accepted source audit commit: `dbba70d74e99c211d47187697e19e528b381520a`.
-- Source audit verdict: `AUDIT PASS`; artifacts are under
-  `artifacts/logs/independent-native-interop-source-audit-dbba70d/`.
-- Expected finalization commit: the commit containing this document, the
-  regenerated readiness manifest, and continuity updates.
+- Starting branch:
+  `feature/runtime-bringup-native-interop-source-audit-acceptance`.
+- Starting commit: `a5a1ddfe055481eec4ea4da57b664c0bd3189d22`.
+- Source audit verdict: `AUDIT PASS` for audited commit
+  `dbba70d74e99c211d47187697e19e528b381520a`.
+- Compile-only validation evidence:
+  `docs/evidence/native-interop-compile-only-validation.json`, schema
+  `chatpad-native-interop-compile-only-validation-v1`, validation ID
+  `native-interop-compile-only-20260703T170511Z`.
 - Production adapter identity: `chatpad-windows-exact-instance-adapter-v1`.
 - Synthetic adapter identity: `chatpad-fake-exact-instance-adapter-v1`,
   selectable only with explicit synthetic mode.
@@ -35,29 +37,29 @@ The declaration source and static boundary validator live under
 - No exported native adapter gate function accepts a caller-supplied mutation
   capability, token, sentinel, secret, object, or equivalent authorization
   value.
-- Exact-instance suite: `PASS`, 171 tests and 718 assertions under Windows
+- Compile-only harness target: `net9.0-windows10.0.26100.0`, `Release`, `x64`,
+  output type `Library`, nullable enabled, warnings as errors, analyzers
+  disabled.
+- Toolchain: .NET SDK `9.0.315`, MSBuild `17.14.43+2a0eb78b3`, Roslyn
+  `4.14.0-3.26064.1 (450493a9)`.
+- Compile-only validation: `PASS`; compiler exit code `0`; warnings `0`;
+  errors `0`; produced file count `18`; primary DLL SHA-256
+  `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA`.
+- Exact-instance suite: `PASS`, 191 tests and 793 assertions under Windows
   PowerShell 5.1 and PowerShell 7.
-- Full readiness suite: `PASS`, 475 fixtures and 2,442 assertions under
+- Full readiness suite: `PASS`, 495 fixtures and 2,517 assertions under
   Windows PowerShell 5.1 and PowerShell 7.
-- PowerShell inventory: 45 `.ps1`, eight `.psm1`, 53 total; AST errors `0`.
-- Native source-boundary guard: `PASS`, 71 tracked source/build files scanned,
-  one approved declaration match, zero forbidden matches.
-- Complete PSScriptAnalyzer: `PASS`, 53 tracked files analyzed, errors `0`,
-  warnings `188`, information `990`, tool failures `0`.
-- Manifest generation: `PASS`, 27 entries, framework status `PASS`, live
-  installation readiness `BLOCKED`.
-- Manifest default validation, corruption regression, and custom path with
-  spaces corruption regression: `PASS` under Windows PowerShell 5.1 and
-  PowerShell 7.
+- Readiness manifest generation: `PASS`, 32 entries, framework status `PASS`,
+  live installation readiness `BLOCKED`.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`.
+- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
-- Native source remains uncompiled, unloaded, and uninvoked. Structure layout,
-  size, `cbSize`, marshaling metadata, and compiler diagnostics remain
-  unvalidated until a separately authorized compile-only phase.
+- Native source has now been compiled only in the isolated non-production
+  harness. Compiled output remains unloaded, unexecuted, unreflected, and
+  uninvoked. Native adapter execution remains unimplemented.
 
 ## Exact-instance framework status
 
@@ -685,10 +687,10 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Separately authorized compile-only native interop validation on
-`feature/runtime-bringup-native-interop-source-audit-acceptance`, starting from
-the finalization commit for this branch. The phase must use an isolated
-non-production harness, avoid loading compiled output, avoid native invocation,
-avoid device query and Windows mutation, validate structure sizes, `cbSize`,
-marshaling metadata, and compiler diagnostics, and record that any compiled
-artifact requires separate independent audit before loading or invocation.
+Independent audit of the compile-only native interop validation evidence, or a
+separately authorized source/design phase for native adapter execution. The next
+phase must start from the final `feature/runtime-bringup-native-interop-compile-only-validation`
+commit, preserve `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and avoid
+loading compiled output, resolving native entry points, invoking SetupAPI/Newdev,
+querying devices, or mutating Windows unless a later task explicitly authorizes
+that exact action after independent audit.

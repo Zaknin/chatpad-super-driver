@@ -7509,3 +7509,87 @@
   invocation. The phase must validate structure sizes, `cbSize`, marshaling
   metadata, and compiler diagnostics, and any compiled artifact must receive a
   separate independent audit before loading or invocation.
+
+## 2026-07-03T21:26+04:00 - Native interop compile-only validation gate
+
+- **Objective:** Perform the separately authorized compile-only validation of
+  the accepted SetupAPI/Newdev declaration-only source boundary without loading
+  compiled output, invoking native APIs, querying devices, or mutating Windows.
+- **Starting state:** Verified repository root `C:/Dev/chatpad-super-driver`,
+  source branch `feature/runtime-bringup-native-interop-source-audit-acceptance`,
+  starting commit `a5a1ddfe055481eec4ea4da57b664c0bd3189d22`, configured
+  upstream `origin/feature/runtime-bringup-native-interop-source-audit-acceptance`,
+  ahead/behind `0/0`, clean worktree/index, and audited native source hashes
+  `127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA` and
+  `3E7E3119A467330A413280658503B294C0FFB38271A9CA847056BAF6B2E778D3`.
+- **Branch created:** `feature/runtime-bringup-native-interop-compile-only-validation`.
+- **Files created:** `tools/ExactInstance/CompileOnlyValidation/Chatpad.NativeInterop.CompileOnlyValidation.csproj`,
+  `tools/ExactInstance/CompileOnlyValidation/CompileOnlyContracts.cs`,
+  `tools/ExactInstance/CompileOnlyValidation/Directory.Build.props`,
+  `tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1`, and
+  `docs/evidence/native-interop-compile-only-validation.json`.
+- **Files modified:** `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PORTING-PLAN.md`,
+  `docs/NEXT-TASK.md`, `docs/WORKLOG.md`, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Implementation details:** The compile-only project is an SDK-style
+  non-test library targeting `net9.0-windows10.0.26100.0`, `Release`, `x64`,
+  with nullable enabled, warnings as errors, analyzers disabled, no default
+  compile items, no generated program file, and all output/intermediate paths
+  redirected to ignored `artifacts/compile-only/native-interop/`. It links the
+  audited declaration source by reference and compiles only a contract sink that
+  binds method groups, structure types, `cbSize` assignments, and marshaling
+  metadata without an entry point or runtime invocation.
+- **Compile-only validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1 -Configuration Release -Platform x64`.
+  Result `PASS`; evidence schema
+  `chatpad-native-interop-compile-only-validation-v1`; validation ID
+  `native-interop-compile-only-20260703T170511Z`; .NET SDK `9.0.315`;
+  MSBuild `17.14.43+2a0eb78b3`; Roslyn
+  `4.14.0-3.26064.1 (450493a9)`; compiler exit code `0`; warnings `0`;
+  errors `0`; produced file count `18`; primary DLL SHA-256
+  `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA`.
+- **Gate transition:** The previous active gate
+  `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED` is recorded
+  as the evidence transition source. The current gate and remaining blocker are
+  both `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Exact-suite validation:** Windows PowerShell 5.1 and PowerShell 7 runs of
+  `tools/Test-ChatpadExactInstanceBindingRestoration.ps1` both returned
+  `PASS`, 191 tests, 793 assertions, and zero failed tests.
+- **Full-readiness validation:** Windows PowerShell 5.1 and PowerShell 7 runs
+  of `tools/Test-ChatpadRuntimeBringupReadiness.ps1` both returned `PASS`,
+  495 fixtures, 2,517 assertions, exact subtotal 191 tests and 793 assertions,
+  live readiness `BLOCKED`, current gate
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and Windows mutation
+  count `0`.
+- **Manifest and safety validation:** After staging the new compile-only
+  validation script so tracked PowerShell inventory included it, the readiness
+  manifest was regenerated with 32 entries. Manifest default validation and
+  corruption regression passed under Windows PowerShell 5.1 and PowerShell 7.
+  Native source-boundary guard returned `PASS`; repository safety returned
+  `PASS`; `git diff --check` returned `PASS`.
+- **Ignored evidence artifacts:** Focused outputs are under
+  `artifacts/logs/native-interop-compile-only-validation/` and
+  `artifacts/logs/native-interop-compile-only-20260703T170511Z/`. Compiler
+  outputs are under ignored `artifacts/compile-only/native-interop/`.
+- **Safety:** No driver build/link, signing, CAT generation, packaging,
+  staging, driver-store mutation, installation, binding, loading, restoration,
+  restart, reboot, live device query, exact-instance access, hardware access,
+  Windows/service/registry/boot mutation, tracing, event-log export, protocol
+  traffic, input injection, certificate/credential change, native DLL loading,
+  entry-point resolution, native invocation, produced assembly execution,
+  reflection inspection, production driver source/INF/frozen binary change, or
+  `legacy/` change occurred.
+- **Next task:** Independent audit of the compile-only validation evidence, or
+  a separately authorized source/design phase for native adapter execution.
+  Preserve `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` until executable
+  native adapter behavior is implemented, audited, and explicitly authorized.

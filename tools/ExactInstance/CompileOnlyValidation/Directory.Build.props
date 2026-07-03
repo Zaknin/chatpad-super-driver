@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <ValidationArtifactRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..\artifacts\compile-only\native-interop\'))</ValidationArtifactRoot>
+    <BaseOutputPath>$(ValidationArtifactRoot)bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(ValidationArtifactRoot)obj\</BaseIntermediateOutputPath>
+    <OutputPath>$(BaseOutputPath)$(Configuration)\$(Platform)\</OutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\$(Platform)\</IntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>

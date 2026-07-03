@@ -4,6 +4,34 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Accept compile-only native interop validation without execution
+
+**Decision:** The accepted declaration-only SetupAPI/Newdev source boundary may
+be compiled only through the isolated non-production harness under
+`tools/ExactInstance/CompileOnlyValidation/`. The active readiness gate is now
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; the historical
+`BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED` gate remains
+only as the prior transition state recorded in evidence.
+
+**Rationale:** The compile-only harness proves the audited declarations,
+structure contracts, `cbSize` assignments, marshaling metadata, Unicode and
+last-error signatures, and compiler diagnostics can compile cleanly without
+adding any production build reference or runtime behavior. It still does not
+prove safe loading, entry-point resolution, native invocation, device query, or
+Windows mutation.
+
+**Alternatives rejected:** Treating compilation as runtime readiness, loading
+or reflecting over the produced assembly during validation, invoking
+SetupAPI/Newdev, adding the declarations to production driver build inputs,
+using `dotnet test` or a test host, querying devices, or advancing directly to
+live adapter authorization.
+
+**Consequences:** Compile-only artifacts remain ignored under `artifacts/` and
+require separate independent audit before any loading, reflection inspection,
+entry-point resolution, native invocation, or live adapter implementation can
+rely on them. Current readiness remains `BLOCKED`, and native adapter
+execution remains unimplemented.
+
 ## 2026-07-03 - Supersede native interop source-audit gate with compile-only validation gate
 
 **Decision:** The independent source audit for the declaration-only

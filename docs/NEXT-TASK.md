@@ -2,24 +2,22 @@
 
 ## Objective
 
-Perform a separately authorized compile-only native interop validation phase for the accepted declaration-only SetupAPI/Newdev source boundary.
+Design and implement only the next separately authorized native adapter execution boundary after compile-only validation, or perform an independent audit of the compile-only validation evidence before any execution work begins.
 
 ## Required Starting Point
 
-- Branch: `feature/runtime-bringup-native-interop-source-audit-acceptance`.
-- Starting commit: the final commit from the native interop source-audit acceptance transition.
-- Accepted source audit commit: `dbba70d74e99c211d47187697e19e528b381520a`.
-- Native source implementation binding in readiness evidence: `a05c7e3fffa2968777824a3a2efe4f286449bdc5`.
-- Before work, verify a clean tree, configured upstream, local/remote equality, and exact current HEAD.
+- Branch: `feature/runtime-bringup-native-interop-compile-only-validation`.
+- Starting commit: the final commit titled `Validate native interop compilation without execution`.
+- Required first check: verify the branch, exact HEAD, upstream, ahead/behind state, and clean worktree before relying on these docs.
 
 ## Current State
 
-- The declaration-only SetupAPI/Newdev source boundary passed independent audit with verdict `AUDIT PASS`.
-- Current gate is `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`.
-- Live readiness is `BLOCKED`.
-- Downstream blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- The declaration source remains uncompiled, unloaded, and uninvoked.
-- Native operation, live device query, Windows mutation, exact binding, restoration, restart, broad install, and rollback counters remain zero.
+- The declaration-only SetupAPI/Newdev source boundary passed independent source audit.
+- The accepted declarations were compiled by an isolated non-production harness.
+- Compile-only validation evidence is tracked at `docs/evidence/native-interop-compile-only-validation.json`.
+- Readiness remains `BLOCKED`.
+- Current gate and capability blocker are both `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Native loading, entry-point resolution, reflection inspection, native invocation, device query, exact-instance access, Windows mutation, driver build/link, signing, packaging, staging, installation, binding, restoration, restart, reboot, production driver source/INF changes, frozen binary changes, and `legacy/` changes remain unauthorized.
 
 ## Inspect First
 
@@ -27,31 +25,29 @@ Perform a separately authorized compile-only native interop validation phase for
 - `docs/PROJECT-STATE.md`
 - `docs/DECISIONS.md`
 - `docs/WORKLOG.md`
+- `docs/evidence/native-interop-compile-only-validation.json`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`
-- `tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs`
-- `tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1`
+- `tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1`
+- `tools/ExactInstance/CompileOnlyValidation/`
+- `tools/ExactInstance/NativeInterop/`
 - `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`
 - `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
 - `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
 - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
-- `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
 
 ## Safety Restrictions
 
-- Compile only in an isolated non-production audit harness.
-- Do not load the compiled assembly.
-- Do not invoke any native declaration.
-- Do not query devices, driver bindings, or hardware.
-- Do not mutate Windows, registry, services, certificates, keys, credentials, boot state, or scheduled tasks.
+- Do not load or execute the compile-only output unless a later task explicitly authorizes that exact action after independent audit.
+- Do not invoke any SetupAPI/Newdev declaration.
+- Do not query devices, driver bindings, hardware, driver store state, services, registry, boot state, event logs, or certificates unless the next task explicitly authorizes that exact inspection.
+- Do not mutate Windows, registry, services, certificates, keys, credentials, boot state, scheduled tasks, devices, drivers, driver packages, or driver-store state.
 - Do not build, link, sign, package, stage, install, load, unload, bind, restore, restart, enable, disable, or remove a driver or device.
-- Keep deterministic temporary compiler artifacts outside production build and package paths and under ignored `artifacts/`.
+- Keep generated outputs under ignored `artifacts/`.
 - Do not modify `legacy/`.
 
 ## Acceptance Criteria
 
-- Verify native source hashes against the accepted audited source boundary before compiling.
-- Compile only the declarations in an isolated audit harness.
-- Validate structure sizes, `cbSize`, marshaling metadata, Unicode/last-error metadata, and compiler diagnostics.
-- Produce deterministic temporary artifact inventory under ignored `artifacts/`.
-- Confirm no assembly loading, native entry-point resolution, native invocation, device query, or Windows mutation occurred.
-- Record that compiled artifacts require a separate independent audit before any loading or invocation.
+- If the next task is an audit, independently verify the compile-only evidence, harness isolation, source hashes, output inventory, and prohibited-action counters without loading or invoking native code.
+- If the next task is implementation design, keep it source/design-only unless execution is explicitly authorized.
+- If execution is explicitly authorized in a later task, require a new gate, new evidence contract, and independent audit boundary before any live operation can be considered.
+- Preserve `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` until executable native adapter behavior is implemented, audited, and separately authorized.

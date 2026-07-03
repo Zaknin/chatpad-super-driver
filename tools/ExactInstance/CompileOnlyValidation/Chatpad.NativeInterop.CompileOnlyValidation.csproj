@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsTestProject>false</IsTestProject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <AnalysisLevel>none</AnalysisLevel>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\NativeInterop\Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs" Link="AuditedSource\Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs" />
+    <Compile Include="CompileOnlyContracts.cs" />
+  </ItemGroup>
+</Project>

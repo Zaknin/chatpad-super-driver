@@ -2,24 +2,29 @@
 
 ## Status
 
-This branch contains a source-level, declaration-only SetupAPI/Newdev interop boundary. It does not compile, load, invoke, install, bind, restore, restart, query devices, mutate Windows, or execute driver behavior.
+This branch contains a source-level, declaration-only SetupAPI/Newdev interop boundary and an isolated non-production compile-only validation harness. The accepted declarations compile cleanly in that harness, but the compiled output is not loaded, executed, reflected over, invoked, installed, bound, restored, restarted, used to query devices, used to mutate Windows, or used for driver behavior.
 
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`.
+- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
 - Live device queries, native operations, and Windows mutations performed: `0`.
 - Source audit verdict: `AUDIT PASS` for audited commit
   `dbba70d74e99c211d47187697e19e528b381520a`.
+- Compile-only validation: `PASS`; evidence
+  `docs/evidence/native-interop-compile-only-validation.json`; validation ID
+  `native-interop-compile-only-20260703T170511Z`.
 
 Authoritative source files:
 
 - `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`
 - `tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs`
 - `tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1`
+- `tools/ExactInstance/CompileOnlyValidation/Chatpad.NativeInterop.CompileOnlyValidation.csproj`
+- `tools/ExactInstance/CompileOnlyValidation/CompileOnlyContracts.cs`
 
 ## Declaration Boundary
 
@@ -39,7 +44,27 @@ The allowlisted declaration file contains 13 `DllImport` signatures for `setupap
 - `SetupDiSetSelectedDriverW`
 - `DiInstallDevice`
 
-The current declaration set intentionally excludes Configuration Manager APIs, DIFx APIs, DevCon, PnPUtil, WMI/CIM mutation, service mutation, runtime compilation, and native loading. The accepted source boundary remains uncompiled, unloaded, and uninvoked. Any future addition requires a separate authorized implementation task and independent source audit.
+The current declaration set intentionally excludes Configuration Manager APIs, DIFx APIs, DevCon, PnPUtil, WMI/CIM mutation, service mutation, runtime compilation, and native loading. The accepted source boundary has been compiled only in the isolated validation harness. It remains unloaded and uninvoked. Any future addition requires a separate authorized implementation task and independent source audit.
+
+## Compile-Only Validation
+
+`tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1` validates the
+accepted source hashes, preprocesses the effective MSBuild graph, scans the
+harness and preprocessed graph for execution/test/device/native patterns, runs
+`dotnet msbuild` restore/build for the isolated library project, hashes the
+temporary outputs under ignored `artifacts/compile-only/native-interop/`, and
+writes tracked evidence.
+
+The validation used target framework `net9.0-windows10.0.26100.0`, platform
+`x64`, configuration `Release`, .NET SDK `9.0.315`, MSBuild
+`17.14.43+2a0eb78b3`, and Roslyn `4.14.0-3.26064.1 (450493a9)`. Compiler exit
+code, warning count, and error count were all `0`. The primary DLL output hash
+was `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA`.
+
+The compile-only evidence records all prohibited action counters as false:
+assembly loading, managed execution, native invocation, device query,
+exact-instance access, Windows mutation, produced assembly execution, test host
+execution, reflection inspection, and post-build execution.
 
 ## Structure And Ownership Boundary
 
@@ -110,8 +135,25 @@ G78-G132 add source-boundary coverage for:
 - fail-closed public operation behavior with source declarations present;
 - module/caller integrity and regenerated contract metadata;
 - complete error mapping; and
-- accepted source-audit gate, compile-only validation not authorized, and zero live/native/device/Windows operation accounting.
+- accepted source-audit gate, the historical compile-only-not-authorized gate,
+  and zero live/native/device/Windows operation accounting.
+
+G133-G152 add compile-only validation coverage for:
+
+- harness references to the approved audited source and no copied declarations;
+- no executable entry point, post-build hook, test project, runtime
+  orchestration, shell/device tooling, or native execution pattern;
+- valid tracked compile-only evidence, exact input hashes, output hashes,
+  toolchain identity, and readiness transition;
+- rejected missing/extra/duplicate inputs and rejected loading/execution claims;
+- historical source-audit evidence remaining read-only; and
+- current blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Next Boundary
 
-The next task is a separately authorized compile-only validation phase in an isolated non-production harness. That phase may validate structure layout, size, `cbSize`, marshaling metadata, and compiler diagnostics, but it must not load compiled output, resolve entry points, invoke native APIs, query devices, or mutate Windows. A compiled artifact requires a separate independent audit before loading or invocation.
+The next task is an independent audit of the compile-only validation evidence or
+a separately authorized source/design phase for native adapter execution. No
+task may load compiled output, resolve entry points, invoke native APIs, query
+devices, or mutate Windows unless that exact action is later authorized after
+independent audit. The current blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
