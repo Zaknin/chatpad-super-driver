@@ -2,38 +2,40 @@
 
 ## Objective
 
-Perform an independent read-only audit of the non-executing production native
-SetupAPI/Newdev adapter scaffold and composition-root wiring. Do not implement
-or execute native adapter behavior.
+Perform an independent read-only re-audit of the remediated non-executing
+production native SetupAPI/Newdev adapter scaffold and composition-root wiring.
+Do not implement or execute native adapter behavior.
 
 ## Required Starting Point
 
-- Branch: `feature/runtime-bringup-native-adapter-composition-root`.
-- Starting commit: the finalization commit for this scaffold task, after
-  implementation commit `9ea29a8a29379a55747c6cf53112379aeb03b9e0` and the
+- Branch:
+  `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`.
+- Starting commit: the finalization commit for this remediation task, after
+  implementation commit `60da3ee244eaa5c28cb5022748a41ca95e6474cc` and the
   regenerated readiness manifest are present.
 - Before audit work, verify a clean tree, configured upstream, local/remote
   equality, and ancestry from
-  `a23259a73dc27f332a98f292e90866b0db42a764`.
+  `b7f5f700c68af3846850b7ba69a34f7c8dd66614`.
 
 ## Current State
 
-- The accepted capability-boundary remediation at
-  `a23259a73dc27f332a98f292e90866b0db42a764` superseded the stale
-  `BLOCKED_PENDING_INDEPENDENT_REAUDIT` continuation text.
-- The current phase adds a production adapter identity and deterministic
-  composition-root selection, but only as a non-executing scaffold.
-- Implementation commit:
-  `9ea29a8a29379a55747c6cf53112379aeb03b9e0`.
+- The initial scaffold audit found fail-open integrity gaps in implicit
+  production selection, script-scope mutable scaffold constants, extensible
+  caller object handling, and manifest corruption regression forwarding.
+- Implementation commit
+  `60da3ee244eaa5c28cb5022748a41ca95e6474cc` remediates those gaps and moves
+  live readiness to
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
 - Production adapter identity:
   `chatpad-windows-exact-instance-adapter-v1`.
 - Synthetic adapter identity:
   `chatpad-fake-exact-instance-adapter-v1`, selectable only with explicit
   synthetic mode.
+- Public native adapter operations require explicit primitive string adapter
+  and operation inputs. Caller objects, missing selections, non-string inputs,
+  module-state edits, and synthetic fallback attempts fail closed.
 - `Apply`, `Restore`, and `Restart` remain blocked with
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Full live readiness remains blocked as
-  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
 - No native interop declaration, SetupAPI/Newdev invocation, live device query,
   Windows mutation, packaging, signing, install, bind, restore, restart, or
   reboot path exists in this scaffold.
@@ -57,8 +59,8 @@ or execute native adapter behavior.
 ## Safety Restrictions
 
 - Read-only audit only.
-- No native API implementation, declaration, P/Invoke, Add-Type, C# shim, DLL
-  import, driver build/link, signing, CAT generation, packaging, staging,
+- No native API implementation, declaration, P/Invoke, Add-Type native shim,
+  DLL import, driver build/link, signing, CAT generation, packaging, staging,
   driver-store mutation, installation, binding, loading, restoration, restart,
   reboot, device query, hardware access, Windows mutation, production
   source/INF change, frozen-binary change, or `legacy/` change.
@@ -69,16 +71,18 @@ or execute native adapter behavior.
 - Confirm production adapter metadata is stable, non-synthetic, fail-closed,
   non-executing, and blocked by
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Confirm composition-root selection is deterministic and uses explicit
-  production or synthetic identity, with no implicit synthetic fallback.
+- Confirm public native adapter operations require explicit primitive string
+  adapter selection and operation selection, with no implicit production
+  default and no implicit synthetic fallback.
+- Confirm mutable module state, caller objects with spoofed methods, wrapper
+  objects, serialized objects, `PSCustomObject`, `PSTypeNames`, `Add-Member`,
+  positional extras, splatted capability-like names, and pipeline input do not
+  authorize execution or change the blocked gate.
 - Confirm `Apply`, `Restore`, and `Restart` return deterministic blocked
   operation evidence and keep native operation, device query, and Windows
   mutation counters at zero.
-- Confirm unknown adapter names, missing adapter selection, production selected
-  as synthetic, synthetic selected without explicit synthetic mode, unsupported
-  operations, caller objects, serialized objects, module-state extraction,
-  splatted capability-like names, positional extras, and pipeline input fail
-  closed or remain non-authorizing.
+- Confirm manifest validation and corruption regression forward custom
+  `-ManifestPath` values to child runtime processes.
 - Re-run the exact suite, full readiness suite, manifest validation/corruption
   regression, executable guard, AST parse inventory, PSScriptAnalyzer, and
   repository safety checks without live execution.
@@ -86,6 +90,6 @@ or execute native adapter behavior.
   postcondition, restart/reboot, and evidence-origin contracts remain intact.
 - Confirm all live/device/Windows mutation counters remain zero.
 - Leave live readiness blocked as
-  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
 - Do not recommend executable native adapter implementation until this
-  independent scaffold audit passes.
+  independent scaffold re-audit passes.

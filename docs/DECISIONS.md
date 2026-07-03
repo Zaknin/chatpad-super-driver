@@ -4,6 +4,36 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Require explicit primitive native adapter and operation selection
+
+**Decision:** Public native adapter scaffold operations require explicit
+primitive string adapter and operation selections. The production adapter is not
+selected by default, synthetic fallback is never implicit, caller objects are
+not introspected for authoritative identity, and scaffold constants are rebuilt
+from literal values per call instead of trusted through mutable module state.
+The current gate is
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
+
+**Rationale:** The initial scaffold audit showed that omitted adapter
+selection defaulted to production, script-scope values could be modified inside
+the process, caller objects could influence identity through object behavior,
+and manifest corruption regression children did not honor custom manifest
+paths. Those were integrity gaps even though native execution remained
+unimplemented.
+
+**Alternatives rejected:** Defaulting missing adapter input to production,
+trusting script-scope constants as security facts, calling methods or relying
+on extensible PowerShell object behavior for identity, allowing broad
+object-typed public gate inputs, or letting child manifest validators silently
+fall back to the tracked manifest path.
+
+**Consequences:** G68-G77 permanently cover omitted adapter selection,
+non-string adapter and operation values, caller-object spoofing, mutable
+module-state tampering, unsupported operation ordering, and custom manifest
+path forwarding. Live readiness remains blocked until independent re-audit
+accepts the remediated scaffold, and native SetupAPI/Newdev execution remains
+a later separately authorized implementation boundary.
+
 ## 2026-07-03 - Treat snapshot identity and offline producer context as the only current trust roots
 
 **Decision:** Restoration uses the exact prior-driver identity read from a

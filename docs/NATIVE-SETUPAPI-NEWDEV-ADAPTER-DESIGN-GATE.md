@@ -9,7 +9,7 @@ implement, declare, load, or invoke any native device-installation API.
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
@@ -283,13 +283,33 @@ G26-G67 additionally prove:
   exported variable authority;
 - no callable internal function performs native execution, and the executable
   native guard still reports zero declarations or invocations;
-- the final gate remains
-  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
+- the initial scaffold task ended at
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` before the
+  follow-up integrity remediation.
+
+G68-G77 additionally prove the remediated scaffold integrity boundary:
+
+- public native adapter operations require explicit primitive string adapter
+  and operation selections;
+- no implicit production adapter default exists on the public operation gate;
+- caller objects, wrapper objects, spoofed methods, mutable module state,
+  `PSCustomObject`, `PSTypeNames`, `Add-Member`, serialization, positional
+  extras, splatted capability-like names, pipeline input, and non-string values
+  do not authorize execution;
+- scaffold constants are rebuilt from literals per call rather than trusted
+  from mutable module state;
+- `Apply`, `Restore`, and `Restart` remain deterministic
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` results with zero native
+  operation, device-query, and Windows-mutation counters;
+- custom manifest corruption regressions forward the requested manifest path
+  to child runtime processes; and
+- the remediated gate remains
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
 
 ## Next Audit Boundary
 
-The next task must be an independent read-only audit of this non-executing
-production scaffold and composition-root wiring. That audit must not implement
-or invoke the native adapter and must confirm the blocker remains
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` with
+The next task must be an independent read-only re-audit of this remediated
+non-executing production scaffold and composition-root wiring. That audit must
+not implement or invoke the native adapter and must confirm the blocker remains
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT` with
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

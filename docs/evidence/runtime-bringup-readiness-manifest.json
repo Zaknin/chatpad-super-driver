@@ -1,18 +1,18 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-03T09:39:06.2337398Z",
+    "generated_utc":  "2026-07-03T12:04:50.2172493Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
-    "current_gate":  "BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT",
+    "current_gate":  "BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT",
     "capability_blocker":  "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
     "live_adapter_status":  "SCAFFOLD_NON_EXECUTING",
     "live_binding_authorized":  false,
     "repository":  {
-                       "branch":  "feature/runtime-bringup-native-adapter-composition-root",
+                       "branch":  "feature/runtime-bringup-native-adapter-scaffold-integrity-remediation",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
                        "prior_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
                        "prior_readiness_finalization_commit":  "88e3cbba3a64828322b7c703765e6b1e2369f698",
-                       "current_readiness_implementation_commit":  "9ea29a8a29379a55747c6cf53112379aeb03b9e0",
+                       "current_readiness_implementation_commit":  "60da3ee244eaa5c28cb5022748a41ca95e6474cc",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -24,15 +24,15 @@
                                       "release_sys_sha256":  "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
                                   },
     "readiness":  {
-                      "fixture_count":  410,
-                      "fixture_assertion_sum":  2109,
+                      "fixture_count":  420,
+                      "fixture_assertion_sum":  2216,
                       "harness_result_record_count":  6,
                       "harness_assertion_sum":  6,
-                      "total_result_record_count":  410,
-                      "assertion_count":  2109,
-                      "record_assertion_sum":  2109,
-                      "category_record_sum":  410,
-                      "category_assertion_sum":  2109,
+                      "total_result_record_count":  420,
+                      "assertion_count":  2216,
+                      "record_assertion_sum":  2216,
+                      "category_record_sum":  420,
+                      "category_assertion_sum":  2216,
                       "assertion_accounting_result":  "PASS",
                       "unassigned_assertion_count":  0,
                       "off_ledger_assertion_count":  0,
@@ -91,8 +91,8 @@
                                               },
                                               {
                                                   "category":  "exact-instance-offline",
-                                                  "record_count":  106,
-                                                  "assertion_count":  385
+                                                  "record_count":  116,
+                                                  "assertion_count":  492
                                               },
                                               {
                                                   "category":  "harness-self-test",
@@ -240,8 +240,8 @@
                       "runtime_observations_evaluated_live":  0,
                       "runtime_observation_gates_blocked_or_unavailable":  25,
                       "exact_instance_framework_result":  "PASS",
-                      "exact_instance_offline_test_count":  106,
-                      "exact_instance_offline_assertion_count":  385,
+                      "exact_instance_offline_test_count":  116,
+                      "exact_instance_offline_assertion_count":  492,
                       "synthetic_exact_binding_attempt_count":  15,
                       "synthetic_exact_restoration_attempt_count":  4,
                       "synthetic_exact_restart_attempt_count":  0,
@@ -277,8 +277,8 @@
                                                "tracked_total":  52,
                                                "analyzed_file_count":  52,
                                                "error_count":  0,
-                                               "warning_count":  175,
-                                               "information_count":  979,
+                                               "warning_count":  187,
+                                               "information_count":  989,
                                                "tool_failure_count":  0,
                                                "findings":  [
                                                                 {
@@ -1607,119 +1607,91 @@
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  22,
+                                                                    "line":  36,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadExactSuiteEnvironment\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  47,
+                                                                    "line":  61,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadExactSuitePlan\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  62,
+                                                                    "line":  76,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027Test-ChatpadAllChecks\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  67,
+                                                                    "line":  81,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadExactTestRecord\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  90,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactTestRecord\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  92,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactTestRecord\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  104,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactTestRecord\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  107,
+                                                                    "line":  106,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactTestRecord\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  114,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  116,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  120,
+                                                                    "line":  118,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  123,
+                                                                    "line":  121,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  127,
+                                                                    "line":  128,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  129,
+                                                                    "line":  130,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  135,
+                                                                    "line":  134,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  136,
+                                                                    "line":  137,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  142,
+                                                                    "line":  141,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -1733,58 +1705,51 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  148,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  149,
                                                                     "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  150,
+                                                                    "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  154,
+                                                                    "line":  156,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  155,
+                                                                    "line":  157,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  160,
+                                                                    "line":  162,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  161,
+                                                                    "line":  163,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  166,
+                                                                    "line":  168,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  167,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
@@ -1796,42 +1761,49 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  174,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  175,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  176,
-                                                                    "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  179,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  184,
+                                                                    "line":  180,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  185,
+                                                                    "line":  181,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  187,
+                                                                    "line":  183,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  189,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  190,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -1840,21 +1812,21 @@
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  193,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  194,
-                                                                    "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  200,
+                                                                    "line":  198,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  199,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
@@ -1866,259 +1838,259 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  206,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  207,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  213,
+                                                                    "line":  208,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  214,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  216,
+                                                                    "line":  215,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  222,
+                                                                    "line":  220,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  223,
+                                                                    "line":  221,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  227,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  228,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  229,
+                                                                    "line":  230,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  240,
+                                                                    "line":  236,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  241,
+                                                                    "line":  237,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  246,
+                                                                    "line":  242,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  247,
+                                                                    "line":  243,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  252,
+                                                                    "line":  254,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  253,
+                                                                    "line":  255,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  258,
+                                                                    "line":  260,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  263,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  264,
+                                                                    "line":  261,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  268,
+                                                                    "line":  266,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  269,
+                                                                    "line":  267,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  281,
+                                                                    "line":  272,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  277,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  278,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  282,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  287,
-                                                                    "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  288,
+                                                                    "line":  283,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  297,
+                                                                    "line":  295,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  298,
+                                                                    "line":  296,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  306,
+                                                                    "line":  301,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  307,
+                                                                    "line":  302,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  315,
+                                                                    "line":  311,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  316,
+                                                                    "line":  312,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  322,
+                                                                    "line":  320,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  331,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  337,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  343,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  349,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  350,
+                                                                    "line":  321,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  356,
+                                                                    "line":  329,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  330,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  336,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  345,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  351,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2127,33 +2099,33 @@
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  357,
                                                                     "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  363,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  364,
+                                                                    "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  370,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  371,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  374,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  378,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  379,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2167,63 +2139,77 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  386,
+                                                                    "line":  388,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  392,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                                                                     "line":  393,
                                                                     "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  402,
+                                                                    "line":  399,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  409,
+                                                                    "line":  400,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  407,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  414,
+                                                                    "line":  416,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  419,
+                                                                    "line":  423,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  426,
+                                                                    "line":  428,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  432,
+                                                                    "line":  433,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  439,
+                                                                    "line":  440,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2244,35 +2230,28 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  459,
+                                                                    "line":  460,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  465,
+                                                                    "line":  467,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  471,
+                                                                    "line":  473,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  472,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  478,
+                                                                    "line":  479,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2286,168 +2265,147 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  493,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  494,
+                                                                    "line":  486,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  502,
+                                                                    "line":  492,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  511,
+                                                                    "line":  499,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  519,
+                                                                    "line":  507,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  526,
+                                                                    "line":  508,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  516,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  537,
+                                                                    "line":  525,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  546,
+                                                                    "line":  533,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  556,
+                                                                    "line":  540,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  566,
+                                                                    "line":  551,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  573,
+                                                                    "line":  560,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  578,
+                                                                    "line":  570,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  584,
+                                                                    "line":  580,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  588,
+                                                                    "line":  587,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  593,
+                                                                    "line":  592,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  598,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  602,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  607,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSPossibleIncorrectComparisonWithNull",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  595,
+                                                                    "line":  609,
                                                                     "severity":  "Warning",
                                                                     "message":  "$null should be on the left side of equality comparisons."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  597,
+                                                                    "line":  611,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  601,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  605,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  609,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  614,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  618,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  623,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  627,
+                                                                    "line":  615,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2468,42 +2426,42 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  639,
+                                                                    "line":  640,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  643,
+                                                                    "line":  644,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  647,
+                                                                    "line":  649,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  652,
+                                                                    "line":  653,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  656,
+                                                                    "line":  657,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  660,
+                                                                    "line":  661,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2524,21 +2482,28 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  675,
+                                                                    "line":  673,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  680,
+                                                                    "line":  678,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  685,
+                                                                    "line":  682,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  686,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2552,28 +2517,7 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  696,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  703,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  708,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  714,
+                                                                    "line":  695,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2615,7 +2559,7 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  748,
+                                                                    "line":  749,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2629,14 +2573,7 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  758,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  763,
+                                                                    "line":  760,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2650,21 +2587,217 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  771,
+                                                                    "line":  772,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  775,
+                                                                    "line":  777,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-                                                                    "line":  779,
+                                                                    "line":  783,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  788,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  794,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  800,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  804,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  809,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  813,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  817,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  821,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  825,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  831,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  865,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  897,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  898,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  901,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  902,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  903,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  904,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  905,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  908,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  914,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidGlobalVars",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  921,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Found global variable \u0027global:ChatpadNativeCallerSideEffects\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  925,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  959,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  983,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  1002,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  1015,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  1031,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  1042,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -2867,58 +3000,79 @@
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  15,
+                                                                    "line":  4,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "The cmdlet \u0027Get-NativeScaffoldConstants\u0027 uses a plural noun. A singular noun should be used instead."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSUseSingularNouns",
+                                                                    "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
+                                                                    "line":  34,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027Get-ChatpadNativeSupportedOperationIdentifiers\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  19,
+                                                                    "line":  38,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeZeroCounters\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  19,
+                                                                    "line":  38,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027New-ChatpadNativeZeroCounters\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  30,
+                                                                    "line":  49,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadProductionNativeAdapter\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  58,
+                                                                    "line":  79,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadSyntheticAdapterMetadata\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSReviewUnusedParameter",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  85,
+                                                                    "line":  107,
                                                                     "severity":  "Warning",
                                                                     "message":  "The parameter \u0027RequireExplicitSelection\u0027 has been declared but not used."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  253,
+                                                                    "line":  314,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeReadOnlyDesignProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  262,
+                                                                    "line":  318,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeMutationCapability\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSReviewUnusedParameter",
+                                                                    "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
+                                                                    "line":  328,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "The parameter \u0027IsElevated\u0027 has been declared but not used."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSReviewUnusedParameter",
+                                                                    "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
+                                                                    "line":  329,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "The parameter \u0027AllowWindowsMutation\u0027 has been declared but not used."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidDefaultValueSwitchParameter",
@@ -3581,14 +3735,14 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
-                                                                    "line":  83,
+                                                                    "line":  84,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-Entry\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
-                                                                    "line":  85,
+                                                                    "line":  86,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-Entry\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -8166,28 +8320,28 @@
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
-                                                                    "line":  195,
+                                                                    "line":  200,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027Set-ManifestEntryFileIdentity\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
-                                                                    "line":  301,
+                                                                    "line":  309,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027Set-AssertionDependentTotals\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
-                                                                    "line":  301,
+                                                                    "line":  309,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027Set-AssertionDependentTotals\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
-                                                                    "line":  525,
+                                                                    "line":  539,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadCountValidationDefect\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -8379,8 +8533,8 @@
                         "id":  "tracked-docs-decisions-md",
                         "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  127177,
-                        "sha256":  "367C992E0BBB7BB529DC20B6A1D64D6C29ED241B290FAE48EFA5387E918B5B62",
+                        "byte_size":  128895,
+                        "sha256":  "18A752EC66E1C4EABEC46C836C44004A1CEA8C50275FF6492396DC572587B0CE",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8388,8 +8542,8 @@
                         "id":  "tracked-docs-evidence-exact-instance-operation-evidence-schema-v1-json",
                         "relative_path":  "docs/evidence/exact-instance-operation-evidence-schema-v1.json",
                         "state":  "tracked",
-                        "byte_size":  4524,
-                        "sha256":  "DB44E622A1D93CB556D5D4EC36FFD13F2CB06B365016BDE3C400D511262C6E20",
+                        "byte_size":  4526,
+                        "sha256":  "27DC9A0D94069B3FED8B6E38C687D9201E9300EBA25ED0B98F77BF4E9CE9FDBC",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8406,8 +8560,8 @@
                         "id":  "tracked-docs-exact-instance-binding-restoration-design-md",
                         "relative_path":  "docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md",
                         "state":  "tracked",
-                        "byte_size":  16916,
-                        "sha256":  "8E528C691F4BD5D85AF18FD58A5C4F8A8EED191AA1CE88D0199F929317BA0E9A",
+                        "byte_size":  16918,
+                        "sha256":  "3A1D3A7AFE30549C141992BFC25F920DF0EDADA9711034A03CFA8DAAC1FE4D33",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8415,8 +8569,8 @@
                         "id":  "tracked-docs-native-setupapi-newdev-adapter-design-gate-md",
                         "relative_path":  "docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md",
                         "state":  "tracked",
-                        "byte_size":  12763,
-                        "sha256":  "51763448EA2430A8782D633489CEA1A7E919CADCBEA455B43E012E4353444FCB",
+                        "byte_size":  13857,
+                        "sha256":  "AB0922991600D06A7073E1DEF76E19744A44E289849C309B5D639BFDF569913F",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8424,8 +8578,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  4399,
-                        "sha256":  "3BBE72FF645AE98163B1186D34EA3A15384127EE442F3FCEA757BCD1BF0549A1",
+                        "byte_size":  4690,
+                        "sha256":  "0D316FE71BFD82F338BA232B27ABFEA70666029B8485EA12A822B10EC415B2C4",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8433,8 +8587,8 @@
                         "id":  "tracked-docs-porting-plan-md",
                         "relative_path":  "docs/PORTING-PLAN.md",
                         "state":  "tracked",
-                        "byte_size":  20967,
-                        "sha256":  "B6FF6B55C7454FDBB49CBF3677104A44A21DA2EE29B57A9EBB7330740DFED93C",
+                        "byte_size":  21205,
+                        "sha256":  "1DDF3764A06CB390A383D87FB3B3D65BF8105BA29EEB5C89F5DC12D73ACBEDD8",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8442,8 +8596,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  4249,
-                        "sha256":  "7CE36C5B940A0ECA7C79424971C32B685EE1B2CAC16D26CD039229B42A5DF699",
+                        "byte_size":  4569,
+                        "sha256":  "90464A9C8B5F2A304F536A55124ADF65C99AEE3313750A758E6237EA1CCE5DAE",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8451,8 +8605,8 @@
                         "id":  "tracked-docs-runtime-bringup-readiness-md",
                         "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
                         "state":  "tracked",
-                        "byte_size":  33883,
-                        "sha256":  "3331575D66D67562BBBEEF13D40F825CDD5C73CDC7778AA2870D3C1AC897576B",
+                        "byte_size":  34044,
+                        "sha256":  "95F3A036F2FF6F07CA79365938E480FAF1D25F25F2B0F4710E4F205CA54FBCDD",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8460,8 +8614,8 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  462278,
-                        "sha256":  "0C3E19FEC354634F62A5EAE08398AF78CB39D92B9F049B3DC90B240EC8154312",
+                        "byte_size":  473915,
+                        "sha256":  "881B4B8B863CA3B569266CDA2DB92A8883EC8546BB242AC140DFAF1809DF43ED",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8469,8 +8623,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-contracts-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.Contracts.psm1",
                         "state":  "tracked",
-                        "byte_size":  55634,
-                        "sha256":  "AFB6ABBF2D06D8077B42A6B5325DE9E1AE0D82B1047CFB752EEA59411724C892",
+                        "byte_size":  55636,
+                        "sha256":  "B66B7B35EE4DC8EDB0469859DCDD13C3ADB5327012EF57A88522B21FAC116DE6",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8487,8 +8641,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-offlinesuite-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                         "state":  "tracked",
-                        "byte_size":  89661,
-                        "sha256":  "DA176B014325E9098D711458E5DD41DBBD87023416ED7DB247CF48D9A74A4BAC",
+                        "byte_size":  109573,
+                        "sha256":  "BB870CF574DEEB0F6AAB4CB649EACFBE3E723BAA451657DA978F78CFB77262B1",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8505,8 +8659,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadnativeadapterdesigngate-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
                         "state":  "tracked",
-                        "byte_size":  30242,
-                        "sha256":  "3A4FC6B623E2584DB6F01143003A9603275E76D6FB35302924108D89761C3028",
+                        "byte_size":  33053,
+                        "sha256":  "CD1D5C23F1E01A2F91A343EFF82FC407A2095A0D1BBA7C4FA7FE25042BB86C0C",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8523,8 +8677,8 @@
                         "id":  "tracked-tools-invoke-chatpadexactinstancebindingrestoration-ps1",
                         "relative_path":  "tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1",
                         "state":  "tracked",
-                        "byte_size":  3178,
-                        "sha256":  "1F3FDEFD470CB62C9AA6E111EAFBEAED36A224839F9F4712FB62F9B70D2CAC93",
+                        "byte_size":  3180,
+                        "sha256":  "C26E980CE2DE487416AFA5480160C92444EF9F4ADEC107EC6F8FE548C79FC51C",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8532,8 +8686,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  11537,
-                        "sha256":  "6F6142A842D2CBCAE386740DC55A735A98636762C30646469A2F03D626EE85C2",
+                        "byte_size":  11621,
+                        "sha256":  "32FD43DD55004F761F74D8F05F9F5355D1623CDFF30002FB539CBBA0B432AC35",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8568,8 +8722,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
                         "state":  "tracked",
-                        "byte_size":  94216,
-                        "sha256":  "8E9B8F3C4B7BDC7D6572D88954C75AA3C046B84F71FB20623F58805061C21843",
+                        "byte_size":  94218,
+                        "sha256":  "8CCA55EC1518BA6E0EC93F7C04741F9110927DE80EBC84AC3B63E56C728257A3",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8577,8 +8731,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  49734,
-                        "sha256":  "35251ABA2F083F6B0979A3F32E0F0FAC3773383C3F3F521DB2A14151A44173F8",
+                        "byte_size":  50621,
+                        "sha256":  "3B9073AC78368A6DC3E28B845EBB45426BAF4F24CC0231EB6BE0F954DE71705A",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8593,10 +8747,10 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/native-adapter-composition-root-readiness-wps-9ea29a8.json",
+                        "relative_path":  "artifacts/logs/native-adapter-integrity-remediation-readiness-wps-60da3ee.json",
                         "state":  "ignored",
-                        "byte_size":  3066844,
-                        "sha256":  "CD0406E8AE0B4896D85B3FC74AEFC6DB8BAD8D7E033B482BA28508D6EA3A7813",
+                        "byte_size":  3563026,
+                        "sha256":  "8805933B7C2BFBAAD102465BBBCA3C5D810D7445445E4CC99D48B6C9F7ED8481",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }

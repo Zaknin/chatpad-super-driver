@@ -7023,3 +7023,186 @@
   `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`; do not proceed
   to executable native adapter implementation until that scaffold audit passes
   and a later task explicitly authorizes implementation.
+
+## 2026-07-03T16:06+04:00 - Native adapter scaffold integrity remediation
+
+- **Objective:** Remediate the failed integrity audit of the non-executing
+  production native SetupAPI/Newdev adapter scaffold. Close implicit production
+  selection, mutable module-state trust, caller-object spoofing, unsupported
+  operation ordering, and manifest corruption-regression path-forwarding gaps
+  without implementing or invoking native adapter behavior.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`, branch
+  `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`,
+  starting commit `b7f5f700c68af3846850b7ba69a34f7c8dd66614`, and current
+  implementation HEAD `60da3ee244eaa5c28cb5022748a41ca95e6474cc` after the
+  source remediation commit.
+- **Documentation discrepancy corrected:** Current docs still described the
+  prior scaffold-audit gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` and 106/385
+  exact-suite, 410/2,109 readiness totals after source and manifest state had
+  moved to the stricter re-audit gate. This entry and the current-state docs
+  update the continuation point to
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`, exact suite
+  116/492, readiness suite 420/2,216, and PSScriptAnalyzer 187/989.
+- **Preflight investigation:** Reproduced the audit failures before
+  remediation: omitted public adapter selection selected production, mutable
+  script-scope scaffold values could change gate/operation behavior, caller
+  object behavior could affect identifier handling, and custom manifest
+  corruption regression did not reliably forward the requested manifest path to
+  child runtimes.
+- **Implementation commit:**
+  `60da3ee244eaa5c28cb5022748a41ca95e6474cc` (`fix: harden native adapter
+  scaffold integrity`) removes trusted mutable native-scaffold script
+  constants, rebuilds scaffold constants from literals per call, requires
+  explicit primitive string adapter and operation inputs, rejects caller objects
+  and non-string values, preserves deterministic blocked `Apply`, `Restore`,
+  and `Restart` results, adds `native_execution_status`, moves readiness to
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`, adds G68-G77
+  integrity regressions, and forwards `-ManifestPath` into manifest-validation
+  child runtimes.
+- **Files modified by implementation and continuity:**
+  `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/WORKLOG.md`,
+  `docs/evidence/exact-instance-operation-evidence-schema-v1.json`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Exact-suite validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit 60da3ee244eaa5c28cb5022748a41ca95e6474cc -OutputPath artifacts\logs\native-adapter-integrity-remediation-exact-suite-wps-60da3ee.json`
+  and the matching `pwsh.exe` command. Both returned exit code `0` and
+  reported `PASS`, 116 tests, 492 assertions, zero failed tests, and gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
+- **Full-readiness validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadiness.ps1`
+  and the matching `pwsh.exe` command. Both returned exit code `0` with
+  framework status `PASS`, live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`, blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, 420 fixtures, 2,216
+  assertions, exact suite 116/492, and `windows_mutation_count=0`.
+- **Manifest validation:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` from the Windows
+  PowerShell readiness artifact with
+  `New-ChatpadRuntimeBringupReadinessManifest.ps1 -ImplementationCommit 60da3ee244eaa5c28cb5022748a41ca95e6474cc`.
+  Default manifest validation passed under Windows PowerShell 5.1 and
+  PowerShell 7 with zero defects. Corruption regression passed under both
+  runtimes with 18 cases and zero failed cases. Custom manifest-path
+  corruption regression also passed under both runtimes with 18 cases and zero
+  failed cases, and child runtimes used the requested custom manifest path.
+- **Manifest sequencing correction:** A post-documentation default manifest
+  validation run failed with 16 defects because the continuity document edits
+  changed tracked file sizes and hashes after the manifest had been generated.
+  That failed output is recorded at
+  `artifacts/logs/native-adapter-integrity-remediation-final-manifest-default-wps-60da3ee.json`,
+  2,442 bytes,
+  `F3203A3155B9859EB7FA092F3858C28EFA561870706E06BA3ECDFE69E9F6862B`.
+  Regenerating the manifest after the documentation edits and rerunning the
+  default, corruption, and custom-manifest-path validators returned `PASS`.
+- **Additional validation:** Complete PSScriptAnalyzer returned exit code `0`,
+  analyzed 52 tracked files, and reported errors `0`, warnings `187`,
+  information `989`, tool failures `0`, and blanket suppression `false`.
+  AST parse inventory returned `PASS`, 52 tracked PowerShell files and zero
+  parse-error files. The AST-level native executable guard returned `PASS`, 52
+  scanned files and zero prohibited command or P/Invoke declaration matches.
+  `git diff --check` returned exit code `0` and no output.
+- **Failed and corrected static-check attempts:** The attempted standalone
+  script names `tools\Test-ChatpadNativeExecutableGuard.ps1` and
+  `tools\Test-ChatpadPowerShellAstParseInventory.ps1` failed because those
+  files do not exist in this repository. Two initial ad hoc native-guard
+  generators were also rejected: one was polluted by Windows PowerShell stdin
+  banner output, and one over-broad raw scan counted design/test strings and
+  read-only inventory commands as native execution. The final accepted guard is
+  AST-level: executable command names plus `Add-Type` text inspected for
+  `DllImport`/SetupAPI/Newdev mutation declarations.
+- **Repository safety:** `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-RepositorySafety.ps1`
+  reported `REPOSITORY SAFETY: PASS`. Deployment, signing, packaging,
+  certificate, key, Windows mutation, device-query, and hardware-access
+  counters were all `0`. No unexpected tracked artifacts, tracked evidence
+  files, non-ignored evidence files, generated output, certificate, private
+  key, forbidden binary, packaging file, or `legacy/` change was found.
+- **Ignored evidence artifacts:** Preflight:
+  `artifacts/logs/native-adapter-integrity-remediation-preflight-wps-b7f5f70.json`
+  42,630 bytes,
+  `688ED4AB168403EB2EAE7136772CB6C9688E51F867ED246B3AF0D4FFA5865823`;
+  `artifacts/logs/native-adapter-integrity-remediation-preflight-pwsh-b7f5f70.json`
+  19,287 bytes,
+  `768C2A31F63FF57D9967EE71F1D376E00E47B565E72A9743F4B2D2DF35783BA8`;
+  `artifacts/logs/native-adapter-integrity-remediation-preflight-custom-manifest-wps-b7f5f70.json`
+  32,592 bytes,
+  `2690E44F2C8C583C5841EB69A447E486B8B540FC955E9712700C17EEF483A179`.
+  Final validation:
+  `artifacts/logs/native-adapter-integrity-remediation-exact-suite-wps-60da3ee.json`
+  4,061,693 bytes,
+  `B1090A070BF1534D718AEFAEA54A565F89F3CCF9133B504DC7B347ECC0748C21`;
+  `artifacts/logs/native-adapter-integrity-remediation-exact-suite-pwsh-60da3ee.json`
+  1,866,577 bytes,
+  `915B23F38DCAA29299878A8A170C0A34C351B350DFDE96BB95A6AAEA6A361380`;
+  `artifacts/logs/native-adapter-integrity-remediation-readiness-wps-60da3ee.json`
+  3,563,026 bytes,
+  `8805933B7C2BFBAAD102465BBBCA3C5D810D7445445E4CC99D48B6C9F7ED8481`;
+  `artifacts/logs/native-adapter-integrity-remediation-readiness-pwsh-60da3ee.json`
+  1,652,958 bytes,
+  `EE395A4074450A775ACD31E7A49A3723583602C294FF5E9BC4BE6A4F4E94AE1D`;
+  `artifacts/logs/native-adapter-integrity-remediation-manifest-generation-60da3ee.json`
+  133 bytes,
+  `1A8D4E54DBA88FA9118BC0C820F42ADAE4CE72013057F1AD532D603BE57C9B7C`;
+  `artifacts/logs/native-adapter-integrity-remediation-manifest-default-wps-60da3ee.json`
+  2,441 bytes,
+  `73A3B9C8C192F441A56551F8E4B49F4DE9431A4537D7E9340A245FA960DB0B46`;
+  `artifacts/logs/native-adapter-integrity-remediation-manifest-default-pwsh-60da3ee.json`
+  1,486 bytes,
+  `4010D322473F743A14DA783E36D90A8E466526408DDC449DCDD244888BD47334`;
+  `artifacts/logs/native-adapter-integrity-remediation-manifest-validation-wps-60da3ee.json`
+  83,476 bytes,
+  `FB3114478F950232F7E3E8EEA3AA0B8E012336FBBDC83D0DC66FBA9FFF6859AE`;
+  `artifacts/logs/native-adapter-integrity-remediation-manifest-validation-pwsh-60da3ee.json`
+  44,135 bytes,
+  `68D3A3CBBEFDE0728A524485859D27295DD1E2E429325990C8167D837FD4ABFB`;
+  `artifacts/logs/native-adapter-integrity-remediation-manifest-custom-wps-60da3ee.json`
+  84,027 bytes,
+  `AF7C4EC68F9149AC09CD1C5CFEF93A998D03A1BFF531F17835FC00F6E0DD2D74`;
+  `artifacts/logs/native-adapter-integrity-remediation-manifest-custom-pwsh-60da3ee.json`
+  44,686 bytes,
+  `A99715F5C269E59C858B0613C73E8CE29C2F77764F6ECFA6E8B86C7514D290CF`;
+  `artifacts/logs/native-adapter-integrity-remediation-psscriptanalyzer-60da3ee.json`
+  585,189 bytes,
+  `EF5A55F52631F8FC1E95B1126F50D44F9B6507DB3CFAED864DBFBD5583943255`;
+  `artifacts/logs/native-adapter-integrity-remediation-native-guard-60da3ee.json`
+  145 bytes,
+  `CB272AD304D53ADFCE296DB92174EDB7CFF649A04073731F55B60F61A363CAEB`;
+  `artifacts/logs/native-adapter-integrity-remediation-ast-parse-60da3ee.json`
+  100 bytes,
+  `9321B440A8580496BE0957E9A20864C40E444F51AABF5E8D8B6FF5BB85673E58`;
+  `artifacts/logs/native-adapter-integrity-remediation-repository-safety-60da3ee.txt`
+  1,203 bytes,
+  `26D1AC0156B52EE5B3D13061642C55485C3F3F3FB8FCE6D71C4D60E34D289276`;
+  and
+  `artifacts/logs/native-adapter-integrity-remediation-git-diff-check-60da3ee.txt`
+  0 bytes,
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`.
+- **Safety:** No native API implementation, declaration, P/Invoke, Add-Type
+  native shim, DLL import, driver build/link, signing, CAT generation,
+  packaging, staging, driver-store mutation, installation, binding, loading,
+  restoration, restart, reboot, device query, hardware access,
+  Windows/service/registry/boot mutation, tracing, event-log export, protocol
+  traffic, input injection, certificate/credential change, production
+  source/INF/frozen binary change, or `legacy/` change occurred.
+- **Finalization and next task:** The expected finalization commit contains
+  the regenerated manifest and continuity updates. The exact next task is an
+  independent read-only re-audit of the remediated native adapter scaffold
+  integrity on
+  `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`,
+  starting from the finalization commit that contains implementation commit
+  `60da3ee244eaa5c28cb5022748a41ca95e6474cc`. Live readiness remains
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`; do not
+  proceed to executable native adapter implementation until that re-audit
+  passes and a later task explicitly authorizes implementation.

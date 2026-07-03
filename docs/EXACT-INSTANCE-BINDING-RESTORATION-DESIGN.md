@@ -32,7 +32,7 @@ It does not contain or invoke a live SetupAPI/Newdev adapter. The current
 production adapter is a non-executing composition-root scaffold only. No driver
 or driver-store operation is authorized. Live readiness is `BLOCKED`; the
 current gate is
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`, and the
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`, and the
 downstream capability blocker is
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
