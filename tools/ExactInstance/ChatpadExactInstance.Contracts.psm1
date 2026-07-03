@@ -937,37 +937,6 @@ function Test-ChatpadExactInstanceEvidence {
     else{[pscustomobject]@{result='PASS';result_code='EVIDENCE_VALID';defects=@()}}
 }
 
-function Get-ChatpadTrackedScriptAnalyzerResult {
-    param([string]$RepositoryRoot='')
-    if(-not$RepositoryRoot){$RepositoryRoot=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())}
-    $tracked=@(&git -C $RepositoryRoot ls-files '*.ps1' '*.psm1'|Sort-Object)
-    $findings=[Collections.Generic.List[object]]::new()
-    $toolFailures=[Collections.Generic.List[object]]::new()
-    foreach($path in $tracked){
-        try {
-            foreach($finding in @(Invoke-ScriptAnalyzer -Path (Join-Path $RepositoryRoot $path) -ErrorAction Stop)){
-                $findings.Add([pscustomobject]@{rule_name=[string]$finding.RuleName;file=$path;line=[int]$finding.Line;severity=[string]$finding.Severity;message=[string]$finding.Message})
-            }
-        } catch {$toolFailures.Add([pscustomobject]@{file=$path;exception_type=$_.Exception.GetType().FullName;message=$_.Exception.Message})}
-    }
-    $errors=@($findings|Where-Object{$_.severity-eq'Error'})
-    [pscustomobject][ordered]@{
-        supported_runtime='Windows PowerShell 5.1'
-        actual_runtime=$PSVersionTable.PSVersion.ToString()
-        tracked_ps1_count=@($tracked|Where-Object{$_-like'*.ps1'}).Count
-        tracked_psm1_count=@($tracked|Where-Object{$_-like'*.psm1'}).Count
-        tracked_total=$tracked.Count
-        analyzed_file_count=$tracked.Count
-        error_count=$errors.Count
-        warning_count=@($findings|Where-Object{$_.severity-eq'Warning'}).Count
-        information_count=@($findings|Where-Object{$_.severity-eq'Information'}).Count
-        tool_failure_count=$toolFailures.Count
-        findings=@($findings)
-        tool_failures=@($toolFailures)
-        blanket_suppression_used=$false
-    }
-}
-
 function Get-ChatpadExactInstanceConstants {
     [pscustomobject][ordered]@{
         plan_schema=$script:PlanSchema

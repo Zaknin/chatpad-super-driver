@@ -380,17 +380,8 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
 
     $results.Add((Invoke-ChatpadExactCase T39 'complete PSScriptAnalyzer scope' {
         $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
-        $command=@"
-`$ErrorActionPreference='Stop'
-Import-Module PSScriptAnalyzer -ErrorAction Stop
-`$root='$($root.Replace("'","''"))'
-`$tracked=@(&git -C `$root ls-files '*.ps1' '*.psm1'|Sort-Object)
-`$findings=[Collections.Generic.List[object]]::new();`$failures=[Collections.Generic.List[object]]::new()
-foreach(`$path in `$tracked){try{foreach(`$finding in @(Invoke-ScriptAnalyzer -Path (Join-Path `$root `$path) -ErrorAction Stop)){`$findings.Add([pscustomobject]@{rule_name=[string]`$finding.RuleName;file=`$path;line=[int]`$finding.Line;severity=[string]`$finding.Severity;message=[string]`$finding.Message})}}catch{`$failures.Add([pscustomobject]@{file=`$path;exception_type=`$_.Exception.GetType().FullName;message=`$_.Exception.Message})}}
-[pscustomobject]@{supported_runtime='Windows PowerShell 5.1';actual_runtime=`$PSVersionTable.PSVersion.ToString();tracked_ps1_count=@(`$tracked|Where-Object{`$_-like'*.ps1'}).Count;tracked_psm1_count=@(`$tracked|Where-Object{`$_-like'*.psm1'}).Count;tracked_total=`$tracked.Count;analyzed_file_count=`$tracked.Count;error_count=@(`$findings|Where-Object severity -eq Error).Count;warning_count=@(`$findings|Where-Object severity -eq Warning).Count;information_count=@(`$findings|Where-Object severity -eq Information).Count;tool_failure_count=`$failures.Count;findings=@(`$findings);tool_failures=@(`$failures);blanket_suppression_used=`$false}|ConvertTo-Json -Depth 10 -Compress
-"@
-        $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
-        $raw=@(&powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded)
+        $analyzerPath=Join-Path (Split-Path $PSScriptRoot -Parent) 'Invoke-ChatpadCompletePSScriptAnalyzer.ps1'
+        $raw=@(&powershell.exe -NoProfile -ExecutionPolicy Bypass -File $analyzerPath -RepositoryRoot $root)
         if($LASTEXITCODE-ne0){throw 'Supported-runtime PSScriptAnalyzer child process failed.'}
         $analysis=($raw-join"`n")|ConvertFrom-Json
         [pscustomobject]@{checks=@(($analysis.tracked_total-eq@(&git ls-files '*.ps1' '*.psm1').Count),($analysis.tool_failure_count-eq0),($analysis.error_count-eq0),(@($analysis.findings|Where-Object{$_.rule_name-eq'PSAvoidAssignmentToAutomaticVariable'-and$_.file-like'*ChatpadRuntimeBringup.Common.psm1'}).Count-eq0));details=$analysis}

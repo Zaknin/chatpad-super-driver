@@ -65,34 +65,15 @@ function Get-PowerShellInventory {
 }
 
 function Get-PSScriptAnalyzerInventory {
-    param([Parameter(Mandatory)][string[]]$TrackedPaths)
-    $command=Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue
-    if($null-eq$command){
+    $analyzerPath=Join-Path $root 'tools\Invoke-ChatpadCompletePSScriptAnalyzer.ps1'
+    if($null-eq(Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue)){
         return [pscustomobject][ordered]@{status='SKIPPED_UNAVAILABLE';analyzed_file_count=0;error_count=0;warning_count=0;information_count=0;tool_failure_count=0;findings=@();tool_failures=@();blanket_suppression_used=$false}
     }
-    $findings=[Collections.Generic.List[object]]::new()
-    $failures=[Collections.Generic.List[object]]::new()
-    foreach($path in $TrackedPaths){
-        try {
-            foreach($finding in @(Invoke-ScriptAnalyzer -Path (Join-Path $root $path) -ErrorAction Stop)){
-                $findings.Add([pscustomobject][ordered]@{rule_name=[string]$finding.RuleName;file=$path;line=[int]$finding.Line;severity=[string]$finding.Severity;message=[string]$finding.Message})
-            }
-        } catch {
-            $failures.Add([pscustomobject][ordered]@{file=$path;exception_type=$_.Exception.GetType().FullName;message=$_.Exception.Message})
-        }
-    }
-    $errors=@($findings|Where-Object severity -eq Error)
-    [pscustomobject][ordered]@{
-        status=if($errors.Count-or$failures.Count){'FAIL'}else{'PASS'}
-        analyzed_file_count=$TrackedPaths.Count
-        error_count=$errors.Count
-        warning_count=@($findings|Where-Object severity -eq Warning).Count
-        information_count=@($findings|Where-Object severity -eq Information).Count
-        tool_failure_count=$failures.Count
-        findings=@($findings)
-        tool_failures=@($failures)
-        blanket_suppression_used=$false
-    }
+    $raw=@(&powershell.exe -NoProfile -ExecutionPolicy Bypass -File $analyzerPath -RepositoryRoot $root)
+    if($LASTEXITCODE-ne0){throw 'Complete PSScriptAnalyzer execution failed.'}
+    $analysis=($raw-join"`n")|ConvertFrom-Json
+    $analysis|Add-Member -NotePropertyName status -NotePropertyValue 'PASS'
+    $analysis
 }
 
 $base='9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
@@ -103,7 +84,7 @@ foreach($path in $paths){$entries.Add((New-Entry ('tracked-'+(($path.ToLowerInva
 $suiteRelative=[IO.Path]::GetFullPath($SuiteResultPath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $powershellInventory=Get-PowerShellInventory
-$pssaInventory=Get-PSScriptAnalyzerInventory @(&git ls-files '*.ps1' '*.psm1'|Sort-Object)
+$pssaInventory=Get-PSScriptAnalyzerInventory
 $checkedOutBranch=Get-CheckedOutLocalBranch
 
 $manifest=[pscustomobject][ordered]@{
