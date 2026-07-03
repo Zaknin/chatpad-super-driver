@@ -23,7 +23,7 @@ $base=[ordered]@{
     broad_rollback_operations=0
     windows_mutations=0
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+    current_gate='BLOCKED_PENDING_INDEPENDENT_REAUDIT'
     capability_blocker='BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
     live_binding_authorized=$false
 }

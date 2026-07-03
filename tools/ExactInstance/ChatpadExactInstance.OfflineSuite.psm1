@@ -398,47 +398,47 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     }))
 
     $results.Add((Invoke-ChatpadExactCase G1 'current apply restore and restart lack live capability' {
-        $apply=Test-ChatpadNativeAdapterOperationGate Apply -Capability $null -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
-        $restore=Test-ChatpadNativeAdapterOperationGate Restore -Capability $null -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restore -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
-        $restart=Test-ChatpadNativeAdapterOperationGate Restart -Capability $null -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restart -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
+        $apply=Test-ChatpadNativeAdapterOperationGate Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
+        $restore=Test-ChatpadNativeAdapterOperationGate Restore -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restore -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
+        $restart=Test-ChatpadNativeAdapterOperationGate Restart -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restart -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
         [pscustomobject]@{checks=@(($apply.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($restore.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($restart.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($apply.windows_mutations_performed+$restore.windows_mutations_performed+$restart.windows_mutations_performed-eq0));details=[pscustomobject]@{apply=$apply;restore=$restore;restart=$restart}}
     }))
 
     $results.Add((Invoke-ChatpadExactCase G2 'adapter name spoof cannot grant capability' {
-        $r=Test-ChatpadNativeAdapterOperationGate Apply -Capability $null -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
+        $r=Test-ChatpadNativeAdapterOperationGate Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
         [pscustomobject]@{checks=@(($r.result-eq'BLOCKED'),($r.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($r.adapter_name_trusted-eq$false),($r.live_capability_present-eq$false));details=$r}
     }))
 
     $results.Add((Invoke-ChatpadExactCase G3 'mode boolean elevation and switch spoof cannot grant capability' {
-        $r=Test-ChatpadNativeAdapterOperationGate Apply -Capability $null -AdapterName 'any' -Mode 'windows-exact-instance' -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
+        $r=Test-ChatpadNativeAdapterOperationGate Apply -AdapterName 'any' -Mode 'windows-exact-instance' -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
         [pscustomobject]@{checks=@(($r.public_mode_trusted-eq$false),($r.public_synthetic_flag_trusted-eq$false),($r.elevation_trusted-eq$false),($r.mutation_switch_trusted-eq$false),($r.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'));details=$r}
     }))
 
     $results.Add((Invoke-ChatpadExactCase G4 'wrapped fake adapter remains synthetic and untrusted' {
         $e=New-ChatpadExactSuiteEnvironment
         $wrapper=[pscustomobject]@{inner=$e.adapter;adapter_identity='chatpad-windows-exact-instance-adapter-v1';synthetic=$false;mode='windows-exact-instance'}
-        $r=Test-ChatpadNativeAdapterOperationGate Apply -Capability $null -AdapterObject $wrapper -AdapterName $wrapper.adapter_identity -Mode $wrapper.mode -Synthetic:$false
+        $r=Test-ChatpadNativeAdapterOperationGate Apply -AdapterObject $wrapper -AdapterName $wrapper.adapter_identity -Mode $wrapper.mode -Synthetic:$false
         [pscustomobject]@{checks=@(($r.fake_adapter_trusted-eq$false),($r.caller_object_trusted-eq$false),($r.live_capability_present-eq$false),(@($e.adapter.call_log|Where-Object{$_.operation-match'bind|restore|restart'}).Count-eq0));details=$r}
     }))
 
     $results.Add((Invoke-ChatpadExactCase G5 'caller-created adapter object cannot satisfy trusted interface' {
         $caller=[pscustomobject]@{capability_present=$true;result='PASS';result_code='TRUSTED_NATIVE_MUTATION_CAPABILITY_PRESENT'}
-        $r=Test-ChatpadNativeAdapterOperationGate Restore -Capability $caller -AdapterObject $caller -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restore -Synthetic:$false
-        [pscustomobject]@{checks=@(($r.result-eq'BLOCKED'),($r.caller_object_trusted-eq$false),($r.live_capability_present-eq$false),($r.live_restoration_authorized-eq$false));details=$r}
+        $r=Test-ChatpadNativeAdapterOperationGate Restore -AdapterObject $caller -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restore -Synthetic:$false
+        [pscustomobject]@{checks=@(($r.result-eq'BLOCKED'),($r.caller_object_trusted-eq$false),($r.live_capability_present-eq$false),($r.live_restoration_authorized-eq$false),($r.caller_supplied_capability_accepted-eq$false));details=$r}
     }))
 
     $results.Add((Invoke-ChatpadExactCase G6 'serialized capability cannot be restored' {
         $probe=[pscustomobject]@{capability_present=$true;capability_source='future-internal-production-composition-root'}
         $restored=[Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($probe,8))
-        $r=Test-ChatpadNativeMutationCapability -Capability $restored
+        $r=Test-ChatpadNativeMutationCapability
         [pscustomobject]@{checks=@(($r.result-eq'BLOCKED'),($r.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($r.capability_present-eq$false),($r.capability_serializable-eq$false));details=[pscustomobject]@{restored_type=$restored.GetType().FullName;validation=$r}}
     }))
 
     $results.Add((Invoke-ChatpadExactCase G7 'read-only capability cannot satisfy mutation interface' {
         $readOnly=New-ChatpadNativeReadOnlyDesignProbe
-        $read=Test-ChatpadNativeReadOnlyCapability -Capability $readOnly
-        $mutation=Test-ChatpadNativeMutationCapability -Capability $readOnly
-        [pscustomobject]@{checks=@(($read.result-eq'PASS'),($read.mutation_capability_present-eq$false),($mutation.result-eq'BLOCKED'),($mutation.capability_present-eq$false));details=[pscustomobject]@{read_only=$read;mutation=$mutation}}
+        $read=Test-ChatpadNativeReadOnlyCapability -Probe $readOnly
+        $mutation=Test-ChatpadNativeMutationCapability
+        [pscustomobject]@{checks=@(($read.result-eq'PASS'),($read.mutation_capability_present-eq$false),($read.authorizes_mutation-eq$false),($mutation.result-eq'BLOCKED'),($mutation.capability_present-eq$false));details=[pscustomobject]@{read_only=$read;mutation=$mutation}}
     }))
 
     $results.Add((Invoke-ChatpadExactCase G8 'composition root cannot construct live capability now' {
@@ -484,7 +484,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         $contract=Get-ChatpadNativeAdapterDesignContract
         $restart=@($contract.error_taxonomy|Where-Object code -eq 'RESTART_REQUIRED')[0]
         $reboot=@($contract.error_taxonomy|Where-Object code -eq 'REBOOT_REQUIRED')[0]
-        $gate=Test-ChatpadNativeAdapterOperationGate Restart -Capability $null -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restart -Synthetic:$false
+        $gate=Test-ChatpadNativeAdapterOperationGate Restart -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restart -Synthetic:$false
         [pscustomobject]@{checks=@(($restart.restart_pending-eq$true),($reboot.reboot_pending-eq$true),($gate.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($gate.live_restart_authorized-eq$false),($gate.windows_mutations_performed-eq0));details=[pscustomobject]@{restart=$restart;reboot=$reboot;gate=$gate}}
     }))
 
@@ -495,6 +495,88 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
         $spoof.synthetic=$false;$spoof.source_classification='live';$spoof.adapter_identity='chatpad-windows-exact-instance-adapter-v1';$spoof.adapter_mode='windows-exact-instance';$spoof.producer='future-live-producer';$spoof.evidence_mode='live'
         $validation=Test-ChatpadExactInstanceEvidence $spoof
         [pscustomobject]@{checks=@(($evidence.source_classification-eq'synthetic'),($validation.result-eq'FAIL'),($validation.defects-contains'UNTRUSTED_EVIDENCE_ORIGIN'),($evidence.live_exact_binding_operation_count-eq0),($evidence.windows_mutation_count-eq0));details=[pscustomobject]@{evidence=$evidence;spoof_validation=$validation}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G16 'former SessionState sentinel extraction cannot authorize gate' {
+        $module=Get-Module ChatpadNativeAdapterDesignGate
+        $sentinelVariable=$module.SessionState.PSVariable.Get('TrustedMutationCapabilitySentinel')
+        $legacyParameterRejected=$false;$legacyExceptionType=''
+        try{[void](Test-ChatpadNativeAdapterOperationGate Apply -Capability $(if($null-eq$sentinelVariable){$null}else{$sentinelVariable.Value}) -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true)}catch{$legacyParameterRejected=$true;$legacyExceptionType=$_.Exception.GetType().FullName}
+        $gate=Test-ChatpadNativeAdapterOperationGate Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
+        [pscustomobject]@{checks=@(($null-eq$sentinelVariable),($legacyParameterRejected-eq$true),($legacyExceptionType-match'ParameterBinding'),($gate.result-eq'BLOCKED'),($gate.live_capability_present-eq$false),($gate.windows_mutations_performed-eq0));details=[pscustomobject]@{sentinel_variable_present=($null-ne$sentinelVariable);legacy_exception_type=$legacyExceptionType;gate=$gate}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G17 'module session-state enumeration exposes no mutation capability object' {
+        $module=Get-Module ChatpadNativeAdapterDesignGate
+        $ampNames=@(& $module { Get-Variable -Name '*Capability*' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name })
+        $sessionNames=@($module.SessionState.InvokeCommand.InvokeScript('Get-Variable -Name *Capability* -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name'))
+        $trustedNames=@($ampNames+$sessionNames|Where-Object{$_ -match 'Trusted.*Mutation|Mutation.*Sentinel|CapabilitySentinel'})
+        [pscustomobject]@{checks=@(($ampNames.Count-eq0),($sessionNames.Count-eq0),($trustedNames.Count-eq0));details=[pscustomobject]@{ampersand_module_variable_names=$ampNames;session_state_variable_names=$sessionNames;trusted_names=$trustedNames}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G18 'module-context invocation remains blocked' {
+        $module=Get-Module ChatpadNativeAdapterDesignGate
+        $ampGate=& $module { Test-ChatpadNativeAdapterOperationGate Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true }
+        $sessionGate=$module.SessionState.InvokeCommand.InvokeScript("Test-ChatpadNativeAdapterOperationGate Restore -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restore -Synthetic:`$false -IsElevated `$true -AllowWindowsMutation `$true")
+        [pscustomobject]@{checks=@(($ampGate.result-eq'BLOCKED'),($sessionGate.result-eq'BLOCKED'),($ampGate.live_capability_present-eq$false),($sessionGate.live_capability_present-eq$false),($ampGate.windows_mutations_performed+$sessionGate.windows_mutations_performed-eq0));details=[pscustomobject]@{ampersand_module_gate=$ampGate;session_state_gate=$sessionGate}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G19 'non-exported and internal function discovery cannot produce authorization' {
+        $module=Get-Module ChatpadNativeAdapterDesignGate
+        $exported=@(Get-Command -Module ChatpadNativeAdapterDesignGate)
+        $allFunctions=@($module.SessionState.InvokeCommand.GetCommands('*Chatpad*','Function',$true))
+        $nonExported=@($allFunctions|Where-Object{$exported.Name -notcontains $_.Name})
+        $nonExportedNative=@($nonExported|Where-Object{$_.Name-match'Native|Mutation|Capability|OperationGate'})
+        $mutationProbe=Test-ChatpadNativeMutationCapability
+        $suspectParameters=@($allFunctions|Where-Object{$_.Name-match'Mutation|OperationGate'}|ForEach-Object{foreach($name in $_.Parameters.Keys){if($name-match'Capability|Token|Sentinel|Secret'){[pscustomobject]@{function=$_.Name;parameter=$name}}}})
+        [pscustomobject]@{checks=@(($nonExportedNative.Count-eq0),($mutationProbe.result-eq'BLOCKED'),($mutationProbe.capability_present-eq$false),($suspectParameters.Count-eq0));details=[pscustomobject]@{all_function_names=@($allFunctions|ForEach-Object Name);non_exported_function_names=@($nonExported|ForEach-Object Name);non_exported_native_function_names=@($nonExportedNative|ForEach-Object Name);suspect_parameters=$suspectParameters;mutation_probe=$mutationProbe}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G20 'extracted references and wrappers cannot satisfy operation gate' {
+        $module=Get-Module ChatpadNativeAdapterDesignGate
+        $extracted=$module.SessionState.PSVariable.Get('TrustedMutationCapabilitySentinel')
+        $inner=if($null-eq$extracted){[object]::new()}else{$extracted.Value}
+        $wrapper=[pscustomobject]@{inner=$inner;capability_present=$true;result='PASS';result_code='TRUSTED_NATIVE_MUTATION_CAPABILITY_PRESENT'}
+        $gate=Test-ChatpadNativeAdapterOperationGate Restore -AdapterObject $wrapper -Evidence $wrapper -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Restore -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true
+        [pscustomobject]@{checks=@(($gate.result-eq'BLOCKED'),($gate.caller_object_trusted-eq$false),($gate.evidence_trusted-eq$false),($gate.live_restoration_authorized-eq$false),($gate.windows_mutations_performed-eq0));details=[pscustomobject]@{extracted_variable_present=($null-ne$extracted);wrapper=$wrapper;gate=$gate}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G21 'PSCustomObject PSTypeNames and Add-Member cannot authorize mutation' {
+        $candidate=[pscustomobject]@{capability_present=$true;result='PASS';result_code='TRUSTED_NATIVE_MUTATION_CAPABILITY_PRESENT'}
+        $candidate.PSTypeNames.Insert(0,'Chatpad.TrustedNativeMutationCapability')
+        $candidate|Add-Member -NotePropertyName TrustedMutationCapabilitySentinel -NotePropertyValue ([object]::new())
+        $legacyRejected=$false;$legacyExceptionType=''
+        try{[void](Test-ChatpadNativeAdapterOperationGate Apply -Capability $candidate -AdapterObject $candidate -Evidence $candidate)}catch{$legacyRejected=$true;$legacyExceptionType=$_.Exception.GetType().FullName}
+        $gate=Test-ChatpadNativeAdapterOperationGate Apply -AdapterObject $candidate -Evidence $candidate -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false
+        [pscustomobject]@{checks=@(($legacyRejected-eq$true),($legacyExceptionType-match'ParameterBinding'),($gate.result-eq'BLOCKED'),($gate.live_binding_authorized-eq$false),($gate.windows_mutations_performed-eq0));details=[pscustomobject]@{legacy_exception_type=$legacyExceptionType;candidate=$candidate;gate=$gate}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G22 'serialized scalars GUIDs and arbitrary objects cannot authorize mutation' {
+        $values=@('TRUSTED_NATIVE_MUTATION_CAPABILITY_PRESENT',42,$true,[guid]::NewGuid(),[object]::new())
+        $legacyRejectCount=0
+        foreach($value in $values){try{[void](Test-ChatpadNativeAdapterOperationGate Apply -Capability $value)}catch{if($_.Exception.GetType().FullName-match'ParameterBinding'){$legacyRejectCount++}}}
+        $payload=[pscustomobject]@{capability_present=$true;nested=[pscustomobject]@{sentinel=[object]::new()}}
+        $restored=[Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($payload,8))
+        $gate=Test-ChatpadNativeAdapterOperationGate Apply -AdapterObject $restored -Evidence $restored -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode Apply -Synthetic:$false
+        [pscustomobject]@{checks=@(($legacyRejectCount-eq$values.Count),($gate.result_code-eq'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'),($gate.live_capability_present-eq$false),($gate.windows_mutations_performed-eq0));details=[pscustomobject]@{legacy_reject_count=$legacyRejectCount;candidate_count=$values.Count;restored_type=$restored.GetType().FullName;gate=$gate}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G23 'exported mutation API accepts no caller-supplied capability parameter' {
+        $exported=@(Get-Command -Module ChatpadNativeAdapterDesignGate)
+        $suspect=@($exported|Where-Object{$_.Name-match'Mutation|OperationGate'}|ForEach-Object{foreach($name in $_.Parameters.Keys){if($name-match'Capability|Token|Sentinel|Secret'){[pscustomobject]@{function=$_.Name;parameter=$name}}}})
+        $gateCommand=$exported|Where-Object Name -eq 'Test-ChatpadNativeAdapterOperationGate'|Select-Object -First 1
+        [pscustomobject]@{checks=@(($null-ne$gateCommand),($gateCommand.Parameters.Keys-notcontains'Capability'),($suspect.Count-eq0));details=[pscustomobject]@{exported=@($exported|ForEach-Object{[pscustomobject]@{name=$_.Name;parameters=@($_.Parameters.Keys)}});suspect_parameters=$suspect}}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G24 'design contract states PowerShell object possession is not a trust boundary' {
+        $contract=Get-ChatpadNativeAdapterDesignContract
+        [pscustomobject]@{checks=@(($contract.module_state_introspectable_by_same_process_callers-eq$true),($contract.caller_supplied_mutation_capability_accepted-eq$false),($contract.composition_root.module_private_object_trust_boundary-eq$false),($contract.composition_root.public_or_exported_caller_supplied_capability_parameter-eq$false),($contract.current_gate-ne'ACCEPTED'));details=$contract}
+    }))
+
+    $results.Add((Invoke-ChatpadExactCase G25 'all public mutation operations remain blocked with zero mutation counters' {
+        $ops=@('Apply','Restore','Restart')
+        $gates=@($ops|ForEach-Object{Test-ChatpadNativeAdapterOperationGate $_ -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Mode $_ -Synthetic:$false -IsElevated $true -AllowWindowsMutation $true})
+        [pscustomobject]@{checks=@((@($gates|Where-Object result -ne 'BLOCKED').Count-eq0),(@($gates|Where-Object live_capability_present -ne $false).Count-eq0),(@($gates|Where-Object live_binding_authorized -ne $false).Count-eq0),(@($gates|Where-Object live_restoration_authorized -ne $false).Count-eq0),(@($gates|Where-Object live_restart_authorized -ne $false).Count-eq0),([int](($gates|Measure-Object windows_mutations_performed -Sum).Sum)-eq0));details=[pscustomobject]@{gates=$gates}}
     }))
 
     $failed=@($results|Where-Object{$_.fixture_result-ne'PASS'})
@@ -599,7 +681,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
             skipped_as_pass_count=0
         }
         live_installation_readiness='BLOCKED'
-        current_gate='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+        current_gate='BLOCKED_PENDING_INDEPENDENT_REAUDIT'
         capability_blocker='BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
         live_adapter_status='NOT_IMPLEMENTED'
         live_binding_authorized=$false

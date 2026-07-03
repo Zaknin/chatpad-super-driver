@@ -64,7 +64,7 @@
     "final_classification": { "enum": ["PASS", "BLOCKED", "FAIL"] },
     "live_readiness_satisfied": { "const": false },
     "readiness": { "const": "BLOCKED" },
-    "current_gate": { "const": "BLOCKED_PENDING_INDEPENDENT_AUDIT" },
+    "current_gate": { "const": "BLOCKED_PENDING_INDEPENDENT_REAUDIT" },
     "capability_blocker": { "const": "BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED" }
   },
   "$defs": {

@@ -9,7 +9,7 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full commit hash.'}
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
-if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_AUDIT'-or$suite.capability_blocker-ne'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'NOT_IMPLEMENTED'-or$suite.live_binding_authorized-ne$false){throw 'Suite result is not an accepted pending-audit, missing-live-adapter blocked result.'}
+if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_REAUDIT'-or$suite.capability_blocker-ne'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'NOT_IMPLEMENTED'-or$suite.live_binding_authorized-ne$false){throw 'Suite result is not an accepted pending-reaudit, missing-live-adapter blocked result.'}
 
 function Get-CheckedOutLocalBranch {
     $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
@@ -92,7 +92,7 @@ $manifest=[pscustomobject][ordered]@{
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_PENDING_INDEPENDENT_AUDIT'
+    current_gate='BLOCKED_PENDING_INDEPENDENT_REAUDIT'
     capability_blocker='BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
     live_adapter_status='NOT_IMPLEMENTED'
     live_binding_authorized=$false

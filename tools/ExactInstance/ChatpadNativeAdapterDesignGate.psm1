@@ -3,34 +3,42 @@ $ErrorActionPreference = 'Stop'
 
 $script:NativeDesignSchema = 'chatpad-native-adapter-design-gate-v1'
 $script:LiveAdapterBlocker = 'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
-$script:TrustedMutationCapabilitySentinel = [object]::new()
-$script:TrustedReadOnlyCapabilitySentinel = [object]::new()
 
 function Test-ChatpadNativeMutationCapability {
-    param([AllowNull()][object]$Capability)
-    $present = [object]::ReferenceEquals($Capability, $script:TrustedMutationCapabilitySentinel)
     [pscustomobject][ordered]@{
-        result = if ($present) { 'PASS' } else { 'BLOCKED' }
-        result_code = if ($present) { 'TRUSTED_NATIVE_MUTATION_CAPABILITY_PRESENT' } else { $script:LiveAdapterBlocker }
-        capability_present = $present
+        result = 'BLOCKED'
+        result_code = $script:LiveAdapterBlocker
+        capability_present = $false
+        caller_supplied_capability_accepted = $false
         capability_serializable = $false
-        capability_source = if ($present) { 'future-internal-production-composition-root' } else { 'none' }
+        capability_source = 'none'
+        reason = 'Native mutation authorization is not represented by any public or caller-supplied PowerShell object.'
     }
 }
 
 function Test-ChatpadNativeReadOnlyCapability {
-    param([AllowNull()][object]$Capability)
-    $present = [object]::ReferenceEquals($Capability, $script:TrustedReadOnlyCapabilitySentinel)
+    param([AllowNull()][object]$Probe)
+    $present = ($null -ne $Probe -and
+        $null -ne $Probe.PSObject.Properties['schema_version'] -and
+        [string]$Probe.schema_version -eq $script:NativeDesignSchema -and
+        $null -ne $Probe.PSObject.Properties['authorizes_mutation'] -and
+        $Probe.authorizes_mutation -eq $false)
     [pscustomobject][ordered]@{
         result = if ($present) { 'PASS' } else { 'BLOCKED' }
-        result_code = if ($present) { 'TRUSTED_NATIVE_READ_ONLY_CAPABILITY_PRESENT' } else { 'READ_ONLY_CAPABILITY_ABSENT' }
-        read_only_capability_present = $present
-        mutation_capability_present = [object]::ReferenceEquals($Capability, $script:TrustedMutationCapabilitySentinel)
+        result_code = if ($present) { 'READ_ONLY_DESIGN_PROBE_PRESENT' } else { 'READ_ONLY_DESIGN_PROBE_ABSENT' }
+        read_only_probe_present = $present
+        mutation_capability_present = $false
+        authorizes_mutation = $false
     }
 }
 
 function New-ChatpadNativeReadOnlyDesignProbe {
-    $script:TrustedReadOnlyCapabilitySentinel
+    [pscustomobject][ordered]@{
+        schema_version = $script:NativeDesignSchema
+        probe_type = 'read-only-design-contract'
+        authorizes_mutation = $false
+        caller_supplied_mutation_boundary = $false
+    }
 }
 
 function New-ChatpadNativeMutationCapability {
@@ -40,7 +48,6 @@ function New-ChatpadNativeMutationCapability {
 function Test-ChatpadNativeAdapterOperationGate {
     param(
         [Parameter(Mandatory)][ValidateSet('Apply','Restore','Restart')][string]$Operation,
-        [AllowNull()][object]$Capability,
         [string]$AdapterName = '',
         [string]$Mode = '',
         [bool]$Synthetic = $true,
@@ -49,11 +56,10 @@ function Test-ChatpadNativeAdapterOperationGate {
         [AllowNull()][object]$AdapterObject = $null,
         [AllowNull()][object]$Evidence = $null
     )
-    $capability = Test-ChatpadNativeMutationCapability -Capability $Capability
-    $trusted = $capability.capability_present
+    $capability = Test-ChatpadNativeMutationCapability
     [pscustomobject][ordered]@{
-        result = if ($trusted) { 'PASS' } else { 'BLOCKED' }
-        result_code = if ($trusted) { 'TRUSTED_NATIVE_MUTATION_CAPABILITY_PRESENT' } else { $script:LiveAdapterBlocker }
+        result = 'BLOCKED'
+        result_code = $script:LiveAdapterBlocker
         operation = $Operation
         adapter_name_trusted = $false
         public_mode_trusted = $false
@@ -63,12 +69,14 @@ function Test-ChatpadNativeAdapterOperationGate {
         caller_object_trusted = $false
         evidence_trusted = $false
         fake_adapter_trusted = $false
-        live_capability_present = $trusted
+        live_capability_present = $false
+        caller_supplied_capability_accepted = $false
         live_binding_authorized = $false
         live_restoration_authorized = $false
         live_restart_authorized = $false
         live_device_queries_performed = 0
         windows_mutations_performed = 0
+        capability_boundary = $capability
         details = [pscustomobject][ordered]@{
             adapter_name = $AdapterName
             mode = $Mode
@@ -137,7 +145,7 @@ function Get-ChatpadNativeAdapterDesignContract {
     )
     $operationGates = @(
         'supported-operating-system-and-architecture',
-        'internal-trusted-native-capability',
+        'no-public-caller-supplied-mutation-capability',
         'exact-canonical-instance-id',
         'valid-unexpired-plan',
         'valid-plan-hash',
@@ -158,7 +166,10 @@ function Get-ChatpadNativeAdapterDesignContract {
     [pscustomobject][ordered]@{
         schema_version = $script:NativeDesignSchema
         live_adapter_status = 'NOT_IMPLEMENTED'
+        current_gate = 'BLOCKED_PENDING_INDEPENDENT_REAUDIT'
         capability_blocker = $script:LiveAdapterBlocker
+        module_state_introspectable_by_same_process_callers = $true
+        caller_supplied_mutation_capability_accepted = $false
         exact_device_opening = [pscustomobject][ordered]@{
             accepts_one_canonical_instance_id = $true
             opens_complete_instance_id = $true
@@ -182,7 +193,7 @@ function Get-ChatpadNativeAdapterDesignContract {
                 reboot_pending = ($_ -eq 'REBOOT_REQUIRED')
             }
         })
-        evidence_fields = @('trusted_producer_identity','implementation_binary_identity','adapter_implementation_version','code_or_assembly_hash','operation_plan_hash','exact_canonical_instance_id','exact_target_driver_identity','exact_restoration_driver_identity','ordered_native_call_log','native_return_codes','win32_errors','before_state','after_state','restart_reboot_indication','cleanup_results','trusted_capability_provenance','synthetic_live_classification')
+        evidence_fields = @('trusted_producer_identity','implementation_binary_identity','adapter_implementation_version','code_or_assembly_hash','operation_plan_hash','exact_canonical_instance_id','exact_target_driver_identity','exact_restoration_driver_identity','ordered_native_call_log','native_return_codes','win32_errors','before_state','after_state','restart_reboot_indication','cleanup_results','internal_authorization_provenance','synthetic_live_classification')
         operation_gates = @($operationGates)
         composition_root = [pscustomobject][ordered]@{
             permitted_future_location = 'internal production composition root only'
@@ -191,6 +202,8 @@ function Get-ChatpadNativeAdapterDesignContract {
             public_path_parameter_replacement = $false
             fake_adapter_satisfies = $false
             current_capability_creation_path = 'none'
+            public_or_exported_caller_supplied_capability_parameter = $false
+            module_private_object_trust_boundary = $false
         }
     }
 }
