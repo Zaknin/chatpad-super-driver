@@ -2181,3 +2181,30 @@ single-item runtime-observer linkage.
 `tools/...` repository-relative names. Double-wrapped and deeper arrays fail
 as `STOP_LINKAGE_INVALID`; all five runtime-only conditions link to
 `tools/Test-ChatpadRuntimeObservation.ps1` and remain unevaluated offline.
+
+## 2026-07-03 - Gate future native mutations with module-private capability sentinels
+
+**Decision:** Future SetupAPI/Newdev mutation operations must require a
+module-private native mutation capability sentinel. Public functions may expose
+read-only design probes and contract inspection, but public callers cannot
+construct a live mutation capability or authorize native binding, restoration,
+restart, or reboot.
+
+**Rationale:** The exact-instance framework needs a future native composition
+root without creating a caller-controlled execution switch. A module-private
+sentinel keeps authorization tied to audited composition code instead of
+strings, Booleans, elevation, or command-line intent.
+
+**Alternatives rejected:**
+
+* Caller-provided flags or strings - spoofable and difficult to audit.
+* Public capability constructors - allow test or caller code to grant itself
+  mutation authority.
+* Implementing native API calls during this phase - outside the authorized
+  design-only scope.
+
+**Consequences:** Live readiness remains blocked with
+`BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`. Future implementation must add an
+audited composition root that creates the sentinel internally, prove exact
+instance and driver-node identity before mutation, and keep read-only probes
+separate from mutation authority.

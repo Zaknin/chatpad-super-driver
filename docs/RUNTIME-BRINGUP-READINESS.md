@@ -6,6 +6,33 @@ preparation only: it does not sign, package, stage, install, load, trace, query
 devices, send requests, access a controller or Chatpad, mutate Windows, reboot,
 or touch hardware.
 
+## Current native adapter design-gate status
+
+Branch `feature/runtime-bringup-native-adapter-design-gate` adds a
+non-executing native SetupAPI/Newdev adapter design gate only. The future API
+sequence, structures, driver-node identity evidence, exact-instance
+binding/restoration proof, restart/reboot separation, error taxonomy, and
+composition-root boundary are documented in
+`docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
+offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
+
+- Current implementation commit: `66e357d7cd54cfab23eb1ce3b237aa63aae96eb0`.
+- Exact-instance suite: `PASS`, 54 tests, 215 assertions under Windows
+  PowerShell 5.1 and PowerShell 7.
+- Full readiness suite: exit `0`, 1,939 assertions under both runtimes.
+- PowerShell inventory: 45 `.ps1`, seven `.psm1`, 52 total; AST errors `0`.
+- Complete PSScriptAnalyzer: errors `0`, warnings `168`, information `927`,
+  tool failures `0`.
+- Native executable guard: `PASS`, 52 files scanned, zero native declaration or
+  invocation matches.
+- Manifest validation and corruption regression: `PASS`.
+- Live binding/restoration/restart, live observations, device queries,
+  hardware access, and Windows mutations: all `0`.
+- Live readiness: `BLOCKED`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+- Capability blocker: `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+- Live adapter status: `NOT_IMPLEMENTED`; live authorization: `false`.
+
 ## Exact-instance framework status
 
 The independent audit of the initial T1-T25 framework failed because

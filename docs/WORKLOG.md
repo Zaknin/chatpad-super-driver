@@ -6633,3 +6633,112 @@
   design-and-gate task for a future native SetupAPI/Newdev adapter opening;
   live execution remains blocked until a later explicit implementation and
   audit phase.
+
+## 2026-07-03T11:25+04:00 - Native SetupAPI/Newdev adapter design gate
+
+- **Objective:** Perform a non-executing design-and-gate implementation for a
+  future native SetupAPI/Newdev exact-instance adapter. Do not implement,
+  declare, invoke, build, sign, package, install, query, or execute native
+  driver behavior.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`, branch
+  `feature/runtime-bringup-exact-instance-contract-remediation`, exact HEAD
+  `5ef224e27b53f4c5a562be3556173bc7856f69d9`, clean tree, remote branch
+  equality `0/0`, and ancestry from
+  `9b380ef6e070311d682866a5f130b51a44f8485a` and
+  `d22ba050a6f5fea0ab9e8a71470c90a474d7b548`. Created
+  `feature/runtime-bringup-native-adapter-design-gate` from that exact commit.
+- **Implementation commits:**
+  `df31800580222c2ac0a24393c8d608b648602d79` added the native adapter design
+  gate and fixtures; `a3de8ea4f7d38d20c5acdcc96e3a985940fcb63b` stabilized
+  guard evidence; `72f6d9d7f41bd19e22c5a0b5e283f237b40e33d5` updated
+  readiness inventory gates; and
+  `66e357d7cd54cfab23eb1ce3b237aa63aae96eb0` updated the manifest validator
+  exact-suite totals to 54 tests and 215 assertions.
+- **Files created or modified:** Added
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. Modified
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`. Final continuity
+  updates modified `docs/PROJECT-STATE.md`, `docs/WORKLOG.md`,
+  `docs/DECISIONS.md`, and `docs/NEXT-TASK.md`.
+- **Implementation details:** The design gate records the future SetupAPI/Newdev
+  API sequence, required structures, error taxonomy, evidence fields,
+  driver-node identity, exact-instance bind/restore postconditions,
+  restart/reboot separation, and composition-root boundary. Mutation authority
+  requires a module-private sentinel capability. The public mutation-capability
+  factory remains blocked with `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`, and
+  read-only probes do not authorize mutation.
+- **Exact-suite validation:**
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit 66e357d7cd54cfab23eb1ce3b237aa63aae96eb0 -OutputPath artifacts\logs\native-design-gate-exact-suite-wps-66e357d.json`
+  and the matching `pwsh.exe` command both passed with 54 tests, 215
+  assertions, zero failed tests, live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_AUDIT`, and blocker
+  `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+- **Full-readiness validation:**
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadiness.ps1`
+  and the matching `pwsh.exe` command both returned exit code `0` with 1,939
+  assertions, live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_AUDIT`, and blocker
+  `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+- **Additional validation:** Cross-runtime matrix `PASS`, four directions, zero
+  failed directions. Complete PSScriptAnalyzer analyzed 52 tracked files with
+  errors `0`, warnings `168`, information `927`, tool failures `0`, and no
+  blanket suppression. AST parse validation parsed 52 tracked PowerShell files
+  with zero parse-error files. Native executable guard passed with 52 files
+  scanned and zero matches. Manifest generation produced 25 entries,
+  framework status `PASS`, and live installation readiness `BLOCKED`.
+  Manifest validation passed with zero defects, and corruption regression
+  passed 18/18 cases.
+- **Repository safety:** `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-RepositorySafety.ps1`
+  reported `REPOSITORY SAFETY: PASS`. Deployment, signing, packaging,
+  certificate, key, Windows mutation, device-query, and hardware-access
+  counters were all `0`. No tracked generated outputs, certificates, private
+  keys, forbidden binaries, packaging files, or `legacy/` changes were found.
+- **Ignored evidence artifacts:**
+  `artifacts/logs/native-design-gate-exact-suite-wps-66e357d.json`,
+  2,636,982 bytes,
+  `849A6953BCF211C95DDD864B2644246AAB21256A7528F421F3A30D938A5C13A9`;
+  `artifacts/logs/native-design-gate-exact-suite-pwsh-66e357d.json`,
+  1,249,026 bytes,
+  `722D34B59B65A19868C8BAC40881298113AEEEC60240EAC02540B9393EF8C36E`;
+  `artifacts/logs/native-design-gate-readiness-wps-66e357d.json`,
+  2,148,072 bytes,
+  `89D6BD0D68C2832DC41D0DA0D8C3F9E3AF65677705B7C4ED0E9DC71185CB0627`;
+  `artifacts/logs/native-design-gate-readiness-pwsh-66e357d.json`,
+  1,060,807 bytes,
+  `AA4B13ABEE34A699C63A7E1811C6EC771F342E41042596E8C6AF0902CCCA116A`;
+  `artifacts/logs/native-design-gate-cross-runtime-66e357d.json`, 3,462 bytes,
+  `1D04335C3ABD33476E0E539E7CE03A8A9FE76AF9070F0C067C02B5E247260F49`;
+  `artifacts/logs/native-design-gate-psscriptanalyzer-66e357d.json`,
+  545,288 bytes,
+  `384FC8C17C3F491B1086A86D2439C6551438D3ABA63989122C08B7F2388D9946`;
+  `artifacts/logs/native-design-gate-ast-parse-66e357d.json`, 133 bytes,
+  `DAD12B7E0628760C5AB7506B8215DA1B680C0756B1875FC0B80C199D4D9B2485`;
+  `artifacts/logs/native-design-gate-executable-guard-66e357d.json`, 180 bytes,
+  `AE2488F6E1DBB25080E52E140A462A061044036954D3A2514ACD593EE714E07E`;
+  `artifacts/logs/native-design-gate-repository-safety-66e357d.json`,
+  1,184 bytes,
+  `934F89719A70DAEC014BE3148F110CC41BF1589FEEB9036F41344F16891A8152`;
+  `artifacts/logs/native-design-gate-manifest-validation-base-final-66e357d.json`,
+  2,441 bytes,
+  `83F6213B251DC43FEAD8CEF20C3E2BC1DADFDB64447309CCFB521CBB46010D9C`;
+  and `artifacts/logs/native-design-gate-manifest-validation-final-66e357d.json`,
+  78,042 bytes,
+  `148464F10B88B19121BD1CC75CA1A2C10E5288E3D8C80B5118414AA6F2C0F98E`.
+- **Safety:** No native API implementation, declaration, P/Invoke, Add-Type,
+  C# shim, DLL import, driver build/link, signing, CAT generation, packaging,
+  staging, driver-store mutation, installation, binding, loading, restoration,
+  restart, reboot, device query, hardware access, Windows/service/registry/boot
+  mutation, tracing, event-log export, protocol traffic, input injection,
+  certificate/credential change, production source/INF/frozen binary change,
+  or `legacy/` change occurred.
+- **Finalization and next task:** The expected finalization commit contains the
+  regenerated manifest and continuity updates. The exact next task is an
+  independent read-only audit of the native adapter design gate on
+  `feature/runtime-bringup-native-adapter-design-gate`. Live execution remains
+  blocked until a later explicit implementation and audit phase.
