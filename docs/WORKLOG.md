@@ -6281,3 +6281,145 @@
   reboot occurred.
 - **Next task:** Independent read-only audit of this corrective branch and the
   evidence-finalization commit. Exact-instance binding remains unauthorized.
+
+## 2026-07-03T03:03+04:00 - Exact-instance implementation phase start and continuation correction
+
+- **Objective:** Begin the offline exact-instance binding and exact restoration
+  implementation from the audited finalization commit.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`, exact branch
+  `feature/runtime-bringup-manifest-validator-integral-count-remediation`,
+  exact HEAD `b9374d8a98392de67824aac4235021b5bd90d284`, direct parent
+  `72abd0695e34e27d075cb10fdf5b381418bcce1d`, clean worktree, configured
+  upstream, local/upstream/live-remote equality, and ahead/behind `0/0`.
+  Rehashed the accepted baseline manifest and both frozen SYS files and reran
+  canonical manifest validation with result `PASS` and zero defects.
+- **Documentation discrepancy:** `docs/PROJECT-STATE.md` and
+  `docs/NEXT-TASK.md` still named the integral-count independent audit as the
+  next task. That audit completed successfully in a prior read-only task and,
+  by design, made no continuity-document changes. This entry records the
+  discrepancy before implementation relies on the continuation documents.
+- **Branch:** Created
+  `feature/runtime-bringup-exact-instance-binding-restoration` directly from
+  `b9374d8a98392de67824aac4235021b5bd90d284`; no history rewrite, rebase,
+  squash, or amend occurred.
+- **Safety:** This phase is offline-only. No live device query, driver build,
+  signing, packaging, staging, installation, binding, loading, restoration,
+  restart, reboot, driver-store mutation, or other Windows/hardware mutation is
+  authorized.
+
+## 2026-07-03T03:32+04:00 - Offline exact-instance binding and restoration framework
+
+- **Objective:** Implement a production-quality offline transaction framework
+  for binding one explicitly authorized Plug and Play instance to one immutable
+  driver node, verifying the postcondition, and restoring the exact prior
+  driver identity. Keep all execution synthetic and live readiness blocked
+  pending independent audit.
+- **Starting branch and commit:**
+  `feature/runtime-bringup-manifest-validator-integral-count-remediation` at
+  `b9374d8a98392de67824aac4235021b5bd90d284`. Verified repository root,
+  direct parent `72abd0695e34e27d075cb10fdf5b381418bcce1d`,
+  required ancestry, clean worktree, configured upstream, local/upstream/live
+  remote equality, and ahead/behind `0/0`. Created
+  `feature/runtime-bringup-exact-instance-binding-restoration` without amend,
+  squash, rewrite, or rebase.
+- **Previous-result verification:** Rehashed the accepted offline manifest and
+  frozen Debug/Release SYS files and reran canonical readiness-manifest
+  validation with `PASS` and zero defects.
+- **Implementation:** Added separate contracts, fake-adapter, orchestrator, and
+  offline-suite modules under `tools/ExactInstance/`; a public fail-closed
+  default-Plan wrapper; a dedicated T1-T25 runner; and versioned plan/evidence
+  JSON schemas. Updated the authoritative readiness suite, generator, and
+  manifest validator for `BLOCKED_PENDING_INDEPENDENT_AUDIT` and the exact
+  offline ledger.
+- **Exact-instance contract:** Only a complete canonical device instance ID is
+  accepted. The adapter returns and verifies the canonical ID, retains exactly
+  one device element, and never retargets by hardware ID, compatible ID, class,
+  container, parent, location, service, prefix, first match, or best rank.
+- **Plan/snapshot security:** Added canonical runtime-independent hashing,
+  exact operation/expiry/authorization gates, immutable target and restoration
+  driver identities, absolute path validation, traversal/ADS/wildcard/control
+  rejection, existing reparse-point rejection, and synthetic/live evidence
+  separation.
+- **State and failure handling:** Defined 50 allowed transition edges across
+  planning, preflight, bind, verification, restart/reboot, restoration,
+  blocked, failure, and uncertainty states. Mutation-possible failures enter
+  `RESTORE_REQUIRED`; unsuccessful restoration retains an explicit
+  manual-recovery blocker. Apply and restore replay is rejected.
+- **Implementation commit:**
+  `0060cd91be7d460f1a4141f6bf893bd56b32bf35`, subject
+  `Implement offline exact-instance binding framework`. Exact changed paths:
+  `docs/evidence/exact-instance-operation-evidence-schema-v1.json`,
+  `docs/evidence/exact-instance-operation-plan-schema-v1.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.FakeAdapter.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/Test-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Corrective implementation commit:**
+  `fdcd9448a3dc172213c07928af45d2e68fd0197a`, subject
+  `Verify analyzer and updated script inventory`. After initial manifest
+  generation, validation truthfully rejected `AVAILABLE_NOT_RUN` because
+  PSScriptAnalyzer was available and rejected the old 41/2/43 inventory
+  constants. The correction runs analyzer error-severity checks in the
+  authoritative generator and updates manifest validation to 43/6/49. The only
+  changed paths are `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1` and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **T1-T25 validation:** Windows PowerShell and PowerShell 7 both returned
+  `PASS`, 25/25 tests, and 99 assertions. Plan and snapshot hashes match across
+  runtimes. T1 records one bind call for only
+  `USB\VID_045E&PID_028E\TARGET-0001` and identical non-target before/after
+  hashes. T4 touches no same-container sibling. T10 records one exact
+  restoration call for the same target. T13 restores only the same target after
+  a mutation-possible bind failure. T25 retains one expected adapter exception
+  as uncertain and blocked.
+- **Accounting:** The exact suite records 14 synthetic bind attempts, four
+  synthetic restoration attempts, zero synthetic restarts, one rejected broad
+  attempt, one expected exception-uncertainty case, zero unexpected harness
+  exceptions, zero live operations, and zero Windows mutations.
+- **Readiness accounting:** Added category `exact-instance-offline`, 25 records
+  and 99 assertions. The authoritative ledger moved from 304/1,724 to
+  329/1,823. Record/category counts reconcile at 329/329 and assertion sums at
+  1,823/1,823. Off-ledger, duplicate-counted, zero-assertion PASS,
+  skipped-as-PASS, and category-reconciliation defects are zero.
+- **Validation commands/results:** All 43 tracked `.ps1` and six tracked
+  `.psm1` files parsed with zero AST errors. Both schema JSON files parsed.
+  Both exact suites and full readiness suites passed under Windows PowerShell
+  and PowerShell 7. Repository safety returned `PASS`; `git diff --check`
+  passed; deterministic repeat evidence hashes matched; static broad-operation
+  guard passed; added-line secret scan found zero; prohibited-path and reparse
+  scans found zero. PSScriptAnalyzer ran with zero errors; remaining warnings
+  are style rules for pure `New-*` constructors/singular nouns plus established
+  repository findings.
+- **Ignored evidence:**
+  `artifacts/logs/exact-instance-binding-restoration-suite-post-implementation-fdcd944.json`,
+  529,662 bytes,
+  `3D81C8FA8612B36A1FC10B57851D32E5C053BBF78BB9BF8D526E54F774303ADA`;
+  and
+  `artifacts/logs/runtime-bringup-exact-instance-suite-post-implementation-fdcd944.json`,
+  867,941 bytes,
+  `F21A0BAC76CD075A29A443549237039D2F926263FF01DDFC5DD091F9DE2FF6B7`.
+  Both are JSON-valid, UTF-8 without BOM, and ignored.
+- **Documentation/finalization:** Added
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`; updated project state,
+  decisions, porting/readiness status, and the independent-audit continuation.
+  The expected finalization commit is the commit containing this entry, subject
+  `docs: finalize exact-instance framework evidence`.
+- **Safety:** No driver compilation/linking, signing, CAT generation, package
+  creation/staging, driver-store mutation, installation, binding, loading,
+  restoration, restart, reboot, service/registry/boot/security mutation,
+  tracing, event-log export, live device query, hardware access, protocol
+  traffic, input injection, certificate/credential change, production
+  source/INF/project/solution change, frozen binary change, or `legacy/`
+  change occurred.
+- **Remaining blocker and next task:** Live readiness is `BLOCKED` with
+  `BLOCKED_PENDING_INDEPENDENT_AUDIT`. The next task is an independent
+  read-only audit of implementation commits
+  `0060cd91be7d460f1a4141f6bf893bd56b32bf35` and
+  `fdcd9448a3dc172213c07928af45d2e68fd0197a`, plus the
+  evidence-finalization commit. A native Windows adapter remains a
+  separate future implementation and authorization boundary.

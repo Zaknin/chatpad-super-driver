@@ -4,6 +4,37 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Separate the offline exact-instance transaction framework from the native Windows adapter
+
+**Decision:** Exact-instance selection is defined by one complete canonical
+Plug and Play instance ID opened directly by an adapter, ordinal comparison
+with the adapter-returned canonical ID, one retained device element, immutable
+driver-node identity, verified postconditions, and exact prior-driver
+restoration. The repository now implements pure contracts, deterministic plan
+and snapshot hashing, a fake adapter, transaction orchestration, replay and
+uncertainty handling, evidence/accounting, and T1-T25 coverage. The public
+entry point defaults to `Plan` and cannot invoke a live adapter. Live readiness
+is `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+
+**Rationale:** Hardware IDs, compatible IDs, class/container/location
+properties, filename-only package selection, first-match enumeration, and
+best-driver reevaluation can affect or select a different device. Offline fake
+execution is required to prove exact scoping, restoration identity, replay
+protection, and failure accounting without mutating the audit host.
+
+**Alternatives rejected:** `pnputil /add-driver ... /install`,
+`UpdateDriverForPlugAndPlayDevices`, class-wide or hardware-ID-wide update,
+package staging counted as binding, global package removal as rollback,
+device removal and rescan, first/best candidate fallback, API-return-only
+success, automatic restart/reboot, and synthetic evidence accepted as live.
+
+**Consequences:** Plans and restoration snapshots are versioned and hashed;
+all synthetic mutation calls carry the same canonical instance ID; zero or
+multiple driver-node candidates fail closed; uncertain post-mutation states
+require restoration/manual recovery; and a future native SetupAPI/Newdev
+adapter must be implemented and independently audited in a separate authorized
+task before any live operation can be considered.
+
 ## 2026-07-03 - Require exact numeric manifest counts and derived local branch provenance
 
 **Decision:** Manifest count fields are valid only when they are JSON numeric

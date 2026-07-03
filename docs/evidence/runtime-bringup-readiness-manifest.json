@@ -1,15 +1,15 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-02T22:41:56.4347617Z",
+    "generated_utc":  "2026-07-03T04:00:42.7307851Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
-    "blocker":  "BLOCKED_NOT_IMPLEMENTED",
+    "blocker":  "BLOCKED_PENDING_INDEPENDENT_AUDIT",
     "repository":  {
-                       "branch":  "feature/runtime-bringup-manifest-validator-integral-count-remediation",
+                       "branch":  "feature/runtime-bringup-exact-instance-binding-restoration",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
                        "prior_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
                        "prior_readiness_finalization_commit":  "88e3cbba3a64828322b7c703765e6b1e2369f698",
-                       "current_readiness_implementation_commit":  "72abd0695e34e27d075cb10fdf5b381418bcce1d",
+                       "current_readiness_implementation_commit":  "fdcd9448a3dc172213c07928af45d2e68fd0197a",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -21,15 +21,15 @@
                                       "release_sys_sha256":  "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
                                   },
     "readiness":  {
-                      "fixture_count":  304,
-                      "fixture_assertion_sum":  1724,
+                      "fixture_count":  329,
+                      "fixture_assertion_sum":  1823,
                       "harness_result_record_count":  6,
                       "harness_assertion_sum":  6,
-                      "total_result_record_count":  304,
-                      "assertion_count":  1724,
-                      "record_assertion_sum":  1724,
-                      "category_record_sum":  304,
-                      "category_assertion_sum":  1724,
+                      "total_result_record_count":  329,
+                      "assertion_count":  1823,
+                      "record_assertion_sum":  1823,
+                      "category_record_sum":  329,
+                      "category_assertion_sum":  1823,
                       "assertion_accounting_result":  "PASS",
                       "unassigned_assertion_count":  0,
                       "off_ledger_assertion_count":  0,
@@ -85,6 +85,11 @@
                                                   "category":  "evidence",
                                                   "record_count":  2,
                                                   "assertion_count":  10
+                                              },
+                                              {
+                                                  "category":  "exact-instance-offline",
+                                                  "record_count":  25,
+                                                  "assertion_count":  99
                                               },
                                               {
                                                   "category":  "harness-self-test",
@@ -231,17 +236,23 @@
                       "unsupported_runtime_observer_pass_count":  0,
                       "runtime_observations_evaluated_live":  0,
                       "runtime_observation_gates_blocked_or_unavailable":  25,
+                      "exact_instance_framework_result":  "PASS",
+                      "exact_instance_offline_test_count":  25,
+                      "exact_instance_offline_assertion_count":  99,
+                      "synthetic_exact_binding_attempt_count":  14,
+                      "synthetic_exact_restoration_attempt_count":  4,
+                      "synthetic_exact_restart_attempt_count":  0,
                       "malformed_input_validator_count":  15,
                       "malformed_input_case_count":  180,
                       "committed_sample_structural_validation":  "PASS",
                       "committed_sample_semantic_validation":  "PASS",
                       "powershell_inventory":  {
-                                                   "tracked_ps1_count":  41,
-                                                   "tracked_psm1_count":  2,
-                                                   "tracked_powershell_count":  43,
-                                                   "parsed_ps1_count":  41,
-                                                   "parsed_psm1_count":  2,
-                                                   "parsed_powershell_count":  43,
+                                                   "tracked_ps1_count":  43,
+                                                   "tracked_psm1_count":  6,
+                                                   "tracked_powershell_count":  49,
+                                                   "parsed_ps1_count":  43,
+                                                   "parsed_psm1_count":  6,
+                                                   "parsed_powershell_count":  49,
                                                    "parse_error_count":  0,
                                                    "excluded_files":  [
 
@@ -253,20 +264,40 @@
 
                                                                     ]
                                                },
-                      "psscriptanalyzer_status":  "SKIPPED_UNAVAILABLE",
+                      "psscriptanalyzer_status":  "PASS",
                       "runtime_evidence_schema":  "chatpad-runtime-evidence-schema-v3",
                       "exact_instance_binding_operations":  0,
                       "exact_instance_restoration_operations":  0,
+                      "exact_instance_restart_operations":  0,
                       "broad_approved_install_operations":  0,
-                      "broad_approved_rollback_operations":  0
+                      "broad_approved_rollback_operations":  0,
+                      "windows_mutation_count":  0
                   },
     "entries":  [
                     {
                         "id":  "tracked-docs-decisions-md",
                         "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  117464,
-                        "sha256":  "085ED06E64633BD3DB9C8D3E1D544B2BAEC3DAC0474D5C4D029D273D51A1897B",
+                        "byte_size":  119381,
+                        "sha256":  "6DAD710B2A08191F50873ABCE671BBFDF7A82704F9505F30D34373D00F6EC81D",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-docs-evidence-exact-instance-operation-evidence-schema-v1-json",
+                        "relative_path":  "docs/evidence/exact-instance-operation-evidence-schema-v1.json",
+                        "state":  "tracked",
+                        "byte_size":  2406,
+                        "sha256":  "A7B3D9432FA02ADF44472E0CACCCC12EF24187C48E5A56EE07255195FDE41CCC",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-docs-evidence-exact-instance-operation-plan-schema-v1-json",
+                        "relative_path":  "docs/evidence/exact-instance-operation-plan-schema-v1.json",
+                        "state":  "tracked",
+                        "byte_size":  3443,
+                        "sha256":  "88539F582BF13BC9B806FA5783E102B13A27B094D735E6A6D8380F2684896224",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -274,8 +305,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  5771,
-                        "sha256":  "B6AD55D9C19560CF938EC7F0C6F7F98A6BE1224E9CA8ABCECFCCBD59F69C09FC",
+                        "byte_size":  4624,
+                        "sha256":  "03AD684451DDD501F62BE0D9CE2AFBAAAD2BD922B58C2BB8B745F0BB0CE7303A",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -283,8 +314,8 @@
                         "id":  "tracked-docs-porting-plan-md",
                         "relative_path":  "docs/PORTING-PLAN.md",
                         "state":  "tracked",
-                        "byte_size":  18924,
-                        "sha256":  "2AE0B269DDEED9E417C4933E0AF5B3550520EC070BAB7C9181369F487E2228E8",
+                        "byte_size":  20307,
+                        "sha256":  "6188A7E2857C5B8E6402BA504A531BCCB09A73EAE6550866692318E6EAC780F8",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -292,8 +323,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  4796,
-                        "sha256":  "A431C207979530335DF9F104DE6FEBBFC84FE156062A0C76F9978F4E87030748",
+                        "byte_size":  4638,
+                        "sha256":  "69FB089B392715CFC44199B7426F137D3907F8105E413670EB7EF1EE1BC88F90",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -301,8 +332,8 @@
                         "id":  "tracked-docs-runtime-bringup-readiness-md",
                         "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
                         "state":  "tracked",
-                        "byte_size":  29159,
-                        "sha256":  "9ADC27EB089AF138EA5153092B08964CC893434CF66A985C9EFBCCC727922CDC",
+                        "byte_size":  30544,
+                        "sha256":  "63A9FEC05EBB403C7316AFDCB3C4A5A554941A17E6800352E8450ED60B873B62",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -310,8 +341,53 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  413788,
-                        "sha256":  "6F52C68D61F041D686FB242BA3BDA92B97775101EB754495A881D99E83018BD3",
+                        "byte_size":  422778,
+                        "sha256":  "EE32EC28F4DC74255D6D6C0944E57157E5674A23B22604D8922D33459D11C9E9",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-exactinstance-chatpadexactinstance-contracts-psm1",
+                        "relative_path":  "tools/ExactInstance/ChatpadExactInstance.Contracts.psm1",
+                        "state":  "tracked",
+                        "byte_size":  27483,
+                        "sha256":  "72B923E3C74B012CC81BD25B42A0D251B1B98846E20E46597B5D940A87A39244",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-exactinstance-chatpadexactinstance-fakeadapter-psm1",
+                        "relative_path":  "tools/ExactInstance/ChatpadExactInstance.FakeAdapter.psm1",
+                        "state":  "tracked",
+                        "byte_size":  13315,
+                        "sha256":  "4A72D8F3D2F7FCCD9CB0120DC9C959AE87740DE2413960206D7E7738D1D3D018",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-exactinstance-chatpadexactinstance-offlinesuite-psm1",
+                        "relative_path":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                        "state":  "tracked",
+                        "byte_size":  32856,
+                        "sha256":  "70795D5A15EC86FFBE7F64A53F062634D12C261E874B65C4D1FC6222A92EB3F3",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-exactinstance-chatpadexactinstance-orchestrator-psm1",
+                        "relative_path":  "tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1",
+                        "state":  "tracked",
+                        "byte_size":  22242,
+                        "sha256":  "8BB516CE48DEC39EF2CDC53CCD2BDA668E9166D1CA9BA324CD43BAE0F14327D9",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-invoke-chatpadexactinstancebindingrestoration-ps1",
+                        "relative_path":  "tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1",
+                        "state":  "tracked",
+                        "byte_size":  2349,
+                        "sha256":  "F7C49A6F7191073A01115979DD04563ED14FD935016A0A1F0A56CB605E355DCB",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -319,8 +395,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  9416,
-                        "sha256":  "54016D0F8C0E68ED71852B954EB0E5CB13E695E03BB4B01E9C744583A2E88969",
+                        "byte_size":  10681,
+                        "sha256":  "03C72C55BEA0BA1A6DDED0B4457D92E4A7D49A6C9D6571EB3769C5A829A207EB",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -334,11 +410,20 @@
                         "evidence_classification":  "synthetic"
                     },
                     {
+                        "id":  "tracked-tools-test-chatpadexactinstancebindingrestoration-ps1",
+                        "relative_path":  "tools/Test-ChatpadExactInstanceBindingRestoration.ps1",
+                        "state":  "tracked",
+                        "byte_size":  1056,
+                        "sha256":  "266D6F5D2EC7085502D0301EA42F5E1488378F141C9BF91EE2D08E86B9055E6C",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
                         "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
                         "state":  "tracked",
-                        "byte_size":  92648,
-                        "sha256":  "0C4E53DA63C25482DD709D092D9A0F8053604FD7560387FAAB599EF905EFC770",
+                        "byte_size":  94025,
+                        "sha256":  "495E05F221F0BE16ABB8A243EF49DFCDC69A2D35568C2100FDADD5958D48C3B1",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -346,8 +431,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  48318,
-                        "sha256":  "D90199A1F4369FB33800A6E1F59A290D6D192D10329313B237B34905BC54734F",
+                        "byte_size":  49095,
+                        "sha256":  "841769213A99B5FA54DD5F8C7013E3742ED0D995ECC080BD6DFA44DD75084FA7",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -362,10 +447,10 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/runtime-bringup-manifest-validator-integral-count-suite-post-implementation-72abd06.json",
+                        "relative_path":  "artifacts/logs/runtime-bringup-exact-instance-suite-post-implementation-fdcd944.json",
                         "state":  "ignored",
-                        "byte_size":  470214,
-                        "sha256":  "63BBC80C60B7B7FA029FF2534070F8CC3104BD7DDBBEF17E165F29E8FEFDC633",
+                        "byte_size":  867941,
+                        "sha256":  "F21A0BAC76CD075A29A443549237039D2F926263FF01DDFC5DD091F9DE2FF6B7",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }

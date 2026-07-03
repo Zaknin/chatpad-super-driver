@@ -6,6 +6,36 @@ preparation only: it does not sign, package, stage, install, load, trace, query
 devices, send requests, access a controller or Chatpad, mutate Windows, reboot,
 or touch hardware.
 
+## Exact-instance framework status
+
+Commit `0060cd91be7d460f1a4141f6bf893bd56b32bf35` implements the
+offline exact-instance binding and restoration framework. It adds pure plan,
+snapshot, path, identity, evidence, authorization, and transition contracts;
+a deterministic fake adapter; exact synthetic bind/restore orchestration; a
+public default-Plan wrapper with no live adapter; versioned schemas; and
+T1-T25 coverage.
+
+Corrective commit `fdcd9448a3dc172213c07928af45d2e68fd0197a`
+updates the authoritative 43/6/49 PowerShell inventory and makes manifest
+generation run PSScriptAnalyzer error-severity checks when the analyzer is
+available.
+
+- Exact-instance suite: `PASS`, 25 records, 99 assertions.
+- Full readiness suite: `PASS`, 329 records, 1,823 assertions.
+- Added category: `exact-instance-offline`, 25 records, 99 assertions.
+- State machine: all 50 allowed edges accepted; five prohibited probes
+  rejected.
+- Windows PowerShell and PowerShell 7: both `PASS`; plan/snapshot hashes match
+  across runtimes.
+- Live binding/restoration/restart, live observations, and Windows mutations:
+  all `0`.
+- Live readiness: `BLOCKED`.
+- Blocker: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+
+The exact-instance definition, Windows API design, operation-plan and snapshot
+contracts, failure model, and remaining gates are authoritative in
+`docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`.
+
 ## Enforcement remediation status
 
 The second independent audit found unsupported PASS paths in the readiness

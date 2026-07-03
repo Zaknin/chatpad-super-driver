@@ -1,6 +1,31 @@
 # Porting Plan
 
-## Current runtime bring-up readiness gate (2026-07-02)
+## Current runtime bring-up readiness gate (2026-07-03)
+
+The offline exact-instance transaction framework is implemented on
+`feature/runtime-bringup-exact-instance-binding-restoration` at implementation
+commit `0060cd91be7d460f1a4141f6bf893bd56b32bf35`.
+Corrective commit `fdcd9448a3dc172213c07928af45d2e68fd0197a`
+binds the updated 43/6/49 script inventory and verified analyzer status.
+
+The framework uses one complete canonical Plug and Play instance ID, immutable
+target and restoration driver-node identities, precondition and snapshot
+fingerprints, verified postconditions, replay protection, explicit uncertainty
+states, and deterministic synthetic evidence. Broad matching and first/best
+candidate fallback are prohibited.
+
+T1-T25 pass with 25 records and 99 assertions. The authoritative readiness
+ledger is 329 records and 1,823 assertions; record/category totals reconcile.
+Framework status is `PASS`. Live readiness remains `BLOCKED` with blocker
+`BLOCKED_PENDING_INDEPENDENT_AUDIT`; every live binding, restoration, restart,
+observation, broad-success, and Windows-mutation counter is zero.
+
+The next task is an independent read-only audit of the implementation and
+evidence-finalization commits. A native Windows SetupAPI/Newdev adapter remains
+a later separately authorized implementation boundary; this phase does not
+authorize any live driver or device operation.
+
+## Previous runtime bring-up readiness gate (2026-07-02)
 
 The offline runtime instrumentation milestone is accepted and frozen at
 `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca` after independent audit returned

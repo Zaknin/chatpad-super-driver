@@ -1,86 +1,93 @@
 # Project State
 
-*Last updated: 2026-07-03 (manifest count validation and branch provenance remediation)*
+*Last updated: 2026-07-03 (offline exact-instance framework finalization)*
 
 ## Current state
 
-- **Branch:**
-  `feature/runtime-bringup-manifest-validator-integral-count-remediation`.
-- **Starting commit:** `b4cfe8473500073bebacc807230d4f1af2f5e09e`.
+- **Branch:** `feature/runtime-bringup-exact-instance-binding-restoration`.
+- **Starting audited commit:**
+  `b9374d8a98392de67824aac4235021b5bd90d284`.
+- **Implementation commit:**
+  `0060cd91be7d460f1a4141f6bf893bd56b32bf35`, subject
+  `Implement offline exact-instance binding framework`.
 - **Corrective implementation commit:**
-  `72abd0695e34e27d075cb10fdf5b381418bcce1d`, subject
-  `Fix manifest count validation and branch provenance`.
-- **Expected evidence-finalization commit:** the commit containing this file,
-  subject `docs: finalize integral-count manifest evidence`.
-- **Accepted offline baseline:**
+  `fdcd9448a3dc172213c07928af45d2e68fd0197a`, subject
+  `Verify analyzer and updated script inventory`.
+- **Expected finalization commit:** the commit containing this file, subject
+  `docs: finalize exact-instance framework evidence`.
+- **Accepted offline baseline:** commit
   `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`; manifest SHA-256
   `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`.
 - **Frozen binaries:** Debug 68,096 bytes,
   `E805693C260E489078D2A9A75E5C0DBCE791EBDDA907C484FE47619CF4256097`;
   Release 40,960 bytes,
   `A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404`.
-- **Offline suite:** framework `PASS`; live readiness `BLOCKED`; blocker
-  `BLOCKED_NOT_IMPLEMENTED`; 304 first-class fixture records; 1,724
-  assertions.
-- **Accounting:** record count `304`; category record sum `304`; record
-  assertion sum `1,724`; category assertion sum `1,724`; unassigned,
-  off-ledger, duplicate-counted, and category-reconciliation defects all `0`.
-- **Manifest-validator regression:** isolated corrupted-copy cases for all
-  omitted harness records, one omitted harness record, all omitted
-  `assertion-accounting-negative` records, fractional counts, oversized
-  counts, and malformed count types fail through controlled validation or
-  accounting defects. The self-consistent `assertion_count = 1.5` bypass is
-  closed. Uncontrolled exception count `0`; `PropertyNotFoundException`
-  detected `false`.
-- **Ignored evidence artifact:**
-  `artifacts/logs/runtime-bringup-manifest-validator-integral-count-evidence-post-implementation-72abd06.json`,
-  50,298 bytes,
-  `8E9514481A3D4CA0A4E2848B05E9B68184D5A19FC000B202C5BF12F0BE25343E`,
+
+## Exact-instance implementation
+
+- Pure contracts validate complete instance IDs, canonical ordinal identity,
+  paths, target/restoration driver identities, plans, snapshots, evidence,
+  execution gates, and state transitions.
+- Plan and snapshot hashes use a deterministic canonical encoder with identical
+  results under Windows PowerShell and PowerShell 7.
+- The fake adapter models same-hardware-ID devices, same-compatible-ID devices,
+  same-container siblings, similar instance prefixes, absent/duplicate
+  records, package absence/ambiguity, restart/reboot outcomes, postcondition
+  mismatch, partial mutation, restoration failure, and adapter exceptions.
+- The orchestrator verifies the same exact instance before and after every
+  synthetic mutation. It has no hardware-ID, compatible-ID, class, package,
+  first-match, or best-rank targeting fallback.
+- The public command defaults to `Plan`. No live Windows adapter is present or
+  invocable in this phase.
+- T1-T25: `PASS`; 25 records; 99 assertions; 50 allowed transition edges
+  validated; five prohibited transition probes rejected; static broad-action
+  guard `PASS`.
+- Synthetic accounting: 14 bind attempts, four restoration attempts, zero
+  restart attempts, one rejected broad-operation attempt, one expected
+  post-mutation adapter-exception uncertainty case, and zero unexpected harness
+  exceptions.
+
+## Readiness and evidence
+
+- Framework status: `PASS`.
+- Live installation readiness: `BLOCKED`.
+- Blocker: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+- Authoritative ledger: 329 records and 1,823 assertions, increased from
+  304/1,724 by exactly 25 records and 99 assertions in category
+  `exact-instance-offline`.
+- Record/category sums reconcile at 329/329 and 1,823/1,823. Unassigned,
+  off-ledger, duplicate-counted, zero-assertion PASS, skipped-as-PASS, and
+  category-reconciliation defects are zero.
+- Runtime observer provenance, lifecycle, malformed-input totality,
+  stop-linkage, committed sample, and prior readiness contracts remain `PASS`.
+- PowerShell inventory: 43 `.ps1`, 6 `.psm1`, 49 total; AST errors `0`.
+- PSScriptAnalyzer ran with zero errors; retained warnings are style findings
+  and pre-existing repository conventions.
+- Ignored exact-instance evidence:
+  `artifacts/logs/exact-instance-binding-restoration-suite-post-implementation-fdcd944.json`,
+  529,662 bytes,
+  `3D81C8FA8612B36A1FC10B57851D32E5C053BBF78BB9BF8D526E54F774303ADA`,
   JSON valid, UTF-8 without BOM.
-- **Runtime observers:** five missing-provenance and five synthetic-source
-  probes produce zero runtime PASS results; unsupported runtime-observer PASS
-  count `0`; live observations performed `0`.
-- **Stop linkage:** 20 conditions; 20 unique IDs; five runtime-observer links;
-  unlinked, unknown, malformed, and nested-array acceptance counts all `0`.
-- **PowerShell inventory:** 41 `.ps1`, 2 `.psm1`, 43 total; AST errors `0`.
-- **PSScriptAnalyzer:** `SKIPPED_UNAVAILABLE`.
-
-## Implementation truth
-
-- `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1` keeps StrictMode
-  enabled and validates every count-like manifest and suite field before any
-  integer conversion or aggregate arithmetic.
-- The exact integer contract accepts only JSON numeric scalars in signed
-  64-bit range with no nonzero fractional component. Numeric-looking strings,
-  Boolean values, nulls, arrays, objects, missing properties, negative counts,
-  fractional values such as `1.5` or `0.1`, and oversized values are controlled
-  defects. Integer-valued numeric representations such as `1.0` are accepted
-  deliberately and documented in the defect reason text.
-- The new corruption regression mode copies manifest inputs into a temporary
-  isolated Git repository under the user temp directory, mutates only that
-  copy, runs the validator as a child process, and removes the temporary root.
-- The canonical readiness manifest remains generated evidence. It is not
-  manually edited or self-hashed. Its generator derives the checked-out local
-  branch with Git symbolic-ref and rejects detached HEAD instead of recording a
-  hard-coded branch.
-- Runtime-observer provenance, assertion-accounting, lifecycle, committed
-  sample, malformed-input, target, rollback, package, signing, host, evidence,
-  install-blocker, WPP, event-log, reconciliation, stop-linkage, and prior
-  direct-probe contracts remain passing.
+- Ignored full-readiness evidence:
+  `artifacts/logs/runtime-bringup-exact-instance-suite-post-implementation-fdcd944.json`,
+  867,941 bytes,
+  `F21A0BAC76CD075A29A443549237039D2F926263FF01DDFC5DD091F9DE2FF6B7`,
+  JSON valid, UTF-8 without BOM.
 
 ## Safety and blocker
 
-- Executable exact-instance binding operations: `0`.
-- Executable exact-instance restoration operations: `0`.
-- Broad approved install operations: `0`.
-- Broad approved rollback operations: `0`.
+- Live exact-instance binding operations: `0`.
+- Live exact-instance restoration operations: `0`.
+- Live restart operations: `0`.
+- Broad successful install/rollback operations: `0`.
+- Live observations: `0`.
+- Windows mutations: `0`.
 - No production source/header, INF, project, solution, protocol, transport,
   binary, package, credential, signing material, or `legacy/` path changed.
-- No signing, CAT generation, package creation, staging, installation,
-  binding, loading, rollback, Windows mutation, tracing, event-log export,
-  live device query, hardware access, protocol traffic, input injection, or
-  reboot occurred.
-- **Blocker:** exact-instance binding and restoration are not implemented.
-  The next task is an independent read-only audit of this integral-count
-  manifest-validator remediation, dynamic branch provenance, and the
-  evidence-finalization commit.
+- No driver build, signing, CAT generation, package creation/staging,
+  installation, binding, loading, restoration, restart, reboot, driver-store,
+  registry, service, boot, security, trace, event-log, device, hardware,
+  protocol, or input operation occurred.
+- **Remaining blocker:** independent read-only audit has not been performed.
+  A native Windows exact-instance adapter remains a separately authorized
+  future implementation and audit boundary.

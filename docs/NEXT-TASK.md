@@ -3,115 +3,95 @@
 ## Exact current state
 
 - Required branch:
-  `feature/runtime-bringup-manifest-validator-integral-count-remediation`.
-- Required starting point: the evidence-finalization commit containing this
-  file, subject `docs: finalize integral-count manifest evidence`.
+  `feature/runtime-bringup-exact-instance-binding-restoration`.
 - Required implementation commit:
-  `72abd0695e34e27d075cb10fdf5b381418bcce1d`.
+  `0060cd91be7d460f1a4141f6bf893bd56b32bf35`.
+- Required corrective implementation commit:
+  `fdcd9448a3dc172213c07928af45d2e68fd0197a`.
+- Required starting point: the evidence-finalization commit containing this
+  file, subject `docs: finalize exact-instance framework evidence`.
 - Required ancestry:
-  `88e3cbba3a64828322b7c703765e6b1e2369f698` ->
-  `eef5b9c151c884eefaa0157e32446e481db73bb4` ->
-  `f4e98e5719230bd40c7096d2a48efb788eeb5a7d` ->
-  `b4cfe8473500073bebacc807230d4f1af2f5e09e` ->
-  `72abd0695e34e27d075cb10fdf5b381418bcce1d` ->
-  finalization commit containing this file.
-- Framework status: `PASS`.
+  `b9374d8a98392de67824aac4235021b5bd90d284` ->
+  `0060cd91be7d460f1a4141f6bf893bd56b32bf35` ->
+  `fdcd9448a3dc172213c07928af45d2e68fd0197a` ->
+  finalization commit.
+- Exact-instance suite: `PASS`, 25 records, 99 assertions.
+- Readiness suite: framework `PASS`, 329 records, 1,823 assertions.
 - Live installation readiness: `BLOCKED`.
-- Blocker: `BLOCKED_NOT_IMPLEMENTED`.
-- Suite: 304 first-class fixture records and 1,724 assertions.
-- Accounting: record/category counts `304/304`; record/category assertions
-  `1,724/1,724`; unassigned, off-ledger, duplicate-counted, and reconciliation
-  defects `0`.
-- Integral-count regression: isolated corrupt manifests for F1-F5 and the
-  malformed-count matrix fail or pass according to the documented exact integer
-  contract. The self-consistent `assertion_count = 1.5` bypass fails with an
-  explicit `INVALID_INTEGER_COUNT.FRACTIONAL` defect.
-- Empty-subset regression: omitted harness and accounting records fail through
-  controlled accounting defects; uncontrolled exception count `0`;
-  `PropertyNotFoundException` `false`.
-- Generator provenance: the manifest generator derives the checked-out local
-  branch from Git and rejects detached HEAD.
-- Runtime observers: missing-provenance PASS `0`; synthetic-source PASS `0`;
-  unsupported runtime-observer PASS `0`; live observations `0`.
-- Stop linkage: 20 conditions, 20 unique IDs, five runtime-observer links,
-  and zero unlinked, unknown, malformed, or nested-array acceptance defects.
-- PowerShell: 41 `.ps1`, 2 `.psm1`, 43 total; all parse with zero errors.
-- Driver state remains unsigned, unpackaged, unstaged, uninstalled, unloaded,
-  untraced, unqueried, and unexecuted.
+- Blocker: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+- Live binding, restoration, restart, observation, broad-success, and Windows
+  mutation counters are all zero.
 
 ## Next recommended objective
 
-Perform an independent, read-only audit of the integral-count manifest
-validator remediation, generator branch provenance correction, regenerated
-manifest, and evidence-finalization commit.
+Perform an independent, read-only audit of the offline exact-instance binding
+and restoration implementation, schemas, generated manifest, evidence, and
+finalization commit.
 
 The audit must directly:
 
-- verify the exact branch, full HEAD, direct parent, upstream equality, and
-  clean worktree;
-- confirm implementation commit
-  `72abd0695e34e27d075cb10fdf5b381418bcce1d` contains only the validator
-  count-validation correction and generator dynamic-branch correction after
-  starting commit `b4cfe8473500073bebacc807230d4f1af2f5e09e`;
-- corrupt only isolated manifest copies, never tracked evidence;
-- reproduce F1 through F5, including the self-consistent coerced-total bypass
-  attempt for `assertion_count = 1.5`;
-- run the malformed-count matrix for missing, null, string, numeric-looking
-  string, Boolean, array, object, negative, fractional, and oversized values;
-- remove all `harness-self-test` records, one `harness-self-test` record, and
-  all `assertion-accounting-negative` records;
-- verify all malformed and empty-subset cases fail through controlled defects,
-  with zero uncontrolled exceptions and no `PropertyNotFoundException`;
-- independently prove generator output uses the checked-out local branch, not
-  an upstream branch, cached document branch, or hard-coded string;
-- verify detached HEAD generation fails clearly and does not record a stale
-  branch;
-- independently sum every fixture record and category in the canonical suite;
-- prove record and category sums equal 304 records and 1,724 assertions;
-- preserve runtime-observer missing-provenance, synthetic-source, provenance,
-  stop-linkage, lifecycle, and malformed-input contracts;
-- confirm live readiness remains `BLOCKED`.
+- verify exact branch, HEAD, direct parent, ancestry, clean worktree, upstream,
+  ahead/behind `0/0`, and live remote equality;
+- confirm the implementation commit contains only the declared executable and
+  schema paths and the finalization commit contains no executable changes;
+- independently inspect the exact-instance normalization, path, plan, snapshot,
+  evidence, authorization, adapter, and state-machine contracts;
+- rerun T1-T25 under Windows PowerShell and PowerShell 7;
+- independently prove same-hardware-ID and same-container sibling isolation
+  from call traces and before/after bytes;
+- verify partial/wildcard rejection, drift, target/restoration absence and
+  ambiguity, postcondition failure, exact restoration, replay, expiry, hash and
+  operation-ID mismatch, restart/reboot behavior, broad-operation rejection,
+  evidence spoof rejection, and adapter-exception uncertainty;
+- enumerate all 50 allowed transition edges and verify prohibited transitions
+  remain rejected;
+- inspect the production static broad-operation guard and confirm negative-test
+  references cannot become execution paths;
+- verify deterministic plan/snapshot hashes across runtimes and repeated runs;
+- independently reconcile 329 records and 1,823 assertions, including the
+  exact 25/99 category increment;
+- validate every manifest entry, JSON file, UTF-8 BOM state, ignored evidence
+  identity, and zero live/Windows-mutation counters;
+- confirm live readiness remains blocked and no independent-audit pass is
+  claimed by the implementation branch.
 
 ## Preconditions
 
-1. Verify the exact branch, full HEAD, direct parent, upstream equality,
-   ahead/behind `0/0`, and clean worktree.
-2. Rehash the accepted baseline manifest, both frozen SYS files, the finalized
-   readiness manifest, and all manifest entries.
-3. Inspect the manifest validator and generator before executing only offline
-   synthetic or isolated-corruption modes.
+1. Rehash the accepted baseline manifest, frozen Debug/Release SYS files,
+   exact-instance evidence, full-readiness evidence, and readiness manifest.
+2. Inspect the implementation and finalization diffs before executing tests.
+3. Execute only pure, synthetic, or isolated-copy validation.
+4. Preserve the tracked readiness manifest; corrupt only isolated copies.
 
 ## Safety restrictions
 
-- Audit only. Do not modify or regenerate repository evidence.
-- Do not sign, package, stage, install, bind, load, remove, enable, disable,
-  or roll back a driver.
-- Do not mutate Windows, boot/security/service/registry/device state; start a
-  trace; export event logs; query or open a live device; access hardware;
-  generate protocol traffic; inject input; or reboot.
-- Do not modify `legacy/`.
+- Audit only. Do not implement the native Windows adapter.
+- Do not build, sign, package, stage, install, bind, load, restore, restart, or
+  reboot a driver or device.
+- Do not query a live device or mutate the driver store, registry, services,
+  boot/security state, tracing, event logs, hardware, protocols, or input.
+- Do not modify production source, INF, project/solution, frozen binaries, or
+  `legacy/`.
 
 ## Acceptance criteria
 
-- Canonical manifest validation passes.
-- F1-F4 and the malformed-count matrix fail with explicit invalid integer
-  defects; F5 `1.0` behavior matches the documented integer-valued numeric
-  rule.
-- The self-consistent fractional bypass attempt does not pass.
-- Corrupted-copy omitted-record cases produce controlled accounting failures.
-- Uncontrolled exception and `PropertyNotFoundException` counts are zero.
-- Generator branch identity follows the checked-out local branch and detached
-  HEAD behavior is controlled.
-- Record count equals category record sum.
-- Record assertion sum equals category assertion sum and reported total.
-- Accounting, observer provenance, manifest, lifecycle, totality, and
-  stop-linkage results pass.
-- Finalization executable changes and prohibited operations are zero.
-- Live readiness remains `BLOCKED` with `BLOCKED_NOT_IMPLEMENTED`.
+- T1-T25 and both PowerShell runtimes pass.
+- Critical call traces identify only the authorized synthetic instance.
+- All schema, state, replay, evidence-provenance, static broad-action,
+  accounting, manifest, AST, and repository-safety checks pass.
+- Finalization executable change count is zero.
+- Live readiness remains `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+- Every live and Windows-mutation counter remains zero.
 
 ## Inspect first
 
-- `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
-- `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+- `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`
+- `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`
+- `tools/ExactInstance/ChatpadExactInstance.FakeAdapter.psm1`
+- `tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1`
+- `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
+- `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`
+- `tools/Test-ChatpadExactInstanceBindingRestoration.ps1`
+- `docs/evidence/exact-instance-operation-plan-schema-v1.json`
+- `docs/evidence/exact-instance-operation-evidence-schema-v1.json`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`
-- `docs/RUNTIME-BRINGUP-READINESS.md`
