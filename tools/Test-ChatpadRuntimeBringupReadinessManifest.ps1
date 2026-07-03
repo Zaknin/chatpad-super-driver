@@ -634,10 +634,10 @@ $inventoryCounts=[ordered]@{}
 foreach($name in @('tracked_ps1_count','tracked_psm1_count','tracked_powershell_count','parsed_ps1_count','parsed_psm1_count','parsed_powershell_count','parse_error_count','duplicate_normalized_path_count','missing_count','extra_count')){
     $inventoryCounts[$name]=Get-ChatpadValidatedIntegerProperty -Item $inventory -PropertyName $name -Location 'manifest.readiness.powershell_inventory' -RecordId 'powershell_inventory' -DefectCount ([ref]$inventoryDefectCount) -Defects $inventoryDefects -AllowZero
 }
-if($inventoryDefectCount -or $inventoryCounts.tracked_ps1_count -ne 45 -or $inventoryCounts.tracked_psm1_count -ne 6 -or$inventoryCounts.tracked_powershell_count-ne51-or$inventoryCounts.parsed_ps1_count-ne45-or$inventoryCounts.parsed_psm1_count-ne6-or$inventoryCounts.parsed_powershell_count-ne51-or$inventoryCounts.parse_error_count-ne0-or$inventoryCounts.duplicate_normalized_path_count-ne0-or$inventoryCounts.missing_count-ne0-or$inventoryCounts.extra_count-ne0){$defects.powershell_inventory++}
+if($inventoryDefectCount -or $inventoryCounts.tracked_ps1_count -ne 45 -or $inventoryCounts.tracked_psm1_count -ne 7 -or$inventoryCounts.tracked_powershell_count-ne52-or$inventoryCounts.parsed_ps1_count-ne45-or$inventoryCounts.parsed_psm1_count-ne7-or$inventoryCounts.parsed_powershell_count-ne52-or$inventoryCounts.parse_error_count-ne0-or$inventoryCounts.duplicate_normalized_path_count-ne0-or$inventoryCounts.missing_count-ne0-or$inventoryCounts.extra_count-ne0){$defects.powershell_inventory++}
 $analyzer=$manifest.readiness.psscriptanalyzer
 if($manifest.readiness.psscriptanalyzer_status-eq'PASS'){
-    if($null-eq$analyzer-or[int]$analyzer.analyzed_file_count-ne51-or[int]$analyzer.error_count-ne0-or[int]$analyzer.tool_failure_count-ne0-or[bool]$analyzer.blanket_suppression_used){$defects.psscriptanalyzer++}
+    if($null-eq$analyzer-or[int]$analyzer.analyzed_file_count-ne52-or[int]$analyzer.error_count-ne0-or[int]$analyzer.tool_failure_count-ne0-or[bool]$analyzer.blanket_suppression_used){$defects.psscriptanalyzer++}
     if(@($analyzer.findings|Where-Object{$_.severity-notin@('Error','Warning','Information')}).Count){$defects.psscriptanalyzer++}
 }
 $total=($defects.Values|Measure-Object -Sum).Sum
