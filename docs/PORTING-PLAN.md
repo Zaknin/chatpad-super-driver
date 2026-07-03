@@ -6,8 +6,10 @@ The native SetupAPI/Newdev interop source boundary is implemented on
 `feature/runtime-bringup-native-interop-source-boundary` from accepted
 starting commit `b7672d123200f13e95353d2505bb813843ac3f7c`. The production
 adapter identity is `chatpad-windows-exact-instance-adapter-v1`; the synthetic
-test identity is `chatpad-fake-exact-instance-adapter-v1`. The final
-implementation commit is pending.
+test identity is `chatpad-fake-exact-instance-adapter-v1`. The implementation
+commits are `2730d037bcbccf4de3dc51e4961922eff98fff7b` and
+`a05c7e3fffa2968777824a3a2efe4f286449bdc5`; the final continuity commit is
+the commit containing this update and the regenerated readiness manifest.
 
 The framework uses one complete canonical Plug and Play instance ID, immutable
 target and restoration driver-node identities, precondition and snapshot
@@ -28,7 +30,9 @@ non-executing, and still blocked pending independent source audit.
 
 The exact-instance suite passes under Windows PowerShell 5.1 and PowerShell 7
 with 171 records and 709 assertions after the source-boundary fixtures are
-added. The authoritative readiness ledger is regenerated before final commit.
+added. The full readiness suite passes under Windows PowerShell 5.1 and
+PowerShell 7 with 475 fixtures and 2,433 assertions. The authoritative
+readiness ledger is regenerated with 27 entries.
 Framework status remains `PASS`. Live readiness remains `BLOCKED` with current
 gate `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT` and blocker
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live binding,

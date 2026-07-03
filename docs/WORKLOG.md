@@ -7326,3 +7326,115 @@
   the executable gate still reports
   `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`; do not treat
   the passed re-audit as live execution authorization.
+
+## 2026-07-03T18:24+04:00 - Native interop declaration-only source boundary
+
+- **Objective:** Create the source-level SetupAPI/Newdev interop declaration
+  and wrapper boundary for the exact-instance production native adapter without
+  compiling, loading, invoking, querying devices, mutating Windows, or changing
+  production driver/INF/legacy source.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`. The accepted starting branch was
+  `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation` at
+  exact commit `b7672d123200f13e95353d2505bb813843ac3f7c` with a clean tree.
+  Created and worked on
+  `feature/runtime-bringup-native-interop-source-boundary` from that commit.
+- **Documentation comparison:** The accepted re-audit state was current, but
+  this task required replacing the previous scaffold re-audit continuation
+  state with the new native interop source-boundary state. The current-state,
+  readiness, porting, next-task, and design-gate documents were updated before
+  relying on them as continuation truth.
+- **Implementation commits:** `2730d037bcbccf4de3dc51e4961922eff98fff7b`
+  added the declaration-only boundary and exact-suite coverage.
+  `a05c7e3fffa2968777824a3a2efe4f286449bdc5` corrected the readiness child
+  process inventory/import expectations for the new module count. The final
+  continuity commit contains this worklog entry, regenerated manifest, and
+  final documentation updates.
+- **Files created:** `tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs`
+  and
+  `tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1`.
+- **Files modified:** `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PORTING-PLAN.md`,
+  `docs/NEXT-TASK.md`, `docs/WORKLOG.md`, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Implementation details:** The C# declaration file is source-only and is
+  not referenced by any project. It declares 13 allowlisted SetupAPI/Newdev
+  signatures and typed ownership/structure records. No ConfigMgr, DIFx,
+  DevCon, PnPUtil, native compilation, native loading, native invocation, live
+  device query, or Windows mutation path was added. The PowerShell wrapper
+  exposes metadata, deterministic non-executing call plans, source-boundary
+  validation, and error taxonomy only. `Apply`, `Restore`, and `Restart`
+  still return `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; the gate is
+  now `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
+- **Exact-suite coverage:** Added G78 through G132. The suite now proves the
+  declaration source is allowlisted, isolated from build/loading/invocation
+  paths, represented as non-executing metadata, blocked pending audit, and
+  still has zero live/device/native-operation/Windows-mutation counters.
+- **Exact-suite validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit a05c7e3fffa2968777824a3a2efe4f286449bdc5 -OutputPath artifacts/logs/native-interop-source-boundary-final-a05c7e3/exact-wps.json`
+  and the matching `pwsh.exe` command. Both returned `PASS`, 171 tests, 709
+  assertions, and zero failed tests.
+- **Full-readiness validation:** Ran
+  `powershell.exe` and `pwsh.exe` executions of
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1` for implementation commit
+  `a05c7e3fffa2968777824a3a2efe4f286449bdc5`, writing
+  `artifacts/logs/native-interop-source-boundary-final-a05c7e3/readiness-wps.json`
+  and
+  `artifacts/logs/native-interop-source-boundary-final-a05c7e3/readiness-pwsh.json`.
+  Both returned `PASS`, 475 fixtures, 2,433 assertions, exact subtotal 171
+  tests and 709 assertions, live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`, and Windows
+  mutation count `0`.
+- **Manifest validation:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` with 27 entries.
+  Default manifest validation passed under Windows PowerShell 5.1 and
+  PowerShell 7 with zero defects. Corruption regression passed under both
+  runtimes. Custom manifest path with spaces corruption regression also passed
+  under both runtimes.
+- **Static validation:** Complete PSScriptAnalyzer under Windows PowerShell
+  5.1 returned exit code `0`, analyzed 53 tracked files, and reported errors
+  `0`, warnings `188`, information `990`, tool failures `0`. AST parse
+  inventory returned `PASS`, 45 `.ps1`, eight `.psm1`, 53 total files, and
+  zero parse-error files. The native source-boundary guard returned `PASS`,
+  scanned 71 tracked source/build files, found one approved declaration match,
+  and found zero forbidden matches.
+- **Repository safety:** `tools/Test-RepositorySafety.ps1` reported
+  `REPOSITORY SAFETY: PASS`. No unexpected tracked artifacts, generated
+  outputs, certificates, private keys, forbidden binaries, packaging files, or
+  `legacy/` changes were found.
+- **Validation correction:** The first Windows PowerShell readiness attempt
+  exposed a clean child-process `Get-FileHash` availability issue. Importing
+  `Microsoft.PowerShell.Utility` in `Test-ChatpadRuntimeBringupReadiness.ps1`
+  corrected the failure. Windows PowerShell readiness output was then captured
+  through `cmd.exe /d /c` redirection to avoid CLIXML stderr noise; the actual
+  suite result passed.
+- **Ignored evidence artifacts:** Final evidence is under
+  `artifacts/logs/native-interop-source-boundary-final-a05c7e3/`, including
+  exact suite, readiness, manifest default validation, manifest corruption,
+  custom manifest-path corruption, PSScriptAnalyzer, AST parse, native
+  source-boundary guard, repository safety, and manifest generation outputs.
+- **Safety:** No driver build/link, signing, CAT generation, packaging,
+  staging, driver-store mutation, installation, binding, loading, restoration,
+  restart, reboot, live device query, hardware access, Windows/service/
+  registry/boot mutation, tracing, event-log export, protocol traffic, input
+  injection, certificate/credential change, native compilation, native
+  loading, native invocation, production driver source/INF/frozen binary
+  change, or `legacy/` change occurred.
+- **Finalization and next task:** The exact next task is an independent
+  read-only source audit of
+  `feature/runtime-bringup-native-interop-source-boundary`, starting from the
+  finalization commit for this branch. The audit must confirm allowlisted
+  declaration isolation, no build references, no native compilation, loading,
+  invocation, device query, Windows mutation, or generated binaries,
+  deterministic blocked operation evidence for `Apply`, `Restore`, and
+  `Restart`, zero live/device/Windows/native-operation counters, and blocker
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.

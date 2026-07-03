@@ -19,7 +19,9 @@ The declaration source and static boundary validator live under
 `tools/ExactInstance/NativeInterop/`.
 
 - Starting accepted commit: `b7672d123200f13e95353d2505bb813843ac3f7c`.
-- Current implementation commit: pending final commit for this branch.
+- Implementation commits:
+  `2730d037bcbccf4de3dc51e4961922eff98fff7b` and
+  `a05c7e3fffa2968777824a3a2efe4f286449bdc5`.
 - Expected finalization commit: the commit containing this document, the
   regenerated readiness manifest, and continuity updates.
 - Production adapter identity: `chatpad-windows-exact-instance-adapter-v1`.
@@ -31,13 +33,19 @@ The declaration source and static boundary validator live under
   capability, token, sentinel, secret, object, or equivalent authorization
   value.
 - Exact-instance suite: `PASS`, 171 tests and 709 assertions under Windows
-  PowerShell 5.1 during implementation smoke validation; dual-runtime final
-  validation is required before commit.
+  PowerShell 5.1 and PowerShell 7.
+- Full readiness suite: `PASS`, 475 fixtures and 2,433 assertions under
+  Windows PowerShell 5.1 and PowerShell 7.
 - PowerShell inventory: 45 `.ps1`, eight `.psm1`, 53 total; AST errors `0`.
 - Native source-boundary guard: `PASS`, 71 tracked source/build files scanned,
   one approved declaration match, zero forbidden matches.
-- Manifest generation and full readiness validation are regenerated before the
-  final commit.
+- Complete PSScriptAnalyzer: `PASS`, 53 tracked files analyzed, errors `0`,
+  warnings `188`, information `990`, tool failures `0`.
+- Manifest generation: `PASS`, 27 entries, framework status `PASS`, live
+  installation readiness `BLOCKED`.
+- Manifest default validation, corruption regression, and custom path with
+  spaces corruption regression: `PASS` under Windows PowerShell 5.1 and
+  PowerShell 7.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.

@@ -1,18 +1,18 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-03T13:21:05.6649996Z",
+    "generated_utc":  "2026-07-03T14:26:55.2108794Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
-    "current_gate":  "BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT",
+    "current_gate":  "BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT",
     "capability_blocker":  "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
     "live_adapter_status":  "SCAFFOLD_NON_EXECUTING",
     "live_binding_authorized":  false,
     "repository":  {
-                       "branch":  "feature/runtime-bringup-native-adapter-scaffold-integrity-remediation",
+                       "branch":  "feature/runtime-bringup-native-interop-source-boundary",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
                        "prior_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
                        "prior_readiness_finalization_commit":  "88e3cbba3a64828322b7c703765e6b1e2369f698",
-                       "current_readiness_implementation_commit":  "60da3ee244eaa5c28cb5022748a41ca95e6474cc",
+                       "current_readiness_implementation_commit":  "a05c7e3fffa2968777824a3a2efe4f286449bdc5",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -24,15 +24,15 @@
                                       "release_sys_sha256":  "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
                                   },
     "readiness":  {
-                      "fixture_count":  420,
-                      "fixture_assertion_sum":  2216,
+                      "fixture_count":  475,
+                      "fixture_assertion_sum":  2433,
                       "harness_result_record_count":  6,
                       "harness_assertion_sum":  6,
-                      "total_result_record_count":  420,
-                      "assertion_count":  2216,
-                      "record_assertion_sum":  2216,
-                      "category_record_sum":  420,
-                      "category_assertion_sum":  2216,
+                      "total_result_record_count":  475,
+                      "assertion_count":  2433,
+                      "record_assertion_sum":  2433,
+                      "category_record_sum":  475,
+                      "category_assertion_sum":  2433,
                       "assertion_accounting_result":  "PASS",
                       "unassigned_assertion_count":  0,
                       "off_ledger_assertion_count":  0,
@@ -91,8 +91,8 @@
                                               },
                                               {
                                                   "category":  "exact-instance-offline",
-                                                  "record_count":  116,
-                                                  "assertion_count":  492
+                                                  "record_count":  171,
+                                                  "assertion_count":  709
                                               },
                                               {
                                                   "category":  "harness-self-test",
@@ -240,8 +240,8 @@
                       "runtime_observations_evaluated_live":  0,
                       "runtime_observation_gates_blocked_or_unavailable":  25,
                       "exact_instance_framework_result":  "PASS",
-                      "exact_instance_offline_test_count":  116,
-                      "exact_instance_offline_assertion_count":  492,
+                      "exact_instance_offline_test_count":  171,
+                      "exact_instance_offline_assertion_count":  709,
                       "synthetic_exact_binding_attempt_count":  15,
                       "synthetic_exact_restoration_attempt_count":  4,
                       "synthetic_exact_restart_attempt_count":  0,
@@ -251,11 +251,11 @@
                       "committed_sample_semantic_validation":  "PASS",
                       "powershell_inventory":  {
                                                    "tracked_ps1_count":  45,
-                                                   "tracked_psm1_count":  7,
-                                                   "tracked_powershell_count":  52,
+                                                   "tracked_psm1_count":  8,
+                                                   "tracked_powershell_count":  53,
                                                    "parsed_ps1_count":  45,
-                                                   "parsed_psm1_count":  7,
-                                                   "parsed_powershell_count":  52,
+                                                   "parsed_psm1_count":  8,
+                                                   "parsed_powershell_count":  53,
                                                    "parse_error_count":  0,
                                                    "excluded_files":  [
 
@@ -273,12 +273,12 @@
                                                "supported_runtime":  "Windows PowerShell 5.1",
                                                "child_process_isolation":  "one-clean-process-per-tracked-file",
                                                "tracked_ps1_count":  45,
-                                               "tracked_psm1_count":  7,
-                                               "tracked_total":  52,
-                                               "analyzed_file_count":  52,
+                                               "tracked_psm1_count":  8,
+                                               "tracked_total":  53,
+                                               "analyzed_file_count":  53,
                                                "error_count":  0,
-                                               "warning_count":  187,
-                                               "information_count":  989,
+                                               "warning_count":  188,
+                                               "information_count":  990,
                                                "tool_failure_count":  0,
                                                "findings":  [
                                                                 {
@@ -2802,6 +2802,13 @@
                                                                     "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  1117,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1",
                                                                     "line":  6,
@@ -3000,79 +3007,86 @@
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  4,
+                                                                    "line":  5,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027Get-NativeScaffoldConstants\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  34,
+                                                                    "line":  35,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027Get-ChatpadNativeSupportedOperationIdentifiers\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  38,
+                                                                    "line":  39,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeZeroCounters\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  38,
+                                                                    "line":  39,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027New-ChatpadNativeZeroCounters\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  49,
+                                                                    "line":  50,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadProductionNativeAdapter\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  79,
+                                                                    "line":  87,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadSyntheticAdapterMetadata\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSReviewUnusedParameter",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  107,
+                                                                    "line":  115,
                                                                     "severity":  "Warning",
                                                                     "message":  "The parameter \u0027RequireExplicitSelection\u0027 has been declared but not used."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  314,
+                                                                    "line":  330,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeReadOnlyDesignProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  318,
+                                                                    "line":  334,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeMutationCapability\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSReviewUnusedParameter",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  328,
+                                                                    "line":  344,
                                                                     "severity":  "Warning",
                                                                     "message":  "The parameter \u0027IsElevated\u0027 has been declared but not used."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSReviewUnusedParameter",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  329,
+                                                                    "line":  345,
                                                                     "severity":  "Warning",
                                                                     "message":  "The parameter \u0027AllowWindowsMutation\u0027 has been declared but not used."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSUseSingularNouns",
+                                                                    "file":  "tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1",
+                                                                    "line":  4,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "The cmdlet \u0027Get-ChatpadNativeInteropConstants\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidDefaultValueSwitchParameter",
@@ -7270,114 +7284,107 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  53,
+                                                                    "line":  54,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Compare-FixtureOutcome\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  64,
+                                                                    "line":  65,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-DriverProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  77,
+                                                                    "line":  78,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-InstallProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  85,
+                                                                    "line":  86,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-TargetInventoryProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  94,
+                                                                    "line":  95,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-TargetContractProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  102,
+                                                                    "line":  103,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-OperationProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  115,
+                                                                    "line":  116,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ResultProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  120,
+                                                                    "line":  121,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ExecutedOperationProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  128,
+                                                                    "line":  129,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-FailedOperationProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  136,
+                                                                    "line":  137,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-RolledBackOperationProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  146,
+                                                                    "line":  147,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-RestoredOperationProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  154,
+                                                                    "line":  155,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-StopConditionRegisterProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  163,
+                                                                    "line":  164,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-RuntimeObservationProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  221,
+                                                                    "line":  222,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027Get-ChatpadAccountingCategoryTotals\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  298,
+                                                                    "line":  299,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-AccountingProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  363,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Compare-FixtureOutcome\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
@@ -7417,84 +7424,84 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  376,
+                                                                    "line":  369,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Compare-FixtureOutcome\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
+                                                                    "line":  377,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  379,
+                                                                    "line":  380,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  417,
+                                                                    "line":  418,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  426,
+                                                                    "line":  427,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  429,
+                                                                    "line":  430,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  436,
+                                                                    "line":  437,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  462,
+                                                                    "line":  463,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  465,
+                                                                    "line":  466,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  471,
+                                                                    "line":  472,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  477,
+                                                                    "line":  478,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  483,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  489,
+                                                                    "line":  484,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -7515,14 +7522,14 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  494,
+                                                                    "line":  492,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  498,
+                                                                    "line":  495,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -7753,7 +7760,7 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  536,
+                                                                    "line":  531,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -7844,30 +7851,30 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  551,
+                                                                    "line":  549,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  554,
+                                                                    "line":  552,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
+                                                                    "line":  555,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  557,
+                                                                    "line":  558,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-RollbackProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  560,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
@@ -7956,35 +7963,35 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  575,
+                                                                    "line":  573,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  578,
+                                                                    "line":  576,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  581,
+                                                                    "line":  579,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  584,
+                                                                    "line":  582,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  587,
+                                                                    "line":  585,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -8003,18 +8010,18 @@
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
-                                                                    "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
-                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  593,
-                                                                    "severity":  "Warning",
-                                                                    "message":  "Function \u0027New-EvidenceProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
-                                                                },
-                                                                {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  596,
+                                                                    "line":  590,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
+                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
+                                                                    "line":  594,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "Function \u0027New-EvidenceProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
@@ -8103,70 +8110,70 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  618,
+                                                                    "line":  609,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
+                                                                    "line":  619,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseDeclaredVarsMoreThanAssignments",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  637,
+                                                                    "line":  638,
                                                                     "severity":  "Warning",
                                                                     "message":  "The variable \u0027schema\u0027 is assigned but never used."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  644,
+                                                                    "line":  645,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  653,
+                                                                    "line":  654,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  656,
+                                                                    "line":  657,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  697,
+                                                                    "line":  698,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  737,
+                                                                    "line":  738,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  772,
+                                                                    "line":  773,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Test-ChatpadResultAccountingContract\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  774,
-                                                                    "severity":  "Information",
-                                                                    "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-                                                                },
-                                                                {
-                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
-                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  777,
+                                                                    "line":  775,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -8194,14 +8201,21 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  807,
+                                                                    "line":  781,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
-                                                                    "line":  832,
+                                                                    "line":  808,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-Fixture\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
+                                                                    "line":  833,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027Test-ChatpadResultAccountingContract\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -8533,8 +8547,8 @@
                         "id":  "tracked-docs-decisions-md",
                         "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  128895,
-                        "sha256":  "18A752EC66E1C4EABEC46C836C44004A1CEA8C50275FF6492396DC572587B0CE",
+                        "byte_size":  130388,
+                        "sha256":  "35DD6906933B350E8620C8B4B29CDC94A4AC2818A2C552860DB35E9374863108",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8560,8 +8574,8 @@
                         "id":  "tracked-docs-exact-instance-binding-restoration-design-md",
                         "relative_path":  "docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md",
                         "state":  "tracked",
-                        "byte_size":  17025,
-                        "sha256":  "1FC264FCFF6DF72AAC7926623ACE081582BA2F29F2BC53B62F42F9C81C04DC13",
+                        "byte_size":  17157,
+                        "sha256":  "7B1360D3028469101F32E46E4B594A043326B4E0B4C794A6FB4B5930622FEF87",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8569,8 +8583,8 @@
                         "id":  "tracked-docs-native-setupapi-newdev-adapter-design-gate-md",
                         "relative_path":  "docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md",
                         "state":  "tracked",
-                        "byte_size":  14884,
-                        "sha256":  "D6513564819C62E23A422820BD6234C6F646E4EBC6C6DA3959CB1768F550D26B",
+                        "byte_size":  5958,
+                        "sha256":  "2D36ED52DD169DEB98CE0D6F585A2F96A31AFF496CAB84C5942544509EC7B142",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8578,8 +8592,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  4263,
-                        "sha256":  "DFDBA21AFF4B9FD1856D65ADCFE3AE774146FA961021D874C9040E9B891BE7A3",
+                        "byte_size":  3390,
+                        "sha256":  "E56566BFDE1DD8F96F998EE32AAAAE1BBF1FD57097C07B7B3B4943F31DAF09AE",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8587,8 +8601,8 @@
                         "id":  "tracked-docs-porting-plan-md",
                         "relative_path":  "docs/PORTING-PLAN.md",
                         "state":  "tracked",
-                        "byte_size":  21205,
-                        "sha256":  "1DDF3764A06CB390A383D87FB3B3D65BF8105BA29EEB5C89F5DC12D73ACBEDD8",
+                        "byte_size":  21596,
+                        "sha256":  "E2C4CED331B852EDB99CF730C4A0D3CA7772E200EE74A24F6FD688444838E14F",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8596,8 +8610,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  5337,
-                        "sha256":  "9C1E0CE476937DF6C9025F695F824D2953D1ADEE40D8FB0DD2F9EA11FCAF2F9A",
+                        "byte_size":  4835,
+                        "sha256":  "41F3404B979B6374BFEFF43988F77E41D19D0923CA3D0C522FB3617FEB53276C",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8605,8 +8619,8 @@
                         "id":  "tracked-docs-runtime-bringup-readiness-md",
                         "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
                         "state":  "tracked",
-                        "byte_size":  34044,
-                        "sha256":  "95F3A036F2FF6F07CA79365938E480FAF1D25F25F2B0F4710E4F205CA54FBCDD",
+                        "byte_size":  33996,
+                        "sha256":  "0C292A4FFB16734B3863AD6943491E0EAF3CD7FD72CB790A87326AD363373D7B",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8614,8 +8628,8 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  482085,
-                        "sha256":  "071D9334888A880BC08F3BCBF9ECCF4495464F0048854DEFF2B5AC9FDE899817",
+                        "byte_size":  489482,
+                        "sha256":  "C9AED0A226078AA8A4C1535B6F23D3BEE57AAAD32E695A05FE0E4146113D4CC7",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8623,8 +8637,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-contracts-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.Contracts.psm1",
                         "state":  "tracked",
-                        "byte_size":  55636,
-                        "sha256":  "B66B7B35EE4DC8EDB0469859DCDD13C3ADB5327012EF57A88522B21FAC116DE6",
+                        "byte_size":  55632,
+                        "sha256":  "B0BBDE307822C038A171D8AEF2607E754050C20DF0FAD92B6AA3D9C7F2623892",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8641,8 +8655,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-offlinesuite-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                         "state":  "tracked",
-                        "byte_size":  109573,
-                        "sha256":  "BB870CF574DEEB0F6AAB4CB649EACFBE3E723BAA451657DA978F78CFB77262B1",
+                        "byte_size":  134215,
+                        "sha256":  "76B607EFF3DE57495454D0FCF29229393BBD7544DE58E66577E413E38911049D",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8659,8 +8673,26 @@
                         "id":  "tracked-tools-exactinstance-chatpadnativeadapterdesigngate-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
                         "state":  "tracked",
-                        "byte_size":  33053,
-                        "sha256":  "CD1D5C23F1E01A2F91A343EFF82FC407A2095A0D1BBA7C4FA7FE25042BB86C0C",
+                        "byte_size":  36125,
+                        "sha256":  "7AEE640695F0FFE88D25B5232DEFB0B31FC6771B2CB7F52DD8DDB99C8A039D12",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-exactinstance-nativeinterop-chatpad-nativeinterop-setupapinewdev-declarations-cs",
+                        "relative_path":  "tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs",
+                        "state":  "tracked",
+                        "byte_size":  9783,
+                        "sha256":  "127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA",
+                        "result":  "VALIDATED",
+                        "evidence_classification":  "synthetic"
+                    },
+                    {
+                        "id":  "tracked-tools-exactinstance-nativeinterop-chatpadnativeinteropsourceboundary-psm1",
+                        "relative_path":  "tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1",
+                        "state":  "tracked",
+                        "byte_size":  17395,
+                        "sha256":  "3E7E3119A467330A413280658503B294C0FFB38271A9CA847056BAF6B2E778D3",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8677,8 +8709,8 @@
                         "id":  "tracked-tools-invoke-chatpadexactinstancebindingrestoration-ps1",
                         "relative_path":  "tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1",
                         "state":  "tracked",
-                        "byte_size":  3180,
-                        "sha256":  "C26E980CE2DE487416AFA5480160C92444EF9F4ADEC107EC6F8FE548C79FC51C",
+                        "byte_size":  3176,
+                        "sha256":  "D1518BF6C0306384AC90033DBB0750C35290EBB857E97A46E9D76696F7AB0125",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8686,8 +8718,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  11621,
-                        "sha256":  "32FD43DD55004F761F74D8F05F9F5355D1623CDFF30002FB539CBBA0B432AC35",
+                        "byte_size":  11609,
+                        "sha256":  "FD139191808203716B5E122B3C1DE3CEC6A1BF76BD06DEFAD2FF7DE2203B866F",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8722,8 +8754,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
                         "state":  "tracked",
-                        "byte_size":  94218,
-                        "sha256":  "8CCA55EC1518BA6E0EC93F7C04741F9110927DE80EBC84AC3B63E56C728257A3",
+                        "byte_size":  94287,
+                        "sha256":  "ED1A92E1E94A5E9D81192BDB0C4E063CE30D376D9F7DABEE841DAFC69963BEA4",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8731,8 +8763,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  50621,
-                        "sha256":  "3B9073AC78368A6DC3E28B845EBB45426BAF4F24CC0231EB6BE0F954DE71705A",
+                        "byte_size":  50617,
+                        "sha256":  "00CB71F8B18DA29F6543B3394D3E69C649B3A014D0494EA74968442B5A38E788",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8747,10 +8779,10 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/native-adapter-integrity-reaudit-readiness-wps-77a3c3c.json",
+                        "relative_path":  "artifacts/logs/native-interop-source-boundary-final-a05c7e3/readiness-wps.json",
                         "state":  "ignored",
-                        "byte_size":  3563026,
-                        "sha256":  "DD72AF8AE1A6262BD12A8EE9C04F810A949928AC8790B2855073325981CE750E",
+                        "byte_size":  5693688,
+                        "sha256":  "3BF05764E568326D6D6EE54F7A0AC67FDA91D805C0EB385497E1C33A03609E43",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }
