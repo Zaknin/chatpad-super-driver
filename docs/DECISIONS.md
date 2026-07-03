@@ -2208,3 +2208,33 @@ strings, Booleans, elevation, or command-line intent.
 audited composition root that creates the sentinel internally, prove exact
 instance and driver-node identity before mutation, and keep read-only probes
 separate from mutation authority.
+
+## 2026-07-03 - Do not treat PowerShell object possession as native mutation authority
+
+**Decision:** Native adapter mutation authorization must not be represented by
+any caller-supplied PowerShell capability, token, sentinel, secret, object, or
+equivalent value accepted by a public/exported function. Public native adapter
+gate functions may classify, plan, validate, and reject, but they must not
+accept an object that can activate a mutation-authorized path.
+
+**Rationale:** Independent audit showed that module script-scope variables are
+not private from same-process callers. A caller can inspect imported module
+session state, recover the exact object reference, and pass it back to a
+reference-equality gate. Same-process PowerShell module state, module-context
+invocation, and function discovery are introspection surfaces, not security
+boundaries.
+
+**Alternatives rejected:** Renaming the sentinel, moving it to another
+script-scope variable, replacing it with another object/string/GUID/secure
+string/custom type, adding wrapper or reference-equality layers, relying on
+callers not using `Get-Module` or module session state, or suppressing only the
+specific audit probe.
+
+**Consequences:** The native adapter operation gate no longer has a
+`Capability` parameter and always remains blocked while the native adapter is
+unimplemented. G16-G25 permanently cover module-state extraction,
+module-context invocation, non-exported function discovery, wrapper/object
+spoofing, serialization, scalar values, legacy capability parameters, exported
+API shape, and zero mutation counters. The gate is
+`BLOCKED_PENDING_INDEPENDENT_REAUDIT` until independent re-audit accepts the
+remediation.

@@ -2,11 +2,11 @@
 
 ## Current runtime bring-up readiness gate (2026-07-03)
 
-The offline exact-instance transaction framework is implemented on
-`feature/runtime-bringup-exact-instance-binding-restoration` at implementation
-commit `0060cd91be7d460f1a4141f6bf893bd56b32bf35`.
-Corrective commit `fdcd9448a3dc172213c07928af45d2e68fd0197a`
-binds the updated 43/6/49 script inventory and verified analyzer status.
+The native adapter capability-boundary remediation is implemented on
+`feature/runtime-bringup-native-adapter-capability-boundary-remediation` from
+audited commit `3c9c04f1870238ad2869c26fc5884d80b961fcc0`. The remediation
+implementation commit is `0b3197ba03302bb835fa673685499f957be52c52`; the
+finalization commit contains the regenerated manifest and continuity updates.
 
 The framework uses one complete canonical Plug and Play instance ID, immutable
 target and restoration driver-node identities, precondition and snapshot
@@ -14,16 +14,23 @@ fingerprints, verified postconditions, replay protection, explicit uncertainty
 states, and deterministic synthetic evidence. Broad matching and first/best
 candidate fallback are prohibited.
 
-T1-T25 pass with 25 records and 99 assertions. The authoritative readiness
-ledger is 329 records and 1,823 assertions; record/category totals reconcile.
-Framework status is `PASS`. Live readiness remains `BLOCKED` with blocker
-`BLOCKED_PENDING_INDEPENDENT_AUDIT`; every live binding, restoration, restart,
-observation, broad-success, and Windows-mutation counter is zero.
+G16-G25 prove the remediated native adapter gate no longer trusts a
+module-private PowerShell object as a mutation capability. Same-process module
+state is treated as introspectable, and no exported/public mutation gate
+accepts a caller-supplied capability-like value.
 
-The next task is an independent read-only audit of the implementation and
-evidence-finalization commits. A native Windows SetupAPI/Newdev adapter remains
-a later separately authorized implementation boundary; this phase does not
-authorize any live driver or device operation.
+The exact-instance suite passes with 64 records and 263 assertions under
+Windows PowerShell 5.1 and PowerShell 7. The authoritative readiness ledger is
+368 records and 1,987 assertions; record/category totals reconcile. Framework
+status is `PASS`. Live readiness remains `BLOCKED` with current gate
+`BLOCKED_PENDING_INDEPENDENT_REAUDIT` and blocker
+`BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`; every live binding, restoration,
+restart, observation, broad-success, and Windows-mutation counter is zero.
+
+The next task is an independent read-only re-audit of the remediated
+capability-boundary implementation and evidence. A native Windows
+SetupAPI/Newdev adapter remains a later separately authorized implementation
+boundary; this phase does not authorize any live driver or device operation.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

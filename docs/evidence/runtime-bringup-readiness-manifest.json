@@ -1,18 +1,18 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-03T07:18:32.1255192Z",
+    "generated_utc":  "2026-07-03T08:13:37.3917906Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
-    "current_gate":  "BLOCKED_PENDING_INDEPENDENT_AUDIT",
+    "current_gate":  "BLOCKED_PENDING_INDEPENDENT_REAUDIT",
     "capability_blocker":  "BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED",
     "live_adapter_status":  "NOT_IMPLEMENTED",
     "live_binding_authorized":  false,
     "repository":  {
-                       "branch":  "feature/runtime-bringup-native-adapter-design-gate",
+                       "branch":  "feature/runtime-bringup-native-adapter-capability-boundary-remediation",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
                        "prior_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
                        "prior_readiness_finalization_commit":  "88e3cbba3a64828322b7c703765e6b1e2369f698",
-                       "current_readiness_implementation_commit":  "66e357d7cd54cfab23eb1ce3b237aa63aae96eb0",
+                       "current_readiness_implementation_commit":  "0b3197ba03302bb835fa673685499f957be52c52",
                        "current_readiness_finalization_commit_source":  "external exact 40-character audit input after finalization commit"
                    },
     "accepted_offline_baseline":  {
@@ -24,15 +24,15 @@
                                       "release_sys_sha256":  "A9C5CD9ABF621ED4B8446A3249843541DB2ADE1BAD7E930D0B8525862758B404"
                                   },
     "readiness":  {
-                      "fixture_count":  358,
-                      "fixture_assertion_sum":  1939,
+                      "fixture_count":  368,
+                      "fixture_assertion_sum":  1987,
                       "harness_result_record_count":  6,
                       "harness_assertion_sum":  6,
-                      "total_result_record_count":  358,
-                      "assertion_count":  1939,
-                      "record_assertion_sum":  1939,
-                      "category_record_sum":  358,
-                      "category_assertion_sum":  1939,
+                      "total_result_record_count":  368,
+                      "assertion_count":  1987,
+                      "record_assertion_sum":  1987,
+                      "category_record_sum":  368,
+                      "category_assertion_sum":  1987,
                       "assertion_accounting_result":  "PASS",
                       "unassigned_assertion_count":  0,
                       "off_ledger_assertion_count":  0,
@@ -91,8 +91,8 @@
                                               },
                                               {
                                                   "category":  "exact-instance-offline",
-                                                  "record_count":  54,
-                                                  "assertion_count":  215
+                                                  "record_count":  64,
+                                                  "assertion_count":  263
                                               },
                                               {
                                                   "category":  "harness-self-test",
@@ -240,8 +240,8 @@
                       "runtime_observations_evaluated_live":  0,
                       "runtime_observation_gates_blocked_or_unavailable":  25,
                       "exact_instance_framework_result":  "PASS",
-                      "exact_instance_offline_test_count":  54,
-                      "exact_instance_offline_assertion_count":  215,
+                      "exact_instance_offline_test_count":  64,
+                      "exact_instance_offline_assertion_count":  263,
                       "synthetic_exact_binding_attempt_count":  15,
                       "synthetic_exact_restoration_attempt_count":  4,
                       "synthetic_exact_restart_attempt_count":  0,
@@ -278,7 +278,7 @@
                                                "analyzed_file_count":  52,
                                                "error_count":  0,
                                                "warning_count":  168,
-                                               "information_count":  927,
+                                               "information_count":  937,
                                                "tool_failure_count":  0,
                                                "findings":  [
                                                                 {
@@ -2298,6 +2298,76 @@
                                                                     "message":  "Cmdlet \u0027New-ChatpadExactSuitePlan\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
                                                                 {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  500,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  509,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  517,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  524,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  535,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  544,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  554,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  564,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  571,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSAvoidUsingPositionalParameters",
+                                                                    "file":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+                                                                    "line":  576,
+                                                                    "severity":  "Information",
+                                                                    "message":  "Cmdlet \u0027Invoke-ChatpadExactCase\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+                                                                },
+                                                                {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadExactInstance.Orchestrator.psm1",
                                                                     "line":  6,
@@ -2496,14 +2566,14 @@
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  32,
+                                                                    "line":  35,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeReadOnlyDesignProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  36,
+                                                                    "line":  44,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeMutationCapability\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
@@ -7966,8 +8036,8 @@
                         "id":  "tracked-docs-decisions-md",
                         "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  124087,
-                        "sha256":  "E26DCB51799C7471361C3DE6021E6C508EB7E30A22ADA35FDD8F2FE5D640331A",
+                        "byte_size":  125779,
+                        "sha256":  "C09939826C06310F9FE51DDB4487389C5D1EE42FA211488EDA40540E1C655E56",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -7975,8 +8045,8 @@
                         "id":  "tracked-docs-evidence-exact-instance-operation-evidence-schema-v1-json",
                         "relative_path":  "docs/evidence/exact-instance-operation-evidence-schema-v1.json",
                         "state":  "tracked",
-                        "byte_size":  4488,
-                        "sha256":  "FBAA03AAB662F4610B0990E054EF20D7FFFEAB90E97B774165FF66847ADF21BB",
+                        "byte_size":  4490,
+                        "sha256":  "96C33CD8AC48D7007F0D52CCA60A830E3375F963E374C9BF3A3BB871F4EAF7AD",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -7993,8 +8063,8 @@
                         "id":  "tracked-docs-exact-instance-binding-restoration-design-md",
                         "relative_path":  "docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md",
                         "state":  "tracked",
-                        "byte_size":  16496,
-                        "sha256":  "2F9322D60D9AB62A0542389C9D6C02213CAC5B2B582692D722E5FAC8998950AF",
+                        "byte_size":  16792,
+                        "sha256":  "CD4FE23F075AB76CA7D3FCB5CC38DFAFF421C66E701A32C08A3AA76B7C0513AA",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8002,8 +8072,8 @@
                         "id":  "tracked-docs-native-setupapi-newdev-adapter-design-gate-md",
                         "relative_path":  "docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md",
                         "state":  "tracked",
-                        "byte_size":  9934,
-                        "sha256":  "07BC5287D7B9D37866150DB645A236C7887FF1806B5D210D546A61165D358F1B",
+                        "byte_size":  11128,
+                        "sha256":  "A8F557937337FA24FA70B6222C88E6F2A2ABB05F88F1C4446ECBB8F486A68384",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8011,8 +8081,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  2840,
-                        "sha256":  "317EFE18D5196C54BF9B4ECE80CAE4238DA38DB6578431D58382D7390B3134B0",
+                        "byte_size":  4257,
+                        "sha256":  "574172CB575AD4A95CBF83A543AA7A3E4CD678A1E934672EE964654928DF3386",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8020,8 +8090,8 @@
                         "id":  "tracked-docs-porting-plan-md",
                         "relative_path":  "docs/PORTING-PLAN.md",
                         "state":  "tracked",
-                        "byte_size":  20307,
-                        "sha256":  "6188A7E2857C5B8E6402BA504A531BCCB09A73EAE6550866692318E6EAC780F8",
+                        "byte_size":  20757,
+                        "sha256":  "4E69BE5A4ADF81E39736BA5D73A7C8BC029B42DB3CF5B117775F76E0E324EDC6",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8029,8 +8099,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  3890,
-                        "sha256":  "C0A478BA700C649E62C3869E9117BBD0CC9F6D6F87CB7782417E8E24A76892D4",
+                        "byte_size":  3949,
+                        "sha256":  "5F9F3DD55F6A1D2F83D33C212B66CF7303420EF78D9FB491400209AA0C32A0F3",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8038,8 +8108,8 @@
                         "id":  "tracked-docs-runtime-bringup-readiness-md",
                         "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
                         "state":  "tracked",
-                        "byte_size":  32902,
-                        "sha256":  "EA549CF413946BD30A2BE6B5F6CA3A81D4046E885987D7174675B32C0E210D6A",
+                        "byte_size":  33309,
+                        "sha256":  "0B247E8F010306647B08396294B1EA20A0F853863B55B8808075062D6DE55C14",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8047,8 +8117,8 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  444255,
-                        "sha256":  "2082213F3BB2559926CA7BB3051202431A6399579621B5F4AFD88A14F9C7784C",
+                        "byte_size":  453186,
+                        "sha256":  "75399CE4A5BA16656301CF2CFE23C2F4D64A9BC1C2F853DF22971981888B0FFD",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8056,8 +8126,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-contracts-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.Contracts.psm1",
                         "state":  "tracked",
-                        "byte_size":  55590,
-                        "sha256":  "133DB089DA5AE92927485E004DE8204D8748171C6B9557820700F27CDA64F600",
+                        "byte_size":  55592,
+                        "sha256":  "6F587F25A122A8AF29BC36941576ACBF514B3D2B94E5FFE0A7C9820F0C366BC2",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8074,8 +8144,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-offlinesuite-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                         "state":  "tracked",
-                        "byte_size":  57439,
-                        "sha256":  "9AD2BAEACAFA655A8028AC99D7A2DECEFC3F75AD3AA3BDF2E78A0010BBCD4F11",
+                        "byte_size":  67747,
+                        "sha256":  "766508B8099D6D19FA1D919998904F1BC79F12738541D98B62719995D47C1E41",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8092,8 +8162,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadnativeadapterdesigngate-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
                         "state":  "tracked",
-                        "byte_size":  17865,
-                        "sha256":  "6A0CF20A0826511B522046B6C3344910F37176C3BBCBDAE8564076D8F39C5193",
+                        "byte_size":  18137,
+                        "sha256":  "136589DFD59D1E88CFEA4DB384AA79E74089544CB4BAC56FAB45CF0C7EF7B59B",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8110,8 +8180,8 @@
                         "id":  "tracked-tools-invoke-chatpadexactinstancebindingrestoration-ps1",
                         "relative_path":  "tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1",
                         "state":  "tracked",
-                        "byte_size":  2778,
-                        "sha256":  "CE39214BC5BE610C2F46CF0DE7F0628BAA877A340FDEB680314420186728A830",
+                        "byte_size":  2780,
+                        "sha256":  "D43DB7B3EF39B4246DF6F5A6201D12E0B7429633CE69D32A086D3D25DBA5317B",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8119,8 +8189,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  11431,
-                        "sha256":  "7B1356BAD9AF26AD211975C9AE79511C26FD94783D2407C11C54129B536D7BA6",
+                        "byte_size":  11437,
+                        "sha256":  "9D24EBF7FEB2C94C97C3C7DE801E430EAB35A2173777191AAEE9419C10C90D26",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8155,8 +8225,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
                         "state":  "tracked",
-                        "byte_size":  94173,
-                        "sha256":  "6AC913C4D54E3E18D69E2D874B8FCEDA2C7764B4EE70460021182A7ED73B8966",
+                        "byte_size":  94175,
+                        "sha256":  "DC08548EB5A75F55E66D2C41E01B13B16CA95123FB92FEF10CA6FE8F8EB8C2FC",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8164,8 +8234,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  49690,
-                        "sha256":  "4CA3075539331DA55C8CAF17E15BC2788FDDFA34C4F1E6D98637E76AFD74F923",
+                        "byte_size":  49692,
+                        "sha256":  "88B47D99851EC0B22EB54E9AA141F1BDC896D27F17B70C08EF4A264AB820A627",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8180,10 +8250,10 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/native-design-gate-readiness-wps-66e357d.json",
+                        "relative_path":  "artifacts/logs/capability-boundary-remediation-readiness-wps-0b3197b.json",
                         "state":  "ignored",
-                        "byte_size":  2148072,
-                        "sha256":  "89D6BD0D68C2832DC41D0DA0D8C3F9E3AF65677705B7C4ED0E9DC71185CB0627",
+                        "byte_size":  2288336,
+                        "sha256":  "98CA4B8B99086454DA1EBA449BBA139A07A7D9CEDD80236752BF103F284485FF",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }

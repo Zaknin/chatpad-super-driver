@@ -9,29 +9,32 @@ implement, declare, load, or invoke any native device-installation API.
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_REAUDIT`.
 - Live adapter status: `NOT_IMPLEMENTED`.
 - Capability blocker: `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
 - Live device queries and Windows mutations performed: `0`.
 
 The executable design contract is
-`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. The offline G1-G15
+`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. The offline G1-G25
 fixtures in `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
 validate this document's current gate behavior.
 
-## Trusted Capability Boundary
+## Capability Boundary
 
 Public strings, public mode fields, synthetic flags, elevation state, mutation
 switches, caller-created objects, serialized records, fake adapters, and fake
-wrappers are not authority. A future mutating adapter requires an internal
-native mutation capability created only inside a future production composition
-root.
+wrappers are not authority. PowerShell module state is introspectable by
+callers in the same process, including through `Get-Module`, session state,
+module-context invocation, and function discovery. A module script-scope
+object is therefore not a security boundary.
 
 The current branch deliberately exposes no successful mutation-capability
-creation path. The present capability test is reference-identity based against
-a module-private sentinel. A deserialized object or `PSCustomObject` with the
-same displayed fields cannot satisfy the gate. A read-only design probe is a
-separate sentinel and cannot satisfy mutation authorization.
+creation path. No public or exported native adapter gate function accepts a
+caller-supplied mutation capability, token, sentinel, secret, object, or
+equivalent authorization value. Possession of a PowerShell object can never
+activate the native mutation path. A read-only design probe is non-authorizing
+metadata and cannot satisfy mutation authorization.
 
 The current composition root remains absent. `Apply`, `Restore`, and `Restart`
 requests therefore fail at the live-adapter gate with
@@ -55,8 +58,11 @@ Future mutating exact-device operations are separate:
 - restore the selected prior node from the authenticated snapshot;
 - restart the exact device only when separately authorized.
 
-Read-only capability never implies mutation capability. Mutation capability is
-not obtained by casting, changing a public mode, or wrapping a fake adapter.
+Read-only probe metadata never implies mutation capability. Mutation
+capability is not obtained by casting, changing a public mode, wrapping a fake
+adapter, extracting module state, invoking in module scope, adding members,
+changing `PSTypeNames`, serializing/deserializing, or passing unexpected legacy
+parameters.
 
 ## Exact Device Opening
 
@@ -195,7 +201,7 @@ Future live evidence must bind trusted producer identity, implementation
 binary identity, adapter version, code or assembly hash, operation-plan hash,
 canonical instance ID, target and restoration driver identities, ordered
 native call log, native return codes, Win32 errors, before/after state,
-restart/reboot indication, cleanup results, trusted capability provenance,
+restart/reboot indication, cleanup results, internal authorization provenance,
 and synthetic/live classification.
 
 For the current branch, all evidence remains synthetic. Any live-source claim
@@ -206,7 +212,7 @@ or adapter-name spoof remains invalid.
 Before a future mutation can be considered, all of the following must pass:
 
 1. Supported operating system and architecture.
-2. Internal trusted native capability.
+2. No public caller-supplied mutation capability.
 3. Exact canonical instance ID.
 4. Valid unexpired plan.
 5. Valid plan hash.
@@ -224,23 +230,36 @@ Before a future mutation can be considered, all of the following must pass:
 17. Live evidence producer available.
 18. Audit-approved implementation version.
 
-The present implementation always fails at gate 2.
+The present implementation always remains blocked because no live native
+adapter or internally controlled mutation authorization exists.
 
 ## Offline Gate Coverage
 
-G1-G15 prove:
+G1-G25 prove:
 
 - no current live capability for Apply, Restore, or Restart;
 - adapter-name, mode, Boolean, elevation, mutation-switch, fake-wrapper,
   caller-object, and serialization spoofing cannot grant authority;
-- read-only capability is separate from mutation capability;
+- read-only probe metadata is separate from mutation capability;
 - no reachable current production path constructs the live capability;
+- the former `Get-Module ... SessionState.PSVariable.Get(...)` sentinel
+  extraction exploit cannot authorize the gate;
+- module-state enumeration, module-scope `Get-Variable`, `& $module { ... }`,
+  session-state invocation, and non-exported function discovery do not expose
+  a mutation authorization path;
+- extracted references, wrapped references, `PSCustomObject`, `PSTypeNames`,
+  `Add-Member`, serialization/deserialization, strings, numbers, Booleans,
+  GUID-like values, arbitrary objects, and unexpected legacy capability
+  parameters are rejected or non-authorizing;
+- exported mutation APIs accept no caller-supplied capability-like parameter;
 - executable native declaration and invocation guards pass;
 - exact API sequence, restoration linkage, uncertainty, restart/reboot, and
   evidence-origin contracts are accounted for.
 
 ## Next Audit Boundary
 
-The next task must be an independent read-only audit of this design-and-gate
-implementation. That audit must not implement or invoke the native adapter and
-must confirm the blocker remains `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+The next task must be an independent read-only re-audit of this remediated
+design-and-gate implementation. That audit must not implement or invoke the
+native adapter and must confirm the blocker remains
+`BLOCKED_PENDING_INDEPENDENT_REAUDIT` with
+`BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.

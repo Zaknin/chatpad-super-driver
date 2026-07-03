@@ -8,20 +8,31 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-adapter-design-gate` adds a
-non-executing native SetupAPI/Newdev adapter design gate only. The future API
-sequence, structures, driver-node identity evidence, exact-instance
-binding/restoration proof, restart/reboot separation, error taxonomy, and
-composition-root boundary are documented in
+Branch `feature/runtime-bringup-native-adapter-capability-boundary-remediation`
+remediates the failed independent audit of the non-executing native
+SetupAPI/Newdev adapter design gate. The future API sequence, structures,
+driver-node identity evidence, exact-instance binding/restoration proof,
+restart/reboot separation, error taxonomy, and composition-root boundary are
+documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 
-- Current implementation commit: `66e357d7cd54cfab23eb1ce3b237aa63aae96eb0`.
-- Exact-instance suite: `PASS`, 54 tests, 215 assertions under Windows
+- Starting audited commit: `3c9c04f1870238ad2869c26fc5884d80b961fcc0`.
+- Current remediation implementation commit:
+  `0b3197ba03302bb835fa673685499f957be52c52`.
+- Expected finalization commit: the commit containing this document and the
+  regenerated readiness manifest.
+- PowerShell module state is introspectable by callers in the same process;
+  caller possession of an object is not a trusted mutation boundary.
+- No exported native adapter gate function accepts a caller-supplied mutation
+  capability, token, sentinel, secret, object, or equivalent authorization
+  value.
+- Exact-instance suite: `PASS`, 64 tests, 263 assertions under Windows
   PowerShell 5.1 and PowerShell 7.
-- Full readiness suite: exit `0`, 1,939 assertions under both runtimes.
+- Full readiness suite: exit `0`, 368 fixtures and 1,987 assertions under both
+  runtimes.
 - PowerShell inventory: 45 `.ps1`, seven `.psm1`, 52 total; AST errors `0`.
-- Complete PSScriptAnalyzer: errors `0`, warnings `168`, information `927`,
+- Complete PSScriptAnalyzer: errors `0`, warnings `168`, information `937`,
   tool failures `0`.
 - Native executable guard: `PASS`, 52 files scanned, zero native declaration or
   invocation matches.
@@ -29,7 +40,7 @@ offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_AUDIT`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_REAUDIT`.
 - Capability blocker: `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
 - Live adapter status: `NOT_IMPLEMENTED`; live authorization: `false`.
 
@@ -659,14 +670,12 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only audit of manifest-validator empty-subset remediation
-commit `eef5b9c151c884eefaa0157e32446e481db73bb4`, manifest-generator identity
-commit `f4e98e5719230bd40c7096d2a48efb788eeb5a7d`, plus the
-evidence-finalization commit. The audit must corrupt only isolated manifest
-copies, remove harness and accounting record subsets, confirm all corruptions
-produce controlled accounting failures with zero uncontrolled exceptions and
-no `PropertyNotFoundException`, revalidate canonical manifest hashes, branch
-identity, and category totals, preserve runtime-observer provenance and
-stop-linkage contracts, verify the finalization commit changes no executable
-files, and confirm authoritative live readiness remains `BLOCKED` with
-blocker `BLOCKED_NOT_IMPLEMENTED`.
+Independent read-only re-audit of the remediated native adapter
+capability-boundary gate on
+`feature/runtime-bringup-native-adapter-capability-boundary-remediation`.
+The audit must reproduce the former module `SessionState` sentinel-extraction
+finding against the old audited commit, verify that no exported/public
+mutation gate now accepts caller-supplied capability-like values, validate the
+new G16-G25 adversarial regressions under Windows PowerShell 5.1 and
+PowerShell 7, confirm all live/device/Windows mutation counters remain zero,
+and keep the final blocker `BLOCKED_PENDING_INDEPENDENT_REAUDIT`.

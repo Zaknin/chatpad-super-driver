@@ -6742,3 +6742,140 @@
   independent read-only audit of the native adapter design gate on
   `feature/runtime-bringup-native-adapter-design-gate`. Live execution remains
   blocked until a later explicit implementation and audit phase.
+
+## 2026-07-03T12:11+04:00 - Native adapter capability-boundary remediation
+
+- **Objective:** Remediate the failed independent audit of the native
+  SetupAPI/Newdev adapter design gate. The audit found that a same-process
+  caller could recover the module script-scope mutation sentinel through module
+  `SessionState` and pass it back to the exported gate. Keep the task offline:
+  no native adapter implementation, driver execution, live device query, or
+  Windows mutation.
+- **Starting state:** Verified repository root `C:/Dev/chatpad-super-driver`,
+  branch `feature/runtime-bringup-native-adapter-design-gate`, exact audited
+  HEAD `3c9c04f1870238ad2869c26fc5884d80b961fcc0`, clean tree, configured
+  upstream `origin/feature/runtime-bringup-native-adapter-design-gate`, and
+  ahead/behind `0/0`. Created
+  `feature/runtime-bringup-native-adapter-capability-boundary-remediation`
+  from that exact commit without fetching, merging, rebasing, resetting, or
+  touching `legacy/`.
+- **Exploit reproduction:** Before branching, imported
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`, extracted
+  `(Get-Module ChatpadNativeAdapterDesignGate).SessionState.PSVariable.Get('TrustedMutationCapabilitySentinel').Value`,
+  and passed it to `Test-ChatpadNativeAdapterOperationGate -Operation Apply
+  -Capability ...`. The old audited gate returned `PASS`,
+  `TRUSTED_NATIVE_MUTATION_CAPABILITY_PRESENT`,
+  `live_capability_present=true`, and `windows_mutations_performed=0`.
+- **Implementation commit:**
+  `0b3197ba03302bb835fa673685499f957be52c52` (`fix: close native adapter
+  capability boundary`) removes the script-scope trusted mutation/read-only
+  sentinel model, removes the public `Capability` parameter from
+  `Test-ChatpadNativeAdapterOperationGate`, makes mutation capability probing
+  always blocked with `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`, converts the
+  read-only path into a non-authorizing design probe, and updates contract,
+  suite, readiness, manifest-validator, and evidence-schema gates to
+  `BLOCKED_PENDING_INDEPENDENT_REAUDIT`.
+- **Files modified by implementation:** `docs/evidence/exact-instance-operation-evidence-schema-v1.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Regression details:** Added G16-G25 covering former SessionState sentinel
+  extraction, module variable enumeration, module-context and session-state
+  invocation, non-exported/internal function discovery, extracted references
+  and wrappers, `PSCustomObject`, `PSTypeNames`, `Add-Member`,
+  serialization/deserialization, strings, numbers, Booleans, GUID-like values,
+  arbitrary objects, rejected legacy `-Capability` parameters, exported API
+  shape, design-contract trust-boundary statements, and all public mutation
+  operations staying blocked with zero mutation counters.
+- **Continuity files modified:** `docs/PROJECT-STATE.md`,
+  `docs/WORKLOG.md`, `docs/DECISIONS.md`, `docs/NEXT-TASK.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PORTING-PLAN.md`, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Exact-suite validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit 0b3197ba03302bb835fa673685499f957be52c52 -OutputPath artifacts\logs\capability-boundary-remediation-exact-suite-wps-0b3197b.json`
+  and the matching `pwsh.exe` command. Both returned exit code `0` and
+  reported `PASS`, 64 tests, 263 assertions, zero failed tests, live readiness
+  `BLOCKED`, current gate `BLOCKED_PENDING_INDEPENDENT_REAUDIT`, blocker
+  `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`, and live authorization `false`.
+- **Full-readiness validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadiness.ps1`
+  and the matching `pwsh.exe` command. Both returned exit code `0` with
+  framework status `PASS`, live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_REAUDIT`, 368 fixtures, 1,987 assertions, exact
+  suite 64/263, and `windows_mutation_count=0`.
+- **Manifest validation:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` with
+  `New-ChatpadRuntimeBringupReadinessManifest.ps1 -ImplementationCommit 0b3197ba03302bb835fa673685499f957be52c52`
+  from the Windows PowerShell readiness artifact. The manifest contains 25
+  entries and binds `current_readiness_implementation_commit` to
+  `0b3197ba03302bb835fa673685499f957be52c52`. Corruption regression returned
+  `PASS`, 18 cases, zero failed cases.
+- **Additional validation:** Complete PSScriptAnalyzer returned exit code `0`,
+  analyzed 52 tracked files, and reported errors `0`, warnings `168`,
+  information `937`, tool failures `0`, and blanket suppression `false`.
+  Native executable guard returned `PASS`, 52 scanned files, zero forbidden
+  native declaration or invocation matches. AST parse inventory returned
+  `PASS`, 45 `.ps1`, seven `.psm1`, 52 total files, and zero parse-error
+  files. `git diff --check` returned exit code `0` and no output.
+- **Repository safety:** `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-RepositorySafety.ps1`
+  reported `REPOSITORY SAFETY: PASS`, deployment actions `0`, signing actions
+  `0`, packaging actions `0`, certificate/key creation actions `0`, Windows
+  mutations `0`, device queries `0`, hardware accesses `0`, unexpected tracked
+  artifacts `0`, tracked evidence files `0`, and non-ignored evidence files
+  `0`.
+- **Ignored evidence artifacts:**
+  `artifacts/logs/capability-boundary-remediation-exact-suite-wps-0b3197b.json`,
+  2,770,226 bytes,
+  `4438C5FF9A26176E49E38E7FFF4FAD1AAF9E37633CF435F14BAADD1344EB2365`;
+  `artifacts/logs/capability-boundary-remediation-exact-suite-pwsh-0b3197b.json`,
+  1,310,780 bytes,
+  `F71195E7FD0448B974885CF9F331409C3672DABF902749F8FFD1AA22F2239BA4`;
+  `artifacts/logs/capability-boundary-remediation-readiness-wps-0b3197b.json`,
+  2,288,336 bytes,
+  `98CA4B8B99086454DA1EBA449BBA139A07A7D9CEDD80236752BF103F284485FF`;
+  `artifacts/logs/capability-boundary-remediation-readiness-pwsh-0b3197b.json`,
+  1,122,929 bytes,
+  `9D782D5397A6B8245DB43A8C83C012B9C8624DA24F02CA9E6410B85B1B265F1C`;
+  `artifacts/logs/capability-boundary-remediation-manifest-generation-0b3197b.json`,
+  133 bytes,
+  `1A8D4E54DBA88FA9118BC0C820F42ADAE4CE72013057F1AD532D603BE57C9B7C`;
+  `artifacts/logs/capability-boundary-remediation-manifest-validation-0b3197b.json`,
+  78,042 bytes,
+  `AE039E91E22BAB83E2D32D055C9685BB31014C4D0358FA64223BD373251AB7E4`;
+  `artifacts/logs/capability-boundary-remediation-psscriptanalyzer-0b3197b.json`,
+  550,388 bytes,
+  `6107E6FD2E115E97F4704C1BC2BB2B85555FA1E3C3B27C0BF1A4B557DDBB05EA`;
+  `artifacts/logs/capability-boundary-remediation-native-guard-0b3197b.json`,
+  180 bytes,
+  `AE2488F6E1DBB25080E52E140A462A061044036954D3A2514ACD593EE714E07E`;
+  `artifacts/logs/capability-boundary-remediation-ast-parse-0b3197b.json`,
+  7,002 bytes,
+  `98C80E5F6AC55B9104B7106B54277DD2C155D70C874F00DC739D064C6EBDF139`;
+  `artifacts/logs/capability-boundary-remediation-repository-safety-0b3197b.txt`,
+  1,204 bytes,
+  `798062239F1EDF174162E47C5BC4B595F2456B1B2153B72C3B467D3ABD2FD008`;
+  and `artifacts/logs/capability-boundary-remediation-git-diff-check-0b3197b.txt`,
+  0 bytes,
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`.
+- **Safety:** No native API implementation, declaration, P/Invoke, Add-Type,
+  C# shim, DLL import, driver build/link, signing, CAT generation, packaging,
+  staging, driver-store mutation, installation, binding, loading, restoration,
+  restart, reboot, device query, hardware access, Windows/service/registry/boot
+  mutation, tracing, event-log export, protocol traffic, input injection,
+  certificate/credential change, production source/INF/frozen binary change,
+  or `legacy/` change occurred.
+- **Finalization and next task:** The expected finalization commit contains the
+  regenerated manifest and continuity updates. The exact next task is an
+  independent read-only re-audit of
+  `feature/runtime-bringup-native-adapter-capability-boundary-remediation`,
+  starting from the finalization commit, with implementation commit
+  `0b3197ba03302bb835fa673685499f957be52c52` as the remediated gate target.
+  Live readiness remains `BLOCKED_PENDING_INDEPENDENT_REAUDIT`; do not proceed
+  to native adapter implementation until that re-audit passes and a later task
+  explicitly authorizes implementation.

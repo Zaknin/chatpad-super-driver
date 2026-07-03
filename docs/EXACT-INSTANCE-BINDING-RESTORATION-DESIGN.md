@@ -30,7 +30,7 @@ The implementation contains:
 
 It does not contain or invoke a live SetupAPI/Newdev adapter. No driver or
 driver-store operation is authorized. Live readiness is `BLOCKED`; the current
-gate is `BLOCKED_PENDING_INDEPENDENT_AUDIT`, and the independent downstream
+gate is `BLOCKED_PENDING_INDEPENDENT_REAUDIT`, and the independent downstream
 capability blocker is `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
 
 ### Remediated trust and serialization contracts
@@ -208,12 +208,16 @@ manual-recovery lineage states. Apply and restore replay is rejected.
 
 The dedicated non-executing native adapter design gate is
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`. The executable contract
-for the trusted capability boundary, API sequence inventory, structure
-ownership model, error taxonomy, evidence fields, operation gates, and static
+for the capability boundary, API sequence inventory, structure ownership
+model, error taxonomy, evidence fields, operation gates, and static
 native-code guards is
-`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. G1-G15 in the
+`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. G1-G25 in the
 offline exact-instance suite prove that the current branch still has no live
-capability and cannot invoke a native adapter.
+capability and cannot invoke a native adapter. G16-G25 specifically prove that
+module session-state extraction, module-context invocation, non-exported
+function discovery, reference wrapping, `PSCustomObject`, `PSTypeNames`,
+`Add-Member`, serialization, scalar/object spoofing, and unexpected legacy
+capability parameters cannot authorize mutation.
 
 The future user-mode adapter must use Unicode Windows APIs and keep a single
 `HDEVINFO` plus `SP_DEVINFO_DATA` pair alive for the transaction:
