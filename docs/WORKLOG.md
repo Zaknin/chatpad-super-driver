@@ -7438,3 +7438,74 @@
   deterministic blocked operation evidence for `Apply`, `Restore`, and
   `Restart`, zero live/device/Windows/native-operation counters, and blocker
   `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
+
+## 2026-07-03T19:17+04:00 - Native interop source audit acceptance transition
+
+- **Objective:** Record the successful independent source audit of the
+  declaration-only SetupAPI/Newdev native interop boundary and transition the
+  current gate from pending source audit to compile-only validation not
+  authorized.
+- **Starting state:** Verified repository root `C:/Dev/chatpad-super-driver`,
+  branch `feature/runtime-bringup-native-interop-source-audit-acceptance`,
+  starting commit `dbba70d74e99c211d47187697e19e528b381520a`, no configured
+  upstream for the new local branch, and a clean worktree/index. The source
+  branch `feature/runtime-bringup-native-interop-source-boundary` was already
+  synchronized to the same audited commit.
+- **Audit accepted:** Independent audit verdict `AUDIT PASS` for audited
+  branch `feature/runtime-bringup-native-interop-source-boundary` at commit
+  `dbba70d74e99c211d47187697e19e528b381520a`. Audit artifacts are under
+  `artifacts/logs/independent-native-interop-source-audit-dbba70d/`; artifact
+  inventory `artifact-inventory.json` has SHA-256
+  `198124D0949A9DD987CD154A09D0DC55DDFEB79C6A2E63839E8FB19BD2202967`.
+- **Implementation details:** Active status producers and validators now use
+  `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`. The
+  downstream blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+  The accepted NativeInterop source files under
+  `tools/ExactInstance/NativeInterop/` were not edited; the active adapter and
+  readiness layer overlays the accepted audit gate while preserving the source
+  implementation identity.
+- **Files modified:** `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PORTING-PLAN.md`,
+  `docs/NEXT-TASK.md`, `docs/WORKLOG.md`, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Validation:** Exact-instance suite passed under Windows PowerShell 5.1 and
+  PowerShell 7 with 171 tests, 718 assertions, and current gate
+  `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`. Full
+  readiness passed under both runtimes with 475 fixtures, 2,442 assertions,
+  live readiness `BLOCKED`, capability blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, exact subtotal 171 tests
+  and 718 assertions, and Windows mutation count `0`. Manifest generation kept
+  schema `chatpad-runtime-bringup-readiness-manifest-v3`, 27 entries, and
+  implementation binding `a05c7e3fffa2968777824a3a2efe4f286449bdc5`.
+  Manifest validation and default corruption regression passed under both
+  runtimes after regenerating the manifest with the final validator hash.
+- **Ignored evidence artifacts:** Focused validation outputs are under
+  `artifacts/logs/native-interop-source-audit-acceptance-dbba70d/`. An initial
+  readiness command failed because `-ImplementationCommit` is not a supported
+  parameter for `Test-ChatpadRuntimeBringupReadiness.ps1`; the corrected
+  stdout-redirection commands passed. An intermediate manifest validation
+  failed once for the stale exact assertion count and once for a manifest hash
+  mismatch after the validator changed; both were corrected before final
+  validation.
+- **Safety:** No native source declaration, structure, constant, marshaling
+  metadata, wrapper call plan, error mapping, adapter identity, driver source,
+  INF, project/solution file, binary, signing material, package, staging or
+  deployment input, or `legacy/` file was modified. No compilation, Add-Type,
+  CSC, MSBuild, Roslyn, CodeDOM, `dotnet build`, assembly loading, native DLL
+  loading, entry-point resolution, native invocation, device query, driver
+  binding query, driver build/link, signing, packaging, staging, installation,
+  binding, restoration, restart, hardware access, or Windows mutation occurred.
+- **Next task:** A separately authorized compile-only native interop validation
+  phase in an isolated non-production harness, with no loading or native
+  invocation. The phase must validate structure sizes, `cbSize`, marshaling
+  metadata, and compiler diagnostics, and any compiled artifact must receive a
+  separate independent audit before loading or invocation.

@@ -26,23 +26,26 @@ selection, no implicit production default, no mutable module-state trust root,
 caller-object fail-closed behavior, and custom manifest path forwarding.
 G78-G132 prove the declaration-only SetupAPI/Newdev source boundary is
 allowlisted, isolated from build/loading/invocation paths, explicitly
-non-executing, and still blocked pending independent source audit.
+non-executing, independently source-audited, and still blocked before
+compile-only validation authorization.
 
 The exact-instance suite passes under Windows PowerShell 5.1 and PowerShell 7
-with 171 records and 709 assertions after the source-boundary fixtures are
+with 171 records and 718 assertions after the source-audit acceptance fixtures are
 added. The full readiness suite passes under Windows PowerShell 5.1 and
-PowerShell 7 with 475 fixtures and 2,433 assertions. The authoritative
+PowerShell 7 with 475 fixtures and 2,442 assertions. The authoritative
 readiness ledger is regenerated with 27 entries.
 Framework status remains `PASS`. Live readiness remains `BLOCKED` with current
-gate `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT` and blocker
+gate `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED` and blocker
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live binding,
 restoration, restart, observation, broad-success, device-query, native-
 operation, and Windows-mutation counter remains zero.
 
-The next task is an independent read-only source audit of the declaration and
-wrapper boundary. A native Windows SetupAPI/Newdev adapter implementation
-remains a later separately authorized boundary; this phase does not authorize
-any live driver or device operation.
+The declaration and wrapper boundary passed independent source audit at
+`dbba70d74e99c211d47187697e19e528b381520a`. The next task is a separately
+authorized compile-only validation phase in an isolated non-production harness.
+A native Windows SetupAPI/Newdev adapter implementation remains a later
+separately authorized boundary; this phase does not authorize any live driver
+or device operation.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

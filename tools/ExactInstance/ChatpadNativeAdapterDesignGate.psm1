@@ -11,9 +11,81 @@ function Get-NativeScaffoldConstants {
         production_adapter_id = 'chatpad-windows-exact-instance-adapter-v1'
         synthetic_adapter_id = 'chatpad-fake-exact-instance-adapter-v1'
         execution_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
-        scaffold_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT'
+        scaffold_gate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
+        source_audit_result = 'AUDIT PASS'
+        source_audit_branch = 'feature/runtime-bringup-native-interop-source-boundary'
+        source_audit_commit = 'dbba70d74e99c211d47187697e19e528b381520a'
+        source_audit_artifact_directory = 'artifacts/logs/independent-native-interop-source-audit-dbba70d/'
+        source_audit_artifact_inventory = 'artifact-inventory.json'
+        source_audit_artifact_inventory_sha256 = '198124D0949A9DD987CD154A09D0DC55DDFEB79C6A2E63839E8FB19BD2202967'
         supported_operations = @('Apply', 'Restore', 'Restart')
     }
+}
+
+function Get-NativeSourceAuditAcceptanceRecord {
+    $constants = Get-NativeScaffoldConstants
+    [pscustomobject][ordered]@{
+        verdict = $constants.source_audit_result
+        audited_branch = $constants.source_audit_branch
+        audited_commit = $constants.source_audit_commit
+        audit_artifact_directory = $constants.source_audit_artifact_directory
+        artifact_inventory = $constants.source_audit_artifact_inventory
+        artifact_inventory_sha256 = $constants.source_audit_artifact_inventory_sha256
+        strict_read_only = $true
+        native_compilation_occurred = $false
+        native_loading_occurred = $false
+        native_invocation_occurred = $false
+        device_query_occurred = $false
+        windows_mutation_occurred = $false
+        source_boundary_accepted = $true
+        compile_only_validation_authorized = $false
+        compile_only_validation_performed = $false
+        structure_layout_cbsize_validated = $false
+    }
+}
+
+function Add-NativeAuditAcceptanceFields {
+    param([Parameter(Mandatory)][object]$Record)
+    $constants = Get-NativeScaffoldConstants
+    $audit = Get-NativeSourceAuditAcceptanceRecord
+    if ($Record.PSObject.Properties['current_gate']) {
+        $Record.current_gate = $constants.scaffold_gate
+    }
+    foreach ($entry in @(
+        @{ Name='source_audit_result'; Value=$constants.source_audit_result },
+        @{ Name='source_audit_accepted'; Value=$true },
+        @{ Name='source_audit_commit'; Value=$constants.source_audit_commit },
+        @{ Name='compile_only_validation_authorized'; Value=$false },
+        @{ Name='compile_only_validation_performed'; Value=$false },
+        @{ Name='native_compilation_performed'; Value=$false },
+        @{ Name='native_loading_performed'; Value=$false },
+        @{ Name='native_invocation_performed'; Value=$false },
+        @{ Name='structure_layout_cbsize_validated'; Value=$false },
+        @{ Name='source_audit'; Value=$audit }
+    )) {
+        if ($Record.PSObject.Properties[$entry.Name]) {
+            $Record.($entry.Name) = $entry.Value
+        } else {
+            $Record | Add-Member -NotePropertyName $entry.Name -NotePropertyValue $entry.Value
+        }
+    }
+    $Record
+}
+
+function Get-ChatpadNativeInteropCallPlan {
+    [CmdletBinding(PositionalBinding = $false)]
+    param([Parameter(Mandatory)][ValidateSet('Apply','Restore','Restart')][string]$Operation)
+    $plan = ChatpadNativeInteropSourceBoundary\Get-ChatpadNativeInteropCallPlan -Operation $Operation
+    Add-NativeAuditAcceptanceFields -Record $plan
+}
+
+function Get-ChatpadNativeInteropSourceBoundaryContract {
+    $contract = ChatpadNativeInteropSourceBoundary\Get-ChatpadNativeInteropSourceBoundaryContract
+    [void](Add-NativeAuditAcceptanceFields -Record $contract)
+    foreach ($plan in @($contract.call_plans)) {
+        [void](Add-NativeAuditAcceptanceFields -Record $plan)
+    }
+    $contract
 }
 
 function ConvertTo-NativeIdentifierRecord {
@@ -69,6 +141,15 @@ function New-ChatpadProductionNativeAdapter {
         native_compilation_permitted = $false
         native_loading_permitted = $false
         native_invocation_permitted = $false
+        native_compilation_performed = $false
+        native_loading_performed = $false
+        native_invocation_performed = $false
+        source_audit_result = $constants.source_audit_result
+        source_audit_accepted = $true
+        source_audit_commit = $constants.source_audit_commit
+        compile_only_validation_authorized = $false
+        compile_only_validation_performed = $false
+        structure_layout_cbsize_validated = $false
         device_queries_available = $false
         windows_mutation_available = $false
         future_elevation_required = $true
@@ -269,6 +350,15 @@ function Invoke-ChatpadNativeAdapterOperation {
         native_compilation_permitted = $false
         native_loading_permitted = $false
         native_invocation_permitted = $false
+        native_compilation_performed = $false
+        native_loading_performed = $false
+        native_invocation_performed = $false
+        source_audit_result = $constants.source_audit_result
+        source_audit_accepted = $true
+        source_audit_commit = $constants.source_audit_commit
+        compile_only_validation_authorized = $false
+        compile_only_validation_performed = $false
+        structure_layout_cbsize_validated = $false
         device_queries_available = $false
         windows_mutation_available = $false
         execution_attempted = $false
@@ -464,6 +554,7 @@ function Get-ChatpadNativeAdapterDesignContract {
         native_execution_status = 'NOT_IMPLEMENTED'
         current_gate = $constants.scaffold_gate
         capability_blocker = $constants.execution_blocker
+        source_audit = Get-NativeSourceAuditAcceptanceRecord
         source_boundary = $interop
         module_state_introspectable_by_same_process_callers = $true
         caller_supplied_mutation_capability_accepted = $false

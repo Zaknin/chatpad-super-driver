@@ -4,7 +4,7 @@ $ErrorActionPreference = 'Stop'
 $script:PlanSchema = 'chatpad-exact-instance-operation-plan-v1'
 $script:SnapshotSchema = 'chatpad-exact-instance-restoration-snapshot-v1'
 $script:EvidenceSchema = 'chatpad-exact-instance-operation-evidence-v1'
-$script:PendingAuditBlocker = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT'
+$script:PendingAuditBlocker = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
 $script:LiveAdapterBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
 $script:CanonicalJsonVersion = 'chatpad-canonical-json-v1'
 $script:AllowedModes = @('Plan','Apply','Restore','Verify')
@@ -923,7 +923,7 @@ function Test-ChatpadExactInstanceEvidence {
         if(-not(Test-ChatpadExactArrayProperty $Evidence 'state_transitions')-or@(Get-ChatpadExactProperty $Evidence 'state_transitions' @()).Count-eq0){$defects.Add('state-transitions-invalid')}
         if(-not(Test-ChatpadExactArrayProperty $Evidence 'adapter_calls')){$defects.Add('adapter-calls-invalid')}
         if([string](Get-ChatpadExactProperty $Evidence 'readiness' '')-ne'BLOCKED'){$defects.Add('readiness-not-blocked')}
-        if([string](Get-ChatpadExactProperty $Evidence 'current_gate' '')-ne$script:PendingAuditBlocker){$defects.Add('pending-audit-gate-missing')}
+        if([string](Get-ChatpadExactProperty $Evidence 'current_gate' '')-ne$script:PendingAuditBlocker){$defects.Add('compile-only-validation-gate-missing')}
         if([string](Get-ChatpadExactProperty $Evidence 'capability_blocker' '')-ne$script:LiveAdapterBlocker){$defects.Add('native-adapter-execution-blocker-missing')}
         $uncertainty=[string](Get-ChatpadExactProperty $Evidence 'uncertainty_status' '')
         if($uncertainty-notin@('none','active','recovered')){$defects.Add('uncertainty-status-invalid')}

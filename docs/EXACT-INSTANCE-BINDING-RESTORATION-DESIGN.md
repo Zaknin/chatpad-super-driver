@@ -32,7 +32,7 @@ It does not compile, load, or invoke a live SetupAPI/Newdev adapter. The
 current production adapter has a declaration-only native interop source
 boundary and deterministic non-executing call plans. No driver or driver-store
 operation is authorized. Live readiness is `BLOCKED`; the current gate is
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`, and the downstream
+`BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`, and the downstream
 capability blocker is `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ### Remediated trust and serialization contracts

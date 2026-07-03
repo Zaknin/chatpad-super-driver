@@ -8,8 +8,8 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-interop-source-boundary` implements a
-declaration-only SetupAPI/Newdev source boundary for the non-executing
+Branch `feature/runtime-bringup-native-interop-source-audit-acceptance` records
+acceptance of the declaration-only SetupAPI/Newdev source boundary for the non-executing
 production native adapter. The future API sequence, structures, driver-node
 identity evidence, exact-instance binding/restoration proof, restart/reboot
 separation, error taxonomy, and source-boundary guard are documented in
@@ -22,6 +22,9 @@ The declaration source and static boundary validator live under
 - Implementation commits:
   `2730d037bcbccf4de3dc51e4961922eff98fff7b` and
   `a05c7e3fffa2968777824a3a2efe4f286449bdc5`.
+- Accepted source audit commit: `dbba70d74e99c211d47187697e19e528b381520a`.
+- Source audit verdict: `AUDIT PASS`; artifacts are under
+  `artifacts/logs/independent-native-interop-source-audit-dbba70d/`.
 - Expected finalization commit: the commit containing this document, the
   regenerated readiness manifest, and continuity updates.
 - Production adapter identity: `chatpad-windows-exact-instance-adapter-v1`.
@@ -32,9 +35,9 @@ The declaration source and static boundary validator live under
 - No exported native adapter gate function accepts a caller-supplied mutation
   capability, token, sentinel, secret, object, or equivalent authorization
   value.
-- Exact-instance suite: `PASS`, 171 tests and 709 assertions under Windows
+- Exact-instance suite: `PASS`, 171 tests and 718 assertions under Windows
   PowerShell 5.1 and PowerShell 7.
-- Full readiness suite: `PASS`, 475 fixtures and 2,433 assertions under
+- Full readiness suite: `PASS`, 475 fixtures and 2,442 assertions under
   Windows PowerShell 5.1 and PowerShell 7.
 - PowerShell inventory: 45 `.ps1`, eight `.psm1`, 53 total; AST errors `0`.
 - Native source-boundary guard: `PASS`, 71 tracked source/build files scanned,
@@ -49,9 +52,12 @@ The declaration source and static boundary validator live under
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
+- Current gate: `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
+- Native source remains uncompiled, unloaded, and uninvoked. Structure layout,
+  size, `cbSize`, marshaling metadata, and compiler diagnostics remain
+  unvalidated until a separately authorized compile-only phase.
 
 ## Exact-instance framework status
 
@@ -679,11 +685,10 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only source audit of the native SetupAPI/Newdev declaration
-and wrapper boundary on `feature/runtime-bringup-native-interop-source-boundary`,
-starting from the finalization commit for this branch. The audit must confirm
-allowlisted declaration isolation, no build references, no native compilation,
-loading, invocation, device query, Windows mutation, or generated binaries,
-deterministic blocked operation evidence for `Apply`, `Restore`, and
-`Restart`, zero live/device/Windows/native-operation counters, and the final
-blocker `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
+Separately authorized compile-only native interop validation on
+`feature/runtime-bringup-native-interop-source-audit-acceptance`, starting from
+the finalization commit for this branch. The phase must use an isolated
+non-production harness, avoid loading compiled output, avoid native invocation,
+avoid device query and Windows mutation, validate structure sizes, `cbSize`,
+marshaling metadata, and compiler diagnostics, and record that any compiled
+artifact requires separate independent audit before loading or invocation.

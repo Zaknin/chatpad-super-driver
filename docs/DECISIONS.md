@@ -4,14 +4,44 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Supersede native interop source-audit gate with compile-only validation gate
+
+**Decision:** The independent source audit for the declaration-only
+SetupAPI/Newdev boundary is accepted with verdict `AUDIT PASS`, so current
+readiness records now use
+`BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED` instead of the
+historical `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT` gate.
+The downstream blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+**Rationale:** The audit accepted the source boundary as declaration-only and
+non-executing, but it did not compile the declarations, validate structure
+sizes or `cbSize`, load an assembly, invoke native APIs, query devices, or
+mutate Windows. The next honest blocker is therefore lack of explicit
+compile-only validation authorization, not lack of source audit.
+
+**Alternatives rejected:** Marking the adapter runtime-ready, treating source
+audit acceptance as compile validation, editing the audited NativeInterop
+source files only to change status text, authorizing native loading or
+invocation, or folding compile-only validation into production build/package
+paths.
+
+**Consequences:** Current-state producers, validators, tests, generated
+readiness evidence, and docs report the compile-only-not-authorized gate.
+Native source hashes remain bound to the accepted source implementation.
+Compile-only validation must be a separate authorized phase in an isolated
+non-production harness, and any compiled artifact requires separate
+independent audit before loading or invocation.
+
 ## 2026-07-03 - Keep SetupAPI/Newdev interop as declaration-only source until independent audit
 
-**Decision:** The native SetupAPI/Newdev boundary may declare allowlisted
+**Decision:** In the source-boundary implementation phase, the native
+SetupAPI/Newdev boundary could declare allowlisted
 `setupapi.dll` and `newdev.dll` P/Invoke signatures and typed structure
 contracts in isolated source under `tools/ExactInstance/NativeInterop/`, but it
 must not compile, load, invoke, reference from build files, generate binaries,
 query devices, or mutate Windows in this phase. The final gate is
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
+the historical `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
 
 **Rationale:** The next useful step after accepting the non-executing adapter
 scaffold is source-level review of the exact Win32 signatures, ownership

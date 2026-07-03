@@ -7,11 +7,13 @@ This branch contains a source-level, declaration-only SetupAPI/Newdev interop bo
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT`.
+- Current gate: `BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
 - Live device queries, native operations, and Windows mutations performed: `0`.
+- Source audit verdict: `AUDIT PASS` for audited commit
+  `dbba70d74e99c211d47187697e19e528b381520a`.
 
 Authoritative source files:
 
@@ -37,7 +39,7 @@ The allowlisted declaration file contains 13 `DllImport` signatures for `setupap
 - `SetupDiSetSelectedDriverW`
 - `DiInstallDevice`
 
-The current declaration set intentionally excludes Configuration Manager APIs, DIFx APIs, DevCon, PnPUtil, WMI/CIM mutation, service mutation, runtime compilation, and native loading. Any future addition requires a separate authorized implementation task and independent source audit.
+The current declaration set intentionally excludes Configuration Manager APIs, DIFx APIs, DevCon, PnPUtil, WMI/CIM mutation, service mutation, runtime compilation, and native loading. The accepted source boundary remains uncompiled, unloaded, and uninvoked. Any future addition requires a separate authorized implementation task and independent source audit.
 
 ## Structure And Ownership Boundary
 
@@ -108,8 +110,8 @@ G78-G132 add source-boundary coverage for:
 - fail-closed public operation behavior with source declarations present;
 - module/caller integrity and regenerated contract metadata;
 - complete error mapping; and
-- final source-audit gate and zero live/native/device/Windows operation accounting.
+- accepted source-audit gate, compile-only validation not authorized, and zero live/native/device/Windows operation accounting.
 
 ## Next Boundary
 
-The next task is an independent read-only source audit of this declaration and wrapper boundary. Passing that audit would still not authorize live execution. A future native implementation, native compilation/loading/invocation, or live device operation requires a separate explicit task, separate evidence, independent audit, and explicit live authorization.
+The next task is a separately authorized compile-only validation phase in an isolated non-production harness. That phase may validate structure layout, size, `cbSize`, marshaling metadata, and compiler diagnostics, but it must not load compiled output, resolve entry points, invoke native APIs, query devices, or mutate Windows. A compiled artifact requires a separate independent audit before loading or invocation.

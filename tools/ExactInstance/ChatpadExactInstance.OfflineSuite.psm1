@@ -113,7 +113,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     $results=[Collections.Generic.List[object]]::new()
     $script:CrossRuntimeMatrix=$null
     $nativeOperationBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
-    $scaffoldAuditGate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT'
+    $scaffoldAuditGate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
 
     $results.Add((Invoke-ChatpadExactCase T1 'two devices with identical hardware IDs' {
         $e=New-ChatpadExactSuiteEnvironment
@@ -822,7 +822,7 @@ foreach(`$name in @('ProductionNativeAdapterId','SyntheticAdapterId','SupportedN
         $r=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Synthetic:$false
         [pscustomobject]@{checks=@(($r.result-eq'BLOCKED'),($r.result_code-eq$nativeOperationBlocker),($r.current_gate-eq$scaffoldAuditGate));details=$r}
     }))
-    $results.Add((Invoke-ChatpadExactCase G67 'final scaffold gate remains pending independent scaffold audit' {
+    $results.Add((Invoke-ChatpadExactCase G67 'final scaffold gate records compile-only validation is not authorized' {
         $contract=Get-ChatpadNativeAdapterDesignContract
         $adapter=New-ChatpadProductionNativeAdapter
         [pscustomobject]@{checks=@(($contract.current_gate-eq$scaffoldAuditGate),($adapter.current_gate-eq$scaffoldAuditGate),($contract.live_adapter_status-eq'SCAFFOLD_NON_EXECUTING'),($adapter.native_interop_implemented-eq$false));details=[pscustomobject]@{contract=$contract;adapter=$adapter}}
@@ -1071,7 +1071,7 @@ foreach(`$name in `$names){`$module.SessionState.PSVariable.Set(`$name,'PASS')}
         @{ id='G89'; title='native interop declarations do not include public callable surface'; body={ $i=Get-ChatpadNativeInteropDeclarationInventory; $text=Get-Content -Raw (Join-Path (git rev-parse --show-toplevel).Trim() $i.declaration_relative_path); [pscustomobject]@{checks=@(($text-notmatch'\bpublic\s+'),($text-match'\binternal\s+static\s+extern\b'),($text-match'internal static class SetupApiNewdevDeclarations'),($text-notmatch'Main\s*\('));details=[pscustomobject]@{path=$i.declaration_relative_path}} } },
         @{ id='G90'; title='native interop source boundary reports no generated binaries'; body={ $b=Test-ChatpadNativeInteropSourceBoundary; [pscustomobject]@{checks=@(($b.native_interop_binary_count-eq0),(@($b.defects).Count-eq0),($b.build_reference_file_count-ge0));details=$b} } },
         @{ id='G91'; title='native source boundary guard allows only approved declaration matches'; body={ $g=Test-ChatpadNativeExecutableGuard; [pscustomobject]@{checks=@(($g.result-eq'PASS'),($g.result_code-eq'NATIVE_SOURCE_BOUNDARY_GUARD_VALID'),($g.match_count-eq0),($g.approved_declaration_match_count-ge1),($g.source_boundary.result-eq'PASS'));details=$g} } },
-        @{ id='G92'; title='native source boundary contract remains non compiling'; body={ $c=Get-ChatpadNativeInteropSourceBoundaryContract; [pscustomobject]@{checks=@(($c.native_compilation_permitted-eq$false),($c.native_loading_permitted-eq$false),($c.native_invocation_permitted-eq$false),($c.windows_device_query_permitted-eq$false),($c.windows_mutation_permitted-eq$false));details=$c} } },
+        @{ id='G92'; title='native source boundary contract remains non compiling'; body={ $c=Get-ChatpadNativeInteropSourceBoundaryContract; [pscustomobject]@{checks=@(($c.native_compilation_permitted-eq$false),($c.native_loading_permitted-eq$false),($c.native_invocation_permitted-eq$false),($c.windows_device_query_permitted-eq$false),($c.windows_mutation_permitted-eq$false),($c.source_audit_result-eq'AUDIT PASS'),($c.compile_only_validation_authorized-eq$false));details=$c} } },
         @{ id='G93'; title='native source declaration is not referenced by build files'; body={ $b=Test-ChatpadNativeInteropSourceBoundary; [pscustomobject]@{checks=@(($b.result-eq'PASS'),(@($b.defects|Where-Object id -eq 'declaration-referenced-by-build-file').Count-eq0));details=$b} } },
         @{ id='G94'; title='native source boundary remains outside production driver sources'; body={ $i=Get-ChatpadNativeInteropDeclarationInventory; [pscustomobject]@{checks=@(($i.declaration_relative_path-like'tools/ExactInstance/NativeInterop/*'),($i.declaration_relative_path-notlike'src/*'),($i.declaration_relative_path-notlike'legacy/*'),($i.declaration_relative_path-notlike'package/*'));details=$i} } },
         @{ id='G95'; title='native source boundary contains no Add-Type or runtime compiler path'; body={ $i=Get-ChatpadNativeInteropDeclarationInventory; $text=Get-Content -Raw (Join-Path (git rev-parse --show-toplevel).Trim() $i.declaration_relative_path); [pscustomobject]@{checks=@(($text-notmatch('Add-'+'Type')),($text-notmatch'CSharpCodeProvider'),($text-notmatch'csc\.exe'),($text-notmatch'DotNetCompilerPlatform'));details=[pscustomobject]@{path=$i.declaration_relative_path}} } },
@@ -1110,8 +1110,8 @@ foreach(`$name in `$names){`$module.SessionState.PSVariable.Set(`$name,'PASS')}
         @{ id='G128'; title='native error mapping records unexpected exception as controlled failure'; body={ $m=Get-ChatpadNativeInteropErrorMapping; $row=@($m|Where-Object code -eq 'UNEXPECTED_NATIVE_EXCEPTION')[0]; [pscustomobject]@{checks=@(($row.controlled_failure-eq$true),($row.manual_recovery_required-eq$true),($row.retry_prohibited-eq$true));details=$row} } },
         @{ id='G129'; title='native interop source boundary has stable fixture group cardinality'; body={ $new=@($results|Where-Object{$_.fixture_id-match'^G(7[8-9]|8[0-9]|9[0-9]|10[0-9]|11[0-9]|12[0-9]|13[0-2])$'}); [pscustomobject]@{checks=@(($new.Count-eq51),(@($new|Where-Object fixture_result -ne 'PASS').Count-eq0),(@($new|Where-Object assertion_count -le 0).Count-eq0));details=[pscustomobject]@{ids=@($new|ForEach-Object fixture_id);count=$new.Count}} } },
         @{ id='G130'; title='native interop source boundary accounting remains zero live operations'; body={ $ops=@(('Apply','Restore','Restart')|ForEach-Object{Invoke-ChatpadNativeAdapterOperation -Operation $_ -AdapterName 'chatpad-windows-exact-instance-adapter-v1'}); [pscustomobject]@{checks=@(([int](($ops|Measure-Object native_operations_performed -Sum).Sum)-eq0),([int](($ops|Measure-Object live_device_queries_performed -Sum).Sum)-eq0),([int](($ops|Measure-Object windows_mutations_performed -Sum).Sum)-eq0));details=$ops} } },
-        @{ id='G131'; title='native interop final gate is independent source audit'; body={ $a=New-ChatpadProductionNativeAdapter; $c=Get-ChatpadNativeAdapterDesignContract; $r=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'; [pscustomobject]@{checks=@(($a.current_gate-eq$scaffoldAuditGate),($c.current_gate-eq$scaffoldAuditGate),($r.current_gate-eq$scaffoldAuditGate),($r.capability_blocker-eq$nativeOperationBlocker));details=[pscustomobject]@{adapter=$a;contract=$c.current_gate;operation=$r.current_gate}} } },
-        @{ id='G132'; title='native interop continuation blocker is source audit not live execution'; body={ $c=Get-ChatpadNativeInteropSourceBoundaryContract; [pscustomobject]@{checks=@(($c.current_gate-eq$scaffoldAuditGate),($c.capability_blocker-eq$nativeOperationBlocker),($c.native_source_declarations_present-eq$true),($c.native_invocation_permitted-eq$false));details=$c} } }
+        @{ id='G131'; title='native interop source audit acceptance is recorded'; body={ $a=New-ChatpadProductionNativeAdapter; $c=Get-ChatpadNativeAdapterDesignContract; $r=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'; [pscustomobject]@{checks=@(($a.current_gate-eq$scaffoldAuditGate),($c.current_gate-eq$scaffoldAuditGate),($r.current_gate-eq$scaffoldAuditGate),($r.capability_blocker-eq$nativeOperationBlocker),($a.source_audit_result-eq'AUDIT PASS'),($c.source_audit.verdict-eq'AUDIT PASS'),($r.source_audit_result-eq'AUDIT PASS'));details=[pscustomobject]@{adapter=$a;contract=$c.current_gate;operation=$r.current_gate;source_audit=$c.source_audit}} } },
+        @{ id='G132'; title='native interop continuation blocker is compile-only validation not authorized'; body={ $c=Get-ChatpadNativeInteropSourceBoundaryContract; [pscustomobject]@{checks=@(($c.current_gate-eq$scaffoldAuditGate),($c.capability_blocker-eq$nativeOperationBlocker),($c.native_source_declarations_present-eq$true),($c.native_invocation_permitted-eq$false),($c.compile_only_validation_authorized-eq$false),($c.native_compilation_performed-eq$false),($c.native_loading_performed-eq$false),($c.native_invocation_performed-eq$false));details=$c} } }
     )
     foreach($case in $nativeInteropCases){
         $results.Add((Invoke-ChatpadExactCase $case.id $case.title $case.body))
@@ -1219,7 +1219,7 @@ foreach(`$name in `$names){`$module.SessionState.PSVariable.Set(`$name,'PASS')}
             skipped_as_pass_count=0
         }
         live_installation_readiness='BLOCKED'
-        current_gate='BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT'
+        current_gate='BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
         capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         live_adapter_status='SCAFFOLD_NON_EXECUTING'
         live_binding_authorized=$false

@@ -1,14 +1,32 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-03T14:26:55.2108794Z",
+    "generated_utc":  "2026-07-03T15:18:44.3547909Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
-    "current_gate":  "BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT",
+    "current_gate":  "BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED",
     "capability_blocker":  "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
     "live_adapter_status":  "SCAFFOLD_NON_EXECUTING",
     "live_binding_authorized":  false,
+    "native_interop_source_audit":  {
+                                        "verdict":  "AUDIT PASS",
+                                        "audited_branch":  "feature/runtime-bringup-native-interop-source-boundary",
+                                        "audited_commit":  "dbba70d74e99c211d47187697e19e528b381520a",
+                                        "audit_artifact_directory":  "artifacts/logs/independent-native-interop-source-audit-dbba70d/",
+                                        "artifact_inventory":  "artifact-inventory.json",
+                                        "artifact_inventory_sha256":  "198124D0949A9DD987CD154A09D0DC55DDFEB79C6A2E63839E8FB19BD2202967",
+                                        "strict_read_only":  true,
+                                        "native_compilation_occurred":  false,
+                                        "native_loading_occurred":  false,
+                                        "native_invocation_occurred":  false,
+                                        "device_query_occurred":  false,
+                                        "windows_mutation_occurred":  false,
+                                        "source_boundary_accepted":  true,
+                                        "compile_only_validation_authorized":  false,
+                                        "compile_only_validation_performed":  false,
+                                        "structure_layout_cbsize_validated":  false
+                                    },
     "repository":  {
-                       "branch":  "feature/runtime-bringup-native-interop-source-boundary",
+                       "branch":  "feature/runtime-bringup-native-interop-source-audit-acceptance",
                        "frozen_baseline_commit":  "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
                        "prior_readiness_implementation_commit":  "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
                        "prior_readiness_finalization_commit":  "88e3cbba3a64828322b7c703765e6b1e2369f698",
@@ -25,14 +43,14 @@
                                   },
     "readiness":  {
                       "fixture_count":  475,
-                      "fixture_assertion_sum":  2433,
+                      "fixture_assertion_sum":  2442,
                       "harness_result_record_count":  6,
                       "harness_assertion_sum":  6,
                       "total_result_record_count":  475,
-                      "assertion_count":  2433,
-                      "record_assertion_sum":  2433,
+                      "assertion_count":  2442,
+                      "record_assertion_sum":  2442,
                       "category_record_sum":  475,
-                      "category_assertion_sum":  2433,
+                      "category_assertion_sum":  2442,
                       "assertion_accounting_result":  "PASS",
                       "unassigned_assertion_count":  0,
                       "off_ledger_assertion_count":  0,
@@ -92,7 +110,7 @@
                                               {
                                                   "category":  "exact-instance-offline",
                                                   "record_count":  171,
-                                                  "assertion_count":  709
+                                                  "assertion_count":  718
                                               },
                                               {
                                                   "category":  "harness-self-test",
@@ -241,7 +259,7 @@
                       "runtime_observation_gates_blocked_or_unavailable":  25,
                       "exact_instance_framework_result":  "PASS",
                       "exact_instance_offline_test_count":  171,
-                      "exact_instance_offline_assertion_count":  709,
+                      "exact_instance_offline_assertion_count":  718,
                       "synthetic_exact_binding_attempt_count":  15,
                       "synthetic_exact_restoration_attempt_count":  4,
                       "synthetic_exact_restart_attempt_count":  0,
@@ -277,7 +295,7 @@
                                                "tracked_total":  53,
                                                "analyzed_file_count":  53,
                                                "error_count":  0,
-                                               "warning_count":  188,
+                                               "warning_count":  189,
                                                "information_count":  990,
                                                "tool_failure_count":  0,
                                                "findings":  [
@@ -3014,70 +3032,77 @@
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  35,
+                                                                    "line":  47,
+                                                                    "severity":  "Warning",
+                                                                    "message":  "The cmdlet \u0027Add-NativeAuditAcceptanceFields\u0027 uses a plural noun. A singular noun should be used instead."
+                                                                },
+                                                                {
+                                                                    "rule_name":  "PSUseSingularNouns",
+                                                                    "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
+                                                                    "line":  107,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027Get-ChatpadNativeSupportedOperationIdentifiers\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  39,
+                                                                    "line":  111,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeZeroCounters\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseSingularNouns",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  39,
+                                                                    "line":  111,
                                                                     "severity":  "Warning",
                                                                     "message":  "The cmdlet \u0027New-ChatpadNativeZeroCounters\u0027 uses a plural noun. A singular noun should be used instead."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  50,
+                                                                    "line":  122,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadProductionNativeAdapter\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  87,
+                                                                    "line":  168,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadSyntheticAdapterMetadata\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSReviewUnusedParameter",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  115,
+                                                                    "line":  196,
                                                                     "severity":  "Warning",
                                                                     "message":  "The parameter \u0027RequireExplicitSelection\u0027 has been declared but not used."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  330,
+                                                                    "line":  420,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeReadOnlyDesignProbe\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSUseShouldProcessForStateChangingFunctions",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  334,
+                                                                    "line":  424,
                                                                     "severity":  "Warning",
                                                                     "message":  "Function \u0027New-ChatpadNativeMutationCapability\u0027 has verb that could change system state. Therefore, the function has to support \u0027ShouldProcess\u0027."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSReviewUnusedParameter",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  344,
+                                                                    "line":  434,
                                                                     "severity":  "Warning",
                                                                     "message":  "The parameter \u0027IsElevated\u0027 has been declared but not used."
                                                                 },
                                                                 {
                                                                     "rule_name":  "PSReviewUnusedParameter",
                                                                     "file":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-                                                                    "line":  345,
+                                                                    "line":  435,
                                                                     "severity":  "Warning",
                                                                     "message":  "The parameter \u0027AllowWindowsMutation\u0027 has been declared but not used."
                                                                 },
@@ -8355,7 +8380,7 @@
                                                                 {
                                                                     "rule_name":  "PSAvoidUsingPositionalParameters",
                                                                     "file":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
-                                                                    "line":  539,
+                                                                    "line":  545,
                                                                     "severity":  "Information",
                                                                     "message":  "Cmdlet \u0027New-ChatpadCountValidationDefect\u0027 has positional parameter. Please use named parameters instead of positional parameters when calling a command."
                                                                 },
@@ -8547,8 +8572,8 @@
                         "id":  "tracked-docs-decisions-md",
                         "relative_path":  "docs/DECISIONS.md",
                         "state":  "tracked",
-                        "byte_size":  130388,
-                        "sha256":  "35DD6906933B350E8620C8B4B29CDC94A4AC2818A2C552860DB35E9374863108",
+                        "byte_size":  132034,
+                        "sha256":  "95D60BC1BC55C87F419C41C3423285E8F43E5E734031E6C4E708111A160345FA",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8574,8 +8599,8 @@
                         "id":  "tracked-docs-exact-instance-binding-restoration-design-md",
                         "relative_path":  "docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md",
                         "state":  "tracked",
-                        "byte_size":  17157,
-                        "sha256":  "7B1360D3028469101F32E46E4B594A043326B4E0B4C794A6FB4B5930622FEF87",
+                        "byte_size":  17163,
+                        "sha256":  "5FBD57EF9171615A05D2211193C55121AD69530B198867FBA381B9DD0FD316E5",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8583,8 +8608,8 @@
                         "id":  "tracked-docs-native-setupapi-newdev-adapter-design-gate-md",
                         "relative_path":  "docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md",
                         "state":  "tracked",
-                        "byte_size":  5958,
-                        "sha256":  "2D36ED52DD169DEB98CE0D6F585A2F96A31AFF496CAB84C5942544509EC7B142",
+                        "byte_size":  6241,
+                        "sha256":  "D7E42C1C6455ED1DB1045F92739E4474D5F1E4BD0F5FE583F40F7EEE781A2F31",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8592,8 +8617,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  3390,
-                        "sha256":  "E56566BFDE1DD8F96F998EE32AAAAE1BBF1FD57097C07B7B3B4943F31DAF09AE",
+                        "byte_size":  3029,
+                        "sha256":  "291491140CD7DDC50BE84E49C4D3B4594A6B20F6A4343DF8540C76A00496D5B0",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8601,8 +8626,8 @@
                         "id":  "tracked-docs-porting-plan-md",
                         "relative_path":  "docs/PORTING-PLAN.md",
                         "state":  "tracked",
-                        "byte_size":  21596,
-                        "sha256":  "E2C4CED331B852EDB99CF730C4A0D3CA7772E200EE74A24F6FD688444838E14F",
+                        "byte_size":  21782,
+                        "sha256":  "6D6077BAC5B6B4444FB2D7BE5F7B5846F42CC56167EC9FC84BF1A0C6C4E570E9",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8610,8 +8635,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  4835,
-                        "sha256":  "41F3404B979B6374BFEFF43988F77E41D19D0923CA3D0C522FB3617FEB53276C",
+                        "byte_size":  4719,
+                        "sha256":  "3DFCAD39B26DF851E232FAD8EA822815DE855F63EFAE1D2DCDE4732D9F12C2EB",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8619,8 +8644,8 @@
                         "id":  "tracked-docs-runtime-bringup-readiness-md",
                         "relative_path":  "docs/RUNTIME-BRINGUP-READINESS.md",
                         "state":  "tracked",
-                        "byte_size":  33996,
-                        "sha256":  "0C292A4FFB16734B3863AD6943491E0EAF3CD7FD72CB790A87326AD363373D7B",
+                        "byte_size":  34359,
+                        "sha256":  "8E10A3D8A251321FEF20593052C42AAFBC032AEF84C902DCC0EFE0B6183C5921",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8628,8 +8653,8 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  489482,
-                        "sha256":  "C9AED0A226078AA8A4C1535B6F23D3BEE57AAAD32E695A05FE0E4146113D4CC7",
+                        "byte_size":  494182,
+                        "sha256":  "2046B557BB4C65DFF8D79549291C38F143217D5B18C7429B7900E9D1E68E5B6C",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8637,8 +8662,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-contracts-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.Contracts.psm1",
                         "state":  "tracked",
-                        "byte_size":  55632,
-                        "sha256":  "B0BBDE307822C038A171D8AEF2607E754050C20DF0FAD92B6AA3D9C7F2623892",
+                        "byte_size":  55648,
+                        "sha256":  "AFD6D83656F8FFC3B68C74FA7F5C63415E09E67E7AE9B66E434607D80BD46AFE",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8655,8 +8680,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadexactinstance-offlinesuite-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
                         "state":  "tracked",
-                        "byte_size":  134215,
-                        "sha256":  "76B607EFF3DE57495454D0FCF29229393BBD7544DE58E66577E413E38911049D",
+                        "byte_size":  134650,
+                        "sha256":  "64F77331CD2DF5A60F82FE7D6709299AC7B46C6F6306CE8A407B62977B68972A",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8673,8 +8698,8 @@
                         "id":  "tracked-tools-exactinstance-chatpadnativeadapterdesigngate-psm1",
                         "relative_path":  "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
                         "state":  "tracked",
-                        "byte_size":  36125,
-                        "sha256":  "7AEE640695F0FFE88D25B5232DEFB0B31FC6771B2CB7F52DD8DDB99C8A039D12",
+                        "byte_size":  40490,
+                        "sha256":  "61205AB309AA92E3F1A0C782C828277CA034B5E544A8190C8C16C900654E7AF6",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8709,8 +8734,8 @@
                         "id":  "tracked-tools-invoke-chatpadexactinstancebindingrestoration-ps1",
                         "relative_path":  "tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1",
                         "state":  "tracked",
-                        "byte_size":  3176,
-                        "sha256":  "D1518BF6C0306384AC90033DBB0750C35290EBB857E97A46E9D76696F7AB0125",
+                        "byte_size":  3182,
+                        "sha256":  "619EDDECDCD565EC06B10C65C5BB925F4AB2D17EC56203C28E0C1D175027B928",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8718,8 +8743,8 @@
                         "id":  "tracked-tools-new-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/New-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  11609,
-                        "sha256":  "FD139191808203716B5E122B3C1DE3CEC6A1BF76BD06DEFAD2FF7DE2203B866F",
+                        "byte_size":  12785,
+                        "sha256":  "63908C9F20B80D22048FDA5CC7DA0D8EF469D0CF4EFF513F5BE050B31FC79D02",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8754,8 +8779,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadiness-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadiness.ps1",
                         "state":  "tracked",
-                        "byte_size":  94287,
-                        "sha256":  "ED1A92E1E94A5E9D81192BDB0C4E063CE30D376D9F7DABEE841DAFC69963BEA4",
+                        "byte_size":  94635,
+                        "sha256":  "E94844C04F2E990021731FAB2D33E00BB26EB452E4D02CA8AE52358C7AAA12C5",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8763,8 +8788,8 @@
                         "id":  "tracked-tools-test-chatpadruntimebringupreadinessmanifest-ps1",
                         "relative_path":  "tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1",
                         "state":  "tracked",
-                        "byte_size":  50617,
-                        "sha256":  "00CB71F8B18DA29F6543B3394D3E69C649B3A014D0494EA74968442B5A38E788",
+                        "byte_size":  51261,
+                        "sha256":  "CFDF481D53A25336A3B15C954890E2B409A3A6427C31B4A088CF1BB1D8321E81",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8779,10 +8804,10 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/native-interop-source-boundary-final-a05c7e3/readiness-wps.json",
+                        "relative_path":  "artifacts/logs/native-interop-source-audit-acceptance-dbba70d/readiness-wps.json",
                         "state":  "ignored",
-                        "byte_size":  5693688,
-                        "sha256":  "3BF05764E568326D6D6EE54F7A0AC67FDA91D805C0EB385497E1C33A03609E43",
+                        "byte_size":  6457251,
+                        "sha256":  "B61DB858BD03C0E83FC4A21B77D6135D3BF15AEBE241C9B6D1BA43BAD9829669",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }
