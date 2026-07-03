@@ -7593,3 +7593,101 @@
   a separately authorized source/design phase for native adapter execution.
   Preserve `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` until executable
   native adapter behavior is implemented, audited, and explicitly authorized.
+
+## 2026-07-04T00:39:51+04:00 - Compile-only evidence remediation closeout
+
+- **Objective:** Close out the existing
+  `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`
+  work by preserving the already implemented evidence remediation, adding the
+  missing continuity entry, validating the remediated evidence and audit output
+  root behavior, and preparing the branch for publication.
+- **Starting state:** Repository root `C:/Dev/chatpad-super-driver`; branch
+  `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`;
+  starting HEAD `164903a8e890dfe1eb1709eeac1272aabcb81b3e`; no upstream
+  configured; `origin/feature/runtime-bringup-native-interop-compile-only-evidence-remediation`
+  absent before push; worktree dirty only in documentation/evidence files.
+- **Investigation:** Verified `ac32b5c8b165919913ef335be44e515f20308a52` is
+  an ancestor and that this branch adds three implementation commits:
+  `7089c7a` (`fix: stabilize compile-only evidence hashing`), `d3c86b0`
+  (`fix: harden compile evidence regressions`), and `164903a`
+  (`fix: isolate evidence identity helpers`). Dirty changes before this entry
+  were limited to `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/evidence/native-interop-compile-only-validation.json`, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Files modified by this closeout:** `docs/WORKLOG.md` and, after this
+  entry, `docs/evidence/runtime-bringup-readiness-manifest.json` to bind the
+  final continuity update. Existing dirty documentation/evidence changes from
+  the remediation were reviewed and preserved.
+- **Implementation details preserved:** Tracked text evidence identity is
+  `canonical_lf_text` with strict UTF-8, optional UTF-8 BOM removal, CRLF/CR
+  normalization to LF, and canonical SHA-256/byte size as authoritative. Raw
+  working-tree hash/size are informational. Compile outputs use
+  `raw_file_bytes`. Audit compile reruns require a distinct ignored
+  `artifacts/` output root and explicit `-NoLoad`, `-NoReflection`, and
+  `-NoInvoke`.
+- **Evidence validation:** `Test-ChatpadNativeInteropCompileOnlyValidationEvidence`
+  returned `PASS`, `NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_VALID`, zero
+  defects. All five compile-only tracked text inputs use `canonical_lf_text`;
+  all five clean Windows working-tree files used CRLF bytes and had
+  `raw_and_canonical_differ=true`; all canonical hashes matched the tracked
+  evidence.
+- **Exact and readiness validation:** Windows PowerShell 5.1 and PowerShell 7
+  runs of `tools/Test-ChatpadExactInstanceBindingRestoration.ps1` both returned
+  `PASS`, 209 tests, 839 assertions, and zero failures. Windows PowerShell 5.1
+  and PowerShell 7 runs of `tools/Test-ChatpadRuntimeBringupReadiness.ps1` both
+  returned framework status `PASS`, 2,563 assertions, and Windows mutation
+  count `0`.
+- **Audit output root validation:** `tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1`
+  with `-OutputRoot artifacts/logs/native-interop-evidence-remediation-closeout-20260703T203112Z/audit-output`
+  and `-NoLoad -NoReflection -NoInvoke` returned `PASS`, compiler exit code
+  `0`, warnings `0`, errors `0`, and 18 outputs. The same command with
+  `-OutputRoot "artifacts/logs/native-interop-evidence-remediation-closeout-20260703T203112Z/audit output with spaces"`
+  also returned `PASS`, compiler exit code `0`, warnings `0`, errors `0`, and
+  18 outputs. The invalid output root `closeout-invalid-output-root` failed
+  closed with `OutputRoot must remain under the repository artifacts
+  directory.` and no directory was created.
+- **Canonical output preservation:** `artifacts/compile-only/native-interop/`
+  had 18 files before and after the audit output root runs; the before/after
+  hash comparison found zero added, removed, or changed files.
+- **Safety validation:** Native source-boundary guard returned `PASS`,
+  `NATIVE_SOURCE_BOUNDARY_GUARD_VALID`, one approved declaration match, and
+  zero forbidden matches. Repository safety returned `PASS` with deployment,
+  signing, packaging, certificate creation, key creation, Windows mutation,
+  device query, and hardware access counts all `0`. Generated-file scan under
+  `artifacts/logs/native-interop-evidence-remediation-closeout-20260703T203112Z/`
+  found zero `.sys`, `.cat`, package, signing, staging, certificate, or key
+  outputs; managed `.dll`/`.pdb` files were present only under the ignored
+  audit compile output roots.
+- **Manifest validation:** After this entry was added, the readiness manifest
+  was regenerated with 32 entries and validated under Windows PowerShell 5.1
+  and PowerShell 7 with result `PASS` and zero defects. Manifest corruption
+  regression returned `PASS` under both runtimes with 23 cases and zero failed
+  cases. The manifest was regenerated again after the final documentation
+  correction so the committed manifest binds the committed continuity text.
+- **Artifact locations:** Closeout artifacts are under
+  `artifacts/logs/native-interop-evidence-remediation-closeout-20260703T203112Z/`,
+  including compile evidence validation, five-input canonical policy check,
+  exact/readiness suite outputs for both runtimes, audit output root evidence,
+  invalid-root rejection output, canonical output before/after inventories,
+  native guard output, repository safety output, and generated-file scan output.
+- **Safety:** No driver build/link, signing, CAT generation, packaging,
+  staging, driver-store mutation, installation, binding, loading, restoration,
+  restart, reboot, live device query, exact-instance access, hardware access,
+  Windows/service/registry/boot mutation, certificate/key/credential change,
+  native loading, native invocation, reflection inspection, produced assembly
+  execution, production driver/INF/project change, frozen binary change, or
+  `legacy/` change occurred.
+- **Remaining state:** Live readiness remains `BLOCKED`; current gate remains
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`;
+  capability blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Commit and push:** Pending at entry write time. The final commit and push
+  result are recorded in the final response after manifest regeneration,
+  manifest validation, final Git checks, commit, and push complete.
+- **Next task:** Independent read-only re-audit of the remediated compile-only
+  evidence and audit-output-root behavior, starting from the final pushed
+  branch head, before any native adapter execution work is considered.

@@ -32,8 +32,17 @@ It does not load or invoke a live SetupAPI/Newdev adapter. The current
 production adapter has a declaration-only native interop source boundary,
 deterministic non-executing call plans, and an isolated non-production
 compile-only validation harness. No driver or driver-store operation is
-authorized. Live readiness is `BLOCKED`; the current gate and capability
-blocker are both `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+authorized. Live readiness is `BLOCKED`; the current gate is
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`, and the
+capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+The first compile-only audit found a line-ending-sensitive evidence defect:
+LF-normalized tracked source identities were compared against raw CRLF bytes.
+The remediation does not change native declarations, call plans, adapter
+behavior, or operation mappings. Tracked text evidence now uses declared
+canonical LF identity, binary compile outputs retain raw-byte identity, and
+the compile runner supports isolated ignored audit output roots. Independent
+re-audit is required before the compile-only phase can be accepted.
 
 ### Remediated trust and serialization contracts
 

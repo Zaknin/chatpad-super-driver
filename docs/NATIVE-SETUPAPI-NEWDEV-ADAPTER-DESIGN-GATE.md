@@ -7,16 +7,16 @@ This branch contains a source-level, declaration-only SetupAPI/Newdev interop bo
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
 - Live device queries, native operations, and Windows mutations performed: `0`.
 - Source audit verdict: `AUDIT PASS` for audited commit
   `dbba70d74e99c211d47187697e19e528b381520a`.
-- Compile-only validation: `PASS`; evidence
+- Remediated compile-only validation: `PASS` pending independent re-audit; evidence
   `docs/evidence/native-interop-compile-only-validation.json`; validation ID
-  `native-interop-compile-only-20260703T170511Z`.
+  `native-interop-compile-only-20260703T194533Z`.
 
 Authoritative source files:
 
@@ -48,18 +48,31 @@ The current declaration set intentionally excludes Configuration Manager APIs, D
 
 ## Compile-Only Validation
 
-`tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1` validates the
-accepted source hashes, preprocesses the effective MSBuild graph, scans the
+The first independent compile-only audit failed because evidence recorded
+LF-normalized identities while validators compared raw CRLF working-tree
+bytes. All canonical LF hashes matched, so the failure was an identity-policy
+portability defect rather than a declaration, output, or safety defect.
+
+`tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1` now validates the
+accepted canonical source identities, preprocesses the effective MSBuild graph, scans the
 harness and preprocessed graph for execution/test/device/native patterns, runs
 `dotnet msbuild` restore/build for the isolated library project, hashes the
 temporary outputs under ignored `artifacts/compile-only/native-interop/`, and
 writes tracked evidence.
 
+Schema `chatpad-native-interop-compile-only-validation-v2` declares
+`canonical_lf_text` for tracked UTF-8 text inputs and records both canonical
+and informational raw working-tree identities. Compile outputs use
+`raw_file_bytes`. `-OutputRoot` with `-NoLoad -NoReflection -NoInvoke` redirects
+compile output, logs, and evidence into one ignored audit root without deleting
+the canonical output; roots outside ignored `artifacts/` fail closed.
+
 The validation used target framework `net9.0-windows10.0.26100.0`, platform
 `x64`, configuration `Release`, .NET SDK `9.0.315`, MSBuild
 `17.14.43+2a0eb78b3`, and Roslyn `4.14.0-3.26064.1 (450493a9)`. Compiler exit
-code, warning count, and error count were all `0`. The primary DLL output hash
-was `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA`.
+code, warning count, and error count were all `0`. Raw output hashes are
+recorded per run and are not claimed to be stable across commits or output
+roots.
 
 The compile-only evidence records all prohibited action counters as false:
 assembly loading, managed execution, native invocation, device query,
@@ -138,22 +151,21 @@ G78-G132 add source-boundary coverage for:
 - accepted source-audit gate, the historical compile-only-not-authorized gate,
   and zero live/native/device/Windows operation accounting.
 
-G133-G152 add compile-only validation coverage for:
+G133-G152 add the original compile-only validation coverage. G153-G170 add:
 
-- harness references to the approved audited source and no copied declarations;
-- no executable entry point, post-build hook, test project, runtime
-  orchestration, shell/device tooling, or native execution pattern;
-- valid tracked compile-only evidence, exact input hashes, output hashes,
-  toolchain identity, and readiness transition;
-- rejected missing/extra/duplicate inputs and rejected loading/execution claims;
-- historical source-audit evidence remaining read-only; and
-- current blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- canonical-LF identity and informational raw working-tree identity;
+- missing, unknown, raw-on-text, canonical-hash, canonical-size, and alias
+  corruption rejection;
+- raw-byte compile-output identity and prohibited-action rejection;
+- explicit audit-root and no-load/no-reflection/no-invoke parameters; and
+- the pending independent re-audit gate.
 
 ## Next Boundary
 
-The next task is an independent audit of the compile-only validation evidence or
-a separately authorized source/design phase for native adapter execution. No
+The next task is an independent re-audit of the remediated compile-only
+evidence and audit-output-root behavior. No
 task may load compiled output, resolve entry points, invoke native APIs, query
 devices, or mutate Windows unless that exact action is later authorized after
-independent audit. The current blocker remains
-`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+independent audit. The current gate is
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`; the
+capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

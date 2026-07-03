@@ -2,52 +2,54 @@
 
 ## Objective
 
-Design and implement only the next separately authorized native adapter execution boundary after compile-only validation, or perform an independent audit of the compile-only validation evidence before any execution work begins.
+Perform an independent read-only re-audit of the remediated native interop compile-only evidence and audit-output-root behavior.
 
 ## Required Starting Point
 
-- Branch: `feature/runtime-bringup-native-interop-compile-only-validation`.
-- Starting commit: the final commit titled `Validate native interop compilation without execution`.
-- Required first check: verify the branch, exact HEAD, upstream, ahead/behind state, and clean worktree before relying on these docs.
+- Branch: `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`.
+- Starting commit: the final evidence/continuity commit containing implementation commit `164903a8e890dfe1eb1709eeac1272aabcb81b3e`.
+- Verify exact HEAD, upstream, `0/0` ahead/behind, clean status, and unchanged native declaration/wrapper source before auditing.
 
 ## Current State
 
-- The declaration-only SetupAPI/Newdev source boundary passed independent source audit.
-- The accepted declarations were compiled by an isolated non-production harness.
-- Compile-only validation evidence is tracked at `docs/evidence/native-interop-compile-only-validation.json`.
-- Readiness remains `BLOCKED`.
-- Current gate and capability blocker are both `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Native loading, entry-point resolution, reflection inspection, native invocation, device query, exact-instance access, Windows mutation, driver build/link, signing, packaging, staging, installation, binding, restoration, restart, reboot, production driver source/INF changes, frozen binary changes, and `legacy/` changes remain unauthorized.
+- The prior audit failed only because LF evidence identities were validated against raw CRLF working-tree bytes.
+- Tracked text identity now uses explicit `canonical_lf_text`; raw working-tree identity is informational.
+- Compile outputs use `raw_file_bytes`.
+- Compile evidence schema is `chatpad-native-interop-compile-only-validation-v2`.
+- Readiness manifest schema is `chatpad-runtime-bringup-readiness-manifest-v4`.
+- The compile runner supports contained ignored audit output roots, including paths with spaces.
+- Live readiness is `BLOCKED`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`.
+- Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Inspect First
 
 - `AGENTS.md`
 - `docs/PROJECT-STATE.md`
 - `docs/DECISIONS.md`
-- `docs/WORKLOG.md`
+- Latest `docs/WORKLOG.md` entry
 - `docs/evidence/native-interop-compile-only-validation.json`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`
 - `tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1`
-- `tools/ExactInstance/CompileOnlyValidation/`
-- `tools/ExactInstance/NativeInterop/`
+- `tools/RuntimeBringup/ChatpadRuntimeBringup.Common.psm1`
 - `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`
-- `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
-- `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
 - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
 
 ## Safety Restrictions
 
-- Do not load or execute the compile-only output unless a later task explicitly authorizes that exact action after independent audit.
-- Do not invoke any SetupAPI/Newdev declaration.
-- Do not query devices, driver bindings, hardware, driver store state, services, registry, boot state, event logs, or certificates unless the next task explicitly authorizes that exact inspection.
-- Do not mutate Windows, registry, services, certificates, keys, credentials, boot state, scheduled tasks, devices, drivers, driver packages, or driver-store state.
-- Do not build, link, sign, package, stage, install, load, unload, bind, restore, restart, enable, disable, or remove a driver or device.
-- Keep generated outputs under ignored `artifacts/`.
-- Do not modify `legacy/`.
+- Do not load, reflect over, execute, or invoke the compiled assembly.
+- Do not load SetupAPI/Newdev, resolve entry points, invoke native APIs, query devices/bindings, or access hardware.
+- Do not build/link the driver, sign, package, stage, install, load, unload, bind, restore, restart, enable, disable, or remove a driver/device.
+- Do not mutate Windows, registry, services, certificates, keys, credentials, boot state, scheduled tasks, or system configuration.
+- Keep audit outputs under ignored `artifacts/`; do not modify `legacy/`.
 
 ## Acceptance Criteria
 
-- If the next task is an audit, independently verify the compile-only evidence, harness isolation, source hashes, output inventory, and prohibited-action counters without loading or invoking native code.
-- If the next task is implementation design, keep it source/design-only unless execution is explicitly authorized.
-- If execution is explicitly authorized in a later task, require a new gate, new evidence contract, and independent audit boundary before any live operation can be considered.
-- Preserve `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` until executable native adapter behavior is implemented, audited, and separately authorized.
+- Reproduce portable canonical identities in a clean CRLF checkout.
+- Verify raw source identity differences are informational and canonical mismatches fail closed.
+- Verify manifest policy corruption cases fail closed.
+- Safely rerun compile-only validation in an ignored audit root and a path containing spaces.
+- Prove canonical output is not deleted by audit runs.
+- Verify all outputs remain raw-byte identified and no load/reflection/execution/invocation occurs.
+- Re-run exact, readiness, manifest, native guard, repository safety, generated-file, and Git checks.
+- Preserve the pending re-audit gate and native execution blocker.

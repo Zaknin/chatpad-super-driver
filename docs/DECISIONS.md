@@ -4,6 +4,34 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-03 - Canonicalize tracked text evidence and isolate audit compilation
+
+**Decision:** Evidence-bound tracked text uses `canonical_lf_text`: strict
+UTF-8, optional UTF-8 BOM removed, CRLF or CR normalized to LF, then UTF-8
+without BOM. Canonical SHA-256 and byte size are authoritative; raw
+working-tree SHA-256 and size are informational. Compile outputs use
+`raw_file_bytes`. Compile-only audit reruns must supply a distinct ignored
+`artifacts/` output root and explicit no-load, no-reflection, and no-invoke
+switches.
+
+**Rationale:** The first independent compile-only audit proved all five
+recorded LF identities matched canonical source content while a clean Windows
+checkout exposed CRLF bytes. Raw working-tree identity therefore was not a
+portable source boundary. Auditors also could not safely reproduce compilation
+because the runner hard-coded and deleted the canonical output root.
+
+**Alternatives rejected:** Recording CRLF-only hashes, silently normalizing
+without declaring policy, using raw hashes for tracked text, treating raw and
+canonical identity as interchangeable, or allowing audit runs to overwrite
+tracked evidence or canonical compile output.
+
+**Consequences:** Compile evidence schema v2 and readiness manifest schema v4
+declare identity policy per file. Missing, unknown, mixed, mismatched, or
+raw-on-tracked-text policies fail closed. Raw compile-output hashes may vary by
+commit or output path and are not presented as cross-run deterministic.
+Independent re-audit remains required; native execution is still unimplemented
+and unauthorized.
+
 ## 2026-07-03 - Accept compile-only native interop validation without execution
 
 **Decision:** The accepted declaration-only SetupAPI/Newdev source boundary may

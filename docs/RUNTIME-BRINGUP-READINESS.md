@@ -8,8 +8,9 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-interop-compile-only-validation` records
-the separately authorized compile-only validation of the accepted
+Branch `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`
+repairs the failed independent audit of the separately authorized compile-only
+validation of the accepted
 declaration-only SetupAPI/Newdev source boundary. The future API sequence,
 structures, driver-node identity evidence, exact-instance binding/restoration
 proof, restart/reboot separation, error taxonomy, source-boundary guard, and
@@ -27,8 +28,8 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `dbba70d74e99c211d47187697e19e528b381520a`.
 - Compile-only validation evidence:
   `docs/evidence/native-interop-compile-only-validation.json`, schema
-  `chatpad-native-interop-compile-only-validation-v1`, validation ID
-  `native-interop-compile-only-20260703T170511Z`.
+  `chatpad-native-interop-compile-only-validation-v2`, validation ID
+  `native-interop-compile-only-20260703T194533Z`.
 - Production adapter identity: `chatpad-windows-exact-instance-adapter-v1`.
 - Synthetic adapter identity: `chatpad-fake-exact-instance-adapter-v1`,
   selectable only with explicit synthetic mode.
@@ -42,24 +43,31 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   disabled.
 - Toolchain: .NET SDK `9.0.315`, MSBuild `17.14.43+2a0eb78b3`, Roslyn
   `4.14.0-3.26064.1 (450493a9)`.
-- Compile-only validation: `PASS`; compiler exit code `0`; warnings `0`;
-  errors `0`; produced file count `18`; primary DLL SHA-256
-  `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA`.
-- Exact-instance suite: `PASS`, 191 tests and 793 assertions under Windows
+- The prior independent audit returned `AUDIT FAIL`: five tracked input
+  identities and 30 manifest entries were line-ending-sensitive in a clean
+  CRLF checkout, while canonical LF identities matched exactly.
+- Remediated compile-only validation: `PASS` pending re-audit; compiler exit
+  code `0`; warnings `0`; errors `0`; produced file count `18`.
+- Exact-instance suite: `PASS`, 209 tests and 839 assertions under Windows
   PowerShell 5.1 and PowerShell 7.
-- Full readiness suite: `PASS`, 495 fixtures and 2,517 assertions under
+- Full readiness suite: `PASS`, 513 fixtures and 2,563 assertions under
   Windows PowerShell 5.1 and PowerShell 7.
-- Readiness manifest generation: `PASS`, 32 entries, framework status `PASS`,
+- Readiness manifest generation uses schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, framework status `PASS`,
   live installation readiness `BLOCKED`.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
   harness. Compiled output remains unloaded, unexecuted, unreflected, and
   uninvoked. Native adapter execution remains unimplemented.
+- Tracked text evidence uses explicit `canonical_lf_text`; raw working-tree
+  identity is informational. Compile outputs use `raw_file_bytes`.
+- Audit-root reruns are contained under ignored `artifacts/`, including paths
+  with spaces, and cannot delete the canonical output root.
 
 ## Exact-instance framework status
 

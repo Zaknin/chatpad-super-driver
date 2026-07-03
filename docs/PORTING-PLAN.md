@@ -3,9 +3,12 @@
 ## Current runtime bring-up readiness gate (2026-07-03)
 
 The native SetupAPI/Newdev interop source boundary passed independent source
-audit and was then compiled only through the isolated non-production harness on
-`feature/runtime-bringup-native-interop-compile-only-validation`, starting from
-`a5a1ddfe055481eec4ea4da57b664c0bd3189d22`. The production adapter identity is
+audit and was then compiled only through the isolated non-production harness.
+The first independent compile-only audit failed because LF evidence identities
+were compared to raw CRLF working-tree bytes. Canonical identities matched, and
+the output/harness/safety boundaries passed. The dedicated remediation branch
+is `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`,
+starting from `ac32b5c8b165919913ef335be44e515f20308a52`. The production adapter identity is
 `chatpad-windows-exact-instance-adapter-v1`; the synthetic test identity is
 `chatpad-fake-exact-instance-adapter-v1`. The final continuity commit is the
 commit containing this update and the regenerated readiness manifest.
@@ -29,24 +32,29 @@ explicitly non-executing, and independently source-audited. G133-G152 prove the
 isolated compile-only harness links the audited source without copying it,
 compiles cleanly, records source and output hashes, and still performs no
 loading, reflection, native invocation, device query, exact-instance access, or
-Windows mutation.
+Windows mutation. G153-G170 prove canonical text identity, informational raw
+identity, fail-closed hash-policy validation, raw compile-output identity,
+audit-root containment, and the pending re-audit transition.
 
 The exact-instance suite passes under Windows PowerShell 5.1 and PowerShell 7
-with 191 records and 793 assertions after the compile-only validation fixtures
+with 209 records and 839 assertions after the evidence-remediation fixtures
 are added. The full readiness suite passes under Windows PowerShell 5.1 and
-PowerShell 7 with 495 fixtures and 2,517 assertions. The authoritative
-readiness ledger is regenerated with 32 entries.
+PowerShell 7 with 513 fixtures and 2,563 assertions. The authoritative
+readiness ledger uses schema `chatpad-runtime-bringup-readiness-manifest-v4`.
 Framework status remains `PASS`. Live readiness remains `BLOCKED` with current
-gate and blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live
+gate `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT` and
+blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live
 binding, restoration, restart, observation, broad-success, device-query,
 native-operation, and Windows-mutation counter remains zero.
 
 The declaration and wrapper boundary passed independent source audit at
 `dbba70d74e99c211d47187697e19e528b381520a`. Compile-only validation evidence is
-tracked at `docs/evidence/native-interop-compile-only-validation.json` with
-validation ID `native-interop-compile-only-20260703T170511Z`. A native Windows
+tracked at `docs/evidence/native-interop-compile-only-validation.json` using
+explicit canonical text and raw output policies. A native Windows
 SetupAPI/Newdev adapter implementation remains a later separately authorized
 boundary; this phase does not authorize any live driver or device operation.
+The next task is an independent read-only re-audit of the remediated evidence
+and audit-output-root behavior.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 
