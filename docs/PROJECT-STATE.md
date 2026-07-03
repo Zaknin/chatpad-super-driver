@@ -1,13 +1,14 @@
 # Project State
 
-*Last updated: 2026-07-03 (native adapter scaffold integrity remediation finalized)*
+*Last updated: 2026-07-03 (native adapter scaffold integrity re-audit passed)*
 
 ## Current State
 
 - **Branch:** `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`.
 - **Starting point:** `b7f5f700c68af3846850b7ba69a34f7c8dd66614`, the native adapter composition-root scaffold finalization commit selected for integrity remediation.
 - **Implementation commit:** `60da3ee244eaa5c28cb5022748a41ca95e6474cc`, containing explicit primitive adapter/operation gates, fresh per-call scaffold constants, fail-closed object handling, manifest path forwarding repair, re-audit gating, and offline integrity regressions.
-- **Expected finalization commit:** the commit containing this file, the regenerated readiness manifest, and continuity updates.
+- **Remediation finalization commit:** `77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6`.
+- **Expected re-audit finalization commit:** the commit containing this file, the regenerated readiness manifest, and re-audit continuity updates.
 - **Accepted offline baseline:** commit `f49b5cbe9e6bba423cfb59313dbdc9be92c785ca`; manifest SHA-256 `35E97D8529C09F107A35A4024FA715F4CA0172F1890FD7DBB27EFEBD8DAB1088`.
 
 ## Native Adapter Scaffold
@@ -21,6 +22,7 @@
 - Public/exported native adapter APIs accept no caller-supplied capability, token, sentinel, secret, object, object method, or equivalent authorization value.
 - Native scaffold constants are re-created from literal values per call and are not trusted through mutable module state.
 - Static executable guards reject current declarations or invocations of SetupAPI/Newdev/native Windows mutation APIs in tracked PowerShell files.
+- Independent read-only scaffold integrity re-audit passed from starting commit `77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6`. The executable gate string remains `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT` until a later separately authorized transition changes it.
 
 ## Verified Results
 
@@ -29,7 +31,8 @@
 - Full runtime bring-up readiness under Windows PowerShell 5.1: framework `PASS`; 420 fixtures, 2,216 assertions; exact suite 116/492; live readiness `BLOCKED`.
 - Full runtime bring-up readiness under PowerShell 7: framework `PASS`; 420 fixtures, 2,216 assertions; exact suite 116/492; live readiness `BLOCKED`.
 - Regenerated readiness manifest: 25 entries; framework `PASS`; live readiness `BLOCKED`.
-- Manifest validation and corruption regression: `PASS`; 18 cases, zero failed cases.
+- Manifest validation and corruption regression: `PASS`; 18 cases, zero failed cases. Custom manifest-path corruption regression also passed in both runtimes with zero child manifest path mismatches.
+- Direct public native adapter probe: `PASS`; `Apply`, `Restore`, and `Restart` returned `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; omitted adapter, non-string adapter, non-string operation, synthetic-without-switch, positional extra, splatted capability-like, and pipeline inputs failed closed.
 - Complete PSScriptAnalyzer under Windows PowerShell 5.1: 52 files analyzed; errors `0`, warnings `187`, information `989`, tool failures `0`.
 - Native executable guard: `PASS`; 52 files scanned; zero native declaration or invocation matches.
 - AST parse inventory: `PASS`; 45 `.ps1`, seven `.psm1`, 52 total files, zero parse-error files.
@@ -46,6 +49,6 @@
 
 ## Unresolved Blockers
 
-- Independent read-only re-audit of the remediated production native adapter scaffold and composition-root wiring has not yet been performed.
 - Native SetupAPI/Newdev execution remains unimplemented and explicitly blocked.
-- Live execution remains blocked until a later implementation, audit, and explicit live authorization complete.
+- Live readiness remains blocked until a later implementation, independent audit, and explicit live authorization complete.
+- No live or executable native adapter implementation task is authorized by this re-audit result alone.

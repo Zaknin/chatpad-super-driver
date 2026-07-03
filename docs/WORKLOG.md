@@ -7206,3 +7206,123 @@
   `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`; do not
   proceed to executable native adapter implementation until that re-audit
   passes and a later task explicitly authorizes implementation.
+
+## 2026-07-03T17:13+04:00 - Native adapter scaffold integrity re-audit
+
+- **Objective:** Perform the independent read-only re-audit of the remediated
+  non-executing production native SetupAPI/Newdev adapter scaffold and
+  composition-root wiring. Confirm the remediation without implementing,
+  declaring, loading, invoking, installing, binding, restoring, restarting, or
+  otherwise executing native adapter behavior.
+- **Starting state:** Verified repository root
+  `C:/Dev/chatpad-super-driver`, branch
+  `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`,
+  starting commit `77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6`, clean tree,
+  upstream
+  `origin/feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`,
+  local/remote equality `0 0`, and required ancestry from
+  `b7f5f700c68af3846850b7ba69a34f7c8dd66614`.
+- **Documentation comparison:** `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+  `docs/NEXT-TASK.md`, and the latest worklog entry matched the real
+  remediation branch and stated next task. No start-of-task stale-documentation
+  correction was required before the audit. After the audit passed, current
+  state and next-task documents were updated so they no longer claim the
+  independent re-audit is still pending.
+- **Files inspected:** `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Audit findings:** Production adapter metadata remains stable,
+  non-synthetic, non-executing, and blocked by
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Public operation entry
+  points require explicit primitive string adapter and operation selections.
+  Omitted adapter selection, non-string adapter values, non-string operation
+  values, caller objects, synthetic adapter selection without explicit
+  synthetic mode, positional extras, splatted capability-like names, and
+  pipeline input fail closed. `Apply`, `Restore`, and `Restart` return
+  deterministic blocked operation evidence with native operation, live device
+  query, and Windows mutation counters at `0`.
+- **Direct probe correction:** The first direct audit probe failed because the
+  probe expected stale fail-closed result-code names
+  `INVALID_NATIVE_ADAPTER_IDENTIFIER` and `UNKNOWN_NATIVE_ADAPTER` for omitted
+  adapter and synthetic-without-switch cases. The actual code returned
+  `NATIVE_ADAPTER_SELECTION_REQUIRED` and
+  `SYNTHETIC_ADAPTER_REQUIRES_EXPLICIT_SYNTHETIC_MODE`, which are the correct
+  current fail-closed codes. The corrected direct probe passed.
+- **Exact-suite validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadExactInstanceBindingRestoration.ps1 -ImplementationCommit 77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6 -OutputPath artifacts\logs\native-adapter-integrity-reaudit-exact-suite-wps-77a3c3c.json`
+  and the matching `pwsh.exe` command. Both returned exit code `0` and
+  reported `PASS`, 116 tests, 492 assertions, and zero failed tests.
+- **Full-readiness validation:** Ran
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadRuntimeBringupReadiness.ps1`
+  and the matching `pwsh.exe` command, writing outputs to
+  `artifacts/logs/native-adapter-integrity-reaudit-readiness-wps-77a3c3c.json`
+  and
+  `artifacts/logs/native-adapter-integrity-reaudit-readiness-pwsh-77a3c3c.json`.
+  Both returned exit code `0` with framework status `PASS`, live readiness
+  `BLOCKED`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`, blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, 420 fixtures, 2,216
+  assertions, and `windows_mutation_count=0`.
+- **Manifest validation:** Default manifest validation passed under Windows
+  PowerShell 5.1 and PowerShell 7 with 25 entries. Corruption regression passed
+  under both runtimes with 18 cases and zero failed cases. Custom manifest-path
+  corruption regression also passed under both runtimes against
+  `artifacts/logs/native-adapter-integrity-reaudit-custom-manifest-copy-77a3c3c.json`,
+  with 18 cases, zero failed cases, zero child manifest path mismatches, and
+  zero false forwarding records. A final post-regeneration corruption rerun
+  first failed because the command incorrectly passed unsupported `-OutputPath`;
+  the corrected commands used shell redirection and passed under both runtimes.
+- **Additional validation:** Direct public native adapter probe passed after
+  correcting expected fail-closed code names. Complete PSScriptAnalyzer under
+  Windows PowerShell 5.1 returned exit code `0`, analyzed 52 tracked files, and
+  reported errors `0`, warnings `187`, information `989`, tool failures `0`,
+  and blanket suppression `false`. AST parse inventory returned `PASS`, 45
+  `.ps1`, seven `.psm1`, 52 total files, and zero parse-error files. The
+  AST-level native executable guard returned `PASS`, 52 scanned files and zero
+  prohibited native declaration or invocation matches. Pre-documentation
+  `git diff --check` returned exit code `0` and no output; the final
+  post-documentation `git diff --check` also returned exit code `0` with only
+  Git CRLF-normalization warnings for edited Markdown files.
+- **Repository safety:** `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-RepositorySafety.ps1`
+  reported `REPOSITORY SAFETY: PASS`. Deployment, signing, packaging,
+  certificate, key, Windows mutation, device-query, and hardware-access
+  counters were all `0`. No unexpected tracked artifacts, tracked evidence
+  files, non-ignored evidence files, generated output, certificate, private
+  key, forbidden binary, packaging file, or `legacy/` change was found.
+- **Files modified by re-audit continuity:** `docs/PROJECT-STATE.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NEXT-TASK.md`, `docs/WORKLOG.md`, and the regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Ignored evidence artifacts:** Re-audit outputs are under
+  `artifacts/logs/native-adapter-integrity-reaudit-*77a3c3c*`, including exact
+  suite, readiness, manifest default, manifest corruption, custom manifest
+  regression, native guard, AST parse, PSScriptAnalyzer, repository safety,
+  direct probe, manifest generation, final manifest validation, and
+  `git diff --check` logs. The initial failed direct probe is retained at
+  `artifacts/logs/native-adapter-integrity-reaudit-direct-probe-77a3c3c.json`
+  and the corrected pass is retained at
+  `artifacts/logs/native-adapter-integrity-reaudit-direct-probe-corrected-77a3c3c.json`.
+- **Safety:** No native API implementation, declaration, P/Invoke, Add-Type
+  native shim, DLL import, driver build/link, signing, CAT generation,
+  packaging, staging, driver-store mutation, installation, binding, loading,
+  restoration, restart, reboot, device query, hardware access,
+  Windows/service/registry/boot mutation, tracing, event-log export, protocol
+  traffic, input injection, certificate/credential change, production
+  source/INF/frozen binary change, or `legacy/` change occurred.
+- **Finalization and next task:** The expected re-audit finalization commit
+  contains the regenerated manifest and continuity updates. The exact next task
+  is to prepare the next separately authorized native SetupAPI/Newdev adapter
+  implementation task boundary on
+  `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`,
+  starting from that finalization commit. Live readiness remains blocked and
+  the executable gate still reports
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`; do not treat
+  the passed re-audit as live execution authorization.

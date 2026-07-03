@@ -1,6 +1,6 @@
 {
     "schema_version":  "chatpad-runtime-bringup-readiness-manifest-v3",
-    "generated_utc":  "2026-07-03T12:04:50.2172493Z",
+    "generated_utc":  "2026-07-03T13:21:05.6649996Z",
     "framework_status":  "PASS",
     "live_installation_readiness":  "BLOCKED",
     "current_gate":  "BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT",
@@ -8560,8 +8560,8 @@
                         "id":  "tracked-docs-exact-instance-binding-restoration-design-md",
                         "relative_path":  "docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md",
                         "state":  "tracked",
-                        "byte_size":  16918,
-                        "sha256":  "3A1D3A7AFE30549C141992BFC25F920DF0EDADA9711034A03CFA8DAAC1FE4D33",
+                        "byte_size":  17025,
+                        "sha256":  "1FC264FCFF6DF72AAC7926623ACE081582BA2F29F2BC53B62F42F9C81C04DC13",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8569,8 +8569,8 @@
                         "id":  "tracked-docs-native-setupapi-newdev-adapter-design-gate-md",
                         "relative_path":  "docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md",
                         "state":  "tracked",
-                        "byte_size":  13857,
-                        "sha256":  "AB0922991600D06A7073E1DEF76E19744A44E289849C309B5D639BFDF569913F",
+                        "byte_size":  14884,
+                        "sha256":  "D6513564819C62E23A422820BD6234C6F646E4EBC6C6DA3959CB1768F550D26B",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8578,8 +8578,8 @@
                         "id":  "tracked-docs-next-task-md",
                         "relative_path":  "docs/NEXT-TASK.md",
                         "state":  "tracked",
-                        "byte_size":  4690,
-                        "sha256":  "0D316FE71BFD82F338BA232B27ABFEA70666029B8485EA12A822B10EC415B2C4",
+                        "byte_size":  4263,
+                        "sha256":  "DFDBA21AFF4B9FD1856D65ADCFE3AE774146FA961021D874C9040E9B891BE7A3",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8596,8 +8596,8 @@
                         "id":  "tracked-docs-project-state-md",
                         "relative_path":  "docs/PROJECT-STATE.md",
                         "state":  "tracked",
-                        "byte_size":  4569,
-                        "sha256":  "90464A9C8B5F2A304F536A55124ADF65C99AEE3313750A758E6237EA1CCE5DAE",
+                        "byte_size":  5337,
+                        "sha256":  "9C1E0CE476937DF6C9025F695F824D2953D1ADEE40D8FB0DD2F9EA11FCAF2F9A",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8614,8 +8614,8 @@
                         "id":  "tracked-docs-worklog-md",
                         "relative_path":  "docs/WORKLOG.md",
                         "state":  "tracked",
-                        "byte_size":  473915,
-                        "sha256":  "881B4B8B863CA3B569266CDA2DB92A8883EC8546BB242AC140DFAF1809DF43ED",
+                        "byte_size":  482085,
+                        "sha256":  "071D9334888A880BC08F3BCBF9ECCF4495464F0048854DEFF2B5AC9FDE899817",
                         "result":  "VALIDATED",
                         "evidence_classification":  "synthetic"
                     },
@@ -8747,10 +8747,10 @@
                     },
                     {
                         "id":  "evidence-synthetic-suite",
-                        "relative_path":  "artifacts/logs/native-adapter-integrity-remediation-readiness-wps-60da3ee.json",
+                        "relative_path":  "artifacts/logs/native-adapter-integrity-reaudit-readiness-wps-77a3c3c.json",
                         "state":  "ignored",
                         "byte_size":  3563026,
-                        "sha256":  "8805933B7C2BFBAAD102465BBBCA3C5D810D7445445E4CC99D48B6C9F7ED8481",
+                        "sha256":  "DD72AF8AE1A6262BD12A8EE9C04F810A949928AC8790B2855073325981CE750E",
                         "result":  "PASS",
                         "evidence_classification":  "synthetic"
                     }

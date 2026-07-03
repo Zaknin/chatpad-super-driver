@@ -311,10 +311,11 @@ harness exceptions, and zero live or Windows mutation counters.
 
 ## 10. Remaining gates
 
-An independent read-only audit must verify the implementation commit,
-finalization commit, plan/evidence hashes, T1-T25 behavior, transition graph,
-critical call traces, static broad-operation guard, manifest reconciliation,
-and all zero live counters.
+The independent read-only re-audit of the remediated production native adapter
+scaffold and composition-root wiring passed from starting commit
+`77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6`. It revalidated the exact-instance
+contracts, manifest reconciliation, executable native guard, and all zero live
+counters without implementing or invoking native behavior.
 
 Only a later separately authorized task may implement and audit the native
 Windows adapter. That task must not reuse synthetic authorization and must not

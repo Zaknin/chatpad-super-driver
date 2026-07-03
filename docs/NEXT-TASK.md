@@ -2,30 +2,32 @@
 
 ## Objective
 
-Perform an independent read-only re-audit of the remediated non-executing
-production native SetupAPI/Newdev adapter scaffold and composition-root wiring.
-Do not implement or execute native adapter behavior.
+Prepare the next separately authorized native SetupAPI/Newdev adapter
+implementation task boundary. Do not implement, declare, load, invoke, install,
+bind, restore, restart, or otherwise execute native adapter behavior unless the
+user explicitly authorizes that exact implementation scope.
 
 ## Required Starting Point
 
 - Branch:
   `feature/runtime-bringup-native-adapter-scaffold-integrity-remediation`.
-- Starting commit: the finalization commit for this remediation task, after
-  implementation commit `60da3ee244eaa5c28cb5022748a41ca95e6474cc` and the
-  regenerated readiness manifest are present.
-- Before audit work, verify a clean tree, configured upstream, local/remote
-  equality, and ancestry from
+- Starting commit: the re-audit finalization commit containing this file, the
+  regenerated readiness manifest, and the worklog entry for the independent
+  scaffold integrity re-audit.
+- Required ancestry:
   `b7f5f700c68af3846850b7ba69a34f7c8dd66614`.
+- Before any next-task work, verify a clean tree, configured upstream,
+  local/remote equality, and the exact current HEAD.
 
 ## Current State
 
-- The initial scaffold audit found fail-open integrity gaps in implicit
-  production selection, script-scope mutable scaffold constants, extensible
-  caller object handling, and manifest corruption regression forwarding.
 - Implementation commit
-  `60da3ee244eaa5c28cb5022748a41ca95e6474cc` remediates those gaps and moves
-  live readiness to
-  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
+  `60da3ee244eaa5c28cb5022748a41ca95e6474cc` remediated the scaffold
+  integrity gaps found in the initial audit.
+- Remediation finalization commit
+  `77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6` contains the regenerated
+  readiness manifest and continuity updates for that remediation.
+- Independent read-only re-audit passed on 2026-07-03.
 - Production adapter identity:
   `chatpad-windows-exact-instance-adapter-v1`.
 - Synthetic adapter identity:
@@ -33,9 +35,13 @@ Do not implement or execute native adapter behavior.
   synthetic mode.
 - Public native adapter operations require explicit primitive string adapter
   and operation inputs. Caller objects, missing selections, non-string inputs,
-  module-state edits, and synthetic fallback attempts fail closed.
+  module-state edits, synthetic fallback attempts, positional extras, splatted
+  capability-like names, and pipeline input fail closed.
 - `Apply`, `Restore`, and `Restart` remain blocked with
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- The executable gate string still reports
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`; do not treat
+  the passed re-audit as live execution authorization.
 - No native interop declaration, SetupAPI/Newdev invocation, live device query,
   Windows mutation, packaging, signing, install, bind, restore, restart, or
   reboot path exists in this scaffold.
@@ -58,38 +64,26 @@ Do not implement or execute native adapter behavior.
 
 ## Safety Restrictions
 
-- Read-only audit only.
-- No native API implementation, declaration, P/Invoke, Add-Type native shim,
-  DLL import, driver build/link, signing, CAT generation, packaging, staging,
+- No live execution without a later explicit user authorization for that exact
+  action.
+- No driver build/link, signing, CAT generation, packaging, staging,
   driver-store mutation, installation, binding, loading, restoration, restart,
   reboot, device query, hardware access, Windows mutation, production
-  source/INF change, frozen-binary change, or `legacy/` change.
-- Keep any audit outputs under ignored `artifacts/`.
+  source/INF change, frozen-binary change, or `legacy/` change unless a later
+  task explicitly authorizes that exact scope.
+- Keep generated outputs and diagnostic logs under ignored `artifacts/`.
 
 ## Acceptance Criteria
 
-- Confirm production adapter metadata is stable, non-synthetic, fail-closed,
-  non-executing, and blocked by
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Confirm public native adapter operations require explicit primitive string
-  adapter selection and operation selection, with no implicit production
-  default and no implicit synthetic fallback.
-- Confirm mutable module state, caller objects with spoofed methods, wrapper
-  objects, serialized objects, `PSCustomObject`, `PSTypeNames`, `Add-Member`,
-  positional extras, splatted capability-like names, and pipeline input do not
-  authorize execution or change the blocked gate.
-- Confirm `Apply`, `Restore`, and `Restart` return deterministic blocked
-  operation evidence and keep native operation, device query, and Windows
-  mutation counters at zero.
-- Confirm manifest validation and corruption regression forward custom
-  `-ManifestPath` values to child runtime processes.
-- Re-run the exact suite, full readiness suite, manifest validation/corruption
-  regression, executable guard, AST parse inventory, PSScriptAnalyzer, and
-  repository safety checks without live execution.
-- Confirm exact-instance opening, driver-node identity, restoration identity,
-  postcondition, restart/reboot, and evidence-origin contracts remain intact.
-- Confirm all live/device/Windows mutation counters remain zero.
-- Leave live readiness blocked as
-  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
-- Do not recommend executable native adapter implementation until this
-  independent scaffold re-audit passes.
+- State the requested mode clearly: design-only, implementation-only without
+  execution, audit, or live execution.
+- Revalidate the current gate and safety state before changing source.
+- Preserve explicit primitive adapter and operation selection, no implicit
+  production default, no implicit synthetic fallback, and no caller-supplied
+  capability-like authorization.
+- Keep all native operation, device-query, and Windows-mutation counters at
+  zero unless a later explicitly authorized live task changes that boundary.
+- If implementation is authorized, add focused regressions for every new native
+  adapter surface before claiming it is safe.
+- Do not claim live readiness until a separate implementation, independent
+  audit, and explicit live authorization all complete.

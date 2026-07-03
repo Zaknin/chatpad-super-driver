@@ -306,10 +306,32 @@ G68-G77 additionally prove the remediated scaffold integrity boundary:
 - the remediated gate remains
   `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`.
 
-## Next Audit Boundary
+## Independent Re-Audit Result
 
-The next task must be an independent read-only re-audit of this remediated
-non-executing production scaffold and composition-root wiring. That audit must
-not implement or invoke the native adapter and must confirm the blocker remains
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT` with
-`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+The independent read-only re-audit of this remediated non-executing production
+scaffold and composition-root wiring passed from starting commit
+`77a3c3c4e29ddb2cfb0f7281b0db40b9f0622ab6`. It confirmed:
+
+- production metadata is stable, non-synthetic, non-executing, and blocked by
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
+- public native adapter operations require explicit primitive string adapter
+  and operation selections;
+- caller objects, mutable module state, serialization, positional extras,
+  splatted capability-like names, pipeline input, and non-string values do not
+  authorize execution;
+- `Apply`, `Restore`, and `Restart` keep native operation, device-query, and
+  Windows-mutation counters at zero; and
+- custom manifest corruption regressions forward the requested manifest path to
+  child runtime processes.
+
+The executable gate string remains
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_REAUDIT`, and the live
+capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`,
+until a later separately authorized transition changes the gate.
+
+## Next Boundary
+
+Only a later explicitly authorized task may start native SetupAPI/Newdev
+implementation work. That task must preserve the exact-instance, fail-closed,
+zero-live-mutation boundary until it has its own implementation, audit, and
+explicit live authorization.
