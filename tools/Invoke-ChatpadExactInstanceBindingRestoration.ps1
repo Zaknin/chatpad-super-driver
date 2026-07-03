@@ -10,6 +10,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSScriptRoot 'ExactInstance\ChatpadExactInstance.Contracts.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'ExactInstance\ChatpadNativeAdapterDesignGate.psm1') -Force
 
 $base=[ordered]@{
     schema_version='chatpad-exact-instance-public-entrypoint-v1'
@@ -23,8 +24,9 @@ $base=[ordered]@{
     broad_rollback_operations=0
     windows_mutations=0
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_PENDING_INDEPENDENT_REAUDIT'
-    capability_blocker='BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
+    current_gate='BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT'
+    capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+    live_adapter_status='SCAFFOLD_NON_EXECUTING'
     live_binding_authorized=$false
 }
 if($Mode-eq'Plan'){
@@ -42,9 +44,11 @@ if($Mode-eq'Plan'){
         }
     }
 } else {
-    $base.result='BLOCKED'
-    $base.result_code='LIVE_ADAPTER_NOT_IMPLEMENTED'
-    $base.reason='The production composition root contains no native SetupAPI/Newdev adapter or trusted live capability.'
+    $operation=Invoke-ChatpadNativeAdapterOperation -Operation $Mode -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Synthetic:$false
+    $base.result=$operation.result
+    $base.result_code=$operation.result_code
+    $base.reason='The production composition root selects the non-executing native adapter scaffold; SetupAPI/Newdev execution is not implemented.'
+    $base.native_adapter_operation=$operation
     if($PlanPath){
         $document=Test-ChatpadExactJsonDocument (Get-Content -LiteralPath $PlanPath -Raw)
         if($document.result-eq'PASS'){

@@ -2238,3 +2238,31 @@ spoofing, serialization, scalar values, legacy capability parameters, exported
 API shape, and zero mutation counters. The gate is
 `BLOCKED_PENDING_INDEPENDENT_REAUDIT` until independent re-audit accepts the
 remediation.
+
+## 2026-07-03 - Treat native adapter composition root as wiring, not authority
+
+**Decision:** The production native adapter composition root may select stable
+adapter metadata and map operations to deterministic blocked results, but it
+must not be treated as authorization, a security boundary, or evidence that
+native SetupAPI/Newdev execution exists.
+
+**Rationale:** The accepted capability-boundary remediation established that
+PowerShell object possession and module state are not trustworthy authorization
+mechanisms. The next useful production scaffold is therefore explicit
+dependency selection and result mapping, while native interop remains absent
+and independently auditable.
+
+**Alternatives rejected:**
+
+* Reintroduce a private mutation sentinel inside the composition root - same
+  PowerShell trust-boundary defect as the rejected capability model.
+* Auto-fallback from production to synthetic adapter - would blur production
+  identity and test identity.
+* Add a native declaration or P/Invoke stub now - outside the authorized
+  non-live scaffold scope.
+
+**Consequences:** The production adapter identity is
+`chatpad-windows-exact-instance-adapter-v1`, recognized operations return
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and the final readiness
+gate is `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` until an
+independent scaffold audit accepts the wiring.

@@ -2,11 +2,12 @@
 
 ## Current runtime bring-up readiness gate (2026-07-03)
 
-The native adapter capability-boundary remediation is implemented on
-`feature/runtime-bringup-native-adapter-capability-boundary-remediation` from
-audited commit `3c9c04f1870238ad2869c26fc5884d80b961fcc0`. The remediation
-implementation commit is `0b3197ba03302bb835fa673685499f957be52c52`; the
-finalization commit contains the regenerated manifest and continuity updates.
+The native adapter composition-root scaffold is implemented on
+`feature/runtime-bringup-native-adapter-composition-root` from accepted
+capability-boundary finalization commit
+`a23259a73dc27f332a98f292e90866b0db42a764`. The production adapter identity is
+`chatpad-windows-exact-instance-adapter-v1`; the synthetic test identity is
+`chatpad-fake-exact-instance-adapter-v1`.
 
 The framework uses one complete canonical Plug and Play instance ID, immutable
 target and restoration driver-node identities, precondition and snapshot
@@ -15,22 +16,24 @@ states, and deterministic synthetic evidence. Broad matching and first/best
 candidate fallback are prohibited.
 
 G16-G25 prove the remediated native adapter gate no longer trusts a
-module-private PowerShell object as a mutation capability. Same-process module
-state is treated as introspectable, and no exported/public mutation gate
-accepts a caller-supplied capability-like value.
+module-private PowerShell object as a mutation capability. G26-G67 prove the
+production scaffold has deterministic adapter selection, no implicit synthetic
+fallback, no executable native operation path, and zero mutation/device/native
+operation counters.
 
-The exact-instance suite passes with 64 records and 263 assertions under
-Windows PowerShell 5.1 and PowerShell 7. The authoritative readiness ledger is
-368 records and 1,987 assertions; record/category totals reconcile. Framework
-status is `PASS`. Live readiness remains `BLOCKED` with current gate
-`BLOCKED_PENDING_INDEPENDENT_REAUDIT` and blocker
-`BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`; every live binding, restoration,
-restart, observation, broad-success, and Windows-mutation counter is zero.
+The exact-instance suite passes in smoke with 106 records and 385 assertions.
+The authoritative readiness ledger passes in smoke with 410 records and 2,109
+assertions. Framework status is `PASS`. Live readiness remains `BLOCKED` with
+current gate
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` and blocker
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live binding,
+restoration, restart, observation, broad-success, device-query,
+native-operation, and Windows-mutation counter remains zero.
 
-The next task is an independent read-only re-audit of the remediated
-capability-boundary implementation and evidence. A native Windows
-SetupAPI/Newdev adapter remains a later separately authorized implementation
-boundary; this phase does not authorize any live driver or device operation.
+The next task is an independent read-only audit of the non-executing production
+adapter scaffold and composition-root wiring. A native Windows SetupAPI/Newdev
+adapter remains a later separately authorized implementation boundary; this
+phase does not authorize any live driver or device operation.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

@@ -9,14 +9,14 @@ implement, declare, load, or invoke any native device-installation API.
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_REAUDIT`.
-- Live adapter status: `NOT_IMPLEMENTED`.
-- Capability blocker: `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
+- Live adapter status: `SCAFFOLD_NON_EXECUTING`.
+- Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
 - Live device queries and Windows mutations performed: `0`.
 
 The executable design contract is
-`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. The offline G1-G25
+`tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. The offline G1-G67
 fixtures in `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
 validate this document's current gate behavior.
 
@@ -36,9 +36,13 @@ equivalent authorization value. Possession of a PowerShell object can never
 activate the native mutation path. A read-only design probe is non-authorizing
 metadata and cannot satisfy mutation authorization.
 
-The current composition root remains absent. `Apply`, `Restore`, and `Restart`
-requests therefore fail at the live-adapter gate with
-`LIVE_ADAPTER_NOT_IMPLEMENTED`.
+The current composition root is a deterministic non-executing scaffold. It
+selects the production adapter identity
+`chatpad-windows-exact-instance-adapter-v1` or the explicitly requested
+synthetic identity `chatpad-fake-exact-instance-adapter-v1`; it does not infer
+synthetic fallback. `Apply`, `Restore`, and `Restart` requests fail closed at
+the native-execution gate with
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Interface Separation
 
@@ -230,8 +234,9 @@ Before a future mutation can be considered, all of the following must pass:
 17. Live evidence producer available.
 18. Audit-approved implementation version.
 
-The present implementation always remains blocked because no live native
-adapter or internally controlled mutation authorization exists.
+The present implementation always remains blocked because the production
+native adapter is a non-executing scaffold and no executable SetupAPI/Newdev
+implementation exists.
 
 ## Offline Gate Coverage
 
@@ -256,10 +261,35 @@ G1-G25 prove:
 - exact API sequence, restoration linkage, uncertainty, restart/reboot, and
   evidence-origin contracts are accounted for.
 
+G26-G67 additionally prove:
+
+- production and synthetic adapter identities resolve only through explicit,
+  deterministic selection;
+- missing, unknown, or mismatched adapter selections fail closed with no
+  fallback;
+- recognized operations return
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` and unsupported
+  operations return `UNSUPPORTED_NATIVE_ADAPTER_OPERATION`;
+- operation evidence carries the selected adapter identity, schema tag,
+  current gate, and zero counters;
+- production metadata states native interop, device queries, live execution,
+  and Windows mutation are unavailable;
+- caller objects, extracted module variables, module-context invocation,
+  splatted capability-like names, positional extras, pipeline input, wrapped
+  references, serialized objects, `PSCustomObject`, `PSTypeNames`,
+  `Add-Member`, scalar values, and generic object parameters cannot authorize
+  execution;
+- exported functions expose no capability-like authorization parameter or
+  exported variable authority;
+- no callable internal function performs native execution, and the executable
+  native guard still reports zero declarations or invocations;
+- the final gate remains
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
+
 ## Next Audit Boundary
 
-The next task must be an independent read-only re-audit of this remediated
-design-and-gate implementation. That audit must not implement or invoke the
-native adapter and must confirm the blocker remains
-`BLOCKED_PENDING_INDEPENDENT_REAUDIT` with
-`BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+The next task must be an independent read-only audit of this non-executing
+production scaffold and composition-root wiring. That audit must not implement
+or invoke the native adapter and must confirm the blocker remains
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` with
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

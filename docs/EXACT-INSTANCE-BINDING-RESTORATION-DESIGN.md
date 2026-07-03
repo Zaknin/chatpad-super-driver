@@ -28,10 +28,13 @@ The implementation contains:
   adapter in this phase;
 - T1-T39 offline regression coverage under Windows PowerShell and PowerShell 7.
 
-It does not contain or invoke a live SetupAPI/Newdev adapter. No driver or
-driver-store operation is authorized. Live readiness is `BLOCKED`; the current
-gate is `BLOCKED_PENDING_INDEPENDENT_REAUDIT`, and the independent downstream
-capability blocker is `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
+It does not contain or invoke a live SetupAPI/Newdev adapter. The current
+production adapter is a non-executing composition-root scaffold only. No driver
+or driver-store operation is authorized. Live readiness is `BLOCKED`; the
+current gate is
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`, and the
+downstream capability blocker is
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ### Remediated trust and serialization contracts
 
@@ -44,9 +47,9 @@ capability blocker is `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
   Serialized adapter, mode, synthetic, source, producer, and evidence-mode
   fields are descriptive outputs and cannot establish live trust.
 - Real Apply/Restore authorization is unavailable by construction.
-  `LIVE_ADAPTER_NOT_IMPLEMENTED` is returned regardless of caller adapter
-  names, Booleans, elevation, switches, preflight claims, or deterministic
-  authorization values.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` is returned regardless of
+  caller adapter names, Booleans, elevation, switches, preflight claims, or
+  deterministic authorization values.
 - `chatpad-canonical-json-v1` parses raw JSON without timestamp conversion,
   rejects case-insensitive duplicate names at every depth, preserves JSON
   scalar/array/object types, sorts property names by ordinal comparison,

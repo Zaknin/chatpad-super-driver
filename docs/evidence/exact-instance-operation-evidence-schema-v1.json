@@ -64,8 +64,8 @@
     "final_classification": { "enum": ["PASS", "BLOCKED", "FAIL"] },
     "live_readiness_satisfied": { "const": false },
     "readiness": { "const": "BLOCKED" },
-    "current_gate": { "const": "BLOCKED_PENDING_INDEPENDENT_REAUDIT" },
-    "capability_blocker": { "const": "BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED" }
+    "current_gate": { "const": "BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT" },
+    "capability_blocker": { "const": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED" }
   },
   "$defs": {
     "count": { "type": "integer", "minimum": 0 }

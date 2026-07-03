@@ -4,8 +4,8 @@ $ErrorActionPreference = 'Stop'
 $script:PlanSchema = 'chatpad-exact-instance-operation-plan-v1'
 $script:SnapshotSchema = 'chatpad-exact-instance-restoration-snapshot-v1'
 $script:EvidenceSchema = 'chatpad-exact-instance-operation-evidence-v1'
-$script:PendingAuditBlocker = 'BLOCKED_PENDING_INDEPENDENT_REAUDIT'
-$script:LiveAdapterBlocker = 'BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED'
+$script:PendingAuditBlocker = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT'
+$script:LiveAdapterBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
 $script:CanonicalJsonVersion = 'chatpad-canonical-json-v1'
 $script:AllowedModes = @('Plan','Apply','Restore','Verify')
 $script:AllowedActions = @('query-exact-device','verify-package','bind-exact-device','verify-exact-device','restore-exact-device','restart-exact-device')
@@ -866,7 +866,7 @@ function Test-ChatpadRealExecutionAuthorization {
     $defects.Add($script:LiveAdapterBlocker)
     [pscustomobject]@{
         result='BLOCKED'
-        result_code='LIVE_ADAPTER_NOT_IMPLEMENTED'
+        result_code=$script:LiveAdapterBlocker
         defects=@($defects)
         caller_execution_claims_trusted=$false
         live_adapter_capability_present=$false
@@ -924,7 +924,7 @@ function Test-ChatpadExactInstanceEvidence {
         if(-not(Test-ChatpadExactArrayProperty $Evidence 'adapter_calls')){$defects.Add('adapter-calls-invalid')}
         if([string](Get-ChatpadExactProperty $Evidence 'readiness' '')-ne'BLOCKED'){$defects.Add('readiness-not-blocked')}
         if([string](Get-ChatpadExactProperty $Evidence 'current_gate' '')-ne$script:PendingAuditBlocker){$defects.Add('pending-audit-gate-missing')}
-        if([string](Get-ChatpadExactProperty $Evidence 'capability_blocker' '')-ne$script:LiveAdapterBlocker){$defects.Add('live-adapter-blocker-missing')}
+        if([string](Get-ChatpadExactProperty $Evidence 'capability_blocker' '')-ne$script:LiveAdapterBlocker){$defects.Add('native-adapter-execution-blocker-missing')}
         $uncertainty=[string](Get-ChatpadExactProperty $Evidence 'uncertainty_status' '')
         if($uncertainty-notin@('none','active','recovered')){$defects.Add('uncertainty-status-invalid')}
         if((Get-ChatpadExactProperty $Evidence 'mutation_may_have_occurred' $null)-isnot[bool]){$defects.Add('mutation-uncertainty-boolean-invalid')}

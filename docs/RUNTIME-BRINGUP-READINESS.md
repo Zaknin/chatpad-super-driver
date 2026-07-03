@@ -8,29 +8,33 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-adapter-capability-boundary-remediation`
-remediates the failed independent audit of the non-executing native
-SetupAPI/Newdev adapter design gate. The future API sequence, structures,
-driver-node identity evidence, exact-instance binding/restoration proof,
-restart/reboot separation, error taxonomy, and composition-root boundary are
-documented in
+Branch `feature/runtime-bringup-native-adapter-composition-root` implements the
+first non-executing production native SetupAPI/Newdev adapter scaffold and
+composition-root wiring after the capability-boundary remediation was accepted.
+The future API sequence, structures, driver-node identity evidence,
+exact-instance binding/restoration proof, restart/reboot separation, error
+taxonomy, and composition-root boundary are documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 
-- Starting audited commit: `3c9c04f1870238ad2869c26fc5884d80b961fcc0`.
-- Current remediation implementation commit:
-  `0b3197ba03302bb835fa673685499f957be52c52`.
+- Starting accepted commit: `a23259a73dc27f332a98f292e90866b0db42a764`.
+- Current scaffold implementation commit: expected from this task's
+  implementation commit.
 - Expected finalization commit: the commit containing this document and the
   regenerated readiness manifest.
+- Production adapter identity: `chatpad-windows-exact-instance-adapter-v1`.
+- Synthetic adapter identity: `chatpad-fake-exact-instance-adapter-v1`,
+  selectable only with explicit synthetic mode.
 - PowerShell module state is introspectable by callers in the same process;
   caller possession of an object is not a trusted mutation boundary.
 - No exported native adapter gate function accepts a caller-supplied mutation
   capability, token, sentinel, secret, object, or equivalent authorization
   value.
-- Exact-instance suite: `PASS`, 64 tests, 263 assertions under Windows
-  PowerShell 5.1 and PowerShell 7.
-- Full readiness suite: exit `0`, 368 fixtures and 1,987 assertions under both
-  runtimes.
+- Exact-instance suite smoke: `PASS`, 106 tests, 385 assertions under Windows
+  PowerShell 5.1.
+- Full readiness suite smoke: `PASS`, 410 fixtures and 2,109 assertions under
+  Windows PowerShell 5.1; final dual-runtime validation is still required
+  before closeout.
 - PowerShell inventory: 45 `.ps1`, seven `.psm1`, 52 total; AST errors `0`.
 - Complete PSScriptAnalyzer: errors `0`, warnings `168`, information `937`,
   tool failures `0`.
@@ -40,9 +44,9 @@ offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_REAUDIT`.
-- Capability blocker: `BLOCKED_LIVE_ADAPTER_NOT_IMPLEMENTED`.
-- Live adapter status: `NOT_IMPLEMENTED`; live authorization: `false`.
+- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT`.
+- Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 
 ## Exact-instance framework status
 
