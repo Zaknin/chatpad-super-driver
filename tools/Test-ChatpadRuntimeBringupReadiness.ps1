@@ -3,6 +3,7 @@ param([string]$ManifestPath = 'docs/evidence/runtime-bringup-readiness-manifest.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+Import-Module Microsoft.PowerShell.Utility -ErrorAction SilentlyContinue
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'ExactInstance\ChatpadExactInstance.OfflineSuite.psm1') -Force
 
@@ -676,8 +677,8 @@ Invoke-Fixture powershell-inventory-reconciliation powershell-inventory PowerShe
     $parsedPsm1=@($parsed|Where-Object{$_ -like '*.psm1'})
     $defects=@()
     if($ps1.Count -ne 45){$defects+="tracked-ps1-count:$($ps1.Count)"}
-    if($psm1.Count -ne 7){$defects+="tracked-psm1-count:$($psm1.Count)"}
-    if($tracked.Count -ne 52){$defects+="tracked-total-count:$($tracked.Count)"}
+    if($psm1.Count -ne 8){$defects+="tracked-psm1-count:$($psm1.Count)"}
+    if($tracked.Count -ne 53){$defects+="tracked-total-count:$($tracked.Count)"}
     if($parsedPs1.Count -ne $ps1.Count){$defects+="parsed-ps1-count:$($parsedPs1.Count)"}
     if($parsedPsm1.Count -ne $psm1.Count){$defects+="parsed-psm1-count:$($parsedPsm1.Count)"}
     if($parsed.Count -ne $tracked.Count){$defects+="parsed-total-count:$($parsed.Count)"}
