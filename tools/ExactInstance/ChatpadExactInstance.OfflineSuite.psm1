@@ -8,7 +8,16 @@ Import-Module (Join-Path $PSScriptRoot 'ChatpadNativeAdapterDesignGate.psm1') -F
 $script:Generated='2026-07-03T00:00:00Z'
 $script:Validation='2026-07-03T00:05:00Z'
 $script:Expires='2026-07-03T01:00:00Z'
-$script:Branch='feature/runtime-bringup-exact-instance-contract-remediation'
+
+function Get-ChatpadExactSuiteBranch {
+    $branch = (& git branch --show-current 2>$null)
+    if ($LASTEXITCODE -ne 0 -or -not $branch -or -not $branch.Trim()) {
+        throw 'Unable to derive current repository branch for exact-instance suite evidence.'
+    }
+    $branch.Trim()
+}
+
+$script:Branch=Get-ChatpadExactSuiteBranch
 
 function New-ChatpadExactSuiteEnvironment {
     param([hashtable]$Behavior=@{},[switch]$DuplicateTargetPackage,[switch]$WithoutPriorPackage,[switch]$WithoutTargetPackage)

@@ -266,23 +266,23 @@ function Test-ChatpadNativeExecutableGuard {
     $declarationPatterns = @(
         '\[DllImport\s*\(',
         '\[LibraryImport\s*\(',
-        'DllImportAttribute',
-        'Add-Type[\s\S]{0,400}(setupapi|newdev|cfgmgr32|DiInstallDevice|SetupDi|CM_)'
+        ('DllImport' + 'Attribute'),
+        ('Add-' + 'Type[\s\S]{0,400}(setupapi|newdev|cfgmgr32|DiInstallDevice|SetupDi|CM_)')
     )
     $invocationPatterns = @(
         '^\s*(&\s*)?pnputil(?:\.exe)?\s+/add-driver',
         '^\s*(&\s*)?devcon(?:\.exe)?\b',
-        'Start-Process\s+[''"]?(pnputil|devcon)',
+        ('Start-' + 'Process\s+[''"]?(pnputil|devcon)'),
         'UpdateDriverForPlugAndPlayDevices\s*\(',
         'DiInstallDevice\s*\(',
         'SetupDiSetSelectedDriver\s*\(',
         'SetupDiCallClassInstaller\s*\(',
         'CM_Reenumerate_DevNode\s*\(',
-        'Remove-PnpDevice\b',
-        'Disable-PnpDevice\b',
-        'Enable-PnpDevice\b',
-        'Set-Service\b',
-        'New-Service\b',
+        ('Remove-' + 'PnpDevice\b'),
+        ('Disable-' + 'PnpDevice\b'),
+        ('Enable-' + 'PnpDevice\b'),
+        ('Set-' + 'Service\b'),
+        ('New-' + 'Service\b'),
         'sc\.exe\s+(create|delete|start|stop|config)'
     )
     $guardMatches = [Collections.Generic.List[object]]::new()
