@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$OutputRoot = 'artifacts/static-metadata-parser-implementation',
+    [string]$OutputRoot = 'artifacts/logs/static-metadata-parser-implementation-remediation',
     [string]$ParserProject = 'tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj',
     [string]$EvidencePath = ''
 )
@@ -54,6 +54,26 @@ function Invoke-ParserCommand {
     $exitCode = $LASTEXITCODE
     Write-Utf8NoBom -Path $LogPath -Value (($output -join [Environment]::NewLine) + [Environment]::NewLine)
     [pscustomobject][ordered]@{ exit_code = $exitCode; output = $output }
+}
+
+function Test-PreReadRejectionEvidence {
+    param(
+        [Parameter(Mandatory)][object]$Evidence,
+        [Parameter(Mandatory)][string]$ExpectedDefectCode
+    )
+    $defectCodes = @($Evidence.defects | ForEach-Object { [string]$_.code })
+    @(
+        ([string]$Evidence.schemaVersion -eq 'chatpad-static-metadata-parser-evidence-v1'),
+        ([string]$Evidence.result -eq 'FAIL'),
+        ($defectCodes -contains $ExpectedDefectCode),
+        ([bool]$Evidence.artifactBytesRead -eq $false),
+        ([bool]$Evidence.artifactHashComputed -eq $false),
+        ([bool]$Evidence.metadataParsed -eq $false),
+        ([int]$Evidence.safetyCounters.artifactBytesRead -eq 0),
+        ([int]$Evidence.safetyCounters.artifactHashComputed -eq 0),
+        ([int]$Evidence.safetyCounters.metadataParsed -eq 0),
+        ([string]$Evidence.metadataReviewStatus -ne 'PERFORMED')
+    )
 }
 
 function Test-ParserSourceGuard {
@@ -272,11 +292,7 @@ foreach ($case in $cases) {
         '--output', ([IO.Path]::GetFullPath($output)),
         '--expected', ([IO.Path]::GetFullPath($expectedFile)),
         '--parser-source-commit', $sourceCommit,
-        '--parser-build-identity', (Get-Sha256 -Path $parserDll),
-        '--no-load',
-        '--no-reflection',
-        '--no-execute',
-        '--no-native-invoke'
+        '--parser-build-identity', (Get-Sha256 -Path $parserDll)
     ) -LogPath (Join-Path $outputRootFull "logs/parser-$($case.fixture_id).txt")
     if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
         throw "Parser did not produce evidence for $($case.fixture_id)."
@@ -309,6 +325,18 @@ foreach ($case in $cases) {
         [int]$evidence.safetyCounters.driverRestart
     )
     $prohibitedZero = (($prohibitedCounters | Measure-Object -Sum).Sum -eq 0)
+    $guaranteesMatchPolicyAndCounters = (
+        [bool]$evidence.safetyPolicyEnforced -and
+        [bool]$evidence.staticOnly -and
+        [bool]$evidence.noLoadGuarantee -and
+        [bool]$evidence.noRuntimeReflectionGuarantee -and
+        [bool]$evidence.noExecutionGuarantee -and
+        [bool]$evidence.noNativeInvocationGuarantee -and
+        [bool]$evidence.noDeviceQueryGuarantee -and
+        [bool]$evidence.noWindowsMutationGuarantee -and
+        -not [bool]$evidence.driverActionsOccurred -and
+        $prohibitedZero
+    )
     $exitCodeExpected = if ($case.expected_result -eq 'PASS') { $parseResult.exit_code -eq 0 } else { $parseResult.exit_code -eq 2 }
     $checks = @(
         ([string]$evidence.schemaVersion -eq 'chatpad-static-metadata-parser-evidence-v1'),
@@ -323,7 +351,8 @@ foreach ($case in $cases) {
         ([bool]$evidence.nativeInvocationOccurred -eq $false),
         ([bool]$evidence.deviceQueryOccurred -eq $false),
         ([bool]$evidence.windowsMutationOccurred -eq $false),
-        $prohibitedZero
+        $prohibitedZero,
+        $guaranteesMatchPolicyAndCounters
     )
     $records.Add([pscustomobject][ordered]@{
         fixture_id = $case.fixture_id
@@ -341,12 +370,146 @@ foreach ($case in $cases) {
     })
 }
 
+$rejectionRecords = [Collections.Generic.List[object]]::new()
+$blockedRelative = 'artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/not-real/Chatpad.NativeInterop.CompileOnlyValidation.dll'
+$blockedAbsolute = [IO.Path]::GetFullPath((Join-Path $root $blockedRelative))
+$blockedMixed = ($blockedAbsolute -replace '\\','/')
+$blockedCase = [IO.Path]::GetFullPath((Join-Path $root 'ARTIFACTS/COMPILE-ONLY/NATIVE-INTEROP/BIN/RELEASE/X64/NET9.0-WINDOWS10.0.26100.0/NOT-REAL/CHATPAD.NATIVEINTEROP.COMPILEONLYVALIDATION.DLL'))
+$blockedTraversal = 'artifacts/logs/static-metadata-parser-implementation-remediation/fixtures/../../../compile-only/native-interop/bin/Release/x64/not-real/Chatpad.NativeInterop.CompileOnlyValidation.dll'
+$outsideFixtureWithRealName = [IO.Path]::GetFullPath((Join-Path $outputRootFull 'not-fixtures/Chatpad.NativeInterop.CompileOnlyValidation.dll'))
+$outsideApprovedRoot = [IO.Path]::GetFullPath((Join-Path $root 'artifacts/logs/not-static-parser/fixtures/Synthetic.Outside.dll'))
+$rejectionCases = @(
+    [pscustomobject][ordered]@{ id='real-artifact-root-relative'; input=$blockedRelative; expected_defect='PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED' },
+    [pscustomobject][ordered]@{ id='real-artifact-root-absolute'; input=$blockedAbsolute; expected_defect='PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED' },
+    [pscustomobject][ordered]@{ id='real-artifact-root-mixed-slash'; input=$blockedMixed; expected_defect='PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED' },
+    [pscustomobject][ordered]@{ id='real-artifact-root-case-variant'; input=$blockedCase; expected_defect='PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED' },
+    [pscustomobject][ordered]@{ id='real-artifact-root-relative-traversal'; input=$blockedTraversal; expected_defect='PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED' },
+    [pscustomobject][ordered]@{ id='real-artifact-filename-outside-fixture-root'; input=$outsideFixtureWithRealName; expected_defect='PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED' },
+    [pscustomobject][ordered]@{ id='outside-approved-synthetic-fixture-roots'; input=$outsideApprovedRoot; expected_defect='PARSER_INPUT.OUTSIDE_SYNTHETIC_FIXTURE_SCOPE' }
+)
+
+$symlinkCase = $null
+$symlinkPath = Join-Path $outputRootFull 'fixtures/reparse/linked-root'
+$symlinkTarget = Split-Path -Parent ([string](@($fixtures | Where-Object fixture_id -eq 'Synthetic.NoPInvoke.Library')[0].output_path))
+$symlinkInput = Join-Path $symlinkPath (Split-Path -Leaf ([string](@($fixtures | Where-Object fixture_id -eq 'Synthetic.NoPInvoke.Library')[0].output_path)))
+try {
+    New-Directory -Path (Split-Path -Parent $symlinkPath)
+    if (Test-Path -LiteralPath $symlinkPath) {
+        Remove-Item -LiteralPath $symlinkPath -Force
+    }
+
+    New-Item -ItemType SymbolicLink -Path $symlinkPath -Target $symlinkTarget -Force | Out-Null
+    $symlinkCase = [pscustomobject][ordered]@{ id='symlink-reparse-parent-under-fixture-root'; input=$symlinkInput; expected_defect='INPUT_REPARSE_POINT' }
+} catch {
+    $symlinkCase = [pscustomobject][ordered]@{
+        id='symlink-reparse-parent-under-fixture-root'
+        input=$symlinkInput
+        expected_defect='INPUT_REPARSE_POINT'
+        not_run=$true
+        reason="Directory symlink/reparse creation did not complete without admin: $($_.Exception.Message)"
+    }
+}
+
+foreach ($case in @($rejectionCases + @($symlinkCase))) {
+    if ($case.PSObject.Properties['not_run'] -and $case.not_run) {
+        $rejectionRecords.Add([pscustomobject][ordered]@{
+            case_id = $case.id
+            input_path = [string]$case.input
+            expected_defect = [string]$case.expected_defect
+            actual_defects = @()
+            parser_exit_code = $null
+            assertion_count = 0
+            rejection_result = 'NOT_RUN'
+            not_run_reason = [string]$case.reason
+        })
+        continue
+    }
+
+    $output = Join-Path $outputRootFull "evidence/rejections/$($case.id).evidence.json"
+    New-Directory -Path (Split-Path -Parent $output)
+    $parseResult = Invoke-ParserCommand -Arguments @(
+        $parserDll,
+        '--input', ([string]$case.input),
+        '--output', ([IO.Path]::GetFullPath($output)),
+        '--parser-source-commit', $sourceCommit,
+        '--parser-build-identity', (Get-Sha256 -Path $parserDll)
+    ) -LogPath (Join-Path $outputRootFull "logs/rejection-$($case.id).txt")
+    if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
+        throw "Parser did not produce rejection evidence for $($case.id)."
+    }
+
+    $evidence = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+    $checks = Test-PreReadRejectionEvidence -Evidence $evidence -ExpectedDefectCode ([string]$case.expected_defect)
+    $checks += ($parseResult.exit_code -eq 2)
+    $defectCodes = @($evidence.defects | ForEach-Object { [string]$_.code })
+    $rejectionRecords.Add([pscustomobject][ordered]@{
+        case_id = $case.id
+        input_path = [string]$case.input
+        evidence_path = ([IO.Path]::GetFullPath($output).Substring($root.Length + 1).Replace('\','/'))
+        evidence_size = (Get-Item -LiteralPath $output).Length
+        evidence_sha256 = Get-Sha256 -Path $output
+        expected_defect = [string]$case.expected_defect
+        actual_defects = $defectCodes
+        parser_exit_code = $parseResult.exit_code
+        artifact_bytes_read = [bool]$evidence.artifactBytesRead
+        artifact_hash_computed = [bool]$evidence.artifactHashComputed
+        metadata_parsed = [bool]$evidence.metadataParsed
+        assertion_count = $checks.Count
+        rejection_result = $(if (@($checks | Where-Object { $_ -ne $true }).Count) { 'FAIL' } else { 'PASS' })
+    })
+}
+
+$safetyOptionRecords = [Collections.Generic.List[object]]::new()
+$validSyntheticInput = (@($fixtures | Where-Object fixture_id -eq 'Synthetic.NoPInvoke.Library')[0].output_path)
+$safetyCases = @(
+    [pscustomobject][ordered]@{ id='obsolete-no-load-option'; option='--no-load'; expected_defect='PARSER_SAFETY.OPTION_NOT_SUPPORTED' },
+    [pscustomobject][ordered]@{ id='unsafe-allow-load-option'; option='--allow-load'; expected_defect='PARSER_SAFETY.OPTION_NOT_SUPPORTED' }
+)
+foreach ($case in $safetyCases) {
+    $output = Join-Path $outputRootFull "evidence/safety-options/$($case.id).evidence.json"
+    New-Directory -Path (Split-Path -Parent $output)
+    $parseResult = Invoke-ParserCommand -Arguments @(
+        $parserDll,
+        '--input', ([IO.Path]::GetFullPath($validSyntheticInput)),
+        '--output', ([IO.Path]::GetFullPath($output)),
+        '--parser-source-commit', $sourceCommit,
+        '--parser-build-identity', (Get-Sha256 -Path $parserDll),
+        ([string]$case.option)
+    ) -LogPath (Join-Path $outputRootFull "logs/safety-option-$($case.id).txt")
+    if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
+        throw "Parser did not produce safety-option evidence for $($case.id)."
+    }
+
+    $evidence = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+    $checks = Test-PreReadRejectionEvidence -Evidence $evidence -ExpectedDefectCode ([string]$case.expected_defect)
+    $checks += ($parseResult.exit_code -eq 2)
+    $defectCodes = @($evidence.defects | ForEach-Object { [string]$_.code })
+    $safetyOptionRecords.Add([pscustomobject][ordered]@{
+        case_id = $case.id
+        option = [string]$case.option
+        evidence_path = ([IO.Path]::GetFullPath($output).Substring($root.Length + 1).Replace('\','/'))
+        evidence_size = (Get-Item -LiteralPath $output).Length
+        evidence_sha256 = Get-Sha256 -Path $output
+        expected_defect = [string]$case.expected_defect
+        actual_defects = $defectCodes
+        parser_exit_code = $parseResult.exit_code
+        artifact_bytes_read = [bool]$evidence.artifactBytesRead
+        artifact_hash_computed = [bool]$evidence.artifactHashComputed
+        metadata_parsed = [bool]$evidence.metadataParsed
+        assertion_count = $checks.Count
+        safety_option_result = $(if (@($checks | Where-Object { $_ -ne $true }).Count) { 'FAIL' } else { 'PASS' })
+    })
+}
+
 $failed = @($records | Where-Object fixture_result -ne 'PASS')
+$failedRejections = @($rejectionRecords | Where-Object { $_.rejection_result -eq 'FAIL' })
+$failedSafetyOptions = @($safetyOptionRecords | Where-Object safety_option_result -ne 'PASS')
+$notRunRejections = @($rejectionRecords | Where-Object rejection_result -eq 'NOT_RUN')
 $summary = [pscustomobject][ordered]@{
     schema_version = 'chatpad-static-metadata-parser-synthetic-validation-v1'
     generated_utc = (Get-Date).ToUniversalTime().ToString('o')
-    result = $(if ($failed.Count) { 'FAIL' } else { 'PASS' })
-    result_code = $(if ($failed.Count) { 'SYNTHETIC_FIXTURE_VALIDATION_FAILED' } else { 'SYNTHETIC_FIXTURE_VALIDATION_PASSED' })
+    result = $(if ($failed.Count -or $failedRejections.Count -or $failedSafetyOptions.Count) { 'FAIL' } else { 'PASS' })
+    result_code = $(if ($failed.Count -or $failedRejections.Count -or $failedSafetyOptions.Count) { 'STATIC_METADATA_PARSER_REMEDIATION_VALIDATION_FAILED' } else { 'STATIC_METADATA_PARSER_REMEDIATION_VALIDATION_PASSED' })
     parser_project_path = $ParserProject
     parser_project_sha256 = Get-Sha256 -Path $parserProjectFull
     parser_source_path = 'tools/StaticMetadataParser/Program.cs'
@@ -356,10 +519,22 @@ $summary = [pscustomobject][ordered]@{
     parser_source_commit = $sourceCommit
     parser_schema_version = 'chatpad-static-metadata-parser-evidence-v1'
     fixture_count = $records.Count
-    assertion_count = [int](($records | Measure-Object assertion_count -Sum).Sum)
+    assertion_count = [int]((($records + $rejectionRecords + $safetyOptionRecords) | Measure-Object assertion_count -Sum).Sum)
     failed_fixture_count = $failed.Count
     guard = $guard
     fixtures = @($records)
+    real_artifact_like_rejection_count = @($rejectionRecords | Where-Object rejection_result -eq 'PASS').Count
+    real_artifact_like_rejection_not_run_count = $notRunRejections.Count
+    failed_real_artifact_like_rejection_count = $failedRejections.Count
+    rejection_cases = @($rejectionRecords)
+    safety_option_rejection_count = @($safetyOptionRecords | Where-Object safety_option_result -eq 'PASS').Count
+    failed_safety_option_rejection_count = $failedSafetyOptions.Count
+    safety_option_cases = @($safetyOptionRecords)
+    real_artifact_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'
+    allowed_input_scope = 'SYNTHETIC_FIXTURES_ONLY'
+    pre_read_rejection_tests = $(if ($failedRejections.Count -or $failedSafetyOptions.Count) { 'FAIL' } else { 'PASS' })
+    safety_policy_mode = 'IMMUTABLE_STATIC_ONLY'
+    safety_policy_enforced = $true
     real_compile_only_artifact_opened = $false
     real_compile_only_artifact_parsed = $false
     real_compile_only_artifact_hash_computed = $false

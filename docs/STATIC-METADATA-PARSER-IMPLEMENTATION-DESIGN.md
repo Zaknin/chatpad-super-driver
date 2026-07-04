@@ -19,11 +19,15 @@
 
 This document's implementation design passed independent read-only audit. A
 separate implementation task added the static parser source and validated it
-only against synthetic fixtures. That implementation does not authorize parser
-execution against the real compiled artifact, artifact opening, artifact
-parsing, artifact hashing, metadata review, assembly loading, reflection,
-execution, native invocation, device query, Windows mutation, or driver
-actions.
+only against synthetic fixtures. The first implementation audit failed because
+the parser did not fail closed against real compile-only artifact paths under
+the current gate and because safety flags were parsed but not authoritatively
+enforced. The remediation adds a pre-read real-artifact path gate and immutable
+static-only safety policy, but the remediated implementation still requires a
+fresh independent audit. It does not authorize parser execution against the
+real compiled artifact, artifact opening, artifact parsing, artifact hashing,
+metadata review, assembly loading, reflection, execution, native invocation,
+device query, Windows mutation, or driver actions.
 
 ## 2. Investigation and technology decision
 
@@ -80,13 +84,30 @@ native-interoperability projects, has no post-build/run target, and uses no
 third-party package.
 
 Implementation, build, and synthetic testing have occurred only in this parser
-scope. First use against the real compile-only artifact remains a separate
-authorization boundary after independent implementation audit.
+scope. The remediated validation evidence is
+`artifacts/logs/static-metadata-parser-implementation-remediation/static-metadata-parser-synthetic-validation.json`.
+It covers synthetic fixtures, real-artifact-like pre-read rejection, and
+immutable safety-policy rejection. First use against the real compile-only
+artifact remains a separate authorization boundary after independent
+implementation audit.
 
 ## 4. Input and identity contract
 
-The future parser accepts exactly one explicit absolute `.dll` path and one
-explicit accepted compile-evidence JSON path. It must reject:
+Under the current audit gate, the parser accepts exactly one input path only
+when that path resolves under a parser-specific synthetic fixture root in
+ignored `artifacts/logs/` output. It must reject before file read/hash/parse:
+
+- paths under `artifacts/compile-only/native-interop`;
+- the real compile-only output DLL name
+  `Chatpad.NativeInterop.CompileOnlyValidation.dll` in any location;
+- paths outside the approved synthetic fixture scope;
+- relative traversal, mixed slashes, and case variants that normalize to a
+  blocked path;
+- reparse points and symlinks.
+
+A future real-artifact metadata-review task would require a separate explicit
+authorization and a different input contract. That later task must still
+reject:
 
 - relative paths, globs, directories, alternate data streams, non-`.dll`
   inputs, reparse points, and paths outside an explicitly allowed ignored
@@ -190,6 +211,15 @@ Future parser source and transitive dependencies must not use:
   Windows mutation;
 - driver build, link, sign, CAT generation, package, stage, install, load,
   unload, bind, restore, restart, enable, disable, or remove operations.
+
+The remediated parser enforces this as an immutable static-only safety policy.
+Safety behavior is not user-controlled; legacy `--no-*` safety options and
+contradictory `--allow-*` options are rejected before input read. Evidence
+records `safetyPolicyMode: IMMUTABLE_STATIC_ONLY`, the current gate, the
+allowed input scope, and pre-read rejection decisions. Safety counters remain
+the proof surface for prohibited runtime, native, device, Windows mutation, and
+driver actions. Safety guarantee and occurrence booleans are computed from the
+enforced policy and those counters.
 
 ## 9. Required prohibited-pattern guard
 

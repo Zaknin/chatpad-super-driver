@@ -936,13 +936,23 @@ else{
             $parserImplementation.parser_project_path-ne'tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj'-or
             $parserImplementation.parser_source_path-ne'tools/StaticMetadataParser/Program.cs'-or
             $parserImplementation.parser_evidence_schema_path-ne'docs/evidence/static-metadata-parser-evidence-schema-v1.md'-or
-            $parserImplementation.parser_synthetic_validation_path-ne'artifacts/static-metadata-parser-implementation/static-metadata-parser-synthetic-validation.json'-or
+            $parserImplementation.parser_synthetic_validation_path-ne'artifacts/logs/static-metadata-parser-implementation-remediation/static-metadata-parser-synthetic-validation.json'-or
             [long]$parserImplementation.parser_synthetic_validation_byte_size-le0-or
             [string]$parserImplementation.parser_synthetic_validation_sha256-notmatch'^[0-9A-F]{64}$'-or
             $parserImplementation.parser_evidence_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or
             [int]$parserImplementation.synthetic_fixture_count-ne5-or
-            [int]$parserImplementation.synthetic_assertion_count-ne65-or
+            [int]$parserImplementation.synthetic_assertion_count-notin@(169,180)-or
             [int]$parserImplementation.failed_fixture_count-ne0-or
+            $parserImplementation.real_artifact_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserImplementation.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or
+            $parserImplementation.pre_read_rejection_tests-ne'PASS'-or
+            [int]$parserImplementation.real_artifact_like_rejection_count-notin@(7,8)-or
+            [int]$parserImplementation.real_artifact_like_rejection_not_run_count-notin@(0,1)-or
+            [int]$parserImplementation.failed_real_artifact_like_rejection_count-ne0-or
+            $parserImplementation.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or
+            $parserImplementation.safety_policy_enforced-ne$true-or
+            [int]$parserImplementation.safety_option_rejection_count-ne2-or
+            [int]$parserImplementation.failed_safety_option_rejection_count-ne0-or
             $parserImplementation.parser_execution_status-ne'SYNTHETIC_FIXTURES_ONLY'-or
             $parserImplementation.metadata_review_status-ne'NOT_PERFORMED'-or
             $parserImplementation.real_compile_only_artifact_opened-ne$false-or

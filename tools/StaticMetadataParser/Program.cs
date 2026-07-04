@@ -13,6 +13,11 @@ internal static class Program
     private const string ToolName = "Chatpad.StaticMetadataParser";
     private const string ToolVersion = "1.0.0";
     private const long MaxInputBytes = 64L * 1024L * 1024L;
+    private const string CurrentGate = "BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT";
+    private const string ImmutableSafetyPolicy = "IMMUTABLE_STATIC_ONLY";
+    private const string SyntheticFixtureInputScope = "SYNTHETIC_FIXTURES_ONLY";
+    private const string RealArtifactRelativeRoot = "artifacts/compile-only/native-interop";
+    private const string RealArtifactFileName = "Chatpad.NativeInterop.CompileOnlyValidation.dll";
 
     public static int Main(string[] args)
     {
@@ -61,8 +66,24 @@ internal static class Program
     private static void Run(ParserOptions options, Evidence evidence)
     {
         ValidateSafetyPolicy(options, evidence);
-        ValidateInputPath(options.InputPath, evidence);
+        ValidateInputScope(options, evidence);
         ValidateOutputPath(options.OutputPath, evidence);
+
+        if (evidence.Defects.Count != 0)
+        {
+            evidence.Result = "FAIL";
+            evidence.ResultCode = "PREFLIGHT_REJECTED";
+            return;
+        }
+
+        ValidateInputPath(options.InputPath, evidence);
+
+        if (evidence.Defects.Count != 0)
+        {
+            evidence.Result = "FAIL";
+            evidence.ResultCode = "PREFLIGHT_REJECTED";
+            return;
+        }
 
         ExpectedMetadata? expected = null;
         if (!string.IsNullOrWhiteSpace(options.ExpectedPath))
@@ -146,10 +167,79 @@ internal static class Program
 
     private static void ValidateSafetyPolicy(ParserOptions options, Evidence evidence)
     {
-        if (!options.NoLoad || !options.NoReflection || !options.NoExecute || !options.NoNativeInvoke)
+        if (options.SafetyPolicyOptions.Count != 0)
         {
-            evidence.Defects.Add(Defect.Create("UNSAFE_OPTION_REJECTED", "options", "All safety flags true", "one or more false", "The parser only supports no-load, no-reflection, no-execute, and no-native-invoke mode."));
+            foreach (string option in options.SafetyPolicyOptions)
+            {
+                evidence.Defects.Add(Defect.Create("PARSER_SAFETY.OPTION_NOT_SUPPORTED", "options", ImmutableSafetyPolicy, option, "Safety policy is immutable and is not user-controlled."));
+            }
         }
+    }
+
+    private static void ValidateInputScope(ParserOptions options, Evidence evidence)
+    {
+        evidence.CurrentGate = CurrentGate;
+        evidence.AllowedInputScope = SyntheticFixtureInputScope;
+        evidence.OriginalInputPath = options.OriginalInputPath;
+        evidence.InputNormalizedPath = options.InputPath;
+
+        string? repositoryRoot = FindRepositoryRoot();
+        if (string.IsNullOrWhiteSpace(repositoryRoot))
+        {
+            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
+            evidence.InputScopeDecision = "REJECTED";
+            evidence.InputScopeReason = "REPOSITORY_ROOT_NOT_FOUND";
+            evidence.Defects.Add(Defect.Create("PARSER_INPUT.REPOSITORY_ROOT_NOT_FOUND", "input", "Repository root containing AGENTS.md", Directory.GetCurrentDirectory(), "The parser could not identify the repository root for input scope validation."));
+            return;
+        }
+
+        string normalizedRoot = Path.GetFullPath(repositoryRoot);
+        string normalizedInput = Path.GetFullPath(options.InputPath);
+        string normalizedRealRoot = Path.GetFullPath(Path.Combine(normalizedRoot, RealArtifactRelativeRoot.Replace('/', Path.DirectorySeparatorChar)));
+        evidence.RepositoryRoot = normalizedRoot;
+        evidence.InputNormalizedPath = normalizedInput;
+
+        string? reparsePoint = FindReparsePointInParentPath(normalizedRoot, normalizedInput);
+        if (!string.IsNullOrWhiteSpace(reparsePoint))
+        {
+            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
+            evidence.InputScopeDecision = "REJECTED";
+            evidence.InputScopeReason = "REPARSE_POINT_NOT_AUTHORIZED";
+            evidence.Defects.Add(Defect.Create("INPUT_REPARSE_POINT", "input", "No reparse-point path components", reparsePoint, "Input paths that traverse a symbolic link, junction, or other reparse point are rejected before file access."));
+            return;
+        }
+
+        if (IsUnderDirectory(normalizedInput, normalizedRealRoot) ||
+            string.Equals(Path.GetFileName(normalizedInput), RealArtifactFileName, StringComparison.OrdinalIgnoreCase))
+        {
+            evidence.InputClassification = "REAL_ARTIFACT_SCOPE_REJECTED";
+            evidence.InputScopeDecision = "REJECTED";
+            evidence.InputScopeReason = "REAL_ARTIFACT_NOT_AUTHORIZED";
+            evidence.Defects.Add(Defect.Create("PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED", "input", SyntheticFixtureInputScope, normalizedInput, "The current gate does not authorize opening, hashing, parsing, or reviewing the real compile-only artifact."));
+            return;
+        }
+
+        if (!Path.IsPathFullyQualified(options.OriginalInputPath))
+        {
+            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
+            evidence.InputScopeDecision = "REJECTED";
+            evidence.InputScopeReason = "INPUT_PATH_NOT_ABSOLUTE";
+            evidence.Defects.Add(Defect.Create("INPUT_PATH_NOT_ABSOLUTE", "input", "Absolute path", options.OriginalInputPath, "Input path must be absolute."));
+            return;
+        }
+
+        if (!IsAllowedSyntheticFixturePath(normalizedRoot, normalizedInput))
+        {
+            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
+            evidence.InputScopeDecision = "REJECTED";
+            evidence.InputScopeReason = "OUTSIDE_SYNTHETIC_FIXTURE_SCOPE";
+            evidence.Defects.Add(Defect.Create("PARSER_INPUT.OUTSIDE_SYNTHETIC_FIXTURE_SCOPE", "input", "Parser-specific ignored synthetic fixture root", normalizedInput, "Under the current gate parser input is limited to parser-specific synthetic fixture roots under artifacts/logs/."));
+            return;
+        }
+
+        evidence.InputClassification = "SYNTHETIC_FIXTURE_CANDIDATE";
+        evidence.InputScopeDecision = "ALLOWED";
+        evidence.InputScopeReason = "SYNTHETIC_FIXTURE_ROOT";
     }
 
     private static void ValidateInputPath(string inputPath, Evidence evidence)
@@ -214,6 +304,72 @@ internal static class Program
         string full = Path.GetFullPath(path);
         int start = Path.GetPathRoot(full)?.Length ?? 0;
         return full.IndexOf(':', start) >= 0;
+    }
+
+    private static bool IsAllowedSyntheticFixturePath(string repositoryRoot, string inputPath)
+    {
+        string artifactsLogs = Path.GetFullPath(Path.Combine(repositoryRoot, "artifacts", "logs"));
+        if (!IsUnderDirectory(inputPath, artifactsLogs))
+        {
+            return false;
+        }
+
+        string relative = Path.GetRelativePath(artifactsLogs, inputPath);
+        string[] segments = relative.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+        bool hasParserSpecificRoot = segments.Any(segment => segment.Contains("static-metadata-parser", StringComparison.OrdinalIgnoreCase));
+        bool hasFixturesSegment = segments.Any(segment => string.Equals(segment, "fixtures", StringComparison.OrdinalIgnoreCase));
+        return hasParserSpecificRoot && hasFixturesSegment;
+    }
+
+    private static bool IsUnderDirectory(string candidatePath, string directoryPath)
+    {
+        string candidate = Path.GetFullPath(candidatePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        string directory = Path.GetFullPath(directoryPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        return candidate.StartsWith(directory, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? FindReparsePointInParentPath(string repositoryRoot, string inputPath)
+    {
+        string normalizedRoot = Path.GetFullPath(repositoryRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        DirectoryInfo? current = new(Path.GetDirectoryName(Path.GetFullPath(inputPath)) ?? "");
+
+        while (current is not null && IsUnderDirectory(current.FullName, normalizedRoot))
+        {
+            if (current.Exists && (current.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                return current.FullName;
+            }
+
+            if (string.Equals(
+                current.FullName.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                normalizedRoot,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                break;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
+    }
+
+    private static string? FindRepositoryRoot()
+    {
+        DirectoryInfo? current = new(Directory.GetCurrentDirectory());
+        while (current is not null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "AGENTS.md")) &&
+                Directory.Exists(Path.Combine(current.FullName, "docs")) &&
+                Directory.Exists(Path.Combine(current.FullName, "tools")))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
     }
 
     private static void PopulateMetadata(PEReader peReader, MetadataReader reader, Evidence evidence)
@@ -466,15 +622,13 @@ internal static class Program
 
 internal sealed class ParserOptions
 {
+    public required string OriginalInputPath { get; init; }
     public required string InputPath { get; init; }
     public required string OutputPath { get; init; }
     public string ExpectedPath { get; init; } = "";
     public string ParserSourceCommit { get; init; } = "UNKNOWN";
     public string ParserBuildIdentity { get; init; } = "UNKNOWN";
-    public bool NoLoad { get; init; } = true;
-    public bool NoReflection { get; init; } = true;
-    public bool NoExecute { get; init; } = true;
-    public bool NoNativeInvoke { get; init; } = true;
+    public List<string> SafetyPolicyOptions { get; init; } = [];
 
     public static ParserOptions Parse(string[] args)
     {
@@ -501,6 +655,16 @@ internal sealed class ParserOptions
                 case "--no-reflection":
                 case "--no-execute":
                 case "--no-native-invoke":
+                case "--no-device-query":
+                case "--no-windows-mutation":
+                case "--no-driver-action":
+                case "--allow-load":
+                case "--allow-reflection":
+                case "--allow-execute":
+                case "--allow-native-invoke":
+                case "--allow-device-query":
+                case "--allow-windows-mutation":
+                case "--allow-driver-action":
                     flags.Add(arg);
                     break;
                 default:
@@ -520,15 +684,13 @@ internal sealed class ParserOptions
 
         return new ParserOptions
         {
+            OriginalInputPath = input,
             InputPath = Path.GetFullPath(input),
             OutputPath = Path.GetFullPath(output),
             ExpectedPath = values.TryGetValue("--expected", out string? expected) ? Path.GetFullPath(expected) : "",
             ParserSourceCommit = values.TryGetValue("--parser-source-commit", out string? commit) ? commit : "UNKNOWN",
             ParserBuildIdentity = values.TryGetValue("--parser-build-identity", out string? identity) ? identity : "UNKNOWN",
-            NoLoad = true,
-            NoReflection = true,
-            NoExecute = true,
-            NoNativeInvoke = true
+            SafetyPolicyOptions = flags.OrderBy(item => item, StringComparer.Ordinal).ToList()
         };
     }
 }
@@ -578,7 +740,16 @@ internal sealed class Evidence
     public string ParserBuildIdentity { get; init; } = "";
     public string ParserTargetFramework { get; init; } = "net9.0";
     public string SystemReflectionMetadataVersion { get; init; } = typeof(PEReader).Assembly.GetName().Version?.ToString() ?? "";
+    public string CurrentGate { get; set; } = "";
+    public string SafetyPolicyMode { get; init; } = "IMMUTABLE_STATIC_ONLY";
+    public bool SafetyPolicyEnforced { get; init; } = true;
+    public string AllowedInputScope { get; set; } = "";
+    public string RepositoryRoot { get; set; } = "";
     public string InputPath { get; init; } = "";
+    public string OriginalInputPath { get; set; } = "";
+    public string InputNormalizedPath { get; set; } = "";
+    public string InputScopeDecision { get; set; } = "NOT_EVALUATED";
+    public string InputScopeReason { get; set; } = "";
     public string InputClassification { get; set; } = "NOT_CLASSIFIED";
     public long InputSize { get; set; }
     public string InputSha256 { get; set; } = "";
@@ -586,24 +757,52 @@ internal sealed class Evidence
     public bool MetadataParsed { get; set; }
     public bool ArtifactBytesRead { get; set; }
     public bool ArtifactHashComputed { get; set; }
-    public bool StaticOnly { get; init; } = true;
-    public bool NoLoadGuarantee { get; init; } = true;
-    public bool NoRuntimeReflectionGuarantee { get; init; } = true;
-    public bool NoExecutionGuarantee { get; init; } = true;
-    public bool NoNativeInvocationGuarantee { get; init; } = true;
-    public bool NoDeviceQueryGuarantee { get; init; } = true;
-    public bool NoWindowsMutationGuarantee { get; init; } = true;
-    public bool AssemblyLoadOccurred { get; init; }
-    public bool RuntimeReflectionOccurred { get; init; }
-    public bool CompiledArtifactExecutionOccurred { get; init; }
-    public bool NativeDllLoadOccurred { get; init; }
-    public bool EntryPointResolutionOccurred { get; init; }
-    public bool NativeInvocationOccurred { get; init; }
-    public bool SetupApiNewdevInvocationOccurred { get; init; }
-    public bool DeviceQueryOccurred { get; init; }
-    public bool HardwareAccessOccurred { get; init; }
-    public bool WindowsMutationOccurred { get; init; }
-    public bool DriverActionsOccurred { get; init; }
+    public string MetadataReviewStatus { get; init; } = "NOT_PERFORMED";
+    public string RealArtifactOpenStatus { get; init; } = "NOT_PERFORMED";
+    public string RealArtifactParseStatus { get; init; } = "NOT_PERFORMED";
+    public string RealArtifactHashStatus { get; init; } = "NOT_PERFORMED";
+    public bool StaticOnly => SafetyPolicyEnforced &&
+        NoLoadGuarantee &&
+        NoRuntimeReflectionGuarantee &&
+        NoExecutionGuarantee &&
+        NoNativeInvocationGuarantee &&
+        NoDeviceQueryGuarantee &&
+        NoWindowsMutationGuarantee &&
+        !DriverActionsOccurred;
+    public bool NoLoadGuarantee => SafetyPolicyEnforced && SafetyCounters.AssemblyLoad == 0;
+    public bool NoRuntimeReflectionGuarantee => SafetyPolicyEnforced && SafetyCounters.RuntimeReflection == 0;
+    public bool NoExecutionGuarantee => SafetyPolicyEnforced && SafetyCounters.CompiledArtifactExecution == 0;
+    public bool NoNativeInvocationGuarantee => SafetyPolicyEnforced &&
+        SafetyCounters.NativeDllLoad == 0 &&
+        SafetyCounters.EntryPointResolution == 0 &&
+        SafetyCounters.NativeInvocation == 0 &&
+        SafetyCounters.SetupApiNewdevInvocation == 0;
+    public bool NoDeviceQueryGuarantee => SafetyPolicyEnforced &&
+        SafetyCounters.DeviceQuery == 0 &&
+        SafetyCounters.HardwareAccess == 0;
+    public bool NoWindowsMutationGuarantee => SafetyPolicyEnforced && SafetyCounters.WindowsMutation == 0;
+    public bool AssemblyLoadOccurred => SafetyCounters.AssemblyLoad != 0;
+    public bool RuntimeReflectionOccurred => SafetyCounters.RuntimeReflection != 0;
+    public bool CompiledArtifactExecutionOccurred => SafetyCounters.CompiledArtifactExecution != 0;
+    public bool NativeDllLoadOccurred => SafetyCounters.NativeDllLoad != 0;
+    public bool EntryPointResolutionOccurred => SafetyCounters.EntryPointResolution != 0;
+    public bool NativeInvocationOccurred => SafetyCounters.NativeInvocation != 0;
+    public bool SetupApiNewdevInvocationOccurred => SafetyCounters.SetupApiNewdevInvocation != 0;
+    public bool DeviceQueryOccurred => SafetyCounters.DeviceQuery != 0;
+    public bool HardwareAccessOccurred => SafetyCounters.HardwareAccess != 0;
+    public bool WindowsMutationOccurred => SafetyCounters.WindowsMutation != 0;
+    public bool DriverActionsOccurred => SafetyCounters.DriverBuild != 0 ||
+        SafetyCounters.DriverLink != 0 ||
+        SafetyCounters.DriverSign != 0 ||
+        SafetyCounters.DriverCatGeneration != 0 ||
+        SafetyCounters.DriverPackage != 0 ||
+        SafetyCounters.DriverStage != 0 ||
+        SafetyCounters.DriverInstall != 0 ||
+        SafetyCounters.DriverLoad != 0 ||
+        SafetyCounters.DriverUnload != 0 ||
+        SafetyCounters.DriverBind != 0 ||
+        SafetyCounters.DriverRestore != 0 ||
+        SafetyCounters.DriverRestart != 0;
     public PeCliSummary? PeCliSummary { get; set; }
     public AssemblyIdentity? AssemblyIdentity { get; set; }
     public string ArtifactTargetFramework { get; set; } = "";
@@ -623,7 +822,8 @@ internal sealed class Evidence
     {
         ParserSourceCommit = options.ParserSourceCommit,
         ParserBuildIdentity = options.ParserBuildIdentity,
-        InputPath = options.InputPath
+        InputPath = options.InputPath,
+        OriginalInputPath = options.OriginalInputPath
     };
 }
 

@@ -2,8 +2,8 @@
 
 ## Objective
 
-Perform an independent read-only audit of the static PE/CLI metadata parser
-implementation.
+Perform a fresh independent read-only audit of the remediated static PE/CLI
+metadata parser implementation.
 
 Do not run the parser against the real compile-only native interop compiled
 artifact. Do not open, parse, hash, load, reflect over, execute, or invoke the
@@ -11,15 +11,18 @@ real artifact. Do not perform metadata review.
 
 ## Required Starting Point
 
-- Branch: `feature/runtime-bringup-static-metadata-parser-implementation`.
-- Starting commit: the final pushed parser implementation commit containing
-  `tools/StaticMetadataParser/`, `tools/Test-ChatpadStaticMetadataParser.ps1`,
-  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`, the regenerated
-  readiness manifest, and continuity updates.
-- Implementation base commit:
-  `27d4640069808121ee74749940392d2df6c8e746`.
-- Accepted static metadata-parser implementation design audit:
-  `468e8679388481e923a37a985055046f72480921`.
+- Branch:
+  `feature/runtime-bringup-static-metadata-parser-implementation-remediation`.
+- Starting commit: the pushed remediation commit containing parser
+  fail-closed input-scope enforcement, immutable safety-policy enforcement,
+  updated parser validation, regenerated readiness manifest, and continuity
+  updates.
+- Remediation base commit:
+  `47b9ada4255b310db5234446404975165a971678`.
+- Failed implementation audit finding:
+  the parser at `47b9ada4255b310db5234446404975165a971678` could be pointed at
+  real compile-only artifact paths under the current gate and parsed safety
+  flags without enforcing them.
 - Verify exact HEAD, upstream, `0/0` ahead/behind, clean status, and unchanged
   native declarations, compile-only harness/runner, runtime adapter,
   production driver source, INF, production project/solution files outside the
@@ -35,11 +38,14 @@ real artifact. Do not perform metadata review.
   `PEReader`/`MetadataReader`.
 - Parser implementation: `IMPLEMENTED_PENDING_AUDIT`.
 - Parser execution: `SYNTHETIC_FIXTURES_ONLY`.
+- Parser real-artifact path gate: `IMPLEMENTED_PENDING_AUDIT`.
+- Parser allowed input scope: `SYNTHETIC_FIXTURES_ONLY`.
+- Parser safety policy: `IMMUTABLE_STATIC_ONLY`.
 - Metadata review: `NOT_PERFORMED`.
 - Real artifact opening/parsing/hash verification: `NOT_PERFORMED` and
   unauthorized.
-- Synthetic validation evidence:
-  `artifacts/static-metadata-parser-implementation/static-metadata-parser-synthetic-validation.json`.
+- Synthetic and pre-read validation evidence:
+  `artifacts/logs/static-metadata-parser-implementation-remediation/static-metadata-parser-synthetic-validation.json`.
 
 ## Inspect First
 
@@ -74,7 +80,14 @@ real artifact. Do not perform metadata review.
 
 - Audit confirms the parser implementation is static-only and uses
   `System.Reflection.Metadata`, `PEReader`, and `MetadataReader`.
-- Audit confirms the parser was validated only against synthetic fixtures.
+- Audit confirms the parser rejects real-artifact-like paths before file read,
+  hash computation, PE parsing, or metadata parsing.
+- Audit confirms current parser input is limited to parser-specific synthetic
+  fixture roots under ignored `artifacts/logs/`.
+- Audit confirms immutable safety policy is enforced and safety options are
+  rejected before input read.
+- Audit confirms the parser was validated only against synthetic fixtures and
+  real-artifact-like path strings.
 - Audit confirms the parser was not run against the real compile-only artifact.
 - Audit confirms real artifact opening/parsing/hash verification remains not
   performed.

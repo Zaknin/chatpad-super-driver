@@ -1,13 +1,14 @@
 # Project State
 
-*Last updated: 2026-07-04 (static metadata-parser implementation)*
+*Last updated: 2026-07-04 (static metadata-parser implementation remediation)*
 
 ## Current State
 
-- **Branch:** `feature/runtime-bringup-static-metadata-parser-implementation`.
-- **Starting commit:** `27d4640069808121ee74749940392d2df6c8e746`.
-- **Expected final commit:** the implementation commit containing parser
-  source, synthetic-fixture validation, regenerated manifest, and continuity
+- **Branch:** `feature/runtime-bringup-static-metadata-parser-implementation-remediation`.
+- **Starting commit:** `47b9ada4255b310db5234446404975165a971678`.
+- **Expected final commit:** the remediation commit containing parser
+  fail-closed input-scope enforcement, immutable safety-policy enforcement,
+  updated synthetic/pre-read validation, regenerated manifest, and continuity
   updates.
 - **Accepted metadata-review design audit commit:**
   `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`.
@@ -37,9 +38,17 @@
 - Real compile-only artifact opening, parsing, and hash verification:
   `NOT_PERFORMED` and not authorized.
 
-Synthetic-fixture validation passed with five fixtures and 65 assertions. The
+The independent audit of `47b9ada4255b310db5234446404975165a971678` failed
+because the parser could be pointed at real compile-only artifact paths under
+the current gate and because safety flags were parsed but not authoritatively
+enforced. The remediation adds a pre-read parser input gate that permits only
+parser-specific synthetic fixture roots under `artifacts/logs/`, rejects
+real-artifact-like paths before any file read/hash/PE parsing, and enforces an
+immutable static-only safety policy. Synthetic/pre-read validation passed with
+five fixtures, 169 assertions, seven real-artifact-like pre-read rejection
+cases, two safety-option rejection cases, and zero failed counted cases. The
 aggregate evidence is
-`artifacts/static-metadata-parser-implementation/static-metadata-parser-synthetic-validation.json`.
+`artifacts/logs/static-metadata-parser-implementation-remediation/static-metadata-parser-synthetic-validation.json`.
 The parser has not been run against the real compile-only native interop
 artifact.
 
@@ -61,8 +70,9 @@ artifact.
 
 ## Unresolved Blockers
 
-- Independent read-only audit of the static metadata parser implementation is
-  required before any first use against the real compile-only artifact.
+- Independent read-only audit of the remediated static metadata parser
+  implementation is required before any first use against the real compile-only
+  artifact.
 - Parser execution against the real artifact remains unauthorized.
 - Metadata review remains unauthorized and not performed.
 - Real artifact opening, parsing, and hash verification remain unauthorized.
@@ -71,8 +81,9 @@ artifact.
 
 ## Next Task
 
-Perform an independent read-only audit of the static metadata parser
-implementation and synthetic-fixture evidence. Do not run the parser against
-the real compile-only artifact, do not open/hash/parse that artifact, do not
-perform metadata review, and do not perform runtime/native/device/driver
+Perform a fresh independent read-only audit of the remediated static metadata
+parser implementation, including the pre-read real-artifact-like path
+rejection evidence and immutable safety-policy evidence. Do not run the parser
+against the real compile-only artifact, do not open/hash/parse that artifact,
+do not perform metadata review, and do not perform runtime/native/device/driver
 activity.

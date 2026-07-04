@@ -8538,3 +8538,99 @@
   compile-only native interop artifact, open/hash/parse that artifact, perform
   metadata review, load or reflect over compiled output, execute it, invoke
   native APIs, query devices, mutate Windows, or perform driver actions.
+
+## 2026-07-04 21:41 +04:00 - Static metadata-parser implementation remediation
+
+- **Objective:** Remediate the failed independent audit of the static PE/CLI
+  metadata parser by enforcing a pre-read real-artifact path gate and an
+  immutable static-only safety policy. Do not use the real compile-only
+  artifact or perform metadata, native, runtime, device, or driver actions.
+- **Starting branch and commit:** Verified
+  `feature/runtime-bringup-static-metadata-parser-implementation` at
+  `47b9ada4255b310db5234446404975165a971678`, clean, with its expected
+  upstream and `0/0` ahead/behind. Created
+  `feature/runtime-bringup-static-metadata-parser-implementation-remediation`
+  from that exact commit.
+- **Documentation discrepancy and failure reproduction:** The continuity docs
+  still described the implementation as ready for audit, while the independent
+  audit had failed. Static review reproduced both findings: generic path checks
+  reached `File.ReadAllBytes`, SHA-256 computation, and `PEReader` without a
+  current-gate real-artifact deny/fixture allow gate; parsed safety options
+  were followed by unconditional true safety claims. Current-state docs now
+  record the failed audit and remediation requirement.
+- **Files modified:** `tools/StaticMetadataParser/Program.cs`,
+  `tools/Test-ChatpadStaticMetadataParser.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and `docs/WORKLOG.md`.
+- **Implementation details:** The parser now normalizes and classifies input
+  before existence checks or any byte access. Under
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`, it rejects
+  paths under `artifacts/compile-only/native-interop`, the compile-only output
+  DLL filename in any location, and all paths outside parser-specific ignored
+  `artifacts/logs/.../fixtures` roots. The immutable
+  `IMMUTABLE_STATIC_ONLY` policy rejects both legacy `--no-*` safety options
+  and contradictory `--allow-*` options before input access. Evidence records
+  the normalized scope decision, policy enforcement, and explicit
+  `NOT_PERFORMED` real-artifact open/parse/hash states.
+- **Parser validation:** Windows PowerShell validation built the .NET 9 parser
+  and passed five synthetic fixtures with 169 assertions, seven counted
+  real-artifact-like path rejections, two safety-option rejections, zero
+  failed fixtures/rejections, and all prohibited counters zero. PowerShell 7
+  validation passed the same five fixtures with 180 assertions and eight path
+  rejections because its non-admin symlink/reparse case ran; Windows
+  PowerShell recorded that one case `NOT_RUN` because the available
+  `New-Item` implementation required an existing target. All tested paths
+  were non-existing strings or synthetic fixtures; no real artifact was used.
+- **Manifest and regression validation:** A corrected 40-entry no-artifact-open
+  manifest dry run passed with zero defects under Windows PowerShell 5.1 and
+  PowerShell 7. Ten targeted negative manifest mutations were rejected 10/10.
+  Changed PowerShell scripts parsed with zero syntax errors under both
+  runtimes. Complete PSScriptAnalyzer analyzed 55 tracked files with zero
+  errors and zero tool failures; the existing repository baseline contained
+  204 warnings and 1004 informational findings.
+- **Repository safety:** `tools/Test-RepositorySafety.ps1` passed under both
+  runtimes. Deployment, signing, packaging, certificate creation, key
+  creation, Windows mutation, device query, hardware access, unexpected
+  tracked artifact, tracked evidence, and non-ignored evidence counters were
+  all zero. No prohibited source, native declaration, compile-only
+  harness/runner, runtime adapter, production driver, INF, production
+  project/solution, signing/package/staging/deployment, binary, frozen
+  artifact, or `legacy/` path changed.
+- **Command issues:** An initial manifest dry-run command used the invalid
+  placeholder `PENDING_REMEDIATION_COMMIT` and correctly failed the full-hash
+  requirement. A subsequent dry run referenced an old readiness summary that
+  lacked fixture records and correctly failed validation. Neither is counted
+  as passing; generation was repeated with commit
+  `47b9ada4255b310db5234446404975165a971678` and
+  `artifacts/logs/compiled-artifact-metadata-review-design-gate/readiness-pwsh.json`.
+  Two local negative-regression harness attempts also misclassified a known
+  validator failure due to wrapper quoting; the final exit-code contract run
+  passed 10/10.
+- **Ignored evidence:** Synthetic validation is under
+  `artifacts/logs/static-metadata-parser-implementation-remediation/`;
+  PowerShell 7 validation is under the sibling `-pwsh` directory. The
+  no-artifact-open manifest dry run and targeted negative-regression summary
+  are in the remediation evidence directory. Final artifact sizes and hashes
+  are recorded in its generated inventory.
+- **Final validation plan:** Regenerate the tracked readiness manifest from
+  this final documentation state; validate it under both runtimes; run
+  documentation/status consistency, changed-path/prohibited-pattern,
+  forbidden-generated-file, and `git diff --check` checks; then inspect,
+  commit, push, and verify upstream equality and a clean tree.
+- **Safety:** The parser was not run against the real compiled artifact. No
+  real artifact opening, parsing, hash verification, or metadata review;
+  assembly loading; runtime reflection; compiled artifact execution; native
+  DLL loading; entry-point resolution; native or SetupAPI/Newdev invocation;
+  device query; exact-instance or hardware access; Windows mutation; or driver
+  build/link/sign/CAT/package/stage/install/load/unload/bind/restore/restart/
+  enable/disable/remove occurred.
+- **Commit and push:** Pending at entry write time. The final commit, push,
+  upstream equality, and clean status are recorded in the final response.
+- **Next task:** Perform a fresh independent read-only audit of this remediated
+  parser implementation and its pre-read rejection evidence. Keep the real
+  artifact and all metadata/native/runtime/device/driver actions unauthorized.

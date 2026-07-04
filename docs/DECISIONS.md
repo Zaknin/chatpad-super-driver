@@ -4,6 +4,39 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Fail-close static parser artifact scope under audit gate
+
+**Decision:** Under
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`, the static
+metadata parser accepts only parser-specific synthetic fixture inputs under
+ignored `artifacts/logs/` paths. It rejects paths under
+`artifacts/compile-only/native-interop`, the real compile-only output DLL name,
+real-artifact-like path variants, paths outside the synthetic fixture scope,
+and attempted safety-policy options before file read, hash computation, PE
+parsing, or metadata parsing. Parser safety policy is immutable
+`IMMUTABLE_STATIC_ONLY` and is not caller-controlled.
+
+**Rationale:** The first independent implementation audit failed because the
+parser could be pointed at real compile-only artifact paths under the current
+gate and because safety flags were parsed but then converted to successful
+safety booleans unconditionally. Current authorization covers only synthetic
+fixtures and parser implementation audit readiness, not first use against the
+real artifact.
+
+**Alternatives rejected:** Allowing real artifact paths while relying on caller
+discipline, treating the real artifact DLL name as safe outside its normal
+output root, accepting user-supplied safety flags as proof, adding a
+caller-controlled allowlist switch, running the parser against the real
+artifact during remediation, or advancing directly to metadata review.
+
+**Consequences:** Remediation evidence must prove pre-read rejection for
+real-artifact-like paths and safety options. Parser implementation remains
+`IMPLEMENTED_PENDING_AUDIT`; parser execution remains
+`SYNTHETIC_FIXTURES_ONLY`; metadata review and real artifact opening/parsing/
+hash verification remain `NOT_PERFORMED`. Live readiness remains `BLOCKED`;
+native execution remains `NOT_IMPLEMENTED`; the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## 2026-07-04 - Implement static metadata parser behind independent audit gate
 
 **Decision:** Add `Chatpad.StaticMetadataParser` as an isolated .NET 9 static

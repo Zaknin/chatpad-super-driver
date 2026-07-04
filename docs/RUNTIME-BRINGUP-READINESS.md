@@ -727,9 +727,15 @@ It covers assembly identity, target framework, architecture, module kind,
 metadata tables, P/Invoke maps/flags, expected type/method names, and
 entry-point absence. The parser design passed independent audit at
 `468e8679388481e923a37a985055046f72480921`; the parser implementation was
-added and validated only against synthetic fixtures. The parser was not run
-against the real compile-only artifact, and that artifact was not opened,
-hashed, parsed, or inspected. See
+added and validated only against synthetic fixtures. The first implementation
+audit failed because the parser could be pointed at the real compile-only
+artifact path under the current gate and because safety flags were not
+authoritatively enforced. The remediation adds a pre-read real-artifact-like
+path gate, limits current parser input to parser-specific synthetic fixture
+roots under ignored `artifacts/logs/`, and enforces immutable static-only
+safety policy. The remediated parser remains pending independent audit. The
+parser was not run against the real compile-only artifact, and that artifact
+was not opened, hashed, parsed, or inspected. See
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 The accepted remediation validates 63 metadata-review safety fields as strict
@@ -740,8 +746,9 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform an independent read-only audit of the static metadata-parser
-implementation. Do not run the parser against the compiled artifact, perform
-metadata review, open/hash/parse the artifact, load or reflect over compiled
-output, execute it, resolve entry points, invoke SetupAPI/Newdev, query
-devices, or mutate Windows.
+Perform a fresh independent read-only audit of the remediated static
+metadata-parser implementation. Audit the pre-read real-artifact-like path
+rejection evidence and immutable safety-policy evidence. Do not run the parser
+against the compiled artifact, perform metadata review, open/hash/parse the
+artifact, load or reflect over compiled output, execute it, resolve entry
+points, invoke SetupAPI/Newdev, query devices, or mutate Windows.
