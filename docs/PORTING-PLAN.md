@@ -1,6 +1,6 @@
 # Porting Plan
 
-## Current runtime bring-up readiness gate (2026-07-04)
+## Current runtime bring-up readiness gate (2026-07-05)
 
 The native SetupAPI/Newdev interop source boundary passed independent source
 audit and was then compiled only through the isolated non-production harness.
@@ -55,7 +55,7 @@ are added. The full readiness suite passes under Windows PowerShell 5.1 and
 PowerShell 7 with 513 fixtures and 2,563 assertions. The authoritative
 readiness ledger uses schema `chatpad-runtime-bringup-readiness-manifest-v4`.
 Framework status remains `PASS`. Live readiness remains `BLOCKED` with current
-gate `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT` and
+gate `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION` and
 blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live
 binding, restoration, restart, observation, broad-success, device-query,
 native-operation, and Windows-mutation counter remains zero.
@@ -66,13 +66,14 @@ tracked at `docs/evidence/native-interop-compile-only-validation.json` using
 explicit canonical text and raw output policies. A native Windows
 SetupAPI/Newdev adapter implementation remains a later separately authorized
 boundary; this phase does not authorize any live driver or device operation.
-No approved static managed metadata parser exists. The remediated non-loading
-design gate passed independent audit at
-`49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The future parser design selects
-an isolated .NET 9 `System.Reflection.Metadata`/`PEReader` tool and passed
-independent audit at `468e8679388481e923a37a985055046f72480921`. It remains
-unimplemented and unexecuted. The next task is separately authorized parser
-implementation, not metadata review or runtime execution.
+The remediated non-loading design gate passed independent audit at
+`49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The parser design selects an
+isolated .NET 9 `System.Reflection.Metadata`/`PEReader` tool and passed
+independent audit at `468e8679388481e923a37a985055046f72480921`. The
+remediated implementation passed independent audit at
+`f0be4746ad4cc548334336c1e66f07007b71859f` and is accepted static-only. The
+next task is separately authorized real-artifact static metadata review, not
+runtime execution.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

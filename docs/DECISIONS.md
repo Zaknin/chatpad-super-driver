@@ -4,6 +4,39 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-05 - Accept static metadata-parser implementation audit
+
+**Decision:** Accept the independent `AUDIT PASS` for the remediated static
+metadata parser implementation at
+`f0be4746ad4cc548334336c1e66f07007b71859f` and transition the active gate to
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`. The
+parser implementation status is now `ACCEPTED_STATIC_ONLY`; real-artifact
+parser execution, metadata review, and real artifact open/parse/hash/write
+remain `NOT_PERFORMED` and unauthorized until a separate metadata-review task.
+
+**Rationale:** The independent audit accepted the remediated all-file preflight
+contract: `--input`, `--expected`, and `--output` are centrally scope-gated;
+rejected file-bearing paths produce no parser output and zero read/hash/parse/
+write counters; standard and independent parser evidence bindings validate;
+invalid parser evidence paths are rejected; and validation remained
+synthetic-fixture-only.
+
+**Alternatives rejected:** Keeping the remediated implementation under the
+pending implementation-audit gate, authorizing real-artifact parser execution
+as part of audit acceptance, performing metadata review in the transition
+task, loading or reflecting over the compiled artifact, executing it, invoking
+native APIs, querying devices, mutating Windows, or advancing to live runtime
+testing.
+
+**Consequences:** The next safe task is a separately authorized real-artifact
+static metadata-review task using the accepted parser. That later task may
+authorize only static open/read/hash/parse of the real compile-only artifact
+for metadata review and must continue to prohibit assembly loading, runtime
+reflection, execution, native invocation, device query, Windows mutation, and
+driver build/sign/package/install/load/bind/restore/restart actions. Live
+readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`; the
+runtime blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## 2026-07-04 - Suppress parser output on file-preflight rejection
 
 **Decision:** Any rejected static-parser file-bearing option terminates with

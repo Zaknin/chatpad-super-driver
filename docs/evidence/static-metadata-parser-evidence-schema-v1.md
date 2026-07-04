@@ -42,9 +42,11 @@ Required evidence fields:
   `actualModules`, `declarationChecks`, `diagnostics`, `defects`, and
   `safetyCounters`.
 
-Parser file access is fail-closed. Under
-`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`, one central
-preflight classifies every file-bearing option before caller-selected file I/O:
+Parser file access is fail-closed. The implementation-audit gate is now
+accepted as static-only; under
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`, one
+central preflight still classifies every file-bearing option before
+caller-selected file I/O:
 
 - `--input` and `--expected` are read paths limited to parser-specific
   synthetic `fixtures/` roots under ignored `artifacts/logs/`;
@@ -84,14 +86,19 @@ prohibited-action counter is a defect for audit acceptance.
 Safety guarantee and occurrence booleans are computed from the enforced policy
 and their corresponding counters; they are not independent constant claims.
 
-For this implementation task, nonzero input/expectation read, input hash,
-PE/metadata parse, and approved output-write counters are allowed only for
-synthetic fixtures and parser evidence under ignored parser artifact roots.
-Every rejected file-bearing path test keeps all read/hash/parse/write counters
-at zero and creates no parser output file. Approved synthetic success cases
-may write parser evidence only below approved parser-specific ignored roots.
+For the accepted implementation audit, nonzero input/expectation read, input
+hash, PE/metadata parse, and approved output-write counters were allowed only
+for synthetic fixtures and parser evidence under ignored parser artifact roots.
+Every rejected file-bearing path test kept all read/hash/parse/write counters
+at zero and created no parser output file. Approved synthetic success cases may
+write parser evidence only below approved parser-specific ignored roots.
 Manifest evidence-path policy accepts both standard parser-remediation roots
 and parser-specific independent-audit roots under `artifacts/logs/`, while
 rejecting non-parser, compile-only, protected-name, metadata-review,
-production, tracked, and legacy paths. The real compile-only native interop
-artifact remains unopened, unparsed, unhashed, unwritten, and unreviewed.
+production, tracked, and legacy paths.
+
+The remediated implementation passed independent audit at
+`f0be4746ad4cc548334336c1e66f07007b71859f` and is accepted only as a
+static-only parser for a future separately authorized real-artifact static
+metadata-review task. The real compile-only native interop artifact remains
+unopened, unparsed, unhashed, unwritten, and unreviewed.

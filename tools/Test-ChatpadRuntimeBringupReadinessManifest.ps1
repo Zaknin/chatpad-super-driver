@@ -852,7 +852,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
 $metadataReviewDefectRecords=[Collections.Generic.List[object]]::new()
 $topLevelNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $manifest -Location 'manifest'
@@ -913,8 +913,8 @@ if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metada
 }
 else{
     $metadataGate=$metadataGateProperty.Value
-    if($metadataGate.status-ne'STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT'-or
-        $metadataGate.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or
+    if($metadataGate.status-ne'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY'-or
+        $metadataGate.current_gate-ne'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'-or
         $metadataGate.runtime_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $metadataGate.artifact_location_classification-ne'IGNORED_COMPILE_ONLY_OUTPUT'-or
         $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'-or
@@ -931,7 +931,7 @@ else{
     else{
         $parserDesign=$parserDesignProperty.Value
         if($parserDesign.status-ne'DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'-or
-            $parserDesign.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or
+            $parserDesign.current_gate-ne'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'-or
             $parserDesign.transition_base_commit-ne'382aa85980408939a93043583b48e942ebfbf018'-or
             $parserDesign.design_document_path-ne'docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'-or
             $parserDesign.preferred_technology-ne'SYSTEM_REFLECTION_METADATA_PEREADER'-or
@@ -947,8 +947,8 @@ else{
             $parserDesign.independent_design_audit_summary_sha256-ne'A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'-or
             $parserDesign.input_identity_source-ne'REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'-or
             $parserDesign.referenced_primary_dll_sha256-ne'77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'-or
-            $parserDesign.parser_implementation_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
-            $parserDesign.parser_execution_status-ne'SYNTHETIC_FIXTURES_ONLY'-or
+            $parserDesign.parser_implementation_status-ne'ACCEPTED_STATIC_ONLY'-or
+            $parserDesign.parser_execution_status-ne'REAL_ARTIFACT_NOT_PERFORMED'-or
             $parserDesign.metadata_review_status-ne'NOT_PERFORMED'-or
             $parserDesign.artifact_opening_status-ne'NOT_PERFORMED'-or
             $parserDesign.artifact_parsing_status-ne'NOT_PERFORMED'-or
@@ -969,8 +969,17 @@ else{
     else{
         $parserImplementation=$parserImplementationProperty.Value
         $parserEvidencePathProperty=$parserImplementation.PSObject.Properties['parser_synthetic_validation_path']
-        if($parserImplementation.status-ne'IMPLEMENTED_PENDING_AUDIT'-or
-            $parserImplementation.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or
+        if($parserImplementation.status-ne'ACCEPTED_STATIC_ONLY'-or
+            $parserImplementation.current_gate-ne'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'-or
+            $parserImplementation.independent_implementation_audit_verdict-ne'AUDIT PASS'-or
+            $parserImplementation.independent_implementation_audit_branch-ne'feature/runtime-bringup-static-metadata-parser-preflight-output-remediation'-or
+            $parserImplementation.independent_implementation_audit_commit-ne'f0be4746ad4cc548334336c1e66f07007b71859f'-or
+            $parserImplementation.independent_implementation_audit_summary_path-ne'artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/audit-summary.json'-or
+            [long]$parserImplementation.independent_implementation_audit_summary_byte_size-ne5706-or
+            $parserImplementation.independent_implementation_audit_summary_sha256-ne'E28834B3B307DE1782CEF1C2E0F9BCD497BD1A856A1AB745DA5E6D4060F5279A'-or
+            $parserImplementation.independent_implementation_audit_artifact_inventory_path-ne'artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/artifact-inventory.json'-or
+            [long]$parserImplementation.independent_implementation_audit_artifact_inventory_byte_size-ne5553-or
+            $parserImplementation.independent_implementation_audit_artifact_inventory_sha256-ne'2F0BEF0D246F6F52F2090E4214EA284B6D4321E8B2E5BADF91842B7AF26E603B'-or
             $parserImplementation.parser_tool_name-ne'Chatpad.StaticMetadataParser'-or
             $parserImplementation.parser_project_path-ne'tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj'-or
             $parserImplementation.parser_source_path-ne'tools/StaticMetadataParser/Program.cs'-or
@@ -983,13 +992,13 @@ else{
             [int]$parserImplementation.synthetic_fixture_count-ne5-or
             [int]$parserImplementation.synthetic_assertion_count-lt474-or
             [int]$parserImplementation.failed_fixture_count-ne0-or
-            $parserImplementation.real_artifact_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserImplementation.real_artifact_path_gate_status-ne'ACCEPTED_STATIC_ONLY'-or
             $parserImplementation.all_file_bearing_options_centrally_scoped-ne$true-or
-            $parserImplementation.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
-            $parserImplementation.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
-            $parserImplementation.preflight_rejection_output_suppression-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserImplementation.expected_path_gate_status-ne'ACCEPTED_STATIC_ONLY'-or
+            $parserImplementation.output_path_gate_status-ne'ACCEPTED_STATIC_ONLY'-or
+            $parserImplementation.preflight_rejection_output_suppression-ne'ACCEPTED_STATIC_ONLY'-or
             $parserImplementation.rejection_evidence_transport-ne'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'-or
-            $parserImplementation.approved_parser_evidence_root_validation-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserImplementation.approved_parser_evidence_root_validation-ne'ACCEPTED_STATIC_ONLY'-or
             $parserImplementation.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or
             $parserImplementation.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or
             $parserImplementation.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY'-or
@@ -1006,8 +1015,9 @@ else{
             $parserImplementation.safety_policy_enforced-ne$true-or
             [int]$parserImplementation.safety_option_rejection_count-ne2-or
             [int]$parserImplementation.failed_safety_option_rejection_count-ne0-or
-            $parserImplementation.parser_execution_status-ne'SYNTHETIC_FIXTURES_ONLY'-or
+            $parserImplementation.parser_execution_status-ne'REAL_ARTIFACT_NOT_PERFORMED'-or
             $parserImplementation.metadata_review_status-ne'NOT_PERFORMED'-or
+            $parserImplementation.real_artifact_open_parse_hash_write_status-ne'NOT_PERFORMED'-or
             $parserImplementation.real_compile_only_artifact_opened-ne$false-or
             $parserImplementation.real_compile_only_artifact_parsed-ne$false-or
             $parserImplementation.real_compile_only_artifact_hash_computed-ne$false-or

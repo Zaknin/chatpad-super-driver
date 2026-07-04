@@ -7,13 +7,15 @@
   at `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`.
 - Static metadata-parser implementation design: accepted by independent
   `AUDIT PASS` at `468e8679388481e923a37a985055046f72480921`.
+- Static metadata-parser implementation: accepted by independent `AUDIT PASS`
+  at `f0be4746ad4cc548334336c1e66f07007b71859f`.
 - Active gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Static metadata-parser implementation: `IMPLEMENTED_PENDING_AUDIT`.
-- Parser execution: `SYNTHETIC_FIXTURES_ONLY`.
+- Static metadata-parser implementation: `ACCEPTED_STATIC_ONLY`.
+- Parser execution against the real artifact: `NOT_PERFORMED`.
 - Metadata review: not performed.
 - Accepted remediation: strict JSON Boolean safety validation covers 63
   metadata-review fields and rejects numeric `0`/`1` and other non-Boolean
@@ -37,8 +39,10 @@ reflect over, execute, or invoke the artifact.
 
 The repository now has an isolated .NET 9 parser implementation using
 framework-provided `System.Reflection.Metadata`/`PEReader` APIs. It has been
-validated only with synthetic fixtures and remains subject to independent
-implementation audit before first use against the real compile-only artifact.
+validated only with synthetic fixtures and accepted by independent
+implementation audit as static-only before first use against the real
+compile-only artifact. Real-artifact static metadata review still requires a
+separate authorization task.
 See `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 ## Future review contract

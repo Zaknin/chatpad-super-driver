@@ -8,14 +8,17 @@
   `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`.
 - Accepted static metadata-parser implementation design audit:
   `468e8679388481e923a37a985055046f72480921`.
+- Accepted static metadata-parser implementation audit:
+  `f0be4746ad4cc548334336c1e66f07007b71859f`.
 - Current gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Parser implementation: `IMPLEMENTED_PENDING_AUDIT`.
-- Parser execution: `SYNTHETIC_FIXTURES_ONLY`.
+- Parser implementation: `ACCEPTED_STATIC_ONLY`.
+- Parser execution against the real artifact: `NOT_PERFORMED`.
 - Metadata review: `NOT_PERFORMED`.
+- Real artifact open/parse/hash/write: `NOT_PERFORMED`.
 
 This document's implementation design passed independent read-only audit. A
 separate implementation task added the static parser source and validated it
@@ -33,11 +36,10 @@ authorized parser evidence and because manifest validation hardcoded one
 standard parser evidence path. The current remediation suppresses all parser
 output on any file-preflight rejection and validates standard or independent
 parser evidence through one constrained ignored-root policy. The implementation
-still requires a fresh independent audit. It does not authorize
-parser execution against the real compiled artifact, artifact opening,
-parsing, hashing, writing, metadata review, assembly loading, reflection,
-execution, native invocation, device query, Windows mutation, or driver
-actions.
+passed independent audit and is accepted as static-only. It does not authorize
+parser execution against the real compiled artifact, artifact opening, parsing,
+hashing, writing, metadata review, assembly loading, reflection, execution,
+native invocation, device query, Windows mutation, or driver actions.
 
 ## 2. Investigation and technology decision
 
@@ -364,10 +366,37 @@ The audit verified:
 - live readiness remains `BLOCKED`, native execution remains
   `NOT_IMPLEMENTED`, and the runtime blocker remains unchanged.
 
+## 13. Independent implementation-audit acceptance
+
+The independent audit of the remediated static metadata parser implementation
+returned `AUDIT PASS` at
+`f0be4746ad4cc548334336c1e66f07007b71859f`. Accepted evidence:
+
+- audit summary:
+  `artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/audit-summary.json`,
+  size `5706` bytes, SHA-256
+  `E28834B3B307DE1782CEF1C2E0F9BCD497BD1A856A1AB745DA5E6D4060F5279A`;
+- artifact inventory:
+  `artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/artifact-inventory.json`,
+  size `5553` bytes, SHA-256
+  `2F0BEF0D246F6F52F2090E4214EA284B6D4321E8B2E5BADF91842B7AF26E603B`.
+
+The audit accepted remediation of real-artifact `--input` gating, `--expected`
+and `--output` scope gating, parser output after preflight rejection, and
+over-hardcoded parser evidence-path validation. File-bearing options are
+exactly `--input`, `--expected`, and `--output`, and all are centrally gated
+before read, hash, parse, or write. Rejected path cases create no parser output
+file and prove no input read, expected read, output write, hash, PE parse, or
+metadata parse occurred. Standard and independent parser evidence manifest
+bindings validate, invalid parser evidence paths are rejected, and the parser
+remains static-only through `System.Reflection.Metadata`, `PEReader`, and
+`MetadataReader`.
+
 The current gate is
-`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`. The next task
-must independently audit the parser implementation. Parser execution against
-the real artifact, metadata review, compiled-artifact opening/parsing/hash
-verification, loading, reflection, execution, native invocation, device query,
-Windows mutation, and driver actions remain unauthorized unless separately and
-explicitly allowed after that audit.
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`. The next
+task is a separately authorized real-artifact static metadata-review task using
+the accepted parser. Parser execution against the real artifact, metadata
+review, compiled-artifact opening/parsing/hash verification, loading,
+reflection, execution, native invocation, device query, Windows mutation, and
+driver actions remain unauthorized unless separately and explicitly allowed by
+that task.

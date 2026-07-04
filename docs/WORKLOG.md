@@ -8635,6 +8635,110 @@
   parser implementation and its pre-read rejection evidence. Keep the real
   artifact and all metadata/native/runtime/device/driver actions unauthorized.
 
+## 2026-07-05 01:19 +04:00 - Static metadata-parser implementation audit acceptance
+
+- **Objective:** Perform a narrow documentation/evidence/gate transition after
+  the independent static metadata-parser implementation preflight-output
+  remediation audit passed. Record the accepted audit at
+  `f0be4746ad4cc548334336c1e66f07007b71859f` without running the parser
+  against the real compile-only artifact and without metadata, native,
+  runtime, device, Windows, or driver actions.
+- **Starting state:** Verified repository root
+  `C:\Dev\chatpad-super-driver`, branch
+  `feature/runtime-bringup-static-metadata-parser-preflight-output-remediation`,
+  HEAD `f0be4746ad4cc548334336c1e66f07007b71859f`, upstream
+  `origin/feature/runtime-bringup-static-metadata-parser-preflight-output-remediation`,
+  ahead/behind `0/0`, and clean worktree/index. Verified accepted commit was
+  reachable and was the current HEAD. Created
+  `feature/runtime-bringup-static-metadata-parser-implementation-audit-acceptance`
+  from that exact commit.
+- **Accepted audit evidence:** Audit summary
+  `artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/audit-summary.json`,
+  size `5706`, SHA-256
+  `E28834B3B307DE1782CEF1C2E0F9BCD497BD1A856A1AB745DA5E6D4060F5279A`.
+  Artifact inventory
+  `artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/artifact-inventory.json`,
+  size `5553`, SHA-256
+  `2F0BEF0D246F6F52F2090E4214EA284B6D4321E8B2E5BADF91842B7AF26E603B`.
+- **Implementation details:** Transitioned the active gate from
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT` to
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  Manifest/readiness vocabulary now records parser implementation
+  `ACCEPTED_STATIC_ONLY`, parser execution against the real artifact
+  `REAL_ARTIFACT_NOT_PERFORMED`, metadata review `NOT_PERFORMED`, and real
+  artifact open/parse/hash/write `NOT_PERFORMED`. The generator records the
+  accepted audit summary and inventory paths, sizes, and hashes. The validator
+  now rejects stale pending-audit gate/status values. Parser source, parser
+  project, parser test harness behavior, native declaration source,
+  compile-only harness/runner behavior, runtime adapter implementation,
+  production driver source, INF, production project/solution files,
+  signing/package/staging/deployment paths, binaries, frozen artifacts, and
+  `legacy/` were not changed.
+- **Files modified:** `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`,
+  `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Validation completed before this entry:** Changed-path review passed with
+  13 authorized paths, zero unexpected paths, parser source unchanged, native
+  declaration source unchanged, and zero `legacy/` changes. PowerShell parse
+  check passed for 55 tracked `.ps1`/`.psm1` files with zero parse errors.
+  Tracked manifest generation in no-real-artifact mode under Windows
+  PowerShell 5.1 produced schema
+  `chatpad-runtime-bringup-readiness-manifest-v4` with 39 entries. Manifest
+  validation passed under Windows PowerShell 5.1 and PowerShell 7 with zero
+  defects. Parser evidence-path regression passed 8/8 under both runtimes.
+  Targeted gate/status/parser/native/metadata-Boolean negative regression
+  passed 18/18 under both runtimes; summary artifact
+  `artifacts/logs/static-metadata-parser-implementation-audit-acceptance/negative-regression/summary.json`,
+  size `8721`, SHA-256
+  `6D78E5EB98C10CDEE3EC362B394B633CEEFC09E2218B878CDCFEA34FBBE7190F`.
+  PowerShell 7 no-real-artifact generation succeeded to ignored artifact
+  `artifacts/logs/static-metadata-parser-implementation-audit-acceptance/manifest-generation-pwsh.json`,
+  size `553253`, SHA-256
+  `021049F80761328D9FAE479E69E747214AF5A6C30D364360B11DD01ED5C87424`.
+  AST-oriented prohibited command/declaration check for changed scripts passed
+  with zero prohibited commands or declarations. Documentation text scan found
+  only documentation/prohibition mentions and false Boolean field names. The
+  forbidden generated-file scan found zero untracked files outside ignored
+  `artifacts/`. `git diff --check` passed with only Git line-ending warnings.
+- **Command issues:** Initial PowerShell version probes used incorrect quoting
+  and failed before validation. The built-in manifest corruption regression
+  exceeded the command timeout twice and was replaced with the targeted
+  negative harness above. The first PowerShell 7 manifest-generation attempt
+  failed because the ignored output directory did not exist; it was rerun after
+  creating the ignored directory. An initial hash-summary helper had an empty
+  pipeline element and was rerun grouped correctly. A pre-commit repository
+  identity check reported the expected dirty-tree/finalization-commit-not-yet-
+  created state and is rerun after the final commit.
+- **Final validation plan:** Regenerate the tracked readiness manifest after
+  this worklog entry, rerun manifest validation under Windows PowerShell 5.1
+  and PowerShell 7, rerun changed-path/prohibited/generated-file/diff checks,
+  inspect the complete diff, commit, rerun repository identity with the final
+  commit hash, push, configure upstream, and verify local/remote equality with
+  a clean worktree.
+- **Safety:** Parser execution remained synthetic-evidence-only for this task;
+  the parser was not run against the real compiled artifact. No real artifact
+  opening, parsing, hash verification, write, overwrite, or metadata review;
+  assembly loading; runtime reflection; compiled artifact execution; native
+  DLL loading; entry-point resolution; native or SetupAPI/Newdev invocation;
+  device query; hardware access; Windows mutation; or driver build/link/sign/
+  CAT/package/stage/install/load/unload/bind/restore/restart occurred.
+- **Commit and push:** Pending final manifest regeneration, final validation,
+  commit creation, push, upstream equality verification, and clean status.
+- **Next task:** A separately authorized real-artifact static metadata-review
+  task using the accepted parser. It may authorize only opening, reading,
+  hashing, and parsing the real compile-only artifact for static metadata
+  review, while still prohibiting runtime loading, runtime reflection,
+  execution, native invocation, device query, Windows mutation, and driver
+  actions.
+
 ## 2026-07-04 22:25 +04:00 - Static metadata-parser file-scope remediation
 
 - **Objective:** Remediate the second failed independent parser audit by

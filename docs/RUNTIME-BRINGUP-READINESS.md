@@ -72,9 +72,13 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
+- Static metadata parser implementation: `ACCEPTED_STATIC_ONLY`.
+- Parser execution against the real artifact: `NOT_PERFORMED`.
+- Metadata review: `NOT_PERFORMED`.
+- Real artifact open/parse/hash/write: `NOT_PERFORMED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
   harness. Compiled output remains unloaded, unexecuted, unreflected, and
@@ -715,11 +719,11 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 Repository investigation previously found no approved static managed metadata
 parser. The remediated non-loading design gate passed independent audit at
-`49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The parser implementation now
-exists and the project advances only to
-`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`;
-the runtime blocker remains
-`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+`49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The remediated parser
+implementation now passed independent audit at
+`f0be4746ad4cc548334336c1e66f07007b71859f`; the project advances only to
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`. The
+runtime blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 The future allowlist is inert PE/CLI byte parsing through an isolated .NET 9
 tool using `System.Reflection.Metadata`, `PEReader`, and `MetadataReader`.
@@ -745,10 +749,11 @@ one hardcoded evidence path. The current remediation exits before output for
 every file-preflight rejection, emits zero-I/O console diagnostics for the
 test harness, and validates both standard and independent parser evidence
 below constrained parser-specific ignored roots. Successful synthetic runs
-retain create-new evidence output. The remediated parser remains pending
-independent audit. The parser was not run against the real
-compile-only artifact, and that artifact was not opened, hashed, parsed,
-written, overwritten, or inspected. See
+retain create-new evidence output. The remediated parser is accepted
+static-only for a future separately authorized real-artifact static metadata
+review. The parser was not run against the real compile-only artifact, and
+that artifact was not opened, hashed, parsed, written, overwritten, or
+inspected. Metadata review was not performed. See
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 The accepted remediation validates 63 metadata-review safety fields as strict
@@ -759,12 +764,10 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform a fresh independent read-only audit of the preflight-output and
-parser-evidence-path remediation. Verify `--input`, `--expected`, and
-`--output` rejection produces zero reads, hashes, parses, and writes with no
-parser output file; verify successful synthetic create-new evidence; and
-verify constrained standard/independent parser evidence roots. Do not run the
-parser against the compiled artifact, perform metadata review,
-open/hash/parse/write the artifact, load or reflect over compiled output,
-execute it, resolve entry points, invoke SetupAPI/Newdev, query devices, or
-mutate Windows.
+Perform a separately authorized real-artifact static metadata-review task using
+the accepted parser. That task may authorize opening, reading, hashing, and
+parsing the real compile-only artifact only for static metadata review. It must
+still prohibit assembly loading, runtime reflection, execution, native DLL
+loading, entry-point resolution, native or SetupAPI/Newdev invocation, device
+query, hardware access, Windows mutation, and driver build/link/sign/CAT/
+package/stage/install/load/unload/bind/restore/restart actions.
