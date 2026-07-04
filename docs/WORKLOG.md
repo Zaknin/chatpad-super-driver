@@ -7691,3 +7691,136 @@
 - **Next task:** Independent read-only re-audit of the remediated compile-only
   evidence and audit-output-root behavior, starting from the final pushed
   branch head, before any native adapter execution work is considered.
+
+## 2026-07-04T02:45+04:00 - Compile-only output lineage clarification
+
+- **Objective:** Resolve the independent re-audit failure at
+  `207d00feedb6e419d3f791fbcb757576dfb5dbba` by determining whether old v1
+  compile-output hash preservation is an active requirement or a superseded
+  historical artifact expectation.
+- **Starting state:** Repository root `C:/Dev/chatpad-super-driver`; branch
+  `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`;
+  starting HEAD `207d00feedb6e419d3f791fbcb757576dfb5dbba`; upstream
+  `origin/feature/runtime-bringup-native-interop-compile-only-evidence-remediation`;
+  ahead/behind `0/0`; clean worktree.
+- **Investigation:** Safe Git evidence inspection showed v1 evidence
+  `native-interop-compile-only-20260703T170511Z` recorded 18 compile outputs
+  under ignored `artifacts/compile-only/native-interop/`. `git ls-files`
+  showed no compile-output files were tracked, and `git check-ignore` confirmed
+  both compile outputs and retained v1 logs are ignored by `.gitignore`.
+  Current schema v2 evidence `native-interop-compile-only-20260703T194533Z`
+  binds 18 current outputs under the same canonical ignored output root with
+  `raw_file_bytes`.
+- **Finding:** Old v1 output preservation is not a project requirement. It is a
+  superseded historical derived-artifact expectation. Comparing old v1 and
+  current v2 evidence found 9 matching and 9 differing output identities. The
+  primary DLL changed from
+  `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA` to
+  `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`.
+  This does not affect reproduction of the original source-input
+  line-ending defect, which depends on the five tracked text input identities.
+- **Resolution:** Outcome A was chosen. Documentation now states that old v1
+  compile-output hashes are historical-only, are not preserved, are not
+  required for acceptance, and are superseded by current schema v2 evidence
+  binding current outputs. The project still requires another independent
+  read-only re-audit before the compile-only phase is accepted.
+- **Files modified:** `docs/DECISIONS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/PORTING-PLAN.md`, `docs/WORKLOG.md`, and, after regeneration,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Validation plan:** Regenerate and validate the readiness manifest after
+  this entry, then run the compile evidence validator, exact/offline suite,
+  readiness suite, manifest validation under Windows PowerShell 5.1 and
+  PowerShell 7, manifest corruption regression, audit-output-root reruns,
+  invalid-root rejection, canonical output root preservation, repository
+  safety, forbidden-artifact scan, native source-boundary guard, and
+  `git diff --check`.
+- **Safety:** No native declaration, wrapper behavior, exact-instance adapter
+  behavior, production driver source, INF, project/solution, signing/package/
+  staging/deployment path, binary, or `legacy/` path was modified. No assembly
+  loading, reflection, execution, native API invocation, SetupAPI/Newdev
+  invocation, device query, hardware access, Windows mutation, driver build,
+  link, signing, CAT generation, packaging, staging, installation, loading,
+  binding, restoration, restart, enable, disable, or removal was performed.
+- **Remaining state:** Live readiness remains `BLOCKED`; current gate remains
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`;
+  capability blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Commit and push:** Pending at entry write time. The final commit and push
+  result are recorded in the final response after validation, final Git checks,
+  commit, and push complete.
+- **Next task:** Another independent read-only re-audit from the final pushed
+  commit, with the audit criterion corrected so old v1 compile-output
+  preservation is not required when explicitly documented as superseded
+  historical derived output.
+
+## 2026-07-04T04:35+04:00 - Compile-only output lineage validation closeout
+
+- **Objective:** Validate and close out the documentation/evidence-only
+  compile-output lineage clarification.
+- **Validation results:** Compile evidence validator returned `PASS`,
+  `NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_VALID`, zero defects, schema
+  `chatpad-native-interop-compile-only-validation-v2`, validation ID
+  `native-interop-compile-only-20260703T194533Z`, compiler exit `0`,
+  warnings/errors `0/0`, and 18 current outputs.
+- **Manifest validation:** Windows PowerShell 5.1 and PowerShell 7 runs of
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1` returned `PASS`,
+  schema `chatpad-runtime-bringup-readiness-manifest-validation-v3`, manifest
+  schema `chatpad-runtime-bringup-readiness-manifest-v4`, 32 entries, and zero
+  defects. Corruption regression returned `PASS` under both runtimes with 23
+  cases and zero failed cases.
+- **Exact and readiness validation:** Windows PowerShell 5.1 and PowerShell 7
+  runs of `tools/Test-ChatpadExactInstanceBindingRestoration.ps1` returned
+  `PASS`, 209 tests, 839 assertions, and zero failures. Windows PowerShell 5.1
+  and PowerShell 7 runs of `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
+  returned framework status `PASS`, 513 fixtures, 2,563 assertions, exact
+  subtotal 209 tests and 839 assertions, off-ledger assertions `0`, duplicate
+  counted assertions `0`, zero-assertion PASS fixtures `0`, Windows mutation
+  count `0`, current gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`, and
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Audit output root validation:** Compile-only rerun with
+  `-OutputRoot artifacts/logs/compile-only-output-lineage-clarification-20260703T224500Z/audit-output`
+  and `-NoLoad -NoReflection -NoInvoke` returned `PASS`, zero defects,
+  compiler exit `0`, warnings/errors `0/0`, 18 outputs, `audit_output_mode=true`,
+  `canonical_lf_text` tracked input policy, `raw_file_bytes` compile output
+  policy, five raw/canonical source identity differences, and all prohibited
+  action flags false. The same rerun with
+  `-OutputRoot "artifacts/logs/compile-only-output-lineage-clarification-20260703T224500Z/audit output with spaces"`
+  returned the same PASS result.
+- **Output-root and artifact checks:** Invalid output root
+  `lineage-invalid-output-root` failed closed with exit code `1`,
+  `OutputRoot must remain under the repository artifacts directory.`, and no
+  directory creation. The canonical output root
+  `artifacts/compile-only/native-interop/` contained 18 files before and after
+  audit-output-root reruns with zero byte/hash diffs. Forbidden generated-file
+  scan under the ignored evidence root found zero forbidden artifacts; the only
+  `.dll`/`.pdb` files were allowed managed compile-only outputs under ignored
+  audit-output roots.
+- **Safety validation:** Native source-boundary guard returned `PASS`,
+  `NATIVE_SOURCE_BOUNDARY_GUARD_VALID`, one approved declaration match, zero
+  forbidden matches, and zero executable matches. Repository safety returned
+  `PASS` with deployment, signing, packaging, certificate creation, key
+  creation, Windows mutation, device query, and hardware access counts all
+  `0`. No assembly load, reflection, execution, native API invocation,
+  SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+  registry/service/certificate/key/credential mutation, driver build/link,
+  signing, CAT generation, packaging, staging, installation, driver
+  load/unload, binding, restoration, restart, enable, disable, or removal was
+  performed.
+- **Ignored evidence artifacts:** Validation outputs are under
+  `artifacts/logs/compile-only-output-lineage-clarification-20260703T224500Z/`.
+  The readiness manifest was regenerated after this closeout entry so the
+  tracked manifest binds the final continuity text before commit.
+- **Remaining state:** Live readiness remains `BLOCKED`; current gate remains
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`;
+  capability blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Commit and push:** Pending at entry write time. The final commit and push
+  result are recorded in the final response after final manifest regeneration,
+  final Git checks, commit, push, and upstream verification.
+- **Next task:** Independent read-only re-audit from the final pushed commit,
+  with the corrected criterion that old v1 compile-output preservation is not
+  required because it is explicitly superseded historical derived output.

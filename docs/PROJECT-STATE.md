@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-03 (compile-only evidence portability remediated; independent re-audit pending)*
+*Last updated: 2026-07-04 (v1 compile-output lineage clarified; independent re-audit pending)*
 
 ## Current State
 
@@ -14,9 +14,11 @@
 
 - The independent audit of `ac32b5c8b165919913ef335be44e515f20308a52` returned `AUDIT FAIL` because five tracked text inputs and 30 readiness-manifest entries used LF identities that did not match raw CRLF working-tree bytes in a clean Windows checkout.
 - The auditor proved all five LF-normalized identities matched the recorded evidence. Native declarations, wrapper behavior, the 18-file compile output, and all safety boundaries were unchanged.
+- The independent re-audit of `207d00feedb6e419d3f791fbcb757576dfb5dbba` failed narrowly because the audit still treated old v1 compile-output byte preservation as unresolved. It otherwise reproduced the source-input defect and validated the remediated exact, readiness, manifest, audit-output-root, invalid-root, safety, generated-file, and native-boundary behavior.
 - Tracked text inputs now use declared `canonical_lf_text`: strict UTF-8, optional UTF-8 BOM removed, CRLF/CR normalized to LF, UTF-8 without BOM.
 - Evidence records canonical SHA-256/size as authoritative and raw working-tree SHA-256/size as informational.
 - Compile outputs use declared `raw_file_bytes`; output hashes are not claimed to be stable across commits or output roots.
+- Old v1 compile-output hashes from `native-interop-compile-only-20260703T170511Z` are historical ignored derived artifacts only. They are not required for acceptance after remediation, are not expected to remain available, and are superseded by current schema v2 evidence binding current outputs.
 - `-OutputRoot`, `-NoLoad`, `-NoReflection`, and `-NoInvoke` provide an ignored, contained audit mode. Audit mode writes compile output, logs, and evidence only below the supplied root and does not delete the canonical output root.
 - The native declaration and source-boundary files were not modified.
 
@@ -33,6 +35,7 @@
 
 - Canonical compile-only validation: `PASS`; compiler exit `0`; warnings/errors `0/0`; 18 outputs.
 - Compile-evidence validator: `PASS`, zero defects.
+- v1/v2 output lineage investigation: old v1 evidence recorded 18 ignored outputs under `artifacts/compile-only/native-interop`; current v2 evidence records 18 current ignored outputs. Nine output hashes match and nine differ, including the primary DLL changing from `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA` to `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`. This is documented as superseded derived-output identity, not an active acceptance failure.
 - Exact suite: `PASS` under Windows PowerShell 5.1 and PowerShell 7; 209 tests, 839 assertions, zero failures.
 - Full readiness: `PASS` under both runtimes; 513 fixtures, 2,563 assertions, Windows mutation count `0`.
 - Audit output root with spaces: `PASS`; 18 isolated outputs; canonical output unchanged.

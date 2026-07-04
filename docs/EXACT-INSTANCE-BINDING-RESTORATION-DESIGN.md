@@ -44,6 +44,12 @@ canonical LF identity, binary compile outputs retain raw-byte identity, and
 the compile runner supports isolated ignored audit output roots. Independent
 re-audit is required before the compile-only phase can be accepted.
 
+The follow-up re-audit of `207d00feedb6e419d3f791fbcb757576dfb5dbba` failed
+narrowly because old v1 compile-output preservation remained unresolved. The
+v1 output hashes are historical ignored derived artifacts only; current
+acceptance relies on schema v2 evidence binding current outputs and contained
+audit-output-root reruns, not on preserving old v1 output bytes.
+
 ### Remediated trust and serialization contracts
 
 - The snapshot is authenticated before use. Restoration resolves, invokes,

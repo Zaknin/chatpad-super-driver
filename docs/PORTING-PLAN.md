@@ -13,6 +13,14 @@ starting from `ac32b5c8b165919913ef335be44e515f20308a52`. The production adapter
 `chatpad-fake-exact-instance-adapter-v1`. The final continuity commit is the
 commit containing this update and the regenerated readiness manifest.
 
+The follow-up independent re-audit at
+`207d00feedb6e419d3f791fbcb757576dfb5dbba` failed only because old v1
+compile-output preservation was still unresolved as an audit criterion. The
+project now treats those v1 output hashes as superseded historical ignored
+derived artifacts. Current acceptance depends on schema v2 evidence binding
+current outputs, audit-output-root reruns, and zero prohibited actions, not on
+preserving old v1 DLL/PDB/NuGet/cache output bytes.
+
 The framework uses one complete canonical Plug and Play instance ID, immutable
 target and restoration driver-node identities, precondition and snapshot
 fingerprints, verified postconditions, replay protection, explicit uncertainty
@@ -34,7 +42,8 @@ compiles cleanly, records source and output hashes, and still performs no
 loading, reflection, native invocation, device query, exact-instance access, or
 Windows mutation. G153-G170 prove canonical text identity, informational raw
 identity, fail-closed hash-policy validation, raw compile-output identity,
-audit-root containment, and the pending re-audit transition.
+historical v1 output supersession, audit-root containment, and the pending
+re-audit transition.
 
 The exact-instance suite passes under Windows PowerShell 5.1 and PowerShell 7
 with 209 records and 839 assertions after the evidence-remediation fixtures

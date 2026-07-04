@@ -67,6 +67,15 @@ and informational raw working-tree identities. Compile outputs use
 compile output, logs, and evidence into one ignored audit root without deleting
 the canonical output; roots outside ignored `artifacts/` fail closed.
 
+The v1 compile-output hashes recorded by
+`native-interop-compile-only-20260703T170511Z` are historical ignored derived
+artifacts only. They are superseded by schema v2 evidence and are not required
+for acceptance. The source-input line-ending defect is reproducible from the
+old evidence without preserving old DLL/PDB/NuGet/cache output bytes. If a
+future audit observes old/new output hash mismatches, it must verify that the
+mismatch is this documented supersession and that current evidence binds the
+current outputs.
+
 The validation used target framework `net9.0-windows10.0.26100.0`, platform
 `x64`, configuration `Release`, .NET SDK `9.0.315`, MSBuild
 `17.14.43+2a0eb78b3`, and Roslyn `4.14.0-3.26064.1 (450493a9)`. Compiler exit
@@ -157,13 +166,14 @@ G133-G152 add the original compile-only validation coverage. G153-G170 add:
 - missing, unknown, raw-on-text, canonical-hash, canonical-size, and alias
   corruption rejection;
 - raw-byte compile-output identity and prohibited-action rejection;
+- explicit supersession of historical v1 compile-output identity;
 - explicit audit-root and no-load/no-reflection/no-invoke parameters; and
 - the pending independent re-audit gate.
 
 ## Next Boundary
 
 The next task is an independent re-audit of the remediated compile-only
-evidence and audit-output-root behavior. No
+evidence, historical v1 output supersession, and audit-output-root behavior. No
 task may load compiled output, resolve entry points, invoke native APIs, query
 devices, or mutate Windows unless that exact action is later authorized after
 independent audit. The current gate is

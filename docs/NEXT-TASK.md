@@ -2,7 +2,7 @@
 
 ## Objective
 
-Perform an independent read-only re-audit of the remediated native interop compile-only evidence and audit-output-root behavior.
+Perform an independent read-only re-audit of the remediated native interop compile-only evidence, output-lineage clarification, and audit-output-root behavior.
 
 ## Required Starting Point
 
@@ -13,8 +13,11 @@ Perform an independent read-only re-audit of the remediated native interop compi
 ## Current State
 
 - The prior audit failed only because LF evidence identities were validated against raw CRLF working-tree bytes.
+- The independent re-audit at `207d00feedb6e419d3f791fbcb757576dfb5dbba` failed narrowly because old v1 compile-output preservation had not yet been resolved as an acceptance criterion. All remediated validation behavior passed in that audit.
 - Tracked text identity now uses explicit `canonical_lf_text`; raw working-tree identity is informational.
 - Compile outputs use `raw_file_bytes`.
+- Old v1 compile-output identities are superseded historical ignored derived artifacts. They are not preserved, are not expected to remain available, and are not required for acceptance.
+- Current schema v2 evidence binding current compile outputs is the authoritative output identity.
 - Compile evidence schema is `chatpad-native-interop-compile-only-validation-v2`.
 - Readiness manifest schema is `chatpad-runtime-bringup-readiness-manifest-v4`.
 - The compile runner supports contained ignored audit output roots, including paths with spaces.
@@ -47,6 +50,8 @@ Perform an independent read-only re-audit of the remediated native interop compi
 
 - Reproduce portable canonical identities in a clean CRLF checkout.
 - Verify raw source identity differences are informational and canonical mismatches fail closed.
+- Verify old v1 compile-output identity is documented as superseded historical derived output and not required for acceptance.
+- Verify current remediated evidence fully binds the current compile outputs.
 - Verify manifest policy corruption cases fail closed.
 - Safely rerun compile-only validation in an ignored audit root and a path containing spaces.
 - Prove canonical output is not deleted by audit runs.

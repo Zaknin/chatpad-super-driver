@@ -46,6 +46,12 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - The prior independent audit returned `AUDIT FAIL`: five tracked input
   identities and 30 manifest entries were line-ending-sensitive in a clean
   CRLF checkout, while canonical LF identities matched exactly.
+- The follow-up independent re-audit of
+  `207d00feedb6e419d3f791fbcb757576dfb5dbba` failed narrowly because old v1
+  compile-output preservation was still an unresolved acceptance criterion.
+  The audit otherwise reproduced the source-input defect and validated the
+  remediated exact, readiness, manifest, audit-root, invalid-root, safety,
+  generated-file, and native-boundary behavior.
 - Remediated compile-only validation: `PASS` pending re-audit; compiler exit
   code `0`; warnings `0`; errors `0`; produced file count `18`.
 - Exact-instance suite: `PASS`, 209 tests and 839 assertions under Windows
@@ -66,6 +72,9 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   uninvoked. Native adapter execution remains unimplemented.
 - Tracked text evidence uses explicit `canonical_lf_text`; raw working-tree
   identity is informational. Compile outputs use `raw_file_bytes`.
+- Old v1 compile-output hashes are superseded historical ignored derived
+  artifacts. Current acceptance relies on schema v2 evidence binding current
+  outputs and audit-output-root reruns, not preservation of v1 output bytes.
 - Audit-root reruns are contained under ignored `artifacts/`, including paths
   with spaces, and cannot delete the canonical output root.
 
@@ -695,10 +704,12 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent audit of the compile-only native interop validation evidence, or a
-separately authorized source/design phase for native adapter execution. The next
-phase must start from the final `feature/runtime-bringup-native-interop-compile-only-validation`
-commit, preserve `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and avoid
-loading compiled output, resolving native entry points, invoking SetupAPI/Newdev,
+Independent read-only re-audit of the compile-only native interop validation
+evidence, including the explicit v1 output-supersession criterion. The next
+phase must start from the final
+`feature/runtime-bringup-native-interop-compile-only-evidence-remediation`
+commit, preserve `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`
+and `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and avoid loading
+compiled output, resolving native entry points, invoking SetupAPI/Newdev,
 querying devices, or mutating Windows unless a later task explicitly authorizes
 that exact action after independent audit.

@@ -4,6 +4,42 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Treat v1 compile-only outputs as superseded derived artifacts
+
+**Decision:** The 18 compile outputs recorded by
+`chatpad-native-interop-compile-only-validation-v1` are historical ignored
+derived artifacts only. Their raw hashes are not an active preservation
+requirement after the evidence-lineage remediation. Acceptance of the
+compile-only phase depends on the current remediated evidence binding the
+current compile outputs, contained audit-output-root reruns, canonical tracked
+text input identity, raw-byte identity for current outputs, and zero
+load/reflection/execution/native/device/Windows/driver actions.
+
+**Rationale:** The v1 evidence recorded outputs under ignored `artifacts/`
+paths and did not declare them tracked, durable, or required to remain
+available after a later remediation. The independent re-audit of
+`207d00feedb6e419d3f791fbcb757576dfb5dbba` reproduced the original source
+identity defect and validated all remediated behavior, but could not prove old
+v1 output preservation because 9 of 18 current output hashes differed from v1
+and the v1 primary DLL hash was no longer present. That mismatch is expected
+for per-run ignored compile artifacts and does not weaken the line-ending
+defect reproduction.
+
+**Alternatives rejected:** Requiring the old v1 DLL/PDB/NuGet/cache output
+bytes to remain available as a long-term acceptance artifact, silently
+regenerating or reconstructing old ignored outputs, treating v1 output hashes
+as the authoritative identity after schema v2, or marking the compile-only
+phase independently accepted without another re-audit.
+
+**Consequences:** Future independent re-audit must verify that v1 output
+identity is explicitly superseded, not preserved, and not required for
+acceptance. The audit must instead validate the current schema v2 evidence,
+the current canonical output root before/after audit reruns, isolated audit
+output roots including paths with spaces, invalid-root rejection, and all
+prohibited-action counters. The gate remains
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`, and native
+adapter execution remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## 2026-07-03 - Canonicalize tracked text evidence and isolate audit compilation
 
 **Decision:** Evidence-bound tracked text uses `canonical_lf_text`: strict
