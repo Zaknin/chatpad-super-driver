@@ -10,12 +10,15 @@
   `468e8679388481e923a37a985055046f72480921`.
 - Accepted static metadata-parser implementation audit:
   `f0be4746ad4cc548334336c1e66f07007b71859f`.
+- Real-artifact review authorization-plumbing base:
+  `baab23aece902cbb06e11a308d9092fdc0f9ce0d`.
 - Current gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Parser implementation: `ACCEPTED_STATIC_ONLY`.
+- Parser implementation:
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
 - Parser execution against the real artifact: `NOT_PERFORMED`.
 - Metadata review: `NOT_PERFORMED`.
 - Real artifact open/parse/hash/write: `NOT_PERFORMED`.
@@ -392,11 +395,38 @@ bindings validate, invalid parser evidence paths are rejected, and the parser
 remains static-only through `System.Reflection.Metadata`, `PEReader`, and
 `MetadataReader`.
 
-The current gate is
-`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`. The next
-task is a separately authorized real-artifact static metadata-review task using
-the accepted parser. Parser execution against the real artifact, metadata
-review, compiled-artifact opening/parsing/hash verification, loading,
-reflection, execution, native invocation, device query, Windows mutation, and
-driver actions remain unauthorized unless separately and explicitly allowed by
-that task.
+## 14. Real-artifact authorization plumbing pending audit
+
+Commit `baab23aece902cbb06e11a308d9092fdc0f9ce0d` authorized a narrow
+implementation task to add real-artifact static-review authorization plumbing.
+The resulting parser state is
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`, and the
+current gate is
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
+
+The new scope is `real-artifact-static-metadata-review`, but it is
+preflight-only in this phase. It may not run the normal parser pipeline
+against the real compile-only DLL. It checks only manifest state and recorded
+evidence identity:
+
+- current manifest gate must be
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`;
+- runtime blocker must be
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
+- live readiness must be `BLOCKED`;
+- native execution must be `NOT_IMPLEMENTED`;
+- accepted parser audit commit must be
+  `f0be4746ad4cc548334336c1e66f07007b71859f`;
+- the authorization transition commit
+  `baab23aece902cbb06e11a308d9092fdc0f9ce0d` must be recorded;
+- the input path string must match the primary compile-only DLL identity
+  recorded in `docs/evidence/native-interop-compile-only-validation.json`.
+
+Successful real-artifact preflight writes no parser output and records zero
+artifact read/open/hash/parse/write/metadata counters. Negative cases cover a
+wrong artifact path, wrong gate, wrong parser status, wrong live readiness,
+missing transition commit, output outside the real-review root, and a
+caller-forced scope without the old authorization gate. Normal real-artifact
+metadata review remains unauthorized until an independent read-only audit
+accepts this plumbing and a later task explicitly reopens artifact
+open/read/hash/parse/write scope.

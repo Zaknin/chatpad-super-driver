@@ -13,11 +13,21 @@ internal static class Program
     private const string ToolName = "Chatpad.StaticMetadataParser";
     private const string ToolVersion = "1.0.0";
     private const long MaxInputBytes = 64L * 1024L * 1024L;
-    private const string CurrentGate = "BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT";
+    private const string CurrentGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT";
+    private const string RealArtifactAuthorizationGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION";
+    private const string RuntimeBlocker = "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED";
+    private const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY";
+    private const string AcceptedParserAuditCommit = "f0be4746ad4cc548334336c1e66f07007b71859f";
+    private const string AcceptedReviewAuthorizationTransitionCommit = "baab23aece902cbb06e11a308d9092fdc0f9ce0d";
     private const string ImmutableSafetyPolicy = "IMMUTABLE_STATIC_ONLY";
     private const string SyntheticFixtureInputScope = "SYNTHETIC_FIXTURES_ONLY";
+    private const string RealArtifactReviewInputScope = "REAL_ARTIFACT_STATIC_REVIEW_MANIFEST_AUTHORIZED";
+    private const string RealArtifactReviewEvidenceScope = "REAL_ARTIFACT_STATIC_METADATA_REVIEW_EVIDENCE_ROOT";
     private const string RealArtifactRelativeRoot = "artifacts/compile-only/native-interop";
     private const string RealArtifactFileName = "Chatpad.NativeInterop.CompileOnlyValidation.dll";
+    private const string CanonicalReadinessManifestPath = "docs/evidence/runtime-bringup-readiness-manifest.json";
+    private const string RealArtifactReviewEvidenceRoot = "artifacts/logs/real-artifact-static-metadata-review";
+    private const string PreflightFixtureManifestRoot = "artifacts/logs/static-parser-real-artifact-authorization-plumbing";
 
     public static int Main(string[] args)
     {
@@ -43,6 +53,12 @@ internal static class Program
         {
             WriteFilePreflightRejectionDiagnostic(evidence);
             return 64;
+        }
+
+        if (options.PreflightOnly)
+        {
+            WritePreflightOnlyDiagnostic(evidence);
+            return 0;
         }
 
         try
@@ -214,11 +230,18 @@ internal static class Program
 
         string normalizedRoot = Path.GetFullPath(repositoryRoot);
         evidence.RepositoryRoot = normalizedRoot;
-        evidence.InputPathDecision = ClassifyReadPath("input", options.OriginalInputPath, options.InputPath, normalizedRoot);
+        RealArtifactAuthorizationContext realArtifactAuthorization = RealArtifactAuthorizationContext.NotRequested();
+        if (options.ReviewScope == ParserReviewScope.RealArtifactStaticMetadataReview)
+        {
+            realArtifactAuthorization = RealArtifactAuthorizationContext.Load(normalizedRoot, options);
+        }
+
+        ApplyAuthorizationContext(evidence, options, realArtifactAuthorization);
+        evidence.InputPathDecision = ClassifyReadPath("input", options.OriginalInputPath, options.InputPath, normalizedRoot, options, realArtifactAuthorization);
         evidence.ExpectedPathDecision = string.IsNullOrWhiteSpace(options.ExpectedPath)
             ? PathScopeDecision.NotProvided("expected")
-            : ClassifyReadPath("expected", options.OriginalExpectedPath, options.ExpectedPath, normalizedRoot);
-        evidence.OutputPathDecision = ClassifyWritePath(options.OriginalOutputPath, options.OutputPath, normalizedRoot);
+            : ClassifyReadPath("expected", options.OriginalExpectedPath, options.ExpectedPath, normalizedRoot, options, realArtifactAuthorization);
+        evidence.OutputPathDecision = ClassifyWritePath(options.OriginalOutputPath, options.OutputPath, normalizedRoot, options);
 
         if (evidence.OutputPathDecision.Decision == "ALLOWED" &&
             (PathsEqual(options.OutputPath, options.InputPath) ||
@@ -239,7 +262,7 @@ internal static class Program
         ];
 
         // All lexical classifications above complete before reparse/existence checks below.
-        foreach (PathScopeDecision decision in decisions.Where(item => item.Decision == "ALLOWED"))
+        foreach (PathScopeDecision decision in decisions.Where(item => item.Decision == "ALLOWED" && item.Reason != "REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZED_BY_MANIFEST"))
         {
             string? reparsePoint = FindReparsePointInPath(normalizedRoot, decision.NormalizedPath);
             if (!string.IsNullOrWhiteSpace(reparsePoint))
@@ -264,7 +287,7 @@ internal static class Program
         }
 
         evidence.InputClassification = evidence.InputPathDecision.Decision == "ALLOWED"
-            ? "SYNTHETIC_FIXTURE_CANDIDATE"
+            ? options.ReviewScope == ParserReviewScope.RealArtifactStaticMetadataReview ? "REAL_ARTIFACT_STATIC_REVIEW_CANDIDATE" : "SYNTHETIC_FIXTURE_CANDIDATE"
             : "INPUT_SCOPE_REJECTED";
         evidence.InputScopeDecision = evidence.InputPathDecision.Decision;
         evidence.InputScopeReason = evidence.InputPathDecision.Reason;
@@ -274,7 +297,9 @@ internal static class Program
         string role,
         string originalPath,
         string normalizedPath,
-        string repositoryRoot)
+        string repositoryRoot,
+        ParserOptions options,
+        RealArtifactAuthorizationContext realArtifactAuthorization)
     {
         string normalizedRealRoot = Path.GetFullPath(Path.Combine(
             repositoryRoot,
@@ -282,6 +307,11 @@ internal static class Program
         if (HasAlternateDataStreamSyntax(normalizedPath))
         {
             return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "ALTERNATE_DATA_STREAM_NOT_AUTHORIZED");
+        }
+
+        if (options.ReviewScope == ParserReviewScope.RealArtifactStaticMetadataReview)
+        {
+            return ClassifyRealArtifactReviewReadPath(role, originalPath, normalizedPath, repositoryRoot, realArtifactAuthorization);
         }
 
         if (IsUnderDirectory(normalizedPath, normalizedRealRoot) ||
@@ -306,7 +336,8 @@ internal static class Program
     private static PathScopeDecision ClassifyWritePath(
         string originalPath,
         string normalizedPath,
-        string repositoryRoot)
+        string repositoryRoot,
+        ParserOptions options)
     {
         string normalizedRealRoot = Path.GetFullPath(Path.Combine(
             repositoryRoot,
@@ -314,6 +345,11 @@ internal static class Program
         if (HasAlternateDataStreamSyntax(normalizedPath))
         {
             return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "ALTERNATE_DATA_STREAM_NOT_AUTHORIZED");
+        }
+
+        if (options.ReviewScope == ParserReviewScope.RealArtifactStaticMetadataReview)
+        {
+            return ClassifyRealArtifactReviewWritePath(originalPath, normalizedPath, repositoryRoot);
         }
 
         if (IsUnderDirectory(normalizedPath, normalizedRealRoot) ||
@@ -346,6 +382,72 @@ internal static class Program
         return PathScopeDecision.Allowed("output", originalPath, normalizedPath, "PARSER_EVIDENCE_ROOT");
     }
 
+    private static PathScopeDecision ClassifyRealArtifactReviewReadPath(
+        string role,
+        string originalPath,
+        string normalizedPath,
+        string repositoryRoot,
+        RealArtifactAuthorizationContext authorization)
+    {
+        if (!Path.IsPathFullyQualified(originalPath))
+        {
+            return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "PATH_NOT_ABSOLUTE");
+        }
+
+        if (!authorization.Authorized)
+        {
+            return PathScopeDecision.Rejected(role, originalPath, normalizedPath, authorization.FailureReason);
+        }
+
+        if (role == "input")
+        {
+            if (!PathsEqual(normalizedPath, authorization.AcceptedArtifactPath))
+            {
+                return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "REAL_ARTIFACT_IDENTITY_MISMATCH");
+            }
+
+            return PathScopeDecision.Allowed(role, originalPath, normalizedPath, "REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZED_BY_MANIFEST");
+        }
+
+        if (!IsAllowedRealArtifactReviewEvidencePath(repositoryRoot, normalizedPath) ||
+            ContainsProtectedArtifactName(normalizedPath))
+        {
+            return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "OUTSIDE_REAL_ARTIFACT_REVIEW_EVIDENCE_SCOPE");
+        }
+
+        return PathScopeDecision.Allowed(role, originalPath, normalizedPath, "REAL_ARTIFACT_REVIEW_EXPECTATION_ROOT");
+    }
+
+    private static PathScopeDecision ClassifyRealArtifactReviewWritePath(
+        string originalPath,
+        string normalizedPath,
+        string repositoryRoot)
+    {
+        if (!Path.IsPathFullyQualified(originalPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "PATH_NOT_ABSOLUTE");
+        }
+
+        if (!IsAllowedRealArtifactReviewEvidencePath(repositoryRoot, normalizedPath) ||
+            ContainsProtectedArtifactName(normalizedPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "OUTSIDE_REAL_ARTIFACT_REVIEW_EVIDENCE_SCOPE");
+        }
+
+        string? parent = Path.GetDirectoryName(normalizedPath);
+        if (string.IsNullOrWhiteSpace(parent) || !Directory.Exists(parent))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "OUTPUT_PARENT_MISSING");
+        }
+
+        if (File.Exists(normalizedPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "OUTPUT_ALREADY_EXISTS");
+        }
+
+        return PathScopeDecision.Allowed("output", originalPath, normalizedPath, "REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT");
+    }
+
     private static void AddPathDefect(Evidence evidence, PathScopeDecision decision)
     {
         if (decision.Decision != "REJECTED")
@@ -366,6 +468,38 @@ internal static class Program
             decision.Role == "output" ? "Parser-specific ignored evidence path" : "Parser-specific synthetic fixture path",
             decision.NormalizedPath,
             "File path rejected before caller-selected file I/O: " + decision.Reason));
+    }
+
+    private static void ApplyAuthorizationContext(
+        Evidence evidence,
+        ParserOptions options,
+        RealArtifactAuthorizationContext authorization)
+    {
+        evidence.ReviewScope = options.ReviewScope.Text;
+        evidence.PreflightOnly = options.PreflightOnly;
+        evidence.AuthorizationManifestPath = authorization.ManifestPath;
+        evidence.RealArtifactAuthorizationStatus = authorization.Authorized ? "AUTHORIZED" : authorization.Status;
+        evidence.RealArtifactAuthorizationReason = authorization.Authorized ? "MANIFEST_AND_IDENTITY_MATCHED" : authorization.FailureReason;
+        evidence.RealArtifactAuthorizationGateMatched = authorization.GateMatched;
+        evidence.RealArtifactAcceptedParserAuditCommitMatched = authorization.AcceptedParserAuditCommitMatched;
+        evidence.RealArtifactTransitionCommitMatched = authorization.TransitionCommitMatched;
+        evidence.RealArtifactIdentityMatched = authorization.IdentityMatched;
+        evidence.RealArtifactExpectedRelativePath = authorization.AcceptedArtifactRelativePath;
+        evidence.RealArtifactExpectedSha256 = authorization.AcceptedArtifactSha256;
+        evidence.RealArtifactExpectedSize = authorization.AcceptedArtifactSize;
+        evidence.RealArtifactExpectedIdentitySource = authorization.IdentitySource;
+
+        if (options.ReviewScope == ParserReviewScope.RealArtifactStaticMetadataReview)
+        {
+            evidence.AllowedInputScope = RealArtifactReviewInputScope;
+            evidence.AllowedExpectedScope = RealArtifactReviewEvidenceScope;
+            evidence.AllowedOutputScope = RealArtifactReviewEvidenceScope;
+        }
+        else
+        {
+            evidence.AllowedExpectedScope = SyntheticFixtureInputScope;
+            evidence.AllowedOutputScope = "PARSER_EVIDENCE_ROOTS_ONLY";
+        }
     }
 
     private static void SetPathDecision(Evidence evidence, PathScopeDecision decision)
@@ -458,9 +592,36 @@ internal static class Program
         return segments.Length >= 2 && IsParserSpecificRootSegment(segments[0]);
     }
 
+    private static bool IsAllowedRealArtifactReviewEvidencePath(string repositoryRoot, string outputPath)
+    {
+        string reviewRoot = Path.GetFullPath(Path.Combine(
+            repositoryRoot,
+            RealArtifactReviewEvidenceRoot.Replace('/', Path.DirectorySeparatorChar)));
+        if (!IsUnderDirectory(outputPath, reviewRoot))
+        {
+            return false;
+        }
+
+        string relative = Path.GetRelativePath(reviewRoot, outputPath);
+        string[] segments = relative.Split(
+            new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
+            StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length >= 1 && segments.All(segment => segment != "." && segment != "..");
+    }
+
+    private static bool IsAllowedPreflightManifestFixturePath(string repositoryRoot, string manifestPath)
+    {
+        string fixtureRoot = Path.GetFullPath(Path.Combine(
+            repositoryRoot,
+            PreflightFixtureManifestRoot.Replace('/', Path.DirectorySeparatorChar)));
+        return IsUnderDirectory(manifestPath, fixtureRoot) &&
+            string.Equals(Path.GetExtension(manifestPath), ".json", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsParserSpecificRootSegment(string segment) =>
         segment.StartsWith("static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
-        segment.StartsWith("independent-static-metadata-parser-", StringComparison.OrdinalIgnoreCase);
+        segment.StartsWith("independent-static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase);
 
     private static bool ContainsProtectedArtifactName(string path) =>
         path.Contains(RealArtifactFileName, StringComparison.OrdinalIgnoreCase);
@@ -792,6 +953,267 @@ internal static class Program
 
         Console.Out.WriteLine(JsonSerializer.Serialize(evidence));
     }
+
+    private static void WritePreflightOnlyDiagnostic(Evidence evidence)
+    {
+        evidence.Result = "PASS";
+        evidence.ResultCode = evidence.ReviewScope == ParserReviewScope.RealArtifactStaticMetadataReview.Text
+            ? "REAL_ARTIFACT_STATIC_REVIEW_PREFLIGHT_AUTHORIZED_NO_ARTIFACT_IO"
+            : "STATIC_METADATA_PARSER_PREFLIGHT_AUTHORIZED_NO_ARTIFACT_IO";
+        evidence.EvidenceTransport = "CONSOLE_PREFLIGHT_ONLY";
+        evidence.Diagnostics.Add(Diagnostic.Info(
+            "preflight-only",
+            "Preflight-only mode completed authorization and path checks without input open/read/hash/parse or output write."));
+        Console.Out.WriteLine(JsonSerializer.Serialize(evidence));
+    }
+}
+
+internal sealed class RealArtifactAuthorizationContext
+{
+    public bool Authorized { get; private init; }
+    public string Status { get; private init; } = "NOT_REQUESTED";
+    public string FailureReason { get; private init; } = "REAL_ARTIFACT_REVIEW_SCOPE_NOT_REQUESTED";
+    public string ManifestPath { get; private init; } = "";
+    public string AcceptedArtifactRelativePath { get; private init; } = "";
+    public string AcceptedArtifactPath { get; private init; } = "";
+    public string AcceptedArtifactSha256 { get; private init; } = "";
+    public long AcceptedArtifactSize { get; private init; }
+    public string IdentitySource { get; private init; } = "";
+    public bool GateMatched { get; private init; }
+    public bool AcceptedParserAuditCommitMatched { get; private init; }
+    public bool TransitionCommitMatched { get; private init; }
+    public bool IdentityMatched { get; private init; }
+
+    public static RealArtifactAuthorizationContext NotRequested() => new();
+
+    public static RealArtifactAuthorizationContext Load(string repositoryRoot, ParserOptions options)
+    {
+        string manifestPath = string.IsNullOrWhiteSpace(options.AuthorizationManifestPath)
+            ? Path.GetFullPath(Path.Combine(
+                repositoryRoot,
+                ProgramConstants.CanonicalReadinessManifestPath.Replace('/', Path.DirectorySeparatorChar)))
+            : options.AuthorizationManifestPath;
+
+        if (!string.IsNullOrWhiteSpace(options.AuthorizationManifestPath) &&
+            (!options.PreflightOnly || !ProgramPaths.IsAllowedPreflightManifestFixturePath(repositoryRoot, manifestPath)))
+        {
+            return Fail(manifestPath, "AUTHORIZATION_MANIFEST_PATH_NOT_CANONICAL");
+        }
+
+        if (!File.Exists(manifestPath))
+        {
+            return Fail(manifestPath, "AUTHORIZATION_MANIFEST_MISSING");
+        }
+
+        string compileEvidencePath = Path.GetFullPath(Path.Combine(
+            repositoryRoot,
+            "docs/evidence/native-interop-compile-only-validation.json".Replace('/', Path.DirectorySeparatorChar)));
+        if (!File.Exists(compileEvidencePath))
+        {
+            return Fail(manifestPath, "COMPILE_ONLY_EVIDENCE_MISSING");
+        }
+
+        using JsonDocument manifestDocument = JsonDocument.Parse(File.ReadAllText(manifestPath));
+        JsonElement manifest = manifestDocument.RootElement;
+        JsonElement metadataGate = GetObject(manifest, "compiled_artifact_metadata_review_design_gate");
+        JsonElement parserImplementation = GetObject(metadataGate, "static_metadata_parser_implementation");
+        JsonElement parserDesign = GetObject(metadataGate, "static_metadata_parser_implementation_design");
+        JsonElement repository = GetObject(manifest, "repository");
+
+        bool gateMatched =
+            GetString(manifest, "current_gate") == ProgramConstants.RealArtifactAuthorizationGate &&
+            GetString(metadataGate, "current_gate") == ProgramConstants.RealArtifactAuthorizationGate &&
+            GetString(parserImplementation, "current_gate") == ProgramConstants.RealArtifactAuthorizationGate &&
+            GetString(manifest, "capability_blocker") == ProgramConstants.RuntimeBlocker &&
+            GetString(metadataGate, "runtime_blocker") == ProgramConstants.RuntimeBlocker &&
+            GetString(manifest, "live_installation_readiness") == "BLOCKED" &&
+            GetString(manifest, "native_execution_status") == "NOT_IMPLEMENTED";
+
+        bool acceptedParserMatched =
+            GetString(parserImplementation, "status") == ProgramConstants.AcceptedParserImplementationStatus &&
+            GetString(parserDesign, "parser_implementation_status") == ProgramConstants.AcceptedParserImplementationStatus &&
+            GetString(parserImplementation, "independent_implementation_audit_commit") == ProgramConstants.AcceptedParserAuditCommit;
+
+        bool notPerformedMatched =
+            GetString(parserImplementation, "parser_execution_status") == "REAL_ARTIFACT_NOT_PERFORMED" &&
+            GetString(parserImplementation, "metadata_review_status") == "NOT_PERFORMED" &&
+            GetString(parserImplementation, "real_artifact_open_parse_hash_write_status") == "NOT_PERFORMED" &&
+            GetString(parserDesign, "parser_execution_status") == "REAL_ARTIFACT_NOT_PERFORMED" &&
+            GetString(parserDesign, "metadata_review_status") == "NOT_PERFORMED" &&
+            GetString(parserDesign, "artifact_opening_status") == "NOT_PERFORMED" &&
+            GetString(parserDesign, "artifact_parsing_status") == "NOT_PERFORMED" &&
+            GetString(parserDesign, "artifact_hash_verification_status") == "NOT_PERFORMED" &&
+            GetString(parserDesign, "artifact_write_status") == "NOT_PERFORMED";
+
+        bool transitionMatched =
+            GetString(parserImplementation, "real_artifact_review_authorization_transition_commit") == ProgramConstants.AcceptedReviewAuthorizationTransitionCommit ||
+            GetString(parserDesign, "real_artifact_review_authorization_transition_commit") == ProgramConstants.AcceptedReviewAuthorizationTransitionCommit ||
+            GetString(repository, "real_artifact_review_authorization_transition_commit") == ProgramConstants.AcceptedReviewAuthorizationTransitionCommit;
+
+        using JsonDocument compileDocument = JsonDocument.Parse(File.ReadAllText(compileEvidencePath));
+        JsonElement compileEvidence = compileDocument.RootElement;
+        string artifactRelative = FindAcceptedPrimaryArtifactRelativePath(compileEvidence);
+        string artifactSha256 = FindAcceptedPrimaryArtifactSha256(compileEvidence);
+        long artifactSize = FindAcceptedPrimaryArtifactSize(compileEvidence);
+        bool identityMatched =
+            !string.IsNullOrWhiteSpace(artifactRelative) &&
+            artifactRelative.Replace('\\', '/').StartsWith(ProgramConstants.RealArtifactRelativeRoot + "/", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(Path.GetFileName(artifactRelative), ProgramConstants.RealArtifactFileName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(artifactSha256, GetString(parserDesign, "referenced_primary_dll_sha256"), StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(artifactSha256, "77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862", StringComparison.OrdinalIgnoreCase) &&
+            artifactSize == 11264;
+
+        string status = "AUTHORIZED";
+        if (!gateMatched)
+        {
+            status = "MANIFEST_GATE_OR_BLOCKER_MISMATCH";
+        }
+        else if (!acceptedParserMatched)
+        {
+            status = "PARSER_IMPLEMENTATION_NOT_ACCEPTED";
+        }
+        else if (!notPerformedMatched)
+        {
+            status = "REAL_ARTIFACT_REVIEW_ALREADY_PERFORMED_OR_STATUS_MISMATCH";
+        }
+        else if (!transitionMatched)
+        {
+            status = "TRANSITION_COMMIT_NOT_RECORDED";
+        }
+        else if (!identityMatched)
+        {
+            status = "COMPILE_ONLY_ARTIFACT_IDENTITY_MISMATCH";
+        }
+
+        return new RealArtifactAuthorizationContext
+        {
+            Authorized = status == "AUTHORIZED",
+            Status = status,
+            FailureReason = status == "AUTHORIZED" ? "" : status,
+            ManifestPath = manifestPath,
+            AcceptedArtifactRelativePath = artifactRelative,
+            AcceptedArtifactPath = string.IsNullOrWhiteSpace(artifactRelative) ? "" : Path.GetFullPath(Path.Combine(repositoryRoot, artifactRelative.Replace('/', Path.DirectorySeparatorChar))),
+            AcceptedArtifactSha256 = artifactSha256,
+            AcceptedArtifactSize = artifactSize,
+            IdentitySource = "docs/evidence/native-interop-compile-only-validation.json",
+            GateMatched = gateMatched,
+            AcceptedParserAuditCommitMatched = acceptedParserMatched,
+            TransitionCommitMatched = transitionMatched,
+            IdentityMatched = identityMatched
+        };
+    }
+
+    private static RealArtifactAuthorizationContext Fail(string manifestPath, string reason) => new()
+    {
+        Authorized = false,
+        Status = reason,
+        FailureReason = reason,
+        ManifestPath = manifestPath
+    };
+
+    private static JsonElement GetObject(JsonElement parent, string propertyName) =>
+        parent.TryGetProperty(propertyName, out JsonElement child) && child.ValueKind == JsonValueKind.Object
+            ? child
+            : default;
+
+    private static string GetString(JsonElement parent, string propertyName) =>
+        parent.ValueKind == JsonValueKind.Object &&
+        parent.TryGetProperty(propertyName, out JsonElement value) &&
+        value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? ""
+            : "";
+
+    private static string FindAcceptedPrimaryArtifactRelativePath(JsonElement compileEvidence)
+    {
+        foreach (JsonElement file in EnumerateProducedFiles(compileEvidence))
+        {
+            string relative = GetString(file, "relative_path").Replace('\\', '/');
+            if (relative.Contains("/bin/Release/x64/net9.0-windows10.0.26100.0/", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(Path.GetFileName(relative), ProgramConstants.RealArtifactFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return relative;
+            }
+        }
+
+        return "";
+    }
+
+    private static string FindAcceptedPrimaryArtifactSha256(JsonElement compileEvidence)
+    {
+        foreach (JsonElement file in EnumerateProducedFiles(compileEvidence))
+        {
+            string relative = GetString(file, "relative_path").Replace('\\', '/');
+            if (relative.Contains("/bin/Release/x64/net9.0-windows10.0.26100.0/", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(Path.GetFileName(relative), ProgramConstants.RealArtifactFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return GetString(file, "sha256");
+            }
+        }
+
+        return "";
+    }
+
+    private static long FindAcceptedPrimaryArtifactSize(JsonElement compileEvidence)
+    {
+        foreach (JsonElement file in EnumerateProducedFiles(compileEvidence))
+        {
+            string relative = GetString(file, "relative_path").Replace('\\', '/');
+            if (relative.Contains("/bin/Release/x64/net9.0-windows10.0.26100.0/", StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(Path.GetFileName(relative), ProgramConstants.RealArtifactFileName, StringComparison.OrdinalIgnoreCase) &&
+                file.TryGetProperty("byte_size", out JsonElement size) &&
+                size.TryGetInt64(out long value))
+            {
+                return value;
+            }
+        }
+
+        return 0;
+    }
+
+    private static IEnumerable<JsonElement> EnumerateProducedFiles(JsonElement compileEvidence)
+    {
+        JsonElement buildResult = GetObject(compileEvidence, "build_result");
+        if (buildResult.ValueKind != JsonValueKind.Object ||
+            !buildResult.TryGetProperty("produced_files", out JsonElement files) ||
+            files.ValueKind != JsonValueKind.Array)
+        {
+            yield break;
+        }
+
+        foreach (JsonElement file in files.EnumerateArray())
+        {
+            yield return file;
+        }
+    }
+}
+
+internal static class ProgramConstants
+{
+    public const string RealArtifactAuthorizationGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION";
+    public const string RuntimeBlocker = "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED";
+    public const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY";
+    public const string AcceptedParserAuditCommit = "f0be4746ad4cc548334336c1e66f07007b71859f";
+    public const string AcceptedReviewAuthorizationTransitionCommit = "baab23aece902cbb06e11a308d9092fdc0f9ce0d";
+    public const string CanonicalReadinessManifestPath = "docs/evidence/runtime-bringup-readiness-manifest.json";
+    public const string RealArtifactRelativeRoot = "artifacts/compile-only/native-interop";
+    public const string RealArtifactFileName = "Chatpad.NativeInterop.CompileOnlyValidation.dll";
+}
+
+internal static class ProgramPaths
+{
+    public static bool IsAllowedPreflightManifestFixturePath(string repositoryRoot, string manifestPath) =>
+        InvokeIsAllowedPreflightManifestFixturePath(repositoryRoot, manifestPath);
+
+    private static bool InvokeIsAllowedPreflightManifestFixturePath(string repositoryRoot, string manifestPath)
+    {
+        string fixtureRoot = Path.GetFullPath(Path.Combine(
+            repositoryRoot,
+            "artifacts/logs/static-parser-real-artifact-authorization-plumbing".Replace('/', Path.DirectorySeparatorChar)));
+        string candidate = Path.GetFullPath(manifestPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        string directory = fixtureRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        return candidate.StartsWith(directory, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(Path.GetExtension(manifestPath), ".json", StringComparison.OrdinalIgnoreCase);
+    }
 }
 
 internal sealed class ParserOptions
@@ -804,6 +1226,9 @@ internal sealed class ParserOptions
     public string ExpectedPath { get; init; } = "";
     public string ParserSourceCommit { get; init; } = "UNKNOWN";
     public string ParserBuildIdentity { get; init; } = "UNKNOWN";
+    public ParserReviewScope ReviewScope { get; init; } = ParserReviewScope.SyntheticFixtures;
+    public bool PreflightOnly { get; init; }
+    public string AuthorizationManifestPath { get; init; } = "";
     public List<string> SafetyPolicyOptions { get; init; } = [];
 
     public static ParserOptions Parse(string[] args)
@@ -820,12 +1245,17 @@ internal sealed class ParserOptions
                 case "--expected":
                 case "--parser-source-commit":
                 case "--parser-build-identity":
+                case "--review-scope":
+                case "--authorization-manifest":
                     if (i + 1 >= args.Length)
                     {
                         throw new ArgumentException("Missing value for " + arg);
                     }
 
                     values[arg] = args[++i];
+                    break;
+                case "--preflight-only":
+                    flags.Add(arg);
                     break;
                 case "--no-load":
                 case "--no-reflection":
@@ -858,6 +1288,9 @@ internal sealed class ParserOptions
             throw new ArgumentException("--output is required.");
         }
 
+        ParserReviewScope reviewScope = ParserReviewScope.Parse(
+            values.TryGetValue("--review-scope", out string? scope) ? scope : "synthetic-fixtures");
+
         return new ParserOptions
         {
             OriginalInputPath = input,
@@ -868,8 +1301,32 @@ internal sealed class ParserOptions
             ExpectedPath = values.TryGetValue("--expected", out string? expected) ? Path.GetFullPath(expected) : "",
             ParserSourceCommit = values.TryGetValue("--parser-source-commit", out string? commit) ? commit : "UNKNOWN",
             ParserBuildIdentity = values.TryGetValue("--parser-build-identity", out string? identity) ? identity : "UNKNOWN",
-            SafetyPolicyOptions = flags.OrderBy(item => item, StringComparer.Ordinal).ToList()
+            ReviewScope = reviewScope,
+            PreflightOnly = flags.Contains("--preflight-only"),
+            AuthorizationManifestPath = values.TryGetValue("--authorization-manifest", out string? manifest) ? Path.GetFullPath(manifest) : "",
+            SafetyPolicyOptions = flags.Where(item => item != "--preflight-only").OrderBy(item => item, StringComparer.Ordinal).ToList()
         };
+    }
+}
+
+internal sealed record ParserReviewScope(string Text)
+{
+    public static readonly ParserReviewScope SyntheticFixtures = new("synthetic-fixtures");
+    public static readonly ParserReviewScope RealArtifactStaticMetadataReview = new("real-artifact-static-metadata-review");
+
+    public static ParserReviewScope Parse(string value)
+    {
+        if (string.Equals(value, SyntheticFixtures.Text, StringComparison.Ordinal))
+        {
+            return SyntheticFixtures;
+        }
+
+        if (string.Equals(value, RealArtifactStaticMetadataReview.Text, StringComparison.Ordinal))
+        {
+            return RealArtifactStaticMetadataReview;
+        }
+
+        throw new ArgumentException("Unsupported review scope: " + value);
     }
 }
 
@@ -942,10 +1399,25 @@ internal sealed class Evidence
     public string ParserTargetFramework { get; init; } = "net9.0";
     public string SystemReflectionMetadataVersion { get; init; } = typeof(PEReader).Assembly.GetName().Version?.ToString() ?? "";
     public string CurrentGate { get; set; } = "";
+    public string ReviewScope { get; set; } = "synthetic-fixtures";
+    public bool PreflightOnly { get; set; }
     public string SafetyPolicyMode { get; init; } = "IMMUTABLE_STATIC_ONLY";
     public bool SafetyPolicyEnforced { get; init; } = true;
     public string AllowedInputScope { get; set; } = "";
+    public string AllowedExpectedScope { get; set; } = "";
+    public string AllowedOutputScope { get; set; } = "";
     public string RepositoryRoot { get; set; } = "";
+    public string AuthorizationManifestPath { get; set; } = "";
+    public string RealArtifactAuthorizationStatus { get; set; } = "NOT_REQUESTED";
+    public string RealArtifactAuthorizationReason { get; set; } = "";
+    public bool RealArtifactAuthorizationGateMatched { get; set; }
+    public bool RealArtifactAcceptedParserAuditCommitMatched { get; set; }
+    public bool RealArtifactTransitionCommitMatched { get; set; }
+    public bool RealArtifactIdentityMatched { get; set; }
+    public string RealArtifactExpectedRelativePath { get; set; } = "";
+    public string RealArtifactExpectedSha256 { get; set; } = "";
+    public long RealArtifactExpectedSize { get; set; }
+    public string RealArtifactExpectedIdentitySource { get; set; } = "";
     public string InputPath { get; init; } = "";
     public string OriginalInputPath { get; set; } = "";
     public string InputNormalizedPath { get; set; } = "";

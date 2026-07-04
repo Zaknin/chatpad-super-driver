@@ -2764,3 +2764,36 @@ and independently auditable.
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and the final readiness
 gate is `BLOCKED_PENDING_INDEPENDENT_NATIVE_ADAPTER_SCAFFOLD_AUDIT` until an
 independent scaffold audit accepts the wiring.
+
+## 2026-07-05 - Real-artifact static-review authorization is manifest-bound and audit-gated
+
+**Decision:** Real-artifact static-review authorization plumbing must be
+manifest-bound, exact-identity-bound, and pending independent audit. A caller
+cannot authorize real-artifact parser use by passing a scope flag alone. The
+preflight-only scope must require the prior authorization gate, the native
+execution blocker, blocked live readiness, the accepted parser audit commit,
+the authorization transition commit
+`baab23aece902cbb06e11a308d9092fdc0f9ce0d`, and the exact recorded
+compile-only DLL identity before it can approve the path string.
+
+**Rationale:** The parser was previously accepted only as static-only and
+synthetic-fixture-only. The first real-artifact step needs explicit proof that
+the repository is still at the intended gate and artifact identity before any
+future artifact I/O is considered. Keeping this as preflight-only preserves the
+no-real-artifact-access boundary while giving the next audit concrete
+plumbing to review.
+
+**Alternatives rejected:** Treating `--review-scope` as sufficient
+authorization, accepting the new audit gate as permission to run real review,
+trusting branch name alone, trusting a caller-supplied artifact path without
+manifest identity, or opening/hashing/parsing the real DLL during this
+plumbing task.
+
+**Consequences:** The current gate is
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
+The parser status is
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`. The next
+task is an independent read-only audit of the plumbing, not real-artifact
+metadata review. Real artifact open/read/hash/parse/write and metadata review
+remain unauthorized until that audit passes and a separate task reopens the
+scope.

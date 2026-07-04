@@ -21,8 +21,10 @@ function Test-ChatpadApprovedParserEvidencePath {
     if($segments.Count-lt4-or$segments[0]-cne'artifacts'-or$segments[1]-cne'logs'){return $false}
     if(@($segments|Where-Object{$_-in@('.','..')}).Count){return $false}
     $rootSegment=$segments[2]
-    if($rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*)$'){return $false}
-    if($normalized-match'(?i)(artifacts/compile-only|chatpad\.nativeinterop\.compileonlyvalidation\.dll|real-artifact|compiled-artifact|native-interop|metadata-review|/legacy/)'){return $false}
+    if($rootSegment -cne 'static-parser-real-artifact-authorization-plumbing' -and $rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*)$'){return $false}
+    $tail=($segments|Select-Object -Skip 3) -join '/'
+    if($normalized-match'(?i)(artifacts/compile-only|chatpad\.nativeinterop\.compileonlyvalidation\.dll|compiled-artifact|native-interop|metadata-review|/legacy/)'){return $false}
+    if($tail-match'(?i)real-artifact'){return $false}
     return $segments[-1]-ceq'static-metadata-parser-synthetic-validation.json'
 }
 
@@ -44,10 +46,11 @@ $acceptedSuiteGates=if($NoArtifactOpenDesignGateAudit){
         'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT',
         'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION',
         'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT',
-        'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'
+        'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION',
+        'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'
     )
 }else{
-    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION')
+    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT')
 }
 $acceptedSuiteMetadataStatuses=if($NoArtifactOpenDesignGateAudit){
     @(
@@ -55,10 +58,11 @@ $acceptedSuiteMetadataStatuses=if($NoArtifactOpenDesignGateAudit){
         'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_PENDING_AUDIT',
         'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED',
         'STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT',
-        'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY'
+        'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY',
+        'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT'
     )
 }else{
-    @('STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED','STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY')
+    @('STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED','STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT')
 }
 if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-notin$acceptedSuiteGates-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false-or-not$suiteNativeExecutionAccepted-or$suite.compiled_artifact_metadata_review_status-notin$acceptedSuiteMetadataStatuses-or$suite.compiled_artifact_metadata_review_authorized-ne$false-or$suite.compiled_artifact_metadata_review_performed-ne$false-or$suite.compiled_artifact_bytes_opened-ne$false-or$suite.compiled_artifact_reflection_performed-ne$false-or$suite.compiled_artifact_execution_performed-ne$false){throw 'Suite result is not a non-executing static-metadata-parser design gate with native execution still blocked.'}
 
@@ -156,7 +160,7 @@ $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $parserEvidenceRelative=[IO.Path]::GetFullPath($ParserEvidencePath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-static-metadata-parser-synthetic-validation $parserEvidenceRelative ignored PASS))
 $parserEvidence=Get-Content -LiteralPath ([IO.Path]::GetFullPath($ParserEvidencePath)) -Raw|ConvertFrom-Json
-if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY'-or$parserEvidence.real_artifact_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.all_file_bearing_options_centrally_scoped-ne$true-or$parserEvidence.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.preflight_rejection_output_suppression-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.rejection_evidence_transport-ne'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'-or$parserEvidence.pre_io_rejection_tests-ne'PASS'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.real_compile_only_artifact_write_attempted-ne$false-or$parserEvidence.real_compile_only_artifact_write_completed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
+if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_AND_REAL_ARTIFACT_PREFLIGHT_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY_AND_MANIFEST_AUTHORIZED_REAL_ARTIFACT_PREFLIGHT'-or$parserEvidence.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'-or$parserEvidence.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'-or$parserEvidence.real_artifact_path_gate_status-ne'AUTHORIZATION_PLUMBING_PENDING_AUDIT'-or$parserEvidence.all_file_bearing_options_centrally_scoped-ne$true-or$parserEvidence.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.preflight_rejection_output_suppression-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.rejection_evidence_transport-ne'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'-or$parserEvidence.pre_io_rejection_tests-ne'PASS'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or[int]$parserEvidence.real_artifact_preflight_only_count-ne8-or[int]$parserEvidence.failed_real_artifact_preflight_only_count-ne0-or$parserEvidence.original_stop_condition_reproduction.result-ne'PASS'-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.real_compile_only_artifact_write_attempted-ne$false-or$parserEvidence.real_compile_only_artifact_write_completed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
     throw 'Parser synthetic-fixture evidence is not a passing no-real-artifact parser implementation validation record.'
 }
 $parserEvidenceIdentity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path ([IO.Path]::GetFullPath($ParserEvidencePath)) -HashPolicy auto -CommitRepresented $ImplementationCommit -State ignored
@@ -177,7 +181,7 @@ $manifest=[pscustomobject][ordered]@{
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'
+    current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     native_execution_status='NOT_IMPLEMENTED'
     manifest_generation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_READINESS_RESULT'}
@@ -222,9 +226,10 @@ $manifest=[pscustomobject][ordered]@{
         accepted=$true
     }
     compiled_artifact_metadata_review_design_gate=[pscustomobject][ordered]@{
-        status='STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY'
+        status='STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT'
         native_execution_status='NOT_IMPLEMENTED'
-        current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'
+        current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'
+        real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
         runtime_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         compile_only_evidence_remediation_accepted=$true
         artifact_location_classification='IGNORED_COMPILE_ONLY_OUTPUT'
@@ -239,7 +244,8 @@ $manifest=[pscustomobject][ordered]@{
         independent_design_audit_artifact_inventory_sha256='2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B'
         static_metadata_parser_implementation_design=[pscustomobject][ordered]@{
             status='DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'
-            current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'
+            current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'
+            real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
             transition_base_commit='382aa85980408939a93043583b48e942ebfbf018'
             design_document_path='docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'
             preferred_technology='SYSTEM_REFLECTION_METADATA_PEREADER'
@@ -255,7 +261,7 @@ $manifest=[pscustomobject][ordered]@{
             independent_design_audit_summary_sha256='A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'
             input_identity_source='REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'
             referenced_primary_dll_sha256='77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'
-            parser_implementation_status='ACCEPTED_STATIC_ONLY'
+            parser_implementation_status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT'
             parser_execution_status='REAL_ARTIFACT_NOT_PERFORMED'
             metadata_review_status='NOT_PERFORMED'
             artifact_opening_status='NOT_PERFORMED'
@@ -271,8 +277,9 @@ $manifest=[pscustomobject][ordered]@{
             driver_actions_status='NOT_PERFORMED'
         }
         static_metadata_parser_implementation=[pscustomobject][ordered]@{
-            status='ACCEPTED_STATIC_ONLY'
-            current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION'
+            status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT'
+            current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'
+            real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
             independent_implementation_audit_verdict='AUDIT PASS'
             independent_implementation_audit_branch='feature/runtime-bringup-static-metadata-parser-preflight-output-remediation'
             independent_implementation_audit_commit='f0be4746ad4cc548334336c1e66f07007b71859f'
@@ -293,7 +300,7 @@ $manifest=[pscustomobject][ordered]@{
             synthetic_fixture_count=[int]$parserEvidence.fixture_count
             synthetic_assertion_count=[int]$parserEvidence.assertion_count
             failed_fixture_count=[int]$parserEvidence.failed_fixture_count
-            real_artifact_path_gate_status='ACCEPTED_STATIC_ONLY'
+            real_artifact_path_gate_status='AUTHORIZATION_PLUMBING_PENDING_AUDIT'
             all_file_bearing_options_centrally_scoped=[bool]$parserEvidence.all_file_bearing_options_centrally_scoped
             expected_path_gate_status='ACCEPTED_STATIC_ONLY'
             output_path_gate_status='ACCEPTED_STATIC_ONLY'
@@ -316,6 +323,9 @@ $manifest=[pscustomobject][ordered]@{
             safety_policy_enforced=[bool]$parserEvidence.safety_policy_enforced
             safety_option_rejection_count=[int]$parserEvidence.safety_option_rejection_count
             failed_safety_option_rejection_count=[int]$parserEvidence.failed_safety_option_rejection_count
+            real_artifact_preflight_only_count=[int]$parserEvidence.real_artifact_preflight_only_count
+            failed_real_artifact_preflight_only_count=[int]$parserEvidence.failed_real_artifact_preflight_only_count
+            original_stop_condition_reproduction_result=[string]$parserEvidence.original_stop_condition_reproduction.result
             parser_execution_status='REAL_ARTIFACT_NOT_PERFORMED'
             metadata_review_status='NOT_PERFORMED'
             real_artifact_open_parse_hash_write_status='NOT_PERFORMED'

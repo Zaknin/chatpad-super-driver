@@ -10,11 +10,12 @@
 - Static metadata-parser implementation: accepted by independent `AUDIT PASS`
   at `f0be4746ad4cc548334336c1e66f07007b71859f`.
 - Active gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Static metadata-parser implementation: `ACCEPTED_STATIC_ONLY`.
+- Static metadata-parser implementation:
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
 - Parser execution against the real artifact: `NOT_PERFORMED`.
 - Metadata review: not performed.
 - Accepted remediation: strict JSON Boolean safety validation covers 63
@@ -39,10 +40,12 @@ reflect over, execute, or invoke the artifact.
 
 The repository now has an isolated .NET 9 parser implementation using
 framework-provided `System.Reflection.Metadata`/`PEReader` APIs. It has been
-validated only with synthetic fixtures and accepted by independent
-implementation audit as static-only before first use against the real
-compile-only artifact. Real-artifact static metadata review still requires a
-separate authorization task.
+validated with synthetic fixtures and accepted by independent implementation
+audit as static-only. This transition adds only authorization plumbing for a
+future real-artifact static metadata review. The plumbing is preflight-only,
+requires the prior manifest authorization gate and the transition commit
+`baab23aece902cbb06e11a308d9092fdc0f9ce0d`, and is pending independent audit
+before any real-artifact review may be retried.
 See `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 ## Future review contract
@@ -106,8 +109,11 @@ execution, native invocation, device query, Windows mutation, or driver action
 occurred. The implementation design is defined at
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md` and passed independent
 read-only audit at `468e8679388481e923a37a985055046f72480921`. Parser
-implementation now exists, but only synthetic-fixture parser execution is
-authorized and performed. Real artifact use and metadata review remain
-unauthorized until an independent implementation audit passes and a separate
+implementation now exists, but normal parser execution is still authorized
+only for synthetic fixtures. The new real-artifact scope is preflight-only and
+may only validate manifest-bound authorization and exact recorded artifact
+identity without opening, reading, hashing, parsing, or writing the real
+compile-only artifact. Real artifact use and metadata review remain
+unauthorized until this plumbing passes independent audit and a separate
 metadata-review task explicitly authorizes the next step. Design acceptance and
 parser implementation do not authorize native runtime execution.

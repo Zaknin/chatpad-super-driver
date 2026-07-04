@@ -72,10 +72,11 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
-- Static metadata parser implementation: `ACCEPTED_STATIC_ONLY`.
+- Static metadata parser implementation:
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
 - Parser execution against the real artifact: `NOT_PERFORMED`.
 - Metadata review: `NOT_PERFORMED`.
 - Real artifact open/parse/hash/write: `NOT_PERFORMED`.
@@ -721,9 +722,11 @@ Repository investigation previously found no approved static managed metadata
 parser. The remediated non-loading design gate passed independent audit at
 `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The remediated parser
 implementation now passed independent audit at
-`f0be4746ad4cc548334336c1e66f07007b71859f`; the project advances only to
-`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`. The
-runtime blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+`f0be4746ad4cc548334336c1e66f07007b71859f`. The authorization-plumbing
+transition from `baab23aece902cbb06e11a308d9092fdc0f9ce0d` advances only to
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
+The runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 The future allowlist is inert PE/CLI byte parsing through an isolated .NET 9
 tool using `System.Reflection.Metadata`, `PEReader`, and `MetadataReader`.
@@ -749,11 +752,17 @@ one hardcoded evidence path. The current remediation exits before output for
 every file-preflight rejection, emits zero-I/O console diagnostics for the
 test harness, and validates both standard and independent parser evidence
 below constrained parser-specific ignored roots. Successful synthetic runs
-retain create-new evidence output. The remediated parser is accepted
-static-only for a future separately authorized real-artifact static metadata
-review. The parser was not run against the real compile-only artifact, and
-that artifact was not opened, hashed, parsed, written, overwritten, or
-inspected. Metadata review was not performed. See
+retain create-new evidence output.
+
+The current transition adds preflight-only real-artifact authorization
+plumbing. The parser can now validate, without opening the real DLL, that a
+future real-review request is backed by the old authorization gate, accepted
+parser audit commit, recorded authorization transition commit, native
+execution blocker, live-readiness blocker, and exact compile-only evidence
+identity. This plumbing is pending independent audit. The parser was not run
+normally against the real compile-only artifact, and that artifact was not
+opened, hashed, parsed, written, overwritten, or inspected. Metadata review
+was not performed. See
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 The accepted remediation validates 63 metadata-review safety fields as strict
@@ -764,10 +773,11 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform a separately authorized real-artifact static metadata-review task using
-the accepted parser. That task may authorize opening, reading, hashing, and
-parsing the real compile-only artifact only for static metadata review. It must
-still prohibit assembly loading, runtime reflection, execution, native DLL
-loading, entry-point resolution, native or SetupAPI/Newdev invocation, device
-query, hardware access, Windows mutation, and driver build/link/sign/CAT/
-package/stage/install/load/unload/bind/restore/restart actions.
+Perform an independent read-only audit of the real-artifact static-review
+authorization plumbing. Do not retry real-artifact metadata review until that
+audit passes and a later task explicitly reopens artifact open/read/hash/parse
+scope. The audit must still prohibit assembly loading, runtime reflection,
+execution, native DLL loading, entry-point resolution, native or
+SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+and driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
+restart actions.

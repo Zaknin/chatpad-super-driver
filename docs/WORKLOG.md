@@ -8920,3 +8920,78 @@
   push, and upstream equality verification.
 - **Next task:** Perform a fresh independent strict read-only audit of
   preflight output suppression and approved parser-evidence-path validation.
+
+## 2026-07-05 02:47 +04:00 - Real-artifact static-review authorization plumbing
+
+- **Objective:** Add narrow, preflight-only real-artifact static-review
+  authorization plumbing to the accepted static metadata parser without
+  running the parser normally against the real compile-only DLL and without
+  opening, reading, hashing, parsing, or writing that DLL.
+- **Starting state:** Created
+  `feature/runtime-bringup-static-parser-real-artifact-authorization-plumbing`
+  from `baab23aece902cbb06e11a308d9092fdc0f9ce0d`. Preflight confirmed a clean
+  tree, gate
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`, runtime
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, native execution `NOT_IMPLEMENTED`, parser status
+  `ACCEPTED_STATIC_ONLY`, and real-artifact parser/review/open/parse/hash/write
+  statuses `NOT_PERFORMED`.
+- **Implementation:** `tools/StaticMetadataParser/Program.cs` now supports
+  `--review-scope`, `--preflight-only`, and an audit-fixture-only
+  `--authorization-manifest`. The real-artifact scope is preflight-only and
+  requires the old review-authorization gate, blocked runtime/live state, the
+  accepted parser audit commit, the transition commit
+  `baab23aece902cbb06e11a308d9092fdc0f9ce0d`, and the recorded primary
+  compile-only DLL identity from tracked compile-only evidence before accepting
+  the exact path string. It writes no parser output during preflight-only
+  authorization.
+- **Harness and manifest updates:** `tools/Test-ChatpadStaticMetadataParser.ps1`
+  reproduces the original accepted-parser stop condition by source inspection
+  only and adds eight real-artifact preflight-only cases:
+  authorized exact artifact, wrong artifact path, wrong gate, wrong parser
+  status, wrong live readiness, missing transition commit, wrong output root,
+  and caller-forced scope without the prior authorization gate. The manifest
+  generator and validator now carry
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`, emit the
+  gate
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`,
+  and accept only the special ignored evidence root
+  `artifacts/logs/static-parser-real-artifact-authorization-plumbing/` for
+  this validation leaf while continuing to reject compile-only, protected DLL,
+  metadata-review, native-interop, tracked, production, and legacy paths.
+- **Validation completed so far:** Isolated parser build passed with zero
+  warnings and zero errors. `tools/Test-ChatpadStaticMetadataParser.ps1` passed
+  with five fixtures, 1125 assertions, zero failed fixtures, eight
+  real-artifact-like rejections, eight expected-path rejections, twelve
+  output-path rejections, two safety-option rejections, original stop-condition
+  reproduction `PASS`, eight real-artifact preflight-only cases, and zero
+  prohibited counters. The real compile-only DLL was not opened, read, hashed,
+  parsed, written, or reviewed.
+- **Command issues:** A rerun of the parser harness into an uncleared ignored
+  output root failed because create-new/no-overwrite output safety correctly
+  rejected existing evidence files. The task artifact roots under
+  `artifacts/logs/static-parser-real-artifact-authorization-plumbing` and
+  `artifacts/logs/real-artifact-static-metadata-review` were then safely
+  cleared and the harness was rerun cleanly to PASS. An initial ad hoc
+  PowerShell parser check used `[ref]` on uninitialized variables and printed
+  errors; the corrected parser check then passed.
+- **Files modified:** `tools/StaticMetadataParser/Program.cs`,
+  `tools/Test-ChatpadStaticMetadataParser.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`,
+  `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and `docs/WORKLOG.md`.
+- **Safety:** No live install, bind, restart, package, sign, stage, driver
+  load, device query, hardware access, Windows mutation, native invocation,
+  runtime reflection, assembly load, compiled artifact execution, or
+  real-artifact metadata review was performed.
+- **Commit and push:** Pending final tracked manifest regeneration, validation,
+  commit creation, push, and upstream equality verification.
+- **Next task:** Perform an independent read-only audit of the real-artifact
+  static-review authorization plumbing. Do not retry real-artifact metadata
+  review until that audit passes and a separate task reopens artifact
+  open/read/hash/parse scope.

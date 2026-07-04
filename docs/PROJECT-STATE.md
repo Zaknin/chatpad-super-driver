@@ -1,21 +1,22 @@
 # Project State
 
-*Last updated: 2026-07-05 (static metadata-parser implementation audit acceptance)*
+*Last updated: 2026-07-05 (real-artifact static-review authorization plumbing pending audit)*
 
 ## Current State
 
 - **Branch:**
-  `feature/runtime-bringup-static-metadata-parser-implementation-audit-acceptance`.
-- **Starting commit:** `f0be4746ad4cc548334336c1e66f07007b71859f`.
-- **Expected final commit:** the audit-acceptance transition commit containing
-  gate/status documentation, manifest vocabulary, regenerated manifest, and
-  continuity updates.
+  `feature/runtime-bringup-static-parser-real-artifact-authorization-plumbing`.
+- **Starting commit:** `baab23aece902cbb06e11a308d9092fdc0f9ce0d`.
+- **Expected final commit:** the authorization-plumbing transition commit
+  containing parser, harness, manifest, evidence-schema, and continuity
+  updates.
 - **Current gate:**
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness:** `BLOCKED`.
 - **Native execution:** `NOT_IMPLEMENTED`.
-- **Parser implementation:** `ACCEPTED_STATIC_ONLY`.
+- **Parser implementation:**
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
 - **Parser execution against the real artifact:** `NOT_PERFORMED`.
 - **Metadata review:** `NOT_PERFORMED`.
 - **Real artifact open/parse/hash/write:** `NOT_PERFORMED` and unauthorized.
@@ -27,45 +28,45 @@
 - Validation: `tools/Test-ChatpadStaticMetadataParser.ps1`.
 - Evidence schema:
   `docs/evidence/static-metadata-parser-evidence-schema-v1.md`.
-- Accepted synthetic evidence root:
+- Accepted prior synthetic evidence root:
   `artifacts/logs/static-metadata-parser-preflight-output-remediation/`.
+- Current authorization-plumbing evidence root:
+  `artifacts/logs/static-parser-real-artifact-authorization-plumbing/`.
 
 The remediated static metadata parser implementation passed independent audit
-at `f0be4746ad4cc548334336c1e66f07007b71859f`.
+at `f0be4746ad4cc548334336c1e66f07007b71859f` as static-only and
+synthetic-fixture-only. The transition commit
+`baab23aece902cbb06e11a308d9092fdc0f9ce0d` authorized only a narrow
+implementation task to add non-caller-controlled real-artifact static-review
+authorization plumbing.
 
-Accepted audit evidence:
+This task adds a preflight-only real-artifact review scope that requires all
+of the following before the parser can even authorize the exact accepted
+compile-only DLL path string:
 
-- audit summary:
-  `artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/audit-summary.json`,
-  size `5706` bytes, SHA-256
-  `E28834B3B307DE1782CEF1C2E0F9BCD497BD1A856A1AB745DA5E6D4060F5279A`;
-- artifact inventory:
-  `artifacts/logs/independent-static-metadata-parser-preflight-output-audit-f0be474/artifact-inventory.json`,
-  size `5553` bytes, SHA-256
-  `2F0BEF0D246F6F52F2090E4214EA284B6D4321E8B2E5BADF91842B7AF26E603B`.
+- the canonical readiness manifest still reports
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`;
+- native execution remains `NOT_IMPLEMENTED`;
+- live readiness remains `BLOCKED`;
+- the accepted parser audit commit remains
+  `f0be4746ad4cc548334336c1e66f07007b71859f`;
+- the authorization transition commit
+  `baab23aece902cbb06e11a308d9092fdc0f9ce0d` is recorded in the manifest;
+- the accepted compile-only evidence identity matches the recorded primary
+  DLL path, size, and SHA-256.
 
-The audit accepted that:
-
-- `--input`, `--expected`, and `--output` are the only file-bearing options;
-- all file-bearing options are centrally scope-gated before read, hash, parse,
-  or write activity;
-- rejected `--input`, `--expected`, and `--output` cases create no parser
-  output file;
-- rejected path cases prove no input read, expected read, output write, hash,
-  PE parse, or metadata parse occurred;
-- standard and independent parser evidence manifest binding validates;
-- invalid parser evidence paths are rejected;
-- the parser remains static-only and uses `System.Reflection.Metadata`,
-  `PEReader`, and `MetadataReader`;
-- validation was synthetic-fixture-only.
+The plumbing is pending independent read-only audit. It does not authorize a
+normal parser run against the real artifact and does not authorize real
+artifact open, read, hash verification, parse, output write, or metadata
+review.
 
 ## Safety Boundary
 
-- The parser has not been run against the real compile-only artifact.
+- The parser has not been run normally against the real compile-only artifact.
 - Metadata review has not been performed.
 - Real artifact open, parse, hash verification, write, overwrite, and
-  metadata parsing remain unauthorized until a separate metadata-review task
-  explicitly authorizes them.
+  metadata parsing remain unauthorized until the authorization plumbing passes
+  independent audit and a later task explicitly reopens that scope.
 - Runtime assembly loading, runtime reflection, compiled-output execution,
   native DLL loading, entry-point resolution, native or SetupAPI/Newdev
   invocation, device query, hardware access, Windows mutation, and driver
@@ -77,16 +78,16 @@ The audit accepted that:
 
 ## Unresolved Blockers
 
-- A separately authorized real-artifact static metadata-review task is required
-  before the accepted parser may open, read, hash, or parse the real
-  compile-only artifact.
+- Independent read-only audit of the authorization plumbing is required before
+  any real-artifact static metadata review may be retried or authorized.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - Live readiness remains blocked.
 
 ## Next Task
 
-Perform a separately authorized real-artifact static metadata-review task
-using the accepted parser. That task may authorize only opening, reading,
-hashing, and parsing the real compile-only artifact for static metadata
-review. Runtime loading, runtime reflection, execution, native invocation,
-device query, Windows mutation, and driver actions must remain prohibited.
+Perform an independent read-only audit of the real-artifact static-review
+authorization plumbing. The audit must validate the gate transition,
+manifest-bound transition commit, exact artifact identity matching, negative
+preflight cases, evidence-root policy, and zero real-artifact I/O. Do not
+retry real-artifact metadata review until that audit passes and the gate is
+advanced by a separate task.

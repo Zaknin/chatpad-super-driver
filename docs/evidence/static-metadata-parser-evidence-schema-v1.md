@@ -4,9 +4,12 @@ Schema identifier: `chatpad-static-metadata-parser-evidence-v1`.
 
 This schema is emitted by `Chatpad.StaticMetadataParser`, the isolated .NET 9
 static PE/CLI metadata parser under `tools/StaticMetadataParser/`. Evidence is
-valid for the implementation task only when generated from synthetic fixture
-inputs. It is not metadata review evidence for the real compile-only native
-interop artifact.
+valid for the implementation task when generated from synthetic fixture
+inputs. Real-artifact authorization-plumbing evidence may also include
+preflight-only diagnostics that validate manifest authorization and recorded
+artifact identity without opening, reading, hashing, parsing, or writing the
+real compile-only native interop artifact. It is not metadata review evidence
+for that artifact.
 
 Required evidence fields:
 
@@ -15,8 +18,9 @@ Required evidence fields:
 - `parserToolName`, `parserToolVersion`, `parserSourceCommit`,
   `parserBuildIdentity`, `parserTargetFramework`, and
   `systemReflectionMetadataVersion`.
-- `currentGate`, `safetyPolicyMode`, `safetyPolicyEnforced`,
-  `allowedInputScope`, `repositoryRoot`, `inputPath`, `inputNormalizedPath`,
+- `currentGate`, `reviewScope`, `preflightOnly`, `safetyPolicyMode`,
+  `safetyPolicyEnforced`, `allowedInputScope`, `allowedExpectedScope`,
+  `allowedOutputScope`, `repositoryRoot`, `inputPath`, `inputNormalizedPath`,
   `inputPathDecision`, `expectedPathDecision`, `outputPathDecision`,
   `inputScopeDecision`, `inputScopeReason`, `inputClassification`,
   `inputSize`, `inputSha256`, and `inputIdentitySource`.
@@ -93,12 +97,25 @@ Every rejected file-bearing path test kept all read/hash/parse/write counters
 at zero and created no parser output file. Approved synthetic success cases may
 write parser evidence only below approved parser-specific ignored roots.
 Manifest evidence-path policy accepts both standard parser-remediation roots
-and parser-specific independent-audit roots under `artifacts/logs/`, while
-rejecting non-parser, compile-only, protected-name, metadata-review,
-production, tracked, and legacy paths.
+and parser-specific independent-audit roots under `artifacts/logs/`. The
+special root `artifacts/logs/static-parser-real-artifact-authorization-plumbing/`
+is accepted only for this authorization-plumbing validation evidence leaf.
+Nested real-artifact paths, compile-only, protected-name, metadata-review,
+native-interop, production, tracked, and legacy paths are rejected.
 
 The remediated implementation passed independent audit at
 `f0be4746ad4cc548334336c1e66f07007b71859f` and is accepted only as a
 static-only parser for a future separately authorized real-artifact static
 metadata-review task. The real compile-only native interop artifact remains
 unopened, unparsed, unhashed, unwritten, and unreviewed.
+
+Authorization-plumbing validation uses
+`realArtifactAuthorizationStatus`, `realArtifactAuthorizationReason`,
+`realArtifactAuthorizationGateMatched`,
+`realArtifactAcceptedParserAuditCommitMatched`,
+`realArtifactTransitionCommitMatched`, `realArtifactIdentityMatched`,
+`realArtifactExpectedRelativePath`, `realArtifactExpectedSha256`,
+`realArtifactExpectedSize`, and `realArtifactExpectedIdentitySource`.
+Successful preflight-only authorization writes no output file and must keep
+all real-artifact open/read/hash/parse/write and metadata-review counters at
+zero.

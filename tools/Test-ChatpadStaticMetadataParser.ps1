@@ -111,6 +111,70 @@ function Get-FilePreflightRejectionDiagnostic {
     throw 'Parser did not emit a structured file-preflight rejection diagnostic.'
 }
 
+function Get-PreflightOnlyDiagnostic {
+    param([Parameter(Mandatory)][object]$CommandResult)
+    foreach ($item in @($CommandResult.output)) {
+        $line = ([string]$item).Trim()
+        if (-not $line.StartsWith('{', [StringComparison]::Ordinal)) {
+            continue
+        }
+
+        try {
+            $candidate = $line | ConvertFrom-Json
+            if ([string]$candidate.evidenceTransport -eq 'CONSOLE_PREFLIGHT_ONLY') {
+                return $candidate
+            }
+        } catch {
+            continue
+        }
+    }
+
+    throw 'Parser did not emit a structured preflight-only diagnostic.'
+}
+
+function Add-OrSet-Property {
+    param([Parameter(Mandatory)][object]$Object,[Parameter(Mandatory)][string]$Name,[object]$Value)
+    if ($null -eq $Object.PSObject.Properties[$Name]) {
+        $Object | Add-Member -NotePropertyName $Name -NotePropertyValue $Value
+    } else {
+        $Object.PSObject.Properties[$Name].Value = $Value
+    }
+}
+
+function New-AuthorizationManifestFixture {
+    param(
+        [Parameter(Mandatory)][string]$CaseId,
+        [string]$Gate = 'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION',
+        [string]$ParserStatus = 'ACCEPTED_STATIC_ONLY',
+        [string]$LiveReadiness = 'BLOCKED',
+        [bool]$IncludeTransitionCommit = $true
+    )
+    $manifest = Get-Content -LiteralPath (Join-Path $root 'docs/evidence/runtime-bringup-readiness-manifest.json') -Raw | ConvertFrom-Json
+    $metadataGate = $manifest.compiled_artifact_metadata_review_design_gate
+    $parserDesign = $metadataGate.static_metadata_parser_implementation_design
+    $parserImplementation = $metadataGate.static_metadata_parser_implementation
+    $manifest.current_gate = $Gate
+    $metadataGate.current_gate = $Gate
+    $parserDesign.current_gate = $Gate
+    $parserImplementation.current_gate = $Gate
+    $manifest.live_installation_readiness = $LiveReadiness
+    $metadataGate.status = 'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY'
+    $parserImplementation.status = $ParserStatus
+    $parserDesign.parser_implementation_status = $ParserStatus
+    if ($IncludeTransitionCommit) {
+        Add-OrSet-Property -Object $manifest.repository -Name real_artifact_review_authorization_transition_commit -Value 'baab23aece902cbb06e11a308d9092fdc0f9ce0d'
+        Add-OrSet-Property -Object $parserDesign -Name real_artifact_review_authorization_transition_commit -Value 'baab23aece902cbb06e11a308d9092fdc0f9ce0d'
+        Add-OrSet-Property -Object $parserImplementation -Name real_artifact_review_authorization_transition_commit -Value 'baab23aece902cbb06e11a308d9092fdc0f9ce0d'
+    } else {
+        if ($null -ne $manifest.repository.PSObject.Properties['real_artifact_review_authorization_transition_commit']) { $manifest.repository.PSObject.Properties.Remove('real_artifact_review_authorization_transition_commit') }
+        if ($null -ne $parserDesign.PSObject.Properties['real_artifact_review_authorization_transition_commit']) { $parserDesign.PSObject.Properties.Remove('real_artifact_review_authorization_transition_commit') }
+        if ($null -ne $parserImplementation.PSObject.Properties['real_artifact_review_authorization_transition_commit']) { $parserImplementation.PSObject.Properties.Remove('real_artifact_review_authorization_transition_commit') }
+    }
+    $path = Join-Path $outputRootFull "manifest-fixtures/$CaseId.runtime-manifest.json"
+    Write-Json -Path $path -Value $manifest
+    $path
+}
+
 function Test-FilePreflightRejectionDiagnostic {
     param(
         [Parameter(Mandatory)][object]$Evidence,
@@ -724,17 +788,167 @@ foreach ($case in $safetyCases) {
     })
 }
 
+$priorParserSource = @(& git show 'f0be4746ad4cc548334336c1e66f07007b71859f:tools/StaticMetadataParser/Program.cs')
+if ($LASTEXITCODE -ne 0) {
+    throw 'Could not inspect accepted prior parser source for stop-condition reproduction.'
+}
+$priorParserText = $priorParserSource -join "`n"
+$originalStopCondition = [pscustomobject][ordered]@{
+    result = $(if (
+        $priorParserText -match 'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT' -and
+        $priorParserText -match 'SYNTHETIC_FIXTURES_ONLY' -and
+        $priorParserText -match 'artifacts/compile-only/native-interop' -and
+        $priorParserText -match 'Chatpad\.NativeInterop\.CompileOnlyValidation\.dll' -and
+        $priorParserText -match 'REAL_ARTIFACT_NOT_AUTHORIZED'
+    ) { 'PASS' } else { 'FAIL' })
+    accepted_parser_commit = 'f0be4746ad4cc548334336c1e66f07007b71859f'
+    source_inspection_only = $true
+    real_artifact_opened = $false
+    real_artifact_read = $false
+    real_artifact_hash_computed = $false
+    real_artifact_parsed = $false
+}
+
+$compileEvidence = Get-Content -LiteralPath (Join-Path $root 'docs/evidence/native-interop-compile-only-validation.json') -Raw | ConvertFrom-Json
+$primaryDllRows = @($compileEvidence.build_result.produced_files | Where-Object {
+    [string]$_.relative_path -like 'artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll'
+})
+if ($primaryDllRows.Count -ne 1) {
+    throw 'Could not resolve exactly one accepted primary compile-only DLL row from tracked evidence.'
+}
+$primaryDll = $primaryDllRows[0]
+$realArtifactPathString = [IO.Path]::GetFullPath((Join-Path $root ([string]$primaryDll.relative_path)))
+$realReviewOutputRoot = [IO.Path]::GetFullPath((Join-Path $root 'artifacts/logs/real-artifact-static-metadata-review'))
+New-Directory -Path $realReviewOutputRoot
+$realPreflightRecords = [Collections.Generic.List[object]]::new()
+$realPreflightCases = @(
+    [pscustomobject][ordered]@{ id='authorized-exact-artifact'; manifest=(New-AuthorizationManifestFixture -CaseId 'authorized-exact-artifact'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'authorized-exact-artifact.evidence.json'); expected_exit=0; expected_status='AUTHORIZED'; expect_authorized=$true },
+    [pscustomobject][ordered]@{ id='wrong-artifact-path'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-artifact-path'); input=([IO.Path]::GetFullPath((Join-Path $root 'artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/NotTheAcceptedArtifact.dll'))); output=(Join-Path $realReviewOutputRoot 'wrong-artifact-path.evidence.json'); expected_exit=64; expected_status='AUTHORIZED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='wrong-gate'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-gate' -Gate 'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'wrong-gate.evidence.json'); expected_exit=64; expected_status='MANIFEST_GATE_OR_BLOCKER_MISMATCH'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='wrong-parser-status'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-parser-status' -ParserStatus 'IMPLEMENTED_PENDING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'wrong-parser-status.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='wrong-live-readiness'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-live-readiness' -LiveReadiness 'READY'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'wrong-live-readiness.evidence.json'); expected_exit=64; expected_status='MANIFEST_GATE_OR_BLOCKER_MISMATCH'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='missing-transition-commit'; manifest=(New-AuthorizationManifestFixture -CaseId 'missing-transition-commit' -IncludeTransitionCommit:$false); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'missing-transition-commit.evidence.json'); expected_exit=64; expected_status='TRANSITION_COMMIT_NOT_RECORDED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='outside-real-review-output-root'; manifest=(New-AuthorizationManifestFixture -CaseId 'outside-real-review-output-root'); input=$realArtifactPathString; output=([IO.Path]::GetFullPath((Join-Path $outputRootFull 'not-real-review-output-root.evidence.json'))); expected_exit=64; expected_status='AUTHORIZED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='force-flag-alone-rejected'; manifest=(New-AuthorizationManifestFixture -CaseId 'force-flag-alone-rejected' -Gate 'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'force-flag-alone-rejected.evidence.json'); expected_exit=64; expected_status='MANIFEST_GATE_OR_BLOCKER_MISMATCH'; expect_authorized=$false }
+)
+foreach ($case in $realPreflightCases) {
+    $output = [string]$case.output
+    if (Test-Path -LiteralPath $output -PathType Leaf) {
+        Remove-Item -LiteralPath $output -Force
+    }
+    $parserArguments = @(
+        $parserDll,
+        '--input', ([string]$case.input),
+        '--output', $output,
+        '--review-scope', 'real-artifact-static-metadata-review',
+        '--authorization-manifest', ([string]$case.manifest),
+        '--preflight-only',
+        '--parser-source-commit', $sourceCommit,
+        '--parser-build-identity', (Get-Sha256 -Path $parserDll)
+    )
+    $consoleLog = Join-Path $outputRootFull "logs/real-preflight-$($case.id).txt"
+    $parseResult = Invoke-ParserCommand -Arguments $parserArguments -LogPath $consoleLog
+    $outputCreated = Test-Path -LiteralPath $output -PathType Leaf
+    $evidence = if ($parseResult.exit_code -eq 0) {
+        Get-PreflightOnlyDiagnostic -CommandResult $parseResult
+    } else {
+        Get-FilePreflightRejectionDiagnostic -CommandResult $parseResult
+    }
+    $prohibitedCounters = @(
+        [int]$evidence.safetyCounters.artifactBytesRead,
+        [int]$evidence.safetyCounters.artifactHashComputed,
+        [int]$evidence.safetyCounters.peParseAttempted,
+        [int]$evidence.safetyCounters.metadataParseAttempted,
+        [int]$evidence.safetyCounters.metadataParsed,
+        [int]$evidence.safetyCounters.outputWriteAttempted,
+        [int]$evidence.safetyCounters.outputWriteCompleted,
+        [int]$evidence.safetyCounters.assemblyLoad,
+        [int]$evidence.safetyCounters.runtimeReflection,
+        [int]$evidence.safetyCounters.compiledArtifactExecution,
+        [int]$evidence.safetyCounters.nativeDllLoad,
+        [int]$evidence.safetyCounters.entryPointResolution,
+        [int]$evidence.safetyCounters.nativeInvocation,
+        [int]$evidence.safetyCounters.setupApiNewdevInvocation,
+        [int]$evidence.safetyCounters.deviceQuery,
+        [int]$evidence.safetyCounters.hardwareAccess,
+        [int]$evidence.safetyCounters.windowsMutation,
+        [int]$evidence.safetyCounters.driverBuild,
+        [int]$evidence.safetyCounters.driverLink,
+        [int]$evidence.safetyCounters.driverSign,
+        [int]$evidence.safetyCounters.driverCatGeneration,
+        [int]$evidence.safetyCounters.driverPackage,
+        [int]$evidence.safetyCounters.driverStage,
+        [int]$evidence.safetyCounters.driverInstall,
+        [int]$evidence.safetyCounters.driverLoad,
+        [int]$evidence.safetyCounters.driverUnload,
+        [int]$evidence.safetyCounters.driverBind,
+        [int]$evidence.safetyCounters.driverRestore,
+        [int]$evidence.safetyCounters.driverRestart
+    )
+    $checks = @(
+        ($parseResult.exit_code -eq [int]$case.expected_exit),
+        (-not $outputCreated),
+        ([string]$evidence.reviewScope -eq 'real-artifact-static-metadata-review'),
+        ([bool]$evidence.preflightOnly -eq $true),
+        ([string]$evidence.realArtifactAuthorizationStatus -eq [string]$case.expected_status),
+        ([bool]$evidence.realArtifactAuthorizationGateMatched -eq ([string]$case.expected_status -ne 'MANIFEST_GATE_OR_BLOCKER_MISMATCH')),
+        ([bool]$evidence.realArtifactAcceptedParserAuditCommitMatched -eq ([string]$case.expected_status -ne 'PARSER_IMPLEMENTATION_NOT_ACCEPTED')),
+        ([bool]$evidence.realArtifactTransitionCommitMatched -eq ([string]$case.expected_status -ne 'TRANSITION_COMMIT_NOT_RECORDED')),
+        ([bool]$evidence.realArtifactIdentityMatched -eq $true),
+        ($(if ([string]$case.id -eq 'wrong-artifact-path') { [string]$evidence.inputPathDecision.reason -eq 'REAL_ARTIFACT_IDENTITY_MISMATCH' } else { $true })),
+        ($(if ([string]$case.id -eq 'outside-real-review-output-root') { [string]$evidence.outputPathDecision.reason -eq 'OUTSIDE_REAL_ARTIFACT_REVIEW_EVIDENCE_SCOPE' } else { $true })),
+        (($prohibitedCounters | Measure-Object -Sum).Sum -eq 0),
+        ([bool]$evidence.artifactBytesRead -eq $false),
+        ([bool]$evidence.artifactHashComputed -eq $false),
+        ([bool]$evidence.peParseAttempted -eq $false),
+        ([bool]$evidence.metadataParseAttempted -eq $false),
+        ([bool]$evidence.metadataParsed -eq $false),
+        ([bool]$evidence.outputWriteAttempted -eq $false),
+        ([bool]$evidence.outputWriteCompleted -eq $false)
+    )
+    $realPreflightRecords.Add([pscustomobject][ordered]@{
+        case_id = [string]$case.id
+        manifest_path = ([IO.Path]::GetFullPath([string]$case.manifest).Substring($root.Length + 1).Replace('\','/'))
+        input_path_string = [string]$case.input
+        output_path = $output.Substring($root.Length + 1).Replace('\','/')
+        console_log_path = ([IO.Path]::GetFullPath($consoleLog).Substring($root.Length + 1).Replace('\','/'))
+        parser_exit_code = $parseResult.exit_code
+        expected_exit_code = [int]$case.expected_exit
+        parser_output_file_created = $outputCreated
+        authorization_status = [string]$evidence.realArtifactAuthorizationStatus
+        authorization_reason = [string]$evidence.realArtifactAuthorizationReason
+        gate_matched = [bool]$evidence.realArtifactAuthorizationGateMatched
+        accepted_parser_audit_commit_matched = [bool]$evidence.realArtifactAcceptedParserAuditCommitMatched
+        transition_commit_matched = [bool]$evidence.realArtifactTransitionCommitMatched
+        artifact_identity_matched = [bool]$evidence.realArtifactIdentityMatched
+        expected_artifact_relative_path = [string]$evidence.realArtifactExpectedRelativePath
+        expected_artifact_sha256 = [string]$evidence.realArtifactExpectedSha256
+        expected_artifact_size = [long]$evidence.realArtifactExpectedSize
+        artifact_bytes_read = [bool]$evidence.artifactBytesRead
+        artifact_hash_computed = [bool]$evidence.artifactHashComputed
+        pe_parse_attempted = [bool]$evidence.peParseAttempted
+        metadata_parse_attempted = [bool]$evidence.metadataParseAttempted
+        metadata_parsed = [bool]$evidence.metadataParsed
+        output_write_attempted = [bool]$evidence.outputWriteAttempted
+        output_write_completed = [bool]$evidence.outputWriteCompleted
+        prohibited_counter_sum = [int](($prohibitedCounters | Measure-Object -Sum).Sum)
+        assertion_count = $checks.Count
+        preflight_result = $(if (@($checks | Where-Object { $_ -ne $true }).Count) { 'FAIL' } else { 'PASS' })
+    })
+}
+
 $failed = @($records | Where-Object fixture_result -ne 'PASS')
 $failedRejections = @($rejectionRecords | Where-Object { $_.rejection_result -eq 'FAIL' })
 $failedExpectedPathRejections = @($expectedPathRecords | Where-Object rejection_result -eq 'FAIL')
 $failedOutputPathRejections = @($outputPathRecords | Where-Object rejection_result -eq 'FAIL')
 $failedSafetyOptions = @($safetyOptionRecords | Where-Object safety_option_result -ne 'PASS')
+$failedRealPreflight = @($realPreflightRecords | Where-Object preflight_result -ne 'PASS')
 $notRunRejections = @($rejectionRecords | Where-Object rejection_result -eq 'NOT_RUN')
 $summary = [pscustomobject][ordered]@{
     schema_version = 'chatpad-static-metadata-parser-synthetic-validation-v1'
     generated_utc = (Get-Date).ToUniversalTime().ToString('o')
-    result = $(if ($failed.Count -or $failedRejections.Count -or $failedExpectedPathRejections.Count -or $failedOutputPathRejections.Count -or $failedSafetyOptions.Count) { 'FAIL' } else { 'PASS' })
-    result_code = $(if ($failed.Count -or $failedRejections.Count -or $failedExpectedPathRejections.Count -or $failedOutputPathRejections.Count -or $failedSafetyOptions.Count) { 'STATIC_METADATA_PARSER_FILE_SCOPE_REMEDIATION_VALIDATION_FAILED' } else { 'STATIC_METADATA_PARSER_FILE_SCOPE_REMEDIATION_VALIDATION_PASSED' })
+    result = $(if ($failed.Count -or $failedRejections.Count -or $failedExpectedPathRejections.Count -or $failedOutputPathRejections.Count -or $failedSafetyOptions.Count -or $failedRealPreflight.Count -or $originalStopCondition.result -ne 'PASS') { 'FAIL' } else { 'PASS' })
+    result_code = $(if ($failed.Count -or $failedRejections.Count -or $failedExpectedPathRejections.Count -or $failedOutputPathRejections.Count -or $failedSafetyOptions.Count -or $failedRealPreflight.Count -or $originalStopCondition.result -ne 'PASS') { 'STATIC_METADATA_PARSER_REAL_ARTIFACT_AUTHORIZATION_PLUMBING_VALIDATION_FAILED' } else { 'STATIC_METADATA_PARSER_REAL_ARTIFACT_AUTHORIZATION_PLUMBING_VALIDATION_PASSED' })
     parser_project_path = $ParserProject
     parser_project_sha256 = Get-Sha256 -Path $parserProjectFull
     parser_source_path = 'tools/StaticMetadataParser/Program.cs'
@@ -744,7 +958,7 @@ $summary = [pscustomobject][ordered]@{
     parser_source_commit = $sourceCommit
     parser_schema_version = 'chatpad-static-metadata-parser-evidence-v1'
     fixture_count = $records.Count
-    assertion_count = [int]((($records + $rejectionRecords + $expectedPathRecords + $outputPathRecords + $safetyOptionRecords) | Measure-Object assertion_count -Sum).Sum)
+    assertion_count = [int]((($records + $rejectionRecords + $expectedPathRecords + $outputPathRecords + $safetyOptionRecords + $realPreflightRecords) | Measure-Object assertion_count -Sum).Sum)
     failed_fixture_count = $failed.Count
     guard = $guard
     fixtures = @($records)
@@ -761,15 +975,19 @@ $summary = [pscustomobject][ordered]@{
     safety_option_rejection_count = @($safetyOptionRecords | Where-Object safety_option_result -eq 'PASS').Count
     failed_safety_option_rejection_count = $failedSafetyOptions.Count
     safety_option_cases = @($safetyOptionRecords)
-    real_artifact_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'
+    original_stop_condition_reproduction = $originalStopCondition
+    real_artifact_preflight_only_count = @($realPreflightRecords | Where-Object preflight_result -eq 'PASS').Count
+    failed_real_artifact_preflight_only_count = $failedRealPreflight.Count
+    real_artifact_preflight_only_cases = @($realPreflightRecords)
+    real_artifact_path_gate_status = 'AUTHORIZATION_PLUMBING_PENDING_AUDIT'
     all_file_bearing_options_centrally_scoped = $true
     expected_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'
     output_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'
     preflight_rejection_output_suppression = 'IMPLEMENTED_PENDING_AUDIT'
     rejection_evidence_transport = 'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'
-    allowed_input_scope = 'SYNTHETIC_FIXTURES_ONLY'
-    allowed_expected_scope = 'SYNTHETIC_FIXTURES_ONLY'
-    allowed_output_scope = 'PARSER_EVIDENCE_ROOTS_ONLY'
+    allowed_input_scope = 'SYNTHETIC_FIXTURES_ONLY_AND_MANIFEST_AUTHORIZED_REAL_ARTIFACT_PREFLIGHT'
+    allowed_expected_scope = 'SYNTHETIC_FIXTURES_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'
+    allowed_output_scope = 'PARSER_EVIDENCE_ROOTS_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'
     pre_io_rejection_tests = $(if ($failedRejections.Count -or $failedExpectedPathRejections.Count -or $failedOutputPathRejections.Count -or $failedSafetyOptions.Count) { 'FAIL' } else { 'PASS' })
     pre_read_rejection_tests = $(if ($failedRejections.Count -or $failedExpectedPathRejections.Count -or $failedSafetyOptions.Count) { 'FAIL' } else { 'PASS' })
     safety_policy_mode = 'IMMUTABLE_STATIC_ONLY'
@@ -780,7 +998,7 @@ $summary = [pscustomobject][ordered]@{
     real_compile_only_artifact_write_attempted = $false
     real_compile_only_artifact_write_completed = $false
     metadata_review_performed = $false
-    parser_execution_scope = 'SYNTHETIC_FIXTURES_ONLY'
+    parser_execution_scope = 'SYNTHETIC_FIXTURES_AND_REAL_ARTIFACT_PREFLIGHT_ONLY'
     prohibited_action_counters = [pscustomobject][ordered]@{
         assembly_load = 0
         runtime_reflection = 0
