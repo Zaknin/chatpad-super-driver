@@ -8,12 +8,14 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-interop-compile-only-audit-acceptance`
-records the accepted independent re-audit of the separately authorized
-compile-only validation of the accepted
-declaration-only SetupAPI/Newdev source boundary. The future API sequence,
-structures, driver-node identity evidence, exact-instance binding/restoration
-proof, restart/reboot separation, error taxonomy, source-boundary guard, and
+Branch
+`feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation`
+records remediation of the failed independent audit of the non-loading
+compiled-artifact metadata-review design gate. The accepted compile-only
+validation and declaration-only SetupAPI/Newdev source boundary remain the
+underlying native-adapter evidence. The future API sequence, structures,
+driver-node identity evidence, exact-instance binding/restoration proof,
+restart/reboot separation, error taxonomy, source-boundary guard, and
 compile-only evidence validator are documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
@@ -72,6 +74,7 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Current gate:
   `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Native execution status: `NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
   harness. Compiled output remains unloaded, unexecuted, unreflected, and
@@ -721,8 +724,17 @@ strings, expected type/method names, and entry-point absence. No artifact was
 opened or inspected in this phase. See
 `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`.
 
+The failed independent design-gate audit proved that metadata-review safety
+Booleans must be validated as JSON Booleans, not PowerShell-coerced values.
+The remediation requires strict Boolean typing, field-level defects for
+non-Boolean values, `native_execution_status: NOT_IMPLEMENTED`, and
+`NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` validation with artifact opening,
+compiled-output hash verification, and metadata parsing recorded as not
+performed.
+
 ## Exact next task
 
-Perform an independent read-only audit of the metadata-review design gate.
-Do not implement or run a parser, open the artifact, load or reflect over it,
-resolve entry points, invoke SetupAPI/Newdev, query devices, or mutate Windows.
+Perform an independent read-only re-audit of the remediated metadata-review
+design gate. Do not implement or run a parser, open, hash, or parse the
+artifact, load or reflect over it, resolve entry points, invoke
+SetupAPI/Newdev, query devices, or mutate Windows.

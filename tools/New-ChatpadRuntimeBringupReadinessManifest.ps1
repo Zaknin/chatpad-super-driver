@@ -2,7 +2,8 @@
 param(
     [string]$OutputPath='docs/evidence/runtime-bringup-readiness-manifest.json',
     [Parameter(Mandatory)][string]$ImplementationCommit,
-    [Parameter(Mandatory)][string]$SuiteResultPath
+    [Parameter(Mandatory)][string]$SuiteResultPath,
+    [switch]$NoArtifactOpenDesignGateAudit
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
@@ -10,7 +11,13 @@ $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full commit hash.'}
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
-if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false-or$suite.compiled_artifact_metadata_review_status-ne'DESIGN_GATED_NOT_IMPLEMENTED'-or$suite.compiled_artifact_metadata_review_authorized-ne$false-or$suite.compiled_artifact_metadata_review_performed-ne$false-or$suite.compiled_artifact_bytes_opened-ne$false-or$suite.compiled_artifact_reflection_performed-ne$false-or$suite.compiled_artifact_execution_performed-ne$false){throw 'Suite result is not a non-executing compiled-artifact metadata-review design gate with native execution still blocked.'}
+$suiteNativeExecutionProperty=$suite.PSObject.Properties['native_execution_status']
+$suiteNativeExecutionAccepted=if($NoArtifactOpenDesignGateAudit){
+    $null-eq$suiteNativeExecutionProperty-or$suiteNativeExecutionProperty.Value-eq'NOT_IMPLEMENTED'
+}else{
+    $null-ne$suiteNativeExecutionProperty-and$suiteNativeExecutionProperty.Value-eq'NOT_IMPLEMENTED'
+}
+if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false-or-not$suiteNativeExecutionAccepted-or$suite.compiled_artifact_metadata_review_status-ne'DESIGN_GATED_NOT_IMPLEMENTED'-or$suite.compiled_artifact_metadata_review_authorized-ne$false-or$suite.compiled_artifact_metadata_review_performed-ne$false-or$suite.compiled_artifact_bytes_opened-ne$false-or$suite.compiled_artifact_reflection_performed-ne$false-or$suite.compiled_artifact_execution_performed-ne$false){throw 'Suite result is not a non-executing compiled-artifact metadata-review design gate with native execution still blocked.'}
 
 function Get-CheckedOutLocalBranch {
     $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
@@ -122,6 +129,8 @@ $manifest=[pscustomobject][ordered]@{
     live_installation_readiness='BLOCKED'
     current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+    native_execution_status='NOT_IMPLEMENTED'
+    manifest_generation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_READINESS_RESULT'}
     live_adapter_status='SCAFFOLD_NON_EXECUTING'
     live_binding_authorized=$false
     native_interop_source_audit=[pscustomobject][ordered]@{
@@ -164,6 +173,7 @@ $manifest=[pscustomobject][ordered]@{
     }
     compiled_artifact_metadata_review_design_gate=[pscustomobject][ordered]@{
         status='DESIGN_GATED_NOT_IMPLEMENTED'
+        native_execution_status='NOT_IMPLEMENTED'
         current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
         runtime_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         compile_only_evidence_remediation_accepted=$true
@@ -171,7 +181,10 @@ $manifest=[pscustomobject][ordered]@{
         proposed_inspection_mode='STATIC_BYTE_AND_METADATA_PARSING_ONLY'
         implementation_authorized=$false
         independent_design_audit_required=$true
+        artifact_opening_authorized=$false
         artifact_bytes_opened=$false
+        artifact_parsing_authorized=$false
+        artifact_parsing_performed=$false
         assembly_loading_authorized=$false
         assembly_loading_occurred=$false
         runtime_reflection_authorized=$false
@@ -184,22 +197,44 @@ $manifest=[pscustomobject][ordered]@{
         native_entry_point_resolution_occurred=$false
         native_invocation_authorized=$false
         native_invocation_occurred=$false
+        setupapi_newdev_invocation_authorized=$false
+        setupapi_newdev_invocation_occurred=$false
         device_query_authorized=$false
         device_query_occurred=$false
+        hardware_access_authorized=$false
+        hardware_access_occurred=$false
         windows_mutation_authorized=$false
         windows_mutation_occurred=$false
+        registry_mutation_authorized=$false
+        registry_mutation_occurred=$false
+        service_mutation_authorized=$false
+        service_mutation_occurred=$false
+        certificate_mutation_authorized=$false
+        certificate_mutation_occurred=$false
+        key_mutation_authorized=$false
+        key_mutation_occurred=$false
+        credential_mutation_authorized=$false
+        credential_mutation_occurred=$false
         driver_actions_authorized=$false
         driver_actions_occurred=$false
         driver_build_authorized=$false
         driver_build_occurred=$false
+        driver_link_authorized=$false
+        driver_link_occurred=$false
         driver_sign_authorized=$false
         driver_sign_occurred=$false
+        driver_cat_generation_authorized=$false
+        driver_cat_generation_occurred=$false
         driver_package_authorized=$false
         driver_package_occurred=$false
+        driver_stage_authorized=$false
+        driver_stage_occurred=$false
         driver_install_authorized=$false
         driver_install_occurred=$false
         driver_load_authorized=$false
         driver_load_occurred=$false
+        driver_unload_authorized=$false
+        driver_unload_occurred=$false
         driver_bind_authorized=$false
         driver_bind_occurred=$false
         driver_restore_authorized=$false

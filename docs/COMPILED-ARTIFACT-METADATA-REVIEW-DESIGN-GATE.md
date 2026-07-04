@@ -9,6 +9,9 @@
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
 - Metadata-review implementation: not authorized and not implemented.
+- Remediation state: strict JSON Boolean safety validation is required after
+  the prior design audit proved PowerShell Boolean coercion could accept a
+  numeric `0` as a false prohibited-action value.
 
 The compiled managed artifact exists only as ignored compile-only output. This
 phase defines a future static review contract; it does not open, parse, load,
@@ -51,6 +54,22 @@ non-ignored path, malformed PE/CLI metadata, executable entry point, unexpected
 DLL target, unexpected declaration inventory, or any request outside this
 allowlist. Evidence must record parser identity, input path/hash, checks,
 defects, and zero prohibited-action counters.
+
+## Manifest safety contract
+
+All metadata-review safety fields in
+`compiled_artifact_metadata_review_design_gate` are type-sensitive JSON
+Booleans. The validator must reject missing, null, numeric, string,
+empty-string, array, and object values before any Boolean coercion. Field-level
+defects must identify the exact manifest path, expected type, actual type, and
+actual value category.
+
+The manifest must also record `native_execution_status: NOT_IMPLEMENTED` at the
+top level and in the metadata-review design-gate section. Missing, null, empty,
+unknown, or implemented native-execution status values fail closed. In
+`NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode, validation must report artifact
+opening, compiled-output hash verification, and metadata parsing as not
+performed.
 
 ## Absolute prohibitions
 

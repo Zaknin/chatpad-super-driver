@@ -852,6 +852,7 @@ $result=[pscustomobject][ordered]@{
     native_compilation_performed=$true
     native_loading_performed=$false
     native_invocation_performed=$false
+    native_execution_status='NOT_IMPLEMENTED'
     compiled_artifact_metadata_review_status='DESIGN_GATED_NOT_IMPLEMENTED'
     compiled_artifact_metadata_review_authorized=$false
     compiled_artifact_metadata_review_performed=$false

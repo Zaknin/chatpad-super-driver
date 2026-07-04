@@ -67,9 +67,10 @@ explicit canonical text and raw output policies. A native Windows
 SetupAPI/Newdev adapter implementation remains a later separately authorized
 boundary; this phase does not authorize any live driver or device operation.
 No approved static managed metadata parser exists, so this phase defines only
-a non-loading compiled-artifact metadata-review design gate. The next task is
-an independent read-only audit of that design, not parser implementation or
-native runtime execution.
+a non-loading compiled-artifact metadata-review design gate. The failed
+independent design audit found a manifest Boolean type-coercion gap; the next
+task is an independent read-only re-audit of the remediated design, not parser
+implementation or native runtime execution.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

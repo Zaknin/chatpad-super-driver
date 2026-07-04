@@ -1,11 +1,164 @@
 [CmdletBinding()]
 param(
     [string]$ManifestPath='docs/evidence/runtime-bringup-readiness-manifest.json',
-    [switch]$RunCorruptionRegression
+    [switch]$RunCorruptionRegression,
+    [switch]$NoArtifactOpenDesignGateAudit
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
+
+function Get-ChatpadMetadataReviewBooleanExpectations {
+    [ordered]@{
+        compile_only_evidence_remediation_accepted=$true
+        independent_design_audit_required=$true
+        implementation_authorized=$false
+        artifact_opening_authorized=$false
+        artifact_bytes_opened=$false
+        artifact_parsing_authorized=$false
+        artifact_parsing_performed=$false
+        assembly_loading_authorized=$false
+        assembly_loading_occurred=$false
+        runtime_reflection_authorized=$false
+        runtime_reflection_occurred=$false
+        compiled_artifact_execution_authorized=$false
+        compiled_artifact_execution_occurred=$false
+        native_dll_loading_authorized=$false
+        native_dll_loading_occurred=$false
+        native_entry_point_resolution_authorized=$false
+        native_entry_point_resolution_occurred=$false
+        native_invocation_authorized=$false
+        native_invocation_occurred=$false
+        setupapi_newdev_invocation_authorized=$false
+        setupapi_newdev_invocation_occurred=$false
+        device_query_authorized=$false
+        device_query_occurred=$false
+        hardware_access_authorized=$false
+        hardware_access_occurred=$false
+        windows_mutation_authorized=$false
+        windows_mutation_occurred=$false
+        registry_mutation_authorized=$false
+        registry_mutation_occurred=$false
+        service_mutation_authorized=$false
+        service_mutation_occurred=$false
+        certificate_mutation_authorized=$false
+        certificate_mutation_occurred=$false
+        key_mutation_authorized=$false
+        key_mutation_occurred=$false
+        credential_mutation_authorized=$false
+        credential_mutation_occurred=$false
+        driver_actions_authorized=$false
+        driver_actions_occurred=$false
+        driver_build_authorized=$false
+        driver_build_occurred=$false
+        driver_link_authorized=$false
+        driver_link_occurred=$false
+        driver_sign_authorized=$false
+        driver_sign_occurred=$false
+        driver_cat_generation_authorized=$false
+        driver_cat_generation_occurred=$false
+        driver_package_authorized=$false
+        driver_package_occurred=$false
+        driver_stage_authorized=$false
+        driver_stage_occurred=$false
+        driver_install_authorized=$false
+        driver_install_occurred=$false
+        driver_load_authorized=$false
+        driver_load_occurred=$false
+        driver_unload_authorized=$false
+        driver_unload_occurred=$false
+        driver_bind_authorized=$false
+        driver_bind_occurred=$false
+        driver_restore_authorized=$false
+        driver_restore_occurred=$false
+        driver_restart_authorized=$false
+        driver_restart_occurred=$false
+    }
+}
+
+function Get-ChatpadValueCategory {
+    param([object]$Value)
+    if($null-eq$Value){return 'null'}
+    if($Value-is[array]){return 'array'}
+    if($Value-is[bool]){return 'boolean'}
+    if($Value-is[string]){return $(if($Value.Length){'string'}else{'empty-string'})}
+    if($Value-is[byte]-or$Value-is[sbyte]-or$Value-is[int16]-or$Value-is[uint16]-or$Value-is[int]-or$Value-is[uint32]-or$Value-is[long]-or$Value-is[uint64]-or$Value-is[single]-or$Value-is[double]-or$Value-is[decimal]){return 'number'}
+    return 'object'
+}
+
+function New-ChatpadMetadataReviewDefect {
+    param(
+        [Parameter(Mandatory)][string]$DefectCode,
+        [Parameter(Mandatory)][string]$FieldPath,
+        [Parameter(Mandatory)][string]$ExpectedType,
+        [object]$ActualValue,
+        [Parameter(Mandatory)][string]$Reason
+    )
+    [pscustomobject][ordered]@{
+        defect_code=$DefectCode
+        field_path=$FieldPath
+        expected_type=$ExpectedType
+        actual_type=if($null-eq$ActualValue){'null'}else{$ActualValue.GetType().FullName}
+        actual_value_category=Get-ChatpadValueCategory $ActualValue
+        actual_value=if($null-eq$ActualValue){$null}elseif($ActualValue-is[array]){"array(count=$($ActualValue.Count))"}elseif($ActualValue-is[pscustomobject]){'object'}else{[string]$ActualValue}
+        reason=$Reason
+    }
+}
+
+function Test-ChatpadRequiredBooleanProperty {
+    param(
+        [object]$Container,
+        [Parameter(Mandatory)][string]$PropertyName,
+        [Parameter(Mandatory)][string]$Location,
+        [Parameter(Mandatory)][bool]$ExpectedValue
+    )
+    $fieldPath="$Location.$PropertyName"
+    if($null-eq$Container-or$Container-is[array]){
+        return New-ChatpadMetadataReviewDefect 'METADATA_BOOLEAN.INVALID_CONTAINER' $fieldPath 'Boolean' $Container 'The Boolean field container is null or an array.'
+    }
+    $property=$Container.PSObject.Properties[$PropertyName]
+    if($null-eq$property){
+        return New-ChatpadMetadataReviewDefect 'METADATA_BOOLEAN.MISSING' $fieldPath 'Boolean' $null 'Required Boolean field is missing.'
+    }
+    $value=$property.Value
+    if($null-eq$value){
+        return New-ChatpadMetadataReviewDefect 'METADATA_BOOLEAN.NULL' $fieldPath 'Boolean' $null 'Required Boolean field is null.'
+    }
+    if($value-isnot[bool]){
+        $category=Get-ChatpadValueCategory $value
+        return New-ChatpadMetadataReviewDefect "METADATA_BOOLEAN.INVALID_TYPE.$($category.ToUpperInvariant().Replace('-','_'))" $fieldPath 'Boolean' $value 'Required Boolean field has a non-Boolean JSON type.'
+    }
+    if($value-ne$ExpectedValue){
+        return New-ChatpadMetadataReviewDefect 'METADATA_BOOLEAN.VALUE_MISMATCH' $fieldPath 'Boolean' $value "Required Boolean value is $ExpectedValue."
+    }
+    return $null
+}
+
+function Test-ChatpadNativeExecutionStatusValue {
+    param([object]$Container,[string]$PropertyName='native_execution_status',[string]$Location='manifest')
+    $fieldPath="$Location.$PropertyName"
+    if($null-eq$Container-or$Container-is[array]){
+        return New-ChatpadMetadataReviewDefect 'NATIVE_EXECUTION_STATUS.INVALID_CONTAINER' $fieldPath 'String(NOT_IMPLEMENTED)' $Container 'Status container is null or an array.'
+    }
+    $property=$Container.PSObject.Properties[$PropertyName]
+    if($null-eq$property){
+        return New-ChatpadMetadataReviewDefect 'NATIVE_EXECUTION_STATUS.MISSING' $fieldPath 'String(NOT_IMPLEMENTED)' $null 'Required native execution status is missing.'
+    }
+    $value=$property.Value
+    if($null-eq$value){
+        return New-ChatpadMetadataReviewDefect 'NATIVE_EXECUTION_STATUS.NULL' $fieldPath 'String(NOT_IMPLEMENTED)' $null 'Required native execution status is null.'
+    }
+    if($value-isnot[string]){
+        return New-ChatpadMetadataReviewDefect 'NATIVE_EXECUTION_STATUS.INVALID_TYPE' $fieldPath 'String(NOT_IMPLEMENTED)' $value 'Native execution status must be a JSON string.'
+    }
+    if([string]::IsNullOrWhiteSpace($value)){
+        return New-ChatpadMetadataReviewDefect 'NATIVE_EXECUTION_STATUS.EMPTY' $fieldPath 'String(NOT_IMPLEMENTED)' $value 'Native execution status is empty.'
+    }
+    if($value-cne'NOT_IMPLEMENTED'){
+        return New-ChatpadMetadataReviewDefect 'NATIVE_EXECUTION_STATUS.UNKNOWN_OR_IMPLEMENTED' $fieldPath 'String(NOT_IMPLEMENTED)' $value 'Native execution status must remain NOT_IMPLEMENTED.'
+    }
+    return $null
+}
 
 function New-ChatpadCountValidationDefect {
     param(
@@ -520,6 +673,73 @@ function Invoke-ChatpadManifestCorruptionRegression {
         $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H3-raw-policy-on-tracked-text' -ExpectedDefect hash_policy -Mutate {param($manifest,$entry) $entry.hash_policy='raw_file_bytes'}))
         $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H4-canonical-hash-mismatch' -ExpectedDefect hash -Mutate {param($manifest,$entry) $entry.canonical_sha256=('0'*64);$entry.sha256=('0'*64)}))
         $results.Add((Invoke-HashPolicyCorruptionCase -CaseId 'H5-canonical-size-mismatch' -ExpectedDefect size -Mutate {param($manifest,$entry) $entry.canonical_byte_size=[long]$entry.canonical_byte_size+1;$entry.byte_size=[long]$entry.byte_size+1}))
+        $invalidBooleanCases=@(
+            @{id='missing';missing=$true;value=$null;expected_code='METADATA_BOOLEAN.MISSING'},
+            @{id='null';missing=$false;value=$null;expected_code='METADATA_BOOLEAN.NULL'},
+            @{id='numeric-zero';missing=$false;value=[long]0;expected_code='METADATA_BOOLEAN.INVALID_TYPE.NUMBER'},
+            @{id='numeric-one';missing=$false;value=[long]1;expected_code='METADATA_BOOLEAN.INVALID_TYPE.NUMBER'},
+            @{id='numeric-other';missing=$false;value=[long]2;expected_code='METADATA_BOOLEAN.INVALID_TYPE.NUMBER'},
+            @{id='string-true';missing=$false;value='true';expected_code='METADATA_BOOLEAN.INVALID_TYPE.STRING'},
+            @{id='string-false';missing=$false;value='false';expected_code='METADATA_BOOLEAN.INVALID_TYPE.STRING'},
+            @{id='empty-string';missing=$false;value='';expected_code='METADATA_BOOLEAN.INVALID_TYPE.EMPTY_STRING'},
+            @{id='array';missing=$false;value=[object[]]@();expected_code='METADATA_BOOLEAN.INVALID_TYPE.ARRAY'},
+            @{id='object';missing=$false;value=[pscustomobject]@{invalid=$true};expected_code='METADATA_BOOLEAN.INVALID_TYPE.OBJECT'}
+        )
+        foreach($expectation in (Get-ChatpadMetadataReviewBooleanExpectations).GetEnumerator()){
+            foreach($invalidCase in $invalidBooleanCases){
+                $container=[pscustomobject]@{}
+                if(-not$invalidCase.missing){
+                    $container|Add-Member -NotePropertyName $expectation.Key -NotePropertyValue $invalidCase.value
+                }
+                $defect=Test-ChatpadRequiredBooleanProperty -Container $container -PropertyName $expectation.Key -Location 'manifest.compiled_artifact_metadata_review_design_gate' -ExpectedValue $expectation.Value
+                $results.Add([pscustomobject][ordered]@{
+                    case="MB-$($expectation.Key)-$($invalidCase.id)"
+                    group='metadata-boolean-type'
+                    field_path="manifest.compiled_artifact_metadata_review_design_gate.$($expectation.Key)"
+                    mutation=$invalidCase.id
+                    validator_result=if($null-ne$defect){'FAIL'}else{'PASS'}
+                    expected_defect=$invalidCase.expected_code
+                    observed_defect=if($null-ne$defect){$defect.defect_code}else{''}
+                    expected_type=if($null-ne$defect){$defect.expected_type}else{''}
+                    actual_type=if($null-ne$defect){$defect.actual_type}else{''}
+                    actual_value_category=if($null-ne$defect){$defect.actual_value_category}else{''}
+                    uncontrolled_exception_count=0
+                    property_not_found=$false
+                    output_parsed=$true
+                    case_passed=($null-ne$defect-and$defect.defect_code-eq$invalidCase.expected_code-and$defect.expected_type-eq'Boolean')
+                })
+            }
+        }
+        $invalidNativeExecutionStatuses=@(
+            @{id='missing';missing=$true;value=$null;expected_code='NATIVE_EXECUTION_STATUS.MISSING'},
+            @{id='null';missing=$false;value=$null;expected_code='NATIVE_EXECUTION_STATUS.NULL'},
+            @{id='empty';missing=$false;value='';expected_code='NATIVE_EXECUTION_STATUS.EMPTY'},
+            @{id='unknown';missing=$false;value='UNKNOWN';expected_code='NATIVE_EXECUTION_STATUS.UNKNOWN_OR_IMPLEMENTED'},
+            @{id='implemented';missing=$false;value='IMPLEMENTED';expected_code='NATIVE_EXECUTION_STATUS.UNKNOWN_OR_IMPLEMENTED'}
+        )
+        foreach($invalidStatus in $invalidNativeExecutionStatuses){
+            $container=[pscustomobject]@{}
+            if(-not$invalidStatus.missing){
+                $container|Add-Member -NotePropertyName native_execution_status -NotePropertyValue $invalidStatus.value
+            }
+            $defect=Test-ChatpadNativeExecutionStatusValue -Container $container
+            $results.Add([pscustomobject][ordered]@{
+                case="NES-$($invalidStatus.id)"
+                group='native-execution-status'
+                field_path='manifest.native_execution_status'
+                mutation=$invalidStatus.id
+                validator_result=if($null-ne$defect){'FAIL'}else{'PASS'}
+                expected_defect=$invalidStatus.expected_code
+                observed_defect=if($null-ne$defect){$defect.defect_code}else{''}
+                expected_type=if($null-ne$defect){$defect.expected_type}else{''}
+                actual_type=if($null-ne$defect){$defect.actual_type}else{''}
+                actual_value_category=if($null-ne$defect){$defect.actual_value_category}else{''}
+                uncontrolled_exception_count=0
+                property_not_found=$false
+                output_parsed=$true
+                case_passed=($null-ne$defect-and$defect.defect_code-eq$invalidStatus.expected_code)
+            })
+        }
         $failed=@($results|Where-Object{
             if($null -ne $_.PSObject.Properties['case_passed']){-not $_.case_passed}
             else {
@@ -538,6 +758,14 @@ function Invoke-ChatpadManifestCorruptionRegression {
             parent_runtime=$PSVersionTable.PSVersion.ToString()
             child_runtime_executable=$childPowerShell
             requested_manifest_path=$ManifestPath
+            validation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_MANIFEST_CORRUPTION_REGRESSION'}
+            artifact_opening_performed=$false
+            compiled_output_hash_verification_performed=$false
+            metadata_parsing_performed=$false
+            metadata_boolean_field_count=(Get-ChatpadMetadataReviewBooleanExpectations).Count
+            metadata_boolean_invalid_type_case_count=$invalidBooleanCases.Count
+            metadata_boolean_regression_case_count=((Get-ChatpadMetadataReviewBooleanExpectations).Count*$invalidBooleanCases.Count)
+            native_execution_status_regression_case_count=$invalidNativeExecutionStatuses.Count
             cases=@($results)
         }
     } finally {
@@ -587,7 +815,11 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
+$metadataReviewDefectRecords=[Collections.Generic.List[object]]::new()
+$topLevelNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $manifest -Location 'manifest'
+if($null-ne$topLevelNativeExecutionDefect){$metadataReviewDefectRecords.Add($topLevelNativeExecutionDefect)}
 $auditProperty=$manifest.PSObject.Properties['native_interop_source_audit']
 if($null -eq $auditProperty -or $null -eq $auditProperty.Value -or $auditProperty.Value -is [array]){$defects.top_level++}
 else{
@@ -639,22 +871,25 @@ else{
         $reaudit.accepted-ne$true){$defects.top_level++}
 }
 $metadataGateProperty=$manifest.PSObject.Properties['compiled_artifact_metadata_review_design_gate']
-if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metadataGateProperty.Value-is[array]){$defects.metadata_review_gate++}
+if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metadataGateProperty.Value-is[array]){
+    $metadataReviewDefectRecords.Add((New-ChatpadMetadataReviewDefect 'METADATA_REVIEW_GATE.INVALID_CONTAINER' 'manifest.compiled_artifact_metadata_review_design_gate' 'Object' $(if($null-eq$metadataGateProperty){$null}else{$metadataGateProperty.Value}) 'Metadata-review design-gate container is missing, null, or an array.'))
+}
 else{
     $metadataGate=$metadataGateProperty.Value
     if($metadataGate.status-ne'DESIGN_GATED_NOT_IMPLEMENTED'-or
         $metadataGate.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or
         $metadataGate.runtime_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
-        $metadataGate.compile_only_evidence_remediation_accepted-ne$true-or
         $metadataGate.artifact_location_classification-ne'IGNORED_COMPILE_ONLY_OUTPUT'-or
-        $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'-or
-        $metadataGate.implementation_authorized-ne$false-or
-        $metadataGate.independent_design_audit_required-ne$true-or
-        $metadataGate.artifact_bytes_opened-ne$false){$defects.metadata_review_gate++}
-    foreach($name in @('assembly_loading_authorized','assembly_loading_occurred','runtime_reflection_authorized','runtime_reflection_occurred','compiled_artifact_execution_authorized','compiled_artifact_execution_occurred','native_dll_loading_authorized','native_dll_loading_occurred','native_entry_point_resolution_authorized','native_entry_point_resolution_occurred','native_invocation_authorized','native_invocation_occurred','device_query_authorized','device_query_occurred','windows_mutation_authorized','windows_mutation_occurred','driver_actions_authorized','driver_actions_occurred','driver_build_authorized','driver_build_occurred','driver_sign_authorized','driver_sign_occurred','driver_package_authorized','driver_package_occurred','driver_install_authorized','driver_install_occurred','driver_load_authorized','driver_load_occurred','driver_bind_authorized','driver_bind_occurred','driver_restore_authorized','driver_restore_occurred','driver_restart_authorized','driver_restart_occurred')){
-        if($null-eq$metadataGate.PSObject.Properties[$name]-or[bool]$metadataGate.$name-ne$false){$defects.metadata_review_gate++}
+        $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'){$defects.metadata_review_gate++}
+    $sectionNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $metadataGate -Location 'manifest.compiled_artifact_metadata_review_design_gate'
+    if($null-ne$sectionNativeExecutionDefect){$metadataReviewDefectRecords.Add($sectionNativeExecutionDefect)}
+    foreach($expectation in (Get-ChatpadMetadataReviewBooleanExpectations).GetEnumerator()){
+        $booleanDefect=Test-ChatpadRequiredBooleanProperty -Container $metadataGate -PropertyName $expectation.Key -Location 'manifest.compiled_artifact_metadata_review_design_gate' -ExpectedValue $expectation.Value
+        if($null-ne$booleanDefect){$metadataReviewDefectRecords.Add($booleanDefect)}
     }
 }
+$defects.metadata_review_gate += $metadataReviewDefectRecords.Count
+$accountingDetails.metadata_review_gate_defects=@($metadataReviewDefectRecords)
 $suiteEntry=@($entries|Where-Object id -eq 'evidence-synthetic-suite')
 if($suiteEntry.Count-ne1){$defects.evidence_binding++}
 else{
@@ -706,6 +941,7 @@ else{
             $readinessCounts[$name]=Get-ChatpadValidatedIntegerProperty -Item $manifest.readiness -PropertyName $name -Location 'manifest.readiness' -RecordId 'readiness' -DefectCount ([ref]$readinessAccountingDefects) -Defects $countValidationDefects -AllowZero
         }
         $accountingDetails=[ordered]@{
+            metadata_review_gate_defects=@($metadataReviewDefectRecords)
             expected_harness_result_record_count=$suiteCounts.harness_result_record_count
             actual_harness_result_record_count=$harness.Count
             expected_harness_assertion_sum=$suiteCounts.harness_assertion_sum
@@ -794,5 +1030,17 @@ if($manifest.readiness.psscriptanalyzer_status-eq'PASS'){
     if(@($analyzer.findings|Where-Object{$_.severity-notin@('Error','Warning','Information')}).Count){$defects.psscriptanalyzer++}
 }
 $total=($defects.Values|Measure-Object -Sum).Sum
-[pscustomobject][ordered]@{schema_version='chatpad-runtime-bringup-readiness-manifest-validation-v3';result=$(if($total){'FAIL'}else{'PASS'});manifest_schema=$manifest.schema_version;entry_count=$entries.Count;defects=[pscustomobject]$defects;total_defects=$total;accounting_details=[pscustomobject]$accountingDetails}|ConvertTo-Json -Depth 8
+[pscustomobject][ordered]@{
+    schema_version='chatpad-runtime-bringup-readiness-manifest-validation-v3'
+    result=$(if($total){'FAIL'}else{'PASS'})
+    validation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_MANIFEST_VALIDATION'}
+    artifact_opening_performed=$false
+    compiled_output_hash_verification_performed=$false
+    metadata_parsing_performed=$false
+    manifest_schema=$manifest.schema_version
+    entry_count=$entries.Count
+    defects=[pscustomobject]$defects
+    total_defects=$total
+    accounting_details=[pscustomobject]$accountingDetails
+}|ConvertTo-Json -Depth 8
 if($total){exit 1}

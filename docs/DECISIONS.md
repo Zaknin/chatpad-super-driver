@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Require strict JSON Boolean safety fields for metadata-review manifests
+
+**Decision:** Metadata-review design-gate safety fields in the readiness
+manifest must be explicit JSON Boolean values. The manifest validator rejects
+missing, null, numeric, string, empty-string, array, and object values instead
+of relying on PowerShell Boolean coercion. The design-gate audit path also
+records `native_execution_status` as `NOT_IMPLEMENTED` and uses
+`NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` when artifact opening, hash verification,
+and metadata parsing are prohibited.
+
+**Rationale:** The independent design-gate audit proved that numeric `0` in a
+prohibited-action field could validate as `$false`. Safety evidence must
+preserve JSON type as part of the contract, otherwise malformed or ambiguous
+inputs can be reinterpreted as acceptable false values.
+
+**Alternatives rejected:** Casting values through `[bool]`, accepting numeric
+or string false equivalents, documenting expected values without enforcing
+JSON type, or running standard compiled-output validation during a
+no-artifact-open design audit.
+
+**Consequences:** Future manifest producers must emit real JSON Booleans for
+every metadata-review safety field. Future validators and re-audits must prove
+field-level rejection for non-Boolean values and must keep native execution
+`NOT_IMPLEMENTED` until a separately authorized native implementation exists.
+
 ## 2026-07-04 - Gate compiled-artifact metadata review behind independent design audit
 
 **Decision:** Because the repository has no approved static managed metadata

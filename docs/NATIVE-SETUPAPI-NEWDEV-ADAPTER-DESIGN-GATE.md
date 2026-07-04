@@ -175,9 +175,11 @@ G133-G152 add the original compile-only validation coverage. G153-G170 add:
 
 ## Next Boundary
 
-The next task is an independent read-only audit of the compiled-artifact
-metadata-review design gate. No task may open or parse compiled output, load or
-reflect over it, resolve entry points, invoke native APIs, query devices, or
-mutate Windows unless that exact action is later authorized. The current gate
-is `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; the
-capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+The next task is an independent read-only re-audit of the remediated
+compiled-artifact metadata-review design gate. No task may open, hash, or parse
+compiled output, load or reflect over it, resolve entry points, invoke native
+APIs, query devices, or mutate Windows unless that exact action is later
+authorized. The current gate is
+`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; the
+capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
+native execution remains `NOT_IMPLEMENTED`.

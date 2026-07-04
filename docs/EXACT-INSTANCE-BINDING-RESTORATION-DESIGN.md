@@ -336,11 +336,10 @@ harness exceptions, and zero live or Windows mutation counters.
 
 ## 10. Remaining gates
 
-The current branch implements only the source declaration, wrapper boundary,
-and isolated compile-only validation harness for a future native Windows
-adapter. It still has no native execution path. The next task is an independent
-audit of the compile-only validation evidence or a separately authorized
-source/design phase for native adapter execution. A future implementation task
-must not reuse synthetic authorization and must not perform live mutation
-merely because the offline framework, source audit, or compile-only validation
-passed.
+The current branch preserves the source declaration, wrapper boundary, and
+isolated compile-only validation harness for a future native Windows adapter.
+It still has no native execution path. The next task is an independent
+read-only re-audit of the remediated compiled-artifact metadata-review design
+gate. A future implementation task must not reuse synthetic authorization and
+must not perform live mutation merely because the offline framework, source
+audit, compile-only validation, or design-gate remediation passed.

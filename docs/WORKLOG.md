@@ -8013,3 +8013,116 @@
   gate. The auditor must not open or parse the artifact, implement a parser,
   load or reflect over compiled output, execute it, invoke native APIs, query
   devices, mutate Windows, or perform driver actions.
+
+## 2026-07-04T14:47:41+04:00 - Compiled-artifact metadata-review design-gate remediation
+
+- **Objective:** Remediate the failed independent audit of the non-loading
+  compiled-artifact metadata-review design gate by enforcing strict JSON
+  Boolean safety fields, preserving the no-artifact-open design audit boundary,
+  regenerating readiness manifest evidence, and publishing a remediation
+  branch for independent re-audit.
+- **Starting state:** Repository root `C:/Dev/chatpad-super-driver`; source
+  branch
+  `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate`;
+  required starting HEAD `f557324848cedecd0333719327bc248083074f87`;
+  upstream
+  `origin/feature/runtime-bringup-compiled-artifact-metadata-review-design-gate`;
+  ahead/behind `0/0`; clean worktree and index. The manifest current gate was
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`, live
+  readiness was `BLOCKED`, and the remaining blocker was
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Branch created:**
+  `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation`
+  directly from `f557324848cedecd0333719327bc248083074f87`.
+- **Audit failure reproduced:** The original failed-audit fixture with
+  `compiled_artifact_metadata_review_design_gate.assembly_loading_occurred = 0`
+  reproduced against the pre-remediation validator as `PASS`, zero total
+  defects, and zero metadata-review defects under both Windows PowerShell 5.1
+  and PowerShell 7.
+- **Implementation details:** The manifest validator now validates 63
+  metadata-review safety fields with type-sensitive JSON Boolean checks.
+  Missing, null, numeric zero/one/other, string true/false, empty-string,
+  array, and object mutations fail closed with field-level defect records.
+  Top-level and metadata-gate `native_execution_status` must be the string
+  `NOT_IMPLEMENTED`; missing, null, empty, unknown, or implemented values fail
+  closed. The manifest generator now emits top-level
+  `native_execution_status`, `manifest_generation_mode`, and the expanded
+  metadata-review no-action field inventory. The readiness producer records
+  native execution as `NOT_IMPLEMENTED`.
+- **No-artifact-open mode:** `-NoArtifactOpenDesignGateAudit` records
+  `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` and validation outputs explicitly
+  report artifact opening, compiled-output hash verification, and metadata
+  parsing as not performed. The standard exact/readiness suites were not rerun
+  for closeout because this remediation's safety boundary prohibits opening or
+  hashing the compiled artifact during the design-gate audit mode.
+- **Post-remediation original failure check:** The same numeric-zero fixture is
+  rejected under both Windows PowerShell 5.1 and PowerShell 7 with a
+  `METADATA_BOOLEAN.INVALID_TYPE.NUMBER` defect for
+  `manifest.compiled_artifact_metadata_review_design_gate.assembly_loading_occurred`.
+  The saved outputs are
+  `artifacts/logs/compiled-artifact-metadata-review-design-gate-remediation/original-failure-after-fix-wps.json`
+  and
+  `artifacts/logs/compiled-artifact-metadata-review-design-gate-remediation/original-failure-after-fix-pwsh.json`.
+- **Files modified:** `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`,
+  `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/WORKLOG.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Static and safety validation:** Changed PowerShell files parsed with zero
+  errors. Native source-boundary guard returned `PASS`,
+  `NATIVE_INTEROP_SOURCE_BOUNDARY_VALID`, 13 declared APIs, six structures, 13
+  DllImports, zero native interop binaries, and zero defects. Repository
+  safety returned `PASS` with deployment, signing, packaging, certificate
+  creation, key creation, Windows mutation, device query, hardware access, and
+  unexpected tracked-artifact counts all `0`. Changed-path forbidden generated
+  file scan returned `PASS` with 12 changed paths and zero forbidden generated
+  paths. Prohibited-pattern review found 102 documentation-only matches and
+  zero script matches. Documentation consistency returned `PASS`.
+- **Manifest validation:** Final no-artifact-open manifest generation returned
+  schema `chatpad-runtime-bringup-readiness-manifest-v4`, 33 entries,
+  generation mode `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT`, top-level native
+  execution `NOT_IMPLEMENTED`, metadata-gate native execution
+  `NOT_IMPLEMENTED`, `artifact_opening_authorized=false`, and
+  `artifact_parsing_performed=false`. Manifest validation returned `PASS`
+  under Windows PowerShell 5.1 and PowerShell 7 with zero defects and explicit
+  `artifact_opening_performed=false`,
+  `compiled_output_hash_verification_performed=false`, and
+  `metadata_parsing_performed=false`.
+- **Corruption regression:** Manifest corruption regression returned `PASS`
+  under Windows PowerShell 5.1 and PowerShell 7 with 658 cases and zero failed
+  cases: the prior 23 manifest corruption cases, 630 metadata Boolean type
+  cases across 63 safety fields, and five native-execution-status cases.
+  Initial parallel regression wrappers timed out after five minutes and left
+  task-owned validator processes; only those task-owned processes were
+  terminated, then clean sequential reruns completed successfully.
+- **Ignored evidence artifacts:** Validation outputs are under
+  `artifacts/logs/compiled-artifact-metadata-review-design-gate-remediation/`.
+  The readiness manifest is regenerated after this closeout entry so the
+  tracked manifest binds the final continuity text before commit.
+- **Safety:** No compiled artifact opening, compiled-output hash verification,
+  metadata parsing, assembly loading, runtime reflection, compiled assembly
+  execution, native DLL loading, native entry-point resolution, native
+  invocation, SetupAPI/Newdev invocation, device query, exact-instance access,
+  hardware access, Windows mutation, registry/service/certificate/key/
+  credential mutation, driver build/link/sign/CAT/package/stage/install/load/
+  unload/bind/restore/restart/enable/disable/remove, production driver/INF/
+  project change, binary change, or `legacy/` change occurred.
+- **Remaining state:** Live readiness remains `BLOCKED`; current gate remains
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; native
+  execution remains `NOT_IMPLEMENTED`; capability blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Commit and push:** Pending at entry write time. The final commit, push,
+  upstream equality, and clean status are recorded in the final response after
+  final manifest regeneration, final validation, commit, push, and upstream
+  verification.
+- **Next task:** Independent read-only re-audit of this remediated
+  metadata-review design gate. The auditor must not open, hash, or parse the
+  artifact, implement a parser, load or reflect over compiled output, execute
+  it, invoke native APIs, query devices, mutate Windows, or perform driver
+  actions.

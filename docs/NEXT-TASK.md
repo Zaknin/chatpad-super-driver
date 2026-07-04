@@ -2,16 +2,17 @@
 
 ## Objective
 
-Perform an independent read-only audit of the non-loading compiled-artifact
-metadata-review design gate. Audit the design and enforcement only; do not
-implement or perform metadata inspection.
+Perform an independent read-only re-audit of the remediated non-loading
+compiled-artifact metadata-review design gate. Audit the design and enforcement
+only; do not implement or perform metadata inspection.
 
 ## Required Starting Point
 
 - Branch:
-  `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate`.
-- Starting commit: the final pushed commit containing the design gate,
-  regenerated readiness manifest, and continuity updates.
+  `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation`.
+- Starting commit: the final pushed remediation commit containing strict
+  metadata-review Boolean validation, regenerated readiness manifest, and
+  continuity updates.
 - Verify exact HEAD, upstream, `0/0` ahead/behind, clean status, and unchanged
   native declarations, compile-only harness, runtime adapter behavior,
   production driver source, INF, project/solution files, binaries, and
@@ -19,7 +20,13 @@ implement or perform metadata inspection.
 
 ## Current State
 
-- Compile-only evidence remediation re-audit: `AUDIT PASS`.
+- Prior design-gate audit: `AUDIT FAIL` due PowerShell Boolean coercion of
+  metadata-review prohibited-action fields.
+- Remediation: all metadata-review safety fields must be explicit JSON
+  Booleans; missing, null, numeric, string, empty-string, array, and object
+  values fail closed with field-level defects.
+- Manifest generation mode for this boundary:
+  `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT`.
 - Live readiness: `BLOCKED`.
 - Current gate:
   `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
@@ -36,11 +43,13 @@ implement or perform metadata inspection.
 - Latest `docs/WORKLOG.md` entry
 - `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`
-- Gate producers and manifest validator changed by the design-gate commit
+- `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+- `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+- `tools/Test-ChatpadRuntimeBringupReadiness.ps1`
 
 ## Safety Restrictions
 
-- Do not open or parse the compiled artifact during the design audit.
+- Do not open, hash, or parse the compiled artifact during the design audit.
 - Do not load, reflect over, execute, or invoke the compiled assembly.
 - Do not use `Assembly.Load*`, `ReflectionOnlyLoad`, artifact-targeted
   `Add-Type`, `dotnet exec`, native DLL loading, or entry-point resolution.
@@ -53,13 +62,22 @@ implement or perform metadata inspection.
 
 ## Acceptance Criteria
 
-- Classify every tooling finding and confirm no existing path is incorrectly
-  presented as an approved safe parser.
-- Confirm the future review allowlist is limited to inert PE/CLI byte parsing.
-- Confirm all loading, reflection, execution, native, device, Windows, and
-  driver actions are explicitly prohibited and recorded false.
-- Confirm the manifest and validators fail closed on gate/status drift.
-- Confirm live readiness remains `BLOCKED`, native execution remains
-  `NOT_IMPLEMENTED`, and the runtime blocker remains unchanged.
+- Reproduce the original failed-audit condition against the pre-remediation
+  validator behavior or supplied failing fixture, then prove the remediated
+  validator rejects numeric `0`/`1` and all other non-Boolean JSON types.
+- Confirm all metadata-review prohibited-action fields are strict JSON
+  Booleans with field-level defects for missing, null, numeric, string,
+  empty-string, array, and object values.
+- Confirm top-level and metadata-gate `native_execution_status` remain
+  `NOT_IMPLEMENTED` and fail closed for missing, null, empty, unknown, or
+  implemented values.
+- Confirm no-artifact-open design-gate audit mode reports artifact opening,
+  compiled-output hash verification, and metadata parsing as not performed.
+- Confirm the future review allowlist remains limited to inert PE/CLI byte
+  parsing and no existing path is incorrectly presented as an approved safe
+  parser.
+- Confirm live readiness remains `BLOCKED`, the current gate remains
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`, and the
+  runtime blocker remains unchanged.
 - Return `AUDIT PASS` or `AUDIT FAIL` with exact evidence. Do not authorize or
   implement the metadata review during this audit.
