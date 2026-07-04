@@ -8126,3 +8126,110 @@
   artifact, implement a parser, load or reflect over compiled output, execute
   it, invoke native APIs, query devices, mutate Windows, or perform driver
   actions.
+
+## 2026-07-04T17:02:00+04:00 - Metadata-review design-audit acceptance
+
+- **Objective:** Record the independent `AUDIT PASS` for the remediated
+  non-loading compiled-artifact metadata-review design gate, transition the
+  active gate to parser implementation authorization, regenerate readiness
+  evidence, and publish the narrow acceptance branch.
+- **Starting state:** Repository root `C:/Dev/chatpad-super-driver`; source
+  branch
+  `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation`;
+  starting and accepted commit
+  `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`; upstream
+  `origin/feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation`;
+  ahead/behind `0/0`; clean worktree and index. The accepted commit was
+  reachable. The manifest recorded live readiness `BLOCKED`, current gate
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`, runtime
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and native
+  execution `NOT_IMPLEMENTED`.
+- **Branch created:**
+  `feature/runtime-bringup-metadata-review-design-audit-acceptance` directly
+  from `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`; no merge or history rewrite.
+- **Accepted audit:** Independent verdict `AUDIT PASS`. Accepted inventory
+  `artifacts/logs/independent-metadata-review-design-gate-remediation-audit-49b41da/artifact-inventory.json`
+  is `22305` bytes with SHA-256
+  `2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B`.
+  The audit accepted strict validation of 63 metadata-review Boolean fields,
+  numeric `0`/`1` rejection under both runtimes, explicit
+  `native_execution_status = NOT_IMPLEMENTED`, and the
+  `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` boundary.
+- **Gate transition:** Previous active gate
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; new active
+  gate
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`.
+  Live readiness remains `BLOCKED`; runtime blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; native execution remains
+  `NOT_IMPLEMENTED`; metadata parser implementation remains not implemented
+  and unauthorized; metadata review remains not performed.
+- **Implementation details:** Current-state producers and assertions use the
+  new gate. No-artifact-open manifest generation may consume the historical
+  accepted readiness result carrying the prior gate, while standard generation
+  requires the new gate. The manifest records the accepted audit branch,
+  commit, inventory path/size/hash, `AUDIT PASS`, and
+  `independent_design_audit_required = false`. The strict 63-field Boolean
+  inventory remains unchanged; `implementation_authorized` and all prohibited
+  action fields remain `false`.
+- **Files modified:** `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`,
+  `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/WORKLOG.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Manifest generation and validation:** No-artifact-open generation passed
+  under Windows PowerShell 5.1 and PowerShell 7. Temporary manifests contained
+  34 entries because they also bound the tracked manifest input. Validation of
+  both temporary manifests returned `PASS`, zero defects, and explicit
+  `artifact_opening_performed=false`,
+  `compiled_output_hash_verification_performed=false`, and
+  `metadata_parsing_performed=false`. The final tracked manifest is regenerated
+  after this entry and contains 33 entries because it excludes itself.
+- **Corruption/adversarial regression:** Windows PowerShell 5.1 and PowerShell
+  7 both returned `PASS`, 658 cases, and zero failed cases: 630 strict
+  metadata-Boolean cases across 63 fields, the prior 23 corruption cases, and
+  five native-execution-status cases. Both runs report artifact opening,
+  compiled-output hash verification, and metadata parsing as not performed.
+- **Static and safety validation:** Seven changed PowerShell files parse with
+  zero errors under Windows PowerShell 5.1 and PowerShell 7. Repository safety
+  returns `PASS` under both runtimes with deployment, signing, packaging,
+  certificate creation, key creation, Windows mutation, device query, hardware
+  access, and unexpected tracked-artifact counts all `0`. Final changed-path,
+  forbidden-generated-file, prohibited-pattern, documentation-consistency,
+  and `git diff --check` reviews pass.
+- **Command issues:** The first Windows PowerShell parse wrapper failed before
+  parsing because its argument forwarding was invalid; the corrected per-file
+  cross-runtime parse checks passed. The first background corruption launches
+  failed before regression execution because absolute manifest paths were
+  incompatible with the validator's path resolution; repository-relative
+  relaunches completed the full matrix successfully. No failed command was
+  treated as validation success.
+- **Focused validation boundary:** Standard exact/readiness suites,
+  compile-only validation, and native source-boundary guard were intentionally
+  not run. Those paths were unchanged, and exact/readiness validation can open
+  or hash compiled output, which this transition forbids.
+- **Ignored evidence artifacts:** Validation outputs are under
+  `artifacts/logs/metadata-review-design-audit-acceptance/`.
+- **Safety:** No compiled artifact opening, parsing, or hash verification;
+  assembly loading; runtime reflection; compiled artifact execution; native
+  DLL loading; entry-point resolution; native or SetupAPI/Newdev invocation;
+  device query; exact-instance or hardware access; Windows mutation; driver
+  build/link/sign/CAT/package/stage/install/load/unload/bind/restore/restart/
+  enable/disable/remove; production driver/INF/project change; binary change;
+  or `legacy/` change occurred.
+- **Commit and push:** Pending at entry write time. The final commit, push,
+  upstream equality, and clean status are recorded in the final response after
+  final manifest regeneration and validation.
+- **Next task:** A separately authorized safe static PE/CLI metadata-parser
+  implementation-design task. Do not perform metadata review or native
+  loading, reflection, execution, invocation, device access, Windows mutation,
+  or driver actions.

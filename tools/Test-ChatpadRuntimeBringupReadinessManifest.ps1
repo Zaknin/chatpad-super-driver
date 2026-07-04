@@ -11,7 +11,7 @@ Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Com
 function Get-ChatpadMetadataReviewBooleanExpectations {
     [ordered]@{
         compile_only_evidence_remediation_accepted=$true
-        independent_design_audit_required=$true
+        independent_design_audit_required=$false
         implementation_authorized=$false
         artifact_opening_authorized=$false
         artifact_bytes_opened=$false
@@ -815,7 +815,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
 $metadataReviewDefectRecords=[Collections.Generic.List[object]]::new()
 $topLevelNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $manifest -Location 'manifest'
@@ -877,10 +877,16 @@ if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metada
 else{
     $metadataGate=$metadataGateProperty.Value
     if($metadataGate.status-ne'DESIGN_GATED_NOT_IMPLEMENTED'-or
-        $metadataGate.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or
+        $metadataGate.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'-or
         $metadataGate.runtime_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $metadataGate.artifact_location_classification-ne'IGNORED_COMPILE_ONLY_OUTPUT'-or
-        $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'){$defects.metadata_review_gate++}
+        $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'-or
+        $metadataGate.independent_design_audit_verdict-ne'AUDIT PASS'-or
+        $metadataGate.independent_design_audit_branch-ne'feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation'-or
+        $metadataGate.independent_design_audit_commit-ne'49b41dad087a3d7e6f4db7f52cd51a0c17eed222'-or
+        $metadataGate.independent_design_audit_artifact_inventory_path-ne'artifacts/logs/independent-metadata-review-design-gate-remediation-audit-49b41da/artifact-inventory.json'-or
+        [long]$metadataGate.independent_design_audit_artifact_inventory_byte_size-ne22305-or
+        $metadataGate.independent_design_audit_artifact_inventory_sha256-ne'2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B'){$defects.metadata_review_gate++}
     $sectionNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $metadataGate -Location 'manifest.compiled_artifact_metadata_review_design_gate'
     if($null-ne$sectionNativeExecutionDefect){$metadataReviewDefectRecords.Add($sectionNativeExecutionDefect)}
     foreach($expectation in (Get-ChatpadMetadataReviewBooleanExpectations).GetEnumerator()){

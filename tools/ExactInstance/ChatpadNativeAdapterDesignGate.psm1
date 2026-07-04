@@ -14,7 +14,7 @@ function Get-NativeScaffoldConstants {
         execution_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         prior_compile_only_gate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
         compile_only_evidence_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
-        scaffold_gate = 'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
+        scaffold_gate = 'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'
         source_audit_result = 'AUDIT PASS'
         source_audit_branch = 'feature/runtime-bringup-native-interop-source-boundary'
         source_audit_commit = 'dbba70d74e99c211d47187697e19e528b381520a'

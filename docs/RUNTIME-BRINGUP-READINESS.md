@@ -72,7 +72,7 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
@@ -714,9 +714,11 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 ## Compiled-artifact metadata-review design gate
 
 Repository investigation found no approved static managed metadata parser.
-The project therefore advances only to
-`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; the runtime
-blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+The remediated non-loading design gate passed independent audit at
+`49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The project advances only to
+`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`;
+the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 The future allowlist is inert PE/CLI byte parsing for assembly identity, target
 framework, architecture, module kind, metadata tables, P/Invoke metadata
@@ -724,17 +726,16 @@ strings, expected type/method names, and entry-point absence. No artifact was
 opened or inspected in this phase. See
 `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`.
 
-The failed independent design-gate audit proved that metadata-review safety
-Booleans must be validated as JSON Booleans, not PowerShell-coerced values.
-The remediation requires strict Boolean typing, field-level defects for
-non-Boolean values, `native_execution_status: NOT_IMPLEMENTED`, and
-`NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` validation with artifact opening,
-compiled-output hash verification, and metadata parsing recorded as not
-performed.
+The accepted remediation validates 63 metadata-review safety fields as strict
+JSON Booleans, records field-level defects for non-Boolean values, requires
+`native_execution_status: NOT_IMPLEMENTED`, and validates
+`NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` with artifact opening, compiled-output
+hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform an independent read-only re-audit of the remediated metadata-review
-design gate. Do not implement or run a parser, open, hash, or parse the
-artifact, load or reflect over it, resolve entry points, invoke
+Perform a separately authorized safe static metadata-parser implementation
+design task. Do not perform metadata review, open or parse the artifact unless
+that future task explicitly authorizes those exact implementation actions,
+load or reflect over compiled output, execute it, resolve entry points, invoke
 SetupAPI/Newdev, query devices, or mutate Windows.

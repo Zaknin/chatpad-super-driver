@@ -8,7 +8,7 @@ Authoritative current state:
 
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
@@ -175,11 +175,12 @@ G133-G152 add the original compile-only validation coverage. G153-G170 add:
 
 ## Next Boundary
 
-The next task is an independent read-only re-audit of the remediated
-compiled-artifact metadata-review design gate. No task may open, hash, or parse
-compiled output, load or reflect over it, resolve entry points, invoke native
-APIs, query devices, or mutate Windows unless that exact action is later
-authorized. The current gate is
-`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; the
+The remediated compiled-artifact metadata-review design gate passed independent
+audit at `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The next task is a
+separately authorized safe static parser implementation-design task. No task
+may open, hash, or parse compiled output, load or reflect over it, resolve entry
+points, invoke native APIs, query devices, or mutate Windows unless that exact
+action is later authorized. The current gate is
+`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`; the
 capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
 native execution remains `NOT_IMPLEMENTED`.

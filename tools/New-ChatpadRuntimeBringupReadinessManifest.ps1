@@ -17,7 +17,15 @@ $suiteNativeExecutionAccepted=if($NoArtifactOpenDesignGateAudit){
 }else{
     $null-ne$suiteNativeExecutionProperty-and$suiteNativeExecutionProperty.Value-eq'NOT_IMPLEMENTED'
 }
-if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false-or-not$suiteNativeExecutionAccepted-or$suite.compiled_artifact_metadata_review_status-ne'DESIGN_GATED_NOT_IMPLEMENTED'-or$suite.compiled_artifact_metadata_review_authorized-ne$false-or$suite.compiled_artifact_metadata_review_performed-ne$false-or$suite.compiled_artifact_bytes_opened-ne$false-or$suite.compiled_artifact_reflection_performed-ne$false-or$suite.compiled_artifact_execution_performed-ne$false){throw 'Suite result is not a non-executing compiled-artifact metadata-review design gate with native execution still blocked.'}
+$acceptedSuiteGates=if($NoArtifactOpenDesignGateAudit){
+    @(
+        'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT',
+        'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'
+    )
+}else{
+    @('BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION')
+}
+if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-notin$acceptedSuiteGates-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false-or-not$suiteNativeExecutionAccepted-or$suite.compiled_artifact_metadata_review_status-ne'DESIGN_GATED_NOT_IMPLEMENTED'-or$suite.compiled_artifact_metadata_review_authorized-ne$false-or$suite.compiled_artifact_metadata_review_performed-ne$false-or$suite.compiled_artifact_bytes_opened-ne$false-or$suite.compiled_artifact_reflection_performed-ne$false-or$suite.compiled_artifact_execution_performed-ne$false){throw 'Suite result is not a non-executing compiled-artifact metadata-review design gate with native execution still blocked.'}
 
 function Get-CheckedOutLocalBranch {
     $branchLines=@(& git symbolic-ref --quiet --short HEAD 2>$null)
@@ -127,7 +135,7 @@ $manifest=[pscustomobject][ordered]@{
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
+    current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     native_execution_status='NOT_IMPLEMENTED'
     manifest_generation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_READINESS_RESULT'}
@@ -174,13 +182,19 @@ $manifest=[pscustomobject][ordered]@{
     compiled_artifact_metadata_review_design_gate=[pscustomobject][ordered]@{
         status='DESIGN_GATED_NOT_IMPLEMENTED'
         native_execution_status='NOT_IMPLEMENTED'
-        current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
+        current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'
         runtime_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         compile_only_evidence_remediation_accepted=$true
         artifact_location_classification='IGNORED_COMPILE_ONLY_OUTPUT'
         proposed_inspection_mode='STATIC_BYTE_AND_METADATA_PARSING_ONLY'
         implementation_authorized=$false
-        independent_design_audit_required=$true
+        independent_design_audit_required=$false
+        independent_design_audit_verdict='AUDIT PASS'
+        independent_design_audit_branch='feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation'
+        independent_design_audit_commit='49b41dad087a3d7e6f4db7f52cd51a0c17eed222'
+        independent_design_audit_artifact_inventory_path='artifacts/logs/independent-metadata-review-design-gate-remediation-audit-49b41da/artifact-inventory.json'
+        independent_design_audit_artifact_inventory_byte_size=22305
+        independent_design_audit_artifact_inventory_sha256='2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B'
         artifact_opening_authorized=$false
         artifact_bytes_opened=$false
         artifact_parsing_authorized=$false

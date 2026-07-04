@@ -115,7 +115,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     $nativeOperationBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     $historicalCompileOnlyGate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
     $compileEvidenceAuditGate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
-    $scaffoldAuditGate = 'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
+    $scaffoldAuditGate = 'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'
 
     $results.Add((Invoke-ChatpadExactCase T1 'two devices with identical hardware IDs' {
         $e=New-ChatpadExactSuiteEnvironment
@@ -1284,7 +1284,7 @@ foreach(`$name in `$names){`$module.SessionState.PSVariable.Set(`$name,'PASS')}
             skipped_as_pass_count=0
         }
         live_installation_readiness='BLOCKED'
-        current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
+        current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION'
         capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         live_adapter_status='SCAFFOLD_NON_EXECUTING'
         live_binding_authorized=$false

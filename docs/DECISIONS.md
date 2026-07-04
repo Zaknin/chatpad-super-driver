@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Accept metadata-review design-gate remediation audit
+
+**Decision:** Accept the independent `AUDIT PASS` for metadata-review
+design-gate remediation commit
+`49b41dad087a3d7e6f4db7f52cd51a0c17eed222` and transition the active gate to
+`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`.
+The accepted design does not authorize parser implementation or artifact use.
+
+**Rationale:** The audit accepted strict Boolean validation for all 63
+metadata-review safety fields, explicit
+`native_execution_status = NOT_IMPLEMENTED`, the no-artifact-open validation
+boundary, cross-runtime manifest validation, and the 658-case adversarial
+regression with zero failures.
+
+**Alternatives rejected:** Keeping the accepted design pending another audit,
+implementing a parser during acceptance, opening or hashing the artifact,
+performing metadata review, loading or reflecting over the assembly, executing
+compiled output, invoking native APIs, or advancing to device/driver actions.
+
+**Consequences:** Live readiness remains `BLOCKED`; native execution remains
+`NOT_IMPLEMENTED`; the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. A separately authorized
+safe static parser implementation-design task is required, and any implemented
+parser requires independent audit before first use.
+
 ## 2026-07-04 - Require strict JSON Boolean safety fields for metadata-review manifests
 
 **Decision:** Metadata-review design-gate safety fields in the readiness

@@ -3,15 +3,17 @@
 ## Status
 
 - Compile-only evidence remediation: accepted by independent `AUDIT PASS`.
+- Metadata-review design-gate remediation: accepted by independent `AUDIT PASS`
+  at `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`.
 - Active gate:
-  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
 - Metadata-review implementation: not authorized and not implemented.
-- Remediation state: strict JSON Boolean safety validation is required after
-  the prior design audit proved PowerShell Boolean coercion could accept a
-  numeric `0` as a false prohibited-action value.
+- Accepted remediation: strict JSON Boolean safety validation covers 63
+  metadata-review fields and rejects numeric `0`/`1` and other non-Boolean
+  types under both supported PowerShell runtimes.
 
 The compiled managed artifact exists only as ignored compile-only output. This
 phase defines a future static review contract; it does not open, parse, load,
@@ -83,9 +85,13 @@ bind, restore, restart, enable, disable, or remove a driver or device.
 
 ## Authorization boundary
 
-This design requires an independent read-only audit before implementation.
-That audit may inspect tracked source, tests, docs, and generated manifest
-content, but must not inspect the compiled artifact itself. A later
-implementation requires separate authorization and another independent audit
-before first use. Design acceptance does not authorize native runtime
-execution.
+The independent read-only remediation audit passed at
+`49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. Its accepted inventory is
+`artifacts/logs/independent-metadata-review-design-gate-remediation-audit-49b41da/artifact-inventory.json`,
+size `22305` bytes, SHA-256
+`2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B`.
+No artifact opening, hash verification, parsing, loading, reflection,
+execution, native invocation, device query, Windows mutation, or driver action
+occurred. Parser implementation still requires separate authorization and
+another independent audit before first use. Design acceptance does not
+authorize metadata review or native runtime execution.
