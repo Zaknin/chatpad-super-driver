@@ -1,0 +1,72 @@
+# Compiled-artifact metadata review design gate
+
+## Status
+
+- Compile-only evidence remediation: accepted by independent `AUDIT PASS`.
+- Active gate:
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
+- Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Live readiness: `BLOCKED`.
+- Native execution: `NOT_IMPLEMENTED`.
+- Metadata-review implementation: not authorized and not implemented.
+
+The compiled managed artifact exists only as ignored compile-only output. This
+phase defines a future static review contract; it does not open, parse, load,
+reflect over, execute, or invoke the artifact.
+
+## Existing tooling classification
+
+| Finding | Classification | Decision |
+| --- | --- | --- |
+| `System.Reflection.Metadata`, `PEReader`, `MetadataReader` | Not present | No safe repository-native managed metadata parser exists. |
+| ILDasm, ILSpy/`ilspycmd`, dnlib, Mono.Cecil | Not present | No approved external static managed metadata path exists. |
+| `dumpbin` scripts and documentation | Irrelevant | Existing uses inspect production native driver/object evidence, not managed CLI metadata. |
+| `Add-Type` in exact-instance contracts | Unsafe for this purpose | It must never receive or compile the artifact; it is unrelated runtime support. |
+| `Assembly.Load*`, reflection, `dotnet exec`, native loaders, entry-point resolution | Unsafe | Prohibited. No approved artifact-review implementation uses them. |
+| Existing source and compile-only pattern checks | Test/guard only | They enforce absence of prohibited paths; they do not inspect metadata. |
+| Existing design and evidence text | Documentation only | It does not authorize review execution. |
+
+No existing tool qualifies as a safe static file-parsing candidate for the
+compiled managed artifact. The project therefore stops at this design gate.
+
+## Future review contract
+
+A separately authorized implementation may read the artifact as bytes and use
+a parser that treats PE and CLI metadata as inert file data. It must bind the
+input to the current schema v2 compile-only evidence primary DLL SHA-256 and
+require the input path to remain under an ignored compile-only or audit root.
+It may report only:
+
+- PE header basic identity, module kind, and platform architecture;
+- managed metadata table presence;
+- assembly identity and target-framework metadata;
+- entry-point absence;
+- P/Invoke declaration count and DllImport target names as metadata strings;
+- expected declaration type and method names;
+- absence of post-build or run hooks in the compile-only project;
+- absence of native invocation in validation scripts.
+
+The implementation must fail closed on an unknown parser, hash mismatch,
+non-ignored path, malformed PE/CLI metadata, executable entry point, unexpected
+DLL target, unexpected declaration inventory, or any request outside this
+allowlist. Evidence must record parser identity, input path/hash, checks,
+defects, and zero prohibited-action counters.
+
+## Absolute prohibitions
+
+The future review must not use `Assembly.Load`, `Assembly.LoadFrom`,
+`Assembly.LoadFile`, `ReflectionOnlyLoad`, runtime reflection over the compiled
+artifact, `Add-Type` on the artifact, `dotnet exec`, direct execution, native
+DLL loading, native entry-point resolution, or native invocation. It must not
+load SetupAPI/Newdev, query devices, access hardware, mutate Windows, or
+build, link, sign, generate CAT files, package, stage, install, load, unload,
+bind, restore, restart, enable, disable, or remove a driver or device.
+
+## Authorization boundary
+
+This design requires an independent read-only audit before implementation.
+That audit may inspect tracked source, tests, docs, and generated manifest
+content, but must not inspect the compiled artifact itself. A later
+implementation requires separate authorization and another independent audit
+before first use. Design acceptance does not authorize native runtime
+execution.

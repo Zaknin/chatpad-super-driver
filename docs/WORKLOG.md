@@ -7915,3 +7915,101 @@
   review if safe static inspection already exists, or a design gate for that
   review if it does not. Do not load, reflect over, execute, or invoke the
   compiled assembly.
+
+## 2026-07-04T12:10:32+04:00 - Compiled-artifact metadata-review design gate
+
+- **Objective:** Determine whether an approved non-loading static managed
+  metadata inspection path already exists and, because none does, define a
+  design-only gate for a future compiled-artifact metadata review.
+- **Starting state:** Repository root `C:/Dev/chatpad-super-driver`; branch
+  `feature/runtime-bringup-native-interop-compile-only-audit-acceptance`;
+  starting HEAD `8a95ebff067ee6a2dd1d2f28b8340edd36237734`;
+  upstream
+  `origin/feature/runtime-bringup-native-interop-compile-only-audit-acceptance`;
+  ahead/behind `0/0`; clean worktree and index. The accepted audit inventory
+  remained `49650` bytes with SHA-256
+  `09E4CB50663849B7E2ADB6D91817A35E97DC12831CA5384128ABE2A72BFCFA5C`.
+- **Branch created:**
+  `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate`
+  directly from the required starting commit.
+- **Investigation:** The repository contains no `System.Reflection.Metadata`,
+  `PEReader`, `MetadataReader`, ILDasm, ILSpy, dnlib, or Mono.Cecil inspection
+  implementation. Existing `dumpbin` paths inspect native production-driver
+  evidence and are not an approved managed CLI metadata contract. Existing
+  `Add-Type` is unrelated runtime contract support and is prohibited for this
+  review. Other matches are guards, compile-only prohibitions, historical
+  documentation, or irrelevant native-binary tooling.
+- **Design result:** No compiled artifact was opened or parsed. The active gate
+  is now
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; the runtime
+  blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. A future
+  implementation may use only inert PE/CLI byte parsing under the documented
+  metadata allowlist and requires separate authorization after independent
+  design audit.
+- **Files changed:** Added
+  `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`; updated
+  `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, `docs/NEXT-TASK.md`,
+  `docs/WORKLOG.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/PORTING-PLAN.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **PowerShell and path checks:** Seven changed PowerShell files parsed with
+  zero errors. Forbidden changed-path count was `0`; native declarations,
+  compile-only harness and runner, runtime adapter implementation, production
+  driver source, INF, project/solution files, signing/package/staging/
+  deployment paths, binaries, frozen artifacts, and `legacy/` were unchanged.
+- **Exact/offline validation:** Windows PowerShell 5.1 and PowerShell 7 both
+  returned `PASS`, 209 tests, 839 assertions, and zero failed tests.
+- **Readiness validation:** Windows PowerShell 5.1 and PowerShell 7 both
+  returned framework `PASS`, 513 fixtures, 2,563 assertions, exact subtotal
+  209 tests and 839 assertions, live readiness `BLOCKED`, metadata status
+  `DESIGN_GATED_NOT_IMPLEMENTED`, current gate
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`, runtime
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and Windows
+  mutation count `0`.
+- **Manifest validation:** Manifest generation returned schema
+  `chatpad-runtime-bringup-readiness-manifest-v4` with 33 entries and an
+  explicit fail-closed metadata-review design-gate section. Default validation
+  passed under Windows PowerShell 5.1 and PowerShell 7 with zero defects.
+  Corruption regression passed under both runtimes with 23 cases and zero
+  failed cases.
+- **Static and safety validation:** Native source-boundary guard returned
+  `PASS`, scanned 75 files, found one approved declaration match, and found
+  zero forbidden matches. Repository safety returned `PASS` with deployment,
+  signing, packaging, certificate creation, key creation, Windows mutation,
+  device query, hardware access, and unexpected tracked-artifact counts all
+  `0`. Changed-path forbidden generated-file count was `0`.
+  Prohibited-pattern review found no newly introduced executable command. Its
+  only AST hit was the pre-existing contracts-module `Add-Type`; the changed
+  line in that file is only the gate constant. Documentation matches are
+  explicit prohibitions. `git diff --check` returned `PASS`.
+- **Command issues:** The first combined validation wrapper had a PowerShell
+  parser error before execution. The corrected combined run exceeded its
+  four-minute wrapper timeout after both exact suites completed; its remaining
+  task-owned Windows PowerShell readiness process was allowed to finish.
+  Merged stream capture was invalid, so readiness was rerun in separate
+  processes with independent stdout/stderr capture and passed under both
+  runtimes.
+- **Ignored evidence:** Validation outputs are under
+  `artifacts/logs/compiled-artifact-metadata-review-design-gate/`.
+- **Safety:** Assembly load count `0`; reflection over compiled artifact count
+  `0`; compiled artifact open/parse count `0`; compiled artifact execution
+  count `0`; native API and SetupAPI/Newdev invocation count `0`; native DLL
+  load and entry-point resolution count `0`; device query, hardware access,
+  and Windows mutation count `0`; driver build/link/sign/CAT/package/stage/
+  install/load/unload/bind/restore/restart/enable/disable/remove count `0`.
+- **Commit and push:** Pending at entry write time. The final commit, pushed
+  branch, upstream equality, and clean status are recorded in the final
+  response.
+- **Next task:** Independent read-only audit of this metadata-review design
+  gate. The auditor must not open or parse the artifact, implement a parser,
+  load or reflect over compiled output, execute it, invoke native APIs, query
+  devices, mutate Windows, or perform driver actions.

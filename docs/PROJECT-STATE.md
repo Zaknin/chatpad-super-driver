@@ -1,12 +1,12 @@
 # Project State
 
-*Last updated: 2026-07-04 (compile-only evidence remediation re-audit accepted)*
+*Last updated: 2026-07-04 (compiled-artifact metadata-review design gate)*
 
 ## Current State
 
-- **Branch:** `feature/runtime-bringup-native-interop-compile-only-audit-acceptance`.
-- **Starting commit:** `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`.
-- **Expected final commit:** the commit containing this transition, regenerated manifest, and continuity update.
+- **Branch:** `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate`.
+- **Starting commit:** `8a95ebff067ee6a2dd1d2f28b8340edd36237734`.
+- **Expected final commit:** the commit containing this design gate, regenerated manifest, and continuity update.
 - **Implementation commit represented by evidence:** `164903a8e890dfe1eb1709eeac1272aabcb81b3e`.
 - **Compile-only evidence:** `docs/evidence/native-interop-compile-only-validation.json`, schema `chatpad-native-interop-compile-only-validation-v2`, validation ID `native-interop-compile-only-20260703T194533Z`.
 - **Readiness manifest:** `docs/evidence/runtime-bringup-readiness-manifest.json`, schema `chatpad-runtime-bringup-readiness-manifest-v4`.
@@ -27,11 +27,23 @@
 ## Readiness And Safety
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Current gate:
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live binding authorization: `false`.
 - `Apply`, `Restore`, and `Restart` remain deterministic non-executing blocked operations.
 - Native loading, reflection, entry-point resolution, native invocation, device query, exact-instance access, Windows mutation, driver build/link, signing, CAT generation, packaging, staging, installation, loading, binding, restoration, restart, reboot, hardware access, registry/service/boot mutation, production driver/INF/project changes, binary changes, and `legacy/` changes remain unauthorized and were not performed.
+
+## Metadata-review Design Gate
+
+- Repository investigation found no approved static managed metadata parser.
+  Existing `dumpbin` tooling targets native production-driver evidence;
+  `Add-Type` is runtime support; remaining matches are guards or documentation.
+- The proposed future review is static byte and CLI/PE metadata parsing only.
+- No metadata review was performed. The artifact was not opened, loaded,
+  reflected over, executed, or invoked.
+- Any implementation requires separate authorization after an independent
+  read-only audit of this design.
 
 ## Verified Results
 
@@ -48,5 +60,6 @@
 ## Unresolved Blockers
 
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
+- The metadata-review design has not passed independent audit.
 - No compiled assembly may be loaded, reflected over, executed, or invoked.
-- The next task requires separate authorization and must remain non-loading and non-executing.
+- The next task is an independent read-only audit of this design gate.

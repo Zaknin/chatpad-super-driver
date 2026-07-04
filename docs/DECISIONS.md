@@ -4,6 +4,30 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Gate compiled-artifact metadata review behind independent design audit
+
+**Decision:** Because the repository has no approved static managed metadata
+parser, stop at
+`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`. Preserve
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` as the runtime capability
+blocker. A future implementation may inspect only inert PE/CLI bytes under an
+explicit allowlist and requires separate authorization after design audit.
+
+**Rationale:** Existing metadata-related findings are absent tools, unrelated
+native `dumpbin` workflows, runtime `Add-Type`, guards, or documentation. None
+provides an audited non-loading managed-artifact inspection path.
+
+**Alternatives rejected:** Loading or reflecting over the assembly, executing
+it, using runtime compilation, repurposing native-driver `dumpbin` workflows
+without a managed metadata contract, implementing a parser in this phase, or
+advancing directly to native adapter execution.
+
+**Consequences:** Live readiness remains `BLOCKED`; metadata review remains
+not implemented and unauthorized; assembly loading, runtime reflection,
+execution, native DLL loading, entry-point resolution, native invocation,
+device query, Windows mutation, and driver actions remain prohibited. The next
+task is an independent read-only audit of the design gate.
+
 ## 2026-07-04 - Accept compile-only evidence remediation re-audit
 
 **Decision:** Accept the independent `AUDIT PASS` for compile-only evidence

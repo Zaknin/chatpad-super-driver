@@ -69,7 +69,8 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Current gate:
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
@@ -707,11 +708,21 @@ request operation, controller/Chatpad access, protocol traffic, keyboard
 injection, Windows mutation, reboot, production source edit, INF/project/
 solution/protocol/transport edit, or `legacy/` edit was authorized.
 
+## Compiled-artifact metadata-review design gate
+
+Repository investigation found no approved static managed metadata parser.
+The project therefore advances only to
+`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; the runtime
+blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+The future allowlist is inert PE/CLI byte parsing for assembly identity, target
+framework, architecture, module kind, metadata tables, P/Invoke metadata
+strings, expected type/method names, and entry-point absence. No artifact was
+opened or inspected in this phase. See
+`docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`.
+
 ## Exact next task
 
-A separately authorized non-loading compiled-artifact metadata review, if a
-safe static inspection method already exists, or a design gate for that review
-if it does not. Preserve
-`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; do not load or reflect over
-compiled output, resolve native entry points, invoke SetupAPI/Newdev, query
-devices, or mutate Windows.
+Perform an independent read-only audit of the metadata-review design gate.
+Do not implement or run a parser, open the artifact, load or reflect over it,
+resolve entry points, invoke SetupAPI/Newdev, query devices, or mutate Windows.

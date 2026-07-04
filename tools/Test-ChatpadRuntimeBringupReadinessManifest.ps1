@@ -555,7 +555,7 @@ if($RunCorruptionRegression){
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 $manifest=Get-Content -LiteralPath (Join-Path $root $ManifestPath) -Raw|ConvertFrom-Json
 $entries=@($manifest.entries)
-$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;hash_policy=0;state=0;containment=0;declared_result=0;top_level=0;compile_validation=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
+$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;hash_policy=0;state=0;containment=0;declared_result=0;top_level=0;compile_validation=0;metadata_review_gate=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
 $accountingDetails=[ordered]@{}
 $readinessCounts=[ordered]@{}
 foreach($entry in $entries){
@@ -587,7 +587,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
 $auditProperty=$manifest.PSObject.Properties['native_interop_source_audit']
 if($null -eq $auditProperty -or $null -eq $auditProperty.Value -or $auditProperty.Value -is [array]){$defects.top_level++}
 else{
@@ -637,6 +637,23 @@ else{
         $reaudit.device_query_occurred-ne$false-or
         $reaudit.windows_mutation_occurred-ne$false-or
         $reaudit.accepted-ne$true){$defects.top_level++}
+}
+$metadataGateProperty=$manifest.PSObject.Properties['compiled_artifact_metadata_review_design_gate']
+if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metadataGateProperty.Value-is[array]){$defects.metadata_review_gate++}
+else{
+    $metadataGate=$metadataGateProperty.Value
+    if($metadataGate.status-ne'DESIGN_GATED_NOT_IMPLEMENTED'-or
+        $metadataGate.current_gate-ne'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'-or
+        $metadataGate.runtime_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
+        $metadataGate.compile_only_evidence_remediation_accepted-ne$true-or
+        $metadataGate.artifact_location_classification-ne'IGNORED_COMPILE_ONLY_OUTPUT'-or
+        $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'-or
+        $metadataGate.implementation_authorized-ne$false-or
+        $metadataGate.independent_design_audit_required-ne$true-or
+        $metadataGate.artifact_bytes_opened-ne$false){$defects.metadata_review_gate++}
+    foreach($name in @('assembly_loading_authorized','assembly_loading_occurred','runtime_reflection_authorized','runtime_reflection_occurred','compiled_artifact_execution_authorized','compiled_artifact_execution_occurred','native_dll_loading_authorized','native_dll_loading_occurred','native_entry_point_resolution_authorized','native_entry_point_resolution_occurred','native_invocation_authorized','native_invocation_occurred','device_query_authorized','device_query_occurred','windows_mutation_authorized','windows_mutation_occurred','driver_actions_authorized','driver_actions_occurred','driver_build_authorized','driver_build_occurred','driver_sign_authorized','driver_sign_occurred','driver_package_authorized','driver_package_occurred','driver_install_authorized','driver_install_occurred','driver_load_authorized','driver_load_occurred','driver_bind_authorized','driver_bind_occurred','driver_restore_authorized','driver_restore_occurred','driver_restart_authorized','driver_restart_occurred')){
+        if($null-eq$metadataGate.PSObject.Properties[$name]-or[bool]$metadataGate.$name-ne$false){$defects.metadata_review_gate++}
+    }
 }
 $suiteEntry=@($entries|Where-Object id -eq 'evidence-synthetic-suite')
 if($suiteEntry.Count-ne1){$defects.evidence_binding++}

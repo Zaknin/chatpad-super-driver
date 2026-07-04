@@ -2,36 +2,31 @@
 
 ## Objective
 
-Perform a separately authorized non-loading compiled-artifact metadata review,
-if the repository already supports static inspection without assembly loading,
-reflection, or execution. If no such tooling exists, produce a design gate for
-that review without implementing the inspector.
+Perform an independent read-only audit of the non-loading compiled-artifact
+metadata-review design gate. Audit the design and enforcement only; do not
+implement or perform metadata inspection.
 
 ## Required Starting Point
 
-- Branch: `feature/runtime-bringup-native-interop-compile-only-audit-acceptance`.
-- Starting commit: the final commit containing the audit-acceptance transition,
+- Branch:
+  `feature/runtime-bringup-compiled-artifact-metadata-review-design-gate`.
+- Starting commit: the final pushed commit containing the design gate,
   regenerated readiness manifest, and continuity updates.
-- Verify exact HEAD, configured upstream, `0/0` ahead/behind, clean status, and
-  unchanged native declaration, compile harness, and adapter runtime behavior.
+- Verify exact HEAD, upstream, `0/0` ahead/behind, clean status, and unchanged
+  native declarations, compile-only harness, runtime adapter behavior,
+  production driver source, INF, project/solution files, binaries, and
+  `legacy/`.
 
 ## Current State
 
-- Independent compile-only evidence remediation re-audit: `AUDIT PASS`.
-- Accepted audit commit: `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`.
-- Audit inventory:
-  `artifacts/logs/independent-compile-only-evidence-reaudit-3e92247/artifact-inventory.json`,
-  size `49650` bytes, SHA-256
-  `09E4CB50663849B7E2ADB6D91817A35E97DC12831CA5384128ABE2A72BFCFA5C`.
-- Line-ending-stable tracked-text evidence is accepted.
-- Old v1 compile outputs are superseded ignored derived artifacts and are not
-  an active preservation criterion.
-- Current schema v2 evidence is authoritative for current compile-output
-  identity.
+- Compile-only evidence remediation re-audit: `AUDIT PASS`.
 - Live readiness: `BLOCKED`.
-- Current gate and remaining blocker:
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Native execution status: `NOT_IMPLEMENTED`.
+- Current gate:
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
+- Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Native execution: `NOT_IMPLEMENTED`.
+- Metadata review: `DESIGN_GATED_NOT_IMPLEMENTED`.
+- No approved repository-native static managed metadata parser exists.
 
 ## Inspect First
 
@@ -39,28 +34,32 @@ that review without implementing the inspector.
 - `docs/PROJECT-STATE.md`
 - `docs/DECISIONS.md`
 - Latest `docs/WORKLOG.md` entry
-- `docs/evidence/native-interop-compile-only-validation.json`
+- `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`
-- Existing repository tooling for static PE/metadata inspection
+- Gate producers and manifest validator changed by the design-gate commit
 
 ## Safety Restrictions
 
+- Do not open or parse the compiled artifact during the design audit.
 - Do not load, reflect over, execute, or invoke the compiled assembly.
-- Do not load SetupAPI/Newdev, resolve entry points, invoke native APIs, query
-  devices or bindings, or access hardware.
-- Do not build or link the driver, sign, package, stage, install, load, unload,
-  bind, restore, restart, enable, disable, or remove a driver or device.
-- Do not mutate Windows, registry, services, certificates, keys, credentials,
-  boot state, scheduled tasks, or system configuration.
-- Keep generated outputs under ignored `artifacts/`; do not modify `legacy/`.
+- Do not use `Assembly.Load*`, `ReflectionOnlyLoad`, artifact-targeted
+  `Add-Type`, `dotnet exec`, native DLL loading, or entry-point resolution.
+- Do not invoke SetupAPI/Newdev or any native API.
+- Do not query devices, bindings, or hardware; do not mutate Windows.
+- Do not build, link, sign, generate CAT files, package, stage, install, load,
+  unload, bind, restore, restart, enable, disable, or remove a driver/device.
+- Do not modify production driver source, INF, project/solution files,
+  signing/package/deployment paths, binaries, frozen artifacts, or `legacy/`.
 
 ## Acceptance Criteria
 
-- Establish whether an existing tool can inspect the compiled artifact as raw
-  file bytes without assembly loading, reflection, or execution.
-- If supported, define an exact allowlisted metadata scope and fail-closed
-  evidence contract before running it.
-- If unsupported, stop at a design gate and do not implement or execute a new
-  inspector without separate authorization.
-- Preserve live readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, and
-  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Classify every tooling finding and confirm no existing path is incorrectly
+  presented as an approved safe parser.
+- Confirm the future review allowlist is limited to inert PE/CLI byte parsing.
+- Confirm all loading, reflection, execution, native, device, Windows, and
+  driver actions are explicitly prohibited and recorded false.
+- Confirm the manifest and validators fail closed on gate/status drift.
+- Confirm live readiness remains `BLOCKED`, native execution remains
+  `NOT_IMPLEMENTED`, and the runtime blocker remains unchanged.
+- Return `AUDIT PASS` or `AUDIT FAIL` with exact evidence. Do not authorize or
+  implement the metadata review during this audit.

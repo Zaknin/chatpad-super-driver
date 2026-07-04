@@ -7,7 +7,8 @@ This branch contains a source-level, declaration-only SetupAPI/Newdev interop bo
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Current gate:
+  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
@@ -174,9 +175,9 @@ G133-G152 add the original compile-only validation coverage. G153-G170 add:
 
 ## Next Boundary
 
-The next task is a separately authorized non-loading compiled-artifact metadata
-review if safe static inspection is already supported, or a design gate for
-that review if it is not. No task may load or reflect over compiled output,
-resolve entry points, invoke native APIs, query devices, or mutate Windows
-unless that exact action is later authorized. The current gate and capability
-blocker are `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+The next task is an independent read-only audit of the compiled-artifact
+metadata-review design gate. No task may open or parse compiled output, load or
+reflect over it, resolve entry points, invoke native APIs, query devices, or
+mutate Windows unless that exact action is later authorized. The current gate
+is `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT`; the
+capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

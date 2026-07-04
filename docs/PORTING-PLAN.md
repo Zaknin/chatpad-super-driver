@@ -55,7 +55,7 @@ are added. The full readiness suite passes under Windows PowerShell 5.1 and
 PowerShell 7 with 513 fixtures and 2,563 assertions. The authoritative
 readiness ledger uses schema `chatpad-runtime-bringup-readiness-manifest-v4`.
 Framework status remains `PASS`. Live readiness remains `BLOCKED` with current
-gate `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` and
+gate `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT` and
 blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live
 binding, restoration, restart, observation, broad-success, device-query,
 native-operation, and Windows-mutation counter remains zero.
@@ -66,9 +66,10 @@ tracked at `docs/evidence/native-interop-compile-only-validation.json` using
 explicit canonical text and raw output policies. A native Windows
 SetupAPI/Newdev adapter implementation remains a later separately authorized
 boundary; this phase does not authorize any live driver or device operation.
-The next task is a separately authorized non-loading compiled-artifact metadata
-review, or a design gate for that review if static inspection tooling does not
-already exist.
+No approved static managed metadata parser exists, so this phase defines only
+a non-loading compiled-artifact metadata-review design gate. The next task is
+an independent read-only audit of that design, not parser implementation or
+native runtime execution.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

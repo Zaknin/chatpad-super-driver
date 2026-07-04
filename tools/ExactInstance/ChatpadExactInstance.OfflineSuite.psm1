@@ -115,7 +115,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     $nativeOperationBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     $historicalCompileOnlyGate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
     $compileEvidenceAuditGate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
-    $scaffoldAuditGate = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+    $scaffoldAuditGate = 'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
 
     $results.Add((Invoke-ChatpadExactCase T1 'two devices with identical hardware IDs' {
         $e=New-ChatpadExactSuiteEnvironment
@@ -1113,7 +1113,7 @@ foreach(`$name in `$names){`$module.SessionState.PSVariable.Set(`$name,'PASS')}
         @{ id='G129'; title='native interop source boundary has stable fixture group cardinality'; body={ $new=@($results|Where-Object{$_.fixture_id-match'^G(7[8-9]|8[0-9]|9[0-9]|10[0-9]|11[0-9]|12[0-9]|13[0-2])$'}); [pscustomobject]@{checks=@(($new.Count-eq51),(@($new|Where-Object fixture_result -ne 'PASS').Count-eq0),(@($new|Where-Object assertion_count -le 0).Count-eq0));details=[pscustomobject]@{ids=@($new|ForEach-Object fixture_id);count=$new.Count}} } },
         @{ id='G130'; title='native interop source boundary accounting remains zero live operations'; body={ $ops=@(('Apply','Restore','Restart')|ForEach-Object{Invoke-ChatpadNativeAdapterOperation -Operation $_ -AdapterName 'chatpad-windows-exact-instance-adapter-v1'}); [pscustomobject]@{checks=@(([int](($ops|Measure-Object native_operations_performed -Sum).Sum)-eq0),([int](($ops|Measure-Object live_device_queries_performed -Sum).Sum)-eq0),([int](($ops|Measure-Object windows_mutations_performed -Sum).Sum)-eq0));details=$ops} } },
         @{ id='G131'; title='native interop source audit acceptance is recorded'; body={ $a=New-ChatpadProductionNativeAdapter; $c=Get-ChatpadNativeAdapterDesignContract; $r=Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'; [pscustomobject]@{checks=@(($a.current_gate-eq$scaffoldAuditGate),($c.current_gate-eq$scaffoldAuditGate),($r.current_gate-eq$scaffoldAuditGate),($r.capability_blocker-eq$nativeOperationBlocker),($a.source_audit_result-eq'AUDIT PASS'),($c.source_audit.verdict-eq'AUDIT PASS'),($r.source_audit_result-eq'AUDIT PASS'));details=[pscustomobject]@{adapter=$a;contract=$c.current_gate;operation=$r.current_gate;source_audit=$c.source_audit}} } },
-        @{ id='G132'; title='native interop continuation blocker is adapter execution not implemented'; body={ $c=Get-ChatpadNativeInteropSourceBoundaryContract; [pscustomobject]@{checks=@(($c.current_gate-eq$scaffoldAuditGate),($c.capability_blocker-eq$nativeOperationBlocker),($c.native_source_declarations_present-eq$true),($c.native_invocation_permitted-eq$false),($c.compile_only_validation_authorized-eq$true),($c.native_compilation_performed-eq$true),($c.native_loading_performed-eq$false),($c.native_invocation_performed-eq$false));details=$c} } }
+        @{ id='G132'; title='metadata review design audit gate preserves non-executing native blocker'; body={ $c=Get-ChatpadNativeInteropSourceBoundaryContract; [pscustomobject]@{checks=@(($c.current_gate-eq$scaffoldAuditGate),($c.capability_blocker-eq$nativeOperationBlocker),($c.native_source_declarations_present-eq$true),($c.native_invocation_permitted-eq$false),($c.compile_only_validation_authorized-eq$true),($c.native_compilation_performed-eq$true),($c.native_loading_performed-eq$false),($c.native_invocation_performed-eq$false));details=$c} } }
     )
     foreach($case in $nativeInteropCases){
         $results.Add((Invoke-ChatpadExactCase $case.id $case.title $case.body))
@@ -1284,7 +1284,7 @@ foreach(`$name in `$names){`$module.SessionState.PSVariable.Set(`$name,'PASS')}
             skipped_as_pass_count=0
         }
         live_installation_readiness='BLOCKED'
-        current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        current_gate='BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT'
         capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         live_adapter_status='SCAFFOLD_NON_EXECUTING'
         live_binding_authorized=$false
