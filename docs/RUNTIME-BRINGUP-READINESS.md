@@ -8,9 +8,9 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`
-repairs the failed independent audit of the separately authorized compile-only
-validation of the accepted
+Branch `feature/runtime-bringup-native-interop-compile-only-audit-acceptance`
+records the accepted independent re-audit of the separately authorized
+compile-only validation of the accepted
 declaration-only SetupAPI/Newdev source boundary. The future API sequence,
 structures, driver-node identity evidence, exact-instance binding/restoration
 proof, restart/reboot separation, error taxonomy, source-boundary guard, and
@@ -52,7 +52,12 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   The audit otherwise reproduced the source-input defect and validated the
   remediated exact, readiness, manifest, audit-root, invalid-root, safety,
   generated-file, and native-boundary behavior.
-- Remediated compile-only validation: `PASS` pending re-audit; compiler exit
+- The independent remediation re-audit returned `AUDIT PASS` for
+  `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`; inventory
+  `artifacts/logs/independent-compile-only-evidence-reaudit-3e92247/artifact-inventory.json`,
+  size `49650` bytes, SHA-256
+  `09E4CB50663849B7E2ADB6D91817A35E97DC12831CA5384128ABE2A72BFCFA5C`.
+- Remediated compile-only validation: accepted `PASS`; compiler exit
   code `0`; warnings `0`; errors `0`; produced file count `18`.
 - Exact-instance suite: `PASS`, 209 tests and 839 assertions under Windows
   PowerShell 5.1 and PowerShell 7.
@@ -64,7 +69,7 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Live binding/restoration/restart, live observations, device queries,
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`.
+- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
@@ -704,12 +709,9 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 
 ## Exact next task
 
-Independent read-only re-audit of the compile-only native interop validation
-evidence, including the explicit v1 output-supersession criterion. The next
-phase must start from the final
-`feature/runtime-bringup-native-interop-compile-only-evidence-remediation`
-commit, preserve `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`
-and `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and avoid loading
-compiled output, resolving native entry points, invoking SetupAPI/Newdev,
-querying devices, or mutating Windows unless a later task explicitly authorizes
-that exact action after independent audit.
+A separately authorized non-loading compiled-artifact metadata review, if a
+safe static inspection method already exists, or a design gate for that review
+if it does not. Preserve
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; do not load or reflect over
+compiled output, resolve native entry points, invoke SetupAPI/Newdev, query
+devices, or mutate Windows.

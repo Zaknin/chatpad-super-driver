@@ -1,6 +1,6 @@
 # Porting Plan
 
-## Current runtime bring-up readiness gate (2026-07-03)
+## Current runtime bring-up readiness gate (2026-07-04)
 
 The native SetupAPI/Newdev interop source boundary passed independent source
 audit and was then compiled only through the isolated non-production harness.
@@ -20,6 +20,10 @@ project now treats those v1 output hashes as superseded historical ignored
 derived artifacts. Current acceptance depends on schema v2 evidence binding
 current outputs, audit-output-root reruns, and zero prohibited actions, not on
 preserving old v1 DLL/PDB/NuGet/cache output bytes.
+
+The final independent remediation re-audit returned `AUDIT PASS` for
+`3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`. The canonical line-ending-stable
+model and current schema v2 output identity are accepted.
 
 The framework uses one complete canonical Plug and Play instance ID, immutable
 target and restoration driver-node identities, precondition and snapshot
@@ -42,8 +46,8 @@ compiles cleanly, records source and output hashes, and still performs no
 loading, reflection, native invocation, device query, exact-instance access, or
 Windows mutation. G153-G170 prove canonical text identity, informational raw
 identity, fail-closed hash-policy validation, raw compile-output identity,
-historical v1 output supersession, audit-root containment, and the pending
-re-audit transition.
+historical v1 output supersession, audit-root containment, and the superseded
+audit-transition record preserved in compile evidence.
 
 The exact-instance suite passes under Windows PowerShell 5.1 and PowerShell 7
 with 209 records and 839 assertions after the evidence-remediation fixtures
@@ -51,7 +55,7 @@ are added. The full readiness suite passes under Windows PowerShell 5.1 and
 PowerShell 7 with 513 fixtures and 2,563 assertions. The authoritative
 readiness ledger uses schema `chatpad-runtime-bringup-readiness-manifest-v4`.
 Framework status remains `PASS`. Live readiness remains `BLOCKED` with current
-gate `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT` and
+gate `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` and
 blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; every live
 binding, restoration, restart, observation, broad-success, device-query,
 native-operation, and Windows-mutation counter remains zero.
@@ -62,8 +66,9 @@ tracked at `docs/evidence/native-interop-compile-only-validation.json` using
 explicit canonical text and raw output policies. A native Windows
 SetupAPI/Newdev adapter implementation remains a later separately authorized
 boundary; this phase does not authorize any live driver or device operation.
-The next task is an independent read-only re-audit of the remediated evidence
-and audit-output-root behavior.
+The next task is a separately authorized non-loading compiled-artifact metadata
+review, or a design gate for that review if static inspection tooling does not
+already exist.
 
 ## Previous runtime bring-up readiness gate (2026-07-02)
 

@@ -13,7 +13,8 @@ function Get-NativeScaffoldConstants {
         synthetic_adapter_id = 'chatpad-fake-exact-instance-adapter-v1'
         execution_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         prior_compile_only_gate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
-        scaffold_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
+        compile_only_evidence_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
+        scaffold_gate = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         source_audit_result = 'AUDIT PASS'
         source_audit_branch = 'feature/runtime-bringup-native-interop-source-boundary'
         source_audit_commit = 'dbba70d74e99c211d47187697e19e528b381520a'
@@ -143,7 +144,7 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
     if ([string]$evidence.build_result.result -ne 'PASS' -or [int]$evidence.build_result.compiler_exit_code -ne 0 -or [int]$evidence.build_result.warning_count -ne 0 -or [int]$evidence.build_result.error_count -ne 0) {
         $defects.Add([pscustomobject][ordered]@{ id = 'compile-result-not-clean-pass'; value = $evidence.build_result })
     }
-    if ([string]$evidence.readiness_transition.previous_gate -ne $constants.prior_compile_only_gate -or [string]$evidence.readiness_transition.resulting_readiness_gate -ne $constants.scaffold_gate -or [string]$evidence.readiness_transition.remaining_blocker -ne $constants.execution_blocker -or [bool]$evidence.readiness_transition.transition_allowed -ne $true) {
+    if ([string]$evidence.readiness_transition.previous_gate -ne $constants.prior_compile_only_gate -or [string]$evidence.readiness_transition.resulting_readiness_gate -ne $constants.compile_only_evidence_gate -or [string]$evidence.readiness_transition.remaining_blocker -ne $constants.execution_blocker -or [bool]$evidence.readiness_transition.transition_allowed -ne $true) {
         $defects.Add([pscustomobject][ordered]@{ id = 'gate-transition-invalid'; value = $evidence.readiness_transition })
     }
     if ([string]$evidence.scope.harness_project_path -ne 'tools/ExactInstance/CompileOnlyValidation/Chatpad.NativeInterop.CompileOnlyValidation.csproj' -or [string]$evidence.scope.target_framework -ne 'net9.0-windows10.0.26100.0' -or [string]$evidence.scope.platform -ne 'x64' -or [string]$evidence.scope.output_type -ne 'Library' -or [bool]$evidence.scope.warnings_as_errors -ne $true -or [string]$evidence.scope.nullable -ne 'enable') {

@@ -1,11 +1,12 @@
 # Project State
 
-*Last updated: 2026-07-04 (v1 compile-output lineage clarified; independent re-audit pending)*
+*Last updated: 2026-07-04 (compile-only evidence remediation re-audit accepted)*
 
 ## Current State
 
-- **Branch:** `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`.
-- **Starting commit:** `ac32b5c8b165919913ef335be44e515f20308a52`.
+- **Branch:** `feature/runtime-bringup-native-interop-compile-only-audit-acceptance`.
+- **Starting commit:** `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`.
+- **Expected final commit:** the commit containing this transition, regenerated manifest, and continuity update.
 - **Implementation commit represented by evidence:** `164903a8e890dfe1eb1709eeac1272aabcb81b3e`.
 - **Compile-only evidence:** `docs/evidence/native-interop-compile-only-validation.json`, schema `chatpad-native-interop-compile-only-validation-v2`, validation ID `native-interop-compile-only-20260703T194533Z`.
 - **Readiness manifest:** `docs/evidence/runtime-bringup-readiness-manifest.json`, schema `chatpad-runtime-bringup-readiness-manifest-v4`.
@@ -15,6 +16,7 @@
 - The independent audit of `ac32b5c8b165919913ef335be44e515f20308a52` returned `AUDIT FAIL` because five tracked text inputs and 30 readiness-manifest entries used LF identities that did not match raw CRLF working-tree bytes in a clean Windows checkout.
 - The auditor proved all five LF-normalized identities matched the recorded evidence. Native declarations, wrapper behavior, the 18-file compile output, and all safety boundaries were unchanged.
 - The independent re-audit of `207d00feedb6e419d3f791fbcb757576dfb5dbba` failed narrowly because the audit still treated old v1 compile-output byte preservation as unresolved. It otherwise reproduced the source-input defect and validated the remediated exact, readiness, manifest, audit-output-root, invalid-root, safety, generated-file, and native-boundary behavior.
+- The independent remediation re-audit returned `AUDIT PASS` for `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`. The accepted inventory is `artifacts/logs/independent-compile-only-evidence-reaudit-3e92247/artifact-inventory.json`, size `49650` bytes, SHA-256 `09E4CB50663849B7E2ADB6D91817A35E97DC12831CA5384128ABE2A72BFCFA5C`.
 - Tracked text inputs now use declared `canonical_lf_text`: strict UTF-8, optional UTF-8 BOM removed, CRLF/CR normalized to LF, UTF-8 without BOM.
 - Evidence records canonical SHA-256/size as authoritative and raw working-tree SHA-256/size as informational.
 - Compile outputs use declared `raw_file_bytes`; output hashes are not claimed to be stable across commits or output roots.
@@ -25,7 +27,7 @@
 ## Readiness And Safety
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`.
+- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live binding authorization: `false`.
 - `Apply`, `Restore`, and `Restart` remain deterministic non-executing blocked operations.
@@ -34,6 +36,7 @@
 ## Verified Results
 
 - Canonical compile-only validation: `PASS`; compiler exit `0`; warnings/errors `0/0`; 18 outputs.
+- Independent compile-only evidence remediation re-audit: `AUDIT PASS` at `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`.
 - Compile-evidence validator: `PASS`, zero defects.
 - v1/v2 output lineage investigation: old v1 evidence recorded 18 ignored outputs under `artifacts/compile-only/native-interop`; current v2 evidence records 18 current ignored outputs. Nine output hashes match and nine differ, including the primary DLL changing from `1F5337976BDE45333CAF5E5D50E12A5A05F1A4B85E12E7B91A800B29F82CF0FA` to `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`. This is documented as superseded derived-output identity, not an active acceptance failure.
 - Exact suite: `PASS` under Windows PowerShell 5.1 and PowerShell 7; 209 tests, 839 assertions, zero failures.
@@ -44,6 +47,6 @@
 
 ## Unresolved Blockers
 
-- The remediated compile-only evidence and audit-output-root behavior require a new independent read-only audit.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - No compiled assembly may be loaded, reflected over, executed, or invoked.
+- The next task requires separate authorization and must remain non-loading and non-executing.

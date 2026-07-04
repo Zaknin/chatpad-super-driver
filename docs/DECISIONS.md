@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Accept compile-only evidence remediation re-audit
+
+**Decision:** Accept the independent `AUDIT PASS` for compile-only evidence
+remediation commit `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b` and transition the
+active readiness gate from
+`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT` to
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+**Rationale:** The independent re-audit reproduced the original five-input
+line-ending defect, accepted canonical LF identity for tracked text, confirmed
+that old v1 outputs are superseded ignored derived artifacts, validated current
+schema v2 output identity, and passed the exact, readiness, manifest,
+audit-output-root, native-boundary, repository-safety, and generated-file
+checks with zero prohibited actions.
+
+**Alternatives rejected:** Keeping the accepted phase pending another re-audit,
+treating old v1 output preservation as active, advancing directly to native
+loading or invocation, or treating compile-only acceptance as live readiness.
+
+**Consequences:** Live readiness remains `BLOCKED`; native execution remains
+`NOT_IMPLEMENTED`; loading, reflection, execution, native invocation, device
+query, Windows mutation, and driver installation or binding remain
+unauthorized. The next task must be a separately authorized non-loading static
+metadata review or a design gate for such a review.
+
 ## 2026-07-04 - Treat v1 compile-only outputs as superseded derived artifacts
 
 **Decision:** The 18 compile outputs recorded by

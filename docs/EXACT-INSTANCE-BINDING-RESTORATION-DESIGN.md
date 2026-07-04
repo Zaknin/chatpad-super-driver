@@ -33,7 +33,7 @@ production adapter has a declaration-only native interop source boundary,
 deterministic non-executing call plans, and an isolated non-production
 compile-only validation harness. No driver or driver-store operation is
 authorized. Live readiness is `BLOCKED`; the current gate is
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`, and the
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and the
 capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 The first compile-only audit found a line-ending-sensitive evidence defect:
@@ -42,7 +42,8 @@ The remediation does not change native declarations, call plans, adapter
 behavior, or operation mappings. Tracked text evidence now uses declared
 canonical LF identity, binary compile outputs retain raw-byte identity, and
 the compile runner supports isolated ignored audit output roots. Independent
-re-audit is required before the compile-only phase can be accepted.
+re-audit accepted the compile-only evidence remediation at
+`3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`.
 
 The follow-up re-audit of `207d00feedb6e419d3f791fbcb757576dfb5dbba` failed
 narrowly because old v1 compile-output preservation remained unresolved. The

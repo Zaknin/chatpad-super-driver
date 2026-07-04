@@ -587,7 +587,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false){$defects.top_level++}
 $auditProperty=$manifest.PSObject.Properties['native_interop_source_audit']
 if($null -eq $auditProperty -or $null -eq $auditProperty.Value -or $auditProperty.Value -is [array]){$defects.top_level++}
 else{
@@ -616,6 +616,27 @@ else{
     foreach($name in @('assemblyLoaded','managedCodeExecuted','nativeInvocationOccurred','deviceQueryOccurred','exactInstanceAccessed','windowsMutationOccurred','producedAssemblyExecuted','testHostExecuted','reflectionInspectionUsed','postBuildExecutionOccurred')){
         if($null -eq $compileEvidence.prohibited_actions.PSObject.Properties[$name] -or [bool]$compileEvidence.prohibited_actions.$name -ne $false){$defects.compile_validation++}
     }
+}
+$reauditProperty=$manifest.PSObject.Properties['native_interop_compile_only_evidence_reaudit']
+if($null-eq$reauditProperty-or$null-eq$reauditProperty.Value-or$reauditProperty.Value-is[array]){$defects.top_level++}
+else{
+    $reaudit=$reauditProperty.Value
+    if($reaudit.verdict-ne'AUDIT PASS'-or
+        $reaudit.audited_commit-ne'3e922470f2e46d5eeb4b6fe7500c4f105c608b3b'-or
+        $reaudit.artifact_inventory_path-ne'artifacts/logs/independent-compile-only-evidence-reaudit-3e92247/artifact-inventory.json'-or
+        [long]$reaudit.artifact_inventory_byte_size-ne49650-or
+        $reaudit.artifact_inventory_sha256-ne'09E4CB50663849B7E2ADB6D91817A35E97DC12831CA5384128ABE2A72BFCFA5C'-or
+        $reaudit.line_ending_stable_evidence_accepted-ne$true-or
+        $reaudit.historical_v1_compile_output_preservation_required-ne$false-or
+        $reaudit.current_v2_evidence_authoritative-ne$true-or
+        $reaudit.current_v2_primary_dll_sha256-ne'77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'-or
+        $reaudit.assembly_loading_occurred-ne$false-or
+        $reaudit.reflection_occurred-ne$false-or
+        $reaudit.compiled_assembly_execution_occurred-ne$false-or
+        $reaudit.native_invocation_occurred-ne$false-or
+        $reaudit.device_query_occurred-ne$false-or
+        $reaudit.windows_mutation_occurred-ne$false-or
+        $reaudit.accepted-ne$true){$defects.top_level++}
 }
 $suiteEntry=@($entries|Where-Object id -eq 'evidence-synthetic-suite')
 if($suiteEntry.Count-ne1){$defects.evidence_binding++}

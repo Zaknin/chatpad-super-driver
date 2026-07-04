@@ -7,14 +7,15 @@ This branch contains a source-level, declaration-only SetupAPI/Newdev interop bo
 Authoritative current state:
 
 - Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`.
+- Current gate: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
 - Live device queries, native operations, and Windows mutations performed: `0`.
 - Source audit verdict: `AUDIT PASS` for audited commit
   `dbba70d74e99c211d47187697e19e528b381520a`.
-- Remediated compile-only validation: `PASS` pending independent re-audit; evidence
+- Remediated compile-only validation and independent re-audit: `AUDIT PASS` at
+  `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`; evidence
   `docs/evidence/native-interop-compile-only-validation.json`; validation ID
   `native-interop-compile-only-20260703T194533Z`.
 
@@ -168,14 +169,14 @@ G133-G152 add the original compile-only validation coverage. G153-G170 add:
 - raw-byte compile-output identity and prohibited-action rejection;
 - explicit supersession of historical v1 compile-output identity;
 - explicit audit-root and no-load/no-reflection/no-invoke parameters; and
-- the pending independent re-audit gate.
+- preservation of the historical pending re-audit transition in compile
+  evidence while the active gate advances after audit acceptance.
 
 ## Next Boundary
 
-The next task is an independent re-audit of the remediated compile-only
-evidence, historical v1 output supersession, and audit-output-root behavior. No
-task may load compiled output, resolve entry points, invoke native APIs, query
-devices, or mutate Windows unless that exact action is later authorized after
-independent audit. The current gate is
-`BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`; the
-capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+The next task is a separately authorized non-loading compiled-artifact metadata
+review if safe static inspection is already supported, or a design gate for
+that review if it is not. No task may load or reflect over compiled output,
+resolve entry points, invoke native APIs, query devices, or mutate Windows
+unless that exact action is later authorized. The current gate and capability
+blocker are `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

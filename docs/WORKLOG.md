@@ -7824,3 +7824,94 @@
 - **Next task:** Independent read-only re-audit from the final pushed commit,
   with the corrected criterion that old v1 compile-output preservation is not
   required because it is explicitly superseded historical derived output.
+
+## 2026-07-04T11:13:53+04:00 - Compile-only evidence remediation audit acceptance
+
+- **Objective:** Record the independent `AUDIT PASS` for the compile-only
+  evidence remediation, transition the active gate to the remaining native
+  execution blocker, regenerate readiness evidence, validate the transition,
+  and publish the narrow acceptance branch.
+- **Starting state:** Repository root `C:/Dev/chatpad-super-driver`; source
+  branch
+  `feature/runtime-bringup-native-interop-compile-only-evidence-remediation`;
+  starting and accepted commit
+  `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`; upstream
+  `origin/feature/runtime-bringup-native-interop-compile-only-evidence-remediation`;
+  ahead/behind `0/0`; clean worktree and index. The accepted commit was
+  reachable and the native declaration source remained unchanged.
+- **Branch created:**
+  `feature/runtime-bringup-native-interop-compile-only-audit-acceptance`
+  directly from `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`.
+- **Audit accepted:** Independent verdict `AUDIT PASS`. Accepted inventory
+  `artifacts/logs/independent-compile-only-evidence-reaudit-3e92247/artifact-inventory.json`
+  is `49650` bytes with SHA-256
+  `09E4CB50663849B7E2ADB6D91817A35E97DC12831CA5384128ABE2A72BFCFA5C`.
+  The audit reproduced the original five-input CRLF/raw-byte failure, matched
+  all five canonical LF identities and `ac32b5c8...` Git blobs, accepted old
+  v1 outputs as superseded ignored derived artifacts, and accepted current v2
+  evidence as authoritative. Current v2 primary DLL SHA-256 is
+  `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`.
+- **Gate transition:** Previous active gate
+  `BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT`; new active
+  gate and remaining blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Live readiness remains
+  `BLOCKED`; native execution remains `NOT_IMPLEMENTED`; live adapter status
+  remains `SCAFFOLD_NON_EXECUTING`; live binding authorization remains
+  `false`.
+- **Implementation details:** Current-state gate producers now report the
+  native-execution blocker. Compile-evidence validation separately preserves
+  and validates the historical pending-re-audit transition in the accepted v2
+  evidence instead of rewriting that evidence. The manifest generator and
+  validator record the accepted re-audit commit, inventory path/size/hash,
+  line-ending model acceptance, v1 supersession, v2 authority, primary DLL
+  hash, and zero loading/reflection/execution/native/device/Windows actions.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`,
+  `docs/NEXT-TASK.md`, `docs/WORKLOG.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/PORTING-PLAN.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Exact/offline validation:** Windows PowerShell 5.1 and PowerShell 7 both
+  returned `PASS`, 209 tests, 839 assertions, and zero failed tests.
+- **Readiness validation:** Windows PowerShell 5.1 and PowerShell 7 both
+  returned framework status `PASS`, 513 fixtures, 2,563 assertions, exact
+  subtotal 209 tests and 839 assertions, live readiness `BLOCKED`, current gate
+  and blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and Windows
+  mutation count `0`.
+- **Manifest validation:** Manifest generation returned schema
+  `chatpad-runtime-bringup-readiness-manifest-v4` with 32 entries. Default
+  validation passed under Windows PowerShell 5.1 and PowerShell 7 with zero
+  defects. Corruption regression passed under both runtimes with 23 cases and
+  zero failed cases. Initial four-minute corruption commands timed out and
+  left child validators; only those task-owned processes were terminated, then
+  clean sequential reruns completed successfully.
+- **Static and safety validation:** Changed PowerShell files parsed with zero
+  errors. Native source-boundary guard returned `PASS`, scanned 75 files,
+  found one approved declaration match and zero forbidden matches. Repository
+  safety returned `PASS` with deployment, signing, packaging, certificate,
+  key, Windows mutation, device query, and hardware access counts all `0`.
+  Changed-path forbidden generated-file scan returned `PASS`; documentation
+  consistency returned `PASS`; `git diff --check` returned `PASS`.
+- **Ignored evidence artifacts:** Validation outputs are under
+  `artifacts/logs/compile-only-audit-acceptance/`.
+- **Safety:** No assembly load, reflection, compiled assembly execution,
+  native API invocation, SetupAPI/Newdev loading or invocation, device query,
+  exact-instance access, hardware access, Windows mutation, driver build/link,
+  signing, CAT generation, packaging, staging, installation, loading, binding,
+  restoration, restart, enable, disable, removal, production driver/INF/
+  project change, binary change, or `legacy/` change occurred.
+- **Commit and push:** Pending at entry write time. The final commit, push,
+  upstream, equality, and clean-status result are recorded in the final
+  response.
+- **Next task:** A separately authorized non-loading compiled-artifact metadata
+  review if safe static inspection already exists, or a design gate for that
+  review if it does not. Do not load, reflect over, execute, or invoke the
+  compiled assembly.
