@@ -33,7 +33,7 @@ production adapter has a declaration-only native interop source boundary,
 deterministic non-executing call plans, and an isolated non-production
 compile-only validation harness. No driver or driver-store operation is
 authorized. Live readiness is `BLOCKED`; the current gate is
-`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`, and the
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`, and the
 capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 The first compile-only audit found a line-ending-sensitive evidence defect:
@@ -341,7 +341,9 @@ isolated compile-only validation harness for a future native Windows adapter.
 It still has no native execution path. The remediated compiled-artifact
 metadata-review design gate passed independent audit at
 `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The static parser implementation
-design is defined but unimplemented and pending independent read-only audit.
+design passed independent audit at
+`468e8679388481e923a37a985055046f72480921`, but remains unimplemented and not
+authorized for execution.
 It must not reuse synthetic authorization or perform live mutation merely
 because the offline framework, source audit, compile-only validation, or
 design audit passed.

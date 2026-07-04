@@ -4,15 +4,47 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Accept static metadata-parser implementation design audit
+
+**Decision:** Accept the independent `AUDIT PASS` for static metadata-parser
+implementation design commit
+`468e8679388481e923a37a985055046f72480921` and transition the active gate to
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`. The
+accepted design does not authorize parser implementation, parser execution,
+compiled-artifact opening/parsing/hash verification, metadata review, runtime
+assembly loading/reflection/execution, native invocation, device query,
+Windows mutation, or driver actions.
+
+**Rationale:** The independent audit accepted the .NET 9
+`System.Reflection.Metadata`/`PEReader`/`MetadataReader` static-only design,
+future evidence model, prohibited-pattern guard requirements, documentation
+consistency, manifest validation, 658-case gate/status regression, 630
+metadata-Boolean cases across 63 fields, five native-execution-status cases,
+13 parser-status rejection cases, parse checks, repository safety, forbidden
+generated-file scan, and `git diff --check` result.
+
+**Alternatives rejected:** Keeping the accepted parser design pending another
+audit, implementing or running the parser during acceptance, opening/hashing/
+parsing the compiled artifact, performing metadata review, loading or
+reflecting over compiled output, executing it, invoking native APIs, or
+advancing to device/driver actions.
+
+**Consequences:** Parser implementation remains `NOT_IMPLEMENTED` and not
+authorized until a separate implementation task. Parser execution and metadata
+review remain not performed. Live readiness remains `BLOCKED`; native
+execution remains `NOT_IMPLEMENTED`; the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## 2026-07-04 - Design static metadata parsing around System.Reflection.Metadata
 
 **Decision:** The future compiled-artifact metadata parser will be an isolated
 .NET 9 console tool using framework-provided `System.Reflection.Metadata`,
 `PEReader`, and `MetadataReader` over one validated read-only file stream. The
-design is gated at
-`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`; no
+design passed independent audit at
+`468e8679388481e923a37a985055046f72480921`; the active gate is now
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`. No
 parser implementation, build, execution, artifact read/hash/parse, or metadata
-review is authorized.
+review is authorized by design acceptance.
 
 **Rationale:** The installed .NET 9 reference/runtime framework provides the
 typed PE/CLI APIs needed for headers, metadata rows, P/Invoke maps, import
@@ -33,8 +65,9 @@ prohibited.
 project graphs, use no third-party package when the pinned framework reference
 is sufficient, accept one explicit contained input, inspect only the documented
 metadata allowlist, emit deterministic JSON, and include fail-closed source/
-project guards. It requires independent design audit before implementation,
-then independent implementation audit before first use.
+project guards. Its design audit is accepted; any implementation still
+requires a separate authorization task and independent implementation audit
+before first use.
 
 ## 2026-07-04 - Accept metadata-review design-gate remediation audit
 

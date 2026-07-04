@@ -8,7 +8,7 @@ Authoritative current state:
 
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
@@ -177,10 +177,11 @@ G133-G152 add the original compile-only validation coverage. G153-G170 add:
 
 The remediated compiled-artifact metadata-review design gate passed independent
 audit at `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The static parser
-implementation design is now defined but unimplemented and pending independent
-read-only audit. No task may open, hash, or parse compiled output, load or
+implementation design passed independent audit at
+`468e8679388481e923a37a985055046f72480921` but remains unimplemented and not
+authorized for execution. No task may open, hash, or parse compiled output, load or
 reflect over it, resolve entry points, invoke native APIs, query devices, or
 mutate Windows unless that exact action is later authorized. The current gate
-is `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`; the
+is `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`; the
 capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
 native execution remains `NOT_IMPLEMENTED`.

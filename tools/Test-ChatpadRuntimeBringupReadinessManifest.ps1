@@ -815,7 +815,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
 $metadataReviewDefectRecords=[Collections.Generic.List[object]]::new()
 $topLevelNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $manifest -Location 'manifest'
@@ -876,8 +876,8 @@ if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metada
 }
 else{
     $metadataGate=$metadataGateProperty.Value
-    if($metadataGate.status-ne'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_PENDING_AUDIT'-or
-        $metadataGate.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT'-or
+    if($metadataGate.status-ne'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED'-or
+        $metadataGate.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'-or
         $metadataGate.runtime_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $metadataGate.artifact_location_classification-ne'IGNORED_COMPILE_ONLY_OUTPUT'-or
         $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'-or
@@ -893,12 +893,21 @@ else{
     }
     else{
         $parserDesign=$parserDesignProperty.Value
-        if($parserDesign.status-ne'PENDING_INDEPENDENT_DESIGN_AUDIT'-or
-            $parserDesign.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT'-or
+        if($parserDesign.status-ne'DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'-or
+            $parserDesign.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'-or
             $parserDesign.transition_base_commit-ne'382aa85980408939a93043583b48e942ebfbf018'-or
             $parserDesign.design_document_path-ne'docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'-or
             $parserDesign.preferred_technology-ne'SYSTEM_REFLECTION_METADATA_PEREADER'-or
             $parserDesign.target_framework-ne'net9.0'-or
+            $parserDesign.independent_design_audit_verdict-ne'AUDIT PASS'-or
+            $parserDesign.independent_design_audit_branch-ne'feature/runtime-bringup-static-metadata-parser-implementation-design'-or
+            $parserDesign.independent_design_audit_commit-ne'468e8679388481e923a37a985055046f72480921'-or
+            $parserDesign.independent_design_audit_artifact_inventory_path-ne'artifacts/logs/independent-static-metadata-parser-design-audit-468e867/artifact-inventory.json'-or
+            [long]$parserDesign.independent_design_audit_artifact_inventory_byte_size-ne54161-or
+            $parserDesign.independent_design_audit_artifact_inventory_sha256-ne'D43213A552CF61E793BABD2792D6B3329706EF9F2DB3DC46D401B66307725B6F'-or
+            $parserDesign.independent_design_audit_summary_path-ne'artifacts/logs/independent-static-metadata-parser-design-audit-468e867/audit-summary.json'-or
+            [long]$parserDesign.independent_design_audit_summary_byte_size-ne14996-or
+            $parserDesign.independent_design_audit_summary_sha256-ne'A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'-or
             $parserDesign.input_identity_source-ne'REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'-or
             $parserDesign.referenced_primary_dll_sha256-ne'77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'-or
             $parserDesign.parser_implementation_status-ne'NOT_IMPLEMENTED'-or

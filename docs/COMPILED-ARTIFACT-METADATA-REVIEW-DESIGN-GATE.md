@@ -5,8 +5,10 @@
 - Compile-only evidence remediation: accepted by independent `AUDIT PASS`.
 - Metadata-review design-gate remediation: accepted by independent `AUDIT PASS`
   at `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`.
+- Static metadata-parser implementation design: accepted by independent
+  `AUDIT PASS` at `468e8679388481e923a37a985055046f72480921`.
 - Active gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
@@ -96,7 +98,8 @@ size `22305` bytes, SHA-256
 No artifact opening, hash verification, parsing, loading, reflection,
 execution, native invocation, device query, Windows mutation, or driver action
 occurred. The implementation design is now defined at
-`docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md` and requires independent
-read-only audit. Parser implementation, build, execution, artifact use, and
-metadata review remain unauthorized. Design acceptance does not authorize
-native runtime execution.
+`docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md` and passed independent
+read-only audit at `468e8679388481e923a37a985055046f72480921`. Parser
+implementation, build, execution, artifact use, and metadata review remain
+unauthorized until a separate implementation task explicitly authorizes the
+next step. Design acceptance does not authorize native runtime execution.

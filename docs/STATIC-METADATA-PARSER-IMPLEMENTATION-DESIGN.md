@@ -6,8 +6,10 @@
   `382aa85980408939a93043583b48e942ebfbf018`.
 - Accepted metadata-review design audit:
   `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`.
+- Accepted static metadata-parser implementation design audit:
+  `468e8679388481e923a37a985055046f72480921`.
 - Current gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
@@ -15,11 +17,11 @@
 - Parser execution: `NOT_PERFORMED`.
 - Metadata review: `NOT_PERFORMED`.
 
-This document authorizes only an implementation design for independent audit.
-It does not authorize parser source implementation, parser build, parser
-execution, artifact opening, artifact parsing, artifact hashing, metadata
-review, assembly loading, reflection, execution, native invocation, device
-query, Windows mutation, or driver actions.
+This document's implementation design passed independent read-only audit. That
+acceptance does not authorize parser source implementation, parser build,
+parser execution, artifact opening, artifact parsing, artifact hashing,
+metadata review, assembly loading, reflection, execution, native invocation,
+device query, Windows mutation, or driver actions.
 
 ## 2. Investigation and technology decision
 
@@ -267,10 +269,22 @@ nonzero only in a future task that explicitly authorizes those exact actions.
 - Partial evidence, exception-only output, missing counters, non-Boolean safety
   fields, duplicate JSON properties, or extra undeclared properties fail.
 
-## 12. Independent design-audit acceptance criteria
+## 12. Independent design-audit acceptance
 
-The next task is an independent read-only audit of this document and the
-gate/manifest transition. It must verify:
+The independent read-only audit of this document and the gate/manifest
+transition returned `AUDIT PASS` at
+`468e8679388481e923a37a985055046f72480921`. Accepted evidence:
+
+- artifact inventory:
+  `artifacts/logs/independent-static-metadata-parser-design-audit-468e867/artifact-inventory.json`,
+  size `54161` bytes, SHA-256
+  `D43213A552CF61E793BABD2792D6B3329706EF9F2DB3DC46D401B66307725B6F`;
+- audit summary:
+  `artifacts/logs/independent-static-metadata-parser-design-audit-468e867/audit-summary.json`,
+  size `14996` bytes, SHA-256
+  `A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5`.
+
+The audit verified:
 
 - no parser source, project, executable, or output was added;
 - the preferred API operates on PE/CLI bytes without assembly loading,
@@ -283,6 +297,9 @@ gate/manifest transition. It must verify:
 - live readiness remains `BLOCKED`, native execution remains
   `NOT_IMPLEMENTED`, and the runtime blocker remains unchanged.
 
-The audit must not implement or run the parser, open/hash/parse the artifact,
-perform metadata review, load/reflect over/execute compiled output, invoke
-native APIs, query devices, mutate Windows, or perform driver actions.
+The current gate is
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`. The next
+task may authorize parser implementation only; parser execution, metadata
+review, compiled-artifact opening/parsing/hash verification, loading,
+reflection, execution, native invocation, device query, Windows mutation, and
+driver actions remain unauthorized unless separately and explicitly allowed.
