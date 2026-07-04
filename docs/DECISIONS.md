@@ -4,6 +4,37 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Suppress parser output on file-preflight rejection
+
+**Decision:** Any rejected static-parser file-bearing option terminates with
+exit code `64` before parser evidence writing. The parser emits a structured
+console diagnostic with zero read/hash/parse/write counters; the test harness
+records rejected-command evidence. Manifest generation and validation accept
+only the standard or independent parser-specific ignored roots selected by a
+constrained relative-path policy.
+
+**Rationale:** The third independent implementation audit proved that
+scope-authorized output was still I/O after an input or expectation preflight
+failure, violating the required all-zero rejection contract. It also proved
+that a validator hardcoded to one standard evidence path could not validate
+legitimate independent-audit evidence generated through the supported
+`ParserEvidencePath` parameter.
+
+**Alternatives rejected:** Writing a parser rejection JSON file after any
+file-path failure, hardcoding additional audit directory names, accepting any
+path under `artifacts/logs/`, allowing tracked or metadata-review evidence
+paths, weakening create-new success output, or advancing to real-artifact
+metadata review.
+
+**Consequences:** Rejected file paths create no parser output. Successful
+synthetic runs retain create-new evidence. Standard and future independent
+parser roots are accepted only by parser-root pattern, exact evidence leaf,
+containment, and protected-term rejection. Parser implementation remains
+`IMPLEMENTED_PENDING_AUDIT`; parser execution remains
+`SYNTHETIC_FIXTURES_ONLY`; metadata review and real-artifact access remain
+unauthorized; live readiness remains `BLOCKED`; native execution remains
+`NOT_IMPLEMENTED`.
+
 ## 2026-07-04 - Centrally gate every static-parser file path
 
 **Decision:** Under

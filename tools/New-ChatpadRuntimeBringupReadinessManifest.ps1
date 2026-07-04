@@ -3,7 +3,7 @@ param(
     [string]$OutputPath='docs/evidence/runtime-bringup-readiness-manifest.json',
     [Parameter(Mandatory)][string]$ImplementationCommit,
     [Parameter(Mandatory)][string]$SuiteResultPath,
-    [string]$ParserEvidencePath='artifacts/logs/static-metadata-parser-file-scope-remediation/static-metadata-parser-synthetic-validation.json',
+    [string]$ParserEvidencePath='artifacts/logs/static-metadata-parser-preflight-output-remediation/static-metadata-parser-synthetic-validation.json',
     [switch]$NoArtifactOpenDesignGateAudit
 )
 Set-StrictMode -Version Latest
@@ -11,6 +11,25 @@ $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
 if($ImplementationCommit-notmatch'^[0-9a-f]{40}$'){throw 'ImplementationCommit must be a full commit hash.'}
+
+function Test-ChatpadApprovedParserEvidencePath {
+    param([AllowNull()][AllowEmptyString()][string]$Path)
+    if([string]::IsNullOrWhiteSpace($Path)-or[IO.Path]::IsPathRooted($Path)){return $false}
+    $normalized=$Path.Replace('\','/')
+    if($normalized.Contains('//')-or$normalized.Contains(':')){return $false}
+    $segments=@($normalized.Split('/')|Where-Object{$_-ne''})
+    if($segments.Count-lt4-or$segments[0]-cne'artifacts'-or$segments[1]-cne'logs'){return $false}
+    if(@($segments|Where-Object{$_-in@('.','..')}).Count){return $false}
+    $rootSegment=$segments[2]
+    if($rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*)$'){return $false}
+    if($normalized-match'(?i)(artifacts/compile-only|chatpad\.nativeinterop\.compileonlyvalidation\.dll|real-artifact|compiled-artifact|native-interop|metadata-review|/legacy/)'){return $false}
+    return $segments[-1]-ceq'static-metadata-parser-synthetic-validation.json'
+}
+
+if(-not(Test-ChatpadApprovedParserEvidencePath -Path $ParserEvidencePath)){
+    throw 'ParserEvidencePath is outside approved parser-specific ignored evidence roots.'
+}
+
 $suite=Get-Content -LiteralPath $SuiteResultPath -Raw|ConvertFrom-Json
 $suiteNativeExecutionProperty=$suite.PSObject.Properties['native_execution_status']
 $suiteNativeExecutionAccepted=if($NoArtifactOpenDesignGateAudit){
@@ -135,7 +154,7 @@ $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $parserEvidenceRelative=[IO.Path]::GetFullPath($ParserEvidencePath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-static-metadata-parser-synthetic-validation $parserEvidenceRelative ignored PASS))
 $parserEvidence=Get-Content -LiteralPath ([IO.Path]::GetFullPath($ParserEvidencePath)) -Raw|ConvertFrom-Json
-if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY'-or$parserEvidence.real_artifact_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.all_file_bearing_options_centrally_scoped-ne$true-or$parserEvidence.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.pre_io_rejection_tests-ne'PASS'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.real_compile_only_artifact_write_attempted-ne$false-or$parserEvidence.real_compile_only_artifact_write_completed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
+if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY'-or$parserEvidence.real_artifact_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.all_file_bearing_options_centrally_scoped-ne$true-or$parserEvidence.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.preflight_rejection_output_suppression-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.rejection_evidence_transport-ne'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'-or$parserEvidence.pre_io_rejection_tests-ne'PASS'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.real_compile_only_artifact_write_attempted-ne$false-or$parserEvidence.real_compile_only_artifact_write_completed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
     throw 'Parser synthetic-fixture evidence is not a passing no-real-artifact parser implementation validation record.'
 }
 $parserEvidenceIdentity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path ([IO.Path]::GetFullPath($ParserEvidencePath)) -HashPolicy auto -CommitRepresented $ImplementationCommit -State ignored
@@ -267,6 +286,9 @@ $manifest=[pscustomobject][ordered]@{
             all_file_bearing_options_centrally_scoped=[bool]$parserEvidence.all_file_bearing_options_centrally_scoped
             expected_path_gate_status=[string]$parserEvidence.expected_path_gate_status
             output_path_gate_status=[string]$parserEvidence.output_path_gate_status
+            preflight_rejection_output_suppression=[string]$parserEvidence.preflight_rejection_output_suppression
+            rejection_evidence_transport=[string]$parserEvidence.rejection_evidence_transport
+            approved_parser_evidence_root_validation='IMPLEMENTED_PENDING_AUDIT'
             allowed_input_scope=[string]$parserEvidence.allowed_input_scope
             allowed_expected_scope=[string]$parserEvidence.allowed_expected_scope
             allowed_output_scope=[string]$parserEvidence.allowed_output_scope

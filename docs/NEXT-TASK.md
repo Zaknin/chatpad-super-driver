@@ -3,16 +3,17 @@
 ## Objective
 
 Perform a fresh independent, strict read-only audit of the remediated static
-PE/CLI metadata parser file-scope implementation.
+PE/CLI metadata parser preflight-output and evidence-path behavior.
 
 ## Required Starting State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch:
-  `feature/runtime-bringup-static-metadata-parser-file-scope-remediation`.
-- Starting commit: the branch HEAD containing the central file-scope
-  remediation, synthetic evidence, manifest, and this continuation document.
-- Base commit: `0036474fc241c0ad1957470b87a7443a69d28e2e`.
+  `feature/runtime-bringup-static-metadata-parser-preflight-output-remediation`.
+- Starting commit: the branch HEAD containing preflight output suppression,
+  evidence-path validation, synthetic evidence, manifest, and this
+  continuation document.
+- Base commit: `1bdba8c823e1809306ca570f4cc5207c4412db44`.
 - Working tree and index: clean.
 - Upstream: matching branch on `origin`, ahead/behind `0/0`.
 
@@ -28,9 +29,12 @@ PE/CLI metadata parser file-scope implementation.
 - Metadata review: `NOT_PERFORMED`.
 - Real artifact open/parse/hash/write: `NOT_PERFORMED`.
 - File-bearing options: `--input`, `--expected`, and `--output`.
-- Read policy: parser-specific ignored synthetic fixture roots only.
-- Write policy: parser-specific ignored evidence roots only, create-new and
-  no-overwrite.
+- Any file-preflight rejection: exit `64`, structured console diagnostic,
+  zero read/hash/parse/write counters, and no parser output file.
+- Successful synthetic output: parser-specific ignored evidence root,
+  create-new and no-overwrite.
+- Manifest parser evidence: constrained standard or independent
+  parser-specific ignored root under `artifacts/logs/`.
 
 ## Inspect First
 
@@ -41,25 +45,27 @@ PE/CLI metadata parser file-scope implementation.
 5. Latest relevant `docs/WORKLOG.md` entry
 6. `tools/StaticMetadataParser/Program.cs`
 7. `tools/Test-ChatpadStaticMetadataParser.ps1`
-8. `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
-9. `docs/evidence/runtime-bringup-readiness-manifest.json`
-10. `artifacts/logs/static-metadata-parser-file-scope-remediation/static-metadata-parser-synthetic-validation.json`
-11. PowerShell 7 sibling evidence root
+8. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+9. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+10. `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
+11. `docs/evidence/runtime-bringup-readiness-manifest.json`
+12. Final ignored evidence under
+    `artifacts/logs/static-metadata-parser-preflight-output-remediation/`
 
 ## Audit Acceptance Criteria
 
-- Verify every file-bearing option is classified before caller-selected I/O.
-- Verify `--input` and `--expected` reject blocked roots, protected names,
-  traversal, slash/case variants, out-of-scope paths, and reparse points before
-  read/hash/parse.
-- Verify `--output` rejects blocked/protected/out-of-scope paths, read/write
-  collisions, tracked paths, existing files, and reparse paths without
-  creating or overwriting the requested output.
-- Verify evidence counters distinguish input read/hash, expectation read/hash,
-  PE/metadata parse attempts, and output write attempt/completion.
-- Re-run synthetic validation under Windows PowerShell 5.1 and PowerShell 7.
-- Validate the readiness manifest under both runtimes and run targeted
-  parser/manifest negative regressions.
+- Verify every file-bearing option is centrally classified.
+- Verify every rejected input, expected, or output path produces no parser
+  output file and zero input/expectation read, hash, PE/metadata parse, and
+  output-write counters.
+- Verify the test harness records command, exit code, defect code, console
+  diagnostic, and output-file absence.
+- Verify successful synthetic fixtures still produce create-new evidence.
+- Verify standard and independent parser evidence roots validate.
+- Verify missing, empty, non-parser, compile-only, protected-name, tracked,
+  metadata-review, production, and legacy evidence paths fail closed.
+- Re-run synthetic validation and readiness-manifest validation under Windows
+  PowerShell 5.1 and PowerShell 7.
 - Confirm no real artifact open, parse, hash, write, overwrite, or metadata
   review occurred.
 

@@ -2,11 +2,26 @@
 param(
     [string]$ManifestPath='docs/evidence/runtime-bringup-readiness-manifest.json',
     [switch]$RunCorruptionRegression,
+    [switch]$RunParserEvidencePathRegression,
     [switch]$NoArtifactOpenDesignGateAudit
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSScriptRoot 'RuntimeBringup\ChatpadRuntimeBringup.Common.psm1') -Force
+
+function Test-ChatpadApprovedParserEvidencePath {
+    param([AllowNull()][AllowEmptyString()][string]$Path)
+    if([string]::IsNullOrWhiteSpace($Path)-or[IO.Path]::IsPathRooted($Path)){return $false}
+    $normalized=$Path.Replace('\','/')
+    if($normalized.Contains('//')-or$normalized.Contains(':')){return $false}
+    $segments=@($normalized.Split('/')|Where-Object{$_-ne''})
+    if($segments.Count-lt4-or$segments[0]-cne'artifacts'-or$segments[1]-cne'logs'){return $false}
+    if(@($segments|Where-Object{$_-in@('.','..')}).Count){return $false}
+    $rootSegment=$segments[2]
+    if($rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*)$'){return $false}
+    if($normalized-match'(?i)(artifacts/compile-only|chatpad\.nativeinterop\.compileonlyvalidation\.dll|real-artifact|compiled-artifact|native-interop|metadata-review|/legacy/)'){return $false}
+    return $segments[-1]-ceq'static-metadata-parser-synthetic-validation.json'
+}
 
 function Get-ChatpadMetadataReviewBooleanExpectations {
     [ordered]@{
@@ -788,6 +803,26 @@ $entries=@($manifest.entries)
 $defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;hash_policy=0;state=0;containment=0;declared_result=0;top_level=0;compile_validation=0;metadata_review_gate=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
 $accountingDetails=[ordered]@{}
 $readinessCounts=[ordered]@{}
+$parserEvidencePathRegression=[ordered]@{result='NOT_RUN';case_count=0;passed_count=0;failed_count=0;cases=@()}
+if($RunParserEvidencePathRegression){
+    $pathCases=@(
+        [pscustomobject]@{id='standard-remediation';path='artifacts/logs/static-metadata-parser-preflight-output-remediation/static-metadata-parser-synthetic-validation.json';expected=$true},
+        [pscustomobject]@{id='independent-audit';path='artifacts/logs/independent-static-metadata-parser-file-scope-audit-1bdba8c/windows/static-metadata-parser-synthetic-validation.json';expected=$true},
+        [pscustomobject]@{id='non-parser-root';path='artifacts/logs/unrelated-audit/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='real-artifact-root';path='artifacts/compile-only/native-interop/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='protected-tracked-path';path='docs/evidence/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='missing-path';path=$null;expected=$false},
+        [pscustomobject]@{id='empty-path';path='';expected=$false},
+        [pscustomobject]@{id='protected-artifact-name';path='artifacts/logs/static-metadata-parser-preflight-output-remediation/Chatpad.NativeInterop.CompileOnlyValidation.dll';expected=$false}
+    )
+    $pathResults=@($pathCases|ForEach-Object{
+        $actual=Test-ChatpadApprovedParserEvidencePath -Path $_.path
+        [pscustomobject][ordered]@{case_id=$_.id;path=$_.path;expected=$_.expected;actual=$actual;result=if($actual-eq$_.expected){'PASS'}else{'FAIL'}}
+    })
+    $pathFailures=@($pathResults|Where-Object result -ne 'PASS')
+    $parserEvidencePathRegression=[ordered]@{result=if($pathFailures.Count){'FAIL'}else{'PASS'};case_count=$pathResults.Count;passed_count=@($pathResults|Where-Object result -eq 'PASS').Count;failed_count=$pathFailures.Count;cases=$pathResults}
+    if($pathFailures.Count){$defects.metadata_review_gate++}
+}
 foreach($entry in $entries){
     $full=[IO.Path]::GetFullPath((Join-Path $root ([string]$entry.relative_path)))
     if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){$defects.containment++;continue}
@@ -933,13 +968,15 @@ else{
     }
     else{
         $parserImplementation=$parserImplementationProperty.Value
+        $parserEvidencePathProperty=$parserImplementation.PSObject.Properties['parser_synthetic_validation_path']
         if($parserImplementation.status-ne'IMPLEMENTED_PENDING_AUDIT'-or
             $parserImplementation.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or
             $parserImplementation.parser_tool_name-ne'Chatpad.StaticMetadataParser'-or
             $parserImplementation.parser_project_path-ne'tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj'-or
             $parserImplementation.parser_source_path-ne'tools/StaticMetadataParser/Program.cs'-or
             $parserImplementation.parser_evidence_schema_path-ne'docs/evidence/static-metadata-parser-evidence-schema-v1.md'-or
-            $parserImplementation.parser_synthetic_validation_path-ne'artifacts/logs/static-metadata-parser-file-scope-remediation/static-metadata-parser-synthetic-validation.json'-or
+            $null-eq$parserEvidencePathProperty-or
+            -not(Test-ChatpadApprovedParserEvidencePath -Path $(if($null-ne$parserEvidencePathProperty){[string]$parserEvidencePathProperty.Value}else{$null}))-or
             [long]$parserImplementation.parser_synthetic_validation_byte_size-le0-or
             [string]$parserImplementation.parser_synthetic_validation_sha256-notmatch'^[0-9A-F]{64}$'-or
             $parserImplementation.parser_evidence_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or
@@ -950,12 +987,15 @@ else{
             $parserImplementation.all_file_bearing_options_centrally_scoped-ne$true-or
             $parserImplementation.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
             $parserImplementation.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserImplementation.preflight_rejection_output_suppression-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserImplementation.rejection_evidence_transport-ne'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'-or
+            $parserImplementation.approved_parser_evidence_root_validation-ne'IMPLEMENTED_PENDING_AUDIT'-or
             $parserImplementation.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or
             $parserImplementation.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or
             $parserImplementation.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY'-or
             $parserImplementation.pre_io_rejection_tests-ne'PASS'-or
             $parserImplementation.pre_read_rejection_tests-ne'PASS'-or
-            [int]$parserImplementation.real_artifact_like_rejection_count-notin@(7,8)-or
+            [int]$parserImplementation.real_artifact_like_rejection_count-notin@(7,8,9)-or
             [int]$parserImplementation.real_artifact_like_rejection_not_run_count-notin@(0,1)-or
             [int]$parserImplementation.failed_real_artifact_like_rejection_count-ne0-or
             [int]$parserImplementation.expected_path_rejection_count-lt7-or
@@ -1142,5 +1182,6 @@ $total=($defects.Values|Measure-Object -Sum).Sum
     defects=[pscustomobject]$defects
     total_defects=$total
     accounting_details=[pscustomobject]$accountingDetails
+    parser_evidence_path_regression=[pscustomobject]$parserEvidencePathRegression
 }|ConvertTo-Json -Depth 8
 if($total){exit 1}

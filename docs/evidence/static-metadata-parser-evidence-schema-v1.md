@@ -10,7 +10,8 @@ interop artifact.
 
 Required evidence fields:
 
-- `schemaVersion`, `generatedUtc`, `result`, and `resultCode`.
+- `schemaVersion`, `generatedUtc`, `result`, `resultCode`, and
+  `evidenceTransport`.
 - `parserToolName`, `parserToolVersion`, `parserSourceCommit`,
   `parserBuildIdentity`, `parserTargetFramework`, and
   `systemReflectionMetadataVersion`.
@@ -64,6 +65,18 @@ remediation rejects those channels with
 hashing, PE parsing, metadata parsing, or an unsafe output write. When output
 itself is unsafe, no rejection evidence is written to that requested path.
 
+The third independent implementation audit found that rejected `--input` and
+`--expected` paths still caused the parser to write an authorized evidence
+file. File preflight is now an all-or-nothing boundary: if any file-bearing
+path decision is `REJECTED`, the parser exits with code `64`, writes no
+`--output` file, and emits a structured console diagnostic with
+`evidenceTransport = CONSOLE_PREFLIGHT_REJECTION`. That diagnostic records
+zero input/expectation reads, hashes, PE/metadata parsing, and output-write
+attempt/completion counters. The validation harness captures the command,
+exit code, defect code, console diagnostic, and absence of the requested
+output in its aggregate ignored test evidence. Successful synthetic fixture
+runs continue to use `evidenceTransport = OUTPUT_FILE` and create-new output.
+
 Safety policy is immutable static-only. Safety options are not user-controlled;
 attempted safety options such as legacy `--no-load` or contradictory
 `--allow-*` options are rejected before input read. Any nonzero
@@ -74,7 +87,11 @@ and their corresponding counters; they are not independent constant claims.
 For this implementation task, nonzero input/expectation read, input hash,
 PE/metadata parse, and approved output-write counters are allowed only for
 synthetic fixtures and parser evidence under ignored parser artifact roots.
-Rejected read-path tests keep all read/hash/parse counters at zero; rejected
-output-path tests create or overwrite no requested output. The real
-compile-only native interop artifact remains unopened, unparsed, unhashed,
-unwritten, and unreviewed.
+Every rejected file-bearing path test keeps all read/hash/parse/write counters
+at zero and creates no parser output file. Approved synthetic success cases
+may write parser evidence only below approved parser-specific ignored roots.
+Manifest evidence-path policy accepts both standard parser-remediation roots
+and parser-specific independent-audit roots under `artifacts/logs/`, while
+rejecting non-parser, compile-only, protected-name, metadata-review,
+production, tracked, and legacy paths. The real compile-only native interop
+artifact remains unopened, unparsed, unhashed, unwritten, and unreviewed.

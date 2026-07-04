@@ -90,6 +90,44 @@ function Test-PreReadRejectionEvidence {
     )
 }
 
+function Get-FilePreflightRejectionDiagnostic {
+    param([Parameter(Mandatory)][object]$CommandResult)
+    foreach ($item in @($CommandResult.output)) {
+        $line = ([string]$item).Trim()
+        if (-not $line.StartsWith('{', [StringComparison]::Ordinal)) {
+            continue
+        }
+
+        try {
+            $candidate = $line | ConvertFrom-Json
+            if ([string]$candidate.resultCode -eq 'FILE_PREFLIGHT_REJECTED') {
+                return $candidate
+            }
+        } catch {
+            continue
+        }
+    }
+
+    throw 'Parser did not emit a structured file-preflight rejection diagnostic.'
+}
+
+function Test-FilePreflightRejectionDiagnostic {
+    param(
+        [Parameter(Mandatory)][object]$Evidence,
+        [Parameter(Mandatory)][string]$ExpectedDefectCode
+    )
+    $checks = @(Test-PreReadRejectionEvidence -Evidence $Evidence -ExpectedDefectCode $ExpectedDefectCode)
+    $checks += @(
+        ([string]$Evidence.resultCode -eq 'FILE_PREFLIGHT_REJECTED'),
+        ([string]$Evidence.evidenceTransport -eq 'CONSOLE_PREFLIGHT_REJECTION'),
+        ([bool]$Evidence.outputWriteAttempted -eq $false),
+        ([bool]$Evidence.outputWriteCompleted -eq $false),
+        ([int]$Evidence.safetyCounters.outputWriteAttempted -eq 0),
+        ([int]$Evidence.safetyCounters.outputWriteCompleted -eq 0)
+    )
+    $checks
+}
+
 function Test-ParserSourceGuard {
     $parserFiles = @(
         'tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj',
@@ -456,32 +494,40 @@ foreach ($case in @($rejectionCases + @($symlinkCase))) {
 
     $output = Join-Path $outputRootFull "evidence/rejections/$($case.id).evidence.json"
     New-Directory -Path (Split-Path -Parent $output)
-    $parseResult = Invoke-ParserCommand -Arguments @(
+    $parserArguments = @(
         $parserDll,
         '--input', ([string]$case.input),
         '--output', ([IO.Path]::GetFullPath($output)),
         '--parser-source-commit', $sourceCommit,
         '--parser-build-identity', (Get-Sha256 -Path $parserDll)
-    ) -LogPath (Join-Path $outputRootFull "logs/rejection-$($case.id).txt")
-    if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
-        throw "Parser did not produce rejection evidence for $($case.id)."
-    }
+    )
+    $consoleLog = Join-Path $outputRootFull "logs/rejection-$($case.id).txt"
+    $parseResult = Invoke-ParserCommand -Arguments $parserArguments -LogPath $consoleLog
+    $outputCreated = Test-Path -LiteralPath $output -PathType Leaf
 
-    $evidence = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
-    $checks = Test-PreReadRejectionEvidence -Evidence $evidence -ExpectedDefectCode ([string]$case.expected_defect)
-    $checks += ($parseResult.exit_code -eq 2)
+    $evidence = Get-FilePreflightRejectionDiagnostic -CommandResult $parseResult
+    $checks = Test-FilePreflightRejectionDiagnostic -Evidence $evidence -ExpectedDefectCode ([string]$case.expected_defect)
+    $checks += ($parseResult.exit_code -eq 64)
+    $checks += (-not $outputCreated)
     $defectCodes = @($evidence.defects | ForEach-Object { [string]$_.code })
     $rejectionRecords.Add([pscustomobject][ordered]@{
         case_id = $case.id
         input_path = [string]$case.input
-        evidence_path = ([IO.Path]::GetFullPath($output).Substring($root.Length + 1).Replace('\','/'))
-        evidence_size = (Get-Item -LiteralPath $output).Length
-        evidence_sha256 = Get-Sha256 -Path $output
+        command = @('dotnet') + $parserArguments
+        console_log_path = ([IO.Path]::GetFullPath($consoleLog).Substring($root.Length + 1).Replace('\','/'))
+        parser_output_path = ([IO.Path]::GetFullPath($output).Substring($root.Length + 1).Replace('\','/'))
+        parser_output_file_created = $outputCreated
         expected_defect = [string]$case.expected_defect
         actual_defects = $defectCodes
         parser_exit_code = $parseResult.exit_code
         artifact_bytes_read = [bool]$evidence.artifactBytesRead
         artifact_hash_computed = [bool]$evidence.artifactHashComputed
+        expected_bytes_read = [bool]$evidence.expectedBytesRead
+        expected_hash_computed = [bool]$evidence.expectedHashComputed
+        output_write_attempted = [bool]$evidence.outputWriteAttempted
+        output_write_completed = [bool]$evidence.outputWriteCompleted
+        pe_parse_attempted = [bool]$evidence.peParseAttempted
+        metadata_parse_attempted = [bool]$evidence.metadataParseAttempted
         metadata_parsed = [bool]$evidence.metadataParsed
         assertion_count = $checks.Count
         rejection_result = $(if (@($checks | Where-Object { $_ -ne $true }).Count) { 'FAIL' } else { 'PASS' })
@@ -513,33 +559,37 @@ $expectedPathCases = @(
 foreach ($case in $expectedPathCases) {
     $output = Join-Path $outputRootFull "evidence/expected-rejections/$($case.id).evidence.json"
     New-Directory -Path (Split-Path -Parent $output)
-    $parseResult = Invoke-ParserCommand -Arguments @(
+    $parserArguments = @(
         $parserDll,
         '--input', ([IO.Path]::GetFullPath($validSyntheticInput)),
         '--output', ([IO.Path]::GetFullPath($output)),
         '--expected', ([string]$case.expected_path),
         '--parser-source-commit', $sourceCommit,
         '--parser-build-identity', (Get-Sha256 -Path $parserDll)
-    ) -LogPath (Join-Path $outputRootFull "logs/expected-rejection-$($case.id).txt")
-    if (-not (Test-Path -LiteralPath $output -PathType Leaf)) {
-        throw "Parser did not produce expected-path rejection evidence for $($case.id)."
-    }
+    )
+    $consoleLog = Join-Path $outputRootFull "logs/expected-rejection-$($case.id).txt"
+    $parseResult = Invoke-ParserCommand -Arguments $parserArguments -LogPath $consoleLog
+    $outputCreated = Test-Path -LiteralPath $output -PathType Leaf
 
-    $evidence = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
-    $checks = Test-PreReadRejectionEvidence -Evidence $evidence -ExpectedDefectCode 'PARSER_EXPECTED_PATH.NOT_AUTHORIZED'
+    $evidence = Get-FilePreflightRejectionDiagnostic -CommandResult $parseResult
+    $checks = Test-FilePreflightRejectionDiagnostic -Evidence $evidence -ExpectedDefectCode 'PARSER_EXPECTED_PATH.NOT_AUTHORIZED'
     $checks += ([string]$evidence.inputPathDecision.decision -eq 'ALLOWED')
     $checks += ([string]$evidence.expectedPathDecision.decision -eq 'REJECTED')
     $checks += ([string]$evidence.outputPathDecision.decision -eq 'ALLOWED')
-    $checks += ($parseResult.exit_code -eq 2)
+    $checks += ($parseResult.exit_code -eq 64)
+    $checks += (-not $outputCreated)
     $expectedPathRecords.Add([pscustomobject][ordered]@{
         case_id = $case.id
         expected_path = [string]$case.expected_path
-        evidence_path = ([IO.Path]::GetFullPath($output).Substring($root.Length + 1).Replace('\','/'))
-        evidence_size = (Get-Item -LiteralPath $output).Length
-        evidence_sha256 = Get-Sha256 -Path $output
+        command = @('dotnet') + $parserArguments
+        console_log_path = ([IO.Path]::GetFullPath($consoleLog).Substring($root.Length + 1).Replace('\','/'))
+        parser_output_path = ([IO.Path]::GetFullPath($output).Substring($root.Length + 1).Replace('\','/'))
+        parser_output_file_created = $outputCreated
         parser_exit_code = $parseResult.exit_code
         input_bytes_read = [bool]$evidence.artifactBytesRead
         expected_bytes_read = [bool]$evidence.expectedBytesRead
+        output_write_attempted = [bool]$evidence.outputWriteAttempted
+        output_write_completed = [bool]$evidence.outputWriteCompleted
         input_hash_computed = [bool]$evidence.artifactHashComputed
         expected_hash_computed = [bool]$evidence.expectedHashComputed
         pe_parse_attempted = [bool]$evidence.peParseAttempted
@@ -586,17 +636,21 @@ foreach ($case in $outputPathCases) {
     $targetHashBefore = if ($targetExistedBefore) { Get-Sha256 -Path $normalizedOutput } else { '' }
     $inputHashBefore = Get-Sha256 -Path $validSyntheticInput
     $expectedHashBefore = Get-Sha256 -Path $validExpectedPath
-    $parseResult = Invoke-ParserCommand -Arguments @(
+    $parserArguments = @(
         $parserDll,
         '--input', ([IO.Path]::GetFullPath($validSyntheticInput)),
         '--output', ([string]$case.output_path),
         '--expected', ([IO.Path]::GetFullPath($validExpectedPath)),
         '--parser-source-commit', $sourceCommit,
         '--parser-build-identity', (Get-Sha256 -Path $parserDll)
-    ) -LogPath (Join-Path $outputRootFull "logs/output-rejection-$($case.id).txt")
+    )
+    $consoleLog = Join-Path $outputRootFull "logs/output-rejection-$($case.id).txt"
+    $parseResult = Invoke-ParserCommand -Arguments $parserArguments -LogPath $consoleLog
+    $evidence = Get-FilePreflightRejectionDiagnostic -CommandResult $parseResult
     $targetExistsAfter = Test-Path -LiteralPath $normalizedOutput -PathType Leaf
     $targetHashAfter = if ($targetExistsAfter) { Get-Sha256 -Path $normalizedOutput } else { '' }
-    $checks = @(
+    $checks = @(Test-FilePreflightRejectionDiagnostic -Evidence $evidence -ExpectedDefectCode 'PARSER_OUTPUT_PATH.NOT_AUTHORIZED')
+    $checks += @(
         ($parseResult.exit_code -eq 64),
         (($parseResult.output -join "`n") -match 'PARSER_OUTPUT_PATH\.NOT_AUTHORIZED'),
         ($targetExistedBefore -eq $targetExistsAfter),
@@ -607,6 +661,8 @@ foreach ($case in $outputPathCases) {
     $outputPathRecords.Add([pscustomobject][ordered]@{
         case_id = $case.id
         output_path = [string]$case.output_path
+        command = @('dotnet') + $parserArguments
+        console_log_path = ([IO.Path]::GetFullPath($consoleLog).Substring($root.Length + 1).Replace('\','/'))
         parser_exit_code = $parseResult.exit_code
         output_existed_before = $targetExistedBefore
         output_exists_after = $targetExistsAfter
@@ -614,8 +670,14 @@ foreach ($case in $outputPathCases) {
         output_hash_after = $targetHashAfter
         input_hash_unchanged = ((Get-Sha256 -Path $validSyntheticInput) -eq $inputHashBefore)
         expected_hash_unchanged = ((Get-Sha256 -Path $validExpectedPath) -eq $expectedHashBefore)
-        output_write_attempted = $false
-        output_write_completed = $false
+        input_bytes_read = [bool]$evidence.artifactBytesRead
+        expected_bytes_read = [bool]$evidence.expectedBytesRead
+        input_hash_computed = [bool]$evidence.artifactHashComputed
+        expected_hash_computed = [bool]$evidence.expectedHashComputed
+        pe_parse_attempted = [bool]$evidence.peParseAttempted
+        metadata_parse_attempted = [bool]$evidence.metadataParseAttempted
+        output_write_attempted = [bool]$evidence.outputWriteAttempted
+        output_write_completed = [bool]$evidence.outputWriteCompleted
         assertion_count = $checks.Count
         rejection_result = $(if (@($checks | Where-Object { $_ -ne $true }).Count) { 'FAIL' } else { 'PASS' })
     })
@@ -703,6 +765,8 @@ $summary = [pscustomobject][ordered]@{
     all_file_bearing_options_centrally_scoped = $true
     expected_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'
     output_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'
+    preflight_rejection_output_suppression = 'IMPLEMENTED_PENDING_AUDIT'
+    rejection_evidence_transport = 'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'
     allowed_input_scope = 'SYNTHETIC_FIXTURES_ONLY'
     allowed_expected_scope = 'SYNTHETIC_FIXTURES_ONLY'
     allowed_output_scope = 'PARSER_EVIDENCE_ROOTS_ONLY'

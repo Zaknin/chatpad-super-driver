@@ -8706,3 +8706,113 @@
 - **Next task:** A fresh independent strict read-only audit of the central
   parser file-scope gate. Keep real-artifact and all
   runtime/native/device/driver activity unauthorized.
+
+## 2026-07-04 23:12 +04:00 - Static metadata-parser preflight-output remediation
+
+- **Objective:** Remediate the third failed parser implementation audit by
+  suppressing parser output after any file-preflight rejection and replacing
+  the hardcoded manifest parser-evidence path with a constrained approved-root
+  policy. Keep all real-artifact, metadata, native, device, Windows, and
+  driver actions unauthorized.
+- **Starting state:** Verified
+  `feature/runtime-bringup-static-metadata-parser-file-scope-remediation` at
+  `1bdba8c823e1809306ca570f4cc5207c4412db44`, clean, tracking the expected
+  upstream at `0/0`. Created
+  `feature/runtime-bringup-static-metadata-parser-preflight-output-remediation`
+  from that exact commit.
+- **Documentation discrepancy:** Current-state documents still described the
+  second remediation as awaiting audit and did not record the third audit
+  failure. They are updated in this commit because the explicit remediation
+  task supersedes that stale continuation point.
+- **Failure reproduction:** Built only the isolated parser under ignored
+  evidence and used an approved prior synthetic fixture. A blocked,
+  nonexistent `--expected` string returned the correct path defect but created
+  the authorized output evidence with output-write counters `1/1`; all
+  read/hash/parse counters were zero. The independent-audit-bound manifest
+  failed one metadata-review-gate validation under both PowerShell runtimes.
+  No real artifact was touched.
+- **Implementation:** `Program.cs` now checks all three path decisions
+  immediately after central preflight. Any rejection emits a structured
+  console diagnostic and exits `64` before `Run` or `WriteEvidence`.
+  Successful synthetic runs retain create-new output. The validation harness
+  parses the console diagnostic and records command, exit code, defect, output
+  absence, and all zero I/O counters in aggregate harness evidence.
+- **Evidence-path policy:** Manifest generation and validation now require a
+  relative `artifacts/logs/` path below a `static-metadata-parser-*` or
+  `independent-static-metadata-parser-*` root, with the exact synthetic
+  validation evidence leaf. Compile-only, real-artifact, native-interop,
+  metadata-review, protected-DLL, tracked, production, and legacy paths are
+  rejected. Eight explicit policy cases cover two accepted and six rejected
+  classes.
+- **Development validation:** Windows PowerShell 5.1 passed five fixtures and
+  973 assertions with eight input, eight expected, twelve output, and two
+  safety-option rejections; one input reparse case was not run. PowerShell 7
+  passed five fixtures and 999 assertions with nine input, eight expected,
+  twelve output, and two safety-option rejections. Both had zero failures.
+  A 40-entry independent-evidence manifest generated and validated under both
+  runtimes with eight of eight path-policy cases passing and zero defects.
+- **Command issues:** The first reproduction build wrapper used an invalid
+  PowerShell regex replacement for a backslash and stopped before build. A
+  first path-regression run omitted whitespace after a `Where-Object -ne`
+  operator and stopped before manifest validation; a later ad hoc evidence
+  summary wrapper repeated that spacing error before reading evidence. All
+  were corrected and rerun; none is counted as a validation pass.
+- **Files modified:** `tools/StaticMetadataParser/Program.cs`,
+  `tools/Test-ChatpadStaticMetadataParser.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and `docs/WORKLOG.md`.
+- **Final validation plan:** Regenerate final Windows PowerShell and
+  PowerShell 7 parser evidence, regenerate the tracked manifest from final
+  documentation bytes, validate standard and independent evidence bindings
+  under both runtimes, run targeted negative regressions, full static analysis,
+  repository safety, forbidden-file, documentation, prohibited-pattern, and
+  diff checks, then inspect, commit, push, and verify clean upstream equality.
+- **Safety:** Parser execution was synthetic-only. No real artifact opening,
+  parsing, hash verification, write, overwrite, or metadata review; assembly
+  loading; runtime reflection; compiled artifact execution; native DLL loading;
+  entry-point resolution; native or SetupAPI/Newdev invocation; device query;
+  hardware access; Windows mutation; or driver build/link/sign/CAT/package/
+  stage/install/load/unload/bind/restore/restart occurred.
+- **Commit and push:** Pending final validation.
+- **Next task:** Perform a fresh independent strict read-only audit of
+  preflight output suppression and approved parser-evidence-path validation.
+
+## 2026-07-04 23:58 +04:00 - Static metadata-parser preflight-output remediation final validation
+
+- **Objective:** Close the third-audit remediation with final scoped
+  validation, final manifest regeneration, commit, and push readiness.
+- **Starting state:** Continued on
+  `feature/runtime-bringup-static-metadata-parser-preflight-output-remediation`
+  at base commit `1bdba8c823e1809306ca570f4cc5207c4412db44` with only the
+  twelve expected tracked remediation paths modified.
+- **Final validation results:** Repository safety passed under Windows
+  PowerShell 5.1 and PowerShell 7. Complete PSScriptAnalyzer passed with 55
+  tracked PowerShell files analyzed, zero errors, 204 warnings, 1004
+  informational findings, and zero tool failures. `git diff --check`
+  returned exit code `0`; its only output was Git line-ending conversion
+  warnings for text files. Scoped changed-path validation found twelve of
+  twelve expected paths, zero unexpected paths, zero forbidden changed paths,
+  and zero generated tracked artifacts. A naive `Newdev` prohibited-pattern
+  scan matched only the static parser safety-counter property names, not a
+  native invocation.
+- **Evidence status:** Final parser validation evidence remains under
+  `artifacts/logs/static-metadata-parser-preflight-output-remediation/` and
+  the PowerShell 7 sibling root. Final safety/static-analysis logs are under
+  `artifacts/logs/static-metadata-parser-preflight-output-remediation/final-checks/`.
+  Final summary and artifact inventory are regenerated after the tracked
+  readiness manifest is regenerated from this final documentation state.
+- **Safety:** Parser execution remained synthetic-only. No real artifact
+  opening, parsing, hash verification, write, overwrite, or metadata review;
+  assembly loading; runtime reflection; compiled artifact execution; native
+  DLL loading; entry-point resolution; native or SetupAPI/Newdev invocation;
+  device query; hardware access; Windows mutation; or driver build/link/sign/
+  CAT/package/stage/install/load/unload/bind/restore/restart occurred.
+- **Commit and push:** Pending final manifest regeneration, commit creation,
+  push, and upstream equality verification.
+- **Next task:** Perform a fresh independent strict read-only audit of
+  preflight output suppression and approved parser-evidence-path validation.

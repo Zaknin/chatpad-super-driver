@@ -738,8 +738,15 @@ safety policy. A second independent audit then failed because the
 file-scope remediation now centrally classifies `--input`, `--expected`, and
 `--output` before caller-selected I/O, limits both read paths to synthetic
 fixture roots, limits output to parser evidence roots, rejects collisions and
-existing outputs, and uses create-new output semantics. The remediated parser
-remains pending independent audit. The parser was not run against the real
+existing outputs, and uses create-new output semantics. A third independent
+audit failed because rejected input/expectation paths still wrote an
+authorized parser evidence file and because manifest validation accepted only
+one hardcoded evidence path. The current remediation exits before output for
+every file-preflight rejection, emits zero-I/O console diagnostics for the
+test harness, and validates both standard and independent parser evidence
+below constrained parser-specific ignored roots. Successful synthetic runs
+retain create-new evidence output. The remediated parser remains pending
+independent audit. The parser was not run against the real
 compile-only artifact, and that artifact was not opened, hashed, parsed,
 written, overwritten, or inspected. See
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
@@ -752,10 +759,12 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform a fresh independent read-only audit of the file-scope-remediated static
-metadata-parser implementation. Audit `--input`, `--expected`, and `--output`
-pre-I/O rejection evidence, no-overwrite behavior, and immutable safety-policy
-evidence. Do not run the parser against the compiled artifact, perform metadata
-review, open/hash/parse/write the artifact, load or reflect over compiled
-output, execute it, resolve entry points, invoke SetupAPI/Newdev, query
-devices, or mutate Windows.
+Perform a fresh independent read-only audit of the preflight-output and
+parser-evidence-path remediation. Verify `--input`, `--expected`, and
+`--output` rejection produces zero reads, hashes, parses, and writes with no
+parser output file; verify successful synthetic create-new evidence; and
+verify constrained standard/independent parser evidence roots. Do not run the
+parser against the compiled artifact, perform metadata review,
+open/hash/parse/write the artifact, load or reflect over compiled output,
+execute it, resolve entry points, invoke SetupAPI/Newdev, query devices, or
+mutate Windows.

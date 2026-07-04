@@ -27,8 +27,13 @@ static-only safety policy. A second independent audit failed because
 `--expected` could still reach file I/O without scope authorization and
 `--output` could target unsafe or protected paths. The file-scope remediation
 centrally classifies all three file-bearing options before caller-selected I/O,
-uses separate read and write policies, and forbids output overwrite. The
-implementation still requires a fresh independent audit. It does not authorize
+uses separate read and write policies, and forbids output overwrite. A third
+independent audit failed because rejected input/expectation paths still wrote
+authorized parser evidence and because manifest validation hardcoded one
+standard parser evidence path. The current remediation suppresses all parser
+output on any file-preflight rejection and validates standard or independent
+parser evidence through one constrained ignored-root policy. The implementation
+still requires a fresh independent audit. It does not authorize
 parser execution against the real compiled artifact, artifact opening,
 parsing, hashing, writing, metadata review, assembly loading, reflection,
 execution, native invocation, device query, Windows mutation, or driver
@@ -89,12 +94,13 @@ native-interoperability projects, has no post-build/run target, and uses no
 third-party package.
 
 Implementation, build, and synthetic testing have occurred only in this parser
-scope. The current remediation validation evidence is
-`artifacts/logs/static-metadata-parser-file-scope-remediation/static-metadata-parser-synthetic-validation.json`.
+scope. The current remediation validation evidence is under
+`artifacts/logs/static-metadata-parser-preflight-output-remediation/`.
 It covers synthetic fixtures; `--input`, `--expected`, and `--output`
-pre-I/O rejection; immutable safety-policy rejection; and create-new output
-semantics. First use against the real compile-only artifact remains a separate
-authorization boundary after independent implementation audit.
+pre-I/O rejection with no parser output; immutable safety-policy rejection;
+create-new success output; and constrained standard/independent parser-evidence
+path validation. First use against the real compile-only artifact remains a
+separate authorization boundary after independent implementation audit.
 
 ## 4. File-scope and identity contract
 
@@ -117,9 +123,19 @@ read, hash, parse, or write:
 
 The write policy additionally rejects output equal to either read path,
 existing output files, tracked or production paths, paths outside parser
-evidence roots, and protected artifact names in any path component. Evidence
-is written with `FileMode.CreateNew`; an unsafe output path receives a
-fail-closed stderr defect and no output file.
+evidence roots, and protected artifact names in any path component. Any
+rejected file-bearing path causes exit `64`, a structured console diagnostic,
+zero read/hash/parse/write counters, and no parser output file. The test
+harness records rejection evidence separately. Successful synthetic parser
+evidence is written with `FileMode.CreateNew`.
+
+Manifest parser-evidence paths are relative paths below parser-specific
+ignored roots under `artifacts/logs/`. Standard
+`static-metadata-parser-*` roots and independent
+`independent-static-metadata-parser-*` audit roots are accepted only when the
+leaf is `static-metadata-parser-synthetic-validation.json`. Compile-only,
+real-artifact, native-interop, metadata-review, protected-DLL, tracked,
+production, and legacy paths are rejected.
 
 A future real-artifact metadata-review task would require a separate explicit
 authorization and a different input contract. That later task must still

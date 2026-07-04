@@ -34,10 +34,14 @@ internal static class Program
 
         Evidence evidence = Evidence.Create(options);
         ApplyFileScopePreflight(options, evidence);
-        if (evidence.OutputPathDecision.Decision == "REJECTED")
+        if (new[]
+            {
+                evidence.InputPathDecision,
+                evidence.ExpectedPathDecision,
+                evidence.OutputPathDecision
+            }.Any(decision => decision.Decision == "REJECTED"))
         {
-            Defect outputDefect = evidence.Defects.First(defect => defect.Location == "output");
-            Console.Error.WriteLine(outputDefect.Code + ": " + outputDefect.Message);
+            WriteFilePreflightRejectionDiagnostic(evidence);
             return 64;
         }
 
@@ -775,6 +779,19 @@ internal static class Program
         writer.Write(json);
         writer.Write(Environment.NewLine);
     }
+
+    private static void WriteFilePreflightRejectionDiagnostic(Evidence evidence)
+    {
+        evidence.Result = "FAIL";
+        evidence.ResultCode = "FILE_PREFLIGHT_REJECTED";
+        evidence.EvidenceTransport = "CONSOLE_PREFLIGHT_REJECTION";
+        foreach (Defect defect in evidence.Defects)
+        {
+            Console.Error.WriteLine(defect.Code + ": " + defect.Message);
+        }
+
+        Console.Out.WriteLine(JsonSerializer.Serialize(evidence));
+    }
 }
 
 internal sealed class ParserOptions
@@ -917,6 +934,7 @@ internal sealed class Evidence
     public string GeneratedUtc { get; init; } = DateTimeOffset.UtcNow.ToString("o", CultureInfo.InvariantCulture);
     public string Result { get; set; } = "FAIL";
     public string ResultCode { get; set; } = "NOT_EVALUATED";
+    public string EvidenceTransport { get; set; } = "OUTPUT_FILE";
     public string ParserToolName { get; init; } = ProgramEvidence.ToolName;
     public string ParserToolVersion { get; init; } = ProgramEvidence.ToolVersion;
     public string ParserSourceCommit { get; init; } = "";
