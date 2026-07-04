@@ -9,19 +9,21 @@
 - Accepted static metadata-parser implementation design audit:
   `468e8679388481e923a37a985055046f72480921`.
 - Current gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Parser implementation: `NOT_IMPLEMENTED`.
-- Parser execution: `NOT_PERFORMED`.
+- Parser implementation: `IMPLEMENTED_PENDING_AUDIT`.
+- Parser execution: `SYNTHETIC_FIXTURES_ONLY`.
 - Metadata review: `NOT_PERFORMED`.
 
-This document's implementation design passed independent read-only audit. That
-acceptance does not authorize parser source implementation, parser build,
-parser execution, artifact opening, artifact parsing, artifact hashing,
-metadata review, assembly loading, reflection, execution, native invocation,
-device query, Windows mutation, or driver actions.
+This document's implementation design passed independent read-only audit. A
+separate implementation task added the static parser source and validated it
+only against synthetic fixtures. That implementation does not authorize parser
+execution against the real compiled artifact, artifact opening, artifact
+parsing, artifact hashing, metadata review, assembly loading, reflection,
+execution, native invocation, device query, Windows mutation, or driver
+actions.
 
 ## 2. Investigation and technology decision
 
@@ -62,22 +64,24 @@ Official references:
 
 ## 3. Future implementation layout
 
-A later, separately authorized task may add:
+The separately authorized implementation task added:
 
-- `tools/StaticMetadata/Chatpad.StaticMetadata.csproj`;
-- parser source under `tools/StaticMetadata/`;
-- a JSON schema under `docs/evidence/`;
-- synthetic fixtures and tests under `tests/StaticMetadata/`;
-- a static prohibited-pattern guard.
+- `tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj`;
+- parser source under `tools/StaticMetadataParser/`;
+- a JSON evidence schema at
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`;
+- synthetic fixture generation and validation in
+  `tools/Test-ChatpadStaticMetadataParser.ps1`;
+- a static prohibited-pattern guard in the validation harness.
 
-The project must target `net9.0`, be absent from `ChatpadWin11.sln` and every
+The project targets `net9.0`, is absent from `ChatpadWin11.sln` and every
 production project graph, have no project reference to production driver or
-native-interoperability projects, and have no post-build/run target. It must
-not add a third-party package if the pinned .NET 9 reference framework exposes
-`System.Reflection.Metadata`.
+native-interoperability projects, has no post-build/run target, and uses no
+third-party package.
 
-Implementation, build, synthetic testing, parser execution, and first use are
-separate authorization boundaries. This design task adds none of those files.
+Implementation, build, and synthetic testing have occurred only in this parser
+scope. First use against the real compile-only artifact remains a separate
+authorization boundary after independent implementation audit.
 
 ## 4. Input and identity contract
 
@@ -298,8 +302,9 @@ The audit verified:
   `NOT_IMPLEMENTED`, and the runtime blocker remains unchanged.
 
 The current gate is
-`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`. The next
-task may authorize parser implementation only; parser execution, metadata
-review, compiled-artifact opening/parsing/hash verification, loading,
-reflection, execution, native invocation, device query, Windows mutation, and
-driver actions remain unauthorized unless separately and explicitly allowed.
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`. The next task
+must independently audit the parser implementation. Parser execution against
+the real artifact, metadata review, compiled-artifact opening/parsing/hash
+verification, loading, reflection, execution, native invocation, device query,
+Windows mutation, and driver actions remain unauthorized unless separately and
+explicitly allowed after that audit.

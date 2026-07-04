@@ -8,12 +8,13 @@
 - Static metadata-parser implementation design: accepted by independent
   `AUDIT PASS` at `468e8679388481e923a37a985055046f72480921`.
 - Active gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Static metadata-parser implementation: not authorized and not implemented.
-- Parser execution and metadata review: not performed.
+- Static metadata-parser implementation: `IMPLEMENTED_PENDING_AUDIT`.
+- Parser execution: `SYNTHETIC_FIXTURES_ONLY`.
+- Metadata review: not performed.
 - Accepted remediation: strict JSON Boolean safety validation covers 63
   metadata-review fields and rejects numeric `0`/`1` and other non-Boolean
   types under both supported PowerShell runtimes.
@@ -34,10 +35,11 @@ reflect over, execute, or invoke the artifact.
 | Existing source and compile-only pattern checks | Test/guard only | They enforce absence of prohibited paths; they do not inspect metadata. |
 | Existing design and evidence text | Documentation only | It does not authorize review execution. |
 
-No existing repository tool qualifies. The accepted future approach is an
-isolated .NET 9 tool using framework-provided
-`System.Reflection.Metadata`/`PEReader` APIs, subject to independent design
-audit. See `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
+The repository now has an isolated .NET 9 parser implementation using
+framework-provided `System.Reflection.Metadata`/`PEReader` APIs. It has been
+validated only with synthetic fixtures and remains subject to independent
+implementation audit before first use against the real compile-only artifact.
+See `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 ## Future review contract
 
@@ -95,11 +97,13 @@ The independent read-only remediation audit passed at
 `artifacts/logs/independent-metadata-review-design-gate-remediation-audit-49b41da/artifact-inventory.json`,
 size `22305` bytes, SHA-256
 `2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B`.
-No artifact opening, hash verification, parsing, loading, reflection,
+No real artifact opening, hash verification, parsing, loading, reflection,
 execution, native invocation, device query, Windows mutation, or driver action
-occurred. The implementation design is now defined at
+occurred. The implementation design is defined at
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md` and passed independent
 read-only audit at `468e8679388481e923a37a985055046f72480921`. Parser
-implementation, build, execution, artifact use, and metadata review remain
-unauthorized until a separate implementation task explicitly authorizes the
-next step. Design acceptance does not authorize native runtime execution.
+implementation now exists, but only synthetic-fixture parser execution is
+authorized and performed. Real artifact use and metadata review remain
+unauthorized until an independent implementation audit passes and a separate
+metadata-review task explicitly authorizes the next step. Design acceptance and
+parser implementation do not authorize native runtime execution.

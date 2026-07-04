@@ -815,7 +815,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
 $metadataReviewDefectRecords=[Collections.Generic.List[object]]::new()
 $topLevelNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $manifest -Location 'manifest'
@@ -876,8 +876,8 @@ if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metada
 }
 else{
     $metadataGate=$metadataGateProperty.Value
-    if($metadataGate.status-ne'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED'-or
-        $metadataGate.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'-or
+    if($metadataGate.status-ne'STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT'-or
+        $metadataGate.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or
         $metadataGate.runtime_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $metadataGate.artifact_location_classification-ne'IGNORED_COMPILE_ONLY_OUTPUT'-or
         $metadataGate.proposed_inspection_mode-ne'STATIC_BYTE_AND_METADATA_PARSING_ONLY'-or
@@ -894,7 +894,7 @@ else{
     else{
         $parserDesign=$parserDesignProperty.Value
         if($parserDesign.status-ne'DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'-or
-            $parserDesign.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'-or
+            $parserDesign.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or
             $parserDesign.transition_base_commit-ne'382aa85980408939a93043583b48e942ebfbf018'-or
             $parserDesign.design_document_path-ne'docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'-or
             $parserDesign.preferred_technology-ne'SYSTEM_REFLECTION_METADATA_PEREADER'-or
@@ -910,8 +910,8 @@ else{
             $parserDesign.independent_design_audit_summary_sha256-ne'A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'-or
             $parserDesign.input_identity_source-ne'REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'-or
             $parserDesign.referenced_primary_dll_sha256-ne'77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'-or
-            $parserDesign.parser_implementation_status-ne'NOT_IMPLEMENTED'-or
-            $parserDesign.parser_execution_status-ne'NOT_PERFORMED'-or
+            $parserDesign.parser_implementation_status-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserDesign.parser_execution_status-ne'SYNTHETIC_FIXTURES_ONLY'-or
             $parserDesign.metadata_review_status-ne'NOT_PERFORMED'-or
             $parserDesign.artifact_opening_status-ne'NOT_PERFORMED'-or
             $parserDesign.artifact_parsing_status-ne'NOT_PERFORMED'-or
@@ -923,6 +923,38 @@ else{
             $parserDesign.device_query_status-ne'NOT_PERFORMED'-or
             $parserDesign.windows_mutation_status-ne'NOT_PERFORMED'-or
             $parserDesign.driver_actions_status-ne'NOT_PERFORMED'){$defects.metadata_review_gate++}
+    }
+    $parserImplementationProperty=$metadataGate.PSObject.Properties['static_metadata_parser_implementation']
+    if($null-eq$parserImplementationProperty-or$null-eq$parserImplementationProperty.Value-or$parserImplementationProperty.Value-is[array]){
+        $defects.metadata_review_gate++
+    }
+    else{
+        $parserImplementation=$parserImplementationProperty.Value
+        if($parserImplementation.status-ne'IMPLEMENTED_PENDING_AUDIT'-or
+            $parserImplementation.current_gate-ne'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'-or
+            $parserImplementation.parser_tool_name-ne'Chatpad.StaticMetadataParser'-or
+            $parserImplementation.parser_project_path-ne'tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj'-or
+            $parserImplementation.parser_source_path-ne'tools/StaticMetadataParser/Program.cs'-or
+            $parserImplementation.parser_evidence_schema_path-ne'docs/evidence/static-metadata-parser-evidence-schema-v1.md'-or
+            $parserImplementation.parser_synthetic_validation_path-ne'artifacts/static-metadata-parser-implementation/static-metadata-parser-synthetic-validation.json'-or
+            [long]$parserImplementation.parser_synthetic_validation_byte_size-le0-or
+            [string]$parserImplementation.parser_synthetic_validation_sha256-notmatch'^[0-9A-F]{64}$'-or
+            $parserImplementation.parser_evidence_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or
+            [int]$parserImplementation.synthetic_fixture_count-ne5-or
+            [int]$parserImplementation.synthetic_assertion_count-ne65-or
+            [int]$parserImplementation.failed_fixture_count-ne0-or
+            $parserImplementation.parser_execution_status-ne'SYNTHETIC_FIXTURES_ONLY'-or
+            $parserImplementation.metadata_review_status-ne'NOT_PERFORMED'-or
+            $parserImplementation.real_compile_only_artifact_opened-ne$false-or
+            $parserImplementation.real_compile_only_artifact_parsed-ne$false-or
+            $parserImplementation.real_compile_only_artifact_hash_computed-ne$false-or
+            $parserImplementation.assembly_loading_occurred-ne$false-or
+            $parserImplementation.runtime_reflection_occurred-ne$false-or
+            $parserImplementation.compiled_artifact_execution_occurred-ne$false-or
+            $parserImplementation.native_invocation_occurred-ne$false-or
+            $parserImplementation.device_query_occurred-ne$false-or
+            $parserImplementation.windows_mutation_occurred-ne$false-or
+            $parserImplementation.driver_actions_occurred-ne$false){$defects.metadata_review_gate++}
     }
     $sectionNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $metadataGate -Location 'manifest.compiled_artifact_metadata_review_design_gate'
     if($null-ne$sectionNativeExecutionDefect){$metadataReviewDefectRecords.Add($sectionNativeExecutionDefect)}
@@ -1066,10 +1098,10 @@ $inventoryCounts=[ordered]@{}
 foreach($name in @('tracked_ps1_count','tracked_psm1_count','tracked_powershell_count','parsed_ps1_count','parsed_psm1_count','parsed_powershell_count','parse_error_count','duplicate_normalized_path_count','missing_count','extra_count')){
     $inventoryCounts[$name]=Get-ChatpadValidatedIntegerProperty -Item $inventory -PropertyName $name -Location 'manifest.readiness.powershell_inventory' -RecordId 'powershell_inventory' -DefectCount ([ref]$inventoryDefectCount) -Defects $inventoryDefects -AllowZero
 }
-if($inventoryDefectCount -or $inventoryCounts.tracked_ps1_count -ne 46 -or $inventoryCounts.tracked_psm1_count -ne 8 -or$inventoryCounts.tracked_powershell_count-ne54-or$inventoryCounts.parsed_ps1_count-ne46-or$inventoryCounts.parsed_psm1_count-ne8-or$inventoryCounts.parsed_powershell_count-ne54-or$inventoryCounts.parse_error_count-ne0-or$inventoryCounts.duplicate_normalized_path_count-ne0-or$inventoryCounts.missing_count-ne0-or$inventoryCounts.extra_count-ne0){$defects.powershell_inventory++}
+if($inventoryDefectCount -or $inventoryCounts.tracked_ps1_count -ne 47 -or $inventoryCounts.tracked_psm1_count -ne 8 -or$inventoryCounts.tracked_powershell_count-ne55-or$inventoryCounts.parsed_ps1_count-ne47-or$inventoryCounts.parsed_psm1_count-ne8-or$inventoryCounts.parsed_powershell_count-ne55-or$inventoryCounts.parse_error_count-ne0-or$inventoryCounts.duplicate_normalized_path_count-ne0-or$inventoryCounts.missing_count-ne0-or$inventoryCounts.extra_count-ne0){$defects.powershell_inventory++}
 $analyzer=$manifest.readiness.psscriptanalyzer
 if($manifest.readiness.psscriptanalyzer_status-eq'PASS'){
-    if($null-eq$analyzer-or[int]$analyzer.analyzed_file_count-ne54-or[int]$analyzer.error_count-ne0-or[int]$analyzer.tool_failure_count-ne0-or[bool]$analyzer.blanket_suppression_used){$defects.psscriptanalyzer++}
+    if($null-eq$analyzer-or[int]$analyzer.analyzed_file_count-ne55-or[int]$analyzer.error_count-ne0-or[int]$analyzer.tool_failure_count-ne0-or[bool]$analyzer.blanket_suppression_used){$defects.psscriptanalyzer++}
     if(@($analyzer.findings|Where-Object{$_.severity-notin@('Error','Warning','Information')}).Count){$defects.psscriptanalyzer++}
 }
 $total=($defects.Values|Measure-Object -Sum).Sum

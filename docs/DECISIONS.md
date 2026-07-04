@@ -4,6 +4,37 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Implement static metadata parser behind independent audit gate
+
+**Decision:** Add `Chatpad.StaticMetadataParser` as an isolated .NET 9 static
+PE/CLI metadata parser under `tools/StaticMetadataParser/`, validate it only
+with synthetic fixtures, and transition the active gate to
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
+
+**Rationale:** The accepted design authorized implementation using
+framework-provided `System.Reflection.Metadata`, `PEReader`, and
+`MetadataReader`. Synthetic validation proves basic static-only behavior,
+expected P/Invoke metadata extraction, entry-point detection, invalid input
+rejection, expected-declaration defect reporting, and zero prohibited runtime,
+native, device, Windows mutation, and driver-action counters without touching
+the real compile-only artifact.
+
+**Alternatives rejected:** Running the parser against the real compile-only
+artifact during implementation, opening/hashing/parsing that artifact,
+performing metadata review, loading or reflecting over compiled output,
+executing compiled output, resolving native entry points, invoking native APIs,
+querying devices, mutating Windows, or advancing directly to native adapter
+execution.
+
+**Consequences:** Parser implementation status is
+`IMPLEMENTED_PENDING_AUDIT`; parser execution status is
+`SYNTHETIC_FIXTURES_ONLY`; metadata review remains `NOT_PERFORMED`. Real
+artifact opening, parsing, and hash verification remain not performed and not
+authorized until an independent implementation audit passes and a separate
+metadata-review task authorizes first use. Live readiness remains `BLOCKED`;
+native execution remains `NOT_IMPLEMENTED`; the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## 2026-07-04 - Accept static metadata-parser implementation design audit
 
 **Decision:** Accept the independent `AUDIT PASS` for static metadata-parser

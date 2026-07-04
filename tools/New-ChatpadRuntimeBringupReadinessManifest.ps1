@@ -3,6 +3,7 @@ param(
     [string]$OutputPath='docs/evidence/runtime-bringup-readiness-manifest.json',
     [Parameter(Mandatory)][string]$ImplementationCommit,
     [Parameter(Mandatory)][string]$SuiteResultPath,
+    [string]$ParserEvidencePath='artifacts/static-metadata-parser-implementation/static-metadata-parser-synthetic-validation.json',
     [switch]$NoArtifactOpenDesignGateAudit
 )
 Set-StrictMode -Version Latest
@@ -22,19 +23,21 @@ $acceptedSuiteGates=if($NoArtifactOpenDesignGateAudit){
         'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_DESIGN_AUDIT',
         'BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION',
         'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT',
-        'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'
+        'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION',
+        'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'
     )
 }else{
-    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION')
+    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT')
 }
 $acceptedSuiteMetadataStatuses=if($NoArtifactOpenDesignGateAudit){
     @(
         'DESIGN_GATED_NOT_IMPLEMENTED',
         'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_PENDING_AUDIT',
-        'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED'
+        'STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED',
+        'STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT'
     )
 }else{
-    @('STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED')
+    @('STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED','STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT')
 }
 if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-notin$acceptedSuiteGates-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false-or-not$suiteNativeExecutionAccepted-or$suite.compiled_artifact_metadata_review_status-notin$acceptedSuiteMetadataStatuses-or$suite.compiled_artifact_metadata_review_authorized-ne$false-or$suite.compiled_artifact_metadata_review_performed-ne$false-or$suite.compiled_artifact_bytes_opened-ne$false-or$suite.compiled_artifact_reflection_performed-ne$false-or$suite.compiled_artifact_execution_performed-ne$false){throw 'Suite result is not a non-executing static-metadata-parser design gate with native execution still blocked.'}
 
@@ -129,6 +132,13 @@ $entries=[Collections.Generic.List[object]]::new()
 foreach($path in $paths){$entries.Add((New-Entry ('tracked-'+(($path.ToLowerInvariant()-replace'[^a-z0-9]+','-').Trim('-'))) $path tracked VALIDATED))}
 $suiteRelative=[IO.Path]::GetFullPath($SuiteResultPath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
+$parserEvidenceRelative=[IO.Path]::GetFullPath($ParserEvidencePath).Substring($root.Length+1).Replace('\','/')
+$entries.Add((New-Entry evidence-static-metadata-parser-synthetic-validation $parserEvidenceRelative ignored PASS))
+$parserEvidence=Get-Content -LiteralPath ([IO.Path]::GetFullPath($ParserEvidencePath)) -Raw|ConvertFrom-Json
+if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
+    throw 'Parser synthetic-fixture evidence is not a passing no-real-artifact parser implementation validation record.'
+}
+$parserEvidenceIdentity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path ([IO.Path]::GetFullPath($ParserEvidencePath)) -HashPolicy auto -CommitRepresented $ImplementationCommit -State ignored
 $powershellInventory=Get-PowerShellInventory
 $pssaInventory=Get-PSScriptAnalyzerInventory
 $checkedOutBranch=Get-CheckedOutLocalBranch
@@ -146,7 +156,7 @@ $manifest=[pscustomobject][ordered]@{
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'
+    current_gate='BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     native_execution_status='NOT_IMPLEMENTED'
     manifest_generation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_READINESS_RESULT'}
@@ -191,9 +201,9 @@ $manifest=[pscustomobject][ordered]@{
         accepted=$true
     }
     compiled_artifact_metadata_review_design_gate=[pscustomobject][ordered]@{
-        status='STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED'
+        status='STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT'
         native_execution_status='NOT_IMPLEMENTED'
-        current_gate='BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'
+        current_gate='BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'
         runtime_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         compile_only_evidence_remediation_accepted=$true
         artifact_location_classification='IGNORED_COMPILE_ONLY_OUTPUT'
@@ -208,7 +218,7 @@ $manifest=[pscustomobject][ordered]@{
         independent_design_audit_artifact_inventory_sha256='2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B'
         static_metadata_parser_implementation_design=[pscustomobject][ordered]@{
             status='DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'
-            current_gate='BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION'
+            current_gate='BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'
             transition_base_commit='382aa85980408939a93043583b48e942ebfbf018'
             design_document_path='docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'
             preferred_technology='SYSTEM_REFLECTION_METADATA_PEREADER'
@@ -224,8 +234,8 @@ $manifest=[pscustomobject][ordered]@{
             independent_design_audit_summary_sha256='A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'
             input_identity_source='REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'
             referenced_primary_dll_sha256='77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'
-            parser_implementation_status='NOT_IMPLEMENTED'
-            parser_execution_status='NOT_PERFORMED'
+            parser_implementation_status='IMPLEMENTED_PENDING_AUDIT'
+            parser_execution_status='SYNTHETIC_FIXTURES_ONLY'
             metadata_review_status='NOT_PERFORMED'
             artifact_opening_status='NOT_PERFORMED'
             artifact_parsing_status='NOT_PERFORMED'
@@ -237,6 +247,33 @@ $manifest=[pscustomobject][ordered]@{
             device_query_status='NOT_PERFORMED'
             windows_mutation_status='NOT_PERFORMED'
             driver_actions_status='NOT_PERFORMED'
+        }
+        static_metadata_parser_implementation=[pscustomobject][ordered]@{
+            status='IMPLEMENTED_PENDING_AUDIT'
+            current_gate='BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT'
+            parser_tool_name='Chatpad.StaticMetadataParser'
+            parser_project_path='tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj'
+            parser_source_path='tools/StaticMetadataParser/Program.cs'
+            parser_evidence_schema_path='docs/evidence/static-metadata-parser-evidence-schema-v1.md'
+            parser_synthetic_validation_path=$parserEvidenceRelative
+            parser_synthetic_validation_byte_size=[long]$parserEvidenceIdentity.canonical_byte_size
+            parser_synthetic_validation_sha256=$parserEvidenceIdentity.canonical_sha256
+            parser_evidence_schema_version='chatpad-static-metadata-parser-evidence-v1'
+            synthetic_fixture_count=[int]$parserEvidence.fixture_count
+            synthetic_assertion_count=[int]$parserEvidence.assertion_count
+            failed_fixture_count=[int]$parserEvidence.failed_fixture_count
+            parser_execution_status='SYNTHETIC_FIXTURES_ONLY'
+            metadata_review_status='NOT_PERFORMED'
+            real_compile_only_artifact_opened=$false
+            real_compile_only_artifact_parsed=$false
+            real_compile_only_artifact_hash_computed=$false
+            assembly_loading_occurred=$false
+            runtime_reflection_occurred=$false
+            compiled_artifact_execution_occurred=$false
+            native_invocation_occurred=$false
+            device_query_occurred=$false
+            windows_mutation_occurred=$false
+            driver_actions_occurred=$false
         }
         artifact_opening_authorized=$false
         artifact_bytes_opened=$false

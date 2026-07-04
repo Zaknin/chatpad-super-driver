@@ -8,7 +8,7 @@ Authoritative current state:
 
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live binding/restoration/restart authorization: `false`.
@@ -182,6 +182,6 @@ implementation design passed independent audit at
 authorized for execution. No task may open, hash, or parse compiled output, load or
 reflect over it, resolve entry points, invoke native APIs, query devices, or
 mutate Windows unless that exact action is later authorized. The current gate
-is `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`; the
+is `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`; the
 capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
 native execution remains `NOT_IMPLEMENTED`.

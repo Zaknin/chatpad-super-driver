@@ -2,46 +2,44 @@
 
 ## Objective
 
-Perform a narrowly authorized static PE/CLI metadata-parser implementation
-task. Create the parser source, project, schema, synthetic fixtures, and
-prohibited-pattern guard needed to implement the accepted design.
+Perform an independent read-only audit of the static PE/CLI metadata parser
+implementation.
 
-Do not run the parser against the compiled artifact unless the next task
-explicitly authorizes that exact action. Do not perform metadata review.
+Do not run the parser against the real compile-only native interop compiled
+artifact. Do not open, parse, hash, load, reflect over, execute, or invoke the
+real artifact. Do not perform metadata review.
 
 ## Required Starting Point
 
-- Branch:
-  `feature/runtime-bringup-static-metadata-parser-design-audit-acceptance`.
-- Starting commit: the final pushed design-audit acceptance commit containing
-  the gate transition to
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`, the
-  regenerated readiness manifest, and continuity updates.
+- Branch: `feature/runtime-bringup-static-metadata-parser-implementation`.
+- Starting commit: the final pushed parser implementation commit containing
+  `tools/StaticMetadataParser/`, `tools/Test-ChatpadStaticMetadataParser.ps1`,
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`, the regenerated
+  readiness manifest, and continuity updates.
+- Implementation base commit:
+  `27d4640069808121ee74749940392d2df6c8e746`.
 - Accepted static metadata-parser implementation design audit:
   `468e8679388481e923a37a985055046f72480921`.
-- Accepted audit inventory:
-  `artifacts/logs/independent-static-metadata-parser-design-audit-468e867/artifact-inventory.json`,
-  size `54161` bytes, SHA-256
-  `D43213A552CF61E793BABD2792D6B3329706EF9F2DB3DC46D401B66307725B6F`.
 - Verify exact HEAD, upstream, `0/0` ahead/behind, clean status, and unchanged
   native declarations, compile-only harness/runner, runtime adapter,
-  production driver source, INF, project/solution files outside the parser
-  project, binaries, frozen artifacts, and `legacy/`.
+  production driver source, INF, production project/solution files outside the
+  parser project, binaries, frozen artifacts, and `legacy/`.
 
 ## Current State
 
 - Live readiness: `BLOCKED`.
-- Current gate:
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`.
+- Current gate: `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Preferred technology:
-  `System.Reflection.Metadata` with `PEReader`/`MetadataReader`.
-- Parser implementation: `NOT_IMPLEMENTED`.
-- Parser execution: `NOT_PERFORMED`.
+- Parser technology: `System.Reflection.Metadata` with
+  `PEReader`/`MetadataReader`.
+- Parser implementation: `IMPLEMENTED_PENDING_AUDIT`.
+- Parser execution: `SYNTHETIC_FIXTURES_ONLY`.
 - Metadata review: `NOT_PERFORMED`.
-- Artifact opening/parsing/hash verification: `NOT_PERFORMED` and
+- Real artifact opening/parsing/hash verification: `NOT_PERFORMED` and
   unauthorized.
+- Synthetic validation evidence:
+  `artifacts/static-metadata-parser-implementation/static-metadata-parser-synthetic-validation.json`.
 
 ## Inspect First
 
@@ -50,30 +48,18 @@ explicitly authorizes that exact action. Do not perform metadata review.
 - `docs/DECISIONS.md`
 - Latest `docs/WORKLOG.md` entry
 - `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`
-- `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`
+- `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
+- `tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj`
+- `tools/StaticMetadataParser/Program.cs`
+- `tools/Test-ChatpadStaticMetadataParser.ps1`
 - `docs/evidence/runtime-bringup-readiness-manifest.json`
-- `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
 - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
-
-## Implementation Boundaries
-
-- Implement only the accepted static parser surface, outside production
-  driver and native/runtime project graphs.
-- Use .NET 9 with framework-provided `System.Reflection.Metadata`,
-  `PEReader`, and `MetadataReader`.
-- Add a fail-closed source/project prohibited-pattern guard before first use.
-- Use only synthetic fixtures unless artifact reading is explicitly authorized
-  by the next task.
-- Keep evidence deterministic and include parser identity, source commit,
-  input identity source, byte-read/hash/parse distinctions, no-load/
-  no-reflection/no-execution/no-native/no-device/no-mutation flags, PE/CLI
-  summary, P/Invoke summary, declaration checks, diagnostics, defects, and
-  safety counters.
 
 ## Safety Restrictions
 
-- Do not open, parse, or hash the compiled artifact unless the next task
-  explicitly authorizes that exact implementation-time action.
+- Do not open, parse, or hash the real compile-only native interop compiled
+  artifact.
+- Do not run the parser against the real artifact.
 - Do not perform metadata review.
 - Do not load or reflect over compiled output; do not execute it.
 - Do not use runtime assembly APIs, artifact-targeted `Add-Type`, `dotnet exec`,
@@ -86,14 +72,15 @@ explicitly authorizes that exact action. Do not perform metadata review.
 
 ## Acceptance Criteria
 
-- Parser implementation source/project/schema/guard exist only in the
-  authorized static parser scope.
-- Parser source passes parse/build/static guard checks authorized by the next
-  task without touching the compiled artifact unless explicitly allowed.
-- No metadata review, artifact loading/reflection/execution, native invocation,
-  device query, Windows mutation, or driver action occurs.
+- Audit confirms the parser implementation is static-only and uses
+  `System.Reflection.Metadata`, `PEReader`, and `MetadataReader`.
+- Audit confirms the parser was validated only against synthetic fixtures.
+- Audit confirms the parser was not run against the real compile-only artifact.
+- Audit confirms real artifact opening/parsing/hash verification remains not
+  performed.
+- Audit confirms metadata review remains not performed.
+- Audit confirms prohibited-action counters remain zero.
 - Manifest and continuity docs keep live readiness `BLOCKED`, native execution
-  `NOT_IMPLEMENTED`, and runtime blocker
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Any implemented parser requires independent implementation audit before
-  first use against the compiled artifact.
+  `NOT_IMPLEMENTED`, runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and current gate
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.

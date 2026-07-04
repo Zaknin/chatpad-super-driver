@@ -8433,3 +8433,108 @@
   task that creates the parser but does not run it against the compiled
   artifact unless explicitly allowed. Do not perform metadata review or
   runtime/native/device/driver activity.
+
+## 2026-07-04 20:16 +04:00 - Static metadata-parser implementation
+
+- **Objective:** Implement the authorized static PE/CLI metadata parser after
+  the accepted design-audit gate. Create parser source, project, evidence
+  schema, synthetic fixtures, validation harness, manifest binding, and
+  continuity updates without running the parser against the real compile-only
+  artifact or performing metadata review.
+- **Starting branch and commit:** Started from
+  `feature/runtime-bringup-static-metadata-parser-design-audit-acceptance` at
+  `27d4640069808121ee74749940392d2df6c8e746`, clean and `0/0` with upstream.
+  Created
+  `feature/runtime-bringup-static-metadata-parser-implementation` from that
+  commit.
+- **Investigation summary:** Verified the authorized transition state before
+  implementation: current gate
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION`,
+  runtime blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live
+  readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, parser
+  implementation `NOT_IMPLEMENTED`, parser execution `NOT_PERFORMED`, metadata
+  review `NOT_PERFORMED`, and real artifact opening/parsing/hash verification
+  not performed. Compared the implementation design, design-gate docs,
+  manifest generator, manifest validator, exact/offline gate producers, and
+  readiness producer against the live repository before editing.
+- **Files created or modified:** Added
+  `tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj`,
+  `tools/StaticMetadataParser/Program.cs`,
+  `tools/Test-ChatpadStaticMetadataParser.ps1`, and
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`. Modified
+  `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`,
+  `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PORTING-PLAN.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`,
+  `docs/WORKLOG.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.Contracts.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/Invoke-ChatpadExactInstanceBindingRestoration.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Implementation details:** `Chatpad.StaticMetadataParser` is an isolated
+  .NET 9 console tool that uses `System.Reflection.Metadata` and
+  `System.Reflection.PortableExecutable.PEReader`/`MetadataReader` for static
+  PE/CLI metadata only. It accepts explicit no-load/no-reflection/no-execute/
+  no-native-invoke flags, rejects unsafe paths and invalid inputs, emits
+  schema-versioned JSON evidence, records assembly identity, target framework,
+  type/method inventory, P/Invoke module/import declarations, entry-point
+  presence, expected-declaration comparisons, defects, diagnostics, and safety
+  counters. The validation harness builds the parser under ignored
+  `artifacts/`, runs a source/project prohibited-pattern guard, builds five
+  synthetic fixtures, and validates expected pass/fail outcomes without using
+  the real compile-only artifact.
+- **Gate transition:** Current gate is now
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`. Parser
+  implementation is `IMPLEMENTED_PENDING_AUDIT`; parser execution is
+  `SYNTHETIC_FIXTURES_ONLY`; metadata review remains `NOT_PERFORMED`; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  runtime blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Validation results before final regeneration:**
+  `tools\Test-ChatpadStaticMetadataParser.ps1` passed with five synthetic
+  fixtures, sixty-five assertions, zero failed fixtures, and zero prohibited
+  action counters. Cross-runtime manifest validation passed under Windows
+  PowerShell and PowerShell 7. Targeted status regression rejected 24/24
+  mutated manifests across both engines. Changed PowerShell files parsed with
+  zero syntax errors under both engines. `tools\Test-RepositorySafety.ps1`
+  passed under both engines with deployment, signing, packaging, certificate,
+  key, Windows mutation, device query, hardware access, unexpected tracked
+  artifact, and tracked evidence counts all `0`. `git diff --check` reported
+  no whitespace errors. Parser source prohibited-pattern search returned no
+  matches; broader changed-file matches were existing design-gate/static-audit
+  strings and synthetic fixture declarations.
+- **Command issues:** Full `-RunCorruptionRegression` manifest validation was
+  attempted under Windows PowerShell but timed out before producing a complete
+  result. The timed-out validation processes were stopped, and this regression
+  is not counted as passing. A separate targeted negative regression was used
+  for the new parser implementation gate/status and real-artifact safety
+  fields.
+- **Ignored evidence artifacts:** Implementation evidence is under
+  `artifacts/static-metadata-parser-implementation/`, including parser build
+  output, synthetic fixture sources/outputs, individual parser evidence files,
+  aggregate synthetic validation evidence, manifest generation/validation
+  outputs, syntax summaries, repository-safety outputs, and status-regression
+  outputs.
+- **Safety:** No real compile-only artifact opening, parsing, or hash
+  verification; metadata review; assembly loading; runtime reflection;
+  compiled artifact execution; native DLL loading; entry-point resolution;
+  native or SetupAPI/Newdev invocation; device query; exact-instance or
+  hardware access; Windows mutation; driver build/link/sign/CAT/package/
+  stage/install/load/unload/bind/restore/restart/enable/disable/remove;
+  production driver/INF/source/project mutation; binary change; or `legacy/`
+  change occurred.
+- **Commit and push:** Pending at entry write time. The final commit, push,
+  upstream equality, and clean status are recorded in the final response after
+  final manifest regeneration and validation.
+- **Next task:** Perform an independent read-only audit of the static
+  metadata-parser implementation. Do not run the parser against the real
+  compile-only native interop artifact, open/hash/parse that artifact, perform
+  metadata review, load or reflect over compiled output, execute it, invoke
+  native APIs, query devices, mutate Windows, or perform driver actions.
