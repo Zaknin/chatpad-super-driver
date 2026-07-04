@@ -22,12 +22,17 @@ separate implementation task added the static parser source and validated it
 only against synthetic fixtures. The first implementation audit failed because
 the parser did not fail closed against real compile-only artifact paths under
 the current gate and because safety flags were parsed but not authoritatively
-enforced. The remediation adds a pre-read real-artifact path gate and immutable
-static-only safety policy, but the remediated implementation still requires a
-fresh independent audit. It does not authorize parser execution against the
-real compiled artifact, artifact opening, artifact parsing, artifact hashing,
-metadata review, assembly loading, reflection, execution, native invocation,
-device query, Windows mutation, or driver actions.
+enforced. The first remediation added a pre-read input gate and immutable
+static-only safety policy. A second independent audit failed because
+`--expected` could still reach file I/O without scope authorization and
+`--output` could target unsafe or protected paths. The file-scope remediation
+centrally classifies all three file-bearing options before caller-selected I/O,
+uses separate read and write policies, and forbids output overwrite. The
+implementation still requires a fresh independent audit. It does not authorize
+parser execution against the real compiled artifact, artifact opening,
+parsing, hashing, writing, metadata review, assembly loading, reflection,
+execution, native invocation, device query, Windows mutation, or driver
+actions.
 
 ## 2. Investigation and technology decision
 
@@ -84,18 +89,22 @@ native-interoperability projects, has no post-build/run target, and uses no
 third-party package.
 
 Implementation, build, and synthetic testing have occurred only in this parser
-scope. The remediated validation evidence is
-`artifacts/logs/static-metadata-parser-implementation-remediation/static-metadata-parser-synthetic-validation.json`.
-It covers synthetic fixtures, real-artifact-like pre-read rejection, and
-immutable safety-policy rejection. First use against the real compile-only
-artifact remains a separate authorization boundary after independent
-implementation audit.
+scope. The current remediation validation evidence is
+`artifacts/logs/static-metadata-parser-file-scope-remediation/static-metadata-parser-synthetic-validation.json`.
+It covers synthetic fixtures; `--input`, `--expected`, and `--output`
+pre-I/O rejection; immutable safety-policy rejection; and create-new output
+semantics. First use against the real compile-only artifact remains a separate
+authorization boundary after independent implementation audit.
 
-## 4. Input and identity contract
+## 4. File-scope and identity contract
 
-Under the current audit gate, the parser accepts exactly one input path only
-when that path resolves under a parser-specific synthetic fixture root in
-ignored `artifacts/logs/` output. It must reject before file read/hash/parse:
+Under the current audit gate, a central two-phase preflight first classifies
+all file-bearing paths lexically, then performs contained reparse/existence
+checks. `--input` and `--expected` are read paths accepted only below a
+parser-specific synthetic `fixtures/` root in ignored `artifacts/logs/`.
+`--output` is a write path accepted only below a parser-specific ignored
+evidence root in `artifacts/logs/`. The parser must reject before unauthorized
+read, hash, parse, or write:
 
 - paths under `artifacts/compile-only/native-interop`;
 - the real compile-only output DLL name
@@ -103,7 +112,14 @@ ignored `artifacts/logs/` output. It must reject before file read/hash/parse:
 - paths outside the approved synthetic fixture scope;
 - relative traversal, mixed slashes, and case variants that normalize to a
   blocked path;
+- alternate-data-stream syntax;
 - reparse points and symlinks.
+
+The write policy additionally rejects output equal to either read path,
+existing output files, tracked or production paths, paths outside parser
+evidence roots, and protected artifact names in any path component. Evidence
+is written with `FileMode.CreateNew`; an unsafe output path receives a
+fail-closed stderr defect and no output file.
 
 A future real-artifact metadata-review task would require a separate explicit
 authorization and a different input contract. That later task must still
@@ -149,7 +165,8 @@ When later authorized, the parser must:
 7. dispose the stream and reader deterministically;
 8. fail closed on I/O, malformed-image, bounds, decoding, timeout, memory, or
    unexpected exceptions;
-9. emit no file other than the caller-selected JSON evidence path.
+9. emit no file other than the preflight-authorized JSON evidence path;
+10. create evidence output only with no-overwrite semantics.
 
 The caller must run the future parser with a bounded timeout and an isolated
 ignored output directory. Timeout, crash, partial JSON, or extra files are
@@ -214,12 +231,12 @@ Future parser source and transitive dependencies must not use:
 
 The remediated parser enforces this as an immutable static-only safety policy.
 Safety behavior is not user-controlled; legacy `--no-*` safety options and
-contradictory `--allow-*` options are rejected before input read. Evidence
-records `safetyPolicyMode: IMMUTABLE_STATIC_ONLY`, the current gate, the
-allowed input scope, and pre-read rejection decisions. Safety counters remain
-the proof surface for prohibited runtime, native, device, Windows mutation, and
-driver actions. Safety guarantee and occurrence booleans are computed from the
-enforced policy and those counters.
+contradictory `--allow-*` options are rejected before input or expectation
+read. Evidence records `safetyPolicyMode: IMMUTABLE_STATIC_ONLY`, the current
+gate, all three path decisions, and read/hash/parse/write counters. Safety
+counters remain the proof surface for prohibited runtime, native, device,
+Windows mutation, and driver actions. Safety guarantee and occurrence booleans
+are computed from the enforced policy and those counters.
 
 ## 9. Required prohibited-pattern guard
 

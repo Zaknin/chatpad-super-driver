@@ -4,6 +4,34 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Centrally gate every static-parser file path
+
+**Decision:** Under
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`, classify every
+file-bearing parser option in one preflight before caller-selected file I/O.
+`--input` and `--expected` use the same synthetic-fixture read policy.
+`--output` uses a parser-evidence-only write policy, rejects read/write
+collisions and existing targets, and writes with `FileMode.CreateNew`.
+
+**Rationale:** The second independent implementation audit proved that
+input-only authorization was not a complete file boundary: `--expected`
+reached `File.OpenRead`, while `--output` could overwrite an unsafe or
+protected path. Separate ad hoc checks allow future file-bearing options to
+escape policy and do not provide complete pre-I/O evidence.
+
+**Alternatives rejected:** Gating only the primary input, trusting callers to
+choose an expectation or output path, allowing overwrite inside evidence
+roots, relying only on reparse-point detection, emitting rejection evidence to
+an unsafe requested output, or advancing to real-artifact metadata review.
+
+**Consequences:** All present and future file-bearing options must be added to
+the central classifier. Unsafe output produces no requested output file.
+Synthetic evidence records each path decision and separate read/hash/parse/
+write counters. Parser implementation remains `IMPLEMENTED_PENDING_AUDIT`;
+parser execution remains `SYNTHETIC_FIXTURES_ONLY`; real-artifact use and
+metadata review remain unauthorized; live readiness remains `BLOCKED`; native
+execution remains `NOT_IMPLEMENTED`.
+
 ## 2026-07-04 - Fail-close static parser artifact scope under audit gate
 
 **Decision:** Under

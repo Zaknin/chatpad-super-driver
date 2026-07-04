@@ -3,7 +3,7 @@ param(
     [string]$OutputPath='docs/evidence/runtime-bringup-readiness-manifest.json',
     [Parameter(Mandatory)][string]$ImplementationCommit,
     [Parameter(Mandatory)][string]$SuiteResultPath,
-    [string]$ParserEvidencePath='artifacts/logs/static-metadata-parser-implementation-remediation/static-metadata-parser-synthetic-validation.json',
+    [string]$ParserEvidencePath='artifacts/logs/static-metadata-parser-file-scope-remediation/static-metadata-parser-synthetic-validation.json',
     [switch]$NoArtifactOpenDesignGateAudit
 )
 Set-StrictMode -Version Latest
@@ -135,7 +135,7 @@ $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $parserEvidenceRelative=[IO.Path]::GetFullPath($ParserEvidencePath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-static-metadata-parser-synthetic-validation $parserEvidenceRelative ignored PASS))
 $parserEvidence=Get-Content -LiteralPath ([IO.Path]::GetFullPath($ParserEvidencePath)) -Raw|ConvertFrom-Json
-if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.real_artifact_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
+if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY'-or$parserEvidence.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY'-or$parserEvidence.real_artifact_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.all_file_bearing_options_centrally_scoped-ne$true-or$parserEvidence.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.pre_io_rejection_tests-ne'PASS'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.real_compile_only_artifact_write_attempted-ne$false-or$parserEvidence.real_compile_only_artifact_write_completed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
     throw 'Parser synthetic-fixture evidence is not a passing no-real-artifact parser implementation validation record.'
 }
 $parserEvidenceIdentity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path ([IO.Path]::GetFullPath($ParserEvidencePath)) -HashPolicy auto -CommitRepresented $ImplementationCommit -State ignored
@@ -240,6 +240,7 @@ $manifest=[pscustomobject][ordered]@{
             artifact_opening_status='NOT_PERFORMED'
             artifact_parsing_status='NOT_PERFORMED'
             artifact_hash_verification_status='NOT_PERFORMED'
+            artifact_write_status='NOT_PERFORMED'
             assembly_loading_status='NOT_PERFORMED'
             runtime_reflection_status='NOT_PERFORMED'
             compiled_artifact_execution_status='NOT_PERFORMED'
@@ -263,11 +264,21 @@ $manifest=[pscustomobject][ordered]@{
             synthetic_assertion_count=[int]$parserEvidence.assertion_count
             failed_fixture_count=[int]$parserEvidence.failed_fixture_count
             real_artifact_path_gate_status=[string]$parserEvidence.real_artifact_path_gate_status
+            all_file_bearing_options_centrally_scoped=[bool]$parserEvidence.all_file_bearing_options_centrally_scoped
+            expected_path_gate_status=[string]$parserEvidence.expected_path_gate_status
+            output_path_gate_status=[string]$parserEvidence.output_path_gate_status
             allowed_input_scope=[string]$parserEvidence.allowed_input_scope
+            allowed_expected_scope=[string]$parserEvidence.allowed_expected_scope
+            allowed_output_scope=[string]$parserEvidence.allowed_output_scope
+            pre_io_rejection_tests=[string]$parserEvidence.pre_io_rejection_tests
             pre_read_rejection_tests=[string]$parserEvidence.pre_read_rejection_tests
             real_artifact_like_rejection_count=[int]$parserEvidence.real_artifact_like_rejection_count
             real_artifact_like_rejection_not_run_count=[int]$parserEvidence.real_artifact_like_rejection_not_run_count
             failed_real_artifact_like_rejection_count=[int]$parserEvidence.failed_real_artifact_like_rejection_count
+            expected_path_rejection_count=[int]$parserEvidence.expected_path_rejection_count
+            failed_expected_path_rejection_count=[int]$parserEvidence.failed_expected_path_rejection_count
+            output_path_rejection_count=[int]$parserEvidence.output_path_rejection_count
+            failed_output_path_rejection_count=[int]$parserEvidence.failed_output_path_rejection_count
             safety_policy_mode=[string]$parserEvidence.safety_policy_mode
             safety_policy_enforced=[bool]$parserEvidence.safety_policy_enforced
             safety_option_rejection_count=[int]$parserEvidence.safety_option_rejection_count
@@ -277,6 +288,8 @@ $manifest=[pscustomobject][ordered]@{
             real_compile_only_artifact_opened=$false
             real_compile_only_artifact_parsed=$false
             real_compile_only_artifact_hash_computed=$false
+            real_compile_only_artifact_write_attempted=$false
+            real_compile_only_artifact_write_completed=$false
             assembly_loading_occurred=$false
             runtime_reflection_occurred=$false
             compiled_artifact_execution_occurred=$false
@@ -289,6 +302,8 @@ $manifest=[pscustomobject][ordered]@{
         artifact_bytes_opened=$false
         artifact_parsing_authorized=$false
         artifact_parsing_performed=$false
+        artifact_writing_authorized=$false
+        artifact_writing_occurred=$false
         assembly_loading_authorized=$false
         assembly_loading_occurred=$false
         runtime_reflection_authorized=$false

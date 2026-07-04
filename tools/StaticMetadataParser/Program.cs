@@ -33,6 +33,14 @@ internal static class Program
         }
 
         Evidence evidence = Evidence.Create(options);
+        ApplyFileScopePreflight(options, evidence);
+        if (evidence.OutputPathDecision.Decision == "REJECTED")
+        {
+            Defect outputDefect = evidence.Defects.First(defect => defect.Location == "output");
+            Console.Error.WriteLine(outputDefect.Code + ": " + outputDefect.Message);
+            return 64;
+        }
+
         try
         {
             Run(options, evidence);
@@ -41,8 +49,9 @@ internal static class Program
         {
             evidence.Result = "FAIL";
             evidence.ResultCode = "UNEXPECTED_PARSER_FAILURE";
-            evidence.Diagnostics.Add(Diagnostic.Error("unexpected-parser-failure", ex.GetType().FullName, ex.Message));
-            evidence.Defects.Add(Defect.Create("UNEXPECTED_PARSER_FAILURE", "parser", "No unexpected parser failure", ex.GetType().FullName, ex.Message));
+            string exceptionType = ex.GetType().FullName ?? ex.GetType().Name;
+            evidence.Diagnostics.Add(Diagnostic.Error("unexpected-parser-failure", exceptionType, ex.Message));
+            evidence.Defects.Add(Defect.Create("UNEXPECTED_PARSER_FAILURE", "parser", "No unexpected parser failure", exceptionType, ex.Message));
         }
         int writeFailureExitCode = 0;
         try
@@ -66,8 +75,6 @@ internal static class Program
     private static void Run(ParserOptions options, Evidence evidence)
     {
         ValidateSafetyPolicy(options, evidence);
-        ValidateInputScope(options, evidence);
-        ValidateOutputPath(options.OutputPath, evidence);
 
         if (evidence.Defects.Count != 0)
         {
@@ -88,7 +95,7 @@ internal static class Program
         ExpectedMetadata? expected = null;
         if (!string.IsNullOrWhiteSpace(options.ExpectedPath))
         {
-            expected = ExpectedMetadata.Load(options.ExpectedPath);
+            expected = ExpectedMetadata.Load(options.ExpectedPath, evidence);
             evidence.InputIdentitySource = expected.InputIdentitySource;
             evidence.ExpectedDeclarationCount = expected.ExpectedDeclarations.Count;
             evidence.ExpectedModules = expected.ExpectedDeclarations
@@ -126,6 +133,8 @@ internal static class Program
 
         try
         {
+            evidence.PeParseAttempted = true;
+            evidence.SafetyCounters.PeParseAttempted = 1;
             using MemoryStream stream = new(bytes, writable: false);
             using PEReader peReader = new(stream, PEStreamOptions.LeaveOpen);
             if (!peReader.HasMetadata)
@@ -137,6 +146,8 @@ internal static class Program
                 return;
             }
 
+            evidence.MetadataParseAttempted = true;
+            evidence.SafetyCounters.MetadataParseAttempted = 1;
             MetadataReader reader = peReader.GetMetadataReader();
             evidence.MetadataParsed = true;
             evidence.SafetyCounters.MetadataParsed = 1;
@@ -176,7 +187,7 @@ internal static class Program
         }
     }
 
-    private static void ValidateInputScope(ParserOptions options, Evidence evidence)
+    private static void ApplyFileScopePreflight(ParserOptions options, Evidence evidence)
     {
         evidence.CurrentGate = CurrentGate;
         evidence.AllowedInputScope = SyntheticFixtureInputScope;
@@ -186,60 +197,187 @@ internal static class Program
         string? repositoryRoot = FindRepositoryRoot();
         if (string.IsNullOrWhiteSpace(repositoryRoot))
         {
-            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
-            evidence.InputScopeDecision = "REJECTED";
-            evidence.InputScopeReason = "REPOSITORY_ROOT_NOT_FOUND";
-            evidence.Defects.Add(Defect.Create("PARSER_INPUT.REPOSITORY_ROOT_NOT_FOUND", "input", "Repository root containing AGENTS.md", Directory.GetCurrentDirectory(), "The parser could not identify the repository root for input scope validation."));
+            evidence.InputPathDecision = PathScopeDecision.Rejected("input", options.OriginalInputPath, options.InputPath, "REPOSITORY_ROOT_NOT_FOUND");
+            evidence.ExpectedPathDecision = string.IsNullOrWhiteSpace(options.ExpectedPath)
+                ? PathScopeDecision.NotProvided("expected")
+                : PathScopeDecision.Rejected("expected", options.OriginalExpectedPath, options.ExpectedPath, "REPOSITORY_ROOT_NOT_FOUND");
+            evidence.OutputPathDecision = PathScopeDecision.Rejected("output", options.OriginalOutputPath, options.OutputPath, "REPOSITORY_ROOT_NOT_FOUND");
+            AddPathDefect(evidence, evidence.InputPathDecision);
+            AddPathDefect(evidence, evidence.ExpectedPathDecision);
+            AddPathDefect(evidence, evidence.OutputPathDecision);
             return;
         }
 
         string normalizedRoot = Path.GetFullPath(repositoryRoot);
-        string normalizedInput = Path.GetFullPath(options.InputPath);
-        string normalizedRealRoot = Path.GetFullPath(Path.Combine(normalizedRoot, RealArtifactRelativeRoot.Replace('/', Path.DirectorySeparatorChar)));
         evidence.RepositoryRoot = normalizedRoot;
-        evidence.InputNormalizedPath = normalizedInput;
+        evidence.InputPathDecision = ClassifyReadPath("input", options.OriginalInputPath, options.InputPath, normalizedRoot);
+        evidence.ExpectedPathDecision = string.IsNullOrWhiteSpace(options.ExpectedPath)
+            ? PathScopeDecision.NotProvided("expected")
+            : ClassifyReadPath("expected", options.OriginalExpectedPath, options.ExpectedPath, normalizedRoot);
+        evidence.OutputPathDecision = ClassifyWritePath(options.OriginalOutputPath, options.OutputPath, normalizedRoot);
 
-        string? reparsePoint = FindReparsePointInParentPath(normalizedRoot, normalizedInput);
-        if (!string.IsNullOrWhiteSpace(reparsePoint))
+        if (evidence.OutputPathDecision.Decision == "ALLOWED" &&
+            (PathsEqual(options.OutputPath, options.InputPath) ||
+             (!string.IsNullOrWhiteSpace(options.ExpectedPath) && PathsEqual(options.OutputPath, options.ExpectedPath))))
         {
-            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
-            evidence.InputScopeDecision = "REJECTED";
-            evidence.InputScopeReason = "REPARSE_POINT_NOT_AUTHORIZED";
-            evidence.Defects.Add(Defect.Create("INPUT_REPARSE_POINT", "input", "No reparse-point path components", reparsePoint, "Input paths that traverse a symbolic link, junction, or other reparse point are rejected before file access."));
+            evidence.OutputPathDecision = PathScopeDecision.Rejected(
+                "output",
+                options.OriginalOutputPath,
+                options.OutputPath,
+                "READ_WRITE_PATH_COLLISION");
+        }
+
+        PathScopeDecision[] decisions =
+        [
+            evidence.InputPathDecision,
+            evidence.ExpectedPathDecision,
+            evidence.OutputPathDecision
+        ];
+
+        // All lexical classifications above complete before reparse/existence checks below.
+        foreach (PathScopeDecision decision in decisions.Where(item => item.Decision == "ALLOWED"))
+        {
+            string? reparsePoint = FindReparsePointInPath(normalizedRoot, decision.NormalizedPath);
+            if (!string.IsNullOrWhiteSpace(reparsePoint))
+            {
+                PathScopeDecision rejected = PathScopeDecision.Rejected(
+                    decision.Role,
+                    decision.OriginalPath,
+                    decision.NormalizedPath,
+                    "REPARSE_POINT_NOT_AUTHORIZED");
+                SetPathDecision(evidence, rejected);
+            }
+        }
+
+        foreach (PathScopeDecision decision in new[]
+                 {
+                     evidence.InputPathDecision,
+                     evidence.ExpectedPathDecision,
+                     evidence.OutputPathDecision
+                 })
+        {
+            AddPathDefect(evidence, decision);
+        }
+
+        evidence.InputClassification = evidence.InputPathDecision.Decision == "ALLOWED"
+            ? "SYNTHETIC_FIXTURE_CANDIDATE"
+            : "INPUT_SCOPE_REJECTED";
+        evidence.InputScopeDecision = evidence.InputPathDecision.Decision;
+        evidence.InputScopeReason = evidence.InputPathDecision.Reason;
+    }
+
+    private static PathScopeDecision ClassifyReadPath(
+        string role,
+        string originalPath,
+        string normalizedPath,
+        string repositoryRoot)
+    {
+        string normalizedRealRoot = Path.GetFullPath(Path.Combine(
+            repositoryRoot,
+            RealArtifactRelativeRoot.Replace('/', Path.DirectorySeparatorChar)));
+        if (HasAlternateDataStreamSyntax(normalizedPath))
+        {
+            return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "ALTERNATE_DATA_STREAM_NOT_AUTHORIZED");
+        }
+
+        if (IsUnderDirectory(normalizedPath, normalizedRealRoot) ||
+            ContainsProtectedArtifactName(normalizedPath))
+        {
+            return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "REAL_ARTIFACT_NOT_AUTHORIZED");
+        }
+
+        if (!Path.IsPathFullyQualified(originalPath))
+        {
+            return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "PATH_NOT_ABSOLUTE");
+        }
+
+        if (!IsAllowedSyntheticFixturePath(repositoryRoot, normalizedPath))
+        {
+            return PathScopeDecision.Rejected(role, originalPath, normalizedPath, "OUTSIDE_SYNTHETIC_FIXTURE_SCOPE");
+        }
+
+        return PathScopeDecision.Allowed(role, originalPath, normalizedPath, "SYNTHETIC_FIXTURE_ROOT");
+    }
+
+    private static PathScopeDecision ClassifyWritePath(
+        string originalPath,
+        string normalizedPath,
+        string repositoryRoot)
+    {
+        string normalizedRealRoot = Path.GetFullPath(Path.Combine(
+            repositoryRoot,
+            RealArtifactRelativeRoot.Replace('/', Path.DirectorySeparatorChar)));
+        if (HasAlternateDataStreamSyntax(normalizedPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "ALTERNATE_DATA_STREAM_NOT_AUTHORIZED");
+        }
+
+        if (IsUnderDirectory(normalizedPath, normalizedRealRoot) ||
+            ContainsProtectedArtifactName(normalizedPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "REAL_ARTIFACT_NOT_AUTHORIZED");
+        }
+
+        if (!Path.IsPathFullyQualified(originalPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "PATH_NOT_ABSOLUTE");
+        }
+
+        if (!IsAllowedParserEvidencePath(repositoryRoot, normalizedPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "OUTSIDE_PARSER_EVIDENCE_SCOPE");
+        }
+
+        string? parent = Path.GetDirectoryName(normalizedPath);
+        if (string.IsNullOrWhiteSpace(parent) || !Directory.Exists(parent))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "OUTPUT_PARENT_MISSING");
+        }
+
+        if (File.Exists(normalizedPath))
+        {
+            return PathScopeDecision.Rejected("output", originalPath, normalizedPath, "OUTPUT_ALREADY_EXISTS");
+        }
+
+        return PathScopeDecision.Allowed("output", originalPath, normalizedPath, "PARSER_EVIDENCE_ROOT");
+    }
+
+    private static void AddPathDefect(Evidence evidence, PathScopeDecision decision)
+    {
+        if (decision.Decision != "REJECTED")
+        {
             return;
         }
 
-        if (IsUnderDirectory(normalizedInput, normalizedRealRoot) ||
-            string.Equals(Path.GetFileName(normalizedInput), RealArtifactFileName, StringComparison.OrdinalIgnoreCase))
+        string code = decision.Role switch
         {
-            evidence.InputClassification = "REAL_ARTIFACT_SCOPE_REJECTED";
-            evidence.InputScopeDecision = "REJECTED";
-            evidence.InputScopeReason = "REAL_ARTIFACT_NOT_AUTHORIZED";
-            evidence.Defects.Add(Defect.Create("PARSER_INPUT.REAL_ARTIFACT_NOT_AUTHORIZED", "input", SyntheticFixtureInputScope, normalizedInput, "The current gate does not authorize opening, hashing, parsing, or reviewing the real compile-only artifact."));
-            return;
-        }
+            "input" => "PARSER_INPUT_PATH.NOT_AUTHORIZED",
+            "expected" => "PARSER_EXPECTED_PATH.NOT_AUTHORIZED",
+            "output" => "PARSER_OUTPUT_PATH.NOT_AUTHORIZED",
+            _ => "PARSER_FILE_PATH.NOT_AUTHORIZED"
+        };
+        evidence.Defects.Add(Defect.Create(
+            code,
+            decision.Role,
+            decision.Role == "output" ? "Parser-specific ignored evidence path" : "Parser-specific synthetic fixture path",
+            decision.NormalizedPath,
+            "File path rejected before caller-selected file I/O: " + decision.Reason));
+    }
 
-        if (!Path.IsPathFullyQualified(options.OriginalInputPath))
+    private static void SetPathDecision(Evidence evidence, PathScopeDecision decision)
+    {
+        switch (decision.Role)
         {
-            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
-            evidence.InputScopeDecision = "REJECTED";
-            evidence.InputScopeReason = "INPUT_PATH_NOT_ABSOLUTE";
-            evidence.Defects.Add(Defect.Create("INPUT_PATH_NOT_ABSOLUTE", "input", "Absolute path", options.OriginalInputPath, "Input path must be absolute."));
-            return;
+            case "input":
+                evidence.InputPathDecision = decision;
+                break;
+            case "expected":
+                evidence.ExpectedPathDecision = decision;
+                break;
+            case "output":
+                evidence.OutputPathDecision = decision;
+                break;
         }
-
-        if (!IsAllowedSyntheticFixturePath(normalizedRoot, normalizedInput))
-        {
-            evidence.InputClassification = "INPUT_SCOPE_REJECTED";
-            evidence.InputScopeDecision = "REJECTED";
-            evidence.InputScopeReason = "OUTSIDE_SYNTHETIC_FIXTURE_SCOPE";
-            evidence.Defects.Add(Defect.Create("PARSER_INPUT.OUTSIDE_SYNTHETIC_FIXTURE_SCOPE", "input", "Parser-specific ignored synthetic fixture root", normalizedInput, "Under the current gate parser input is limited to parser-specific synthetic fixture roots under artifacts/logs/."));
-            return;
-        }
-
-        evidence.InputClassification = "SYNTHETIC_FIXTURE_CANDIDATE";
-        evidence.InputScopeDecision = "ALLOWED";
-        evidence.InputScopeReason = "SYNTHETIC_FIXTURE_ROOT";
     }
 
     private static void ValidateInputPath(string inputPath, Evidence evidence)
@@ -268,11 +406,6 @@ internal static class Program
             evidence.Defects.Add(Defect.Create("INPUT_NOT_FILE", "input", "Regular file", inputPath, "Input path is a directory."));
         }
 
-        if ((info.Attributes & FileAttributes.ReparsePoint) != 0)
-        {
-            evidence.Defects.Add(Defect.Create("INPUT_REPARSE_POINT", "input", "Non-reparse regular file", inputPath, "Reparse points are rejected."));
-        }
-
         if (info.Length <= 0)
         {
             evidence.Defects.Add(Defect.Create("INPUT_EMPTY", "input", "Non-empty file", info.Length.ToString(CultureInfo.InvariantCulture), "Input file is empty."));
@@ -281,21 +414,6 @@ internal static class Program
         if (info.Length > MaxInputBytes)
         {
             evidence.Defects.Add(Defect.Create("INPUT_TOO_LARGE", "input", MaxInputBytes.ToString(CultureInfo.InvariantCulture), info.Length.ToString(CultureInfo.InvariantCulture), "Input exceeds parser size limit."));
-        }
-    }
-
-    private static void ValidateOutputPath(string outputPath, Evidence evidence)
-    {
-        if (!Path.IsPathFullyQualified(outputPath))
-        {
-            evidence.Defects.Add(Defect.Create("OUTPUT_PATH_NOT_ABSOLUTE", "output", "Absolute path", outputPath, "Output path must be absolute."));
-            return;
-        }
-
-        string? parent = Path.GetDirectoryName(outputPath);
-        if (string.IsNullOrWhiteSpace(parent) || !Directory.Exists(parent))
-        {
-            evidence.Defects.Add(Defect.Create("OUTPUT_PARENT_MISSING", "output", "Existing output directory", outputPath, "Output directory must already exist."));
         }
     }
 
@@ -316,10 +434,35 @@ internal static class Program
 
         string relative = Path.GetRelativePath(artifactsLogs, inputPath);
         string[] segments = relative.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
-        bool hasParserSpecificRoot = segments.Any(segment => segment.Contains("static-metadata-parser", StringComparison.OrdinalIgnoreCase));
-        bool hasFixturesSegment = segments.Any(segment => string.Equals(segment, "fixtures", StringComparison.OrdinalIgnoreCase));
-        return hasParserSpecificRoot && hasFixturesSegment;
+        return segments.Length >= 3 &&
+            IsParserSpecificRootSegment(segments[0]) &&
+            segments.Skip(1).Any(segment => string.Equals(segment, "fixtures", StringComparison.OrdinalIgnoreCase));
     }
+
+    private static bool IsAllowedParserEvidencePath(string repositoryRoot, string outputPath)
+    {
+        string artifactsLogs = Path.GetFullPath(Path.Combine(repositoryRoot, "artifacts", "logs"));
+        if (!IsUnderDirectory(outputPath, artifactsLogs))
+        {
+            return false;
+        }
+
+        string relative = Path.GetRelativePath(artifactsLogs, outputPath);
+        string[] segments = relative.Split(
+            new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
+            StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length >= 2 && IsParserSpecificRootSegment(segments[0]);
+    }
+
+    private static bool IsParserSpecificRootSegment(string segment) =>
+        segment.StartsWith("static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
+        segment.StartsWith("independent-static-metadata-parser-", StringComparison.OrdinalIgnoreCase);
+
+    private static bool ContainsProtectedArtifactName(string path) =>
+        path.Contains(RealArtifactFileName, StringComparison.OrdinalIgnoreCase);
+
+    private static bool PathsEqual(string left, string right) =>
+        string.Equals(Path.GetFullPath(left), Path.GetFullPath(right), StringComparison.OrdinalIgnoreCase);
 
     private static bool IsUnderDirectory(string candidatePath, string directoryPath)
     {
@@ -328,10 +471,17 @@ internal static class Program
         return candidate.StartsWith(directory, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string? FindReparsePointInParentPath(string repositoryRoot, string inputPath)
+    private static string? FindReparsePointInPath(string repositoryRoot, string path)
     {
         string normalizedRoot = Path.GetFullPath(repositoryRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        DirectoryInfo? current = new(Path.GetDirectoryName(Path.GetFullPath(inputPath)) ?? "");
+        string normalizedPath = Path.GetFullPath(path);
+        FileInfo file = new(normalizedPath);
+        if (file.Exists && (file.Attributes & FileAttributes.ReparsePoint) != 0)
+        {
+            return file.FullName;
+        }
+
+        DirectoryInfo? current = new(Path.GetDirectoryName(normalizedPath) ?? "");
 
         while (current is not null && IsUnderDirectory(current.FullName, normalizedRoot))
         {
@@ -611,12 +761,19 @@ internal static class Program
 
     private static void WriteEvidence(string outputPath, Evidence evidence)
     {
+        evidence.OutputWriteAttempted = true;
+        evidence.OutputWriteCompleted = true;
+        evidence.SafetyCounters.OutputWriteAttempted = 1;
+        evidence.SafetyCounters.OutputWriteCompleted = 1;
         JsonSerializerOptions jsonOptions = new()
         {
             WriteIndented = true
         };
         string json = JsonSerializer.Serialize(evidence, jsonOptions);
-        File.WriteAllText(outputPath, json + Environment.NewLine, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        using FileStream stream = new(outputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        using StreamWriter writer = new(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        writer.Write(json);
+        writer.Write(Environment.NewLine);
     }
 }
 
@@ -624,7 +781,9 @@ internal sealed class ParserOptions
 {
     public required string OriginalInputPath { get; init; }
     public required string InputPath { get; init; }
+    public required string OriginalOutputPath { get; init; }
     public required string OutputPath { get; init; }
+    public string OriginalExpectedPath { get; init; } = "";
     public string ExpectedPath { get; init; } = "";
     public string ParserSourceCommit { get; init; } = "UNKNOWN";
     public string ParserBuildIdentity { get; init; } = "UNKNOWN";
@@ -686,7 +845,9 @@ internal sealed class ParserOptions
         {
             OriginalInputPath = input,
             InputPath = Path.GetFullPath(input),
+            OriginalOutputPath = output,
             OutputPath = Path.GetFullPath(output),
+            OriginalExpectedPath = values.TryGetValue("--expected", out string? originalExpected) ? originalExpected : "",
             ExpectedPath = values.TryGetValue("--expected", out string? expected) ? Path.GetFullPath(expected) : "",
             ParserSourceCommit = values.TryGetValue("--parser-source-commit", out string? commit) ? commit : "UNKNOWN",
             ParserBuildIdentity = values.TryGetValue("--parser-build-identity", out string? identity) ? identity : "UNKNOWN",
@@ -701,10 +862,12 @@ internal sealed class ExpectedMetadata
     public bool RequireNoEntryPoint { get; private init; } = true;
     public List<ExpectedDeclaration> ExpectedDeclarations { get; } = [];
 
-    public static ExpectedMetadata Load(string path)
+    public static ExpectedMetadata Load(string path, Evidence evidence)
     {
-        using FileStream stream = File.OpenRead(path);
-        using JsonDocument document = JsonDocument.Parse(stream);
+        byte[] bytes = File.ReadAllBytes(path);
+        evidence.ExpectedBytesRead = true;
+        evidence.SafetyCounters.ExpectedBytesRead = 1;
+        using JsonDocument document = JsonDocument.Parse(bytes);
         JsonElement root = document.RootElement;
         ExpectedMetadata expected = new()
         {
@@ -728,6 +891,26 @@ internal sealed class ExpectedMetadata
 
 internal sealed record ExpectedDeclaration(string Module, string EntryPoint);
 
+internal sealed record PathScopeDecision(
+    string Role,
+    string OriginalPath,
+    string NormalizedPath,
+    string Decision,
+    string Reason)
+{
+    public static PathScopeDecision Allowed(string role, string originalPath, string normalizedPath, string reason) =>
+        new(role, originalPath, normalizedPath, "ALLOWED", reason);
+
+    public static PathScopeDecision Rejected(string role, string originalPath, string normalizedPath, string reason) =>
+        new(role, originalPath, normalizedPath, "REJECTED", reason);
+
+    public static PathScopeDecision NotProvided(string role) =>
+        new(role, "", "", "NOT_PROVIDED", "OPTION_NOT_PROVIDED");
+
+    public static PathScopeDecision NotEvaluated(string role) =>
+        new(role, "", "", "NOT_EVALUATED", "");
+}
+
 internal sealed class Evidence
 {
     public string SchemaVersion { get; init; } = ProgramEvidence.SchemaVersion;
@@ -748,6 +931,9 @@ internal sealed class Evidence
     public string InputPath { get; init; } = "";
     public string OriginalInputPath { get; set; } = "";
     public string InputNormalizedPath { get; set; } = "";
+    public PathScopeDecision InputPathDecision { get; set; } = PathScopeDecision.NotEvaluated("input");
+    public PathScopeDecision ExpectedPathDecision { get; set; } = PathScopeDecision.NotEvaluated("expected");
+    public PathScopeDecision OutputPathDecision { get; set; } = PathScopeDecision.NotEvaluated("output");
     public string InputScopeDecision { get; set; } = "NOT_EVALUATED";
     public string InputScopeReason { get; set; } = "";
     public string InputClassification { get; set; } = "NOT_CLASSIFIED";
@@ -757,10 +943,17 @@ internal sealed class Evidence
     public bool MetadataParsed { get; set; }
     public bool ArtifactBytesRead { get; set; }
     public bool ArtifactHashComputed { get; set; }
+    public bool ExpectedBytesRead { get; set; }
+    public bool ExpectedHashComputed { get; set; }
+    public bool OutputWriteAttempted { get; set; }
+    public bool OutputWriteCompleted { get; set; }
+    public bool PeParseAttempted { get; set; }
+    public bool MetadataParseAttempted { get; set; }
     public string MetadataReviewStatus { get; init; } = "NOT_PERFORMED";
     public string RealArtifactOpenStatus { get; init; } = "NOT_PERFORMED";
     public string RealArtifactParseStatus { get; init; } = "NOT_PERFORMED";
     public string RealArtifactHashStatus { get; init; } = "NOT_PERFORMED";
+    public string RealArtifactWriteStatus { get; init; } = "NOT_PERFORMED";
     public bool StaticOnly => SafetyPolicyEnforced &&
         NoLoadGuarantee &&
         NoRuntimeReflectionGuarantee &&
@@ -860,6 +1053,12 @@ internal sealed class SafetyCounters
 {
     public int ArtifactBytesRead { get; set; }
     public int ArtifactHashComputed { get; set; }
+    public int ExpectedBytesRead { get; set; }
+    public int ExpectedHashComputed { get; set; }
+    public int OutputWriteAttempted { get; set; }
+    public int OutputWriteCompleted { get; set; }
+    public int PeParseAttempted { get; set; }
+    public int MetadataParseAttempted { get; set; }
     public int MetadataParsed { get; set; }
     public int AssemblyLoad { get; set; }
     public int RuntimeReflection { get; set; }

@@ -2,98 +2,73 @@
 
 ## Objective
 
-Perform a fresh independent read-only audit of the remediated static PE/CLI
-metadata parser implementation.
+Perform a fresh independent, strict read-only audit of the remediated static
+PE/CLI metadata parser file-scope implementation.
 
-Do not run the parser against the real compile-only native interop compiled
-artifact. Do not open, parse, hash, load, reflect over, execute, or invoke the
-real artifact. Do not perform metadata review.
+## Required Starting State
 
-## Required Starting Point
-
+- Repository: `C:\Dev\chatpad-super-driver`.
 - Branch:
-  `feature/runtime-bringup-static-metadata-parser-implementation-remediation`.
-- Starting commit: the pushed remediation commit containing parser
-  fail-closed input-scope enforcement, immutable safety-policy enforcement,
-  updated parser validation, regenerated readiness manifest, and continuity
-  updates.
-- Remediation base commit:
-  `47b9ada4255b310db5234446404975165a971678`.
-- Failed implementation audit finding:
-  the parser at `47b9ada4255b310db5234446404975165a971678` could be pointed at
-  real compile-only artifact paths under the current gate and parsed safety
-  flags without enforcing them.
-- Verify exact HEAD, upstream, `0/0` ahead/behind, clean status, and unchanged
-  native declarations, compile-only harness/runner, runtime adapter,
-  production driver source, INF, production project/solution files outside the
-  parser project, binaries, frozen artifacts, and `legacy/`.
+  `feature/runtime-bringup-static-metadata-parser-file-scope-remediation`.
+- Starting commit: the branch HEAD containing the central file-scope
+  remediation, synthetic evidence, manifest, and this continuation document.
+- Base commit: `0036474fc241c0ad1957470b87a7443a69d28e2e`.
+- Working tree and index: clean.
+- Upstream: matching branch on `origin`, ahead/behind `0/0`.
 
 ## Current State
 
-- Live readiness: `BLOCKED`.
-- Current gate: `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
+- Current gate:
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Parser technology: `System.Reflection.Metadata` with
-  `PEReader`/`MetadataReader`.
 - Parser implementation: `IMPLEMENTED_PENDING_AUDIT`.
 - Parser execution: `SYNTHETIC_FIXTURES_ONLY`.
-- Parser real-artifact path gate: `IMPLEMENTED_PENDING_AUDIT`.
-- Parser allowed input scope: `SYNTHETIC_FIXTURES_ONLY`.
-- Parser safety policy: `IMMUTABLE_STATIC_ONLY`.
 - Metadata review: `NOT_PERFORMED`.
-- Real artifact opening/parsing/hash verification: `NOT_PERFORMED` and
-  unauthorized.
-- Synthetic and pre-read validation evidence:
-  `artifacts/logs/static-metadata-parser-implementation-remediation/static-metadata-parser-synthetic-validation.json`.
+- Real artifact open/parse/hash/write: `NOT_PERFORMED`.
+- File-bearing options: `--input`, `--expected`, and `--output`.
+- Read policy: parser-specific ignored synthetic fixture roots only.
+- Write policy: parser-specific ignored evidence roots only, create-new and
+  no-overwrite.
 
 ## Inspect First
 
-- `AGENTS.md`
-- `docs/PROJECT-STATE.md`
-- `docs/DECISIONS.md`
-- Latest `docs/WORKLOG.md` entry
-- `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`
-- `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
-- `tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj`
-- `tools/StaticMetadataParser/Program.cs`
-- `tools/Test-ChatpadStaticMetadataParser.ps1`
-- `docs/evidence/runtime-bringup-readiness-manifest.json`
-- `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+1. `AGENTS.md`
+2. `docs/PROJECT-STATE.md`
+3. `docs/DECISIONS.md`
+4. `docs/NEXT-TASK.md`
+5. Latest relevant `docs/WORKLOG.md` entry
+6. `tools/StaticMetadataParser/Program.cs`
+7. `tools/Test-ChatpadStaticMetadataParser.ps1`
+8. `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
+9. `docs/evidence/runtime-bringup-readiness-manifest.json`
+10. `artifacts/logs/static-metadata-parser-file-scope-remediation/static-metadata-parser-synthetic-validation.json`
+11. PowerShell 7 sibling evidence root
+
+## Audit Acceptance Criteria
+
+- Verify every file-bearing option is classified before caller-selected I/O.
+- Verify `--input` and `--expected` reject blocked roots, protected names,
+  traversal, slash/case variants, out-of-scope paths, and reparse points before
+  read/hash/parse.
+- Verify `--output` rejects blocked/protected/out-of-scope paths, read/write
+  collisions, tracked paths, existing files, and reparse paths without
+  creating or overwriting the requested output.
+- Verify evidence counters distinguish input read/hash, expectation read/hash,
+  PE/metadata parse attempts, and output write attempt/completion.
+- Re-run synthetic validation under Windows PowerShell 5.1 and PowerShell 7.
+- Validate the readiness manifest under both runtimes and run targeted
+  parser/manifest negative regressions.
+- Confirm no real artifact open, parse, hash, write, overwrite, or metadata
+  review occurred.
 
 ## Safety Restrictions
 
-- Do not open, parse, or hash the real compile-only native interop compiled
-  artifact.
-- Do not run the parser against the real artifact.
-- Do not perform metadata review.
-- Do not load or reflect over compiled output; do not execute it.
-- Do not use runtime assembly APIs, artifact-targeted `Add-Type`, `dotnet exec`,
-  native DLL loading, entry-point resolution, or native invocation.
-- Do not invoke SetupAPI/Newdev, query devices/hardware, or mutate Windows.
-- Do not build, link, sign, generate CAT files, package, stage, install, load,
-  unload, bind, restore, restart, enable, disable, or remove a driver/device.
-- Do not modify production/native/runtime implementation paths, binaries,
-  frozen artifacts, or `legacy/`.
-
-## Acceptance Criteria
-
-- Audit confirms the parser implementation is static-only and uses
-  `System.Reflection.Metadata`, `PEReader`, and `MetadataReader`.
-- Audit confirms the parser rejects real-artifact-like paths before file read,
-  hash computation, PE parsing, or metadata parsing.
-- Audit confirms current parser input is limited to parser-specific synthetic
-  fixture roots under ignored `artifacts/logs/`.
-- Audit confirms immutable safety policy is enforced and safety options are
-  rejected before input read.
-- Audit confirms the parser was validated only against synthetic fixtures and
-  real-artifact-like path strings.
-- Audit confirms the parser was not run against the real compile-only artifact.
-- Audit confirms real artifact opening/parsing/hash verification remains not
-  performed.
-- Audit confirms metadata review remains not performed.
-- Audit confirms prohibited-action counters remain zero.
-- Manifest and continuity docs keep live readiness `BLOCKED`, native execution
-  `NOT_IMPLEMENTED`, runtime blocker
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and current gate
-  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`.
+Do not run the parser against the real compile-only artifact. Do not open,
+parse, hash, write, overwrite, load, reflect over, or execute that artifact.
+Do not invoke native APIs, query devices, access hardware, mutate Windows, or
+build/link/sign/package/stage/install/load/bind/restore/restart a driver. Do
+not modify native declarations, compile-only harness/runner behavior, runtime
+adapter implementation, production driver source, INF, production
+project/solution files, binaries, frozen artifacts, or `legacy/`.

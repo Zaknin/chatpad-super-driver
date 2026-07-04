@@ -16,12 +16,16 @@ Required evidence fields:
   `systemReflectionMetadataVersion`.
 - `currentGate`, `safetyPolicyMode`, `safetyPolicyEnforced`,
   `allowedInputScope`, `repositoryRoot`, `inputPath`, `inputNormalizedPath`,
+  `inputPathDecision`, `expectedPathDecision`, `outputPathDecision`,
   `inputScopeDecision`, `inputScopeReason`, `inputClassification`,
   `inputSize`, `inputSha256`, and `inputIdentitySource`.
-- `metadataParsed`, `artifactBytesRead`, `artifactHashComputed`, and
+- `metadataParsed`, `artifactBytesRead`, `artifactHashComputed`,
+  `expectedBytesRead`, `expectedHashComputed`, `outputWriteAttempted`,
+  `outputWriteCompleted`, `peParseAttempted`, `metadataParseAttempted`, and
   `staticOnly`.
 - `metadataReviewStatus`, `realArtifactOpenStatus`,
-  `realArtifactParseStatus`, and `realArtifactHashStatus`.
+  `realArtifactParseStatus`, `realArtifactHashStatus`, and
+  `realArtifactWriteStatus`.
 - `noLoadGuarantee`, `noRuntimeReflectionGuarantee`, `noExecutionGuarantee`,
   `noNativeInvocationGuarantee`, `noDeviceQueryGuarantee`, and
   `noWindowsMutationGuarantee`.
@@ -37,17 +41,28 @@ Required evidence fields:
   `actualModules`, `declarationChecks`, `diagnostics`, `defects`, and
   `safetyCounters`.
 
-Parser output is fail-closed. Under
-`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`, input is limited
-to parser-specific synthetic fixture roots under ignored `artifacts/logs/`
-paths. Real-artifact-like paths, the real compile-only output DLL name,
-paths under `artifacts/compile-only/native-interop`, relative traversal into a
-blocked root, paths outside the synthetic fixture scope, reparse points,
-missing input, invalid PE bytes, missing CLI metadata, executable entry
-points, unexpected P/Invoke declarations, malformed expectation files,
-unsupported output paths, and unsupported safety options produce `result: FAIL`
-with defect records. Real-artifact-like and safety-policy rejections occur
-before file read, hash computation, PE parsing, or metadata parsing.
+Parser file access is fail-closed. Under
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT`, one central
+preflight classifies every file-bearing option before caller-selected file I/O:
+
+- `--input` and `--expected` are read paths limited to parser-specific
+  synthetic `fixtures/` roots under ignored `artifacts/logs/`;
+- `--output` is a write path limited to parser-specific ignored evidence
+  roots under `artifacts/logs/`;
+- output may not equal either read path, target an existing file, pass through
+  a reparse point, use alternate-data-stream syntax, resolve outside the
+  evidence root, or contain the protected compile-only DLL name;
+- evidence output uses create-new semantics and never overwrites an existing
+  file.
+
+The second independent implementation audit failed because the prior
+remediation gated only `--input`: `--expected` could reach `File.OpenRead`, and
+`--output` could write outside parser evidence roots. The file-scope
+remediation rejects those channels with
+`PARSER_EXPECTED_PATH.NOT_AUTHORIZED` or
+`PARSER_OUTPUT_PATH.NOT_AUTHORIZED` before input read, expectation read,
+hashing, PE parsing, metadata parsing, or an unsafe output write. When output
+itself is unsafe, no rejection evidence is written to that requested path.
 
 Safety policy is immutable static-only. Safety options are not user-controlled;
 attempted safety options such as legacy `--no-load` or contradictory
@@ -56,8 +71,10 @@ prohibited-action counter is a defect for audit acceptance.
 Safety guarantee and occurrence booleans are computed from the enforced policy
 and their corresponding counters; they are not independent constant claims.
 
-For this implementation task, nonzero `artifactBytesRead`,
-`artifactHashComputed`, and `metadataParsed` counters are allowed only for
-synthetic fixtures created under ignored parser artifact roots. The real
-compile-only native interop artifact remains unopened, unparsed, unhashed, and
-unreviewed.
+For this implementation task, nonzero input/expectation read, input hash,
+PE/metadata parse, and approved output-write counters are allowed only for
+synthetic fixtures and parser evidence under ignored parser artifact roots.
+Rejected read-path tests keep all read/hash/parse counters at zero; rejected
+output-path tests create or overwrite no requested output. The real
+compile-only native interop artifact remains unopened, unparsed, unhashed,
+unwritten, and unreviewed.

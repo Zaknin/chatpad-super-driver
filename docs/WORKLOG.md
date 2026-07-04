@@ -8634,3 +8634,75 @@
 - **Next task:** Perform a fresh independent read-only audit of this remediated
   parser implementation and its pre-read rejection evidence. Keep the real
   artifact and all metadata/native/runtime/device/driver actions unauthorized.
+
+## 2026-07-04 22:25 +04:00 - Static metadata-parser file-scope remediation
+
+- **Objective:** Remediate the second failed independent parser audit by
+  centrally scope-gating every file-bearing option before caller-selected
+  read, hash, parse, or write activity. Keep the real compile-only artifact and
+  all metadata/native/runtime/device/driver actions unauthorized.
+- **Starting state:** Verified
+  `feature/runtime-bringup-static-metadata-parser-implementation-remediation`
+  at `0036474fc241c0ad1957470b87a7443a69d28e2e`, clean, tracking the expected
+  upstream at `0/0`. Created
+  `feature/runtime-bringup-static-metadata-parser-file-scope-remediation`
+  from that exact commit.
+- **Failure reproduction:** Built only the isolated .NET 9 parser under ignored
+  evidence. A nonexistent blocked-root `--expected` probe reached the old
+  `File.OpenRead` path and returned `UNEXPECTED_PARSER_FAILURE` /
+  `DirectoryNotFoundException` with input scope allowed. An isolated unsafe
+  `--output` path containing the protected compile-only DLL name was written
+  successfully. No real artifact path was opened, read, hashed, parsed, or
+  written.
+- **Implementation:** `Program.cs` now performs one two-phase preflight for
+  `--input`, `--expected`, and `--output`. Both read paths are limited to
+  parser-specific ignored synthetic fixture roots. Output is limited to
+  parser-specific ignored evidence roots, rejects protected names, traversal,
+  outside roots, reparse points, input/expectation collisions, and existing
+  files, and uses `FileMode.CreateNew`. Unsafe output receives a stderr defect
+  and no requested evidence file. Evidence distinguishes all three path
+  decisions, input and expectation reads/hashes, PE and metadata parse
+  attempts, and output write attempt/completion.
+- **Files modified:** `tools/StaticMetadataParser/Program.cs`,
+  `tools/Test-ChatpadStaticMetadataParser.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, and `docs/WORKLOG.md`.
+- **Parser validation:** Windows PowerShell 5.1 passed five fixtures and 573
+  assertions with eight input rejections, one input reparse case `NOT_RUN`,
+  eight expectation rejections, twelve output rejections, two safety-option
+  rejections, and zero failures. PowerShell 7 passed five fixtures and 592
+  assertions with nine input rejections including the directory symlink
+  case, eight expectation rejections, twelve output rejections, two
+  safety-option rejections, and zero failures. Every rejected read path had
+  zero input/expectation reads and hashes and zero PE/metadata parse attempts.
+  Every rejected output preserved target existence/hash and both read-file
+  hashes.
+- **Manifest dry run:** Generated a 40-entry temporary no-artifact-open
+  manifest and validated it under Windows PowerShell 5.1 and PowerShell 7 with
+  zero defects. The final tracked manifest is regenerated after this entry.
+- **Command issue:** An initial development build used a relative MSBuild
+  output property, which resolved under the parser project. The exact generated
+  subtree was verified and removed, then the build was repeated under the
+  approved ignored root. Windows PowerShell initially promoted intentional
+  native stderr rejection output to a terminating error; the parser-command
+  wrapper now locally captures native stderr while preserving the exit code.
+  Neither issue is counted as a validation pass.
+- **Ignored evidence:** Reproduction and final synthetic evidence are under
+  `artifacts/logs/static-metadata-parser-file-scope-remediation/`; PowerShell 7
+  evidence is under the sibling `-pwsh` root.
+- **Safety:** Parser execution was synthetic-only. No real artifact opening,
+  parsing, hash verification, write, overwrite, or metadata review; assembly
+  loading; runtime reflection; compiled artifact execution; native DLL loading;
+  entry-point resolution; native or SetupAPI/Newdev invocation; device query;
+  hardware access; Windows mutation; or driver build/link/sign/CAT/package/
+  stage/install/load/unload/bind/restore/restart occurred.
+- **Commit and push:** Pending final manifest regeneration and the complete
+  scoped validation set.
+- **Next task:** A fresh independent strict read-only audit of the central
+  parser file-scope gate. Keep real-artifact and all
+  runtime/native/device/driver activity unauthorized.
