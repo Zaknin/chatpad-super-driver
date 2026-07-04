@@ -72,7 +72,7 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
@@ -716,15 +716,17 @@ solution/protocol/transport edit, or `legacy/` edit was authorized.
 Repository investigation found no approved static managed metadata parser.
 The remediated non-loading design gate passed independent audit at
 `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The project advances only to
-`BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`;
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`;
 the runtime blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
-The future allowlist is inert PE/CLI byte parsing for assembly identity, target
-framework, architecture, module kind, metadata tables, P/Invoke metadata
-strings, expected type/method names, and entry-point absence. No artifact was
-opened or inspected in this phase. See
-`docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`.
+The future allowlist is inert PE/CLI byte parsing through an isolated .NET 9
+tool using `System.Reflection.Metadata`, `PEReader`, and `MetadataReader`.
+It covers assembly identity, target framework, architecture, module kind,
+metadata tables, P/Invoke maps/flags, expected type/method names, and
+entry-point absence. No parser was implemented or run, and no artifact was
+opened, hashed, parsed, or inspected. See
+`docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 The accepted remediation validates 63 metadata-review safety fields as strict
 JSON Booleans, records field-level defects for non-Boolean values, requires
@@ -734,8 +736,8 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform a separately authorized safe static metadata-parser implementation
-design task. Do not perform metadata review, open or parse the artifact unless
-that future task explicitly authorizes those exact implementation actions,
-load or reflect over compiled output, execute it, resolve entry points, invoke
-SetupAPI/Newdev, query devices, or mutate Windows.
+Perform an independent read-only audit of the static metadata-parser
+implementation design. Do not implement or run a parser, perform metadata
+review, open/hash/parse the artifact, load or reflect over compiled output,
+execute it, resolve entry points, invoke SetupAPI/Newdev, query devices, or
+mutate Windows.

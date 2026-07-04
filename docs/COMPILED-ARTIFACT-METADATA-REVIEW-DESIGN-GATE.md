@@ -6,11 +6,12 @@
 - Metadata-review design-gate remediation: accepted by independent `AUDIT PASS`
   at `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`.
 - Active gate:
-  `BLOCKED_PENDING_COMPILED_ARTIFACT_METADATA_REVIEW_IMPLEMENTATION_AUTHORIZATION`.
+  `BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Metadata-review implementation: not authorized and not implemented.
+- Static metadata-parser implementation: not authorized and not implemented.
+- Parser execution and metadata review: not performed.
 - Accepted remediation: strict JSON Boolean safety validation covers 63
   metadata-review fields and rejects numeric `0`/`1` and other non-Boolean
   types under both supported PowerShell runtimes.
@@ -31,8 +32,10 @@ reflect over, execute, or invoke the artifact.
 | Existing source and compile-only pattern checks | Test/guard only | They enforce absence of prohibited paths; they do not inspect metadata. |
 | Existing design and evidence text | Documentation only | It does not authorize review execution. |
 
-No existing tool qualifies as a safe static file-parsing candidate for the
-compiled managed artifact. The project therefore stops at this design gate.
+No existing repository tool qualifies. The accepted future approach is an
+isolated .NET 9 tool using framework-provided
+`System.Reflection.Metadata`/`PEReader` APIs, subject to independent design
+audit. See `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 ## Future review contract
 
@@ -92,6 +95,8 @@ size `22305` bytes, SHA-256
 `2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B`.
 No artifact opening, hash verification, parsing, loading, reflection,
 execution, native invocation, device query, Windows mutation, or driver action
-occurred. Parser implementation still requires separate authorization and
-another independent audit before first use. Design acceptance does not
-authorize metadata review or native runtime execution.
+occurred. The implementation design is now defined at
+`docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md` and requires independent
+read-only audit. Parser implementation, build, execution, artifact use, and
+metadata review remain unauthorized. Design acceptance does not authorize
+native runtime execution.

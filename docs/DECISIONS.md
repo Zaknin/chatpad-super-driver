@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-04 - Design static metadata parsing around System.Reflection.Metadata
+
+**Decision:** The future compiled-artifact metadata parser will be an isolated
+.NET 9 console tool using framework-provided `System.Reflection.Metadata`,
+`PEReader`, and `MetadataReader` over one validated read-only file stream. The
+design is gated at
+`BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_AUDIT`; no
+parser implementation, build, execution, artifact read/hash/parse, or metadata
+review is authorized.
+
+**Rationale:** The installed .NET 9 reference/runtime framework provides the
+typed PE/CLI APIs needed for headers, metadata rows, P/Invoke maps, import
+flags, type/method names, and entry-point checks without CLR assembly loading,
+runtime reflection, execution, native resolution, or third-party restore. A
+small source-controlled tool gives a narrower and more deterministic proof
+surface than a PowerShell host or general-purpose decompiler.
+
+**Alternatives rejected:** dnlib and Mono.Cecil add broad reader/writer,
+resolver, dependency, licensing-review, and offline-restore surfaces; ILDasm
+and ILSpy CLI add external-process, version, unstructured-output, and excessive
+decompilation scope; `dumpbin` does not provide the managed CLI metadata
+contract; a custom PE/CLI parser duplicates ECMA-335 with unnecessary
+correctness and malformed-input risk; runtime assembly loading/reflection is
+prohibited.
+
+**Consequences:** A later implementation must remain outside production
+project graphs, use no third-party package when the pinned framework reference
+is sufficient, accept one explicit contained input, inspect only the documented
+metadata allowlist, emit deterministic JSON, and include fail-closed source/
+project guards. It requires independent design audit before implementation,
+then independent implementation audit before first use.
+
 ## 2026-07-04 - Accept metadata-review design-gate remediation audit
 
 **Decision:** Accept the independent `AUDIT PASS` for metadata-review
