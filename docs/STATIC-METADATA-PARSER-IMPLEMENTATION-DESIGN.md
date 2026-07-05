@@ -142,6 +142,14 @@ leaf is `static-metadata-parser-synthetic-validation.json`. Compile-only,
 real-artifact, native-interop, metadata-review, protected-DLL, tracked,
 production, and legacy paths are rejected.
 
+Authorization-plumbing audit evidence also accepts only the exact independent
+families
+`independent-static-parser-real-artifact-authorization-plumbing-audit-<hex>`
+and
+`independent-static-parser-real-artifact-authorization-plumbing-remediation-<hex>`,
+with a 7-to-40-character hexadecimal suffix. This is not a general
+`independent-static-parser-*` allowance.
+
 A future real-artifact metadata-review task would require a separate explicit
 authorization and a different input contract. That later task must still
 reject:
@@ -430,3 +438,22 @@ caller-forced scope without the old authorization gate. Normal real-artifact
 metadata review remains unauthorized until an independent read-only audit
 accepts this plumbing and a later task explicitly reopens artifact
 open/read/hash/parse/write scope.
+
+### 14.1 Audit remediation
+
+The first independent plumbing audit failed at
+`cb34346d3a2268b92a295e9d135609c1e45e2c68`. The remediation preserves the
+same blocked gate and adds:
+
+- the canonical independent audit/remediation root families above;
+- structured exit-64 denials for invalid JSON, empty manifests, schema
+  mismatches, missing fields, wrong field types, and disallowed manifest paths;
+- six malformed-manifest harness cases in addition to the existing eight
+  authorization cases;
+- unconditional exclusion of the canonical readiness manifest from generated
+  manifest entries, preserving the intended deterministic 39-entry inventory.
+
+This remediation does not authorize or perform real-artifact opening, reading,
+hashing, parsing, writing, metadata review, runtime loading/reflection/
+execution, native invocation, device access, Windows mutation, or driver
+actions. It remains pending fresh independent audit.

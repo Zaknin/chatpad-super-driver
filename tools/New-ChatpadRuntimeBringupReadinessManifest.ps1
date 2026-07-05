@@ -21,7 +21,7 @@ function Test-ChatpadApprovedParserEvidencePath {
     if($segments.Count-lt4-or$segments[0]-cne'artifacts'-or$segments[1]-cne'logs'){return $false}
     if(@($segments|Where-Object{$_-in@('.','..')}).Count){return $false}
     $rootSegment=$segments[2]
-    if($rootSegment -cne 'static-parser-real-artifact-authorization-plumbing' -and $rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*)$'){return $false}
+    if($rootSegment -cne 'static-parser-real-artifact-authorization-plumbing' -and $rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation)-[a-f0-9]{7,40})$'){return $false}
     $tail=($segments|Select-Object -Skip 3) -join '/'
     if($normalized-match'(?i)(artifacts/compile-only|chatpad\.nativeinterop\.compileonlyvalidation\.dll|compiled-artifact|native-interop|metadata-review|/legacy/)'){return $false}
     if($tail-match'(?i)real-artifact'){return $false}
@@ -152,7 +152,12 @@ function Get-PSScriptAnalyzerInventory {
 $base='9b5c8f3b4ac8c0dc0453da693266a82fea636ec0'
 $paths=@(&git diff "$base..HEAD" --name-only)+@(&git diff HEAD --name-only)+@(&git ls-files --others --exclude-standard)
 $normalizedOutputPath=$OutputPath.Replace('\','/')
-$paths=@($paths|Where-Object{$_-and$_.Replace('\','/')-ne$normalizedOutputPath}|Sort-Object -Unique)
+$canonicalManifestPath='docs/evidence/runtime-bringup-readiness-manifest.json'
+$paths=@($paths|Where-Object{
+    if(-not$_){return $false}
+    $normalized=$_.Replace('\','/')
+    return $normalized-ne$normalizedOutputPath-and$normalized-ne$canonicalManifestPath
+}|Sort-Object -Unique)
 $entries=[Collections.Generic.List[object]]::new()
 foreach($path in $paths){$entries.Add((New-Entry ('tracked-'+(($path.ToLowerInvariant()-replace'[^a-z0-9]+','-').Trim('-'))) $path tracked VALIDATED))}
 $suiteRelative=[IO.Path]::GetFullPath($SuiteResultPath).Substring($root.Length+1).Replace('\','/')
@@ -160,7 +165,7 @@ $entries.Add((New-Entry evidence-synthetic-suite $suiteRelative ignored PASS))
 $parserEvidenceRelative=[IO.Path]::GetFullPath($ParserEvidencePath).Substring($root.Length+1).Replace('\','/')
 $entries.Add((New-Entry evidence-static-metadata-parser-synthetic-validation $parserEvidenceRelative ignored PASS))
 $parserEvidence=Get-Content -LiteralPath ([IO.Path]::GetFullPath($ParserEvidencePath)) -Raw|ConvertFrom-Json
-if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_AND_REAL_ARTIFACT_PREFLIGHT_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY_AND_MANIFEST_AUTHORIZED_REAL_ARTIFACT_PREFLIGHT'-or$parserEvidence.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'-or$parserEvidence.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'-or$parserEvidence.real_artifact_path_gate_status-ne'AUTHORIZATION_PLUMBING_PENDING_AUDIT'-or$parserEvidence.all_file_bearing_options_centrally_scoped-ne$true-or$parserEvidence.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.preflight_rejection_output_suppression-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.rejection_evidence_transport-ne'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'-or$parserEvidence.pre_io_rejection_tests-ne'PASS'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or[int]$parserEvidence.real_artifact_preflight_only_count-ne8-or[int]$parserEvidence.failed_real_artifact_preflight_only_count-ne0-or$parserEvidence.original_stop_condition_reproduction.result-ne'PASS'-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.real_compile_only_artifact_write_attempted-ne$false-or$parserEvidence.real_compile_only_artifact_write_completed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
+if($parserEvidence.schema_version-ne'chatpad-static-metadata-parser-synthetic-validation-v1'-or$parserEvidence.result-ne'PASS'-or$parserEvidence.parser_schema_version-ne'chatpad-static-metadata-parser-evidence-v1'-or$parserEvidence.parser_execution_scope-ne'SYNTHETIC_FIXTURES_AND_REAL_ARTIFACT_PREFLIGHT_ONLY'-or$parserEvidence.allowed_input_scope-ne'SYNTHETIC_FIXTURES_ONLY_AND_MANIFEST_AUTHORIZED_REAL_ARTIFACT_PREFLIGHT'-or$parserEvidence.allowed_expected_scope-ne'SYNTHETIC_FIXTURES_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'-or$parserEvidence.allowed_output_scope-ne'PARSER_EVIDENCE_ROOTS_ONLY_OR_REAL_ARTIFACT_REVIEW_EVIDENCE_ROOT'-or$parserEvidence.real_artifact_path_gate_status-ne'AUTHORIZATION_PLUMBING_PENDING_AUDIT'-or$parserEvidence.all_file_bearing_options_centrally_scoped-ne$true-or$parserEvidence.expected_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.output_path_gate_status-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.preflight_rejection_output_suppression-ne'IMPLEMENTED_PENDING_AUDIT'-or$parserEvidence.rejection_evidence_transport-ne'TEST_HARNESS_FROM_CONSOLE_DIAGNOSTIC'-or$parserEvidence.pre_io_rejection_tests-ne'PASS'-or$parserEvidence.pre_read_rejection_tests-ne'PASS'-or$parserEvidence.safety_policy_mode-ne'IMMUTABLE_STATIC_ONLY'-or$parserEvidence.safety_policy_enforced-ne$true-or[int]$parserEvidence.real_artifact_preflight_only_count-ne8-or[int]$parserEvidence.failed_real_artifact_preflight_only_count-ne0-or[int]$parserEvidence.authorization_manifest_malformed_case_count-ne6-or[int]$parserEvidence.failed_authorization_manifest_malformed_case_count-ne0-or$parserEvidence.original_stop_condition_reproduction.result-ne'PASS'-or$parserEvidence.real_compile_only_artifact_opened-ne$false-or$parserEvidence.real_compile_only_artifact_parsed-ne$false-or$parserEvidence.real_compile_only_artifact_hash_computed-ne$false-or$parserEvidence.real_compile_only_artifact_write_attempted-ne$false-or$parserEvidence.real_compile_only_artifact_write_completed-ne$false-or$parserEvidence.metadata_review_performed-ne$false){
     throw 'Parser synthetic-fixture evidence is not a passing no-real-artifact parser implementation validation record.'
 }
 $parserEvidenceIdentity=Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path ([IO.Path]::GetFullPath($ParserEvidencePath)) -HashPolicy auto -CommitRepresented $ImplementationCommit -State ignored
@@ -325,6 +330,8 @@ $manifest=[pscustomobject][ordered]@{
             failed_safety_option_rejection_count=[int]$parserEvidence.failed_safety_option_rejection_count
             real_artifact_preflight_only_count=[int]$parserEvidence.real_artifact_preflight_only_count
             failed_real_artifact_preflight_only_count=[int]$parserEvidence.failed_real_artifact_preflight_only_count
+            authorization_manifest_malformed_case_count=[int]$parserEvidence.authorization_manifest_malformed_case_count
+            failed_authorization_manifest_malformed_case_count=[int]$parserEvidence.failed_authorization_manifest_malformed_case_count
             original_stop_condition_reproduction_result=[string]$parserEvidence.original_stop_condition_reproduction.result
             parser_execution_status='REAL_ARTIFACT_NOT_PERFORMED'
             metadata_review_status='NOT_PERFORMED'

@@ -8995,3 +8995,80 @@
   static-review authorization plumbing. Do not retry real-artifact metadata
   review until that audit passes and a separate task reopens artifact
   open/read/hash/parse scope.
+
+## 2026-07-05 04:18 +04:00 - Authorization-plumbing audit remediation
+
+- **Objective:** Remediate the failed independent audit at
+  `cb34346d3a2268b92a295e9d135609c1e45e2c68` without touching or running the
+  real compile-only artifact, then produce one focused remediation commit.
+- **Starting state:** Verified
+  `feature/runtime-bringup-static-parser-real-artifact-authorization-plumbing`
+  at `cb34346d3a2268b92a295e9d135609c1e45e2c68`, clean, tracking the expected
+  upstream at ahead/behind `0/0`. The base
+  `baab23aece902cbb06e11a308d9092fdc0f9ce0d` remains an ancestor.
+- **Prior continuity discrepancy:** The preceding implementation entry still
+  said commit/push were pending although `cb34346d...` was already the pushed
+  upstream HEAD, and `docs/PROJECT-STATE.md` still described an expected
+  final commit. This append-only entry records the correction; current-state
+  documents now describe the failed audit and remediation.
+- **Root-policy fix:** Parser input/output scope, authorization-manifest
+  fixture scope, manifest generation, and manifest validation now accept only
+  the exact
+  `independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation)-<hex>`
+  families with a 7-to-40-character hexadecimal suffix. Existing standard
+  roots remain valid. Missing-hash, non-hex, lookalike, protected, traversal,
+  and unrelated roots remain rejected.
+- **Malformed-manifest fix:** Invalid/empty JSON returns
+  `AUTHORIZATION_MANIFEST_MALFORMED`; missing/wrong schema returns
+  `AUTHORIZATION_MANIFEST_SCHEMA_MISMATCH`; missing or wrongly typed required
+  fields fail existing gate/status checks. All use structured exit-64
+  diagnostics, create no output, and retain zero real-artifact and prohibited
+  counters.
+- **Deterministic manifest fix:** The generator excludes
+  `docs/evidence/runtime-bringup-readiness-manifest.json` regardless of the
+  selected output path. Windows PowerShell 5.1 and PowerShell 7 each generated
+  39 entries with zero self-entries and identical ordered entry identities.
+  The validator independently rejects a canonical-manifest self-entry.
+- **Corruption regression:** Removed redundant parent-side identity
+  recomputation before child validation without reducing the complete
+  manifest inventory or corruption matrix. PowerShell 7.6.3 completed the
+  full 678-case matrix in 216.33 seconds: `PASS`, zero failed cases. The
+  bounded command used a 300-second ceiling rather than combining two full
+  runtimes under the earlier 240-second aggregate timeout.
+- **Parser validation:** Isolated Release build passed with zero warnings and
+  zero errors. Independent validation from the remediation root passed five
+  fixtures, 1,239 assertions, eight of eight authorization cases, six of six
+  malformed-manifest cases, zero failed fixtures, and zero prohibited
+  counters. The existing implementation evidence remains `PASS` with five
+  fixtures, 1,125 assertions, and eight preflight cases.
+- **Other validation:** Repository safety and forbidden generated-file scan
+  passed. Prohibited-pattern review found no executable non-guard use.
+  `git diff --check` returned exit `0` with line-ending conversion warnings
+  only. Final canonical manifest regeneration and cross-runtime validation
+  are performed after this entry so the manifest binds these final worklog
+  bytes.
+- **Command issues:** An initial direct build used a relative MSBuild output
+  path that resolved beneath `tools/StaticMetadataParser`; that generated
+  directory was verified, removed, and the supported harness build was used.
+  The first harness console redirection ran before its directory existed; the
+  rerun created the ignored root first. The first empty-manifest fixture
+  exposed an `AllowEmptyString` omission in the harness helper and passed after
+  correction. A first prohibited-pattern report attempted `Trim()` on a null
+  display line; the corrected report completed. A reduced-inventory
+  corruption-fixture experiment was rejected because it changed the fixture
+  surface and was fully reverted.
+- **Evidence:** Ignored evidence is under
+  `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-cb34346/`.
+- **Safety:** The real compile-only DLL was not opened, read, hashed, parsed,
+  written, overwritten, executed, or reviewed. No assembly loading, runtime
+  reflection, native DLL load, entry-point resolution, native or
+  SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+  or driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
+  restart occurred.
+- **Commit disposition:** Implementation, validation contracts, generated
+  canonical manifest, and continuity updates are committed together as one
+  focused remediation commit. Git and the final task report provide its exact
+  hash; the branch is then pushed and checked for upstream equality.
+- **Next task:** Perform a fresh independent strict read-only audit of this
+  remediation. Do not retry real-artifact metadata review until that re-audit
+  passes and a separate gate-transition task reauthorizes it.

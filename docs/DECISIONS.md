@@ -4,6 +4,32 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-05 - Fail closed on authorization manifests and canonicalize independent roots
+
+**Decision:** Authorization-manifest fixtures are accepted only below the
+existing parser roots or the explicit
+`independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation)-<hex>`
+families, where the hexadecimal suffix is 7 through 40 characters. Malformed,
+empty, or schema-mismatched authorization manifests produce structured
+zero-I/O authorization denials. Readiness-manifest generation always excludes
+the canonical readiness manifest from its own entry inventory.
+
+**Rationale:** The first plumbing audit proved that its required independent
+root could not run the synthetic suite, malformed JSON escaped the diagnostic
+contract, and alternate-output regeneration included the canonical manifest
+as a fortieth self-entry.
+
+**Alternatives rejected:** Accepting arbitrary `independent-static-parser-*`
+roots, swallowing malformed JSON without a structured denial, trusting output
+path equality alone to prevent self-inclusion, or increasing the corruption
+regression timeout without investigating repeated identity work.
+
+**Consequences:** Existing standard roots remain valid; lookalike, missing-hash,
+non-hex, traversal, protected, and unrelated roots remain rejected. The parser
+still performs no real-artifact I/O during preflight-only validation. Generated
+manifests retain 39 intended entries with deterministic ordering and no
+canonical self-entry.
+
 ## 2026-07-05 - Accept static metadata-parser implementation audit
 
 **Decision:** Accept the independent `AUDIT PASS` for the remediated static

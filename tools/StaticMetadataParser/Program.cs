@@ -619,9 +619,7 @@ internal static class Program
     }
 
     private static bool IsParserSpecificRootSegment(string segment) =>
-        segment.StartsWith("static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
-        segment.StartsWith("independent-static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase);
+        ProgramPaths.IsApprovedParserRootSegment(segment);
 
     private static bool ContainsProtectedArtifactName(string path) =>
         path.Contains(RealArtifactFileName, StringComparison.OrdinalIgnoreCase);
@@ -1013,8 +1011,19 @@ internal sealed class RealArtifactAuthorizationContext
             return Fail(manifestPath, "COMPILE_ONLY_EVIDENCE_MISSING");
         }
 
-        using JsonDocument manifestDocument = JsonDocument.Parse(File.ReadAllText(manifestPath));
+        if (!TryLoadJsonDocument(manifestPath, out JsonDocument? loadedManifest) || loadedManifest is null)
+        {
+            return Fail(manifestPath, "AUTHORIZATION_MANIFEST_MALFORMED");
+        }
+
+        using JsonDocument manifestDocument = loadedManifest;
         JsonElement manifest = manifestDocument.RootElement;
+        if (manifest.ValueKind != JsonValueKind.Object ||
+            GetString(manifest, "schema_version") != ProgramConstants.ReadinessManifestSchemaVersion)
+        {
+            return Fail(manifestPath, "AUTHORIZATION_MANIFEST_SCHEMA_MISMATCH");
+        }
+
         JsonElement metadataGate = GetObject(manifest, "compiled_artifact_metadata_review_design_gate");
         JsonElement parserImplementation = GetObject(metadataGate, "static_metadata_parser_implementation");
         JsonElement parserDesign = GetObject(metadataGate, "static_metadata_parser_implementation_design");
@@ -1050,8 +1059,18 @@ internal sealed class RealArtifactAuthorizationContext
             GetString(parserDesign, "real_artifact_review_authorization_transition_commit") == ProgramConstants.AcceptedReviewAuthorizationTransitionCommit ||
             GetString(repository, "real_artifact_review_authorization_transition_commit") == ProgramConstants.AcceptedReviewAuthorizationTransitionCommit;
 
-        using JsonDocument compileDocument = JsonDocument.Parse(File.ReadAllText(compileEvidencePath));
+        if (!TryLoadJsonDocument(compileEvidencePath, out JsonDocument? loadedCompileEvidence) || loadedCompileEvidence is null)
+        {
+            return Fail(manifestPath, "COMPILE_ONLY_EVIDENCE_MALFORMED");
+        }
+
+        using JsonDocument compileDocument = loadedCompileEvidence;
         JsonElement compileEvidence = compileDocument.RootElement;
+        if (compileEvidence.ValueKind != JsonValueKind.Object)
+        {
+            return Fail(manifestPath, "COMPILE_ONLY_EVIDENCE_MALFORMED");
+        }
+
         string artifactRelative = FindAcceptedPrimaryArtifactRelativePath(compileEvidence);
         string artifactSha256 = FindAcceptedPrimaryArtifactSha256(compileEvidence);
         long artifactSize = FindAcceptedPrimaryArtifactSize(compileEvidence);
@@ -1110,6 +1129,20 @@ internal sealed class RealArtifactAuthorizationContext
         FailureReason = reason,
         ManifestPath = manifestPath
     };
+
+    private static bool TryLoadJsonDocument(string path, out JsonDocument? document)
+    {
+        try
+        {
+            document = JsonDocument.Parse(File.ReadAllText(path));
+            return true;
+        }
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+        {
+            document = null;
+            return false;
+        }
+    }
 
     private static JsonElement GetObject(JsonElement parent, string propertyName) =>
         parent.TryGetProperty(propertyName, out JsonElement child) && child.ValueKind == JsonValueKind.Object
@@ -1194,6 +1227,7 @@ internal static class ProgramConstants
     public const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY";
     public const string AcceptedParserAuditCommit = "f0be4746ad4cc548334336c1e66f07007b71859f";
     public const string AcceptedReviewAuthorizationTransitionCommit = "baab23aece902cbb06e11a308d9092fdc0f9ce0d";
+    public const string ReadinessManifestSchemaVersion = "chatpad-runtime-bringup-readiness-manifest-v4";
     public const string CanonicalReadinessManifestPath = "docs/evidence/runtime-bringup-readiness-manifest.json";
     public const string RealArtifactRelativeRoot = "artifacts/compile-only/native-interop";
     public const string RealArtifactFileName = "Chatpad.NativeInterop.CompileOnlyValidation.dll";
@@ -1201,18 +1235,49 @@ internal static class ProgramConstants
 
 internal static class ProgramPaths
 {
+    private const string IndependentAuthorizationAuditPrefix =
+        "independent-static-parser-real-artifact-authorization-plumbing-audit-";
+    private const string IndependentAuthorizationRemediationPrefix =
+        "independent-static-parser-real-artifact-authorization-plumbing-remediation-";
+
     public static bool IsAllowedPreflightManifestFixturePath(string repositoryRoot, string manifestPath) =>
         InvokeIsAllowedPreflightManifestFixturePath(repositoryRoot, manifestPath);
 
+    public static bool IsApprovedParserRootSegment(string segment) =>
+        segment.StartsWith("static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
+        segment.StartsWith("independent-static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase) ||
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationAuditPrefix) ||
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix);
+
     private static bool InvokeIsAllowedPreflightManifestFixturePath(string repositoryRoot, string manifestPath)
     {
-        string fixtureRoot = Path.GetFullPath(Path.Combine(
-            repositoryRoot,
-            "artifacts/logs/static-parser-real-artifact-authorization-plumbing".Replace('/', Path.DirectorySeparatorChar)));
-        string candidate = Path.GetFullPath(manifestPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        string directory = fixtureRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        return candidate.StartsWith(directory, StringComparison.OrdinalIgnoreCase) &&
+        string logsRoot = Path.GetFullPath(Path.Combine(repositoryRoot, "artifacts", "logs"));
+        string candidate = Path.GetFullPath(manifestPath);
+        string relative = Path.GetRelativePath(logsRoot, candidate);
+        string[] segments = relative.Split(
+            new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
+            StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length >= 2 &&
+            segments.All(segment => segment is not "." and not "..") &&
+            IsApprovedAuthorizationManifestRootSegment(segments[0]) &&
             string.Equals(Path.GetExtension(manifestPath), ".json", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsApprovedAuthorizationManifestRootSegment(string segment) =>
+        string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase) ||
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationAuditPrefix) ||
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix);
+
+    private static bool HasCanonicalHexSuffix(string segment, string prefix)
+    {
+        if (!segment.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        string suffix = segment[prefix.Length..];
+        return suffix.Length is >= 7 and <= 40 && suffix.All(Uri.IsHexDigit);
     }
 }
 

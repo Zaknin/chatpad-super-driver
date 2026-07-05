@@ -765,6 +765,14 @@ opened, hashed, parsed, written, overwritten, or inspected. Metadata review
 was not performed. See
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
+The first plumbing audit failed at `cb34346d3a2268b92a295e9d135609c1e45e2c68`.
+The remediation accepts only canonical independent audit/remediation roots
+with hexadecimal commit suffixes, converts malformed authorization manifests
+to structured zero-I/O denials, and excludes the canonical readiness manifest
+from its own generated entry set. The gate remains
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`;
+fresh independent re-audit is required.
+
 The accepted remediation validates 63 metadata-review safety fields as strict
 JSON Booleans, records field-level defects for non-Boolean values, requires
 `native_execution_status: NOT_IMPLEMENTED`, and validates
@@ -773,10 +781,10 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform an independent read-only audit of the real-artifact static-review
-authorization plumbing. Do not retry real-artifact metadata review until that
-audit passes and a later task explicitly reopens artifact open/read/hash/parse
-scope. The audit must still prohibit assembly loading, runtime reflection,
+Perform a fresh independent read-only audit of the remediated real-artifact
+static-review authorization plumbing. Do not retry real-artifact metadata
+review until that re-audit passes and a later task explicitly reopens artifact
+open/read/hash/parse scope. The audit must still prohibit assembly loading, runtime reflection,
 execution, native DLL loading, entry-point resolution, native or
 SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
 and driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/

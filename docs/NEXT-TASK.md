@@ -2,15 +2,17 @@
 
 ## Objective
 
-Perform an independent read-only audit of the real-artifact static-review
-authorization plumbing.
+Perform a fresh independent read-only audit of the remediated real-artifact
+static-review authorization plumbing.
 
 ## Required Starting State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch:
   `feature/runtime-bringup-static-parser-real-artifact-authorization-plumbing`.
-- Starting commit: the pushed authorization-plumbing transition commit.
+- Starting commit: the pushed remediation commit whose parent is
+  `cb34346d3a2268b92a295e9d135609c1e45e2c68`; resolve and record its exact
+  hash from Git before auditing.
 - Authorization transition base:
   `baab23aece902cbb06e11a308d9092fdc0f9ce0d`.
 - Accepted parser implementation audit commit:
@@ -57,7 +59,7 @@ The audit must still prohibit:
 4. `docs/NEXT-TASK.md`
 5. Latest relevant `docs/WORKLOG.md` entry
 6. `docs/evidence/runtime-bringup-readiness-manifest.json`
-7. `artifacts/logs/static-parser-real-artifact-authorization-plumbing/static-metadata-parser-synthetic-validation.json`
+7. `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-cb34346/static-metadata-parser-synthetic-validation.json`
 8. `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
 9. `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`
 10. `tools/StaticMetadataParser/Program.cs`
@@ -78,11 +80,18 @@ The audit must still prohibit:
   stale/new gate, a wrong parser status, wrong live readiness, missing
   transition commit, wrong artifact path, wrong output root, or unsafe
   manifest path.
+- Verify canonical
+  `independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation)-<hex>`
+  roots are accepted while missing-hash, non-hex, lookalike, traversal,
+  reparse, and unrelated roots remain rejected.
+- Verify all six malformed-manifest cases return structured exit-64 denials,
+  create no output, and keep every prohibited counter at zero.
 - Verify successful preflight writes no parser output and performs no real
   artifact read, open, hash, parse, write, or metadata review.
-- Verify manifest generation and validation accept only the new
-  `static-parser-real-artifact-authorization-plumbing` evidence root as the
-  special root and continue to reject compile-only, protected DLL,
-  metadata-review, native-interop, tracked, production, and legacy paths.
+- Verify Windows PowerShell 5.1 and PowerShell 7 regeneration each produce
+  the same intended 39 entry identities, no duplicate IDs or normalized
+  paths, and no canonical-manifest self-entry.
+- Re-run the full gate/status corruption regression and record its case count,
+  result, and elapsed runtime.
 - Keep live readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, and the
   runtime blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

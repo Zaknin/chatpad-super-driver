@@ -18,7 +18,7 @@ function Test-ChatpadApprovedParserEvidencePath {
     if($segments.Count-lt4-or$segments[0]-cne'artifacts'-or$segments[1]-cne'logs'){return $false}
     if(@($segments|Where-Object{$_-in@('.','..')}).Count){return $false}
     $rootSegment=$segments[2]
-    if($rootSegment -cne 'static-parser-real-artifact-authorization-plumbing' -and $rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*)$'){return $false}
+    if($rootSegment -cne 'static-parser-real-artifact-authorization-plumbing' -and $rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation)-[a-f0-9]{7,40})$'){return $false}
     $tail=($segments|Select-Object -Skip 3) -join '/'
     if($normalized-match'(?i)(artifacts/compile-only|chatpad\.nativeinterop\.compileonlyvalidation\.dll|compiled-artifact|native-interop|metadata-review|/legacy/)'){return $false}
     if($tail-match'(?i)real-artifact'){return $false}
@@ -424,9 +424,6 @@ function Invoke-ChatpadManifestCorruptionRegression {
             Write-ChatpadUtf8NoBomJson $tempSuitePath $suite
             $entry=@($manifest.entries|Where-Object id -eq 'evidence-synthetic-suite')
             Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$entry[0].relative_path)
-            foreach($manifestEntry in @($manifest.entries|Where-Object id -ne 'evidence-synthetic-suite')){
-                Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$manifestEntry.relative_path)
-            }
             Write-ChatpadUtf8NoBomJson $tempManifestPath $manifest
             Push-Location $tempRoot
             try {
@@ -554,9 +551,6 @@ function Invoke-ChatpadManifestCorruptionRegression {
             Write-ChatpadUtf8NoBomJson $tempSuitePath $suite
             $entry=@($manifest.entries|Where-Object id -eq 'evidence-synthetic-suite')
             Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$entry[0].relative_path)
-            foreach($manifestEntry in @($manifest.entries|Where-Object id -ne 'evidence-synthetic-suite')){
-                Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$manifestEntry.relative_path)
-            }
             Write-ChatpadUtf8NoBomJson $tempManifestPath $manifest
             Push-Location $tempRoot
             try {
@@ -651,9 +645,6 @@ function Invoke-ChatpadManifestCorruptionRegression {
             [IO.File]::WriteAllText($tempManifestPath,$baselineManifestText,[Text.UTF8Encoding]::new($false))
             [IO.File]::WriteAllText($tempSuitePath,$baselineSuiteText,[Text.UTF8Encoding]::new($false))
             $manifest=Get-Content -LiteralPath $tempManifestPath -Raw|ConvertFrom-Json
-            foreach($manifestEntry in @($manifest.entries)){
-                Set-ManifestEntryFileIdentity -Manifest $manifest -RelativePath ([string]$manifestEntry.relative_path)
-            }
             $target=@($manifest.entries|Where-Object state -eq 'tracked'|Where-Object content_classification -eq 'text'|Select-Object -First 1)
             if($target.Count-ne1){throw "Cannot locate tracked text identity for $CaseId."}
             & $Mutate $manifest $target[0]
@@ -811,6 +802,11 @@ if($RunParserEvidencePathRegression){
         [pscustomobject]@{id='standard-remediation';path='artifacts/logs/static-metadata-parser-preflight-output-remediation/static-metadata-parser-synthetic-validation.json';expected=$true},
         [pscustomobject]@{id='independent-audit';path='artifacts/logs/independent-static-metadata-parser-file-scope-audit-1bdba8c/windows/static-metadata-parser-synthetic-validation.json';expected=$true},
         [pscustomobject]@{id='authorization-plumbing';path='artifacts/logs/static-parser-real-artifact-authorization-plumbing/static-metadata-parser-synthetic-validation.json';expected=$true},
+        [pscustomobject]@{id='authorization-plumbing-independent-audit';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-audit-cb34346/static-metadata-parser-synthetic-validation.json';expected=$true},
+        [pscustomobject]@{id='authorization-plumbing-independent-remediation';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-cb34346/static-metadata-parser-synthetic-validation.json';expected=$true},
+        [pscustomobject]@{id='authorization-plumbing-independent-missing-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-audit/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-independent-nonhex-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-audit-notasha/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-lookalike';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-review-cb34346/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='authorization-plumbing-nested-real-artifact';path='artifacts/logs/static-parser-real-artifact-authorization-plumbing/real-artifact/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='non-parser-root';path='artifacts/logs/unrelated-audit/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='real-artifact-root';path='artifacts/compile-only/native-interop/static-metadata-parser-synthetic-validation.json';expected=$false},
@@ -827,6 +823,10 @@ if($RunParserEvidencePathRegression){
     $parserEvidencePathRegression=[ordered]@{result=if($pathFailures.Count){'FAIL'}else{'PASS'};case_count=$pathResults.Count;passed_count=@($pathResults|Where-Object result -eq 'PASS').Count;failed_count=$pathFailures.Count;cases=$pathResults}
     if($pathFailures.Count){$defects.metadata_review_gate++}
 }
+$canonicalManifestEntryCount=@($entries|Where-Object{
+    [string]$_.relative_path -eq 'docs/evidence/runtime-bringup-readiness-manifest.json'
+}).Count
+if($canonicalManifestEntryCount-ne0){$defects.top_level++}
 foreach($entry in $entries){
     $full=[IO.Path]::GetFullPath((Join-Path $root ([string]$entry.relative_path)))
     if(-not$full.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){$defects.containment++;continue}
@@ -1024,6 +1024,8 @@ else{
             [int]$parserImplementation.failed_safety_option_rejection_count-ne0-or
             [int]$parserImplementation.real_artifact_preflight_only_count-ne8-or
             [int]$parserImplementation.failed_real_artifact_preflight_only_count-ne0-or
+            [int]$parserImplementation.authorization_manifest_malformed_case_count-ne6-or
+            [int]$parserImplementation.failed_authorization_manifest_malformed_case_count-ne0-or
             $parserImplementation.original_stop_condition_reproduction_result-ne'PASS'-or
             $parserImplementation.parser_execution_status-ne'REAL_ARTIFACT_NOT_PERFORMED'-or
             $parserImplementation.metadata_review_status-ne'NOT_PERFORMED'-or

@@ -115,5 +115,9 @@ may only validate manifest-bound authorization and exact recorded artifact
 identity without opening, reading, hashing, parsing, or writing the real
 compile-only artifact. Real artifact use and metadata review remain
 unauthorized until this plumbing passes independent audit and a separate
-metadata-review task explicitly authorizes the next step. Design acceptance and
-parser implementation do not authorize native runtime execution.
+metadata-review task explicitly authorizes the next step. The first plumbing
+audit failed at `cb34346d3a2268b92a295e9d135609c1e45e2c68`; the current
+remediation adds canonical independent audit roots, structured malformed-
+manifest denial, and deterministic 39-entry manifest regeneration and remains
+pending fresh re-audit. Design acceptance and parser implementation do not
+authorize native runtime execution.
