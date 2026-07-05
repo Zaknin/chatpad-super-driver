@@ -10,8 +10,8 @@ metadata review.
 - Repository: `C:\\Dev\\chatpad-super-driver`.
 - Branch: `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
 - Starting commit: `383aaf0a65a867d2773ed91d6a5c8e9c535e4f04`.
-- Previous gate: `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
-- Current gate: `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+- **Previous gate:** `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION` (pre-review).
+- **Current gate:** `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` (post-review, independent audit pending).
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.

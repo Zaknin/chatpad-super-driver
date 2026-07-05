@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-05 (authorized real-artifact static metadata review completed)*
+*Last updated: 2026-07-05 (authorized real-artifact static metadata review completed; independent audit pending)*
 
 ## Current State
 
@@ -12,9 +12,9 @@
   this document, the generated manifest, and the transition record are
   committed atomically.
 - **Previous gate:**
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION` (pre-review).
 - **Current gate:**
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` (post-review, independent audit pending).
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness:** `BLOCKED`.
 - **Native execution:** `NOT_IMPLEMENTED`.
