@@ -1,5 +1,6 @@
 {
   "schema_version": "chatpad-runtime-bringup-readiness-manifest-v4",
+  "real_artifact_static_metadata_review_completed": true,
   "identity_policy": {
     "schema_version": "chatpad-evidence-file-identity-policy-v1",
     "supported_hash_policies": [
