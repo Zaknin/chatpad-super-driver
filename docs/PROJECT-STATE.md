@@ -1,126 +1,92 @@
 # Project State
 
-*Last updated: 2026-07-05 (audit-root and manifest-shape remediation pending independent audit)*
+*Last updated: 2026-07-05 (authorization-plumbing audit accepted)*
 
 ## Current State
 
 - **Branch:**
-  `feature/runtime-bringup-static-parser-auth-plumbing-audit-root-remediation`.
-- **Authorization-plumbing implementation:** `cb34346d3a2268b92a295e9d135609c1e45e2c68`.
-- **First audit remediation:**
-  `2d7a721ce3172b338df0de56853a256b1170fb4a`, which remediated the
-  original independent-root, malformed-JSON, manifest self-entry, corruption
-  timeout, and continuity failures but did not accept the exact combined
-  remediation-audit root or fully validate required nested manifest objects.
-- **Current remediation:** the focused child commit of `2d7a721...` that adds
-  those two fail-closed contracts and corrects continuity. Git is authoritative
-  for its exact hash because this document is committed atomically with it.
+  `feature/runtime-bringup-static-parser-auth-plumbing-audit-acceptance`.
+- **Starting and accepted remediation commit:**
+  `dca0a9d794b4442de86d53a90e4aab74dfe68971`.
+- **Current transition commit:** Git is authoritative for the exact hash because
+  this document, the generated manifest, and the transition record are
+  committed atomically.
 - **Current gate:**
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness:** `BLOCKED`.
 - **Native execution:** `NOT_IMPLEMENTED`.
 - **Parser implementation:**
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
-- **Parser execution against the real artifact:** `NOT_PERFORMED`.
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
+- **Parser execution against the real artifact:**
+  `REAL_ARTIFACT_NOT_PERFORMED`.
 - **Metadata review:** `NOT_PERFORMED`.
-- **Real artifact open/parse/hash/write:** `NOT_PERFORMED` and unauthorized.
+- **Real artifact open/read/hash/parse/write:** `NOT_PERFORMED`.
 
-## Static Metadata Parser
+## Accepted Authorization-Plumbing Audit
 
-- Project: `tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj`.
-- Source: `tools/StaticMetadataParser/Program.cs`.
-- Validation: `tools/Test-ChatpadStaticMetadataParser.ps1`.
-- Evidence schema:
-  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`.
-- Accepted prior synthetic evidence root:
-  `artifacts/logs/static-metadata-parser-preflight-output-remediation/`.
-- Current authorization-plumbing evidence root:
-  `artifacts/logs/static-parser-real-artifact-authorization-plumbing/`.
-- Current remediation evidence root:
-  `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a7210/`.
+The independent audit returned `AUDIT PASS` for
+`dca0a9d794b4442de86d53a90e4aab74dfe68971`, based on
+`2d7a721ce3172b338df0de56853a256b1170fb4a`.
 
-The remediated static metadata parser implementation passed independent audit
-at `f0be4746ad4cc548334336c1e66f07007b71859f` as static-only and
-synthetic-fixture-only. The transition commit
-`baab23aece902cbb06e11a308d9092fdc0f9ce0d` authorized only a narrow
-implementation task to add non-caller-controlled real-artifact static-review
-authorization plumbing.
+- Summary:
+  `artifacts/logs/independent-static-parser-auth-plumbing-audit-root-remediation-audit-dca0a9d/audit-summary.json`,
+  `2666` bytes, SHA-256
+  `FAB4EC641663902C779A65721EED1C481F7CD0FF5410E0E38D23B43A475403A5`.
+- Inventory:
+  `artifacts/logs/independent-static-parser-auth-plumbing-audit-root-remediation-audit-dca0a9d/evidence-inventory.json`,
+  `7462` bytes, SHA-256
+  `DF6FB3F45689D231F77E4C53B18E0B7B5D099B93BC90F8847460DB5033E2761F`.
+- Accepted results: root/path regression `31/31`; malformed/shape matrix
+  `14/14`; authorization preflight `8/8`; combined synthetic evidence
+  `5` fixtures and `1417` assertions; existing plumbing evidence `5` fixtures
+  and `1125` assertions; manifest generation and validation `PASS` with
+  `39` entries under Windows PowerShell 5.1 and PowerShell 7.6.3; corruption
+  regression `678` cases, `0` failures.
 
-This task adds a preflight-only real-artifact review scope that requires all
-of the following before the parser can even authorize the exact accepted
-compile-only DLL path string:
+The audit accepted the exact combined remediation-audit root family, typed
+total validation of required nested manifest objects, fail-closed structured
+diagnostics, non-caller-controlled authorization, no-output/no-overwrite
+behavior, deterministic cross-runtime manifests, repository safety, and zero
+prohibited executable additions.
 
-- the canonical readiness manifest still reports
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`;
-- native execution remains `NOT_IMPLEMENTED`;
-- live readiness remains `BLOCKED`;
-- the accepted parser audit commit remains
-  `f0be4746ad4cc548334336c1e66f07007b71859f`;
-- the authorization transition commit
-  `baab23aece902cbb06e11a308d9092fdc0f9ce0d` is recorded in the manifest;
-- the accepted compile-only evidence identity matches the recorded primary
-  DLL path, size, and SHA-256.
+## Accepted Artifact Identity
 
-The first independent audit failed because the required canonical independent
-audit root was rejected, malformed authorization manifests could escape as
-unhandled JSON exceptions, readiness-manifest regeneration could include the
-canonical manifest itself, and continuity records were stale. The remediation:
+The following identity is copied from tracked accepted evidence only. This
+transition did not access the DLL:
 
-- accepts only canonical independent authorization-plumbing audit/remediation
-  roots with a 7-to-40-character hexadecimal suffix;
-- converts malformed, empty, and schema-mismatched authorization manifests
-  into structured exit-64 zero-I/O denials;
-- excludes `docs/evidence/runtime-bringup-readiness-manifest.json` from
-  generated manifest entries regardless of the selected output path;
-- keeps the existing eight authorization cases and adds malformed-manifest
-  coverage.
-
-The next audit of `2d7a721ce3172b338df0de56853a256b1170fb4a`
-found that the exact
-`independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<hex>`
-family was still rejected, the exact remediation commit was omitted from
-continuity, and absent or non-object required nested manifest structures could
-reach `JsonElement.TryGetProperty` on an undefined value. The current
-remediation accepts only that additional 7-to-40-character hexadecimal root
-family and classifies all required nested-object shape failures as structured
-`AUTHORIZATION_MANIFEST_MALFORMED` zero-I/O denials. Fourteen malformed and
-shape cases now pass.
-
-The remediated plumbing is pending a fresh independent read-only audit. It does
-not authorize a normal parser run against the real artifact and does not
-authorize real artifact open, read, hash verification, parse, output write, or
-metadata review.
+- Path:
+  `artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll`.
+- Recorded size: `11264` bytes.
+- Recorded SHA-256:
+  `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`.
 
 ## Safety Boundary
 
-- The parser has not been run normally against the real compile-only artifact.
-- Metadata review has not been performed.
-- Real artifact open, parse, hash verification, write, overwrite, and
-  metadata parsing remain unauthorized until the authorization plumbing passes
-  independent audit and a later task explicitly reopens that scope.
-- Runtime assembly loading, runtime reflection, compiled-output execution,
-  native DLL loading, entry-point resolution, native or SetupAPI/Newdev
-  invocation, device query, hardware access, Windows mutation, and driver
-  actions remain unauthorized.
-- Native declarations, compile-only harness/runner behavior, runtime adapter,
-  production driver source, INF, production projects/solution,
-  signing/package/staging/deployment paths, binaries, frozen artifacts, and
-  `legacy/` remain unchanged.
+- This transition did not run the parser normally against the real artifact.
+- It did not open, read, hash, parse, write, overwrite, load, reflect over,
+  execute, or perform metadata review on the real artifact.
+- Assembly loading, runtime reflection, compiled-artifact execution, native
+  DLL loading, entry-point resolution, native or SetupAPI/Newdev invocation,
+  device query, hardware access, and Windows mutation remain unauthorized.
+- Driver build, link, sign, CAT generation, package, stage, install, load,
+  unload, bind, restore, and restart remain unauthorized.
+- Parser source, native declaration source, compile-only behavior, runtime
+  adapter implementation, production driver source, INF, projects/solutions,
+  binaries, frozen artifacts, and `legacy/` are unchanged.
 
 ## Unresolved Blockers
 
-- Fresh independent read-only re-audit of the remediated authorization
-  plumbing is required before any real-artifact static metadata review may be
-  retried or authorized.
+- Real-artifact static metadata review still requires a separate explicit
+  authorization task.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - Live readiness remains blocked.
 
 ## Next Task
 
-Perform a fresh independent read-only audit of the focused child remediation
-of `2d7a721ce3172b338df0de56853a256b1170fb4a`. Include the exact combined
-remediation-audit root family, all fourteen malformed/shape denials,
-deterministic 39-entry manifest regeneration, and zero real-artifact I/O.
-Do not retry metadata review until the re-audit passes and a separate task
-advances the gate.
+Perform a separately authorized real-artifact static metadata review using the
+accepted parser and accepted authorization plumbing. That task may permit only
+static open/read, hash verification, PE/CLI metadata parsing, and metadata
+evidence generation for the exact approved compile-only DLL. Runtime loading,
+reflection, execution, native/device/Windows actions, and driver actions must
+remain prohibited.

@@ -9156,3 +9156,79 @@
 - **Next task:** Fresh independent strict read-only audit of the focused child
   remediation commit. Do not authorize real-artifact metadata review unless
   that audit passes and a later explicit gate transition reopens the scope.
+
+## 2026-07-05 12:05 +04:00 - Authorization-plumbing audit acceptance transition
+
+- **Objective:** Record the independent `AUDIT PASS` for focused
+  authorization-plumbing remediation commit
+  `dca0a9d794b4442de86d53a90e4aab74dfe68971` and transition the repo back to
+  the separately authorized real-artifact static metadata-review gate without
+  opening, reading, hashing, parsing, loading, reflecting over, executing, or
+  reviewing the real compile-only DLL.
+- **Starting state:** Continued on
+  `feature/runtime-bringup-static-parser-auth-plumbing-audit-acceptance` at
+  `dca0a9d794b4442de86d53a90e4aab74dfe68971`. The branch had no configured
+  upstream and the working tree already contained in-progress edits to
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Investigation:** Verified the independent audit summary and inventory
+  exist under
+  `artifacts/logs/independent-static-parser-auth-plumbing-audit-root-remediation-audit-dca0a9d/`.
+  Their sizes and SHA-256 values match the transition bindings:
+  `audit-summary.json`, `2666` bytes,
+  `FAB4EC641663902C779A65721EED1C481F7CD0FF5410E0E38D23B43A475403A5`;
+  `evidence-inventory.json`, `7462` bytes,
+  `DF6FB3F45689D231F77E4C53B18E0B7B5D099B93BC90F8847460DB5033E2761F`.
+  The audit summary records `AUDIT PASS`, candidate head
+  `dca0a9d794b4442de86d53a90e4aab74dfe68971`, base
+  `2d7a721ce3172b338df0de56853a256b1170fb4a`, root/path regression `31/31`,
+  malformed/shape matrix `14/14`, authorization preflight `8/8`, combined
+  synthetic evidence `5` fixtures and `1417` assertions, existing evidence
+  `5` fixtures and `1125` assertions, 39-entry cross-runtime manifest
+  validation, and corruption regression `678` cases with zero failures.
+- **Implementation:** Updated continuity docs and manifest generator/validator
+  contracts to bind the accepted remediation audit, set current gate
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`, set
+  parser status
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`, and preserve
+  `REAL_ARTIFACT_NOT_PERFORMED` / `NOT_PERFORMED` states for real-artifact
+  parser execution, metadata review, and artifact open/read/hash/parse/write.
+  Corrected the next-task handoff to avoid claiming an upstream branch before
+  one is actually configured.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/DECISIONS.md`, `docs/WORKLOG.md`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`, and the regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Validation:** Regenerated the canonical readiness manifest with
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1` using
+  implementation commit `dca0a9d794b4442de86d53a90e4aab74dfe68971`, suite
+  result
+  `artifacts/logs/compiled-artifact-metadata-review-design-gate/readiness-pwsh.json`,
+  parser evidence
+  `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a7210/static-metadata-parser-synthetic-validation.json`,
+  and `-NoArtifactOpenDesignGateAudit`; result `PASS`, 39 entries, live
+  readiness `BLOCKED`. Ran
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1 -ManifestPath docs/evidence/runtime-bringup-readiness-manifest.json -RunParserEvidencePathRegression -NoArtifactOpenDesignGateAudit`;
+  result `PASS`, zero defects, 39 entries, parser evidence path regression
+  `31/31`. Ran `tools/Test-RepositorySafety.ps1`; result
+  `REPOSITORY SAFETY: PASS`, zero deployment/signing/packaging/certificate/
+  key/Windows/device/hardware actions and zero unexpected tracked artifacts.
+  Ran `git diff --check`; result `PASS` with only Git line-ending conversion
+  warnings. The readiness manifest is regenerated once more after this entry
+  so it binds these final tracked documentation bytes before commit.
+- **Safety:** This transition did not authorize or perform real-artifact static
+  metadata review. No parser normal run against the real compile-only DLL,
+  real artifact open/read/hash/parse/write, assembly load, runtime reflection,
+  compiled-artifact execution, native DLL load, entry-point resolution, native
+  or SetupAPI/Newdev invocation, device query, hardware access, Windows
+  mutation, or driver build/link/sign/CAT/package/stage/install/load/unload/
+  bind/restore/restart occurred.
+- **Commit and push:** Pending final manifest regeneration, diff inspection,
+  and local commit. No push has been requested for the acceptance branch.
+- **Next task:** Perform a separately authorized real-artifact static metadata
+  review using the accepted parser and accepted authorization plumbing. That
+  task may authorize only static open/read, SHA-256 verification, static
+  PE/CLI metadata parsing, and metadata-review evidence generation for the
+  exact approved compile-only DLL.

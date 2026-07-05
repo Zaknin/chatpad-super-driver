@@ -4,6 +4,37 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-05 - Accept authorization-plumbing remediation audit before real-artifact review
+
+**Decision:** Accept the independent `AUDIT PASS` for authorization-plumbing
+remediation commit `dca0a9d794b4442de86d53a90e4aab74dfe68971` and transition
+the active gate back to
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`. The
+parser status is now
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`; real-artifact
+metadata review remains separate and not yet performed.
+
+**Rationale:** The audit accepted the focused audit-root and manifest-shape
+remediation, including the exact combined remediation-audit root family,
+typed required authorization-manifest objects, structured fail-closed
+diagnostics, deterministic manifest generation, repository safety, and zero
+real-artifact I/O or prohibited actions.
+
+**Alternatives rejected:** Keeping the remediated authorization plumbing under
+the pending-audit gate, treating audit acceptance as permission to perform
+real-artifact metadata review in the same transition, opening or hashing the
+compile-only DLL during transition, loading or reflecting over the assembly,
+executing compiled output, invoking native APIs, querying devices, mutating
+Windows, or advancing to driver actions.
+
+**Consequences:** The next safe task is a separately authorized real-artifact
+static metadata review using the accepted parser and authorization plumbing.
+That later task may authorize only static open/read, SHA-256 verification,
+static PE/CLI metadata parsing, and metadata-review evidence generation for
+the exact approved compile-only DLL. Live readiness remains `BLOCKED`; native
+execution remains `NOT_IMPLEMENTED`; the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## 2026-07-05 - Treat required authorization-manifest objects as typed boundaries
 
 **Decision:** Accept the exact
