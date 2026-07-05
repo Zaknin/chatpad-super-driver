@@ -1236,7 +1236,7 @@ internal sealed class RealArtifactAuthorizationContext
 
 internal static class ProgramConstants
 {
-    public const string RealArtifactAuthorizationGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT";
+    public const string RealArtifactAuthorizationGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION";
     public const string RuntimeBlocker = "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED";
     public const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED";
     public const string AcceptedParserAuditCommit = "f0be4746ad4cc548334336c1e66f07007b71859f";
