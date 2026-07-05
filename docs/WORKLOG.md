@@ -9232,3 +9232,91 @@
   task may authorize only static open/read, SHA-256 verification, static
   PE/CLI metadata parsing, and metadata-review evidence generation for the
   exact approved compile-only DLL.
+
+## 2026-07-05 18:42 +04:00 - Real-artifact static metadata review blocked by parser status boundary
+
+- **Objective:** Perform the separately authorized real-artifact static
+  metadata review using the accepted parser and authorization plumbing for the
+  exact approved compile-only DLL, while keeping all runtime/native/device/
+  Windows/driver actions prohibited.
+- **Starting state:** Verified repository root `C:/Dev/chatpad-super-driver`,
+  branch `feature/runtime-bringup-static-parser-auth-plumbing-audit-acceptance`,
+  HEAD `3bb2e73a833b99876b1cb5e90452d47a0070c65a`, upstream
+  `origin/feature/runtime-bringup-static-parser-auth-plumbing-audit-acceptance`,
+  ahead/behind `0/0`, and a clean tree. Verified required commits
+  `f0be4746ad4cc548334336c1e66f07007b71859f`,
+  `baab23aece902cbb06e11a308d9092fdc0f9ce0d`,
+  `dca0a9d794b4442de86d53a90e4aab74dfe68971`, and
+  `3bb2e73a833b99876b1cb5e90452d47a0070c65a` are present. The preferred
+  branch `feature/runtime-bringup-real-artifact-static-metadata-review`
+  already existed at older commit `baab23aece902cbb06e11a308d9092fdc0f9ce0d`,
+  so it was not rewritten. Created
+  `feature/runtime-bringup-real-artifact-static-metadata-review-20260705`
+  from the required starting commit.
+- **Documentation discrepancy found:** `docs/NEXT-TASK.md` still said the
+  transition branch might have no upstream; live Git had the expected upstream
+  and ahead/behind `0/0`. Several design/readiness docs also still described
+  the pre-acceptance authorization-plumbing audit gate. Current-state docs are
+  corrected in this commit.
+- **Identity resolution:** Resolved exactly one accepted primary DLL row from
+  tracked evidence `docs/evidence/native-interop-compile-only-validation.json`,
+  schema `chatpad-native-interop-compile-only-validation-v2`, validation ID
+  `native-interop-compile-only-20260703T194533Z`, generation commit
+  `164903a8e890dfe1eb1709eeac1272aabcb81b3e`. The approved path is
+  `artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll`,
+  under accepted root `artifacts/compile-only/native-interop`, ignored,
+  non-synthetic, non-production driver/package/signing/staging/deployment
+  output, expected size `11264`, expected SHA-256
+  `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`.
+  The current working-tree file exists and its stat size is `11264` bytes.
+- **Parser preflight:** Built the parser into ignored evidence root
+  `artifacts/logs/real-artifact-static-metadata-review/3bb2e73-preflight-boundary/parser-build/`;
+  build passed with zero warnings and zero errors. The first explicit
+  `--authorization-manifest docs/evidence/runtime-bringup-readiness-manifest.json`
+  preflight failed closed with
+  `AUTHORIZATION_MANIFEST_PATH_NOT_CANONICAL`, no output file, and zero
+  artifact I/O. Rerunning with the parser's default canonical manifest path
+  failed closed with exit `64`,
+  `PARSER_IMPLEMENTATION_NOT_ACCEPTED`, no parser output file, and zero
+  artifact read/hash/parse/write counters. The manifest gate, transition
+  commit, and artifact identity matched, but the parser's accepted-status
+  check still requires `ACCEPTED_STATIC_ONLY`; the current accepted manifest
+  records `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
+- **Result classification:** `FAIL_PARSER_BOUNDARY`. The metadata review did
+  not proceed. Per task restrictions, parser source was not changed in this
+  review task; this requires a separate parser-boundary remediation task.
+- **Evidence generated:** Ignored blocked evidence is under
+  `artifacts/logs/real-artifact-static-metadata-review/3bb2e73-preflight-boundary/`.
+  It includes `artifact-identity-verification.json`,
+  `preflight-default-manifest-console.json`, `metadata-review-summary.json`,
+  `expected-vs-actual-dllimport-comparison.json`, `entry-point-review.json`,
+  `safety-counters.json`, and `artifact-inventory.json`.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/WORKLOG.md`, and the regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Commands and validation:** Ran Git branch/HEAD/upstream/status/history
+  checks; parsed tracked identity evidence; built
+  `tools/StaticMetadataParser/Chatpad.StaticMetadataParser.csproj` to ignored
+  evidence; ran parser real-review preflight twice as described above; wrote
+  blocked evidence package. An initial repository-safety run failed because a
+  direct parser build left ignored generated outputs under
+  `tools/StaticMetadataParser/obj`; `tools/StaticMetadataParser/bin` and
+  `tools/StaticMetadataParser/obj` were verified as contained generated
+  outputs, removed, and repository safety was rerun to `PASS`. Final manifest
+  regeneration, cross-runtime validation, documentation consistency,
+  changed-path review, prohibited-pattern review, forbidden generated-file
+  scan, and `git diff --check` are performed after this entry so their final
+  results are bound to the commit.
+- **Safety:** The real compile-only DLL was not opened, read, hashed, parsed,
+  written, overwritten, loaded, reflected over, executed, or metadata-reviewed.
+  No native DLL load, entry-point resolution, native or SetupAPI/Newdev
+  invocation, device query, hardware access, Windows mutation, or driver
+  build/link/sign/CAT/package/stage/install/load/unload/bind/restore/restart
+  occurred. Only file existence and size stat were observed after identity
+  evidence resolution.
+- **Next task:** Remediate and independently audit the parser real-artifact
+  authorization status boundary so it accepts the current manifest status
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` without weakening
+  any static-only or zero-I/O denial behavior. Do not retry real-artifact
+  static metadata review until that remediation passes independent audit and a
+  later task explicitly authorizes the retry.
