@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-05 (authorized real-artifact static metadata review completed; independent audit pending)*
+*Last updated: 2026-07-05 (authorized real-artifact static metadata review completed; independent audit accepted; post-audit vocabulary committed; gate transition applied)*
 
 ## Current State
 
@@ -14,7 +14,7 @@
 - **Previous gate:**
   `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION` (pre-review).
 - **Current gate:**
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` (post-review, independent audit pending).
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` (post-audit, native adapter implementation pending).
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness:** `BLOCKED`.
 - **Native execution:** `NOT_IMPLEMENTED`.
@@ -24,6 +24,7 @@
 - **Metadata review:** `STATIC_METADATA_VALIDATED`.
 - **Real artifact open/read/hash/parse/write:**
   `PERFORMED` (open, read, hash, parse) / `NOT_PERFORMED` (write).
+- **Post-audit vocabulary applied:** YES — gate advanced to `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; parser implementation status transitioned from `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` to `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`; `STATUS_BOUNDARY_PENDING_AUDIT` preflight-only status transitioned to `STATUS_BOUNDARY_ACCEPTED`; tooling allowlists updated.
 
 ## Authorized Real-Artifact Static Metadata Review
 

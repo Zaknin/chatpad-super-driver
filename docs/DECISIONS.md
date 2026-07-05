@@ -4,6 +4,44 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-05 - Define post-audit vocabulary for authorized real-artifact static metadata review
+
+**Decision:** Define repository-approved post-audit vocabulary for the authorized real-artifact static metadata review transition:
+
+- `real_artifact_path_gate_status`: `STATUS_BOUNDARY_ACCEPTED`
+- `current_gate` (top-level manifest): `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`
+- `parser_implementation_status`: `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`
+- `status` (metadata review gate): `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`
+- `live_adapter_status`: `SCAFFOLD_NON_EXECUTING`
+- `live_installation_readiness`: `BLOCKED`
+- `capability_blocker`: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`
+- `native_execution_status`: `NOT_IMPLEMENTED`
+- `parser_execution_status`: `STATIC_METADATA_VALIDATED`
+- `metadata_review_status`: `STATIC_METADATA_VALIDATED`
+- `parser_implementation_status` (parser design): `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`
+- `parser_current_gate` (parser design): `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`
+
+**Rationale:** The independent audit of the authorized real-artifact static metadata review passed (`AUDIT PASS`, `STATIC_METADATA_VALIDATED`). The prior audit-acceptance transition stopped because no repository-approved post-audit vocabulary existed for `real_artifact_path_gate_status` and `current_gate`. The vocabulary must express: static metadata review completed, evidence validated, independent audit accepted, static metadata lane closed, runtime/native execution still blocked, no SetupAPI/Newdev/device/Windows actions authorized. It must NOT imply: native execution implemented, live readiness passed, runtime driver work authorized, device/Windows actions authorized.
+
+**Alternatives rejected:** Inventing ad hoc vocabulary not following the existing `BLOCKED_PENDING_*` / `ACCEPTED_STATIC_ONLY_*` / `STATUS_BOUNDARY_*` / `BLOCKED_NATIVE_*` patterns. Using vague terms like `DONE`, `OK`, `COMPLETE`, or `PASSED` when the repository already has precise audit-friendly vocabulary. Removing the `BLOCKED` qualifier from `current_gate` or `live_installation_readiness` since runtime/native execution is still unimplemented.
+
+**Consequences:** The repository now has explicit, audit-approved vocabulary for post-audit state. The `current_gate` advances to `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` (native adapter implementation pending). The parser implementation status transitions from `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` to `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`. The `STATUS_BOUNDARY_PENDING_AUDIT` preflight-only status transitions to `STATUS_BOUNDARY_ACCEPTED` for the authorized real-artifact static metadata review. Live readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`; the runtime blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+**Implications for tooling:**
+- `New-ChatpadRuntimeBringupReadinessManifest.ps1`: `current_gate` must change from `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` to `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` in all output sites (lines 192, 239, 267, 301). The `accepted suite gates` allowlist (lines 49-55) must include `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` as an accepted gate. The parser status must change from `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT` to `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED` in all output sites. The `real_artifact_path_gate_status` must change from `STATUS_BOUNDARY_PENDING_AUDIT` to `STATUS_BOUNDARY_ACCEPTED`.
+- `Test-ChatpadRuntimeBringupReadinessManifest.ps1`: The top-level manifest validation (line 875) must accept `current_gate`=`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. The `accepted suite gates` allowlist must include `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. The metadata review gate status check (line 936) must expect `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED` for `metadataGate.status`. The parser design `current_gate` check (line 972) must expect `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. The parser implementation status check (line 989) must expect `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
+- `tools/StaticMetadataParser/Program.cs`: The `CurrentGate` constant must change from `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` to `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. The `StatusBoundaryAccepted` constant must be added as `STATUS_BOUNDARY_ACCEPTED`.
+
+**Implementation plan (8 vocabulary items):**
+1. Update `docs/DECISIONS.md` with post-audit vocabulary design decision (this item).
+2. Update `docs/NEXT-TASK.md` with post-audit vocabulary and next task.
+3. Update `docs/PROJECT-STATE.md` with post-audit state.
+4. Update `docs/WORKLOG.md` with this vocabulary design task.
+5. Update `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1` with new gate/status vocabulary.
+6. Update `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1` with new gate/status vocabulary.
+7. Run full validation suite (both PS versions).
+8. Commit, push, verify.
+
 ## 2026-07-05 - Gate parser status-boundary remediation for independent audit
 
 **Decision:** After the narrow parser authorization status-boundary

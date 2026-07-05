@@ -2,12 +2,11 @@
 
 ## Objective
 
-Perform an independent read-only audit of the authorized real-artifact static
-metadata review.
+Perform an independent read-only audit of the authorized real-artifact static metadata review. Do not run the parser normally against the real compile-only artifact. Do not open, read, hash, parse, write, overwrite, load, reflect over, execute, or perform metadata review on the real compile-only DLL.
 
 ## Exact Current State
 
-- Repository: `C:\\Dev\\chatpad-super-driver`.
+- Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
 - Starting commit: `383aaf0a65a867d2773ed91d6a5c8e9c535e4f04`.
 - **Previous gate:** `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION` (pre-review).
