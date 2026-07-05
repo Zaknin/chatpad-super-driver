@@ -9567,3 +9567,79 @@
 - **Next task:** Apply the accepted audit result as a separate
   audit-acceptance transition using the selected post-audit vocabulary, with
   parser source unchanged unless a separate explicit contract requires it.
+
+---
+
+## 2026-07-06 02:43 +04:00 - Accept real-artifact static metadata review audit
+
+- **Objective:** Add narrow manifest generator/validator support for the
+  selected post-audit vocabulary and formally close the accepted static
+  metadata review lane.
+- **Starting state:** Verified repository
+  `C:\Dev\chatpad-super-driver`, branch
+  `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`,
+  HEAD `83eb4acf44d50d8c43a09f7827728763e726e9c2`, upstream
+  `origin/feature/runtime-bringup-real-artifact-static-metadata-review-authorized`,
+  ahead/behind `0/0`, empty status/index, ignored `IDEA.md`, and all required
+  ancestors.
+- **Investigation:** Confirmed the prior design decision selected
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`,
+  `STATUS_BOUNDARY_ACCEPTED`, and
+  `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
+  Confirmed the generator and validator still required pending-audit values.
+  Confirmed manifest entries do not include the real DLL.
+- **Implementation:** The generator now accepts pending or accepted suite input
+  only where required for continuity, emits the exact accepted vocabulary,
+  records the accepted audit target and evidence-inventory policy, preserves
+  `BLOCKED` live readiness, `NOT_IMPLEMENTED` native execution, and all
+  zero/not-performed safety fields. The validator now requires those exact
+  accepted values and exact audit facts; it does not accept arbitrary strings.
+- **Accepted audit facts:** Target
+  `83eb4acf44d50d8c43a09f7827728763e726e9c2`, verdict `AUDIT PASS`, empty
+  initial/final status, evidence inventory self-reference policy
+  `excluded_from_authoritative_size_hash`, 16 physical files, 15
+  authoritative files, validation `15/15`, self-entry non-authoritative,
+  14-file preflight subtree, metadata result `STATIC_METADATA_VALIDATED`,
+  parser source net change versus `eedf2a5` none, and premature `6372adf`
+  transition reverted.
+- **Evidence identities recorded:** Review evidence
+  `artifacts/logs/real-artifact-static-metadata-review/static-metadata-parser-real-artifact-review.json`,
+  SHA-256
+  `024693B23AA26C42CD2F9D5AB995956CEB202A76FBA5481264EF828AAEDF0875`;
+  approved artifact path
+  `artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll`,
+  recorded SHA-256
+  `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`.
+- **Static metadata recorded:** `PE32Plus`, `Amd64`,
+  `Chatpad.NativeInterop.CompileOnlyValidation` v0.0.0.0, 24 types, 71
+  methods, 13 P/Invokes, modules `newdev.dll` and `setupapi.dll`.
+- **Files modified:** `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, and `docs/WORKLOG.md`.
+- **Preliminary validation:** Both tooling files parsed with zero syntax
+  errors. Accepted manifests generated under Windows PowerShell 5.1 and
+  PowerShell 7.6.3 with schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, 39 entries, and accepted
+  gate values. Both validators returned `PASS`, zero defects. Cross-runtime
+  identity comparison passed 39/39 with zero deltas.
+- **Final state:** Current gate and capability blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; path gate
+  `STATUS_BOUNDARY_ACCEPTED`; metadata review `STATIC_METADATA_VALIDATED`;
+  parser implementation
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`; live readiness
+  `BLOCKED`; native execution `NOT_IMPLEMENTED`. Static metadata lane accepted
+  and closed.
+- **Safety:** The parser was not rerun. The real DLL was not opened, read,
+  hashed, parsed, written, overwritten, loaded, reflected over, or executed.
+  No native DLL load, entry-point resolution, native or SetupAPI/Newdev
+  invocation, device query, hardware access, Windows mutation, or driver
+  build/link/sign/CAT/package/stage/install/load/unload/bind/restore/restart
+  occurred.
+- **Commit and push:** Commit subject
+  `docs: accept real artifact metadata review audit`; Git is authoritative for
+  the resulting hash. Push target is
+  `origin/feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
+- **Next task:** Open a separately authorized native-adapter execution
+  design/implementation gate. Native execution remains unimplemented.

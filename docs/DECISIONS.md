@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-06 - Accept the real-artifact static metadata review audit and close the static lane
+
+**Decision:** Accept the `AUDIT PASS` for post-audit vocabulary-design
+remediation commit `83eb4acf44d50d8c43a09f7827728763e726e9c2`.
+Apply `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` as the current gate,
+`STATUS_BOUNDARY_ACCEPTED` as the real-artifact path gate, and
+`STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`
+as the matching metadata/parser accepted status. Keep parser implementation
+status `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`, metadata
+review `STATIC_METADATA_VALIDATED`, live readiness `BLOCKED`, and native
+execution `NOT_IMPLEMENTED`.
+
+**Rationale:** The independent audit verified empty initial/final Git status,
+15/15 authoritative evidence files, the inventory self-reference exclusion
+policy, no parser-source net change versus `eedf2a5`, reversion of the
+premature `6372adf` transition, and no parser rerun, real-DLL access, or
+runtime/native/device/Windows/driver action. The generator and validator now
+emit and require the exact selected vocabulary without accepting arbitrary
+strings or weakening safety counters.
+
+**Alternatives rejected:** Leaving the completed review indefinitely at a
+pending-audit gate; bypassing or waiving manifest validation; accepting broad
+or arbitrary status strings; changing parser source; rerunning the parser;
+accessing the real DLL; or treating static metadata acceptance as runtime
+authorization.
+
+**Consequences:** The static metadata review lane is accepted and closed. The
+next blocker is native adapter execution not implemented. A separate explicit
+design/implementation gate is required before any native loading, entry-point
+resolution, SetupAPI/Newdev invocation, device query, Windows mutation, or
+driver action.
+
 ## 2026-07-05 - Define post-audit vocabulary for authorized real-artifact static metadata review
 
 **Decision:** Define, but do not yet apply, repository-approved post-audit vocabulary for a later authorized real-artifact static metadata review audit-acceptance transition:

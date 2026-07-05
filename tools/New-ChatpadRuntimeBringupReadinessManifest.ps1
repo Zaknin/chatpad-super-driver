@@ -48,10 +48,11 @@ $acceptedSuiteGates=if($NoArtifactOpenDesignGateAudit){
         'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT',
         'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION',
         'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT',
-        'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
+        'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT',
+        'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     )
 }else{
-    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT')
+    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT','BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED')
 }
 $acceptedSuiteMetadataStatuses=if($NoArtifactOpenDesignGateAudit){
     @(
@@ -62,10 +63,11 @@ $acceptedSuiteMetadataStatuses=if($NoArtifactOpenDesignGateAudit){
         'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY',
         'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT',
         'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED',
-        'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT'
+        'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT',
+        'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED'
     )
 }else{
-    @('STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED','STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT')
+    @('STATIC_METADATA_PARSER_IMPLEMENTATION_DESIGN_ACCEPTED','STATIC_METADATA_PARSER_IMPLEMENTED_PENDING_AUDIT','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT','STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED')
 }
 if($suite.framework_status-ne'PASS'-or$suite.live_installation_readiness-ne'BLOCKED'-or$suite.current_gate-notin$acceptedSuiteGates-or$suite.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$suite.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$suite.live_binding_authorized-ne$false-or$suite.source_audit_result-ne'AUDIT PASS'-or$suite.compile_only_validation_authorized-ne$true-or$suite.compile_only_validation_performed-ne$true-or$suite.native_compilation_performed-ne$true-or$suite.native_loading_performed-ne$false-or$suite.native_invocation_performed-ne$false-or-not$suiteNativeExecutionAccepted-or$suite.compiled_artifact_metadata_review_status-notin$acceptedSuiteMetadataStatuses-or$suite.compiled_artifact_metadata_review_authorized-ne$false-or$suite.compiled_artifact_metadata_review_performed-ne$false-or$suite.compiled_artifact_bytes_opened-ne$false-or$suite.compiled_artifact_reflection_performed-ne$false-or$suite.compiled_artifact_execution_performed-ne$false){throw 'Suite result is not a non-executing static-metadata-parser design gate with native execution still blocked.'}
 
@@ -190,7 +192,7 @@ $manifest=[pscustomobject][ordered]@{
     real_artifact_static_metadata_review_completed=$true
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
+    current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     native_execution_status='NOT_IMPLEMENTED'
     manifest_generation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_READINESS_RESULT'}
@@ -235,11 +237,35 @@ $manifest=[pscustomobject][ordered]@{
         accepted=$true
     }
     compiled_artifact_metadata_review_design_gate=[pscustomobject][ordered]@{
-        status='STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT'
+        status='STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED'
         native_execution_status='NOT_IMPLEMENTED'
-        current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
+        current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
         runtime_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        status_boundary_audit_acceptance=[pscustomobject][ordered]@{
+            verdict='AUDIT PASS'
+            accepted_audit_target='83eb4acf44d50d8c43a09f7827728763e726e9c2'
+            initial_git_status_empty=$true
+            final_git_status_empty=$true
+            evidence_inventory_path='artifacts/logs/real-artifact-static-metadata-review/evidence-inventory.json'
+            evidence_inventory_self_reference_policy='excluded_from_authoritative_size_hash'
+            evidence_inventory_physical_file_count=16
+            evidence_inventory_authoritative_file_count=15
+            evidence_inventory_authoritative_validation='15/15'
+            evidence_inventory_self_entry_authoritative=$false
+            evidence_inventory_preflight_subtree_file_count=14
+            review_evidence_path='artifacts/logs/real-artifact-static-metadata-review/static-metadata-parser-real-artifact-review.json'
+            review_evidence_sha256='024693B23AA26C42CD2F9D5AB995956CEB202A76FBA5481264EF828AAEDF0875'
+            review_evidence_result='STATIC_METADATA_VALIDATED'
+            approved_real_artifact_path='artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll'
+            approved_real_artifact_sha256='77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'
+            parser_source_net_change_from_eedf2a5='NONE'
+            premature_transition_from_6372adf_reverted=$true
+            parser_rerun_occurred=$false
+            real_dll_access_occurred=$false
+            runtime_native_device_windows_driver_actions_occurred=$false
+            static_metadata_lane_closed=$true
+        }
         authorization_plumbing_audit=[pscustomobject][ordered]@{
             verdict='AUDIT PASS'
             accepted_remediation_commit='dca0a9d794b4442de86d53a90e4aab74dfe68971'
@@ -265,7 +291,7 @@ $manifest=[pscustomobject][ordered]@{
         independent_design_audit_artifact_inventory_sha256='2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B'
         static_metadata_parser_implementation_design=[pscustomobject][ordered]@{
             status='DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'
-            current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
+            current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
             real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
             transition_base_commit='382aa85980408939a93043583b48e942ebfbf018'
             design_document_path='docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'
@@ -282,7 +308,7 @@ $manifest=[pscustomobject][ordered]@{
             independent_design_audit_summary_sha256='A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'
             input_identity_source='REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'
             referenced_primary_dll_sha256='77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'
-            parser_implementation_status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'
+            parser_implementation_status='STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED'
             parser_execution_status='STATIC_METADATA_VALIDATED'
             metadata_review_status='STATIC_METADATA_VALIDATED'
             artifact_opening_status='NOT_PERFORMED'
@@ -299,7 +325,7 @@ $manifest=[pscustomobject][ordered]@{
         }
         static_metadata_parser_implementation=[pscustomobject][ordered]@{
             status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'
-            current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
+            current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
             real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
             independent_implementation_audit_verdict='AUDIT PASS'
             independent_implementation_audit_branch='feature/runtime-bringup-static-metadata-parser-preflight-output-remediation'
@@ -321,7 +347,7 @@ $manifest=[pscustomobject][ordered]@{
             synthetic_fixture_count=[int]$parserEvidence.fixture_count
             synthetic_assertion_count=[int]$parserEvidence.assertion_count
             failed_fixture_count=[int]$parserEvidence.failed_fixture_count
-            real_artifact_path_gate_status='STATUS_BOUNDARY_PENDING_AUDIT'
+            real_artifact_path_gate_status='STATUS_BOUNDARY_ACCEPTED'
             all_file_bearing_options_centrally_scoped=[bool]$parserEvidence.all_file_bearing_options_centrally_scoped
             expected_path_gate_status='ACCEPTED_STATIC_ONLY'
             output_path_gate_status='ACCEPTED_STATIC_ONLY'

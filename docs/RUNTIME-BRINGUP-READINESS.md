@@ -72,7 +72,7 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Static metadata parser implementation:
@@ -81,10 +81,13 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Metadata review: `STATIC_METADATA_VALIDATED`.
 - Real artifact open/parse/hash: `PERFORMED`.
 - Real artifact write/overwrite: `NOT_PERFORMED`.
-- Real-artifact static metadata review audit: `AUDIT PASS`, accepted at
-  `eedf2a515734ca26c528a727e648ec987c0da0bd`.
-- Post-audit vocabulary is defined but not applied. The separately authorized
-  transition remains pending.
+- Post-audit vocabulary-design remediation audit: `AUDIT PASS`, accepted at
+  `83eb4acf44d50d8c43a09f7827728763e726e9c2`.
+- Real-artifact path gate: `STATUS_BOUNDARY_ACCEPTED`.
+- Metadata/parser accepted status:
+  `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
+- The static metadata lane is accepted and closed. The generator emits and the
+  validator requires this accepted vocabulary.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
   harness. Compiled output remains unloaded, unexecuted, unreflected, and
@@ -779,18 +782,17 @@ real-artifact preflight authorization fixture status. Old, pending, missing,
 empty, null, non-string, synthetic-only, implemented-pending-audit, and
 accepted-like lookalike parser statuses remain rejected before real-artifact
 I/O. Because parser source changed after authorization-plumbing acceptance,
-the gate moved to
+the gate historically moved to
 `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`. The later
-authorized real-artifact static metadata review completed, and its independent
-audit was accepted at
-`eedf2a515734ca26c528a727e648ec987c0da0bd`. The repository has selected
+authorized real-artifact static metadata review completed. The post-audit
+vocabulary-design remediation audit passed at
+`83eb4acf44d50d8c43a09f7827728763e726e9c2`. The repository applied
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`,
 `STATUS_BOUNDARY_ACCEPTED`, and
 `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`
-as post-audit vocabulary, but has not applied the audit-acceptance transition.
-The current gate therefore remains the pending-transition gate above. Live
-readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
-runtime/native/device/Windows/driver work remains unauthorized.
+as the accepted post-audit vocabulary. The static metadata lane is closed.
+Live readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`,
+and runtime/native/device/Windows/driver work remains unauthorized.
 
 The first plumbing audit failed at `cb34346d3a2268b92a295e9d135609c1e45e2c68`.
 The remediation accepts only canonical independent audit/remediation roots
@@ -820,11 +822,11 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Apply the accepted audit result in a separate audit-acceptance transition using
-the selected post-audit vocabulary. Do not change parser source without an
-explicit repository contract. Do not rerun the parser or open, read, hash,
-parse, write, load, reflect over, or execute the real DLL. The transition must
-still prohibit assembly loading, runtime reflection, execution, native DLL
-loading, entry-point resolution, native or SetupAPI/Newdev invocation, device
-query, hardware access, Windows mutation, and driver build/link/sign/CAT/
-package/stage/install/load/unload/bind/restore/restart actions.
+Open a separately authorized native-adapter execution design/implementation
+gate. Native execution remains `NOT_IMPLEMENTED`, live readiness remains
+`BLOCKED`, and SetupAPI/Newdev invocation remains unauthorized. Do not rerun
+the parser or open, read, hash, parse, write, load, reflect over, or execute the
+real DLL. Continue to prohibit native DLL loading, entry-point resolution,
+native invocation, device query, hardware access, Windows mutation, and driver
+build/link/sign/CAT/package/stage/install/load/unload/bind/restore/restart
+actions until a later explicit contract authorizes them.

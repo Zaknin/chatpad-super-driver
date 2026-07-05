@@ -2,75 +2,61 @@
 
 ## Objective
 
-Apply the already accepted real-artifact static metadata review audit result as
-a separate audit-acceptance transition using the repository-approved
-post-audit vocabulary. Do not run the parser or open, read, hash, parse, write,
-overwrite, load, reflect over, execute, or perform metadata review on the real
-compile-only DLL.
+Define the next repository-approved design/implementation gate for native
+SetupAPI/Newdev adapter execution. Static metadata review is accepted and
+closed; native execution remains unimplemented.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
-- Branch: `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
-- Starting commit: `383aaf0a65a867d2773ed91d6a5c8e9c535e4f04`.
-- **Previous gate:** `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION` (pre-review).
-- **Current gate:** `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` (audit accepted, transition pending).
-- Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Branch:
+  `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
+- Required starting commit: the audit-acceptance transition commit that follows
+  `83eb4acf44d50d8c43a09f7827728763e726e9c2`; verify from Git.
+- Previous gate:
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
+- Current gate and capability blocker:
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Real-artifact path gate: `STATUS_BOUNDARY_ACCEPTED`.
+- Metadata/parser accepted status:
+  `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
+- Parser implementation:
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
+- Metadata review: `STATIC_METADATA_VALIDATED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Parser implementation: `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
-- Parser execution against the real artifact: `STATIC_METADATA_VALIDATED`.
-- Metadata review: `STATIC_METADATA_VALIDATED`.
-- Real artifact open/read/hash/parse/write: `PERFORMED` (open, read, hash, parse) / `NOT_PERFORMED` (write).
-- Real-artifact static metadata review audit accepted at:
-  `eedf2a515734ca26c528a727e648ec987c0da0bd`.
-- Selected post-audit `current_gate`:
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Selected post-audit `real_artifact_path_gate_status`:
-  `STATUS_BOUNDARY_ACCEPTED`.
-- Selected post-audit metadata review gate status:
-  `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
+- Static metadata lane: accepted and closed.
+- Accepted audit target:
+  `83eb4acf44d50d8c43a09f7827728763e726e9c2` (`AUDIT PASS`).
 
 ## Preconditions
 
 1. Follow `AGENTS.md`.
-2. Verify branch, HEAD, upstream, ahead/behind, and clean working tree.
-3. Read `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the
-   latest `docs/WORKLOG.md` entry.
-4. Verify the accepted audit commit and the vocabulary-design decision.
-5. Confirm the tracked manifest remains at the pending-transition gate before
-   applying the transition.
+2. Verify branch, HEAD, upstream, ahead/behind, and clean status.
+3. Read the continuity documents and the audit-acceptance worklog entry.
+4. Verify the canonical manifest under Windows PowerShell 5.1 and PowerShell 7.
+5. Obtain an explicit repository contract before implementing or executing any
+   native adapter behavior.
 
 ## Safety Restrictions
 
-This is a metadata/docs/tooling transition only. Do not run the parser against
-the real compile-only artifact. Do not open, read, hash, parse, write,
-overwrite, load, reflect over, execute, or perform metadata review on the real
-compile-only DLL.
+Do not load native DLLs, resolve entry points, invoke SetupAPI/Newdev or other
+native APIs, query devices, access hardware, mutate Windows, or build, link,
+sign, generate CAT files, package, stage, install, load, unload, bind, restore,
+or restart a driver without later explicit authorization.
 
-Do not invoke native APIs, SetupAPI/Newdev, load native DLLs, resolve entry
-points, query devices, access hardware, mutate Windows, or build/link/sign/CAT/
-package/stage/install/load/unload/bind/restore/restart a driver.
-
-Do not modify native declaration source, compile-only harness behavior, runtime
-adapter implementation, production driver source, INF, project/solution files,
-packaging/signing/staging/deployment paths, binaries, frozen artifacts, or
-`legacy/`.
+Do not rerun the static metadata parser or open, read, hash, parse, write,
+overwrite, load, reflect over, or execute the real compile-only DLL.
 
 ## Acceptance Criteria
 
-- Apply `current_gate = BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Apply `real_artifact_path_gate_status = STATUS_BOUNDARY_ACCEPTED`.
-- Apply metadata review gate status
-  `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
-- Keep runtime blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Keep live readiness `BLOCKED`.
-- Keep native execution `NOT_IMPLEMENTED`.
-- Do not modify parser source unless a separate explicit contract requires it.
-- Do not authorize SetupAPI/Newdev invocation, device query, Windows mutation,
-  runtime/native execution, or driver actions.
-- Confirm repository safety, forbidden generated-file scan, prohibited-pattern
-  review, documentation consistency, and `git diff --check` pass.
+- Produce a precise, fail-closed native-adapter execution authorization design.
+- Keep live readiness `BLOCKED` and native execution `NOT_IMPLEMENTED` until a
+  separately authorized implementation and audit complete.
+- Preserve the accepted static metadata evidence and manifest identities.
+- Preserve zero/not-performed runtime/native/device/Windows/driver counters.
+- Pass applicable offline validation, repository safety, generated-file scans,
+  documentation consistency, and `git diff --check`.
 
 ## Inspect First
 
@@ -79,6 +65,5 @@ packaging/signing/staging/deployment paths, binaries, frozen artifacts, or
 3. `docs/DECISIONS.md`
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
-6. `docs/evidence/runtime-bringup-readiness-manifest.json`
-7. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
-8. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+6. `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
+7. `docs/evidence/runtime-bringup-readiness-manifest.json`
