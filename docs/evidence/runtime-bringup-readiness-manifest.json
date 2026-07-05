@@ -15,7 +15,7 @@
   "generated_utc": "2026-07-05T09:46:50.2641566Z",
   "framework_status": "PASS",
   "live_installation_readiness": "BLOCKED",
-  "current_gate": "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT",
+  "current_gate": "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION",
   "capability_blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
   "native_execution_status": "NOT_IMPLEMENTED",
   "manifest_generation_mode": "NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT",
@@ -765,7 +765,7 @@
       "driver_actions_status": "NOT_PERFORMED"
     },
     "static_metadata_parser_implementation": {
-      "status": "ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT",
+      "status": "ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED",
       "current_gate": "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT",
       "real_artifact_review_authorization_transition_commit": "baab23aece902cbb06e11a308d9092fdc0f9ce0d",
       "independent_implementation_audit_verdict": "AUDIT PASS",

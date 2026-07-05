@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-05 (parser status-boundary remediation pending audit)*
+*Last updated: 2026-07-05 (narrow gate transition accepted; metadata review authorization pending)*
 
 ## Current State
 
@@ -8,18 +8,16 @@
   `feature/runtime-bringup-static-parser-status-boundary-remediation`.
 - **Starting commit:**
   `906a4d098364956cbc635c5d385a98e33827404d`.
-- **Current transition commit:** Git is authoritative for the exact hash because
-  this document, the generated manifest, and the transition record are
-  committed atomically.
+- **Current transition commit:** `fc2aa6ed6d87841bd9bab5c4c663ea48b9565b0f`.
 - **Previous gate:**
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
-- **Current gate:**
   `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
+- **Current gate:**
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness:** `BLOCKED`.
 - **Native execution:** `NOT_IMPLEMENTED`.
 - **Parser implementation:**
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
 - **Parser execution against the real artifact:** `REAL_ARTIFACT_NOT_PERFORMED`.
 - **Metadata review:** `NOT_PERFORMED`.
 - **Real artifact open/read/hash/parse/write:** `NOT_PERFORMED`.
