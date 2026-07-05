@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-05 (authorized real-artifact static metadata review completed; independent audit accepted; post-audit vocabulary committed; gate transition applied)*
+*Last updated: 2026-07-05 (real-artifact static metadata review audit accepted at `eedf2a515734ca26c528a727e648ec987c0da0bd`; post-audit vocabulary defined; audit-acceptance transition not applied)*
 
 ## Current State
 
@@ -14,7 +14,8 @@
 - **Previous gate:**
   `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION` (pre-review).
 - **Current gate:**
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` (post-audit, native adapter implementation pending).
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`
+  (audit accepted, transition still pending).
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness:** `BLOCKED`.
 - **Native execution:** `NOT_IMPLEMENTED`.
@@ -24,7 +25,12 @@
 - **Metadata review:** `STATIC_METADATA_VALIDATED`.
 - **Real artifact open/read/hash/parse/write:**
   `PERFORMED` (open, read, hash, parse) / `NOT_PERFORMED` (write).
-- **Post-audit vocabulary applied:** YES — gate advanced to `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; parser implementation status transitioned from `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` to `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`; `STATUS_BOUNDARY_PENDING_AUDIT` preflight-only status transitioned to `STATUS_BOUNDARY_ACCEPTED`; tooling allowlists updated.
+- **Post-audit vocabulary defined, not applied:** selected future values are
+  `current_gate = BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`,
+  `real_artifact_path_gate_status = STATUS_BOUNDARY_ACCEPTED`, and metadata
+  review gate status
+  `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
+  The tracked manifest and tooling remain at the pending-transition values.
 
 ## Authorized Real-Artifact Static Metadata Review
 
@@ -134,17 +140,19 @@ Primary ignored evidence is under
 
 ## Unresolved Blockers
 
-- Independent read-only audit of the authorized real-artifact static metadata
-  review is required before any runtime/native adapter work.
+- Apply the accepted audit result in a separate audit-acceptance transition
+  task using the vocabulary defined above.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - Live readiness remains blocked.
 
 ## Next Task
 
-Perform an independent read-only audit of the authorized real-artifact static
-metadata review. Do not run the parser normally against the real compile-only
-artifact. Do not open, read, hash, parse, write, overwrite, load, reflect over,
-execute, or perform metadata review on the real compile-only DLL.
+Perform the audit-acceptance transition from
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` to the
+selected post-audit vocabulary. Do not modify parser source unless a separate
+repository contract explicitly requires it. Do not run the parser or open,
+read, hash, parse, write, overwrite, load, reflect over, execute, or perform
+metadata review on the real compile-only DLL.
 
 Do not invoke native APIs, SetupAPI/Newdev, load native DLLs, resolve entry
 points, query devices, access hardware, mutate Windows, or build/link/sign/CAT/

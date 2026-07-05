@@ -872,7 +872,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.real_artifact_static_metadata_review_completed-ne$true-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
 $metadataReviewDefectRecords=[Collections.Generic.List[object]]::new()
 $topLevelNativeExecutionDefect=Test-ChatpadNativeExecutionStatusValue -Container $manifest -Location 'manifest'
@@ -986,9 +986,9 @@ else{
             $parserDesign.independent_design_audit_summary_sha256-ne'A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'-or
             $parserDesign.input_identity_source-ne'REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'-or
             $parserDesign.referenced_primary_dll_sha256-ne'77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'-or
-            $parserDesign.parser_implementation_status-ne'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT'-or
-            $parserDesign.parser_execution_status-ne'REAL_ARTIFACT_NOT_PERFORMED'-or
-            $parserDesign.metadata_review_status-ne'NOT_PERFORMED'-or
+            $parserDesign.parser_implementation_status-ne'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'-or
+            $parserDesign.parser_execution_status-ne'STATIC_METADATA_VALIDATED'-or
+            $parserDesign.metadata_review_status-ne'STATIC_METADATA_VALIDATED'-or
             $parserDesign.artifact_opening_status-ne'NOT_PERFORMED'-or
             $parserDesign.artifact_parsing_status-ne'NOT_PERFORMED'-or
             $parserDesign.artifact_hash_verification_status-ne'NOT_PERFORMED'-or
@@ -1008,7 +1008,7 @@ else{
     else{
         $parserImplementation=$parserImplementationProperty.Value
         $parserEvidencePathProperty=$parserImplementation.PSObject.Properties['parser_synthetic_validation_path']
-        if($parserImplementation.status-ne'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT'-or
+        if($parserImplementation.status-ne'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'-or
             $parserImplementation.current_gate-ne'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'-or
             $parserImplementation.real_artifact_review_authorization_transition_commit-ne'baab23aece902cbb06e11a308d9092fdc0f9ce0d'-or
             $parserImplementation.independent_implementation_audit_verdict-ne'AUDIT PASS'-or
@@ -1060,14 +1060,16 @@ else{
             [int]$parserImplementation.authorization_manifest_malformed_case_count-ne14-or
             [int]$parserImplementation.failed_authorization_manifest_malformed_case_count-ne0-or
             $parserImplementation.original_stop_condition_reproduction_result-ne'PASS'-or
-            $parserImplementation.parser_execution_status-ne'REAL_ARTIFACT_NOT_PERFORMED'-or
-            $parserImplementation.metadata_review_status-ne'NOT_PERFORMED'-or
-            $parserImplementation.real_artifact_open_parse_hash_write_status-ne'NOT_PERFORMED'-or
-            $parserImplementation.real_compile_only_artifact_opened-ne$false-or
-            $parserImplementation.real_compile_only_artifact_parsed-ne$false-or
-            $parserImplementation.real_compile_only_artifact_hash_computed-ne$false-or
+            $parserImplementation.parser_execution_status-ne'STATIC_METADATA_VALIDATED'-or
+            $parserImplementation.metadata_review_status-ne'STATIC_METADATA_VALIDATED'-or
+            $parserImplementation.real_artifact_open_parse_hash_write_status-ne'PERFORMED'-or
+            $parserImplementation.real_compile_only_artifact_opened-ne$true-or
+            $parserImplementation.real_compile_only_artifact_parsed-ne$true-or
+            $parserImplementation.real_compile_only_artifact_hash_computed-ne$true-or
             $parserImplementation.real_compile_only_artifact_write_attempted-ne$false-or
             $parserImplementation.real_compile_only_artifact_write_completed-ne$false-or
+            $parserImplementation.real_artifact_review_completed-ne$true-or
+            $parserImplementation.static_metadata_review_result-ne'STATIC_METADATA_VALIDATED'-or
             $parserImplementation.assembly_loading_occurred-ne$false-or
             $parserImplementation.runtime_reflection_occurred-ne$false-or
             $parserImplementation.compiled_artifact_execution_occurred-ne$false-or

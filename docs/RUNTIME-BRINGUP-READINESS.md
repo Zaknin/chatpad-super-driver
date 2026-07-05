@@ -76,11 +76,15 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Static metadata parser implementation:
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
-- Parser execution against the real artifact: `REAL_ARTIFACT_NOT_PERFORMED`.
-- Metadata review: `NOT_PERFORMED`.
-- Real artifact open/parse/hash: `NOT_PERFORMED`.
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
+- Parser execution against the real artifact: `STATIC_METADATA_VALIDATED`.
+- Metadata review: `STATIC_METADATA_VALIDATED`.
+- Real artifact open/parse/hash: `PERFORMED`.
 - Real artifact write/overwrite: `NOT_PERFORMED`.
+- Real-artifact static metadata review audit: `AUDIT PASS`, accepted at
+  `eedf2a515734ca26c528a727e648ec987c0da0bd`.
+- Post-audit vocabulary is defined but not applied. The separately authorized
+  transition remains pending.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
   harness. Compiled output remains unloaded, unexecuted, unreflected, and
@@ -756,17 +760,17 @@ test harness, and validates both standard and independent parser evidence
 below constrained parser-specific ignored roots. Successful synthetic runs
 retain create-new evidence output.
 
-The accepted parser can validate, without opening the real DLL, that a future
-real-review request is backed by the authorization gate, accepted parser audit
-commit, recorded authorization transition commit, native execution blocker,
-live-readiness blocker, and exact compile-only evidence identity. The first
-separately authorized real-artifact review attempt failed closed before
-artifact I/O because the parser's authorization status boundary still accepts
-only `ACCEPTED_STATIC_ONLY`, while the current manifest records
-`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`. The parser was
-not run normally against the real compile-only artifact, and that artifact was
-not opened, hashed, parsed, written, overwritten, or inspected. Metadata
-review was not performed. See
+The accepted parser validates that a real-review request is backed by the
+authorization gate, accepted parser audit commit, recorded authorization
+transition commit, native execution blocker, live-readiness blocker, and exact
+compile-only evidence identity. Historically, the first separately authorized
+real-artifact review attempt failed closed before artifact I/O because the
+parser's authorization status boundary still accepted only
+`ACCEPTED_STATIC_ONLY`, while the manifest recorded
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`. At that historical
+point the parser was not run normally against the real compile-only artifact,
+the artifact was not opened, hashed, parsed, written, overwritten, or
+inspected, and metadata review was not performed. See
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 The status-boundary remediation updates that parser check to accept only
@@ -775,12 +779,18 @@ real-artifact preflight authorization fixture status. Old, pending, missing,
 empty, null, non-string, synthetic-only, implemented-pending-audit, and
 accepted-like lookalike parser statuses remain rejected before real-artifact
 I/O. Because parser source changed after authorization-plumbing acceptance,
-the active gate is now
-`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`; parser
-implementation status is
-`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
-Real-artifact metadata review remains not performed and unauthorized until an
-independent read-only audit passes.
+the gate moved to
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`. The later
+authorized real-artifact static metadata review completed, and its independent
+audit was accepted at
+`eedf2a515734ca26c528a727e648ec987c0da0bd`. The repository has selected
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`,
+`STATUS_BOUNDARY_ACCEPTED`, and
+`STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`
+as post-audit vocabulary, but has not applied the audit-acceptance transition.
+The current gate therefore remains the pending-transition gate above. Live
+readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
+runtime/native/device/Windows/driver work remains unauthorized.
 
 The first plumbing audit failed at `cb34346d3a2268b92a295e9d135609c1e45e2c68`.
 The remediation accepts only canonical independent audit/remediation roots
@@ -810,11 +820,11 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Remediate and independently audit the parser real-artifact authorization
-status boundary. Do not retry real-artifact metadata review until that parser
-remediation passes independent audit and a later task explicitly reopens
-artifact open/read/hash/parse scope. The audit must still prohibit assembly
-loading, runtime reflection, execution, native DLL loading, entry-point
-resolution, native or SetupAPI/Newdev invocation, device query, hardware
-access, Windows mutation, and driver build/link/sign/CAT/package/stage/install/
-load/unload/bind/restore/restart actions.
+Apply the accepted audit result in a separate audit-acceptance transition using
+the selected post-audit vocabulary. Do not change parser source without an
+explicit repository contract. Do not rerun the parser or open, read, hash,
+parse, write, load, reflect over, or execute the real DLL. The transition must
+still prohibit assembly loading, runtime reflection, execution, native DLL
+loading, entry-point resolution, native or SetupAPI/Newdev invocation, device
+query, hardware access, Windows mutation, and driver build/link/sign/CAT/
+package/stage/install/load/unload/bind/restore/restart actions.

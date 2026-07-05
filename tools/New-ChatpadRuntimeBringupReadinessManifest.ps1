@@ -48,11 +48,10 @@ $acceptedSuiteGates=if($NoArtifactOpenDesignGateAudit){
         'BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT',
         'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION',
         'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT',
-        'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT',
-        'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
     )
 }else{
-    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT','BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED')
+    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT')
 }
 $acceptedSuiteMetadataStatuses=if($NoArtifactOpenDesignGateAudit){
     @(
@@ -188,6 +187,7 @@ $manifest=[pscustomobject][ordered]@{
         canonical_text_line_endings='LF'
     }
     generated_utc=(Get-Date).ToUniversalTime().ToString('o')
+    real_artifact_static_metadata_review_completed=$true
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
     current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
@@ -282,9 +282,9 @@ $manifest=[pscustomobject][ordered]@{
             independent_design_audit_summary_sha256='A1A83F8C7A818B45D2A19A2C10C9206FE0C38CB8335485E17E2124BCEFCDB2C5'
             input_identity_source='REFERENCE_ONLY_ACCEPTED_COMPILE_ONLY_V2_EVIDENCE'
             referenced_primary_dll_sha256='77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862'
-            parser_implementation_status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT'
-            parser_execution_status='REAL_ARTIFACT_NOT_PERFORMED'
-            metadata_review_status='NOT_PERFORMED'
+            parser_implementation_status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'
+            parser_execution_status='STATIC_METADATA_VALIDATED'
+            metadata_review_status='STATIC_METADATA_VALIDATED'
             artifact_opening_status='NOT_PERFORMED'
             artifact_parsing_status='NOT_PERFORMED'
             artifact_hash_verification_status='NOT_PERFORMED'
@@ -298,7 +298,7 @@ $manifest=[pscustomobject][ordered]@{
             driver_actions_status='NOT_PERFORMED'
         }
         static_metadata_parser_implementation=[pscustomobject][ordered]@{
-            status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT'
+            status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'
             current_gate='BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT'
             real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
             independent_implementation_audit_verdict='AUDIT PASS'
@@ -349,14 +349,16 @@ $manifest=[pscustomobject][ordered]@{
             authorization_manifest_malformed_case_count=[int]$parserEvidence.authorization_manifest_malformed_case_count
             failed_authorization_manifest_malformed_case_count=[int]$parserEvidence.failed_authorization_manifest_malformed_case_count
             original_stop_condition_reproduction_result=[string]$parserEvidence.original_stop_condition_reproduction.result
-            parser_execution_status='REAL_ARTIFACT_NOT_PERFORMED'
-            metadata_review_status='NOT_PERFORMED'
-            real_artifact_open_parse_hash_write_status='NOT_PERFORMED'
-            real_compile_only_artifact_opened=$false
-            real_compile_only_artifact_parsed=$false
-            real_compile_only_artifact_hash_computed=$false
+            parser_execution_status='STATIC_METADATA_VALIDATED'
+            metadata_review_status='STATIC_METADATA_VALIDATED'
+            real_artifact_open_parse_hash_write_status='PERFORMED'
+            real_compile_only_artifact_opened=$true
+            real_compile_only_artifact_parsed=$true
+            real_compile_only_artifact_hash_computed=$true
             real_compile_only_artifact_write_attempted=$false
             real_compile_only_artifact_write_completed=$false
+            real_artifact_review_completed=$true
+            static_metadata_review_result='STATIC_METADATA_VALIDATED'
             assembly_loading_occurred=$false
             runtime_reflection_occurred=$false
             compiled_artifact_execution_occurred=$false

@@ -9476,3 +9476,94 @@
 - **Live readiness remains:** `BLOCKED`.
 - **Manifest updated:** `parser_execution_status=STATIC_METADATA_VALIDATED`, `metadata_review_status=STATIC_METADATA_VALIDATED`, `real_artifact_open_parse_hash_write_status=PERFORMED`, `real_artifact_static_metadata_review_completed=true`.
 - **Next task:** independent read-only audit of the authorized real-artifact static metadata review.
+
+---
+
+## 2026-07-05 23:11 +04:00 - Post-audit vocabulary design scope remediation
+
+- **Objective:** Verify commit
+  `6372adfdc695c26ae90b639c69abb6cf7eff0a98` and remediate any
+  vocabulary-design scope violations without rerunning the parser, accessing
+  the real compile-only DLL, or performing runtime/native/device/Windows/driver
+  work.
+- **Starting state:** Repository `C:\Dev\chatpad-super-driver`, branch
+  `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`,
+  HEAD `6372adfdc695c26ae90b639c69abb6cf7eff0a98`, upstream
+  `origin/feature/runtime-bringup-real-artifact-static-metadata-review-authorized`,
+  ahead/behind `0/0`, clean working tree. `IDEA.md` was ignored and absent
+  from status. Required ancestors
+  `eedf2a515734ca26c528a727e648ec987c0da0bd`,
+  `e207a23bffad45a39e7fec3dfa0e72e6f4600b83`, and
+  `383aaf0a65a867d2773ed91d6a5c8e9c535e4f04` were present.
+- **Investigation:** The range
+  `eedf2a515734ca26c528a727e648ec987c0da0bd..6372adfdc695c26ae90b639c69abb6cf7eff0a98`
+  contained one commit and changed `docs/DECISIONS.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and unauthorized
+  parser source `tools/StaticMetadataParser/Program.cs`. The parser diff
+  changed `CurrentGate` to
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` and added
+  `StatusBoundaryAccepted`. No earlier repository contract explicitly
+  required parser-source modification. The suspect commit also described and
+  partially applied the audit-acceptance transition even though the parent
+  contract kept
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` as the
+  current gate. Its own `docs/NEXT-TASK.md` remained at that pending gate,
+  proving the commit was internally inconsistent.
+- **Remediation:** Reverted the unauthorized parser-source diff and the
+  generator allowlist change. Preserved the selected post-audit vocabulary in
+  `docs/DECISIONS.md` as design-only, explicitly left the transition
+  unapplied, corrected current-state/readiness continuity, and made the
+  separate audit-acceptance transition the exact next task. The real-artifact
+  static metadata review audit is recorded as accepted at
+  `eedf2a515734ca26c528a727e648ec987c0da0bd`.
+- **Current state:** `current_gate` remains
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`;
+  metadata review remains `STATIC_METADATA_VALIDATED`; runtime blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live readiness remains
+  `BLOCKED`; native execution remains `NOT_IMPLEMENTED`.
+- **Files modified:** `docs/DECISIONS.md`, `docs/NEXT-TASK.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/WORKLOG.md`, regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`, and exact reverts in
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1` and
+  `tools/StaticMetadataParser/Program.cs`. The manifest generator and validator
+  were also aligned to preserve the already accepted review facts
+  (`STATIC_METADATA_VALIDATED`, real artifact open/read/hash/parse performed,
+  write not performed) while retaining the pending-transition gate.
+- **Validation:** Manifest generation passed under Windows PowerShell 5.1 and
+  PowerShell 7 with schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, 39 entries, zero duplicate
+  IDs, zero duplicate paths, and zero `NO_PATH` entries. Canonical manifest
+  validation passed under both runtimes with zero defects. Cross-runtime entry
+  identity comparison passed for 39/39 entries with zero deltas.
+  Documentation consistency checks passed; stale wording, both named malformed
+  runtime-path terms, and executable prohibited-pattern searches returned zero
+  matches. Changed-path authorization passed. Forbidden tracked
+  generated-file and untracked-outside-ignore counts were zero.
+- **Repository safety cleanup:** The first repository-safety run found
+  pre-existing ignored parser build outputs beneath
+  `tools/StaticMetadataParser/bin` and `tools/StaticMetadataParser/obj`.
+  This task did not build or run the parser. After verifying both paths were
+  exactly those contained generated-output directories, they were removed.
+  Repository safety then passed with deployment, signing, packaging,
+  certificate, key, Windows mutation, device query, hardware access,
+  unexpected tracked artifact, tracked evidence, and non-ignored evidence
+  counters all zero.
+- **Finalization validation:** Final canonical manifest regeneration and
+  dual-runtime validation passed with the same schema, counts, zero defects,
+  and zero cross-runtime identity deltas. `git diff --check`, complete diff
+  review, commit, push, and remote synchronization verification complete the
+  task after this entry.
+- **Safety:** The parser was not rerun. The real compile-only DLL was not
+  opened, read, hashed, parsed, written, overwritten, loaded, reflected over,
+  or executed. No native API or SetupAPI/Newdev invocation, device query,
+  hardware access, Windows mutation, or driver build/link/sign/CAT/package/
+  stage/install/load/unload/bind/restore/restart occurred.
+- **Commit and push:** Commit subject
+  `docs: remediate post-audit vocabulary design scope`; Git is authoritative
+  for the resulting hash. Push target is
+  `origin/feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
+- **Next task:** Apply the accepted audit result as a separate
+  audit-acceptance transition using the selected post-audit vocabulary, with
+  parser source unchanged unless a separate explicit contract requires it.
