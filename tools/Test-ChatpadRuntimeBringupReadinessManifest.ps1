@@ -18,7 +18,7 @@ function Test-ChatpadApprovedParserEvidencePath {
     if($segments.Count-lt4-or$segments[0]-cne'artifacts'-or$segments[1]-cne'logs'){return $false}
     if(@($segments|Where-Object{$_-in@('.','..')}).Count){return $false}
     $rootSegment=$segments[2]
-    if($rootSegment -cne 'static-parser-real-artifact-authorization-plumbing' -and $rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation)-[a-f0-9]{7,40})$'){return $false}
+    if($rootSegment -cne 'static-parser-real-artifact-authorization-plumbing' -and $rootSegment-notmatch'(?i)^(static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-metadata-parser-[a-z0-9][a-z0-9-]*|independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation|remediation-audit)-[a-f0-9]{7,40})$'){return $false}
     $tail=($segments|Select-Object -Skip 3) -join '/'
     if($normalized-match'(?i)(artifacts/compile-only|chatpad\.nativeinterop\.compileonlyvalidation\.dll|compiled-artifact|native-interop|metadata-review|/legacy/)'){return $false}
     if($tail-match'(?i)real-artifact'){return $false}
@@ -804,12 +804,28 @@ if($RunParserEvidencePathRegression){
         [pscustomobject]@{id='authorization-plumbing';path='artifacts/logs/static-parser-real-artifact-authorization-plumbing/static-metadata-parser-synthetic-validation.json';expected=$true},
         [pscustomobject]@{id='authorization-plumbing-independent-audit';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-audit-cb34346/static-metadata-parser-synthetic-validation.json';expected=$true},
         [pscustomobject]@{id='authorization-plumbing-independent-remediation';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-cb34346/static-metadata-parser-synthetic-validation.json';expected=$true},
+        [pscustomobject]@{id='authorization-plumbing-independent-remediation-audit';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a721/static-metadata-parser-synthetic-validation.json';expected=$true},
+        [pscustomobject]@{id='authorization-plumbing-independent-remediation-audit-uppercase-hex';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2D7A721/static-metadata-parser-synthetic-validation.json';expected=$true},
         [pscustomobject]@{id='authorization-plumbing-independent-missing-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-audit/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='authorization-plumbing-independent-nonhex-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-audit-notasha/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-missing-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-nonhex-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-notasha/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-short-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a72/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-long-sha';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-extra-suffix';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a721-extra/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-lookalike-prefix';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-review-2d7a721/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-traversal';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a721/../docs/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-remediation-audit-mixed-traversal';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a721\..\legacy/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-broad-independent-parser';path='artifacts/logs/independent-static-parser-anything-2d7a721/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='authorization-plumbing-broad-real-artifact';path='artifacts/logs/independent-static-parser-real-artifact-anything-2d7a721/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='authorization-plumbing-lookalike';path='artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-review-cb34346/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='authorization-plumbing-nested-real-artifact';path='artifacts/logs/static-parser-real-artifact-authorization-plumbing/real-artifact/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='non-parser-root';path='artifacts/logs/unrelated-audit/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='real-artifact-root';path='artifacts/compile-only/native-interop/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='production-driver-root';path='driver/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='package-signing-staging-root';path='packaging/signing/staging/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='binary-output-root';path='artifacts/bin/static-metadata-parser-synthetic-validation.json';expected=$false},
+        [pscustomobject]@{id='legacy-root';path='legacy/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='protected-tracked-path';path='docs/evidence/static-metadata-parser-synthetic-validation.json';expected=$false},
         [pscustomobject]@{id='missing-path';path=$null;expected=$false},
         [pscustomobject]@{id='empty-path';path='';expected=$false},
@@ -1024,7 +1040,7 @@ else{
             [int]$parserImplementation.failed_safety_option_rejection_count-ne0-or
             [int]$parserImplementation.real_artifact_preflight_only_count-ne8-or
             [int]$parserImplementation.failed_real_artifact_preflight_only_count-ne0-or
-            [int]$parserImplementation.authorization_manifest_malformed_case_count-ne6-or
+            [int]$parserImplementation.authorization_manifest_malformed_case_count-ne14-or
             [int]$parserImplementation.failed_authorization_manifest_malformed_case_count-ne0-or
             $parserImplementation.original_stop_condition_reproduction_result-ne'PASS'-or
             $parserImplementation.parser_execution_status-ne'REAL_ARTIFACT_NOT_PERFORMED'-or

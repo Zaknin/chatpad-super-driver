@@ -4,6 +4,31 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-05 - Treat required authorization-manifest objects as typed boundaries
+
+**Decision:** Accept the exact
+`independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<hex>`
+family only with a 7-to-40-character hexadecimal suffix. Before reading
+authorization fields, require the metadata-review gate, parser implementation,
+parser design, and repository nodes to be JSON objects. Missing or non-object
+required nodes fail with `AUTHORIZATION_MANIFEST_MALFORMED`.
+
+**Rationale:** The independent audit of
+`2d7a721ce3172b338df0de56853a256b1170fb4a` proved that the only authorized
+audit root was still rejected and that nested property access could operate on
+an undefined `JsonElement`, escaping the structured zero-I/O denial contract.
+
+**Alternatives rejected:** Broadening arbitrary `independent-static-parser-*`
+roots, accepting scalar or array nodes and relying on later empty-string
+comparisons, catching all exceptions without validating shape, or weakening
+the preflight-only boundary.
+
+**Consequences:** The combined remediation-audit family is accepted without
+broad wildcard expansion. Missing, null, scalar, array, empty, and wrongly
+typed required objects reject before real-artifact I/O with exit `64`, no
+parser output, and zero prohibited counters. The gate remains pending
+independent audit.
+
 ## 2026-07-05 - Fail closed on authorization manifests and canonicalize independent roots
 
 **Decision:** Authorization-manifest fixtures are accepted only below the

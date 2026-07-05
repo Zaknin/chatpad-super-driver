@@ -9072,3 +9072,87 @@
 - **Next task:** Perform a fresh independent strict read-only audit of this
   remediation. Do not retry real-artifact metadata review until that re-audit
   passes and a separate gate-transition task reauthorizes it.
+
+## 2026-07-05 11:17 +04:00 - Authorization-plumbing audit-root and manifest-shape remediation
+
+- **Objective:** Narrowly remediate the failed independent audit of
+  `2d7a721ce3172b338df0de56853a256b1170fb4a`: accept the exact authorized
+  combined remediation-audit root, make required nested authorization-manifest
+  object access total and fail-closed, and record the exact prior remediation
+  commit in continuity without advancing the gate.
+- **Starting state:** Verified
+  `feature/runtime-bringup-static-parser-real-artifact-authorization-plumbing`
+  at exact HEAD `2d7a721ce3172b338df0de56853a256b1170fb4a`,
+  tracking its expected upstream at `0/0` with a clean tree and index. Verified
+  current gate
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`,
+  runtime blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live
+  readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, parser status
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`, parser
+  execution `REAL_ARTIFACT_NOT_PERFORMED`, metadata review `NOT_PERFORMED`,
+  and real artifact open/read/hash/parse/write `NOT_PERFORMED`. Created
+  `feature/runtime-bringup-static-parser-auth-plumbing-audit-root-remediation`
+  from that exact commit.
+- **Audit reproduction:** The parent parser rejected
+  `independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a721`
+  with exit `64`, `OUTSIDE_SYNTHETIC_FIXTURE_SCOPE`, no output, and zero
+  counters. A direct synthetic `JsonElement` probe reproduced the underlying
+  `System.InvalidOperationException` when `TryGetProperty` was invoked on an
+  undefined value. No real-artifact file operation was used for either
+  reproduction.
+- **Implementation:** `Program.cs` adds only the exact
+  `independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<hex>`
+  family with a 7-to-40-character hexadecimal suffix. Required
+  `compiled_artifact_metadata_review_design_gate`,
+  `static_metadata_parser_implementation`,
+  `static_metadata_parser_implementation_design`, and `repository` nodes must
+  now be JSON objects before field access; missing or non-object nodes return
+  `AUTHORIZATION_MANIFEST_MALFORMED`. The shared object accessor is total over
+  undefined and non-object `JsonElement` values.
+- **Regression coverage:** The parser harness adds missing, null, string,
+  number, Boolean, array, empty-object, and wrong-nested-child object-shape
+  cases. The malformed/shape matrix is now fourteen cases. Manifest path
+  regression adds the combined-family positive cases plus missing, non-hex,
+  short, long, extra-suffix, lookalike, traversal, mixed-traversal,
+  broad-wildcard, production, package/signing/staging, binary, and legacy
+  negatives.
+- **Validation:** The full parser harness passed from the combined
+  remediation-audit root with five fixtures, 1,417 assertions, eight of eight
+  authorization preflights, fourteen of fourteen malformed/shape cases, zero
+  failed fixtures, and zero prohibited counters. Parser build passed with zero
+  warnings and zero errors. The expanded parser-path regression passed 31 of
+  31 cases. Windows PowerShell 5.1 and PowerShell 7 each generated and
+  validated 39-entry manifests with zero canonical self-entries and zero
+  cross-runtime entry-identity delta. The affected full corruption regression
+  completed on PowerShell 7.6.3: `PASS`, 678 cases, zero failures, 224.19
+  seconds.
+- **Files modified:** `tools/StaticMetadataParser/Program.cs`,
+  `tools/Test-ChatpadStaticMetadataParser.ps1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/evidence/static-metadata-parser-evidence-schema-v1.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, `docs/DECISIONS.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/COMPILED-ARTIFACT-METADATA-REVIEW-DESIGN-GATE.md`,
+  `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`, and
+  `docs/WORKLOG.md`.
+- **Evidence:** Reproduction, parser, manifest, corruption, safety, and final
+  inventory evidence is under
+  `artifacts/logs/static-parser-auth-plumbing-audit-root-remediation/`.
+  Complete combined-root parser evidence is under
+  `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a7210/`.
+- **Continuity:** Current-state documents now explicitly record
+  `2d7a721ce3172b338df0de56853a256b1170fb4a` as the first remediation and
+  preserve the pending-audit gate. The focused child commit and push are
+  recorded authoritatively by Git because this entry is committed atomically
+  with the implementation and generated manifest.
+- **Safety:** The parser was not run normally against the real compile-only
+  artifact. That artifact was not opened, read, hashed, parsed, written,
+  overwritten, loaded, reflected over, executed, or reviewed. No native or
+  SetupAPI/Newdev invocation, native DLL loading, entry-point resolution,
+  device query, hardware access, Windows mutation, or driver build/link/sign/
+  CAT/package/stage/install/load/unload/bind/restore/restart occurred.
+- **Next task:** Fresh independent strict read-only audit of the focused child
+  remediation commit. Do not authorize real-artifact metadata review unless
+  that audit passes and a later explicit gate transition reopens the scope.

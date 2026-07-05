@@ -849,6 +849,38 @@ $wrongSchemaManifest = New-MutatedAuthorizationManifestFixture -CaseId 'wrong-sc
     param($manifest)
     $manifest.schema_version = 'chatpad-runtime-bringup-readiness-manifest-v999'
 }
+$missingMetadataGateManifest = New-MutatedAuthorizationManifestFixture -CaseId 'missing-metadata-gate-object' -Mutate {
+    param($manifest)
+    [void]$manifest.PSObject.Properties.Remove('compiled_artifact_metadata_review_design_gate')
+}
+$nullMetadataGateManifest = New-MutatedAuthorizationManifestFixture -CaseId 'null-metadata-gate-object' -Mutate {
+    param($manifest)
+    $manifest.compiled_artifact_metadata_review_design_gate = $null
+}
+$stringMetadataGateManifest = New-MutatedAuthorizationManifestFixture -CaseId 'string-metadata-gate-object' -Mutate {
+    param($manifest)
+    $manifest.compiled_artifact_metadata_review_design_gate = 'invalid'
+}
+$numberMetadataGateManifest = New-MutatedAuthorizationManifestFixture -CaseId 'number-metadata-gate-object' -Mutate {
+    param($manifest)
+    $manifest.compiled_artifact_metadata_review_design_gate = 1
+}
+$booleanMetadataGateManifest = New-MutatedAuthorizationManifestFixture -CaseId 'boolean-metadata-gate-object' -Mutate {
+    param($manifest)
+    $manifest.compiled_artifact_metadata_review_design_gate = $false
+}
+$arrayMetadataGateManifest = New-MutatedAuthorizationManifestFixture -CaseId 'array-metadata-gate-object' -Mutate {
+    param($manifest)
+    $manifest.compiled_artifact_metadata_review_design_gate = @('invalid')
+}
+$emptyMetadataGateManifest = New-MutatedAuthorizationManifestFixture -CaseId 'empty-metadata-gate-object' -Mutate {
+    param($manifest)
+    $manifest.compiled_artifact_metadata_review_design_gate = [pscustomobject]@{}
+}
+$wrongNestedParserObjectManifest = New-MutatedAuthorizationManifestFixture -CaseId 'wrong-nested-parser-object-type' -Mutate {
+    param($manifest)
+    $manifest.compiled_artifact_metadata_review_design_gate.static_metadata_parser_implementation = @('invalid')
+}
 $realPreflightCases = @(
     [pscustomobject][ordered]@{ id='authorized-exact-artifact'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'authorized-exact-artifact'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'authorized-exact-artifact.evidence.json'); expected_exit=0; expected_status='AUTHORIZED'; expect_authorized=$true },
     [pscustomobject][ordered]@{ id='wrong-artifact-path'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-artifact-path'); input=([IO.Path]::GetFullPath((Join-Path $root 'artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/NotTheAcceptedArtifact.dll'))); output=(Join-Path $realReviewOutputRoot 'wrong-artifact-path.evidence.json'); expected_exit=64; expected_status='AUTHORIZED'; expect_authorized=$false },
@@ -863,7 +895,15 @@ $realPreflightCases = @(
     [pscustomobject][ordered]@{ id='manifest-missing-required-fields'; case_group='malformed-manifest'; manifest=$missingFieldsManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-missing-required-fields.evidence.json'); expected_exit=64; expected_status='MANIFEST_GATE_OR_BLOCKER_MISMATCH'; expect_authorized=$false; expected_identity_matched=$true },
     [pscustomobject][ordered]@{ id='manifest-wrong-field-type'; case_group='malformed-manifest'; manifest=$wrongFieldTypeManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-wrong-field-type.evidence.json'); expected_exit=64; expected_status='MANIFEST_GATE_OR_BLOCKER_MISMATCH'; expect_authorized=$false; expected_identity_matched=$true },
     [pscustomobject][ordered]@{ id='manifest-wrong-schema-version'; case_group='malformed-manifest'; manifest=$wrongSchemaManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-wrong-schema-version.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_SCHEMA_MISMATCH'; expect_authorized=$false; expected_identity_matched=$false },
-    [pscustomobject][ordered]@{ id='manifest-path-outside-approved-root'; case_group='malformed-manifest'; manifest=([IO.Path]::GetFullPath((Join-Path $root 'docs/evidence/runtime-bringup-readiness-manifest.json'))); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-path-outside-approved-root.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_PATH_NOT_CANONICAL'; expect_authorized=$false; expected_identity_matched=$false }
+    [pscustomobject][ordered]@{ id='manifest-path-outside-approved-root'; case_group='malformed-manifest'; manifest=([IO.Path]::GetFullPath((Join-Path $root 'docs/evidence/runtime-bringup-readiness-manifest.json'))); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-path-outside-approved-root.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_PATH_NOT_CANONICAL'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-missing-metadata-gate-object'; case_group='malformed-manifest'; manifest=$missingMetadataGateManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-missing-metadata-gate-object.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-null-metadata-gate-object'; case_group='malformed-manifest'; manifest=$nullMetadataGateManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-null-metadata-gate-object.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-string-metadata-gate-object'; case_group='malformed-manifest'; manifest=$stringMetadataGateManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-string-metadata-gate-object.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-number-metadata-gate-object'; case_group='malformed-manifest'; manifest=$numberMetadataGateManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-number-metadata-gate-object.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-boolean-metadata-gate-object'; case_group='malformed-manifest'; manifest=$booleanMetadataGateManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-boolean-metadata-gate-object.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-array-metadata-gate-object'; case_group='malformed-manifest'; manifest=$arrayMetadataGateManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-array-metadata-gate-object.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-empty-metadata-gate-object'; case_group='malformed-manifest'; manifest=$emptyMetadataGateManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-empty-metadata-gate-object.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false },
+    [pscustomobject][ordered]@{ id='manifest-wrong-nested-parser-object-type'; case_group='malformed-manifest'; manifest=$wrongNestedParserObjectManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'manifest-wrong-nested-parser-object-type.evidence.json'); expected_exit=64; expected_status='AUTHORIZATION_MANIFEST_MALFORMED'; expect_authorized=$false; expected_identity_matched=$false }
 )
 foreach ($case in $realPreflightCases) {
     $output = [string]$case.output

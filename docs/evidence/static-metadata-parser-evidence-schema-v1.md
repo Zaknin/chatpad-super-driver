@@ -104,6 +104,8 @@ Canonical independent roots are additionally limited to
 `independent-static-parser-real-artifact-authorization-plumbing-audit-<hex>`
 or
 `independent-static-parser-real-artifact-authorization-plumbing-remediation-<hex>`,
+or
+`independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<hex>`,
 where `<hex>` is 7 through 40 hexadecimal characters. Similar names without
 that exact shape are rejected.
 Nested real-artifact paths, compile-only, protected-name, metadata-review,
@@ -126,7 +128,9 @@ Successful preflight-only authorization writes no output file and must keep
 all real-artifact open/read/hash/parse/write and metadata-review counters at
 zero. Invalid JSON and empty manifests report
 `AUTHORIZATION_MANIFEST_MALFORMED`; a wrong or missing schema reports
-`AUTHORIZATION_MANIFEST_SCHEMA_MISMATCH`. Other missing or wrongly typed
+`AUTHORIZATION_MANIFEST_SCHEMA_MISMATCH`. Missing, null, array, scalar, empty,
+or otherwise non-object required nested manifest structures report
+`AUTHORIZATION_MANIFEST_MALFORMED`. Other missing or wrongly typed scalar
 authorization fields fail the existing manifest gate/status checks. Every
 denial exits `64`, emits the structured console diagnostic, creates no parser
 output, and keeps prohibited counters at zero.

@@ -2,20 +2,22 @@
 
 ## Objective
 
-Perform a fresh independent read-only audit of the remediated real-artifact
-static-review authorization plumbing.
+Perform a fresh independent strict read-only audit of the focused
+authorization-plumbing audit-root and manifest-shape remediation.
 
 ## Required Starting State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch:
-  `feature/runtime-bringup-static-parser-real-artifact-authorization-plumbing`.
-- Starting commit: the pushed remediation commit whose parent is
-  `cb34346d3a2268b92a295e9d135609c1e45e2c68`; resolve and record its exact
+  `feature/runtime-bringup-static-parser-auth-plumbing-audit-root-remediation`.
+- Starting commit: the pushed focused remediation commit whose parent is
+  `2d7a721ce3172b338df0de56853a256b1170fb4a`; resolve and record its exact
   hash from Git before auditing.
+- First remediation:
+  `2d7a721ce3172b338df0de56853a256b1170fb4a`.
 - Authorization transition base:
   `baab23aece902cbb06e11a308d9092fdc0f9ce0d`.
-- Accepted parser implementation audit commit:
+- Accepted parser implementation audit:
   `f0be4746ad4cc548334336c1e66f07007b71859f`.
 - Current gate:
   `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
@@ -24,32 +26,20 @@ static-review authorization plumbing.
 - Native execution: `NOT_IMPLEMENTED`.
 - Parser implementation:
   `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
-- Parser execution against the real artifact: `NOT_PERFORMED`.
+- Parser execution against the real artifact:
+  `REAL_ARTIFACT_NOT_PERFORMED`.
 - Metadata review: `NOT_PERFORMED`.
-- Real artifact open/parse/hash/write: `NOT_PERFORMED`.
+- Real artifact open/read/hash/parse/write: `NOT_PERFORMED`.
 - Working tree and index: clean.
-- Upstream: matching branch on `origin`, ahead/behind `0/0`.
+- Upstream: matching remediation branch on `origin`, ahead/behind `0/0`.
 
-## Authorization Boundary
+## Safety Restrictions
 
-The next task is audit-only. It may read source, documentation, tracked JSON
-evidence, generated ignored parser evidence, and test logs. It must not run
-the parser normally against the real compile-only artifact and must not open,
-read, hash, parse, overwrite, or write the real compile-only DLL.
-
-The audit must still prohibit:
-
-- assembly loading;
-- runtime reflection;
-- compiled artifact execution;
-- native DLL loading;
-- entry-point resolution;
-- native or SetupAPI/Newdev invocation;
-- device query;
-- hardware access;
-- Windows mutation;
-- driver build, link, sign, CAT generation, package, stage, install, load,
-  unload, bind, restore, or restart.
+This is audit-only. Do not run the parser normally against the real compile-only
+artifact. Do not open, read, hash, parse, write, overwrite, load, reflect over,
+or execute that artifact. Do not invoke native APIs, query devices, access
+hardware, mutate Windows, or build/link/sign/package/stage/install/load/unload/
+bind/restore/restart a driver.
 
 ## Inspect First
 
@@ -59,39 +49,36 @@ The audit must still prohibit:
 4. `docs/NEXT-TASK.md`
 5. Latest relevant `docs/WORKLOG.md` entry
 6. `docs/evidence/runtime-bringup-readiness-manifest.json`
-7. `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-cb34346/static-metadata-parser-synthetic-validation.json`
-8. `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
-9. `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`
-10. `tools/StaticMetadataParser/Program.cs`
-11. `tools/Test-ChatpadStaticMetadataParser.ps1`
-12. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
-13. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+7. `docs/evidence/static-metadata-parser-evidence-schema-v1.md`
+8. `tools/StaticMetadataParser/Program.cs`
+9. `tools/Test-ChatpadStaticMetadataParser.ps1`
+10. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+11. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+12. Remediation evidence under
+    `artifacts/logs/static-parser-auth-plumbing-audit-root-remediation/`
 
 ## Acceptance Criteria
 
-- Reproduce that the accepted parser at
-  `f0be4746ad4cc548334336c1e66f07007b71859f` stopped before real-artifact
-  review authorization plumbing.
-- Verify the new parser scope is preflight-only and requires the manifest
-  gate, runtime blocker, live-readiness state, accepted parser audit commit,
-  authorization transition commit, and exact recorded compile-only artifact
-  identity.
-- Verify callers cannot force the real-artifact scope with a flag alone, a
-  stale/new gate, a wrong parser status, wrong live readiness, missing
-  transition commit, wrong artifact path, wrong output root, or unsafe
-  manifest path.
-- Verify canonical
-  `independent-static-parser-real-artifact-authorization-plumbing-(audit|remediation)-<hex>`
-  roots are accepted while missing-hash, non-hex, lookalike, traversal,
-  reparse, and unrelated roots remain rejected.
-- Verify all six malformed-manifest cases return structured exit-64 denials,
-  create no output, and keep every prohibited counter at zero.
-- Verify successful preflight writes no parser output and performs no real
-  artifact read, open, hash, parse, write, or metadata review.
-- Verify Windows PowerShell 5.1 and PowerShell 7 regeneration each produce
-  the same intended 39 entry identities, no duplicate IDs or normalized
-  paths, and no canonical-manifest self-entry.
-- Re-run the full gate/status corruption regression and record its case count,
-  result, and elapsed runtime.
-- Keep live readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, and the
-  runtime blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Independently reproduce that the parent `2d7a721...` rejected the exact
+  combined remediation-audit root and could expose undefined nested
+  `JsonElement` access.
+- Run the complete synthetic harness under
+  `independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<7-40 hex>`.
+- Verify the audit, remediation, and remediation-audit families are accepted
+  narrowly; missing, non-hex, short, long, lookalike, traversal, protected,
+  unrelated, and broad-wildcard roots remain rejected.
+- Verify all fourteen malformed/shape cases produce structured exit-64
+  denials, no output, zero real-artifact I/O, and zero prohibited counters.
+- Verify the eight real-artifact preflight-only authorization cases without
+  opening, reading, hashing, parsing, or writing the artifact.
+- Verify deterministic 39-entry manifest generation and validation under
+  Windows PowerShell 5.1 and PowerShell 7 with zero cross-runtime identity
+  delta and no canonical self-entry.
+- Verify parser-path regression, documentation consistency, repository safety,
+  forbidden generated-file scan, prohibited-pattern scan, and
+  `git diff --check`.
+- Keep the current gate, blocker, readiness, native-execution, parser,
+  execution, metadata-review, and real-artifact-I/O states unchanged.
+
+Do not authorize or perform real-artifact metadata review. A separate
+post-audit gate transition is required before that work can be considered.

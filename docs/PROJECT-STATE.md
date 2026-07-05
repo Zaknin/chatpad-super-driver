@@ -1,16 +1,20 @@
 # Project State
 
-*Last updated: 2026-07-05 (authorization-plumbing audit remediation pending re-audit)*
+*Last updated: 2026-07-05 (audit-root and manifest-shape remediation pending independent audit)*
 
 ## Current State
 
 - **Branch:**
-  `feature/runtime-bringup-static-parser-real-artifact-authorization-plumbing`.
+  `feature/runtime-bringup-static-parser-auth-plumbing-audit-root-remediation`.
 - **Authorization-plumbing implementation:** `cb34346d3a2268b92a295e9d135609c1e45e2c68`.
-- **Current remediation:** the focused commit containing the parser,
-  harness, deterministic-manifest, and continuity fixes described here.
-  Git is authoritative for its exact hash because this document is committed
-  atomically with that commit.
+- **First audit remediation:**
+  `2d7a721ce3172b338df0de56853a256b1170fb4a`, which remediated the
+  original independent-root, malformed-JSON, manifest self-entry, corruption
+  timeout, and continuity failures but did not accept the exact combined
+  remediation-audit root or fully validate required nested manifest objects.
+- **Current remediation:** the focused child commit of `2d7a721...` that adds
+  those two fail-closed contracts and corrects continuity. Git is authoritative
+  for its exact hash because this document is committed atomically with it.
 - **Current gate:**
   `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
@@ -34,7 +38,7 @@
 - Current authorization-plumbing evidence root:
   `artifacts/logs/static-parser-real-artifact-authorization-plumbing/`.
 - Current remediation evidence root:
-  `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-cb34346/`.
+  `artifacts/logs/independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-2d7a7210/`.
 
 The remediated static metadata parser implementation passed independent audit
 at `f0be4746ad4cc548334336c1e66f07007b71859f` as static-only and
@@ -69,8 +73,19 @@ canonical manifest itself, and continuity records were stale. The remediation:
   into structured exit-64 zero-I/O denials;
 - excludes `docs/evidence/runtime-bringup-readiness-manifest.json` from
   generated manifest entries regardless of the selected output path;
-- keeps the existing eight authorization cases and adds six malformed-manifest
-  cases.
+- keeps the existing eight authorization cases and adds malformed-manifest
+  coverage.
+
+The next audit of `2d7a721ce3172b338df0de56853a256b1170fb4a`
+found that the exact
+`independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<hex>`
+family was still rejected, the exact remediation commit was omitted from
+continuity, and absent or non-object required nested manifest structures could
+reach `JsonElement.TryGetProperty` on an undefined value. The current
+remediation accepts only that additional 7-to-40-character hexadecimal root
+family and classifies all required nested-object shape failures as structured
+`AUTHORIZATION_MANIFEST_MALFORMED` zero-I/O denials. Fourteen malformed and
+shape cases now pass.
 
 The remediated plumbing is pending a fresh independent read-only audit. It does
 not authorize a normal parser run against the real artifact and does not
@@ -103,9 +118,9 @@ metadata review.
 
 ## Next Task
 
-Perform a fresh independent read-only audit of the remediated real-artifact
-static-review authorization plumbing. Include the canonical independent-root
-matrix, all six malformed-manifest denials, deterministic 39-entry manifest
-regeneration, the completed corruption matrix, and zero real-artifact I/O.
+Perform a fresh independent read-only audit of the focused child remediation
+of `2d7a721ce3172b338df0de56853a256b1170fb4a`. Include the exact combined
+remediation-audit root family, all fourteen malformed/shape denials,
+deterministic 39-entry manifest regeneration, and zero real-artifact I/O.
 Do not retry metadata review until the re-audit passes and a separate task
 advances the gate.

@@ -1024,10 +1024,13 @@ internal sealed class RealArtifactAuthorizationContext
             return Fail(manifestPath, "AUTHORIZATION_MANIFEST_SCHEMA_MISMATCH");
         }
 
-        JsonElement metadataGate = GetObject(manifest, "compiled_artifact_metadata_review_design_gate");
-        JsonElement parserImplementation = GetObject(metadataGate, "static_metadata_parser_implementation");
-        JsonElement parserDesign = GetObject(metadataGate, "static_metadata_parser_implementation_design");
-        JsonElement repository = GetObject(manifest, "repository");
+        if (!TryGetObject(manifest, "compiled_artifact_metadata_review_design_gate", out JsonElement metadataGate) ||
+            !TryGetObject(metadataGate, "static_metadata_parser_implementation", out JsonElement parserImplementation) ||
+            !TryGetObject(metadataGate, "static_metadata_parser_implementation_design", out JsonElement parserDesign) ||
+            !TryGetObject(manifest, "repository", out JsonElement repository))
+        {
+            return Fail(manifestPath, "AUTHORIZATION_MANIFEST_MALFORMED");
+        }
 
         bool gateMatched =
             GetString(manifest, "current_gate") == ProgramConstants.RealArtifactAuthorizationGate &&
@@ -1144,10 +1147,21 @@ internal sealed class RealArtifactAuthorizationContext
         }
     }
 
+    private static bool TryGetObject(JsonElement parent, string propertyName, out JsonElement child)
+    {
+        if (parent.ValueKind == JsonValueKind.Object &&
+            parent.TryGetProperty(propertyName, out child) &&
+            child.ValueKind == JsonValueKind.Object)
+        {
+            return true;
+        }
+
+        child = default;
+        return false;
+    }
+
     private static JsonElement GetObject(JsonElement parent, string propertyName) =>
-        parent.TryGetProperty(propertyName, out JsonElement child) && child.ValueKind == JsonValueKind.Object
-            ? child
-            : default;
+        TryGetObject(parent, propertyName, out JsonElement child) ? child : default;
 
     private static string GetString(JsonElement parent, string propertyName) =>
         parent.ValueKind == JsonValueKind.Object &&
@@ -1239,6 +1253,8 @@ internal static class ProgramPaths
         "independent-static-parser-real-artifact-authorization-plumbing-audit-";
     private const string IndependentAuthorizationRemediationPrefix =
         "independent-static-parser-real-artifact-authorization-plumbing-remediation-";
+    private const string IndependentAuthorizationRemediationAuditPrefix =
+        "independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-";
 
     public static bool IsAllowedPreflightManifestFixturePath(string repositoryRoot, string manifestPath) =>
         InvokeIsAllowedPreflightManifestFixturePath(repositoryRoot, manifestPath);
@@ -1248,7 +1264,8 @@ internal static class ProgramPaths
         segment.StartsWith("independent-static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase) ||
         HasCanonicalHexSuffix(segment, IndependentAuthorizationAuditPrefix) ||
-        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix);
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix) ||
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationAuditPrefix);
 
     private static bool InvokeIsAllowedPreflightManifestFixturePath(string repositoryRoot, string manifestPath)
     {
@@ -1267,7 +1284,8 @@ internal static class ProgramPaths
     private static bool IsApprovedAuthorizationManifestRootSegment(string segment) =>
         string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase) ||
         HasCanonicalHexSuffix(segment, IndependentAuthorizationAuditPrefix) ||
-        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix);
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix) ||
+        HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationAuditPrefix);
 
     private static bool HasCanonicalHexSuffix(string segment, string prefix)
     {

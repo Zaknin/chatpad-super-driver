@@ -773,6 +773,19 @@ from its own generated entry set. The gate remains
 `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`;
 fresh independent re-audit is required.
 
+That remediation is exactly
+`2d7a721ce3172b338df0de56853a256b1170fb4a`. Its re-audit found that the
+authorized combined
+`independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<hex>`
+root was still rejected and that missing or non-object required nested
+manifest nodes could reach undefined `JsonElement` property access. The
+focused child remediation accepts only that additional 7-to-40-character
+hexadecimal family and rejects every required nested-object shape failure as
+structured `AUTHORIZATION_MANIFEST_MALFORMED` with zero real-artifact I/O. It
+remains pending independent audit; live readiness stays `BLOCKED`, native
+execution stays `NOT_IMPLEMENTED`, and the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 The accepted remediation validates 63 metadata-review safety fields as strict
 JSON Booleans, records field-level defects for non-Boolean values, requires
 `native_execution_status: NOT_IMPLEMENTED`, and validates

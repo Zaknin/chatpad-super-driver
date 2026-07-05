@@ -121,3 +121,12 @@ remediation adds canonical independent audit roots, structured malformed-
 manifest denial, and deterministic 39-entry manifest regeneration and remains
 pending fresh re-audit. Design acceptance and parser implementation do not
 authorize native runtime execution.
+
+That remediation is exactly
+`2d7a721ce3172b338df0de56853a256b1170fb4a`. Its re-audit still rejected the
+authorized combined remediation-audit root and identified unsafe access when
+required nested manifest nodes were missing or non-object. The focused child
+remediation accepts only the exact combined family with a 7-to-40-character
+hexadecimal suffix and validates every required nested node as an object
+before field access. It remains pending independent audit and does not
+authorize real artifact open/read/hash/parse/write or metadata review.

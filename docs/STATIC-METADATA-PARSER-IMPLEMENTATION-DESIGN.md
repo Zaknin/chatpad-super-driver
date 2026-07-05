@@ -448,7 +448,7 @@ same blocked gate and adds:
 - the canonical independent audit/remediation root families above;
 - structured exit-64 denials for invalid JSON, empty manifests, schema
   mismatches, missing fields, wrong field types, and disallowed manifest paths;
-- six malformed-manifest harness cases in addition to the existing eight
+- fourteen malformed/shape harness cases in addition to the existing eight
   authorization cases;
 - unconditional exclusion of the canonical readiness manifest from generated
   manifest entries, preserving the intended deterministic 39-entry inventory.
@@ -457,3 +457,15 @@ This remediation does not authorize or perform real-artifact opening, reading,
 hashing, parsing, writing, metadata review, runtime loading/reflection/
 execution, native invocation, device access, Windows mutation, or driver
 actions. It remains pending fresh independent audit.
+
+The first remediation commit is exactly
+`2d7a721ce3172b338df0de56853a256b1170fb4a`. Its re-audit found that the exact
+combined remediation-audit root was still outside parser scope and that
+missing or non-object required nested manifest structures could reach property
+access on an undefined `JsonElement`. The focused child remediation adds only
+the exact
+`independent-static-parser-real-artifact-authorization-plumbing-remediation-audit-<hex>`
+family and validates the metadata gate, parser implementation, parser design,
+and repository nodes as objects before reading fields. All such shape failures
+return structured `AUTHORIZATION_MANIFEST_MALFORMED` denials with zero
+real-artifact I/O. The plumbing remains pending independent audit.
