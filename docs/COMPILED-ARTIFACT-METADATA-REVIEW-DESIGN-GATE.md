@@ -10,12 +10,12 @@
 - Static metadata-parser implementation: accepted by independent `AUDIT PASS`
   at `f0be4746ad4cc548334336c1e66f07007b71859f`.
 - Active gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
 - Static metadata-parser implementation:
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
 - Parser execution against the real artifact: `NOT_PERFORMED`.
 - Metadata review: not performed.
 - Accepted remediation: strict JSON Boolean safety validation covers 63
@@ -41,11 +41,14 @@ reflect over, execute, or invoke the artifact.
 The repository now has an isolated .NET 9 parser implementation using
 framework-provided `System.Reflection.Metadata`/`PEReader` APIs. It has been
 validated with synthetic fixtures and accepted by independent implementation
-audit as static-only. This transition adds only authorization plumbing for a
-future real-artifact static metadata review. The plumbing is preflight-only,
-requires the prior manifest authorization gate and the transition commit
-`baab23aece902cbb06e11a308d9092fdc0f9ce0d`, and is pending independent audit
-before any real-artifact review may be retried.
+audit as static-only. Accepted authorization plumbing later failed closed at
+the first real-artifact static metadata-review preflight because the parser
+accepted the old parser status `ACCEPTED_STATIC_ONLY` while the manifest
+recorded `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`. A narrow
+status-boundary remediation now accepts only the intended accepted status for
+preflight-only authorization fixtures. Because parser source changed, that
+remediation is pending independent audit before any real-artifact review may
+be retried.
 See `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
 
 ## Future review contract

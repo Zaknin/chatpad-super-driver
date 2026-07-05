@@ -4,6 +4,39 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-05 - Gate parser status-boundary remediation for independent audit
+
+**Decision:** After the narrow parser authorization status-boundary
+remediation, move the active gate to
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT` and set
+the parser implementation status to
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
+The parser preflight accepts only the prior authorization-plumbing accepted
+status `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` as the
+real-artifact authorization fixture status.
+
+**Rationale:** The first real-artifact static metadata-review attempt failed
+closed before artifact I/O because the parser still checked the old
+`ACCEPTED_STATIC_ONLY` status while the manifest recorded the accepted
+authorization-plumbing status. Source changed after audit acceptance, so a new
+independent audit is required before reauthorizing real-artifact metadata
+review.
+
+**Alternatives rejected:** Reauthorizing real-artifact metadata review in the
+same remediation, broadly accepting old or accepted-like parser statuses,
+treating the new pending-audit status as a preflight authorization status,
+opening or hashing the compile-only DLL during remediation, loading or
+reflecting over the assembly, executing compiled output, invoking native APIs,
+querying devices, mutating Windows, or advancing to driver actions.
+
+**Consequences:** The next safe task is an independent read-only audit of this
+status-boundary remediation. Real-artifact parser execution, metadata review,
+artifact open/read/hash/parse/write, runtime loading/reflection/execution,
+native invocation, device query, Windows mutation, and driver actions remain
+unauthorized and not performed. Live readiness remains `BLOCKED`; native
+execution remains `NOT_IMPLEMENTED`; the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## 2026-07-05 - Accept authorization-plumbing remediation audit before real-artifact review
 
 **Decision:** Accept the independent `AUDIT PASS` for authorization-plumbing

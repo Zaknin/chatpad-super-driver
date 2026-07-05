@@ -72,15 +72,14 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Static metadata parser implementation:
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
-- Parser execution against the real artifact:
-  `REAL_ARTIFACT_NOT_PERFORMED_BLOCKED_BY_PARSER_BOUNDARY`.
-- Metadata review: `NOT_PERFORMED_BLOCKED_BY_PARSER_BOUNDARY`.
-- Real artifact open/parse/hash: `NOT_PERFORMED_BLOCKED_BY_PARSER_BOUNDARY`.
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
+- Parser execution against the real artifact: `REAL_ARTIFACT_NOT_PERFORMED`.
+- Metadata review: `NOT_PERFORMED`.
+- Real artifact open/parse/hash: `NOT_PERFORMED`.
 - Real artifact write/overwrite: `NOT_PERFORMED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`; live authorization: `false`.
 - Native source has now been compiled only in the isolated non-production
@@ -769,6 +768,19 @@ not run normally against the real compile-only artifact, and that artifact was
 not opened, hashed, parsed, written, overwritten, or inspected. Metadata
 review was not performed. See
 `docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md`.
+
+The status-boundary remediation updates that parser check to accept only
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` as the
+real-artifact preflight authorization fixture status. Old, pending, missing,
+empty, null, non-string, synthetic-only, implemented-pending-audit, and
+accepted-like lookalike parser statuses remain rejected before real-artifact
+I/O. Because parser source changed after authorization-plumbing acceptance,
+the active gate is now
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`; parser
+implementation status is
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
+Real-artifact metadata review remains not performed and unauthorized until an
+independent read-only audit passes.
 
 The first plumbing audit failed at `cb34346d3a2268b92a295e9d135609c1e45e2c68`.
 The remediation accepts only canonical independent audit/remediation roots

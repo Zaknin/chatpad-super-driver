@@ -13,10 +13,10 @@ internal static class Program
     private const string ToolName = "Chatpad.StaticMetadataParser";
     private const string ToolVersion = "1.0.0";
     private const long MaxInputBytes = 64L * 1024L * 1024L;
-    private const string CurrentGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT";
+    private const string CurrentGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT";
     private const string RealArtifactAuthorizationGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION";
     private const string RuntimeBlocker = "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED";
-    private const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY";
+    private const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED";
     private const string AcceptedParserAuditCommit = "f0be4746ad4cc548334336c1e66f07007b71859f";
     private const string AcceptedReviewAuthorizationTransitionCommit = "baab23aece902cbb06e11a308d9092fdc0f9ce0d";
     private const string ImmutableSafetyPolicy = "IMMUTABLE_STATIC_ONLY";
@@ -1238,7 +1238,7 @@ internal static class ProgramConstants
 {
     public const string RealArtifactAuthorizationGate = "BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION";
     public const string RuntimeBlocker = "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED";
-    public const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY";
+    public const string AcceptedParserImplementationStatus = "ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED";
     public const string AcceptedParserAuditCommit = "f0be4746ad4cc548334336c1e66f07007b71859f";
     public const string AcceptedReviewAuthorizationTransitionCommit = "baab23aece902cbb06e11a308d9092fdc0f9ce0d";
     public const string ReadinessManifestSchemaVersion = "chatpad-runtime-bringup-readiness-manifest-v4";
@@ -1262,6 +1262,7 @@ internal static class ProgramPaths
     public static bool IsApprovedParserRootSegment(string segment) =>
         segment.StartsWith("static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
         segment.StartsWith("independent-static-metadata-parser-", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(segment, "static-parser-status-boundary-remediation", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase) ||
         HasCanonicalHexSuffix(segment, IndependentAuthorizationAuditPrefix) ||
         HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix) ||
@@ -1282,6 +1283,7 @@ internal static class ProgramPaths
     }
 
     private static bool IsApprovedAuthorizationManifestRootSegment(string segment) =>
+        string.Equals(segment, "static-parser-status-boundary-remediation", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(segment, "static-parser-real-artifact-authorization-plumbing", StringComparison.OrdinalIgnoreCase) ||
         HasCanonicalHexSuffix(segment, IndependentAuthorizationAuditPrefix) ||
         HasCanonicalHexSuffix(segment, IndependentAuthorizationRemediationPrefix) ||

@@ -46,11 +46,16 @@ Required evidence fields:
   `actualModules`, `declarationChecks`, `diagnostics`, `defects`, and
   `safetyCounters`.
 
-Parser file access is fail-closed. The implementation-audit gate is now
-accepted as static-only; under
-`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`, one
-central preflight still classifies every file-bearing option before
-caller-selected file I/O:
+Parser file access is fail-closed. The implementation-audit gate is accepted as
+static-only, and authorization plumbing has been accepted separately. A later
+status-boundary remediation updates real-artifact preflight authorization to
+accept only `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` as the
+manifest parser implementation status. The active repository gate after that
+source change is
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`, so
+real-artifact metadata review remains unauthorized until independent audit
+passes. Under parser file preflight, one central preflight still classifies
+every file-bearing option before caller-selected file I/O:
 
 - `--input` and `--expected` are read paths limited to parser-specific
   synthetic `fixtures/` roots under ignored `artifacts/logs/`;

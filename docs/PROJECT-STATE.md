@@ -1,106 +1,91 @@
 # Project State
 
-*Last updated: 2026-07-05 (real-artifact review blocked by parser boundary)*
+*Last updated: 2026-07-05 (parser status-boundary remediation pending audit)*
 
 ## Current State
 
 - **Branch:**
-  `feature/runtime-bringup-real-artifact-static-metadata-review-20260705`.
-- **Starting and accepted remediation commit:**
-  `dca0a9d794b4442de86d53a90e4aab74dfe68971`.
+  `feature/runtime-bringup-static-parser-status-boundary-remediation`.
+- **Starting commit:**
+  `906a4d098364956cbc635c5d385a98e33827404d`.
 - **Current transition commit:** Git is authoritative for the exact hash because
   this document, the generated manifest, and the transition record are
   committed atomically.
-- **Current gate:**
+- **Previous gate:**
   `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
-- **Current review result:** `FAIL_PARSER_BOUNDARY`.
+- **Current gate:**
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
 - **Runtime blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness:** `BLOCKED`.
 - **Native execution:** `NOT_IMPLEMENTED`.
 - **Parser implementation:**
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
-- **Parser execution against the real artifact:**
-  `REAL_ARTIFACT_NOT_PERFORMED_BLOCKED_BY_PARSER_BOUNDARY`.
-- **Metadata review:** `NOT_PERFORMED_BLOCKED_BY_PARSER_BOUNDARY`.
-- **Real artifact open/read/hash/parse:** `NOT_PERFORMED_BLOCKED_BY_PARSER_BOUNDARY`.
-- **Real artifact write/overwrite:** `NOT_PERFORMED`.
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
+- **Parser execution against the real artifact:** `REAL_ARTIFACT_NOT_PERFORMED`.
+- **Metadata review:** `NOT_PERFORMED`.
+- **Real artifact open/read/hash/parse/write:** `NOT_PERFORMED`.
 
-## Accepted Authorization-Plumbing Audit
+## Status-Boundary Remediation
 
-The independent audit returned `AUDIT PASS` for
-`dca0a9d794b4442de86d53a90e4aab74dfe68971`, based on
-`2d7a721ce3172b338df0de56853a256b1170fb4a`.
+The first real-artifact static metadata-review attempt stopped fail-closed at
+parser preflight. The parser still accepted only the old parser implementation
+status `ACCEPTED_STATIC_ONLY`, while the current manifest correctly recorded
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`. The parser
+returned `PARSER_IMPLEMENTATION_NOT_ACCEPTED`; no real-artifact metadata review
+occurred.
 
-- Summary:
-  `artifacts/logs/independent-static-parser-auth-plumbing-audit-root-remediation-audit-dca0a9d/audit-summary.json`,
-  `2666` bytes, SHA-256
-  `FAB4EC641663902C779A65721EED1C481F7CD0FF5410E0E38D23B43A475403A5`.
-- Inventory:
-  `artifacts/logs/independent-static-parser-auth-plumbing-audit-root-remediation-audit-dca0a9d/evidence-inventory.json`,
-  `7462` bytes, SHA-256
-  `DF6FB3F45689D231F77E4C53B18E0B7B5D099B93BC90F8847460DB5033E2761F`.
-- Accepted results: root/path regression `31/31`; malformed/shape matrix
-  `14/14`; authorization preflight `8/8`; combined synthetic evidence
-  `5` fixtures and `1417` assertions; existing plumbing evidence `5` fixtures
-  and `1125` assertions; manifest generation and validation `PASS` with
-  `39` entries under Windows PowerShell 5.1 and PowerShell 7.6.3; corruption
-  regression `678` cases, `0` failures.
+This remediation updates the parser authorization boundary to accept only the
+current authorization-plumbing accepted status for preflight-only real-artifact
+authorization fixtures. It does not broadly accept old, pending, missing,
+empty, null, non-string, synthetic-only, implemented-pending-audit, or
+accepted-like lookalike parser statuses.
 
-The audit accepted the exact combined remediation-audit root family, typed
-total validation of required nested manifest objects, fail-closed structured
-diagnostics, non-caller-controlled authorization, no-output/no-overwrite
-behavior, deterministic cross-runtime manifests, repository safety, and zero
-prohibited executable additions.
+Because parser source changed after authorization-plumbing acceptance, the
+repository is no longer left at a fully authorized real-artifact metadata-review
+gate. The active gate is now pending independent status-boundary audit.
 
-## Accepted Artifact Identity
+## Validation Snapshot
 
-The following identity is copied from tracked accepted evidence only. This
-transition did not access the DLL:
+- Pre-fix boundary reproduction: `PASS`; parser exited `64` with
+  `PARSER_IMPLEMENTATION_NOT_ACCEPTED`, no parser output file, and zero
+  prohibited counters.
+- Parser validation: `PASS`; 5 synthetic fixtures, 1,588 assertions, 17/17
+  real-artifact preflight-only authorization cases, 14/14 malformed manifest
+  cases, zero failed cases, and zero prohibited counters.
+- Manifest generation: `PASS` under PowerShell 7.6.3 and Windows PowerShell
+  5.1; schema `chatpad-runtime-bringup-readiness-manifest-v4`; 39 entries.
+- Manifest validation: `PASS` under PowerShell 7.6.3 and Windows PowerShell
+  5.1.
+- Cross-runtime manifest entry identity: `PASS`, 39/39 entries, zero deltas.
+- Gate/status corruption regression: `PASS`, 678 cases, zero failures.
 
-- Path:
-  `artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll`.
-- Recorded size: `11264` bytes.
-- Recorded SHA-256:
-  `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`.
-
-The 2026-07-05 real-artifact review attempt resolved this identity from
-`docs/evidence/native-interop-compile-only-validation.json` and confirmed the
-working-tree path exists with size `11264` bytes. The parser preflight then
-failed closed before opening, reading, hashing, or parsing the DLL because the
-accepted parser still checks for parser status `ACCEPTED_STATIC_ONLY` while
-the current accepted manifest records
-`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`. The generated
-blocked evidence is under
-`artifacts/logs/real-artifact-static-metadata-review/3bb2e73-preflight-boundary/`.
+Primary ignored evidence is under
+`artifacts/logs/static-parser-status-boundary-remediation/`.
 
 ## Safety Boundary
 
-- The blocked review attempt did not run the parser normally against the real
-  artifact.
-- It did not open, read, hash, parse, write, overwrite, load, reflect over,
-  execute, or perform metadata review on the real artifact.
-- Assembly loading, runtime reflection, compiled-artifact execution, native
-  DLL loading, entry-point resolution, native or SetupAPI/Newdev invocation,
-  device query, hardware access, and Windows mutation remain unauthorized.
+- The parser was not run normally against the real compile-only artifact.
+- The real compile-only artifact was not opened, read, hashed, parsed, written,
+  overwritten, loaded, reflected over, executed, or metadata-reviewed.
+- Assembly loading, runtime reflection, compiled-artifact execution, native DLL
+  loading, entry-point resolution, native or SetupAPI/Newdev invocation, device
+  query, hardware access, and Windows mutation remain unauthorized.
 - Driver build, link, sign, CAT generation, package, stage, install, load,
   unload, bind, restore, and restart remain unauthorized.
-- Parser source, native declaration source, compile-only behavior, runtime
-  adapter implementation, production driver source, INF, projects/solutions,
-  binaries, frozen artifacts, and `legacy/` are unchanged.
+- Native declaration source, compile-only harness behavior, runtime adapter
+  implementation, production driver source, INF, projects/solutions, binaries,
+  frozen artifacts, and `legacy/` are unchanged.
 
 ## Unresolved Blockers
 
-- Real-artifact static metadata review is blocked by parser authorization
-  status vocabulary and requires a separate parser-boundary remediation task
-  before any retry.
+- Independent read-only audit of this parser real-artifact authorization
+  status-boundary remediation is required before any real-artifact metadata
+  review retry.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - Live readiness remains blocked.
 
 ## Next Task
 
-Remediate and independently audit the accepted parser real-artifact
-authorization status boundary so it accepts the current manifest status
-`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` without weakening
-any static-only or zero-I/O denial behavior. Do not retry real-artifact static
-metadata review until that remediation passes independent audit and a later
-task explicitly authorizes the retry.
+Perform an independent read-only audit of the parser real-artifact
+authorization status-boundary remediation. Do not retry real-artifact static
+metadata review until that audit passes and a later explicit gate transition
+reauthorizes it.

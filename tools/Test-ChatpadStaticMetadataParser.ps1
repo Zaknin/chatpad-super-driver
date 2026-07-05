@@ -145,7 +145,7 @@ function New-AuthorizationManifestFixture {
     param(
         [Parameter(Mandatory)][string]$CaseId,
         [string]$Gate = 'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION',
-        [string]$ParserStatus = 'ACCEPTED_STATIC_ONLY',
+        [string]$ParserStatus = 'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED',
         [string]$LiveReadiness = 'BLOCKED',
         [bool]$IncludeTransitionCommit = $true
     )
@@ -158,7 +158,7 @@ function New-AuthorizationManifestFixture {
     $parserDesign.current_gate = $Gate
     $parserImplementation.current_gate = $Gate
     $manifest.live_installation_readiness = $LiveReadiness
-    $metadataGate.status = 'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY'
+    $metadataGate.status = 'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'
     $parserImplementation.status = $ParserStatus
     $parserDesign.parser_implementation_status = $ParserStatus
     if ($IncludeTransitionCommit) {
@@ -881,11 +881,44 @@ $wrongNestedParserObjectManifest = New-MutatedAuthorizationManifestFixture -Case
     param($manifest)
     $manifest.compiled_artifact_metadata_review_design_gate.static_metadata_parser_implementation = @('invalid')
 }
+$missingParserStatusManifest = New-MutatedAuthorizationManifestFixture -CaseId 'missing-parser-status' -Mutate {
+    param($manifest)
+    $metadataGate = $manifest.compiled_artifact_metadata_review_design_gate
+    [void]$metadataGate.static_metadata_parser_implementation.PSObject.Properties.Remove('status')
+    [void]$metadataGate.static_metadata_parser_implementation_design.PSObject.Properties.Remove('parser_implementation_status')
+}
+$emptyParserStatusManifest = New-MutatedAuthorizationManifestFixture -CaseId 'empty-parser-status' -Mutate {
+    param($manifest)
+    $metadataGate = $manifest.compiled_artifact_metadata_review_design_gate
+    $metadataGate.static_metadata_parser_implementation.status = ''
+    $metadataGate.static_metadata_parser_implementation_design.parser_implementation_status = ''
+}
+$nullParserStatusManifest = New-MutatedAuthorizationManifestFixture -CaseId 'null-parser-status' -Mutate {
+    param($manifest)
+    $metadataGate = $manifest.compiled_artifact_metadata_review_design_gate
+    $metadataGate.static_metadata_parser_implementation.status = $null
+    $metadataGate.static_metadata_parser_implementation_design.parser_implementation_status = $null
+}
+$nonStringParserStatusManifest = New-MutatedAuthorizationManifestFixture -CaseId 'non-string-parser-status' -Mutate {
+    param($manifest)
+    $metadataGate = $manifest.compiled_artifact_metadata_review_design_gate
+    $metadataGate.static_metadata_parser_implementation.status = 1
+    $metadataGate.static_metadata_parser_implementation_design.parser_implementation_status = 1
+}
 $realPreflightCases = @(
     [pscustomobject][ordered]@{ id='authorized-exact-artifact'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'authorized-exact-artifact'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'authorized-exact-artifact.evidence.json'); expected_exit=0; expected_status='AUTHORIZED'; expect_authorized=$true },
     [pscustomobject][ordered]@{ id='wrong-artifact-path'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-artifact-path'); input=([IO.Path]::GetFullPath((Join-Path $root 'artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/NotTheAcceptedArtifact.dll'))); output=(Join-Path $realReviewOutputRoot 'wrong-artifact-path.evidence.json'); expected_exit=64; expected_status='AUTHORIZED'; expect_authorized=$false },
     [pscustomobject][ordered]@{ id='wrong-gate'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-gate' -Gate 'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'wrong-gate.evidence.json'); expected_exit=64; expected_status='MANIFEST_GATE_OR_BLOCKER_MISMATCH'; expect_authorized=$false },
-    [pscustomobject][ordered]@{ id='wrong-parser-status'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-parser-status' -ParserStatus 'IMPLEMENTED_PENDING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'wrong-parser-status.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='parser-status-accepted-static-only'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'parser-status-accepted-static-only' -ParserStatus 'ACCEPTED_STATIC_ONLY'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'parser-status-accepted-static-only.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='parser-status-auth-plumbing-pending-audit'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'parser-status-auth-plumbing-pending-audit' -ParserStatus 'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'parser-status-auth-plumbing-pending-audit.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='parser-status-status-boundary-pending-audit'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'parser-status-status-boundary-pending-audit' -ParserStatus 'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'parser-status-status-boundary-pending-audit.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='parser-status-implemented-pending-audit'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'parser-status-implemented-pending-audit' -ParserStatus 'IMPLEMENTED_PENDING_AUDIT'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'parser-status-implemented-pending-audit.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='parser-status-synthetic-fixtures-only'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'parser-status-synthetic-fixtures-only' -ParserStatus 'SYNTHETIC_FIXTURES_ONLY'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'parser-status-synthetic-fixtures-only.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='missing-parser-status'; case_group='authorization'; manifest=$missingParserStatusManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'missing-parser-status.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='empty-parser-status'; case_group='authorization'; manifest=$emptyParserStatusManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'empty-parser-status.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='null-parser-status'; case_group='authorization'; manifest=$nullParserStatusManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'null-parser-status.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='non-string-parser-status'; case_group='authorization'; manifest=$nonStringParserStatusManifest; input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'non-string-parser-status.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
+    [pscustomobject][ordered]@{ id='lookalike-parser-status'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'lookalike-parser-status' -ParserStatus 'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED_EXTRA'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'lookalike-parser-status.evidence.json'); expected_exit=64; expected_status='PARSER_IMPLEMENTATION_NOT_ACCEPTED'; expect_authorized=$false },
     [pscustomobject][ordered]@{ id='wrong-live-readiness'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'wrong-live-readiness' -LiveReadiness 'READY'); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'wrong-live-readiness.evidence.json'); expected_exit=64; expected_status='MANIFEST_GATE_OR_BLOCKER_MISMATCH'; expect_authorized=$false },
     [pscustomobject][ordered]@{ id='missing-transition-commit'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'missing-transition-commit' -IncludeTransitionCommit:$false); input=$realArtifactPathString; output=(Join-Path $realReviewOutputRoot 'missing-transition-commit.evidence.json'); expected_exit=64; expected_status='TRANSITION_COMMIT_NOT_RECORDED'; expect_authorized=$false },
     [pscustomobject][ordered]@{ id='outside-real-review-output-root'; case_group='authorization'; manifest=(New-AuthorizationManifestFixture -CaseId 'outside-real-review-output-root'); input=$realArtifactPathString; output=([IO.Path]::GetFullPath((Join-Path $outputRootFull 'not-real-review-output-root.evidence.json'))); expected_exit=64; expected_status='AUTHORIZED'; expect_authorized=$false },
@@ -1078,7 +1111,7 @@ $summary = [pscustomobject][ordered]@{
     authorization_manifest_malformed_case_count = @($realPreflightRecords | Where-Object { $_.case_group -eq 'malformed-manifest' -and $_.preflight_result -eq 'PASS' }).Count
     failed_authorization_manifest_malformed_case_count = $failedMalformedManifestPreflight.Count
     real_artifact_preflight_only_cases = @($realPreflightRecords)
-    real_artifact_path_gate_status = 'AUTHORIZATION_PLUMBING_PENDING_AUDIT'
+    real_artifact_path_gate_status = 'STATUS_BOUNDARY_PENDING_AUDIT'
     all_file_bearing_options_centrally_scoped = $true
     expected_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'
     output_path_gate_status = 'IMPLEMENTED_PENDING_AUDIT'

@@ -13,12 +13,12 @@
 - Real-artifact review authorization-plumbing base:
   `baab23aece902cbb06e11a308d9092fdc0f9ce0d`.
 - Current gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT`.
+  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
 - Parser implementation:
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`.
+  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
 - Parser execution against the real artifact: `NOT_PERFORMED`.
 - Metadata review: `NOT_PERFORMED`.
 - Real artifact open/parse/hash/write: `NOT_PERFORMED`.
@@ -39,10 +39,16 @@ authorized parser evidence and because manifest validation hardcoded one
 standard parser evidence path. The current remediation suppresses all parser
 output on any file-preflight rejection and validates standard or independent
 parser evidence through one constrained ignored-root policy. The implementation
-passed independent audit and is accepted as static-only. It does not authorize
-parser execution against the real compiled artifact, artifact opening, parsing,
-hashing, writing, metadata review, assembly loading, reflection, execution,
-native invocation, device query, Windows mutation, or driver actions.
+passed independent audit and is accepted as static-only. Authorization
+plumbing was later accepted, but the first real-artifact static metadata-review
+attempt failed closed before artifact I/O because the parser still accepted
+only the old `ACCEPTED_STATIC_ONLY` status while the manifest recorded
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`. This remediation
+updates that status boundary and leaves it pending independent audit. It does
+not authorize parser execution against the real compiled artifact, artifact
+opening, parsing, hashing, writing, metadata review, assembly loading,
+reflection, execution, native invocation, device query, Windows mutation, or
+driver actions.
 
 ## 2. Investigation and technology decision
 
@@ -469,3 +475,30 @@ family and validates the metadata gate, parser implementation, parser design,
 and repository nodes as objects before reading fields. All such shape failures
 return structured `AUTHORIZATION_MANIFEST_MALFORMED` denials with zero
 real-artifact I/O. The plumbing remains pending independent audit.
+
+## 15. Real-artifact authorization status-boundary pending audit
+
+The first separately authorized real-artifact static metadata-review attempt
+failed closed at parser preflight before artifact I/O. The parser still
+accepted only `ACCEPTED_STATIC_ONLY`, while the current manifest recorded
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
+
+The status-boundary remediation changes the accepted preflight authorization
+status to exactly
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`. It rejects
+`ACCEPTED_STATIC_ONLY`,
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_PENDING_AUDIT`,
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`,
+`IMPLEMENTED_PENDING_AUDIT`, `SYNTHETIC_FIXTURES_ONLY`, missing, empty, null,
+non-string, and accepted-like lookalike parser status values before
+real-artifact I/O.
+
+Because parser source changed after authorization-plumbing acceptance, the
+active repository gate is
+`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`, and the
+parser implementation status is
+`ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
+The parser was not run normally against the real compile-only DLL; real
+artifact open/read/hash/parse/write, metadata review, assembly loading,
+runtime reflection, execution, native invocation, device query, Windows
+mutation, and driver actions remain unauthorized and not performed.
