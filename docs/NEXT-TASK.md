@@ -2,30 +2,23 @@
 
 ## Objective
 
-Perform an independent read-only audit of the parser real-artifact authorization
-status-boundary remediation.
+Perform an independent read-only audit of the authorized real-artifact static
+metadata review.
 
 ## Exact Current State
 
-- Repository: `C:\Dev\chatpad-super-driver`.
-- Branch:
-  `feature/runtime-bringup-static-parser-status-boundary-remediation`.
-- Required starting commit: the commit that contains this file and the
-  status-boundary remediation; verify with Git before starting.
-- Remediation starting commit:
-  `906a4d098364956cbc635c5d385a98e33827404d`.
-- Previous gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
-- Current gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
+- Repository: `C:\\Dev\\chatpad-super-driver`.
+- Branch: `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
+- Starting commit: `383aaf0a65a867d2773ed91d6a5c8e9c535e4f04`.
+- Previous gate: `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+- Current gate: `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
 - Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Parser implementation:
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_PENDING_AUDIT`.
-- Parser execution against the real artifact: `REAL_ARTIFACT_NOT_PERFORMED`.
-- Metadata review: `NOT_PERFORMED`.
-- Real artifact open/read/hash/parse/write: `NOT_PERFORMED`.
+- Parser implementation: `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
+- Parser execution against the real artifact: `STATIC_METADATA_VALIDATED`.
+- Metadata review: `STATIC_METADATA_VALIDATED`.
+- Real artifact open/read/hash/parse/write: `PERFORMED` (open, read, hash, parse) / `NOT_PERFORMED` (write).
 
 ## Preconditions
 
@@ -33,9 +26,10 @@ status-boundary remediation.
 2. Verify branch, HEAD, upstream, ahead/behind, and clean working tree.
 3. Read `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the
    latest `docs/WORKLOG.md` entry.
-4. Inspect the remediation diff before trusting this summary.
-5. Inspect the ignored evidence under
-   `artifacts/logs/static-parser-status-boundary-remediation/`.
+4. Inspect the evidence file:
+   `artifacts/logs/real-artifact-static-metadata-review/static-metadata-parser-real-artifact-review.json`
+5. Inspect the evidence inventory:
+   `artifacts/logs/real-artifact-static-metadata-review/evidence-inventory.json`
 
 ## Safety Restrictions
 
@@ -55,16 +49,24 @@ packaging/signing/staging/deployment paths, binaries, frozen artifacts, or
 
 ## Acceptance Criteria
 
-- Confirm the parser accepts only
-  `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED` for the
-  preflight-only real-artifact authorization fixture.
-- Confirm old, pending, missing, empty, null, non-string, synthetic-only,
-  implemented-pending-audit, status-boundary-pending-audit, and accepted-like
-  lookalike parser statuses reject before real-artifact I/O.
-- Confirm current repository gate remains
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
-- Confirm real-artifact metadata review remains not performed.
-- Confirm all prohibited counters remain zero.
+- Confirm the review evidence file exists at:
+  `artifacts/logs/real-artifact-static-metadata-review/static-metadata-parser-real-artifact-review.json`
+- Confirm evidence file size is 23,302 bytes.
+- Confirm evidence file SHA-256 is `024693B23AA26C42CD2F9D5AB995956CEB202A76FBA5481264EF828AAEDF0875`.
+- Confirm `Result = PASS` and `ResultCode = STATIC_METADATA_VALIDATED`.
+- Confirm input path is the exact approved DLL:
+  `artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll`
+- Confirm input size is 11,264 bytes.
+- Confirm input SHA-256 is `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`.
+- Confirm type definitions count is 24.
+- Confirm method definitions count is 71.
+- Confirm P/Invoke declarations count is 13.
+- Confirm actual modules are `newdev.dll`, `setupapi.dll`.
+- Confirm all forbidden safety counters are zero:
+  AssemblyLoadOccurred, RuntimeReflectionOccurred, NativeDllLoadOccurred,
+  NativeInvocationOccurred, DeviceQueryOccurred, WindowsMutationOccurred,
+  DriverActionsOccurred.
+- Confirm defects are empty or contain only repository-approved non-fatal diagnostics.
 - Confirm repository safety, forbidden generated-file scan, prohibited-pattern
   review, documentation consistency, and `git diff --check` pass.
 
@@ -75,10 +77,5 @@ packaging/signing/staging/deployment paths, binaries, frozen artifacts, or
 3. `docs/DECISIONS.md`
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
-6. `tools/StaticMetadataParser/Program.cs`
-7. `tools/Test-ChatpadStaticMetadataParser.ps1`
-8. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
-9. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
-10. `docs/evidence/runtime-bringup-readiness-manifest.json`
-11. `artifacts/logs/static-parser-status-boundary-remediation/status-boundary-validation-summary.json`
-12. `artifacts/logs/static-parser-status-boundary-remediation/artifact-inventory.json`
+6. `artifacts/logs/real-artifact-static-metadata-review/static-metadata-parser-real-artifact-review.json`
+7. `artifacts/logs/real-artifact-static-metadata-review/evidence-inventory.json`
