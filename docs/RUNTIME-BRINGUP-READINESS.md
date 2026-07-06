@@ -101,6 +101,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
 - Fail-closed scaffolding commit:
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+- Fail-closed scaffolding audit acceptance:
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted scaffolding audit target:
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Native adapter design-gate remediation audit: `AUDIT PASS` for
   `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`; 17 functions traced; full
   compile-output validator, `Get-FileHash`, output enumeration, and native/file
@@ -136,6 +140,11 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   PowerShell 7. SetupAPI/Newdev invocation, native DLL loading, entry-point
   resolution, device query, Windows mutation, and driver build/sign/package/
   install/load/bind/restore/restart remain not authorized.
+- Independent strict read-only audit of documentation-remediation target
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e` returned `AUDIT PASS`.
+  Acceptance records the status transition only; it does not authorize native
+  execution, real DLL or compile-output access, device query, Windows mutation,
+  or driver action.
 - Tracked text evidence uses explicit `canonical_lf_text`; raw working-tree
   identity is informational. Compile outputs use `raw_file_bytes`.
 - Old v1 compile-output hashes are superseded historical ignored derived

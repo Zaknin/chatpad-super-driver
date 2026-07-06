@@ -10168,3 +10168,65 @@
   unchanged fail-closed/no-artifact-I/O state without editing, parser/full
   validator execution, compile-output access, or native/device/Windows/driver
   action.
+
+---
+
+## 2026-07-06 - Accept fail-closed native adapter scaffolding audit
+
+- **Objective:** Record acceptance of independent strict read-only audit target
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e` without changing fail-closed
+  behavior or authorizing native execution or artifact I/O.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`, branch
+  `feature/native-adapter-fail-closed-scaffolding`, exact HEAD and upstream
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`, parent
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`, remote equality, ahead/behind
+  `0/0`, clean tree/index, no untracked non-ignored files, and ignored
+  `IDEA.md`.
+- **Accepted audit:** Recorded `AUDIT PASS` and exact acceptance status
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+  Preserved implementation status
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`, design
+  status
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`,
+  evidence mode `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`, runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, and native execution `NOT_IMPLEMENTED`.
+- **Files modified:** `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/DECISIONS.md`, this append-only
+  worklog, and regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Safety:** This transition is documentation/evidence only. The static
+  parser and full compile-output validator were not run. No real DLL or
+  compile output was opened, read, hashed, parsed, written, statted, scanned,
+  loaded, reflected over, or executed. No native library load, entry-point
+  resolution, SetupAPI/Newdev invocation, device query, hardware access,
+  Windows mutation, or driver build/link/sign/CAT/package/stage/install/load/
+  unload/bind/restore/restart occurred.
+- **Manifest regeneration:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` under Windows
+  PowerShell 5.1 using implementation commit
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`, the existing approved ignored
+  suite/parser records, and `-NoArtifactOpenDesignGateAudit`. The generator
+  reported 39 entries, framework `PASS`, and live readiness `BLOCKED`; the
+  manifest contains no real-DLL or compile-output entry.
+- **Validation:** Manifest validation passed with zero defects under Windows
+  PowerShell 5.1 and PowerShell 7 in
+  `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode. Schema v4, 39 entries, duplicate
+  IDs `0`, duplicate paths `0`, `NO_PATH` `0`, compile-output entries `0`, and
+  semantic cross-runtime identity all passed. Documentation consistency,
+  positive-authorization, prohibited executable-pattern, constrained
+  Git/index repository-safety, forbidden generated-file, spelling-variant,
+  changed-path, and `git diff --check` checks passed. The three spelling hits
+  are historical self-referential worklog statements; this transition added
+  none.
+- **Commit and push:** Commit subject is
+  `docs: accept native adapter scaffolding audit`; Git is authoritative for
+  the resulting full hash. Push target is
+  `origin/feature/native-adapter-fail-closed-scaffolding`; exact push and
+  synchronized final-state results are reported in the final response.
+- **Next task:** Independent strict read-only audit of this documentation-only
+  acceptance transition. Verify exact audit target, implementation commit,
+  acceptance status, manifest identity, and unchanged blocked/no-artifact-I/O
+  restrictions without editing or running artifact/native/device/Windows/
+  driver paths.

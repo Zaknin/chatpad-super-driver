@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-06 (scaffolding commit documentation remediation)*
+*Last updated: 2026-07-06 (fail-closed scaffolding audit accepted)*
 
 ## Current State
 
@@ -21,6 +21,10 @@
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
 - **Fail-closed scaffolding status:**
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
+- **Fail-closed scaffolding audit acceptance:**
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- **Accepted scaffolding audit target:**
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - **Execution authorized:** `false`.
 - **Real-artifact path gate:** `STATUS_BOUNDARY_ACCEPTED`.
@@ -93,6 +97,15 @@ the current-state documentation omitted that exact commit identity. Its
 technical scaffolding, focused dual-runtime checks, no-artifact-I/O regression,
 manifest validation, and safety checks passed.
 
+Independent strict read-only audit of documentation-remediation commit
+`af41a8eaeea96dcbcad75fb2e261c4352b2a468e` returned `AUDIT PASS`. The commit
+changed only the five authorized current-state documents and regenerated
+manifest, consistently recorded scaffolding implementation commit
+`7560fc242a39228d6a95f42ff908bb4be438d6ad`, preserved the fail-closed
+no-artifact-I/O boundary, and left all runtime/native/device/Windows/driver
+authorization false. Acceptance status is
+`NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
@@ -121,17 +134,16 @@ manifest validation, and safety checks passed.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - Live readiness remains `BLOCKED`.
 - Native execution remains `NOT_IMPLEMENTED`.
-- Independent strict read-only audit of this documentation remediation and the
-  unchanged fail-closed scaffolding state is required before any later
-  non-live implementation expansion.
+- Audit acceptance does not authorize native execution, real DLL or
+  compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
   failure described above; focused changed-surface checks pass.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the documentation-remediation
-commit on branch `feature/native-adapter-fail-closed-scaffolding`. Verify that
-the exact scaffolding commit is recorded consistently and that the unchanged
-request, authorization, evidence, and execution-result paths remain fail
-closed without artifact I/O, native loading, entry-point resolution, device
-query, Windows mutation, or driver action.
+Perform an independent strict read-only audit of the documentation-only
+scaffolding-audit acceptance transition on branch
+`feature/native-adapter-fail-closed-scaffolding`. Verify accepted target
+`af41a8eaeea96dcbcad75fb2e261c4352b2a468e`, implementation commit
+`7560fc242a39228d6a95f42ff908bb4be438d6ad`, exact acceptance status, and the
+unchanged blocked/no-artifact-I/O safety boundary.

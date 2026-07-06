@@ -3063,3 +3063,31 @@ execution remains `NOT_IMPLEMENTED`; runtime blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Native loading, entry-point
 resolution, SetupAPI/Newdev calls, device queries, Windows mutations, and
 driver actions remain unauthorized.
+
+## 2026-07-06 - Accept the fail-closed native adapter scaffolding audit
+
+**Decision:** Accept independent strict read-only audit target
+`af41a8eaeea96dcbcad75fb2e261c4352b2a468e` with exact status
+`NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`, while
+retaining scaffolding implementation commit
+`7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+
+**Rationale:** The audit began and ended clean, verified the exact candidate
+and parent, found only the five authorized current-state documents and
+regenerated manifest changed, confirmed schema v4 with 39 entries and zero
+identity/path defects, and passed record-only manifest validation under
+Windows PowerShell 5.1 and PowerShell 7. The audit found no positive execution
+authorization or prohibited executable pattern.
+
+**Alternatives rejected:** Keeping the remediation pending audit would
+contradict the accepted result; treating audit acceptance as implementation,
+artifact-access permission, or live execution authorization would cross the
+audited boundary; changing the native adapter or validator would exceed the
+documentation-only scope.
+
+**Consequences:** The scaffolding audit is accepted, but the runtime blocker
+remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence
+mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Real DLL/compile-output
+access, native loading, entry-point resolution, SetupAPI/Newdev invocation,
+device query, Windows mutation, and driver actions remain unauthorized.

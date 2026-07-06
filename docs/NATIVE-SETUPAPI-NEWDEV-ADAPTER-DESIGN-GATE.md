@@ -18,6 +18,10 @@ Authoritative current state:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
 - Fail-closed scaffolding commit:
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+- Fail-closed scaffolding audit acceptance:
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted scaffolding audit target:
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - Static metadata lane: `ACCEPTED_CLOSED` at
   `cb80939a862d33efb1abf26a14d5c75d43a77b30`.
@@ -396,6 +400,10 @@ action is later authorized. The current gate is
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; the capability blocker has
 the same value; live readiness remains `BLOCKED`; native execution remains
 `NOT_IMPLEMENTED`. `Apply`, `Restore`, and `Restart` remain blocked, and the
-no-artifact-I/O regression passed. The next step is an independent strict
-read-only audit of this documentation remediation and the fail-closed
-scaffolding state; it must remain non-live and fail-closed.
+no-artifact-I/O regression passed. Independent strict read-only audit target
+`af41a8eaeea96dcbcad75fb2e261c4352b2a468e` received `AUDIT PASS`; acceptance
+status is
+`NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+Acceptance does not authorize native execution, artifact I/O, device query,
+Windows mutation, or driver action. The next step is an independent strict
+read-only audit of this documentation-only acceptance transition.
