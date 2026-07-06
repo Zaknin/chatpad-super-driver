@@ -122,6 +122,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `4522510a17354fe53d163546e16ff24af5fa0374`.
 - Non-live implementation audit acceptance:
   `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Non-live planning audit-acceptance commit:
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
+- Execution-scope boundary status:
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -175,6 +179,13 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`; implementation
   remains `4522510a17354fe53d163546e16ff24af5fa0374`, and all operation plans and
   results remain blocked/non-executing.
+- The record-only execution-scope boundary requires an exact single-operation
+  authorization statement; exact real-artifact path, size, and SHA-256; exact
+  native-entry-point and SetupAPI/Newdev allowlists; exact device binding;
+  audited dry-run and rollback evidence; per-call Windows-mutation
+  classification; envelope-bound operator confirmation; and independent audits
+  before and after implementation. The current repository does not satisfy
+  this envelope, and this task grants no execution or artifact-access authority.
 - Tracked text evidence uses explicit `canonical_lf_text`; raw working-tree
   identity is informational. Compile outputs use `raw_file_bytes`.
 - Old v1 compile-output hashes are superseded historical ignored derived

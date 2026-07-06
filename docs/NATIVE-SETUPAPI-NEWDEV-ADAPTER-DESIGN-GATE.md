@@ -30,6 +30,10 @@ Authoritative current state:
   `4522510a17354fe53d163546e16ff24af5fa0374`.
 - Non-live implementation audit acceptance:
   `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Non-live planning audit-acceptance commit:
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
+- Execution-scope boundary status:
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -169,6 +173,73 @@ Every item below requires separate evidence and acceptance:
 
 Any unmet prerequisite returns a blocked result with every native/device/
 Windows/driver action counter unchanged.
+
+## Future Execution Authorization Envelope
+
+Status: `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+This record-only boundary is opened from accepted non-live planning
+audit-acceptance commit `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
+The current repository does not satisfy the envelope, and this task grants no
+execution or artifact-access authority.
+
+A future implementation or execution authorization is valid only when one
+immutable envelope contains every field below and an independent audit accepts
+the complete envelope. Partial records, defaults, wildcards, caller-created
+objects, branch identity, elevation, prior audit results, or operator intent do
+not satisfy any field.
+
+1. **Authorization statement:** one exact statement names exactly one operation
+   class: `NATIVE_ADAPTER_APPLY`, `NATIVE_ADAPTER_RESTORE`, or
+   `NATIVE_ADAPTER_RESTART`. It also binds the implementation commit, host,
+   session, expiry, evidence root, and envelope hash. An umbrella or multi-
+   operation statement is invalid.
+2. **Real artifact identity:** one approved canonical absolute path, positive
+   byte size, and 64-character uppercase SHA-256 must be recorded together with
+   artifact-origin evidence. These values are absent in the current boundary;
+   the real DLL and compile outputs remain inaccessible.
+3. **Native entry-point allowlist:** an exact ordered, library-qualified list
+   with no wildcard must be present. It must be a subset of the reviewed
+   declaration ceiling and must bind each entry point to the selected operation.
+4. **SetupAPI/Newdev function allowlist:** an exact ordered subset of
+   `SetupDiCreateDeviceInfoList`, `SetupDiDestroyDeviceInfoList`,
+   `SetupDiOpenDeviceInfoW`, `SetupDiGetDeviceInstanceIdW`,
+   `SetupDiGetDevicePropertyW`, `SetupDiGetDeviceRegistryPropertyW`,
+   `SetupDiBuildDriverInfoList`, `SetupDiDestroyDriverInfoList`,
+   `SetupDiEnumDriverInfoW`, `SetupDiGetDriverInfoDetailW`,
+   `SetupDiGetDriverInstallParamsW`, `SetupDiSetSelectedDriverW`, and
+   `DiInstallDevice` must be present. This declaration ceiling is not a current
+   invocation allowlist. Any other function requires a separately authorized
+   declaration/design change and audit.
+5. **Device binding:** one complete canonical Plug and Play instance ID,
+   approved snapshot identity, target and prior driver-node identities, and an
+   ordinal reopen comparison immediately before the operation are required.
+   Enumeration, hardware-ID-wide selection, ambiguity, or identity drift fails
+   closed.
+6. **Dry-run evidence:** independently audited no-mutation evidence must bind
+   the envelope, planned ordered calls, preconditions, expected postconditions,
+   cleanup, and zero artifact/native/device/Windows/driver action counters.
+7. **Rollback/restore plan:** the exact prior driver identity, ordered rollback
+   calls, cleanup obligations, verification steps, stop conditions, and manual-
+   recovery procedure for uncertain state must be independently accepted.
+8. **Windows mutation classification:** every proposed call must have an exact
+   mutation class, precondition, postcondition, failure state, cleanup duty,
+   and integer attempt/success/failure counter. Unclassified mutation is
+   forbidden.
+9. **Operator confirmation:** an explicit single-operation confirmation must
+   bind the envelope hash, exact instance, artifact identity, host/session,
+   operation class, and expiry. Generic consent or interactive presence is not
+   authority.
+10. **Independent audits:** an audit is required before any implementation is
+    accepted and another audit is required after implementation but before any
+    execution authorization can be considered. Implementation audit success is
+    not execution authorization.
+
+The current repository has no approved real-artifact identity in this
+envelope, no native-entry-point or SetupAPI/Newdev invocation allowlist, no
+device-bound operator confirmation, and no accepted implementation. Therefore
+the envelope is unsatisfied. Artifact access, native loading, entry-point
+resolution, SetupAPI/Newdev invocation, device query, hardware access, Windows
+mutation, and driver actions remain forbidden.
 
 ## Future Call Scope
 

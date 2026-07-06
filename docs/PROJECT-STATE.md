@@ -1,12 +1,12 @@
 # Project State
 
-*Last updated: 2026-07-06 (non-live native adapter planning audit accepted)*
+*Last updated: 2026-07-06 (native adapter execution scope boundary defined)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-non-live-implementation-phase`.
-- **Task starting commit and accepted audit target:**
-  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
+- **Branch:** `feature/native-adapter-execution-scope-boundary`.
+- **Task starting commit and accepted non-live planning audit commit:**
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
 - **Fail-closed scaffolding commit:**
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
 - **Scaffolding-audit remediation commit:**
@@ -15,7 +15,7 @@
   `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - **Non-live implementation commit:**
   `4522510a17354fe53d163546e16ff24af5fa0374`.
-- **Current audit-acceptance commit:** Git is authoritative because this
+- **Current scope-boundary commit:** Git is authoritative because this
   document and the regenerated manifest are committed atomically.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
@@ -33,6 +33,8 @@
   `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
 - **Non-live implementation audit acceptance:**
   `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- **Execution-scope boundary status:**
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -137,6 +139,17 @@ implementation remains `4522510a17354fe53d163546e16ff24af5fa0374`, and
 acceptance grants no artifact, native, device, hardware, Windows, or driver
 authority.
 
+The record-only execution-scope boundary defines the exact envelope that a
+future native-adapter implementation or execution request would have to
+satisfy. It requires a single-operation authorization statement, exact real-
+artifact path/size/SHA-256, exact native and SetupAPI/Newdev allowlists, exact
+device binding, audited dry-run evidence, an exact rollback/restore plan,
+per-call Windows-mutation classification, envelope-bound operator
+confirmation, and independent audits before and after implementation. The
+current repository does not satisfy the envelope. This boundary implements no
+native execution and grants no artifact, native, device, hardware, Windows, or
+driver authority.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
@@ -175,9 +188,9 @@ authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the documentation-only
-acceptance commit on branch
-`feature/native-adapter-non-live-implementation-phase`. Verify accepted target
-`5e7a6f39d0363121b8bd3f6e4b38ceb517889679`, implementation commit
-`4522510a17354fe53d163546e16ff24af5fa0374`, exact acceptance status, manifest
-identity, and the unchanged blocked/no-artifact-I/O safety boundary.
+Perform an independent strict read-only audit of the execution-scope boundary
+commit on branch `feature/native-adapter-execution-scope-boundary`. Verify the
+exact envelope, status
+`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`, accepted base
+`bb6cc27c2281e04dee2166c5a67e124092055f9f`, manifest enforcement, and the
+unchanged blocked/no-artifact-I/O safety boundary.

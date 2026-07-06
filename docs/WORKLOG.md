@@ -10442,3 +10442,92 @@
   acceptance commit. Verify parent
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`, exact identities/statuses,
   manifest identity, and the unchanged blocked/no-artifact-I/O boundary.
+
+---
+
+## 2026-07-06 20:19:50 +04:00 - Define native adapter execution scope boundary
+
+- **Objective:** Define the smallest machine-verifiable authorization envelope
+  that any future native-adapter implementation or execution request must
+  satisfy, without implementing execution or opening any artifact/native/
+  device/Windows/driver boundary.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`, branch
+  `feature/native-adapter-execution-scope-boundary`, exact HEAD
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`, and parent
+  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`. The branch had no configured
+  upstream. Continuation recovery found eight intended unstaged scope-boundary
+  files from the interrupted task and no adapter-module, offline-suite, parser,
+  artifact, compile-output, driver-source, INF/project, binary, or `legacy/`
+  change. The interrupted state had not yet added this required worklog entry,
+  committed, or pushed.
+- **Boundary definition:** Added record-only status
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`, opened from
+  accepted non-live planning audit-acceptance commit
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`. The envelope requires exactly
+  one operation class; an implementation/host/session/expiry/evidence-root/
+  envelope-hash-bound authorization statement; exact artifact path, positive
+  size, uppercase SHA-256, and origin evidence; exact ordered operation-bound
+  native and SetupAPI/Newdev allowlists without wildcards; exact instance,
+  snapshot, target/prior driver, and ordinal-reopen identity; independently
+  audited dry-run and rollback evidence; per-call mutation/failure/cleanup/
+  counter classification; fully envelope-bound operator confirmation; and
+  independent pre- and post-implementation audits.
+- **Recovery correction:** Diff review found that the interrupted prose named
+  the full envelope but the first manifest requirement strings omitted several
+  bindings. Tightened the generator and validator to enforce operation
+  cardinality, envelope hash, artifact-origin evidence, driver identities,
+  ordered-call cleanup and stop conditions, failure-state classification, full
+  operator-confirmation binding, and the rule that implementation-audit success
+  grants no execution authority.
+- **Current authority:** The repository does not satisfy the envelope.
+  `approved_real_artifact_identity_present`,
+  `native_entry_point_allowlist_present`,
+  `setupapi_newdev_function_allowlist_present`,
+  `current_repository_satisfies_envelope`,
+  `current_task_authorizes_execution`, and every artifact/native/device/
+  hardware/Windows/driver authorization field remain `false`. Gate and runtime
+  blocker remain `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`,
+  installation readiness remains `BLOCKED`, native execution remains
+  `NOT_IMPLEMENTED`, and evidence mode remains
+  `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`, and regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Validation:** Manifest generation under Windows PowerShell 5.1 reported 39
+  entries, framework `PASS`, and installation state `BLOCKED`. Record-only
+  manifest validation under Windows PowerShell 5.1 and PowerShell 7 returned
+  `PASS`, schema v4, 39 entries, total defects `0`, duplicate IDs `0`,
+  duplicate paths `0`, `NO_PATH` `0`, artifact opening `false`, compile-output
+  hash verification `false`, metadata parsing `false`, and semantic cross-
+  runtime identity. PowerShell syntax, exact changed-path restrictions,
+  documentation/status consistency, positive-authorization additions,
+  prohibited executable-pattern additions, forbidden generated paths,
+  constrained Git/index repository safety, and `git diff --check` passed.
+- **Command correction:** An initial combined final-verification wrapper had
+  two inline-only defects: invalid `$file:` interpolation in its syntax-check
+  diagnostic and malformed `return` expressions in its semantic normalizer.
+  It produced no usable combined result and timed out while repeating wrapper
+  errors. It changed no repository state. The checks were split, corrected,
+  and rerun successfully; only the corrected results above are validation
+  evidence.
+- **Safety:** The static parser, full compile-output validator, full exact/
+  readiness suites, and behavior tests were not run. No real DLL or compile
+  output was opened, read, hashed, parsed, statted, scanned, written, loaded,
+  reflected over, or executed. No native library load, entry-point resolution,
+  SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+  or driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
+  restart occurred.
+- **Commit and push:** Commit subject is
+  `docs: define native adapter execution scope boundary`; Git is authoritative
+  for the resulting full hash. Push target is
+  `origin/feature/native-adapter-execution-scope-boundary`; exact push and final
+  synchronization are reported in the final response.
+- **Next task:** Independent strict read-only audit of the scope-boundary
+  commit. Verify the exact envelope, accepted base, manifest enforcement,
+  declaration-ceiling distinction, false current-authority fields, and
+  unchanged blocked/no-artifact-I/O boundary without editing or running any
+  artifact/native/device/Windows/driver path.

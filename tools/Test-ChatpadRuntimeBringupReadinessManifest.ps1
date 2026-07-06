@@ -919,6 +919,44 @@ else{
             }
         }
     }
+    $executionScopeProperty=$executionDesign.PSObject.Properties['execution_scope_boundary']
+    if($null-eq$executionScopeProperty-or$null-eq$executionScopeProperty.Value-or$executionScopeProperty.Value-is[array]){
+        $defects.top_level++
+    }
+    else{
+        $executionScope=$executionScopeProperty.Value
+        if($executionScope.schema_version-ne'chatpad-native-adapter-execution-scope-boundary-v1'-or
+            $executionScope.status-ne'NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO'-or
+            $executionScope.opened_from_non_live_audit_acceptance_commit-ne'bb6cc27c2281e04dee2166c5a67e124092055f9f'-or
+            (@($executionScope.required_operation_classes)-join'|')-ne'NATIVE_ADAPTER_APPLY|NATIVE_ADAPTER_RESTORE|NATIVE_ADAPTER_RESTART'-or
+            $executionScope.required_authorized_operation_class_count-ne1-or
+            $executionScope.authorization_statement_requirement-ne'EXACTLY_ONE_OPERATION_CLASS_BOUND_TO_IMPLEMENTATION_COMMIT_HOST_SESSION_EXPIRY_EVIDENCE_ROOT_AND_ENVELOPE_HASH'-or
+            $executionScope.approved_real_artifact_identity_requirement-ne'EXACT_CANONICAL_PATH_POSITIVE_BYTE_SIZE_UPPERCASE_SHA256_AND_ORIGIN_EVIDENCE'-or
+            $executionScope.approved_real_artifact_identity_present-ne$false-or
+            $executionScope.native_entry_point_allowlist_requirement-ne'EXACT_ORDERED_LIBRARY_QUALIFIED_OPERATION_BOUND_REVIEWED_SUBSET_NO_WILDCARDS'-or
+            $executionScope.native_entry_point_allowlist_present-ne$false-or
+            $executionScope.setupapi_newdev_function_allowlist_requirement-ne'EXACT_ORDERED_OPERATION_BOUND_REVIEWED_SUBSET_NO_WILDCARDS'-or
+            $executionScope.setupapi_newdev_function_allowlist_present-ne$false-or
+            (@($executionScope.reviewed_declaration_ceiling_not_authorized)-join'|')-ne'SetupDiCreateDeviceInfoList|SetupDiDestroyDeviceInfoList|SetupDiOpenDeviceInfoW|SetupDiGetDeviceInstanceIdW|SetupDiGetDevicePropertyW|SetupDiGetDeviceRegistryPropertyW|SetupDiBuildDriverInfoList|SetupDiDestroyDriverInfoList|SetupDiEnumDriverInfoW|SetupDiGetDriverInfoDetailW|SetupDiGetDriverInstallParamsW|SetupDiSetSelectedDriverW|DiInstallDevice'-or
+            $executionScope.device_instance_binding_requirement-ne'EXACT_CANONICAL_INSTANCE_ID_APPROVED_SNAPSHOT_TARGET_AND_PRIOR_DRIVER_IDENTITIES_AND_ORDINAL_REOPEN_COMPARISON'-or
+            $executionScope.dry_run_evidence_requirement-ne'INDEPENDENTLY_AUDITED_ENVELOPE_BOUND_NO_MUTATION_DRY_RUN_WITH_ORDERED_CALLS_PRECONDITIONS_POSTCONDITIONS_CLEANUP_AND_ZERO_ACTION_COUNTERS'-or
+            $executionScope.rollback_restore_plan_requirement-ne'INDEPENDENTLY_ACCEPTED_EXACT_PRIOR_DRIVER_IDENTITY_ORDERED_CALLS_CLEANUP_VERIFICATION_STOP_CONDITIONS_AND_MANUAL_RECOVERY'-or
+            $executionScope.windows_mutation_classification_requirement-ne'EXACT_PER_CALL_MUTATION_CLASS_PRECONDITION_POSTCONDITION_FAILURE_STATE_CLEANUP_DUTY_AND_INTEGER_COUNTERS'-or
+            $executionScope.operator_confirmation_requirement-ne'EXPLICIT_SINGLE_OPERATION_CONFIRMATION_BOUND_TO_ENVELOPE_HASH_INSTANCE_ARTIFACT_HOST_SESSION_OPERATION_AND_EXPIRY'-or
+            $executionScope.pre_implementation_audit_required-ne$true-or
+            $executionScope.post_implementation_audit_required-ne$true-or
+            $executionScope.implementation_audit_grants_execution_authority-ne$false-or
+            $executionScope.current_repository_satisfies_envelope-ne$false-or
+            $executionScope.current_task_authorizes_execution-ne$false-or
+            $executionScope.artifact_access_authorized-ne$false-or
+            $executionScope.native_library_load_authorized-ne$false-or
+            $executionScope.native_entry_point_resolution_authorized-ne$false-or
+            $executionScope.setupapi_newdev_invocation_authorized-ne$false-or
+            $executionScope.device_query_authorized-ne$false-or
+            $executionScope.hardware_access_authorized-ne$false-or
+            $executionScope.windows_mutation_authorized-ne$false-or
+            $executionScope.driver_action_authorized-ne$false){$defects.top_level++}
+    }
     $executionAuditProperty=$executionDesign.PSObject.Properties['audit_acceptance']
     if($null-eq$executionAuditProperty-or$null-eq$executionAuditProperty.Value-or$executionAuditProperty.Value-is[array]){
         $defects.top_level++

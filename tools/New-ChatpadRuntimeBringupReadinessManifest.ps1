@@ -235,6 +235,53 @@ $manifest=[pscustomobject][ordered]@{
             'DRIVER_PACKAGE_SIGNING_STAGING_WHEN_APPLICABLE',
             'LIVE_EXECUTION'
         )
+        execution_scope_boundary=[pscustomobject][ordered]@{
+            schema_version='chatpad-native-adapter-execution-scope-boundary-v1'
+            status='NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO'
+            opened_from_non_live_audit_acceptance_commit='bb6cc27c2281e04dee2166c5a67e124092055f9f'
+            required_operation_classes=@('NATIVE_ADAPTER_APPLY','NATIVE_ADAPTER_RESTORE','NATIVE_ADAPTER_RESTART')
+            required_authorized_operation_class_count=1
+            authorization_statement_requirement='EXACTLY_ONE_OPERATION_CLASS_BOUND_TO_IMPLEMENTATION_COMMIT_HOST_SESSION_EXPIRY_EVIDENCE_ROOT_AND_ENVELOPE_HASH'
+            approved_real_artifact_identity_requirement='EXACT_CANONICAL_PATH_POSITIVE_BYTE_SIZE_UPPERCASE_SHA256_AND_ORIGIN_EVIDENCE'
+            approved_real_artifact_identity_present=$false
+            native_entry_point_allowlist_requirement='EXACT_ORDERED_LIBRARY_QUALIFIED_OPERATION_BOUND_REVIEWED_SUBSET_NO_WILDCARDS'
+            native_entry_point_allowlist_present=$false
+            setupapi_newdev_function_allowlist_requirement='EXACT_ORDERED_OPERATION_BOUND_REVIEWED_SUBSET_NO_WILDCARDS'
+            setupapi_newdev_function_allowlist_present=$false
+            reviewed_declaration_ceiling_not_authorized=@(
+                'SetupDiCreateDeviceInfoList',
+                'SetupDiDestroyDeviceInfoList',
+                'SetupDiOpenDeviceInfoW',
+                'SetupDiGetDeviceInstanceIdW',
+                'SetupDiGetDevicePropertyW',
+                'SetupDiGetDeviceRegistryPropertyW',
+                'SetupDiBuildDriverInfoList',
+                'SetupDiDestroyDriverInfoList',
+                'SetupDiEnumDriverInfoW',
+                'SetupDiGetDriverInfoDetailW',
+                'SetupDiGetDriverInstallParamsW',
+                'SetupDiSetSelectedDriverW',
+                'DiInstallDevice'
+            )
+            device_instance_binding_requirement='EXACT_CANONICAL_INSTANCE_ID_APPROVED_SNAPSHOT_TARGET_AND_PRIOR_DRIVER_IDENTITIES_AND_ORDINAL_REOPEN_COMPARISON'
+            dry_run_evidence_requirement='INDEPENDENTLY_AUDITED_ENVELOPE_BOUND_NO_MUTATION_DRY_RUN_WITH_ORDERED_CALLS_PRECONDITIONS_POSTCONDITIONS_CLEANUP_AND_ZERO_ACTION_COUNTERS'
+            rollback_restore_plan_requirement='INDEPENDENTLY_ACCEPTED_EXACT_PRIOR_DRIVER_IDENTITY_ORDERED_CALLS_CLEANUP_VERIFICATION_STOP_CONDITIONS_AND_MANUAL_RECOVERY'
+            windows_mutation_classification_requirement='EXACT_PER_CALL_MUTATION_CLASS_PRECONDITION_POSTCONDITION_FAILURE_STATE_CLEANUP_DUTY_AND_INTEGER_COUNTERS'
+            operator_confirmation_requirement='EXPLICIT_SINGLE_OPERATION_CONFIRMATION_BOUND_TO_ENVELOPE_HASH_INSTANCE_ARTIFACT_HOST_SESSION_OPERATION_AND_EXPIRY'
+            pre_implementation_audit_required=$true
+            post_implementation_audit_required=$true
+            implementation_audit_grants_execution_authority=$false
+            current_repository_satisfies_envelope=$false
+            current_task_authorizes_execution=$false
+            artifact_access_authorized=$false
+            native_library_load_authorized=$false
+            native_entry_point_resolution_authorized=$false
+            setupapi_newdev_invocation_authorized=$false
+            device_query_authorized=$false
+            hardware_access_authorized=$false
+            windows_mutation_authorized=$false
+            driver_action_authorized=$false
+        }
         audit_acceptance=[pscustomobject][ordered]@{
             verdict='AUDIT PASS'
             accepted_audit_target='d71c6a46b0066eb8bc48e8de14795c223cdaa00c'

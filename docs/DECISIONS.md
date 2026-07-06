@@ -3150,3 +3150,35 @@ mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Operation plans/results
 remain blocked/non-executing. Real DLL and compile-output access, native
 loading, entry-point resolution, SetupAPI/Newdev invocation, device query,
 hardware access, Windows mutation, and driver actions remain forbidden.
+
+## 2026-07-06 - Define a fail-closed native execution authorization envelope
+
+**Decision:** Define record-only status
+`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO` from accepted
+non-live planning audit-acceptance commit
+`bb6cc27c2281e04dee2166c5a67e124092055f9f`. Require any future authorization
+envelope to bind one operation class, exact artifact path/size/SHA-256, exact
+native and SetupAPI/Newdev allowlists, exact device identity, audited dry-run
+evidence, exact rollback/restore evidence, per-call Windows-mutation classes,
+operator confirmation, and independent pre- and post-implementation audits.
+
+**Rationale:** The accepted non-live planning lane provides deterministic,
+always-denied operation plans but cannot establish execution authority. A
+machine-verifiable envelope makes every missing authorization fact explicit
+before later implementation work can be considered, without accessing an
+artifact or crossing a native/device/Windows boundary.
+
+**Alternatives rejected:** Treating the reviewed declaration set as an
+invocation allowlist; using branch identity, elevation, operator presence,
+caller input, or prior audit success as authority; allowing wildcard APIs or
+multi-operation approval; supplying placeholder artifact/device values; or
+combining boundary definition with implementation or execution.
+
+**Consequences:** The current repository explicitly does not satisfy the
+envelope. The gate and runtime blocker remain
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, installation readiness
+remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence
+mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Artifact access, native
+loading, entry-point resolution, SetupAPI/Newdev invocation, device query,
+hardware access, Windows mutation, and driver actions remain forbidden. The
+next task is an independent strict read-only audit of the scope-boundary commit.

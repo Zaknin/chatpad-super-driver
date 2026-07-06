@@ -2,78 +2,82 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the documentation-only
-acceptance commit for non-live native adapter operation planning.
+Perform an independent strict read-only audit of the native adapter execution-
+scope boundary commit.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
-- Branch: `feature/native-adapter-non-live-implementation-phase`.
+- Branch: `feature/native-adapter-execution-scope-boundary`.
 - Required starting commit: the commit with subject
-  `docs: accept native adapter planning audit`; obtain its exact full hash from
-  Git, require parent `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`, and
-  require upstream synchronization `0/0`.
-- Accepted audit target:
-  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
-- Non-live implementation commit:
-  `4522510a17354fe53d163546e16ff24af5fa0374`.
-- Non-live implementation status:
-  `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
-- Non-live planning audit acceptance:
-  `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Scaffolding implementation commit:
-  `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
-- Scaffolding-audit remediation commit:
-  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
-- Scaffolding-audit acceptance commit:
-  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
+  `docs: define native adapter execution scope boundary`; obtain its exact full
+  hash from Git, require parent
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`, and require upstream
+  synchronization `0/0`.
+- Accepted non-live planning audit-acceptance commit:
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
+- Execution-scope boundary status:
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+- Execution design status:
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
+- Scaffolding status:
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
 - Scaffolding-audit status:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Non-live implementation status:
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
+- Non-live planning audit status:
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Current gate and runtime blocker:
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
-- Live readiness: `BLOCKED`.
+- Installation readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
 
 ## Preconditions
 
-1. Follow `AGENTS.md`.
-2. Verify exact branch, HEAD, parent, upstream, remote equality, `0/0`, and a
-   clean tree/index.
-3. Verify the acceptance commit changed only authorized continuity documents,
-   manifest, and manifest generator/validator.
-4. Confirm adapter modules, offline suite, parser, artifacts, compile outputs,
+1. Follow `AGENTS.md` and verify exact branch, HEAD, parent, upstream, remote
+   equality, `0/0`, and a clean tree/index.
+2. Verify the candidate changed only authorized documentation, manifest, and
+   manifest generator/validator paths.
+3. Confirm adapter modules, offline suite, parser, artifacts, compile outputs,
    driver source, INF/project files, binaries, ignored evidence, and `legacy/`
    are unchanged.
 
 ## Audit Scope
 
-- Verify the accepted target, implementation commit, audit status,
-  scaffolding-audit identity/status, and prior scaffolding identities are
-  present consistently and validator-enforced.
+- Verify the envelope requires exactly one operation class; exact artifact
+  path, size, and SHA-256; exact library-qualified native and SetupAPI/Newdev
+  allowlists without wildcards; exact device binding; audited dry-run evidence;
+  exact rollback/restore evidence; per-call Windows-mutation classification;
+  envelope-bound operator confirmation; and independent audits before and
+  after implementation.
+- Verify the reviewed declaration ceiling is not represented as a current
+  invocation allowlist.
+- Verify the current repository does not satisfy the envelope and every current
+  artifact/native/device/hardware/Windows/driver authorization is false.
 - Validate schema v4, 39 entries, duplicate IDs/paths `0`, `NO_PATH` `0`, and
-  semantic cross-runtime identity under Windows PowerShell 5.1 and PowerShell
+  cross-runtime manifest identity under Windows PowerShell 5.1 and PowerShell
   7.
-- Verify gate/runtime blocker remain
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness remains
-  `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence mode
-  remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
-- Verify operation plans/results remain blocked/non-executing and the
-  acceptance authorizes no artifact, native, device, hardware, Windows, or
-  driver action.
 
 ## Safety Restrictions
 
 This is read-only. Do not edit, commit, or push. Do not run the static parser,
-full compile-output validator, full exact/readiness suites, or any
-native/device/Windows/driver action. Do not open, read, hash, parse, stat, scan,
-write, load, reflect over, or execute the real DLL or compile outputs.
+full compile-output validator, full exact/readiness suites, or any artifact,
+native, device, hardware, Windows, or driver path. Do not open, read, hash,
+parse, stat, scan, write, load, reflect over, or execute the real DLL or compile
+outputs.
 
 ## Acceptance Criteria
 
-- Exact continuity identities and statuses are present and validator-enforced.
-- Manifest validation passes under both runtimes with zero defects and
-  cross-runtime identity.
+- Scope status, accepted base, exact requirements, declaration ceiling, and all
+  false current-authority fields are present and validator-enforced.
+- Gate/runtime blocker remain
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, installation readiness
+  remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence
+  mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- Manifest validation passes under both runtimes with zero defects and no
+  cross-runtime differences.
 - No positive authorization or prohibited executable pattern was added.
 - Final Git status remains clean and synchronized `0/0`.
 
@@ -84,6 +88,7 @@ write, load, reflect over, or execute the real DLL or compile outputs.
 3. `docs/DECISIONS.md`
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
-6. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
-7. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
-8. `docs/evidence/runtime-bringup-readiness-manifest.json`
+6. `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
+7. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+8. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+9. `docs/evidence/runtime-bringup-readiness-manifest.json`
