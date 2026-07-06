@@ -10091,3 +10091,80 @@
   scaffolding. Verify the request, evidence, authorization, and execution-result
   paths fail closed without artifact I/O, native loading, entry-point
   resolution, device query, Windows mutation, or driver action.
+
+---
+
+## 2026-07-06 - Record exact fail-closed scaffolding commit
+
+- **Objective:** Remediate the failed independent audit of fail-closed native
+  adapter scaffolding commit
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad` by recording that exact identity
+  in current-state documentation and regenerating readiness evidence. This is
+  documentation/evidence remediation only.
+- **Starting state:** Resumed the authorized partial remediation in repository
+  `C:\Dev\chatpad-super-driver`, branch
+  `feature/native-adapter-fail-closed-scaffolding`, HEAD and upstream
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`, parent
+  `788ce8adfd0500741783ee1e359d5f805db710dd`, and ahead/behind `0/0`.
+  `IDEA.md` was present, ignored through `.git/info/exclude`, and absent from
+  normal status. The dirty tree was limited exactly to the five authorized
+  documentation paths; there were no untracked non-ignored files and no dirty
+  tooling, module, source, binary, artifact, driver, INF, project, packaging,
+  ignored-evidence, or `legacy/` paths.
+- **Audit finding:** The technical scaffolding and safety checks passed, but
+  the strict audit returned `AUDIT FAIL` because current-state documentation
+  did not state the exact scaffolding commit. No technical behavior change was
+  requested or made.
+- **Documentation remediation:** Recorded exact scaffolding commit
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`, status
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`, evidence
+  mode `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`, blocked Apply/Restore/Restart
+  behavior, and the unchanged authorization boundaries. Replaced the
+  continuation task with an independent strict read-only audit of this
+  remediation commit and unchanged scaffolding state.
+- **Files modified:** `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Safety state:** Current gate and runtime blocker remain
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; design status remains
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`;
+  live readiness remains `BLOCKED`; native execution remains
+  `NOT_IMPLEMENTED`. SetupAPI/Newdev invocation, native DLL loading,
+  entry-point resolution, device query, Windows mutation, and driver build/
+  sign/package/install/load/bind/restore/restart remain unauthorized.
+- **Manifest regeneration:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` under Windows
+  PowerShell 5.1 with implementation commit
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`, the existing approved ignored
+  suite/parser records, and `-NoArtifactOpenDesignGateAudit`. The generator
+  reported 39 entries, framework `PASS`, and live readiness `BLOCKED`; the
+  manifest contains no real-DLL or compile-output entry.
+- **Validation:** Windows PowerShell 5.1 and PowerShell 7 manifest validation
+  passed in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode with schema v4, 39
+  entries, duplicate IDs `0`, duplicate paths `0`, `NO_PATH` `0`, total
+  defects `0`, and identical cross-runtime validation identity. Documentation
+  consistency, positive authorization, prohibited executable-pattern,
+  constrained Git/index repository-safety, forbidden generated-file, spelling
+  variant, changed-path, and whitespace checks passed. The standard
+  `tools/Test-RepositorySafety.ps1` was intentionally not run because it
+  recursively enumerates filesystem output roots; the required constrained
+  safety check used only Git index/diff path data and did not inspect compile
+  outputs.
+- **Command correction:** The first combined final-validation wrapper compared
+  the complete serialized validator reports and stopped because Windows
+  PowerShell serialized `total_defects` as integer `0` while PowerShell 7
+  serialized the same value as numeric `0.0`. Both validators had already
+  returned `PASS` with zero defects. The comparison was rerun semantically over
+  the shared schema, result, mode, entry accounting, defect categories, safety
+  facts, and readiness identity fields; those values were identical.
+- **Commit and push:** Commit subject is
+  `docs: record native adapter scaffolding commit`; Git is authoritative for
+  the resulting full hash. Push target is
+  `origin/feature/native-adapter-fail-closed-scaffolding`; the exact pushed
+  hash and final synchronized status are reported in the final response.
+- **Next task:** Independent strict read-only audit of the documentation
+  remediation commit. Verify the exact scaffolding commit identity and
+  unchanged fail-closed/no-artifact-I/O state without editing, parser/full
+  validator execution, compile-output access, or native/device/Windows/driver
+  action.

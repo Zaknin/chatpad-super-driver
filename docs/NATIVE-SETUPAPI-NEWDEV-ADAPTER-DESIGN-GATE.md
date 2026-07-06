@@ -16,6 +16,8 @@ Authoritative current state:
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
 - Fail-closed scaffolding status:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
+- Fail-closed scaffolding commit:
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - Static metadata lane: `ACCEPTED_CLOSED` at
   `cb80939a862d33efb1abf26a14d5c75d43a77b30`.
@@ -38,11 +40,15 @@ Authoritative current state:
   and native/file loading members unreachable. Design-gate operations use
   tracked evidence records only in mode
   `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
-- Fail-closed scaffolding from branch
+- Fail-closed scaffolding added at
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad` on branch
   `feature/native-adapter-fail-closed-scaffolding` adds inert operation
   request, evidence-state, authorization-state, and deterministic blocked
   execution-result records. It does not add native implementation, artifact
   I/O, live device lookup, Windows mutation, or driver action.
+- The independent audit of that commit returned `AUDIT FAIL` only because
+  current-state documentation omitted the exact scaffolding commit. The
+  technical fail-closed and no-artifact-I/O checks passed.
 
 Authoritative source files:
 
@@ -381,11 +387,15 @@ passed independent audit at `f0be4746ad4cc548334336c1e66f07007b71859f`.
 The native-adapter execution design gate and no-artifact-I/O remediation passed
 independent audit at `d71c6a46b0066eb8bc48e8de14795c223cdaa00c` and are
 accepted and closed. Fail-closed scaffolding is now implemented as
-`NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`, but no task
-may open, hash, or parse compiled output, load or reflect over it, resolve
-entry points, invoke native APIs, query devices, or mutate Windows unless that
-exact action is later authorized. The current gate is
+`NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO` at
+`7560fc242a39228d6a95f42ff908bb4be438d6ad`, but no task may open, hash, or
+parse compiled output, load or reflect over it, resolve entry points, invoke
+SetupAPI/Newdev or other native APIs, query devices, mutate Windows, or perform
+driver build/sign/package/install/load/bind/restore/restart unless that exact
+action is later authorized. The current gate is
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; the capability blocker has
 the same value; live readiness remains `BLOCKED`; native execution remains
-`NOT_IMPLEMENTED`. The next step is an independent strict read-only audit of
-the fail-closed scaffolding and must remain non-live and fail-closed.
+`NOT_IMPLEMENTED`. `Apply`, `Restore`, and `Restart` remain blocked, and the
+no-artifact-I/O regression passed. The next step is an independent strict
+read-only audit of this documentation remediation and the fail-closed
+scaffolding state; it must remain non-live and fail-closed.

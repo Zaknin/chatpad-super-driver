@@ -1,14 +1,16 @@
 # Project State
 
-*Last updated: 2026-07-06 (fail-closed native adapter scaffolding added)*
+*Last updated: 2026-07-06 (scaffolding commit documentation remediation)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-fail-closed-scaffolding`.
 - **Starting commit:** `788ce8adfd0500741783ee1e359d5f805db710dd`.
-- **Current transition commit:** Git is authoritative because this document,
-  the implementation, tests, generator, validator, and manifest are committed
-  atomically.
+- **Fail-closed scaffolding commit:**
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+- **Current documentation-remediation commit:** Git is authoritative because
+  this document, the other current-state docs, and the regenerated manifest
+  are committed atomically.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -34,11 +36,11 @@
 - **Real artifact write/overwrite:** `NOT_PERFORMED`.
 
 The static metadata lane and native-adapter execution design gate are accepted
-and closed. This transition adds only non-live fail-closed execution scaffolding:
-request shaping, evidence-state checking, authorization-state checking, and a
-deterministic fail-closed execution result for `Apply`, `Restore`, and
-`Restart`. It does not implement native execution or authorize any runtime,
-device, Windows, package, signing, or driver action.
+and closed. Commit `7560fc242a39228d6a95f42ff908bb4be438d6ad`
+added only non-live fail-closed execution scaffolding: request shaping,
+evidence-state checking, authorization-state checking, and a deterministic
+fail-closed execution result for `Apply`, `Restore`, and `Restart`. It does not
+implement native execution.
 
 `Apply`, `Restore`, and `Restart` still return
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Unsupported operations
@@ -46,6 +48,11 @@ return `UNSUPPORTED_NATIVE_ADAPTER_OPERATION`. Missing or malformed tracked
 evidence and every non-current authorization shape fail closed before any native
 or artifact I/O boundary. Target identity fields are accepted only as inert
 request data and do not trigger live lookup.
+
+SetupAPI/Newdev invocation, native DLL loading, native entry-point resolution,
+device query, and Windows mutation are not authorized. Driver build, sign,
+package, install, load, bind, restore, and restart are not authorized. Real DLL
+or compile-output access is not authorized by this remediation.
 
 ## Native Adapter Execution Design Gate
 
@@ -80,6 +87,12 @@ tracked evidence failed closed without artifact I/O.
 The post-audit vocabulary-design remediation at
 `83eb4acf44d50d8c43a09f7827728763e726e9c2` received `AUDIT PASS`.
 
+Independent strict read-only audit of fail-closed scaffolding commit
+`7560fc242a39228d6a95f42ff908bb4be438d6ad` returned `AUDIT FAIL` only because
+the current-state documentation omitted that exact commit identity. Its
+technical scaffolding, focused dual-runtime checks, no-artifact-I/O regression,
+manifest validation, and safety checks passed.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
@@ -108,15 +121,17 @@ The post-audit vocabulary-design remediation at
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - Live readiness remains `BLOCKED`.
 - Native execution remains `NOT_IMPLEMENTED`.
-- Independent strict read-only audit of this fail-closed scaffolding is still
-  required before any later non-live implementation expansion.
+- Independent strict read-only audit of this documentation remediation and the
+  unchanged fail-closed scaffolding state is required before any later
+  non-live implementation expansion.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
   failure described above; focused changed-surface checks pass.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the fail-closed native adapter
-scaffolding on branch `feature/native-adapter-fail-closed-scaffolding`. Verify
-that all new request, authorization, evidence, and execution-result paths fail
+Perform an independent strict read-only audit of the documentation-remediation
+commit on branch `feature/native-adapter-fail-closed-scaffolding`. Verify that
+the exact scaffolding commit is recorded consistently and that the unchanged
+request, authorization, evidence, and execution-result paths remain fail
 closed without artifact I/O, native loading, entry-point resolution, device
 query, Windows mutation, or driver action.

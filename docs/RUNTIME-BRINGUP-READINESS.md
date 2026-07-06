@@ -23,17 +23,19 @@ closed; the current blocker is native adapter execution not implemented.
 
 Branch `feature/native-adapter-fail-closed-scaffolding` adds the next
 non-executing scaffolding stage from accepted design-gate transition
-`788ce8adfd0500741783ee1e359d5f805db710dd`. The accepted compile-only
+`788ce8adfd0500741783ee1e359d5f805db710dd`. The fail-closed native adapter
+scaffolding was added at
+`7560fc242a39228d6a95f42ff908bb4be438d6ad`. The accepted compile-only
 validation, declaration-only SetupAPI/Newdev source boundary, static metadata
 review, exact-instance offline framework, and accepted no-artifact-I/O
 design-gate audit remain underlying evidence; none authorizes execution. This
 stage adds request shaping, evidence-state checking, authorization-state
-checking, and deterministic fail-closed operation results only. It does not add
-native implementation, live lookup, artifact I/O, device query, Windows
-mutation, or driver behavior. The future API sequence, structures, driver-node
-identity evidence, exact-instance binding/restoration proof, restart/reboot
-separation, error taxonomy, authorization prerequisites, safety counters,
-source-boundary guard, compile-only evidence validator, and fail-closed
+checking, and deterministic fail-closed operation results only. It does not
+implement native execution or add live lookup, artifact I/O, device query,
+Windows mutation, or driver behavior. The future API sequence, structures,
+driver-node identity evidence, exact-instance binding/restoration proof,
+restart/reboot separation, error taxonomy, authorization prerequisites, safety
+counters, source-boundary guard, compile-only evidence validator, and fail-closed
 scaffolding status are documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
@@ -97,6 +99,8 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
 - Fail-closed scaffolding status:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
+- Fail-closed scaffolding commit:
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
 - Native adapter design-gate remediation audit: `AUDIT PASS` for
   `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`; 17 functions traced; full
   compile-output validator, `Get-FileHash`, output enumeration, and native/file
@@ -128,6 +132,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; unsupported operations
   are rejected; malformed or non-current evidence/authorization states fail
   closed; and all native/device/Windows/driver/action counters remain zero.
+- The no-artifact-I/O regression passed under Windows PowerShell 5.1 and
+  PowerShell 7. SetupAPI/Newdev invocation, native DLL loading, entry-point
+  resolution, device query, Windows mutation, and driver build/sign/package/
+  install/load/bind/restore/restart remain not authorized.
 - Tracked text evidence uses explicit `canonical_lf_text`; raw working-tree
   identity is informational. Compile outputs use `raw_file_bytes`.
 - Old v1 compile-output hashes are superseded historical ignored derived
