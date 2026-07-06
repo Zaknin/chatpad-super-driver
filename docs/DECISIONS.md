@@ -3035,3 +3035,31 @@ record-only validator. Static and dynamic regressions reject any return to
 query, Windows mutation, or driver action. The runtime blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness remains
 `BLOCKED`, and native execution remains `NOT_IMPLEMENTED`.
+
+## 2026-07-06 - Accept the fail-closed no-artifact-I/O execution design gate
+
+**Decision:** Accept the independent audit of
+`d71c6a46b0066eb8bc48e8de14795c223cdaa00c`, close the native-adapter
+execution design gate with exact status
+`NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`,
+and return the current gate to
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+**Rationale:** The independent strict read-only audit traced 17 transitive
+functions and proved that native-adapter design-gate operations reach only the
+record-only validator. The full compile-output validator, `Get-FileHash`,
+output enumeration, and native/file loading members are unreachable. Both
+PowerShell runtimes blocked Apply, Restore, and Restart 3/3, and missing or
+malformed tracked evidence failed closed without artifact I/O.
+
+**Alternatives rejected:** Keeping the pending-audit gate would contradict the
+accepted result; treating design acceptance as implementation or execution
+authorization would cross the audited boundary; accepting arbitrary status
+values would weaken manifest validation.
+
+**Consequences:** The design gate is accepted and closed, but native adapter
+execution remains unimplemented. Live readiness remains `BLOCKED`; native
+execution remains `NOT_IMPLEMENTED`; runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Native loading, entry-point
+resolution, SetupAPI/Newdev calls, device queries, Windows mutations, and
+driver actions remain unauthorized.

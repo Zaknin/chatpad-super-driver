@@ -2,78 +2,67 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the native adapter
-design-gate artifact-I/O remediation. Prove that fail-closed operations and
-their audit-safe probes cannot open, read, hash, parse, write, load, reflect
-over, execute, stat, or scan the real compile-only DLL or related outputs.
+Perform an independent strict read-only audit of the native-adapter execution
+design-gate audit-acceptance transition. Verify the exact accepted vocabulary,
+accepted audit facts, manifest consistency, and unchanged no-execution safety
+boundary.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-design-gate`.
-- Required starting commit: the remediation commit with subject
-  `fix: keep native adapter design gate from hashing artifacts`; verify its
-  exact hash from Git and require upstream synchronization `0/0`.
+- Required starting commit: the commit with subject
+  `docs: accept native adapter design gate audit`; verify its exact hash from
+  Git and require upstream synchronization `0/0`.
+- Accepted audit target: `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`.
 - Failed audit target: `dddd4afab914c1929de5683d6822fde5cbf46c6a`.
-- Current gate: `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
-- Runtime blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Current gate and runtime blocker:
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Design status:
-  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
-- Execution authorized: `false`.
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
+- Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Design-gate evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - Static metadata lane: `ACCEPTED_CLOSED`.
 
 ## Preconditions
 
-1. Follow `AGENTS.md` and require the exact branch, clean status/index,
-   expected HEAD, upstream, and `0/0` ahead/behind state.
-2. Verify the remediation commit changed only authorized paths.
-3. Read the current-state, decision, readiness, native-adapter design, and
-   latest worklog records.
-4. Do not run the static metadata parser, full compile-output validator, full
-   exact-instance suite, or full readiness suite.
+1. Follow `AGENTS.md`.
+2. Verify exact branch, HEAD, parent, upstream, `0/0`, and clean tree/index.
+3. Verify the acceptance commit changed only authorized docs, manifest, and
+   exact-vocabulary generator/validator/readiness files.
+4. Confirm both native-adapter design-gate modules are unchanged from
+   `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`.
 
 ## Audit Scope
 
-- Trace every call from `Invoke-ChatpadNativeAdapterOperation`, production
-  adapter construction, source-boundary contract decoration, call-plan
-  decoration, and fail-closed gate probes.
-- Confirm those paths call only
-  `Test-ChatpadNativeInteropCompileOnlyValidationEvidenceRecordOnly`.
-- Confirm the record-only validator reads only the two fixed tracked JSON
-  records and compares recorded identities without any output-path I/O.
-- Confirm the full compile-output validator remains unreachable from the
-  design-gate path and retains its separately authorized purpose.
-- Run only the isolated no-artifact-I/O regression and static checks under
-  Windows PowerShell 5.1 and PowerShell 7.
-- Verify manifest schema v4, 39 entries, duplicate IDs/paths 0, `NO_PATH` 0,
-  dual-runtime validation, cross-runtime identity, repository safety,
-  forbidden generated files, documentation consistency, and clean diff.
+- Verify the manifest records the exact accepted design status and complete
+  audit facts for `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`.
+- Verify generator and validator require exact values and reject arbitrary
+  accepted statuses or incomplete audit records.
+- Verify top-level and nested current gates consistently use
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Verify live readiness remains `BLOCKED`, native execution remains
+  `NOT_IMPLEMENTED`, and all native/device/Windows/driver counters remain zero.
+- Verify documentation contains no stale current pending-design-audit claim.
 
 ## Safety Restrictions
 
-This audit is read-only. Do not open, read, hash, parse, write, overwrite,
-load, reflect over, execute, stat, or scan the real DLL or related compile
-outputs. Do not load native libraries, resolve entry points, invoke
-SetupAPI/Newdev, query devices, mutate Windows, or perform driver build, link,
-sign, CAT generation, package, stage, install, load, unload, bind, restore,
-restart, or reboot actions.
+This is read-only. Do not run the static parser, full compile-output validator,
+full exact/readiness suites, or any native/device/Windows/driver action. Do not
+open, read, hash, parse, write, load, reflect over, execute, stat, or scan the
+real DLL or compile outputs. Do not edit, commit, or push during the audit.
 
 ## Acceptance Criteria
 
-- Static call-chain proof shows no path from fail-closed operations/probes to
-  `Get-FileHash`, output-directory enumeration, or the full validator.
-- Isolated regressions return `PASS` under both runtimes with Apply, Restore,
-  and Restart blocked as
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` and all action counters
-  zero.
-- Evidence mode is exactly `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
-- Current gate, runtime blocker, blocked live readiness, and unimplemented
-  native execution are unchanged.
-- The audit performs no prohibited artifact, native, device, Windows, or
-  driver action.
+- Exact accepted status and audit facts validate under Windows PowerShell 5.1
+  and PowerShell 7 with zero defects.
+- Manifest remains schema v4 with 39 entries, duplicate IDs/paths `0`, and
+  `NO_PATH` `0`.
+- No arbitrary-value acceptance or weakened validation exists.
+- Native-adapter design-gate modules, parser, harness, driver, INF/projects,
+  binaries, and `legacy/` are unchanged.
+- Final Git status remains clean and synced `0/0`.
 
 ## Inspect First
 
@@ -82,7 +71,6 @@ restart, or reboot actions.
 3. `docs/DECISIONS.md`
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
-6. `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
-7. `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`
-8. `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
-9. `docs/evidence/runtime-bringup-readiness-manifest.json`
+6. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+7. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+8. `docs/evidence/runtime-bringup-readiness-manifest.json`

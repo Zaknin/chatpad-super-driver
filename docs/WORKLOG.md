@@ -9876,3 +9876,139 @@
   compile-output I/O; do not run the parser, full compile-output validator,
   full exact/readiness suites, native/device/Windows operations, or driver
   actions.
+
+---
+
+## 2026-07-06 08:48 +04:00 - Accept native adapter design-gate remediation audit
+
+- **Objective:** Record independent `AUDIT PASS` acceptance of remediation
+  commit `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`, close the fail-closed
+  no-artifact-I/O execution design gate, and restore the active blocker to
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` without implementing or
+  executing native behavior.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`, branch
+  `feature/native-adapter-execution-design-gate`, HEAD/upstream
+  `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`, ahead/behind `0/0`, empty tree
+  and index, ignored `IDEA.md`, and every required ancestor. Manifest schema
+  was v4 with 39 entries, duplicate IDs/paths `0`, `NO_PATH` `0`, pending
+  design-audit gate, runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, native execution `NOT_IMPLEMENTED`, static metadata lane
+  `ACCEPTED_CLOSED`, path gate `STATUS_BOUNDARY_ACCEPTED`, and metadata review
+  `STATIC_METADATA_VALIDATED`.
+- **Accepted audit facts:** The audit of `d71c6a4` passed. Failed target
+  `dddd4afab914c1929de5683d6822fde5cbf46c6a` allowed blocked probes to reach
+  compile-output validation and hash the real DLL. The remediation removed
+  that path and uses `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. The audit traced 17
+  functions; record-only validation was reachable; full compile-output
+  validation, `Get-FileHash`, output enumeration, and native/file loading
+  member reachability were zero; reads were limited to two fixed tracked JSON
+  records. Both runtimes passed no-artifact-I/O regression with Apply, Restore,
+  and Restart 3/3 blocked. Missing/malformed tracked evidence failed closed.
+- **Transition:** Added exact status
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
+  Top-level and nested current gates now require
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; independent design audit
+  is no longer pending. Generator and validator require the exact accepted
+  target, failed target, finding, remediation result, evidence mode, reachability
+  counts, dual-runtime results, fail-closed results, and all false safety facts.
+  No wildcard or arbitrary accepted-status path was added.
+- **Files modified:** `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, `docs/WORKLOG.md`, and regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Preliminary validation:** The generator used only the existing approved
+  ignored synthetic suite/parser records in no-artifact-open mode. The
+  preliminary manifest had 39 entries, duplicate IDs/paths `0`, `NO_PATH` `0`,
+  exact final gate/status/target, and passed validation with zero defects under
+  Windows PowerShell 5.1 and PowerShell 7. All three changed scripts parsed
+  with zero errors under both runtimes. Exact generator/validator status and
+  target comparisons each occurred once; wildcard status comparisons were
+  zero.
+- **Static and safety validation:** No stale current pending-design-audit claim
+  remained; remaining pending-gate mentions were historical or the previous
+  gate. No positive runtime/native/device/Windows/driver authorization claim
+  was introduced. No prohibited executable pattern was added. Repository
+  safety passed with deployment, signing, packaging, certificate, key, Windows
+  mutation, device query, hardware access, unexpected tracked artifact,
+  tracked evidence, and non-ignored evidence counters all zero. Forbidden
+  generated changed paths and untracked non-ignored files were zero.
+  `runtime-beatup` and `runtime-bringup-readings` appeared only in the earlier
+  self-referential worklog absence statement. `git diff --check` passed with
+  line-ending conversion warnings only.
+- **Command corrections:** The initial vocabulary search passed a Windows-
+  invalid `docs/*.md` path to `rg`; explicit files still produced the useful
+  result. A follow-up `rg` pattern interpolated `$true` and produced invalid
+  escapes. Two combined validation wrappers and one revised AST wrapper exited
+  before output because of PowerShell operator/AST-filter wrapper issues; none
+  changed repository state and none is treated as evidence. The checks were
+  split into focused commands, which passed as recorded above.
+  The first combined final-check wrapper also failed to parse because a Git
+  command and `$LASTEXITCODE` were embedded inside an object-literal property;
+  it produced no evidence or changes, and the final checks were rerun as
+  separate passing commands.
+- **Safety:** The static metadata parser, full compile-output validator, full
+  readiness suite, and native-adapter design-gate modules were not run or
+  changed. The real DLL was not opened, read, hashed, parsed, written, loaded,
+  reflected over, or executed. No native library load, entry-point resolution,
+  SetupAPI/Newdev call, device query, hardware access, Windows mutation, or
+  driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
+  restart occurred.
+- **Final state:** The design gate is accepted and closed. Current gate and
+  runtime blocker are `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  static metadata lane remains `ACCEPTED_CLOSED`; path gate remains
+  `STATUS_BOUNDARY_ACCEPTED`; metadata review remains
+  `STATIC_METADATA_VALIDATED`.
+- **Commit and push:** Commit subject will be
+  `docs: accept native adapter design gate audit`; Git is authoritative for the
+  resulting hash. Push target is
+  `origin/feature/native-adapter-execution-design-gate`.
+- **Next task:** Independent strict read-only audit of this acceptance
+  transition. Verify exact vocabulary/audit facts and unchanged safety
+  boundaries; do not edit, run the parser/full validator/full suites, access
+  the real DLL, or perform native/device/Windows/driver actions.
+
+---
+
+## 2026-07-06 10:39 +04:00 - Finalize native adapter design-gate audit acceptance
+
+- **Objective:** Finalize the in-progress native-adapter execution design-gate
+  audit-acceptance transition after the previous continuation stopped on stale
+  current-gate wording in
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`,
+  branch `feature/native-adapter-execution-design-gate`, actual HEAD
+  `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`, upstream
+  `origin/feature/native-adapter-execution-design-gate`, ahead/behind `0/0`,
+  ignored `IDEA.md`, no untracked nonignored files, and a dirty working tree
+  limited to the in-progress audit-acceptance transition paths.
+- **Correction:** Updated
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md` so
+  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT` is clearly a
+  previous pending-audit state and the accepted current gate is
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Manifest regeneration:** Regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json` with
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1` using the existing
+  approved ignored suite record
+  `artifacts/logs/compiled-artifact-metadata-review-design-gate/readiness-pwsh.json`,
+  the existing approved parser synthetic record
+  `artifacts/logs/static-parser-status-boundary-remediation/parser-validation-final/static-metadata-parser-synthetic-validation.json`,
+  and `-NoArtifactOpenDesignGateAudit`. The generator reported 39 entries,
+  framework `PASS`, and live readiness `BLOCKED`.
+- **Safety:** The static metadata parser, full compile-output validator, full
+  readiness suite, and native-adapter design-gate modules were not run or
+  changed. The real DLL was not opened, read, hashed, parsed, written, loaded,
+  reflected over, or executed. No native library load, entry-point resolution,
+  SetupAPI/Newdev call, device query, hardware access, Windows mutation, or
+  driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
+  restart occurred.
+- **Validation:** Final validation is recorded in the commit handoff and final
+  response. The expected final state remains: design gate accepted and closed,
+  current gate and runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness `BLOCKED`,
+  and native execution `NOT_IMPLEMENTED`.

@@ -8,12 +8,12 @@ Authoritative current state:
 
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Execution design status:
-  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
 - Static metadata lane: `ACCEPTED_CLOSED` at
   `cb80939a862d33efb1abf26a14d5c75d43a77b30`.
 - Live binding/restoration/restart authorization: `false`.
@@ -28,8 +28,12 @@ Authoritative current state:
   `dddd4afab914c1929de5683d6822fde5cbf46c6a`: `AUDIT FAIL`. The fail-closed
   operation path called the full compile-output evidence validator, which
   opened and hashed the real DLL.
-- Remediation status: pending independent strict read-only audit. Design-gate
-  operations now use tracked evidence records only and report validation mode
+- Independent audit of remediation commit
+  `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`: `AUDIT PASS`. The audit traced
+  17 transitive functions, found the record-only validator reachable, and
+  found the full compile-output validator, `Get-FileHash`, output enumeration,
+  and native/file loading members unreachable. Design-gate operations use
+  tracked evidence records only in mode
   `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 
 Authoritative source files:
@@ -72,12 +76,13 @@ contexts and is unreachable from fail-closed design-gate operations and probes.
 
 The execution state model is:
 
-1. `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`: no execution design gate
-   has been accepted and no native implementation is available.
-2. `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`: this document and
-   its manifest contract exist, but independent audit has not accepted them.
-3. A future design-audit acceptance gate may authorize a separate
-   implementation task only. It must not authorize execution.
+1. `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`: the design and
+   manifest contract existed but had not yet received independent acceptance.
+2. `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`: the fail-closed,
+   no-artifact-I/O design gate is accepted, but no native implementation is
+   available. This is the current state.
+3. Design-audit acceptance authorizes only a separate non-live implementation
+   task. It does not authorize execution.
 4. A future implementation-audit gate may accept non-live implementation
    evidence only. It must not authorize execution.
 5. A future live-execution authorization must name the exact implementation,
@@ -343,11 +348,12 @@ audit at `49b41dad087a3d7e6f4db7f52cd51a0c17eed222`. The static parser
 implementation design passed independent audit at
 `468e8679388481e923a37a985055046f72480921`, and the remediated implementation
 passed independent audit at `f0be4746ad4cc548334336c1e66f07007b71859f`.
-No task may open, hash, or parse compiled output, load or reflect over it,
+The native-adapter execution design gate and no-artifact-I/O remediation passed
+independent audit at `d71c6a46b0066eb8bc48e8de14795c223cdaa00c` and are
+accepted and closed. No task may open, hash, or parse compiled output, load or reflect over it,
 resolve entry points, invoke native APIs, query devices, or mutate Windows
 unless that exact action is later authorized. The current gate is
-`BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`; the
-capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
-native execution remains `NOT_IMPLEMENTED`. The next task is an independent
-read-only audit of this execution design gate and its fail-closed manifest and
-scaffold vocabulary. It is not an implementation or live-execution task.
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; the capability blocker has
+the same value; live readiness remains `BLOCKED`; native execution remains
+`NOT_IMPLEMENTED`. The next implementation/scaffolding step requires separate
+authorization and independent audit and must remain non-live and fail-closed.

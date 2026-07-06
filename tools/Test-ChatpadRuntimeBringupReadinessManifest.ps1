@@ -872,7 +872,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.real_artifact_static_metadata_review_completed-ne$true-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.real_artifact_static_metadata_review_completed-ne$true-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
 $executionDesignProperty=$manifest.PSObject.Properties['native_adapter_execution_design_gate']
 if($null-eq$executionDesignProperty-or$null-eq$executionDesignProperty.Value-or$executionDesignProperty.Value-is[array]){
@@ -882,13 +882,13 @@ else{
     $executionDesign=$executionDesignProperty.Value
     $executionCounters=$executionDesign.PSObject.Properties['safety_counters']
     if($executionDesign.schema_version-ne'chatpad-native-adapter-execution-design-gate-v1'-or
-        $executionDesign.status-ne'NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT'-or
-        $executionDesign.current_gate-ne'BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'-or
+        $executionDesign.status-ne'NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO'-or
+        $executionDesign.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $executionDesign.opened_from_commit-ne'cb80939a862d33efb1abf26a14d5c75d43a77b30'-or
         $executionDesign.design_document_path-ne'docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md'-or
         $executionDesign.implementation_status-ne'NOT_IMPLEMENTED'-or
         $executionDesign.execution_authorized-ne$false-or
-        $executionDesign.independent_audit_required-ne$true-or
+        $executionDesign.independent_audit_required-ne$false-or
         $executionDesign.live_installation_readiness-ne'BLOCKED'-or
         $executionDesign.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $executionDesign.static_metadata_lane_status-ne'ACCEPTED_CLOSED'-or
@@ -908,6 +908,41 @@ else{
                 $defects.top_level++
             }
         }
+    }
+    $executionAuditProperty=$executionDesign.PSObject.Properties['audit_acceptance']
+    if($null-eq$executionAuditProperty-or$null-eq$executionAuditProperty.Value-or$executionAuditProperty.Value-is[array]){
+        $defects.top_level++
+    }
+    else{
+        $executionAudit=$executionAuditProperty.Value
+        if($executionAudit.verdict-ne'AUDIT PASS'-or
+            $executionAudit.accepted_audit_target-ne'd71c6a46b0066eb8bc48e8de14795c223cdaa00c'-or
+            $executionAudit.failed_audit_target-ne'dddd4afab914c1929de5683d6822fde5cbf46c6a'-or
+            $executionAudit.failed_audit_finding-ne'FAIL_CLOSED_PROBES_REACHED_COMPILE_OUTPUT_VALIDATION_AND_HASHED_REAL_DLL'-or
+            $executionAudit.remediation_result-ne'UNSAFE_ARTIFACT_HASHING_PATH_REMOVED'-or
+            $executionAudit.evidence_mode-ne'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO'-or
+            [int]$executionAudit.transitive_function_count-ne17-or
+            $executionAudit.record_only_validator_reachable-ne$true-or
+            [int]$executionAudit.full_compile_output_validator_reachable_count-ne0-or
+            [int]$executionAudit.get_file_hash_reachable_count-ne0-or
+            [int]$executionAudit.output_enumeration_reachable_count-ne0-or
+            [int]$executionAudit.native_or_file_loading_member_reachable_count-ne0-or
+            [int]$executionAudit.fixed_tracked_json_read_count-ne2-or
+            $executionAudit.windows_powershell_no_artifact_io_regression-ne'PASS'-or
+            $executionAudit.powershell_7_no_artifact_io_regression-ne'PASS'-or
+            [int]$executionAudit.windows_powershell_blocked_operation_count-ne3-or
+            [int]$executionAudit.powershell_7_blocked_operation_count-ne3-or
+            $executionAudit.missing_or_malformed_evidence_fails_closed-ne$true-or
+            $executionAudit.full_compile_output_validator_run-ne$false-or
+            $executionAudit.static_metadata_parser_run-ne$false-or
+            $executionAudit.real_dll_accessed-ne$false-or
+            $executionAudit.native_library_loaded-ne$false-or
+            $executionAudit.native_entry_point_resolved-ne$false-or
+            $executionAudit.setupapi_newdev_invoked-ne$false-or
+            $executionAudit.device_queried-ne$false-or
+            $executionAudit.windows_mutated-ne$false-or
+            $executionAudit.driver_action_performed-ne$false-or
+            $executionAudit.accepted-ne$true){$defects.top_level++}
     }
 }
 $metadataReviewDefectRecords=[Collections.Generic.List[object]]::new()
@@ -970,7 +1005,7 @@ if($null-eq$metadataGateProperty-or$null-eq$metadataGateProperty.Value-or$metada
 else{
     $metadataGate=$metadataGateProperty.Value
     if($metadataGate.status-ne'STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED'-or
-        $metadataGate.current_gate-ne'BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'-or
+        $metadataGate.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $metadataGate.real_artifact_review_authorization_transition_commit-ne'baab23aece902cbb06e11a308d9092fdc0f9ce0d'-or
         $metadataGate.runtime_blocker-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $metadataGate.artifact_location_classification-ne'IGNORED_COMPILE_ONLY_OUTPUT'-or
@@ -1034,7 +1069,7 @@ else{
     else{
         $parserDesign=$parserDesignProperty.Value
         if($parserDesign.status-ne'DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'-or
-            $parserDesign.current_gate-ne'BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'-or
+            $parserDesign.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
             $parserDesign.real_artifact_review_authorization_transition_commit-ne'baab23aece902cbb06e11a308d9092fdc0f9ce0d'-or
             $parserDesign.transition_base_commit-ne'382aa85980408939a93043583b48e942ebfbf018'-or
             $parserDesign.design_document_path-ne'docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'-or
@@ -1074,7 +1109,7 @@ else{
         $parserImplementation=$parserImplementationProperty.Value
         $parserEvidencePathProperty=$parserImplementation.PSObject.Properties['parser_synthetic_validation_path']
         if($parserImplementation.status-ne'ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'-or
-            $parserImplementation.current_gate-ne'BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'-or
+            $parserImplementation.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
             $parserImplementation.real_artifact_review_authorization_transition_commit-ne'baab23aece902cbb06e11a308d9092fdc0f9ce0d'-or
             $parserImplementation.independent_implementation_audit_verdict-ne'AUDIT PASS'-or
             $parserImplementation.independent_implementation_audit_branch-ne'feature/runtime-bringup-static-metadata-parser-preflight-output-remediation'-or

@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-06 (native adapter design-gate artifact-I/O audit remediation pending independent audit)*
+*Last updated: 2026-07-06 (native adapter execution design gate accepted and closed)*
 
 ## Current State
 
@@ -10,13 +10,13 @@
   the generator, validator, manifest, and transition record are committed
   atomically.
 - **Previous gate:**
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- **Current gate:**
   `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
+- **Current gate:**
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Runtime blocker:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Execution design status:**
-  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
 - **Execution authorized:** `false`.
 - **Real-artifact path gate:** `STATUS_BOUNDARY_ACCEPTED`.
 - **Metadata/parser accepted status:**
@@ -30,10 +30,11 @@
   authorized static review.
 - **Real artifact write/overwrite:** `NOT_PERFORMED`.
 
-The static metadata lane remains accepted and closed. The generator now emits,
-and the validator requires, the pending native-adapter execution-design audit
-gate plus zero execution-attempt counters. This does not authorize runtime/
-native execution or any device, Windows, package, signing, or driver action.
+The static metadata lane and native-adapter execution design gate are accepted
+and closed. The generator emits, and the validator requires, the exact accepted
+design status, audit facts, final implementation blocker, and zero action
+counters. This does not authorize runtime/native execution or any device,
+Windows, package, signing, or driver action.
 
 Independent audit of
 `dddd4afab914c1929de5683d6822fde5cbf46c6a` failed because fail-closed native
@@ -43,6 +44,14 @@ tracked evidence records only in
 `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` mode. The full compile-output validator
 remains available outside this design-gate path for separately authorized
 artifact-validation work.
+
+Independent strict read-only audit of remediation commit
+`d71c6a46b0066eb8bc48e8de14795c223cdaa00c` returned `AUDIT PASS`. It traced
+17 transitive functions, reached record-only validation, and found the full
+compile-output validator, `Get-FileHash`, output enumeration, and native/file
+loading members unreachable. Apply, Restore, and Restart were 3/3 blocked per
+runtime under Windows PowerShell 5.1 and PowerShell 7. Missing or malformed
+tracked evidence failed closed without artifact I/O.
 
 ## Native Adapter Execution Design Gate
 
@@ -114,10 +123,10 @@ the DLL during this transition:
   unauthorized and did not occur.
 - Driver build, link, sign, CAT generation, package, stage, install, load,
   unload, bind, restore, and restart remain unauthorized and did not occur.
-- Parser source, parser tests, native declarations, compile-only harness,
-  production driver source, INF, projects/solutions, binaries, frozen
-  artifacts, and `legacy/` are unchanged. The non-executing PowerShell adapter
-  scaffold changed only its current-gate constant.
+- Parser source/tests, native-adapter design-gate modules, native declarations,
+  compile-only harness, production driver source, INF, projects/solutions,
+  binaries, frozen artifacts, and `legacy/` are unchanged by this acceptance
+  transition.
 
 ## Validation Snapshot
 
@@ -141,9 +150,6 @@ the DLL during this transition:
 
 ## Unresolved Blockers
 
-- Independent audit failed for
-  `dddd4afab914c1929de5683d6822fde5cbf46c6a`; this artifact-I/O remediation
-  has not yet received independent acceptance.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
   failure described above; focused changed-surface checks pass.
@@ -152,8 +158,7 @@ the DLL during this transition:
 
 ## Next Task
 
-Perform an independent strict read-only audit of this native-adapter
-design-gate artifact-I/O remediation. Prove the fail-closed operation path
-cannot reach compile-output hashing or any real-DLL access. Do not run the
-static metadata parser or full compile-output validator, implement or execute
-the adapter, query devices, mutate Windows, or perform any driver action.
+Perform an independent strict read-only audit of this audit-acceptance
+transition. Verify the exact accepted vocabulary and recorded audit facts while
+keeping native execution unimplemented and all runtime/device/Windows/driver
+actions unauthorized.

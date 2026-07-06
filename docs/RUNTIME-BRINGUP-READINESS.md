@@ -17,7 +17,9 @@ validation, but removes it from the operation/design-gate call chain. Blocked
 operations now use only tracked evidence records in explicit mode
 `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`; they do not stat, scan, open, read,
 hash, parse, write, load, reflect over, or execute compile outputs. The current
-gate remains pending independent native-adapter execution-design audit.
+remediation passed independent audit at
+`d71c6a46b0066eb8bc48e8de14795c223cdaa00c`. The design gate is accepted and
+closed; the current blocker is native adapter execution not implemented.
 
 Branch `feature/native-adapter-execution-design-gate` opens the next
 non-executing contract stage from accepted static metadata transition
@@ -83,11 +85,15 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Execution design status:
-  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
+- Native adapter design-gate remediation audit: `AUDIT PASS` for
+  `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`; 17 functions traced; full
+  compile-output validator, `Get-FileHash`, output enumeration, and native/file
+  loading members reachable: `0`.
 - Native execution authorization: `false`.
 - Design-gate operation evidence validation:
   `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
