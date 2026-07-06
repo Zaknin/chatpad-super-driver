@@ -243,6 +243,7 @@ $manifest=[pscustomobject][ordered]@{
             audit_acceptance_target='f0b10d862d23d0ede28b1139c2ccb726bfcddc48'
             lane_closeout_result='AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO'
             lane_closeout_audit_target='d1372ba8f7812d24a09b87238793e78435ac4492'
+            lane_closeout_commit='e68ed58e3c5a2560c331f4b69dfe021ae54531e1'
             opened_from_non_live_audit_acceptance_commit='bb6cc27c2281e04dee2166c5a67e124092055f9f'
             required_operation_classes=@('NATIVE_ADAPTER_APPLY','NATIVE_ADAPTER_RESTORE','NATIVE_ADAPTER_RESTART')
             required_authorized_operation_class_count=1

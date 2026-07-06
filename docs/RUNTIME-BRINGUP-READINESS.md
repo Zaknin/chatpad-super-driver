@@ -136,6 +136,8 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`.
 - Accepted lane-closeout audit target:
   `d1372ba8f7812d24a09b87238793e78435ac4492`.
+- Execution-scope boundary lane-closeout commit:
+  `e68ed58e3c5a2560c331f4b69dfe021ae54531e1`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:

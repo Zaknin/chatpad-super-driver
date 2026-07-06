@@ -10669,3 +10669,34 @@
   `origin/feature/native-adapter-execution-scope-boundary`.
 - **Next task:** Independent strict read-only audit of this closeout commit and
   unchanged blocked/no-artifact-I/O boundary.
+
+---
+
+## 2026-07-06 - Record native adapter boundary closeout identity
+
+- **Objective:** Remediate failed audit target
+  `e68ed58e3c5a2560c331f4b69dfe021ae54531e1` by recording it as the exact
+  lane-closeout commit while preserving accepted audit target
+  `d1372ba8f7812d24a09b87238793e78435ac4492`.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-scope-boundary`, exact HEAD/upstream
+  `e68ed58e3c5a2560c331f4b69dfe021ae54531e1`, parent
+  `d1372ba8f7812d24a09b87238793e78435ac4492`, `0/0`, and clean tree/index.
+- **Remediation:** Added and validator-enforced distinct
+  `lane_closeout_commit`, preserving closeout status
+  `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`, all prior identities/statuses, and
+  blocked runtime authority.
+- **Files modified:** The six continuity documents, regenerated readiness
+  manifest, manifest generator, and manifest validator.
+- **Validation:** Final manifest validation passed under Windows PowerShell 5.1
+  and PowerShell 7 with schema v4, 39 entries, zero defects, duplicate
+  IDs/paths `0/0`, `NO_PATH` `0`, and cross-runtime identity. Identity/status,
+  authorization, prohibited-pattern, constrained safety, generated-file,
+  spelling-variant, changed-path, and diff checks passed.
+- **Safety:** No behavior test, parser/full validator, real DLL/output access,
+  native/device/hardware/Windows action, or driver action occurred.
+- **Commit and push:** Subject is
+  `docs: record native adapter boundary closeout identity`; push target is
+  `origin/feature/native-adapter-execution-scope-boundary`.
+- **Next task:** Independent strict read-only audit of this remediation commit,
+  distinct accepted-audit/closeout identities, and unchanged blocked boundary.

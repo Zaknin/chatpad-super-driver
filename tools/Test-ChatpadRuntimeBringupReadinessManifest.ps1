@@ -932,6 +932,7 @@ else{
             $executionScope.audit_acceptance_target-ne'f0b10d862d23d0ede28b1139c2ccb726bfcddc48'-or
             $executionScope.lane_closeout_result-ne'AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO'-or
             $executionScope.lane_closeout_audit_target-ne'd1372ba8f7812d24a09b87238793e78435ac4492'-or
+            $executionScope.lane_closeout_commit-ne'e68ed58e3c5a2560c331f4b69dfe021ae54531e1'-or
             $executionScope.opened_from_non_live_audit_acceptance_commit-ne'bb6cc27c2281e04dee2166c5a67e124092055f9f'-or
             (@($executionScope.required_operation_classes)-join'|')-ne'NATIVE_ADAPTER_APPLY|NATIVE_ADAPTER_RESTORE|NATIVE_ADAPTER_RESTART'-or
             $executionScope.required_authorized_operation_class_count-ne1-or

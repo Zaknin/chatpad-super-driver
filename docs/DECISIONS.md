@@ -3246,3 +3246,22 @@ native implementation or execution authorization; or changing adapter behavior.
 `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence mode
 remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Closeout grants no artifact,
 native, device, hardware, Windows, or driver authority.
+
+## 2026-07-06 - Distinguish the closeout commit from its accepted audit target
+
+**Decision:** Preserve `d1372ba8f7812d24a09b87238793e78435ac4492` as the
+accepted audit target and separately record
+`e68ed58e3c5a2560c331f4b69dfe021ae54531e1` as the exact lane-closeout commit.
+
+**Rationale:** Independent audit found the lane technically consistent but
+could not accept closeout continuity because the closeout commit identity was
+missing. The two commits represent distinct lifecycle facts.
+
+**Alternatives rejected:** Replacing the accepted audit target with the
+closeout commit; relying on current `HEAD`; weakening identity enforcement; or
+changing behavior or execution authority.
+
+**Consequences:** Generator and validator enforce both identities. Closeout
+status remains `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`; runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; no artifact, native,
+device, hardware, Windows, or driver authority is granted.

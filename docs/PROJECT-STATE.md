@@ -23,6 +23,8 @@
   `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`.
 - **Execution scope-boundary audit-acceptance commit:**
   `d1372ba8f7812d24a09b87238793e78435ac4492`.
+- **Execution scope-boundary lane-closeout commit:**
+  `e68ed58e3c5a2560c331f4b69dfe021ae54531e1`.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -167,6 +169,12 @@ authority.
 Independent strict read-only audit of audit-acceptance commit
 `d1372ba8f7812d24a09b87238793e78435ac4492` returned `AUDIT PASS` and closed
 the execution-scope boundary lane. Lane closeout changes no execution authority.
+
+The first strict audit of lane-closeout commit
+`e68ed58e3c5a2560c331f4b69dfe021ae54531e1` returned `AUDIT FAIL` only because
+that exact closeout identity was absent from continuity records. This
+remediation records and validator-enforces it while preserving
+`d1372ba8f7812d24a09b87238793e78435ac4492` as the accepted audit target.
 
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
