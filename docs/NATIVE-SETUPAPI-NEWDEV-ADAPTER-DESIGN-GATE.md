@@ -54,6 +54,10 @@ Authoritative current state:
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
 - Accepted final-closeout audit target:
   `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`.
+- Accepted execution scope-boundary final-closeout commit:
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
+- Execution-envelope verifier:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -496,6 +500,32 @@ inert target identity, and typed zero-counter results. The expanded
 no-artifact-I/O regression traces 15 functions and requires zero forbidden
 commands.
 
+## Record-only execution-envelope verifier
+
+`Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope` validates only inert
+declared values. The exact schema binds one Apply, Restore, or Restart
+operation; a future authorization statement; declared artifact path, size, and
+SHA-256; native and SetupAPI/Newdev name allowlists; device and driver
+identifiers; tracked dry-run evidence identifiers and `docs/evidence/` paths;
+rollback/restore declarations; Windows-mutation classification; operator
+confirmation; pre- and post-implementation audit requirements; and the current
+denial `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+The verifier uses exact property whitelists and rejects unknown fields,
+wildcards, invalid numeric types, missing records, malformed nested records,
+expired records, future/live authorization vocabulary, and any current
+execution-authorized claim. A structurally complete envelope is still blocked.
+Every result sets execution authorization false, native execution
+`NOT_IMPLEMENTED`, live readiness `BLOCKED`, artifact and compile-output I/O
+false, and all native/device/hardware/Windows/driver counters to zero.
+
+The verifier is not connected to production operation dispatch. It does not
+inspect the filesystem, real DLL, compile outputs, registry, services,
+certificates, devices, hardware, drivers, or Windows state. Its implementation
+status is
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`; its
+implementation commit identity is intentionally deferred to independent audit.
+
 ## Next Boundary
 
 The remediated compiled-artifact metadata-review design gate passed independent
@@ -533,7 +563,9 @@ read-only audit of closeout-identity audit-acceptance commit
 `f7f6041d6987ea8e3752546bd4c9116c88fbe56a` returned `AUDIT PASS`. The
 execution scope-boundary lane is finally closed with status
 `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`. The next
-step is an independent strict read-only audit of the final documentation-only
-closeout commit, deriving its identity from Git rather than requiring the
-commit to contain its own hash. No artifact, native, device, hardware, Windows,
-or driver authority is granted.
+separately authorized lane starts from accepted final-closeout commit
+`68099a441db5f8b517dbeb296ab234a9ee639bdb` and implements only the record-only
+execution-envelope verifier. The next step is an independent strict read-only
+audit of that verifier implementation commit, deriving its identity from Git
+rather than requiring the commit to contain its own hash. No artifact, native,
+device, hardware, Windows, or driver authority is granted.

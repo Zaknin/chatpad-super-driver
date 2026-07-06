@@ -967,6 +967,46 @@ else{
             $executionScope.windows_mutation_authorized-ne$false-or
             $executionScope.driver_action_authorized-ne$false){$defects.top_level++}
     }
+    $envelopeVerifierProperty=$executionDesign.PSObject.Properties['execution_envelope_verifier']
+    if($null-eq$envelopeVerifierProperty-or$null-eq$envelopeVerifierProperty.Value-or$envelopeVerifierProperty.Value-is[array]){
+        $defects.top_level++
+    }
+    else{
+        $envelopeVerifier=$envelopeVerifierProperty.Value
+        if($envelopeVerifier.schema_version-ne'chatpad-native-adapter-execution-envelope-verifier-v1'-or
+            $envelopeVerifier.status-ne'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO'-or
+            $envelopeVerifier.opened_from_closed_boundary_commit-ne'68099a441db5f8b517dbeb296ab234a9ee639bdb'-or
+            $envelopeVerifier.implementation_commit_recorded-ne$false-or
+            $envelopeVerifier.independent_implementation_audit_required-ne$true-or
+            $envelopeVerifier.declared_field_validation_only-ne$true-or
+            (@($envelopeVerifier.supported_operation_classes)-join'|')-ne'Apply|Restore|Restart'-or
+            $envelopeVerifier.missing_envelope_result-ne'BLOCKED'-or
+            $envelopeVerifier.malformed_envelope_result-ne'BLOCKED'-or
+            $envelopeVerifier.stale_envelope_result-ne'BLOCKED'-or
+            $envelopeVerifier.future_live_envelope_result-ne'BLOCKED'-or
+            $envelopeVerifier.structurally_complete_envelope_result-ne'BLOCKED'-or
+            $envelopeVerifier.complete_envelope_authorizes_execution-ne$false-or
+            $envelopeVerifier.current_state_denial-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
+            $envelopeVerifier.execution_authorized-ne$false-or
+            $envelopeVerifier.native_execution_status-ne'NOT_IMPLEMENTED'-or
+            $envelopeVerifier.live_readiness-ne'BLOCKED'-or
+            $envelopeVerifier.artifact_io_performed-ne$false-or
+            $envelopeVerifier.compile_output_io_performed-ne$false-or
+            $envelopeVerifier.static_metadata_parser_invoked-ne$false-or
+            $envelopeVerifier.native_library_load_count-ne0-or
+            $envelopeVerifier.entry_point_resolution_count-ne0-or
+            $envelopeVerifier.setupapi_newdev_invocation_count-ne0-or
+            $envelopeVerifier.device_query_count-ne0-or
+            $envelopeVerifier.hardware_access_count-ne0-or
+            $envelopeVerifier.windows_mutation_count-ne0-or
+            $envelopeVerifier.driver_action_count-ne0-or
+            $envelopeVerifier.focused_test_count-ne18-or
+            $envelopeVerifier.no_artifact_io_traced_function_count-ne23-or
+            $envelopeVerifier.no_artifact_io_forbidden_command_count-ne0-or
+            $envelopeVerifier.no_artifact_io_forbidden_member_count-ne0){
+            $defects.top_level++
+        }
+    }
     $executionAuditProperty=$executionDesign.PSObject.Properties['audit_acceptance']
     if($null-eq$executionAuditProperty-or$null-eq$executionAuditProperty.Value-or$executionAuditProperty.Value-is[array]){
         $defects.top_level++

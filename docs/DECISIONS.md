@@ -3304,3 +3304,31 @@ rather than self-reference. The runtime blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live readiness remains
 `BLOCKED`; native execution remains `NOT_IMPLEMENTED`; no artifact, native,
 device, hardware, Windows, or driver authority is granted.
+
+## 2026-07-06 - Keep execution-envelope verification declared-value-only and always blocked
+
+**Decision:** Implement the separately authorized authorization-envelope
+verifier with status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+Validate exact whitelisted record shapes and declared values only. Treat
+missing, malformed, stale, future/live, and structurally complete envelopes as
+blocked under `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+**Rationale:** The closed execution-scope boundary defines facts that a future
+authorization envelope must bind, but validating those declarations does not
+prove the real artifact, device, host, Windows state, or execution authority.
+An always-blocked structural verifier makes the envelope machine-checkable
+without turning caller-controlled data into capability.
+
+**Alternatives rejected:** Trusting an envelope because it is structurally
+complete; accepting unknown fields or wildcard allowlists; resolving declared
+artifact or device identities; using operator confirmation as current
+authority; connecting the verifier to production dispatch; or combining
+verification with native execution.
+
+**Consequences:** The verifier can classify envelope structure but can never
+authorize execution. Execution authorization remains false, native execution
+remains `NOT_IMPLEMENTED`, live readiness remains `BLOCKED`, artifact and
+compile-output I/O remain false, and all native/device/hardware/Windows/driver
+counters remain zero. Independent audit must derive the implementation commit
+identity from Git because the implementation commit does not self-reference.

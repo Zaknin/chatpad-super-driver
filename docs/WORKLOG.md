@@ -10796,3 +10796,96 @@
   commit. Derive its identity from Git and verify subject, parent
   `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, changed paths, content, manifest
   enforcement, and blocked authority without requiring self-reference.
+
+---
+
+## 2026-07-06 22:59:03 +04:00 - Add record-only native adapter execution-envelope verifier
+
+- **Objective:** Start a separately authorized non-live lane from accepted
+  execution scope-boundary final-closeout commit
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb` and implement the smallest useful
+  machine-checkable authorization-envelope verifier without native execution or
+  execution authority.
+- **Starting state:** Verified source branch
+  `feature/native-adapter-execution-scope-boundary`, exact HEAD and remote
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb`, upstream
+  `origin/feature/native-adapter-execution-scope-boundary`, ahead/behind `0/0`,
+  clean tree/index, and all required closed-lane identities/statuses. Created
+  `feature/native-adapter-execution-envelope-verifier` from that exact commit.
+- **Implementation:** Added
+  `Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope` and private shape,
+  text, identifier, native-name, array, integer, property, and result helpers to
+  the existing non-live native-adapter design-gate module. The verifier uses
+  exact property whitelists and declared values only. It checks operation,
+  future authorization, inert artifact identity, native/API allowlists, device
+  binding, tracked dry-run evidence declarations, rollback, Windows-mutation
+  classification, operator confirmation, audit requirements, and current-state
+  denial. It is not connected to production operation dispatch.
+- **Fail-closed behavior:** Missing, malformed, stale, future/live,
+  caller-authority, wildcard, wrong-numeric-type, and structurally complete
+  envelopes all remain blocked. Every result reports execution authorization
+  false, native execution `NOT_IMPLEMENTED`, live readiness `BLOCKED`, blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, false artifact/compile-
+  output I/O, and zero native/device/hardware/Windows/driver counters. Status is
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+- **Files modified:**
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  regenerated `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Focused validation:** PowerShell syntax passed for all four changed scripts
+  under Windows PowerShell 5.1 and PowerShell 7. Focused verifier tests passed
+  18/18 with zero unsafe results under both runtimes. The no-artifact-I/O
+  regression passed under both runtimes with 23/23 transitive functions, zero
+  parse errors, zero forbidden commands, zero forbidden members, no dynamic
+  exception, a structurally complete envelope still blocked, and all counters
+  zero.
+- **Preliminary manifest validation:** Both runtime-generated preliminary
+  manifests parsed as schema v4 with 39 entries, recorded the verifier status,
+  passed their record-only validators with zero defects, and were semantically
+  identical after generated-time normalization. Preliminary records are under
+  ignored `artifacts/logs/native-adapter-execution-envelope-verifier/`.
+- **Command corrections:** Two early syntax/test wrappers failed before running
+  because compact PowerShell loops omitted whitespace after `in`; corrected
+  wrappers passed. A combined dual-runtime generator exceeded its 120-second
+  wrapper timeout after Windows generation; the PowerShell 7 child completed in
+  the background and its valid output was inspected instead of blindly
+  rerunning. One inspection wrapper used an invalid direct pipe from `foreach`;
+  its corrected array-based form confirmed both outputs. None of these wrapper
+  failures changed tracked repository state or crossed a prohibited boundary.
+- **Continuity correction:** Final documentation consistency found that the new
+  `docs/NEXT-TASK.md` preserved final lane closeout but omitted the distinct
+  boundary closeout-identity audit status. Added
+  `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`
+  before final manifest regeneration; no code or authority changed.
+- **Final validation:** After the complete worklog update, canonical manifest
+  generation under Windows PowerShell 5.1 and comparison generation under
+  PowerShell 7 both reported 39 entries, framework `PASS`, live readiness
+  `BLOCKED`, and the exact verifier status. The canonical manifest passed the
+  record-only validator under both runtimes with schema v4, total defects `0`,
+  duplicate IDs/paths `0/0`, `NO_PATH` `0`, and cross-runtime semantic
+  identity. The manifest records implementation identity as pending audit and
+  execution authorization as false.
+- **Safety:** The static metadata parser, full compile-output validator, full
+  exact/readiness suites, real DLL, and compile outputs were not run, opened,
+  read, hashed, parsed, statted, scanned, written, loaded, reflected over, or
+  executed. No native library load, entry-point resolution, SetupAPI/Newdev
+  invocation, device query, hardware access, registry/service/certificate
+  mutation, Windows mutation, or driver build/sign/package/install/load/bind/
+  restore/restart occurred.
+- **Commit and push:** Subject is
+  `feat: add native adapter execution envelope verifier`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the final
+  response are authoritative for the resulting commit identity; this commit
+  intentionally does not contain its own hash.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; execution authority remains false.
+- **Next task:** Independent strict read-only audit of the verifier
+  implementation commit by Git identity, subject, parent, changed paths,
+  transitive call chain, focused tests, manifest enforcement, and unchanged
+  blocked/no-artifact-I/O state without requiring commit self-reference.

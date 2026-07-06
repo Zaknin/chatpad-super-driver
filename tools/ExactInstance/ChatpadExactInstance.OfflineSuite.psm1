@@ -52,6 +52,14 @@ function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
         'Test-ChatpadNativeAdapterNonLivePreconditions',
         'New-ChatpadNativeAdapterNonLiveOperationPlan',
         'New-ChatpadNativeAdapterNonLivePlanResult',
+        'Test-NativeEnvelopeRecordShape',
+        'Get-NativeEnvelopePropertyValue',
+        'Test-NativeEnvelopeText',
+        'Test-NativeEnvelopeIdentifier',
+        'Test-NativeEnvelopeStringArray',
+        'Test-NativeEnvelopeInteger',
+        'New-NativeEnvelopeVerificationResult',
+        'Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope',
         'Invoke-ChatpadNativeAdapterFailClosedExecution',
         'New-ChatpadProductionNativeAdapter',
         'Resolve-ChatpadNativeAdapter',
@@ -67,10 +75,36 @@ function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
             ForEach-Object { $_.GetCommandName() }
     })
     $forbiddenCommands = @($safeCommands | Where-Object {
-        $_ -in @('Test-ChatpadNativeInteropCompileOnlyValidationEvidence','Get-FileHash','Get-Item','Get-ChildItem','Add-Type','Get-PnpDevice','Get-PnpDeviceProperty','pnputil','devcon','dism')
+        $_ -in @(
+            'Test-ChatpadNativeInteropCompileOnlyValidationEvidence',
+            'Get-FileHash','Get-Item','Get-ChildItem','Get-ItemProperty',
+            'Set-ItemProperty','Add-Type','Get-PnpDevice','Get-PnpDeviceProperty',
+            'Get-Service','Start-Service','Stop-Service','Restart-Service',
+            'Get-CimInstance','Get-WmiObject','Get-AuthenticodeSignature',
+            'pnputil','devcon','dism','certutil','reg','sc','msbuild','dotnet'
+        )
     })
+    $safeMembers = @($safeFunctions | ForEach-Object {
+        $_.FindAll({
+            param($node)
+            $node -is [Management.Automation.Language.MemberExpressionAst]
+        }, $true) | ForEach-Object {
+            if ($_.Member -is [Management.Automation.Language.StringConstantExpressionAst]) {
+                $_.Member.Value
+            }
+        }
+    })
+    $forbiddenMembers = @($safeMembers | Where-Object {
+        $_ -in @(
+            'ReadAllBytes','ReadAllLines','Open','OpenRead','WriteAllBytes',
+            'Load','LoadFrom','LoadFile','GetProcAddress','OpenBaseKey',
+            'OpenRemoteBaseKey','CreateSubKey','DeleteSubKey','SetValue'
+        )
+    })
+    $envelope = New-NativeAdapterExecutionEnvelopeFixture -Operation Apply
 
     $dynamic = & $module {
+        param([Parameter(Mandatory)][object]$Envelope)
         $originalUnsafeValidator = ${function:Test-ChatpadNativeInteropCompileOnlyValidationEvidence}
         try {
             function Test-ChatpadNativeInteropCompileOnlyValidationEvidence { throw 'UNSAFE_COMPILE_OUTPUT_VALIDATOR_REACHED' }
@@ -88,25 +122,43 @@ function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
             $planResults = @($plans | ForEach-Object {
                 New-ChatpadNativeAdapterNonLivePlanResult -Plan $_
             })
-            [pscustomobject]@{ records = $records; plans = $plans; plan_results = $planResults; exception = $null }
+            $envelopeResult = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+                -Envelope $Envelope `
+                -EvaluationUtc ([datetimeoffset]'2026-07-06T00:00:00Z')
+            [pscustomobject]@{
+                records = $records
+                plans = $plans
+                plan_results = $planResults
+                envelope_result = $envelopeResult
+                exception = $null
+            }
         } catch {
-            [pscustomobject]@{ records = @(); plans = @(); plan_results = @(); exception = $_.Exception.Message }
+            [pscustomobject]@{
+                records = @()
+                plans = @()
+                plan_results = @()
+                envelope_result = $null
+                exception = $_.Exception.Message
+            }
         } finally {
             Set-Item -LiteralPath function:Test-ChatpadNativeInteropCompileOnlyValidationEvidence -Value $originalUnsafeValidator
             Remove-Item -LiteralPath function:Get-FileHash -ErrorAction SilentlyContinue
         }
-    }
+    } $envelope
     $records = @($dynamic.records)
     $plans = @($dynamic.plans)
     $planResults = @($dynamic.plan_results)
+    $envelopeResult = $dynamic.envelope_result
     [pscustomobject][ordered]@{
-        result = if ($parseErrors.Count -eq 0 -and $safeFunctions.Count -eq $safeFunctionNames.Count -and $forbiddenCommands.Count -eq 0 -and $safeText -notmatch '\[IO\.File\]::(ReadAllBytes|ReadAllLines|Open|OpenRead|WriteAllBytes)' -and -not $dynamic.exception -and $records.Count -eq 3 -and $plans.Count -eq 3 -and $planResults.Count -eq 3 -and @($records | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or $_.compile_only_validation.validation_mode -ne 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO' -or $_.compile_only_validation.artifact_io_performed -ne $false -or $_.compile_only_validation.compile_output_directory_scanned -ne $false -or $_.compile_only_validation.real_dll_accessed -ne $false -or $_.native_loading_performed -ne $false -or $_.native_invocation_performed -ne $false -or $_.native_invocation_count -ne 0 -or $_.device_query_count -ne 0 -or $_.windows_mutation_count -ne 0 -or $_.driver_action_count -ne 0 -or $_.artifact_io_performed -ne $false -or $_.native_library_load_performed -ne $false -or $_.entry_point_resolution_performed -ne $false -or $_.setupapi_newdev_invocation_performed -ne $false -or $_.live_device_queries_performed -ne 0 -or $_.windows_mutations_performed -ne 0 -or $_.native_operations_performed -ne 0 }).Count -eq 0 -and @($plans | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or $_.would_invoke_native -ne $false -or $_.would_touch_device -ne $false -or $_.would_access_hardware -ne $false -or $_.would_mutate_windows -ne $false -or $_.would_perform_driver_action -ne $false -or $_.would_access_artifact -ne $false }).Count -eq 0 -and @($planResults | Where-Object { $_.result -ne 'BLOCKED' -or $_.native_invocation_count -ne 0 -or $_.native_library_load_count -ne 0 -or $_.entry_point_resolution_count -ne 0 -or $_.setupapi_newdev_invocation_count -ne 0 -or $_.device_query_count -ne 0 -or $_.hardware_access_count -ne 0 -or $_.windows_mutation_count -ne 0 -or $_.driver_action_count -ne 0 -or $_.artifact_io_performed -ne $false }).Count -eq 0) { 'PASS' } else { 'FAIL' }
+        result = if ($parseErrors.Count -eq 0 -and $safeFunctions.Count -eq $safeFunctionNames.Count -and $forbiddenCommands.Count -eq 0 -and $forbiddenMembers.Count -eq 0 -and $safeText -notmatch '\[IO\.File\]::(ReadAllBytes|ReadAllLines|Open|OpenRead|WriteAllBytes)' -and -not $dynamic.exception -and $records.Count -eq 3 -and $plans.Count -eq 3 -and $planResults.Count -eq 3 -and $null -ne $envelopeResult -and $envelopeResult.EnvelopeState -eq 'STRUCTURALLY_COMPLETE_STILL_BLOCKED' -and $envelopeResult.ExecutionAuthorized -eq $false -and $envelopeResult.ArtifactIoPerformed -eq $false -and $envelopeResult.NativeLibraryLoadCount -eq 0 -and $envelopeResult.EntryPointResolutionCount -eq 0 -and $envelopeResult.SetupApiNewdevInvocationCount -eq 0 -and $envelopeResult.DeviceQueryCount -eq 0 -and $envelopeResult.HardwareAccessCount -eq 0 -and $envelopeResult.WindowsMutationCount -eq 0 -and $envelopeResult.DriverActionCount -eq 0 -and @($records | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or $_.compile_only_validation.validation_mode -ne 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO' -or $_.compile_only_validation.artifact_io_performed -ne $false -or $_.compile_only_validation.compile_output_directory_scanned -ne $false -or $_.compile_only_validation.real_dll_accessed -ne $false -or $_.native_loading_performed -ne $false -or $_.native_invocation_performed -ne $false -or $_.native_invocation_count -ne 0 -or $_.device_query_count -ne 0 -or $_.windows_mutation_count -ne 0 -or $_.driver_action_count -ne 0 -or $_.artifact_io_performed -ne $false -or $_.native_library_load_performed -ne $false -or $_.entry_point_resolution_performed -ne $false -or $_.setupapi_newdev_invocation_performed -ne $false -or $_.live_device_queries_performed -ne 0 -or $_.windows_mutations_performed -ne 0 -or $_.native_operations_performed -ne 0 }).Count -eq 0 -and @($plans | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or $_.would_invoke_native -ne $false -or $_.would_touch_device -ne $false -or $_.would_access_hardware -ne $false -or $_.would_mutate_windows -ne $false -or $_.would_perform_driver_action -ne $false -or $_.would_access_artifact -ne $false }).Count -eq 0 -and @($planResults | Where-Object { $_.result -ne 'BLOCKED' -or $_.native_invocation_count -ne 0 -or $_.native_library_load_count -ne 0 -or $_.entry_point_resolution_count -ne 0 -or $_.setupapi_newdev_invocation_count -ne 0 -or $_.device_query_count -ne 0 -or $_.hardware_access_count -ne 0 -or $_.windows_mutation_count -ne 0 -or $_.driver_action_count -ne 0 -or $_.artifact_io_performed -ne $false }).Count -eq 0) { 'PASS' } else { 'FAIL' }
         result_code = 'NATIVE_ADAPTER_DESIGN_GATE_NO_ARTIFACT_IO_REGRESSION'
         parsed_function_count = $safeFunctions.Count
         expected_function_count = $safeFunctionNames.Count
         parse_error_count = $parseErrors.Count
         forbidden_command_count = $forbiddenCommands.Count
         forbidden_commands = $forbiddenCommands
+        forbidden_member_count = $forbiddenMembers.Count
+        forbidden_members = $forbiddenMembers
         dynamic_exception = $dynamic.exception
         operation_count = $records.Count
         records = $records
@@ -114,6 +166,223 @@ function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
         plans = $plans
         plan_result_count = $planResults.Count
         plan_results = $planResults
+        envelope_result = $envelopeResult
+    }
+}
+
+function New-NativeAdapterExecutionEnvelopeFixture {
+    param(
+        [ValidateSet('Apply','Restore','Restart')][string]$Operation = 'Apply',
+        [string]$EnvelopeStatus = 'RECORD_ONLY_FUTURE_AUTHORIZATION_ENVELOPE',
+        [string]$AuthorizationStatus = 'DECLARED_FUTURE_AUTHORIZATION_NOT_CURRENT_AUTHORITY',
+        [string]$ExpiresUtc = '2026-07-07T00:00:00Z',
+        [bool]$CurrentExecutionAuthorized = $false,
+        [string]$NativeExecutionStatus = 'NOT_IMPLEMENTED',
+        [string]$LiveReadiness = 'BLOCKED'
+    )
+
+    $hash = 'A' * 64
+    $artifactHash = 'B' * 64
+    $instanceId = 'USB\VID_045E&PID_028E\TARGET-0001'
+    [pscustomobject][ordered]@{
+        schema_version = 'chatpad-native-adapter-execution-authorization-envelope-v1'
+        envelope_status = $EnvelopeStatus
+        operation_class = $Operation
+        authorization_statement = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-future-authorization-statement-v1'
+            status = $AuthorizationStatus
+            implementation_commit = '1111111111111111111111111111111111111111'
+            host_id = 'host-01'
+            session_id = 'session-01'
+            expires_utc = $ExpiresUtc
+            evidence_root_id = 'evidence-root-01'
+            envelope_hash = $hash
+        }
+        approved_real_artifact_identity = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-declared-artifact-identity-v1'
+            path = 'C:\declared-only\Chatpad.NativeInterop.dll'
+            size = [int64]4096
+            sha256 = $artifactHash
+            origin_evidence_id = 'artifact-origin-01'
+        }
+        native_entry_point_allowlist = @(
+            'setupapi.dll/SetupDiOpenDeviceInfoW',
+            'newdev.dll/DiInstallDevice'
+        )
+        setupapi_newdev_function_allowlist = @(
+            'SetupDiOpenDeviceInfoW',
+            'DiInstallDevice'
+        )
+        device_instance_binding = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-declared-device-binding-v1'
+            instance_id = $instanceId
+            snapshot_id = 'snapshot-01'
+            target_driver_identity = 'oem42.inf'
+            prior_driver_identity = 'oem41.inf'
+            ordinal_reopen_required = $true
+        }
+        dry_run_evidence = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-dry-run-evidence-prerequisite-v1'
+            evidence_ids = @('dry-run-01')
+            evidence_paths = @('docs/evidence/native-adapter-dry-run-01.json')
+            independently_audited = $true
+            mutation_count = 0
+        }
+        rollback_restore_plan = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-rollback-restore-plan-v1'
+            plan_id = 'rollback-plan-01'
+            prior_driver_identity = 'oem41.inf'
+            ordered_steps = @('capture-prior-driver','restore-prior-driver','verify-restoration')
+            independently_accepted = $true
+            manual_recovery_documented = $true
+        }
+        windows_mutation_classification = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-windows-mutation-classification-v1'
+            operation_class = $Operation
+            classification = 'future-exact-device-mutation'
+            mutation_permitted_current_phase = $false
+            cleanup_required = $true
+            failure_state = 'manual-recovery-required'
+            counter_names = @(
+                'native-library-load-count',
+                'entry-point-resolution-count',
+                'setupapi-newdev-invocation-count',
+                'device-query-count',
+                'hardware-access-count',
+                'windows-mutation-count',
+                'driver-action-count'
+            )
+        }
+        operator_confirmation = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-operator-confirmation-v1'
+            confirmed = $true
+            envelope_hash = $hash
+            operation_class = $Operation
+            instance_id = $instanceId
+            artifact_sha256 = $artifactHash
+            host_id = 'host-01'
+            session_id = 'session-01'
+            expires_utc = $ExpiresUtc
+        }
+        pre_implementation_audit_required = $true
+        post_implementation_audit_required = $true
+        current_state_denial = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        current_execution_authorized = $CurrentExecutionAuthorized
+        native_execution_status = $NativeExecutionStatus
+        live_readiness = $LiveReadiness
+    }
+}
+
+function Test-ChatpadNativeAdapterExecutionEnvelopeVerifier {
+    [CmdletBinding(PositionalBinding = $false)]
+    param()
+
+    $evaluationUtc = [datetimeoffset]'2026-07-06T00:00:00Z'
+    $validResults = @('Apply','Restore','Restart' | ForEach-Object {
+        Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+            -Envelope (New-NativeAdapterExecutionEnvelopeFixture -Operation $_) `
+            -EvaluationUtc $evaluationUtc
+    })
+    $missing = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -EvaluationUtc $evaluationUtc
+    $malformedScalar = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope 'malformed' `
+        -EvaluationUtc $evaluationUtc
+    $malformedRecord = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope ([pscustomobject]@{schema_version='wrong'}) `
+        -EvaluationUtc $evaluationUtc
+    $stale = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope (New-NativeAdapterExecutionEnvelopeFixture -ExpiresUtc '2026-07-05T00:00:00Z') `
+        -EvaluationUtc $evaluationUtc
+    $futureLive = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope (New-NativeAdapterExecutionEnvelopeFixture -EnvelopeStatus 'NATIVE_ADAPTER_EXECUTION_AUTHORIZED_LIVE') `
+        -EvaluationUtc $evaluationUtc
+    $authorityClaim = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope (New-NativeAdapterExecutionEnvelopeFixture -CurrentExecutionAuthorized $true) `
+        -EvaluationUtc $evaluationUtc
+    $unknownAuthorityEnvelope = New-NativeAdapterExecutionEnvelopeFixture
+    $unknownAuthorityEnvelope | Add-Member -NotePropertyName execution_authorized -NotePropertyValue $true
+    $unknownAuthority = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope $unknownAuthorityEnvelope `
+        -EvaluationUtc $evaluationUtc
+    $wildcardEnvelope = New-NativeAdapterExecutionEnvelopeFixture
+    $wildcardEnvelope.native_entry_point_allowlist = @('*')
+    $wildcardAllowlist = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope $wildcardEnvelope `
+        -EvaluationUtc $evaluationUtc
+    $stringSizeEnvelope = New-NativeAdapterExecutionEnvelopeFixture
+    $stringSizeEnvelope.approved_real_artifact_identity.size = '4096'
+    $stringArtifactSize = Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope `
+        -Envelope $stringSizeEnvelope `
+        -EvaluationUtc $evaluationUtc
+    $all = @(
+        $validResults + $missing + $malformedScalar + $malformedRecord + $stale +
+        $futureLive + $authorityClaim + $unknownAuthority + $wildcardAllowlist +
+        $stringArtifactSize
+    )
+    $unsafeResults = @($all | Where-Object {
+        $_.ExecutionAuthorized -ne $false -or
+        $_.NativeExecution -ne 'NOT_IMPLEMENTED' -or
+        $_.LiveReadiness -ne 'BLOCKED' -or
+        $_.BlockedReason -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or
+        $_.ArtifactIoPerformed -ne $false -or
+        $_.CompileOutputIoPerformed -ne $false -or
+        $_.StaticMetadataParserInvoked -ne $false -or
+        $_.FilesystemInspected -ne $false -or
+        $_.DeviceStateInspected -ne $false -or
+        $_.RegistryInspected -ne $false -or
+        $_.ServiceStateInspected -ne $false -or
+        $_.CertificateStoreInspected -ne $false -or
+        $_.NativeLibraryLoadCount -ne 0 -or
+        $_.EntryPointResolutionCount -ne 0 -or
+        $_.SetupApiNewdevInvocationCount -ne 0 -or
+        $_.DeviceQueryCount -ne 0 -or
+        $_.HardwareAccessCount -ne 0 -or
+        $_.WindowsMutationCount -ne 0 -or
+        $_.DriverActionCount -ne 0
+    })
+    $checks = @(
+        ($validResults.Count -eq 3),
+        (@($validResults | Where-Object {
+            $_.EnvelopeState -ne 'STRUCTURALLY_COMPLETE_STILL_BLOCKED' -or
+            $_.EnvelopeResultCode -ne 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_COMPLETE_STILL_BLOCKED' -or
+            $_.EnvelopeStructurallyValid -ne $true
+        }).Count -eq 0),
+        (($validResults.OperationClass -join '|') -eq 'Apply|Restore|Restart'),
+        ($missing.EnvelopeState -eq 'MISSING'),
+        ($missing.EnvelopeResultCode -eq 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_MISSING'),
+        ($malformedScalar.EnvelopeState -eq 'MALFORMED'),
+        ($malformedRecord.EnvelopeState -eq 'MALFORMED'),
+        ($stale.EnvelopeState -eq 'STALE'),
+        ($stale.EnvelopeResultCode -eq 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_STALE'),
+        ($futureLive.EnvelopeState -eq 'FUTURE_LIVE_REJECTED'),
+        ($futureLive.EnvelopeResultCode -eq 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_FUTURE_LIVE_REJECTED'),
+        ($authorityClaim.EnvelopeState -eq 'FUTURE_LIVE_REJECTED'),
+        ($authorityClaim.ExecutionAuthorized -eq $false),
+        ($unknownAuthority.EnvelopeState -eq 'MALFORMED'),
+        ($wildcardAllowlist.EnvelopeState -eq 'MALFORMED'),
+        ($stringArtifactSize.EnvelopeState -eq 'MALFORMED'),
+        (@($all | Where-Object { $_.VerifierStatus -ne 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO' }).Count -eq 0),
+        ($unsafeResults.Count -eq 0)
+    )
+    [pscustomobject][ordered]@{
+        SchemaVersion = 'chatpad-native-adapter-execution-envelope-verifier-test-v1'
+        Result = if (@($checks | Where-Object { $_ -ne $true }).Count) { 'FAIL' } else { 'PASS' }
+        ResultCode = 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_TEST'
+        TestCount = $checks.Count
+        FailedCheckCount = @($checks | Where-Object { $_ -ne $true }).Count
+        VerifierStatus = 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO'
+        ValidLookingOperationResults = $validResults
+        MissingEnvelopeResult = $missing
+        MalformedScalarResult = $malformedScalar
+        MalformedRecordResult = $malformedRecord
+        StaleEnvelopeResult = $stale
+        FutureLiveEnvelopeResult = $futureLive
+        CurrentAuthorizationClaimResult = $authorityClaim
+        UnknownAuthorityFieldResult = $unknownAuthority
+        WildcardAllowlistResult = $wildcardAllowlist
+        StringArtifactSizeResult = $stringArtifactSize
+        UnsafeResultCount = $unsafeResults.Count
     }
 }
 

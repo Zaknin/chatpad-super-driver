@@ -19,6 +19,7 @@ function Get-NativeScaffoldConstants {
         execution_design_status = 'NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO'
         fail_closed_scaffolding_status = 'NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO'
         non_live_plan_status = 'NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO'
+        envelope_verifier_status = 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO'
         evidence_mode = 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO'
         source_audit_result = 'AUDIT PASS'
         source_audit_branch = 'feature/runtime-bringup-native-interop-source-boundary'
@@ -517,6 +518,487 @@ function New-ChatpadNativeZeroCounters {
     }
 }
 
+function Test-NativeEnvelopeRecordShape {
+    param(
+        [AllowNull()][object]$Value,
+        [Parameter(Mandatory)][string[]]$RequiredProperties
+    )
+
+    if ([object]::ReferenceEquals($null, $Value) -or
+        $Value -is [array] -or
+        $Value -isnot [pscustomobject]) {
+        return [pscustomobject][ordered]@{
+            valid = $false
+            missing = @($RequiredProperties)
+            unexpected = @()
+        }
+    }
+    $names = @($Value.PSObject.Properties.Name)
+    $missing = @($RequiredProperties | Where-Object { $_ -notin $names })
+    $unexpected = @($names | Where-Object { $_ -notin $RequiredProperties })
+    [pscustomobject][ordered]@{
+        valid = ($missing.Count -eq 0 -and $unexpected.Count -eq 0)
+        missing = $missing
+        unexpected = $unexpected
+    }
+}
+
+function Get-NativeEnvelopePropertyValue {
+    param(
+        [AllowNull()][object]$Value,
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if ([object]::ReferenceEquals($null, $Value) -or $Value -is [array]) {
+        return $null
+    }
+    $property = $Value.PSObject.Properties[$Name]
+    if ($null -eq $property) {
+        return $null
+    }
+    $property.Value
+}
+
+function Test-NativeEnvelopeText {
+    param(
+        [AllowNull()][object]$Value,
+        [int]$MaximumLength = 512
+    )
+
+    if ($Value -isnot [string]) {
+        return $false
+    }
+    $text = [string]$Value
+    -not [string]::IsNullOrWhiteSpace($text) -and
+        $text.Length -le $MaximumLength -and
+        $text -notmatch "[`r`n]"
+}
+
+function Test-NativeEnvelopeIdentifier {
+    param([AllowNull()][object]$Value)
+
+    (Test-NativeEnvelopeText -Value $Value -MaximumLength 128) -and
+        ([string]$Value -match '^[A-Za-z0-9][A-Za-z0-9_.:/\\&{}-]{0,127}$') -and
+        ([string]$Value -notmatch '\*|\?')
+}
+
+function Test-NativeEnvelopeStringArray {
+    param(
+        [AllowNull()][object]$Value,
+        [ValidateSet('Identifier','NativeName','EvidencePath')][string]$Kind = 'Identifier'
+    )
+
+    if ([object]::ReferenceEquals($null, $Value) -or $Value -is [string]) {
+        return $false
+    }
+    $items = @($Value)
+    if ($items.Count -eq 0) {
+        return $false
+    }
+    $normalized = [Collections.Generic.List[string]]::new()
+    foreach ($item in $items) {
+        if ($item -isnot [string] -or -not (Test-NativeEnvelopeText -Value $item -MaximumLength 512)) {
+            return $false
+        }
+        $text = [string]$item
+        if ($Kind -eq 'Identifier') {
+            if (-not (Test-NativeEnvelopeIdentifier -Value $text)) {
+                return $false
+            }
+        } elseif ($Kind -eq 'NativeName') {
+            if ($text -notmatch '^[A-Za-z][A-Za-z0-9_.-]{0,127}(/[A-Za-z][A-Za-z0-9_.-]{0,127})?$' -or
+                $text -match '\*|\?') {
+                return $false
+            }
+        } else {
+            $path = $text.Replace('\','/')
+            if (-not $path.StartsWith('docs/evidence/', [StringComparison]::Ordinal) -or
+                $path.Contains('//') -or
+                $path.Contains(':') -or
+                @($path.Split('/') | Where-Object { $_ -in @('.','..') }).Count -ne 0) {
+                return $false
+            }
+            $text = $path
+        }
+        if ($normalized.Contains($text)) {
+            return $false
+        }
+        $normalized.Add($text)
+    }
+    $true
+}
+
+function Test-NativeEnvelopeInteger {
+    param(
+        [AllowNull()][object]$Value,
+        [switch]$AllowZero
+    )
+
+    if ($Value -isnot [byte] -and
+        $Value -isnot [int16] -and
+        $Value -isnot [int32] -and
+        $Value -isnot [int64] -and
+        $Value -isnot [uint16] -and
+        $Value -isnot [uint32]) {
+        return $false
+    }
+    if ($AllowZero) {
+        return [int64]$Value -ge 0
+    }
+    [int64]$Value -gt 0
+}
+
+function New-NativeEnvelopeVerificationResult {
+    param(
+        [Parameter(Mandatory)][string]$EnvelopeState,
+        [Parameter(Mandatory)][string]$EnvelopeResultCode,
+        [Parameter(Mandatory)][bool]$StructurallyValid,
+        [string]$OperationClass = '',
+        [string[]]$Defects = @()
+    )
+
+    $constants = Get-NativeScaffoldConstants
+    $counters = New-ChatpadNativeZeroCounters
+    [pscustomobject][ordered]@{
+        SchemaVersion = 'chatpad-native-adapter-execution-envelope-verification-result-v1'
+        VerifierStatus = $constants.envelope_verifier_status
+        EnvelopeState = $EnvelopeState
+        EnvelopeResultCode = $EnvelopeResultCode
+        EnvelopeStructurallyValid = $StructurallyValid
+        OperationClass = $OperationClass
+        DefectCount = @($Defects).Count
+        Defects = @($Defects)
+        DeclaredFieldValidationOnly = $true
+        ExecutionAuthorized = $false
+        NativeExecution = 'NOT_IMPLEMENTED'
+        LiveReadiness = 'BLOCKED'
+        BlockedReason = $constants.execution_blocker
+        ArtifactIoPerformed = $false
+        CompileOutputIoPerformed = $false
+        StaticMetadataParserInvoked = $false
+        FilesystemInspected = $false
+        DeviceStateInspected = $false
+        RegistryInspected = $false
+        ServiceStateInspected = $false
+        CertificateStoreInspected = $false
+        NativeLibraryLoadCount = $counters.native_library_load_count
+        EntryPointResolutionCount = $counters.entry_point_resolution_count
+        SetupApiNewdevInvocationCount = $counters.setupapi_newdev_invocation_count
+        DeviceQueryCount = $counters.device_query_count
+        HardwareAccessCount = $counters.hardware_access_count
+        WindowsMutationCount = $counters.windows_mutation_count
+        DriverActionCount = $counters.driver_action_count
+    }
+}
+
+function Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope {
+    [CmdletBinding(PositionalBinding = $false)]
+    param(
+        [AllowNull()][object]$Envelope = $null,
+        [datetimeoffset]$EvaluationUtc = [datetimeoffset]::UtcNow
+    )
+
+    $constants = Get-NativeScaffoldConstants
+    if ([object]::ReferenceEquals($null, $Envelope)) {
+        return New-NativeEnvelopeVerificationResult `
+            -EnvelopeState 'MISSING' `
+            -EnvelopeResultCode 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_MISSING' `
+            -StructurallyValid $false `
+            -Defects @('envelope-missing')
+    }
+    $topProperties = @(
+        'schema_version',
+        'envelope_status',
+        'operation_class',
+        'authorization_statement',
+        'approved_real_artifact_identity',
+        'native_entry_point_allowlist',
+        'setupapi_newdev_function_allowlist',
+        'device_instance_binding',
+        'dry_run_evidence',
+        'rollback_restore_plan',
+        'windows_mutation_classification',
+        'operator_confirmation',
+        'pre_implementation_audit_required',
+        'post_implementation_audit_required',
+        'current_state_denial',
+        'current_execution_authorized',
+        'native_execution_status',
+        'live_readiness'
+    )
+    $shape = Test-NativeEnvelopeRecordShape -Value $Envelope -RequiredProperties $topProperties
+    if (-not $shape.valid) {
+        return New-NativeEnvelopeVerificationResult `
+            -EnvelopeState 'MALFORMED' `
+            -EnvelopeResultCode 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_MALFORMED' `
+            -StructurallyValid $false `
+            -Defects @(
+                @($shape.missing | ForEach-Object { "missing:$($_)" })
+                @($shape.unexpected | ForEach-Object { "unexpected:$($_)" })
+            )
+    }
+
+    $defects = [Collections.Generic.List[string]]::new()
+    $operation = [string](Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'operation_class')
+    $envelopeStatus = [string](Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'envelope_status')
+    $futureLiveRequested = $envelopeStatus -match '(?i)(AUTHORIZED[_-]?LIVE|LIVE[_-]?READY|EXECUTION[_-]?AUTHORIZED)'
+    if ([string](Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'schema_version') -cne 'chatpad-native-adapter-execution-authorization-envelope-v1') {
+        $defects.Add('schema-version-invalid')
+    }
+    if ($envelopeStatus -cne 'RECORD_ONLY_FUTURE_AUTHORIZATION_ENVELOPE') {
+        $defects.Add('envelope-status-invalid')
+    }
+    if ($operation -notin $constants.supported_operations) {
+        $defects.Add('operation-class-invalid')
+    }
+    if ((Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'pre_implementation_audit_required') -isnot [bool] -or
+        (Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'pre_implementation_audit_required') -ne $true) {
+        $defects.Add('pre-implementation-audit-required-invalid')
+    }
+    if ((Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'post_implementation_audit_required') -isnot [bool] -or
+        (Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'post_implementation_audit_required') -ne $true) {
+        $defects.Add('post-implementation-audit-required-invalid')
+    }
+    if ([string](Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'current_state_denial') -cne $constants.execution_blocker) {
+        $defects.Add('current-state-denial-invalid')
+    }
+    if ((Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'current_execution_authorized') -isnot [bool] -or
+        (Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'current_execution_authorized') -ne $false) {
+        $defects.Add('current-execution-authorization-claim-rejected')
+        $futureLiveRequested = $true
+    }
+    if ([string](Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'native_execution_status') -cne 'NOT_IMPLEMENTED') {
+        $defects.Add('native-execution-status-invalid')
+    }
+    if ([string](Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'live_readiness') -cne 'BLOCKED') {
+        $defects.Add('live-readiness-invalid')
+    }
+
+    $authorization = Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'authorization_statement'
+    $authorizationShape = Test-NativeEnvelopeRecordShape -Value $authorization -RequiredProperties @(
+        'schema_version','status','implementation_commit','host_id','session_id',
+        'expires_utc','evidence_root_id','envelope_hash'
+    )
+    $expires = [datetimeoffset]::MinValue
+    $expiryValid = $false
+    if (-not $authorizationShape.valid) {
+        $defects.Add('authorization-statement-shape-invalid')
+    } else {
+        if ([string]$authorization.schema_version -cne 'chatpad-native-adapter-future-authorization-statement-v1') {
+            $defects.Add('authorization-statement-schema-invalid')
+        }
+        if ([string]$authorization.status -cne 'DECLARED_FUTURE_AUTHORIZATION_NOT_CURRENT_AUTHORITY') {
+            $defects.Add('authorization-statement-status-invalid')
+            if ([string]$authorization.status -match '(?i)(AUTHORIZED[_-]?LIVE|LIVE[_-]?READY|EXECUTION[_-]?AUTHORIZED)') {
+                $futureLiveRequested = $true
+            }
+        }
+        if ([string]$authorization.implementation_commit -notmatch '^[0-9a-f]{40}$') {
+            $defects.Add('authorization-implementation-commit-invalid')
+        }
+        foreach ($name in @('host_id','session_id','evidence_root_id')) {
+            if (-not (Test-NativeEnvelopeIdentifier -Value $authorization.$name)) {
+                $defects.Add("authorization-$($name.Replace('_','-'))-invalid")
+            }
+        }
+        if ([string]$authorization.envelope_hash -notmatch '^[A-F0-9]{64}$') {
+            $defects.Add('authorization-envelope-hash-invalid')
+        }
+        $expiryValid = [datetimeoffset]::TryParse(
+            [string]$authorization.expires_utc,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::AssumeUniversal,
+            [ref]$expires
+        )
+        if (-not $expiryValid) {
+            $defects.Add('authorization-expiry-invalid')
+        }
+    }
+
+    $artifact = Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'approved_real_artifact_identity'
+    $artifactShape = Test-NativeEnvelopeRecordShape -Value $artifact -RequiredProperties @(
+        'schema_version','path','size','sha256','origin_evidence_id'
+    )
+    if (-not $artifactShape.valid) {
+        $defects.Add('artifact-identity-shape-invalid')
+    } else {
+        if ([string]$artifact.schema_version -cne 'chatpad-native-adapter-declared-artifact-identity-v1') {
+            $defects.Add('artifact-identity-schema-invalid')
+        }
+        if (-not (Test-NativeEnvelopeText -Value $artifact.path -MaximumLength 1024)) {
+            $defects.Add('artifact-path-invalid')
+        }
+        if (-not (Test-NativeEnvelopeInteger -Value $artifact.size)) {
+            $defects.Add('artifact-size-invalid')
+        }
+        if ([string]$artifact.sha256 -notmatch '^[A-F0-9]{64}$') {
+            $defects.Add('artifact-sha256-invalid')
+        }
+        if (-not (Test-NativeEnvelopeIdentifier -Value $artifact.origin_evidence_id)) {
+            $defects.Add('artifact-origin-evidence-id-invalid')
+        }
+    }
+
+    if (-not (Test-NativeEnvelopeStringArray -Value $Envelope.native_entry_point_allowlist -Kind NativeName)) {
+        $defects.Add('native-entry-point-allowlist-invalid')
+    }
+    if (-not (Test-NativeEnvelopeStringArray -Value $Envelope.setupapi_newdev_function_allowlist -Kind NativeName)) {
+        $defects.Add('setupapi-newdev-function-allowlist-invalid')
+    }
+
+    $device = Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'device_instance_binding'
+    $deviceShape = Test-NativeEnvelopeRecordShape -Value $device -RequiredProperties @(
+        'schema_version','instance_id','snapshot_id','target_driver_identity',
+        'prior_driver_identity','ordinal_reopen_required'
+    )
+    if (-not $deviceShape.valid) {
+        $defects.Add('device-binding-shape-invalid')
+    } else {
+        if ([string]$device.schema_version -cne 'chatpad-native-adapter-declared-device-binding-v1') {
+            $defects.Add('device-binding-schema-invalid')
+        }
+        foreach ($name in @('instance_id','snapshot_id','target_driver_identity','prior_driver_identity')) {
+            if (-not (Test-NativeEnvelopeIdentifier -Value $device.$name)) {
+                $defects.Add("device-$($name.Replace('_','-'))-invalid")
+            }
+        }
+        if ($device.ordinal_reopen_required -isnot [bool] -or $device.ordinal_reopen_required -ne $true) {
+            $defects.Add('device-ordinal-reopen-required-invalid')
+        }
+    }
+
+    $dryRun = Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'dry_run_evidence'
+    $dryRunShape = Test-NativeEnvelopeRecordShape -Value $dryRun -RequiredProperties @(
+        'schema_version','evidence_ids','evidence_paths','independently_audited','mutation_count'
+    )
+    if (-not $dryRunShape.valid) {
+        $defects.Add('dry-run-evidence-shape-invalid')
+    } else {
+        if ([string]$dryRun.schema_version -cne 'chatpad-native-adapter-dry-run-evidence-prerequisite-v1') {
+            $defects.Add('dry-run-evidence-schema-invalid')
+        }
+        if (-not (Test-NativeEnvelopeStringArray -Value $dryRun.evidence_ids -Kind Identifier)) {
+            $defects.Add('dry-run-evidence-ids-invalid')
+        }
+        if (-not (Test-NativeEnvelopeStringArray -Value $dryRun.evidence_paths -Kind EvidencePath)) {
+            $defects.Add('dry-run-evidence-paths-invalid')
+        }
+        if ($dryRun.independently_audited -isnot [bool] -or $dryRun.independently_audited -ne $true) {
+            $defects.Add('dry-run-independent-audit-invalid')
+        }
+        if (-not (Test-NativeEnvelopeInteger -Value $dryRun.mutation_count -AllowZero) -or [int64]$dryRun.mutation_count -ne 0) {
+            $defects.Add('dry-run-mutation-count-invalid')
+        }
+    }
+
+    $rollback = Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'rollback_restore_plan'
+    $rollbackShape = Test-NativeEnvelopeRecordShape -Value $rollback -RequiredProperties @(
+        'schema_version','plan_id','prior_driver_identity','ordered_steps',
+        'independently_accepted','manual_recovery_documented'
+    )
+    if (-not $rollbackShape.valid) {
+        $defects.Add('rollback-plan-shape-invalid')
+    } else {
+        if ([string]$rollback.schema_version -cne 'chatpad-native-adapter-rollback-restore-plan-v1') {
+            $defects.Add('rollback-plan-schema-invalid')
+        }
+        if (-not (Test-NativeEnvelopeIdentifier -Value $rollback.plan_id) -or
+            -not (Test-NativeEnvelopeIdentifier -Value $rollback.prior_driver_identity)) {
+            $defects.Add('rollback-plan-identity-invalid')
+        }
+        if (-not (Test-NativeEnvelopeStringArray -Value $rollback.ordered_steps -Kind Identifier)) {
+            $defects.Add('rollback-plan-steps-invalid')
+        }
+        if ($rollback.independently_accepted -isnot [bool] -or $rollback.independently_accepted -ne $true -or
+            $rollback.manual_recovery_documented -isnot [bool] -or $rollback.manual_recovery_documented -ne $true) {
+            $defects.Add('rollback-plan-acceptance-invalid')
+        }
+    }
+
+    $mutation = Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'windows_mutation_classification'
+    $mutationShape = Test-NativeEnvelopeRecordShape -Value $mutation -RequiredProperties @(
+        'schema_version','operation_class','classification','mutation_permitted_current_phase',
+        'cleanup_required','failure_state','counter_names'
+    )
+    if (-not $mutationShape.valid) {
+        $defects.Add('mutation-classification-shape-invalid')
+    } else {
+        if ([string]$mutation.schema_version -cne 'chatpad-native-adapter-windows-mutation-classification-v1' -or
+            [string]$mutation.operation_class -cne $operation -or
+            -not (Test-NativeEnvelopeIdentifier -Value $mutation.classification) -or
+            -not (Test-NativeEnvelopeIdentifier -Value $mutation.failure_state)) {
+            $defects.Add('mutation-classification-invalid')
+        }
+        if ($mutation.mutation_permitted_current_phase -isnot [bool] -or $mutation.mutation_permitted_current_phase -ne $false -or
+            $mutation.cleanup_required -isnot [bool] -or $mutation.cleanup_required -ne $true) {
+            $defects.Add('mutation-classification-authority-invalid')
+        }
+        if (-not (Test-NativeEnvelopeStringArray -Value $mutation.counter_names -Kind Identifier)) {
+            $defects.Add('mutation-classification-counters-invalid')
+        }
+    }
+
+    $confirmation = Get-NativeEnvelopePropertyValue -Value $Envelope -Name 'operator_confirmation'
+    $confirmationShape = Test-NativeEnvelopeRecordShape -Value $confirmation -RequiredProperties @(
+        'schema_version','confirmed','envelope_hash','operation_class','instance_id',
+        'artifact_sha256','host_id','session_id','expires_utc'
+    )
+    if (-not $confirmationShape.valid) {
+        $defects.Add('operator-confirmation-shape-invalid')
+    } else {
+        if ([string]$confirmation.schema_version -cne 'chatpad-native-adapter-operator-confirmation-v1' -or
+            $confirmation.confirmed -isnot [bool] -or $confirmation.confirmed -ne $true) {
+            $defects.Add('operator-confirmation-invalid')
+        }
+        if ($authorizationShape.valid -and (
+            [string]$confirmation.envelope_hash -cne [string]$authorization.envelope_hash -or
+            [string]$confirmation.host_id -cne [string]$authorization.host_id -or
+            [string]$confirmation.session_id -cne [string]$authorization.session_id -or
+            [string]$confirmation.expires_utc -cne [string]$authorization.expires_utc
+        )) {
+            $defects.Add('operator-confirmation-authorization-binding-invalid')
+        }
+        if ([string]$confirmation.operation_class -cne $operation) {
+            $defects.Add('operator-confirmation-operation-binding-invalid')
+        }
+        if ($deviceShape.valid -and [string]$confirmation.instance_id -cne [string]$device.instance_id) {
+            $defects.Add('operator-confirmation-device-binding-invalid')
+        }
+        if ($artifactShape.valid -and [string]$confirmation.artifact_sha256 -cne [string]$artifact.sha256) {
+            $defects.Add('operator-confirmation-artifact-binding-invalid')
+        }
+    }
+
+    if ($rollbackShape.valid -and $deviceShape.valid -and
+        [string]$rollback.prior_driver_identity -cne [string]$device.prior_driver_identity) {
+        $defects.Add('rollback-device-binding-invalid')
+    }
+
+    $stale = $expiryValid -and $expires -le $EvaluationUtc
+    $structurallyValid = ($defects.Count -eq 0 -and -not $stale -and -not $futureLiveRequested)
+    $state = if ($futureLiveRequested) {
+        'FUTURE_LIVE_REJECTED'
+    } elseif ($stale) {
+        'STALE'
+    } elseif ($defects.Count) {
+        'MALFORMED'
+    } else {
+        'STRUCTURALLY_COMPLETE_STILL_BLOCKED'
+    }
+    $code = switch ($state) {
+        'FUTURE_LIVE_REJECTED' { 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_FUTURE_LIVE_REJECTED' }
+        'STALE' { 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_STALE' }
+        'MALFORMED' { 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_MALFORMED' }
+        default { 'NATIVE_ADAPTER_EXECUTION_ENVELOPE_COMPLETE_STILL_BLOCKED' }
+    }
+    New-NativeEnvelopeVerificationResult `
+        -EnvelopeState $state `
+        -EnvelopeResultCode $code `
+        -StructurallyValid $structurallyValid `
+        -OperationClass $operation `
+        -Defects @($defects)
+}
+
 function New-ChatpadNativeAdapterExecutionRequest {
     [CmdletBinding(PositionalBinding = $false)]
     param(
@@ -908,6 +1390,7 @@ function New-ChatpadProductionNativeAdapter {
         design_status = $constants.execution_design_status
         fail_closed_scaffolding_status = $constants.fail_closed_scaffolding_status
         non_live_implementation_status = $constants.non_live_plan_status
+        envelope_verifier_status = $constants.envelope_verifier_status
         evidence_mode = $constants.evidence_mode
         capability_blocker = $constants.execution_blocker
         compatibility_capability_api_authorizes_mutation = $false
@@ -1329,6 +1812,17 @@ function Get-ChatpadNativeAdapterDesignContract {
         design_status = $constants.execution_design_status
         fail_closed_scaffolding_status = $constants.fail_closed_scaffolding_status
         non_live_implementation_status = $constants.non_live_plan_status
+        envelope_verifier = [pscustomobject][ordered]@{
+            schema_version = 'chatpad-native-adapter-execution-authorization-envelope-v1'
+            status = $constants.envelope_verifier_status
+            declared_field_validation_only = $true
+            can_authorize_execution = $false
+            artifact_io_performed = $false
+            compile_output_io_performed = $false
+            native_execution_status = 'NOT_IMPLEMENTED'
+            live_readiness = 'BLOCKED'
+            blocked_reason = $constants.execution_blocker
+        }
         evidence_mode = $constants.evidence_mode
         capability_blocker = $constants.execution_blocker
         source_audit = Get-NativeSourceAuditAcceptanceRecord

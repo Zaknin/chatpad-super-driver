@@ -146,6 +146,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
 - Accepted final-closeout audit target:
   `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`.
+- Accepted execution scope-boundary final-closeout commit:
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
+- Execution-envelope verifier:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -936,13 +940,14 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform an independent strict read-only audit of the final documentation-only
-closeout commit. Derive its exact identity from Git; require subject
-`docs: close native adapter execution boundary scope`, parent
-`f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, authorized changed paths, and
-content recording that accepted audit target. Do not require the closeout
-commit to contain its own hash. Native execution remains `NOT_IMPLEMENTED`,
-live readiness remains `BLOCKED`, and SetupAPI/Newdev invocation remains
-unauthorized. Do not run the parser or full compile-output validator, inspect
-the real DLL or compile outputs, or perform artifact, native, device, hardware,
-Windows, or driver actions.
+Perform an independent strict read-only audit of the record-only
+execution-envelope verifier implementation commit. Derive its exact identity
+from Git; require subject
+`feat: add native adapter execution envelope verifier`, parent
+`68099a441db5f8b517dbeb296ab234a9ee639bdb`, authorized changed paths, and
+content proving every envelope remains blocked. Do not require the
+implementation commit to contain its own hash. Native execution remains
+`NOT_IMPLEMENTED`, live readiness remains `BLOCKED`, and SetupAPI/Newdev
+invocation remains unauthorized. Do not run the parser or full compile-output
+validator, inspect the real DLL or compile outputs, or perform artifact,
+native, device, hardware, Windows, or driver actions.

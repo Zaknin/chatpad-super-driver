@@ -1,10 +1,12 @@
 # Project State
 
-*Last updated: 2026-07-06 (execution scope-boundary lane closed)*
+*Last updated: 2026-07-06 (record-only execution-envelope verifier implemented)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-execution-scope-boundary`.
+- **Branch:** `feature/native-adapter-execution-envelope-verifier`.
+- **Accepted execution scope-boundary final-closeout commit:**
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
   `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
 - **Fail-closed scaffolding commit:**
@@ -55,6 +57,8 @@
   `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - **Final lane closeout:**
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
+- **Execution-envelope verifier:**
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -191,6 +195,16 @@ status is
 This final closeout records the accepted audit target and does not record its
 own commit identity; the next audit must derive that identity from Git.
 
+The separately authorized follow-up adds a record-only authorization-envelope
+verifier with status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`. It
+validates only declared fields and exact record shapes for Apply, Restore, and
+Restart envelopes. Missing, malformed, stale, future/live, and structurally
+complete envelopes all remain blocked. The verifier cannot authorize
+execution, change live readiness, or change native execution status. It does
+not inspect artifacts, compile outputs, filesystems, devices, hardware,
+registry, services, certificates, drivers, or Windows state.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -224,6 +238,12 @@ driver authority.
   zero forbidden commands, zero native loads/invocations, zero device queries,
   zero Windows mutations, and zero native operations.
 - Cross-runtime manifest identity: `PASS`, 39/39 entries, zero deltas.
+- Focused execution-envelope verifier checks: `PASS`, 18/18 under Windows
+  PowerShell 5.1 and PowerShell 7; all valid-looking and adversarial envelopes
+  remained blocked with zero unsafe results.
+- Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
+  runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
+  members, and all native/device/hardware/Windows/driver counters zero.
 - Repository safety and forbidden generated-file scans: `PASS`, zero prohibited
   counters/files.
 - The broader legacy exact-instance suite remains blocked by a pre-existing
@@ -243,10 +263,11 @@ driver authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the documentation-only lane
-closeout commit. Obtain its exact identity from Git, require subject
-`docs: close native adapter execution boundary scope` and parent
-`f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, and verify changed paths, content,
-all boundary identities/statuses, manifest enforcement, and the unchanged
-blocked/no-artifact-I/O safety boundary. Do not require the commit to contain
-its own hash.
+Perform an independent strict read-only audit of the record-only
+execution-envelope verifier implementation commit. Obtain its exact identity
+from Git, require subject
+`feat: add native adapter execution envelope verifier` and parent
+`68099a441db5f8b517dbeb296ab234a9ee639bdb`, and verify changed paths, exact
+schema validation, always-blocked results, call-chain isolation, manifest
+enforcement, and unchanged blocked/no-artifact-I/O safety state. Do not require
+the implementation commit to contain its own hash.
