@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-06 (execution scope-boundary audit accepted)*
+*Last updated: 2026-07-06 (execution scope-boundary lane closed)*
 
 ## Current State
 
@@ -21,6 +21,8 @@
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
 - **Execution scope-boundary audit target:**
   `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`.
+- **Execution scope-boundary audit-acceptance commit:**
+  `d1372ba8f7812d24a09b87238793e78435ac4492`.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -41,6 +43,8 @@
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
 - **Execution-scope boundary audit acceptance:**
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- **Execution-scope boundary lane closeout:**
+  `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -160,6 +164,10 @@ Acceptance status is
 Acceptance grants no artifact, native, device, hardware, Windows, or driver
 authority.
 
+Independent strict read-only audit of audit-acceptance commit
+`d1372ba8f7812d24a09b87238793e78435ac4492` returned `AUDIT PASS` and closed
+the execution-scope boundary lane. Lane closeout changes no execution authority.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -212,8 +220,8 @@ driver authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the documentation-only
-scope-boundary audit-acceptance commit. Require parent
-`f0b10d862d23d0ede28b1139c2ccb726bfcddc48`; verify the accepted audit target,
-acceptance status, manifest enforcement, and unchanged blocked/no-artifact-I/O
-safety boundary.
+Perform an independent strict read-only audit of the documentation-only lane
+closeout commit. Require parent
+`d1372ba8f7812d24a09b87238793e78435ac4492`; verify the closeout target/result,
+all boundary identities/statuses, manifest enforcement, and unchanged blocked/
+no-artifact-I/O safety boundary.

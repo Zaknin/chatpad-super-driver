@@ -3226,3 +3226,23 @@ blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live
 readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
 evidence mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. No artifact,
 native, device, hardware, Windows, or driver authority is granted.
+
+## 2026-07-06 - Close the execution scope-boundary lane after accepted audit
+
+**Decision:** Record audit target
+`d1372ba8f7812d24a09b87238793e78435ac4492` as
+`AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO` and close the execution scope-boundary
+lane.
+
+**Rationale:** Independent read-only audit accepted the documentation-only
+scope-boundary audit transition and verified its identities, statuses,
+manifest enforcement, and blocked authority.
+
+**Alternatives rejected:** Leaving the accepted lane open; treating closeout as
+native implementation or execution authorization; or changing adapter behavior.
+
+**Consequences:** The lane is closed, while the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness remains
+`BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence mode
+remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Closeout grants no artifact,
+native, device, hardware, Windows, or driver authority.
