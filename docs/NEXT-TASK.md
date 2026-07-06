@@ -2,28 +2,32 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the non-live native adapter
-operation-planning implementation.
+Perform an independent strict read-only audit of the documentation/evidence
+continuity remediation for non-live native adapter operation planning.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-non-live-implementation-phase`.
 - Required starting commit: the commit with subject
-  `feat: add non-live native adapter operation planning`; obtain its exact full
-  hash from Git, require parent
-  `748ba24b3e795cd70b3325b6a54fb88569427ed6`, and require upstream
+  `docs: record native adapter planning continuity`; obtain its exact full hash
+  from Git, require parent
+  `4522510a17354fe53d163546e16ff24af5fa0374`, and require upstream
   synchronization `0/0`.
+- Non-live implementation commit:
+  `4522510a17354fe53d163546e16ff24af5fa0374`.
 - Non-live implementation status:
   `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
+- Scaffolding implementation commit:
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+- Scaffolding-audit remediation commit:
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
+- Scaffolding-audit acceptance commit:
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
+- Scaffolding-audit status:
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Current gate and runtime blocker:
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Design status:
-  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
-- Scaffolding status:
-  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
-- Scaffolding audit acceptance:
-  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
@@ -33,26 +37,24 @@ operation-planning implementation.
 1. Follow `AGENTS.md`.
 2. Verify exact branch, HEAD, parent, upstream, remote equality, `0/0`, and a
    clean tree/index.
-3. Verify the implementation commit changed only the authorized module, focused
-   offline suite, manifest generator/validator, continuity documents, and
-   regenerated readiness manifest.
-4. Confirm parser, real artifacts, compile outputs, production driver source,
-   INF/project/solution files, binaries, ignored evidence, and `legacy/` are
-   unchanged.
+3. Verify the remediation changed only authorized continuity documents,
+   manifest, and manifest generator/validator.
+4. Confirm adapter modules, offline suite, parser, artifacts, compile outputs,
+   driver source, INF/project files, binaries, ignored evidence, and `legacy/`
+   are unchanged.
 
 ## Audit Scope
 
-- Trace the new operation-plan, precondition-evaluation, always-deny
-  authorization-decision, and typed result-model call chain.
-- Verify `Apply`, `Restore`, and `Restart` produce inert blocked plans and
-  blocked results with all native-load, entry-point, SetupAPI/Newdev, device,
-  hardware, Windows, driver, and artifact counters/flags zero.
-- Verify future or caller-supplied authorization cannot authorize execution.
-- Verify target identity remains inert request data and no lookup is performed.
-- Verify no new path reaches the static parser, full compile-output validator,
-  filesystem output enumeration, native loading, or executable APIs.
-- Reproduce focused tests and no-artifact-I/O regression in Windows PowerShell
-  5.1 and PowerShell 7, plus schema-v4 39-entry manifest validation.
+- Verify both exact commits and both exact statuses are present consistently in
+  current-state documentation and the readiness manifest.
+- Validate schema v4, 39 entries, duplicate IDs/paths `0`, `NO_PATH` `0`, and
+  semantic cross-runtime identity under Windows PowerShell 5.1 and PowerShell 7.
+- Verify gate/runtime blocker remain
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness remains
+  `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence mode
+  remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- Verify the remediation changes no adapter behavior and authorizes no artifact,
+  native, device, hardware, Windows, or driver action.
 
 ## Safety Restrictions
 
@@ -63,14 +65,10 @@ write, load, reflect over, or execute the real DLL or compile outputs.
 
 ## Acceptance Criteria
 
-- The implementation is data-only and non-live.
-- All focused checks pass under both PowerShell runtimes.
-- Manifest validation passes with 39 entries, duplicate IDs/paths `0`,
-  `NO_PATH` `0`, zero defects, and cross-runtime identity.
-- Current gate remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Live readiness remains `BLOCKED`; native execution remains
-  `NOT_IMPLEMENTED`.
-- No positive authorization or prohibited executable pattern is reachable.
+- Exact continuity identities and statuses are present and validator-enforced.
+- Manifest validation passes under both runtimes with zero defects and
+  cross-runtime identity.
+- No positive authorization or prohibited executable pattern was added.
 - Final Git status remains clean and synchronized `0/0`.
 
 ## Inspect First
@@ -80,6 +78,6 @@ write, load, reflect over, or execute the real DLL or compile outputs.
 3. `docs/DECISIONS.md`
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
-6. `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`
-7. `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
+6. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+7. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
 8. `docs/evidence/runtime-bringup-readiness-manifest.json`

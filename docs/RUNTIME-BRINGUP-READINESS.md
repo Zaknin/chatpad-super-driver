@@ -23,7 +23,8 @@ closed; the current blocker is native adapter execution not implemented.
 
 Branch `feature/native-adapter-non-live-implementation-phase` adds the next
 separately authorized non-live planning phase from accepted audit transition
-`748ba24b3e795cd70b3325b6a54fb88569427ed6`. It preserves all earlier
+`748ba24b3e795cd70b3325b6a54fb88569427ed6`. The non-live implementation commit
+is `4522510a17354fe53d163546e16ff24af5fa0374`. It preserves all earlier
 fail-closed scaffolding and adds only inert operation-plan, in-memory
 precondition, always-deny authorization-decision, and typed zero-counter result
 models. No target lookup, native execution, artifact I/O, device access,
@@ -109,12 +110,16 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
 - Fail-closed scaffolding commit:
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+- Scaffolding-audit remediation commit:
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Fail-closed scaffolding audit acceptance:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Scaffolding-audit acceptance commit:
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - Non-live implementation status:
   `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
-- Non-live phase base:
-  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
+- Non-live implementation commit:
+  `4522510a17354fe53d163546e16ff24af5fa0374`.
 - Accepted scaffolding audit target:
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Native adapter design-gate remediation audit: `AUDIT PASS` for

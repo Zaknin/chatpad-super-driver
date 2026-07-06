@@ -8,9 +8,14 @@
 - **Starting commit:** `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - **Fail-closed scaffolding commit:**
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
-- **Current non-live implementation commit:** Git is authoritative because
-  this document, the other current-state docs, and the regenerated manifest
-  are committed atomically.
+- **Scaffolding-audit remediation commit:**
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
+- **Scaffolding-audit acceptance commit:**
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
+- **Non-live implementation commit:**
+  `4522510a17354fe53d163546e16ff24af5fa0374`.
+- **Current continuity-remediation commit:** Git is authoritative because this
+  document and the regenerated manifest are committed atomically.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -63,6 +68,13 @@ native DLL loading, native entry-point resolution,
 device query, and Windows mutation are not authorized. Driver build, sign,
 package, install, load, bind, restore, and restart are not authorized. Real DLL
 or compile-output access is not authorized by this remediation.
+
+The first independent audit of non-live implementation commit
+`4522510a17354fe53d163546e16ff24af5fa0374` returned `AUDIT FAIL` only because
+continuity documents omitted that exact implementation identity and the
+manifest omitted the scaffolding-audit acceptance identity/status. Its
+technical planning, fail-closed, dual-runtime, and no-artifact-I/O checks
+passed. This documentation/evidence remediation changes no adapter behavior.
 
 ## Native Adapter Execution Design Gate
 
@@ -150,10 +162,10 @@ authorization false. Acceptance status is
 
 ## Next Task
 
-Perform an independent strict read-only audit of the non-live native adapter
-planning implementation on branch
-`feature/native-adapter-non-live-implementation-phase`. Verify the resulting
-implementation commit from Git, parent
-`748ba24b3e795cd70b3325b6a54fb88569427ed6`, exact non-live status, blocked
-plans and results, always-deny authorization, zero counters, and the unchanged
-no-artifact-I/O/native/device/Windows/driver safety boundary.
+Perform an independent strict read-only audit of the documentation/evidence
+continuity remediation commit on branch
+`feature/native-adapter-non-live-implementation-phase`. Verify exact
+implementation commit `4522510a17354fe53d163546e16ff24af5fa0374`,
+scaffolding-audit acceptance commit
+`748ba24b3e795cd70b3325b6a54fb88569427ed6`, both exact statuses, manifest
+identity, and the unchanged blocked/no-artifact-I/O safety boundary.

@@ -18,12 +18,16 @@ Authoritative current state:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
 - Fail-closed scaffolding commit:
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+- Scaffolding-audit remediation commit:
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Fail-closed scaffolding audit acceptance:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Scaffolding-audit acceptance commit:
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - Non-live implementation status:
   `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
-- Non-live phase base:
-  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
+- Non-live implementation commit:
+  `4522510a17354fe53d163546e16ff24af5fa0374`.
 - Accepted scaffolding audit target:
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -421,7 +425,8 @@ status is
 Acceptance does not authorize native execution, artifact I/O, device query,
 Windows mutation, or driver action. The separately authorized non-live phase
 implements inert planning with status
-`NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`; its commit is
-authoritative in Git because code, evidence, and continuity updates are
-committed atomically. The next step is an independent strict read-only audit of
-that non-live implementation.
+`NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO` at
+`4522510a17354fe53d163546e16ff24af5fa0374`. Its first independent audit found
+the technical implementation safe but failed continuity identity recording.
+The next step is an independent strict read-only audit of the resulting
+documentation/evidence remediation commit.

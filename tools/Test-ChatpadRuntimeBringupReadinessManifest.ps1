@@ -884,7 +884,12 @@ else{
     if($executionDesign.schema_version-ne'chatpad-native-adapter-execution-design-gate-v1'-or
         $executionDesign.status-ne'NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO'-or
         $executionDesign.fail_closed_scaffolding_status-ne'NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO'-or
+        $executionDesign.fail_closed_scaffolding_implementation_commit-ne'7560fc242a39228d6a95f42ff908bb4be438d6ad'-or
+        $executionDesign.fail_closed_scaffolding_audit_status-ne'NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO'-or
+        $executionDesign.fail_closed_scaffolding_audit_acceptance_commit-ne'748ba24b3e795cd70b3325b6a54fb88569427ed6'-or
+        $executionDesign.fail_closed_scaffolding_audit_remediation_commit-ne'af41a8eaeea96dcbcad75fb2e261c4352b2a468e'-or
         $executionDesign.non_live_implementation_status-ne'NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO'-or
+        $executionDesign.non_live_implementation_commit-ne'4522510a17354fe53d163546e16ff24af5fa0374'-or
         $executionDesign.non_live_implementation_audit_required-ne$true-or
         $executionDesign.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $executionDesign.opened_from_commit-ne'cb80939a862d33efb1abf26a14d5c75d43a77b30'-or

@@ -10314,3 +10314,57 @@
   implementation commit. Trace the four new data-only functions, reproduce the
   focused dual-runtime tests and manifest checks, and verify that no artifact,
   native, device, hardware, Windows, or driver boundary is reachable.
+
+---
+
+## 2026-07-06 - Record native adapter planning continuity
+
+- **Objective:** Remediate the documentation/evidence continuity failure from
+  independent audit target
+  `4522510a17354fe53d163546e16ff24af5fa0374` without changing non-live
+  planning behavior or authorizing execution.
+- **Starting state:** Verified branch
+  `feature/native-adapter-non-live-implementation-phase`, exact HEAD and remote
+  `4522510a17354fe53d163546e16ff24af5fa0374`, parent
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`, upstream equality,
+  ahead/behind `0/0`, and a clean tree/index.
+- **Audit finding remediated:** The technical implementation passed, but the
+  continuity documents did not name the exact non-live implementation commit
+  or explicitly classify `748ba24b3e795cd70b3325b6a54fb88569427ed6`
+  as the scaffolding-audit acceptance commit. The manifest also omitted exact
+  scaffolding-audit acceptance status
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- **Continuity update:** Recorded non-live implementation commit
+  `4522510a17354fe53d163546e16ff24af5fa0374`, scaffolding-audit acceptance
+  commit `748ba24b3e795cd70b3325b6a54fb88569427ed6`, scaffolding implementation
+  commit `7560fc242a39228d6a95f42ff908bb4be438d6ad`, audit remediation commit
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`, and both exact statuses in
+  current-state documentation and validator-enforced manifest fields.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`, `docs/NEXT-TASK.md`,
+  `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only
+  worklog, regenerated `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Manifest validation:** Schema v4 and 39 entries were preserved. Windows
+  PowerShell 5.1 and PowerShell 7 validation returned `PASS` with duplicate
+  IDs `0`, duplicate paths `0`, `NO_PATH` `0`, total defects `0`, and semantic
+  cross-runtime identity. Gate/runtime blocker remain
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live readiness remains
+  `BLOCKED`; native execution remains `NOT_IMPLEMENTED`; evidence mode remains
+  `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`; all runtime/native/device/hardware/
+  Windows/driver counters remain zero.
+- **Safety:** No adapter module, offline suite, parser, artifact, compile output,
+  driver source, INF/project file, binary, ignored evidence, or `legacy/` path
+  changed. The static parser and full compile-output validator were not run.
+  No real DLL or compile output was opened, read, hashed, parsed, statted,
+  scanned, written, loaded, reflected over, or executed. No native library,
+  entry point, SetupAPI/Newdev, device, hardware, Windows, or driver action was
+  used.
+- **Commit and push:** Commit subject is
+  `docs: record native adapter planning continuity`; Git is authoritative for
+  the resulting full hash. Push target is
+  `origin/feature/native-adapter-non-live-implementation-phase`.
+- **Next task:** Independent strict read-only audit of the resulting continuity
+  remediation commit, exact identities/statuses, dual-runtime manifest
+  validation, and unchanged blocked/no-artifact-I/O boundaries.

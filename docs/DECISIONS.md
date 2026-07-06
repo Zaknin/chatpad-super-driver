@@ -3070,7 +3070,9 @@ driver actions remain unauthorized.
 `af41a8eaeea96dcbcad75fb2e261c4352b2a468e` with exact status
 `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`, while
 retaining scaffolding implementation commit
-`7560fc242a39228d6a95f42ff908bb4be438d6ad`.
+`7560fc242a39228d6a95f42ff908bb4be438d6ad`. The documentation remediation is
+`af41a8eaeea96dcbcad75fb2e261c4352b2a468e`; the resulting scaffolding-audit
+acceptance commit is `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 
 **Rationale:** The audit began and ended clean, verified the exact candidate
 and parent, found only the five authorized current-state documents and
@@ -3098,6 +3100,8 @@ device query, Windows mutation, and driver actions remain unauthorized.
 inert operation-plan, in-memory precondition-evaluation, always-deny
 authorization-decision, and typed zero-counter result models with exact status
 `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
+The exact implementation commit is
+`4522510a17354fe53d163546e16ff24af5fa0374`.
 
 **Rationale:** Planning and validation can be audited without crossing the
 native execution boundary. Keeping target identity as inert request data and
