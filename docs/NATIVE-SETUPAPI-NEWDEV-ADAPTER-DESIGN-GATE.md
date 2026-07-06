@@ -34,6 +34,8 @@ Authoritative current state:
   `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
 - Execution-scope boundary status:
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+- Execution-scope boundary commit:
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -177,6 +179,8 @@ Windows/driver action counter unchanged.
 ## Future Execution Authorization Envelope
 
 Status: `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+The exact scope-boundary commit is
+`4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
 This record-only boundary is opened from accepted non-live planning
 audit-acceptance commit `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
 The current repository does not satisfy the envelope, and this task grants no

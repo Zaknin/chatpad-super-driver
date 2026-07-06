@@ -10531,3 +10531,68 @@
   declaration-ceiling distinction, false current-authority fields, and
   unchanged blocked/no-artifact-I/O boundary without editing or running any
   artifact/native/device/Windows/driver path.
+
+---
+
+## 2026-07-06 20:47:42 +04:00 - Record native adapter execution boundary identity
+
+- **Objective:** Remediate the failed independent audit of native-adapter
+  execution scope-boundary commit
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e` by recording and
+  validator-enforcing that exact identity. This is continuity-only remediation.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`, branch
+  `feature/native-adapter-execution-scope-boundary`, exact HEAD and upstream
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e`, parent
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`, remote equality,
+  ahead/behind `0/0`, clean tree/index, and ignored `IDEA.md`.
+- **Audit finding remediated:** The boundary requirements and safety checks
+  passed, but continuity documents, manifest, generator, and validator omitted
+  the exact scope-boundary commit. Added
+  `scope_boundary_commit=4cdde55e392e78db8a7a38858fb2f436557fbe2e`
+  to the generated manifest contract and exact validator comparison.
+- **Continuity update:** Recorded the scope-boundary commit and status
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`, accepted
+  non-live planning audit commit
+  `bb6cc27c2281e04dee2166c5a67e124092055f9f`, non-live implementation
+  `4522510a17354fe53d163546e16ff24af5fa0374`, continuity remediation
+  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`, scaffolding audit acceptance
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`, scaffolding implementation
+  `7560fc242a39228d6a95f42ff908bb4be438d6ad`, and prior remediation/audit
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Validation:** Generator/validator syntax passed under Windows PowerShell
+  5.1 and PowerShell 7. Final no-artifact-open manifest validation passed under
+  both runtimes with schema v4, 39 entries, duplicate IDs `0`, duplicate paths
+  `0`, `NO_PATH` `0`, total defects `0`, and semantic cross-runtime identity.
+  Exact identity/status searches, documentation consistency, positive-
+  authorization, prohibited executable-pattern, constrained Git/index
+  repository-safety, forbidden generated-file, spelling-variant, changed-path,
+  and `git diff --check` checks passed.
+- **Safety:** No behavior test, static parser, full compile-output validator,
+  or full exact/readiness suite was run. No real DLL or compile output was
+  opened, read, hashed, parsed, statted, scanned, written, loaded, reflected
+  over, or executed. No native library load, entry-point resolution,
+  SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+  or driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
+  restart occurred.
+- **Final state:** Gate and runtime blocker remain
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; design, scaffolding,
+  scaffolding-audit, non-live implementation, and non-live-audit statuses are
+  unchanged; live readiness remains `BLOCKED`; native execution remains
+  `NOT_IMPLEMENTED`; evidence mode remains
+  `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- **Commit and push:** Commit subject is
+  `docs: record native adapter execution boundary identity`. Push target is
+  `origin/feature/native-adapter-execution-scope-boundary`; Git and the final
+  response are authoritative for the resulting commit identity.
+- **Next task:** Independent strict read-only audit of this continuity
+  remediation commit. Verify exact parent
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e`, scope-boundary identity and
+  status enforcement, all prior identities/statuses, and unchanged blocked/
+  no-artifact-I/O restrictions.

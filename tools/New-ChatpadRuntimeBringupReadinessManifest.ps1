@@ -238,6 +238,7 @@ $manifest=[pscustomobject][ordered]@{
         execution_scope_boundary=[pscustomobject][ordered]@{
             schema_version='chatpad-native-adapter-execution-scope-boundary-v1'
             status='NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO'
+            scope_boundary_commit='4cdde55e392e78db8a7a38858fb2f436557fbe2e'
             opened_from_non_live_audit_acceptance_commit='bb6cc27c2281e04dee2166c5a67e124092055f9f'
             required_operation_classes=@('NATIVE_ADAPTER_APPLY','NATIVE_ADAPTER_RESTORE','NATIVE_ADAPTER_RESTART')
             required_authorized_operation_class_count=1

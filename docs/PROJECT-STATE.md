@@ -1,11 +1,11 @@
 # Project State
 
-*Last updated: 2026-07-06 (native adapter execution scope boundary defined)*
+*Last updated: 2026-07-06 (execution scope-boundary identity remediation)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-scope-boundary`.
-- **Task starting commit and accepted non-live planning audit commit:**
+- **Accepted non-live planning audit commit:**
   `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
 - **Fail-closed scaffolding commit:**
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
@@ -15,8 +15,10 @@
   `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - **Non-live implementation commit:**
   `4522510a17354fe53d163546e16ff24af5fa0374`.
-- **Current scope-boundary commit:** Git is authoritative because this
-  document and the regenerated manifest are committed atomically.
+- **Non-live planning continuity remediation commit:**
+  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
+- **Execution scope-boundary commit:**
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -139,6 +141,14 @@ implementation remains `4522510a17354fe53d163546e16ff24af5fa0374`, and
 acceptance grants no artifact, native, device, hardware, Windows, or driver
 authority.
 
+Independent strict read-only audit of execution scope-boundary commit
+`4cdde55e392e78db8a7a38858fb2f436557fbe2e` returned `AUDIT FAIL` only
+because continuity documents and the manifest generator/validator omitted that
+exact boundary identity. The boundary requirements, changed-path restriction,
+blocked authority, dual-runtime manifest validation, and safety checks passed.
+This remediation records and validator-enforces the omitted identity without
+changing adapter or offline-suite behavior.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -154,6 +164,9 @@ driver authority.
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
 - Manifest entries: 39; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Scope-boundary commit
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
+  enforced by the generator and validator.
 - Manifest validation: `PASS`, zero defects under Windows PowerShell 5.1 and
   PowerShell 7 in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode.
 - Focused fail-closed scaffolding checks: `PASS`, 16/16 under each runtime,
@@ -188,9 +201,11 @@ driver authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the execution-scope boundary
-commit on branch `feature/native-adapter-execution-scope-boundary`. Verify the
-exact envelope, status
+Perform an independent strict read-only audit of the execution scope-boundary
+identity remediation commit on branch
+`feature/native-adapter-execution-scope-boundary`. Require parent
+`4cdde55e392e78db8a7a38858fb2f436557fbe2e`; verify the exact envelope, status
 `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`, accepted base
-`bb6cc27c2281e04dee2166c5a67e124092055f9f`, manifest enforcement, and the
-unchanged blocked/no-artifact-I/O safety boundary.
+`bb6cc27c2281e04dee2166c5a67e124092055f9f`, exact scope-boundary commit
+identity, manifest enforcement, and the unchanged blocked/no-artifact-I/O
+safety boundary.

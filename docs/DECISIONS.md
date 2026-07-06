@@ -3182,3 +3182,26 @@ mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Artifact access, native
 loading, entry-point resolution, SetupAPI/Newdev invocation, device query,
 hardware access, Windows mutation, and driver actions remain forbidden. The
 next task is an independent strict read-only audit of the scope-boundary commit.
+
+## 2026-07-06 - Bind the execution scope boundary to its exact commit
+
+**Decision:** Record and validator-enforce
+`4cdde55e392e78db8a7a38858fb2f436557fbe2e` as the exact commit that defined
+status `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+
+**Rationale:** Independent strict read-only audit found the boundary technically
+consistent but could not accept it because the continuity documents, generated
+manifest, generator, and validator omitted the candidate identity. A boundary
+status without its exact defining commit is insufficient continuity evidence.
+
+**Alternatives rejected:** Relying on branch or current `HEAD` identity;
+treating Git history as an implicit manifest field; weakening the audit
+requirement; changing adapter or offline-suite behavior; or combining identity
+remediation with native implementation or execution.
+
+**Consequences:** The manifest now binds the existing record-only boundary to
+its exact defining commit. The runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness remains
+`BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence mode
+remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. This continuity remediation
+grants no artifact, native, device, hardware, Windows, or driver authority.

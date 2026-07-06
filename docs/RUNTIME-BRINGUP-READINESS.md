@@ -126,6 +126,8 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `bb6cc27c2281e04dee2166c5a67e124092055f9f`.
 - Execution-scope boundary status:
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+- Execution-scope boundary commit:
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
