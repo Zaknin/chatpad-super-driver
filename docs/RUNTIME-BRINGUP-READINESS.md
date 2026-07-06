@@ -8,15 +8,15 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
-Branch
-`feature/runtime-bringup-compiled-artifact-metadata-review-design-gate-remediation`
-records remediation of the failed independent audit of the non-loading
-compiled-artifact metadata-review design gate. The accepted compile-only
-validation and declaration-only SetupAPI/Newdev source boundary remain the
-underlying native-adapter evidence. The future API sequence, structures,
-driver-node identity evidence, exact-instance binding/restoration proof,
-restart/reboot separation, error taxonomy, source-boundary guard, and
-compile-only evidence validator are documented in
+Branch `feature/native-adapter-execution-design-gate` opens the next
+non-executing contract stage from accepted static metadata transition
+`cb80939a862d33efb1abf26a14d5c75d43a77b30`. The accepted compile-only
+validation, declaration-only SetupAPI/Newdev source boundary, static metadata
+review, and exact-instance offline framework remain underlying evidence; none
+authorizes execution. The future API sequence, structures, driver-node
+identity evidence, exact-instance binding/restoration proof, restart/reboot
+separation, error taxonomy, authorization prerequisites, safety counters,
+source-boundary guard, and compile-only evidence validator are documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 The declaration source and static boundary validator live under
@@ -72,9 +72,12 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   hardware access, and Windows mutations: all `0`.
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Native execution status: `NOT_IMPLEMENTED`.
+- Execution design status:
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
+- Native execution authorization: `false`.
 - Static metadata parser implementation:
   `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
 - Parser execution against the real artifact: `STATIC_METADATA_VALIDATED`.
@@ -822,11 +825,11 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Open a separately authorized native-adapter execution design/implementation
-gate. Native execution remains `NOT_IMPLEMENTED`, live readiness remains
-`BLOCKED`, and SetupAPI/Newdev invocation remains unauthorized. Do not rerun
-the parser or open, read, hash, parse, write, load, reflect over, or execute the
-real DLL. Continue to prohibit native DLL loading, entry-point resolution,
-native invocation, device query, hardware access, Windows mutation, and driver
-build/link/sign/CAT/package/stage/install/load/unload/bind/restore/restart
-actions until a later explicit contract authorizes them.
+Perform an independent strict read-only audit of the native-adapter execution
+design gate. Native execution remains `NOT_IMPLEMENTED`, live readiness
+remains `BLOCKED`, and SetupAPI/Newdev invocation remains unauthorized. Do not
+implement the adapter, rerun the parser, or open, read, hash, parse, write,
+load, reflect over, or execute the real DLL. Continue to prohibit native DLL
+loading, entry-point resolution, native invocation, device query, hardware
+access, Windows mutation, and driver build/link/sign/CAT/package/stage/install/
+load/unload/bind/restore/restart actions.

@@ -4,6 +4,43 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-06 - Open the native adapter execution design gate without authorizing execution
+
+**Decision:** Open
+`BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT` from accepted static
+metadata transition
+`cb80939a862d33efb1abf26a14d5c75d43a77b30`. Define native adapter execution
+as any runtime native-library load, entry-point resolution, SetupAPI/Newdev
+call, device query, selected-driver mutation, cleanup call, or associated
+Windows/driver action. Keep capability blocker
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness `BLOCKED`,
+native execution `NOT_IMPLEMENTED`, and execution authorization false.
+
+**Rationale:** The accepted declaration-only source, compile-only evidence,
+static metadata review, exact-instance offline framework, and existing
+fail-closed adapter scaffold establish enough reviewed structure to define the
+next execution contract. They do not implement a trustworthy live
+authorization boundary or an executable adapter. A separately audited design
+must therefore define exact-instance, device/artifact, rollback, mutation,
+package, evidence, counter, cleanup, and audit prerequisites before any
+implementation task can open.
+
+**Alternatives rejected:** Treating static metadata acceptance as execution
+permission; implementing or invoking P/Invoke declarations in this task;
+loading `setupapi.dll` or `newdev.dll`; using caller-supplied flags, strings,
+objects, module state, elevation, or branch identity as authority; combining
+design, implementation, audit, and live execution; querying a device to refine
+the design; or authorizing package/signing/staging/driver actions implicitly.
+
+**Consequences:** The existing adapter remains deterministically
+non-executing. Its current-gate vocabulary advances to pending independent
+execution-design audit, but recognized operations still return
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` with zero native/device/
+Windows/driver counters. The next task is an independent read-only design audit.
+Implementation, native loading, entry-point resolution, SetupAPI/Newdev
+invocation, device query, Windows mutation, and driver actions require later
+separate authorization.
+
 ## 2026-07-06 - Accept the real-artifact static metadata review audit and close the static lane
 
 **Decision:** Accept the `AUDIT PASS` for post-audit vocabulary-design

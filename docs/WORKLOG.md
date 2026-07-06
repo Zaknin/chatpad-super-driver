@@ -9643,3 +9643,128 @@
   `origin/feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
 - **Next task:** Open a separately authorized native-adapter execution
   design/implementation gate. Native execution remains unimplemented.
+
+---
+
+## 2026-07-06 07:40 +04:00 - Open native adapter execution design gate
+
+- **Objective:** Open a separately authorized, fail-closed native
+  SetupAPI/Newdev execution design gate without loading or invoking native
+  code, querying devices, mutating Windows, or performing driver actions.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`,
+  branch
+  `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`,
+  HEAD `cb80939a862d33efb1abf26a14d5c75d43a77b30`, matching upstream,
+  ahead/behind `0/0`, empty working tree/index, and ignored `IDEA.md`.
+  Manifest schema was v4 with 39 entries, zero duplicate IDs/paths, zero
+  `NO_PATH`, gate/runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, native execution `NOT_IMPLEMENTED`, path gate
+  `STATUS_BOUNDARY_ACCEPTED`, metadata review `STATIC_METADATA_VALIDATED`, and
+  static metadata lane closed.
+- **Branch:** Created `feature/native-adapter-execution-design-gate` from the
+  exact starting commit. The branch did not exist locally or remotely.
+- **Investigation:** The repository already contained a mature declaration-only
+  native source boundary, compile-only evidence, and deterministic
+  non-executing PowerShell adapter scaffold. A new executable scaffold was not
+  justified. The narrow implementation defines the execution contract and
+  updates only the existing scaffold/current-state vocabulary so `Apply`,
+  `Restore`, and `Restart` remain blocked.
+- **Durable design:** Native adapter execution now explicitly includes native
+  library load, entry-point resolution, SetupAPI/Newdev calls, device queries,
+  selected-driver mutation, cleanup, and related Windows/driver actions. The
+  design defines separate design-audit, implementation-audit, and exact
+  live-run gates; exact-instance/device/artifact/rollback/mutation/package/
+  evidence prerequisites; the proposed call allowlist; forbidden operations;
+  and exact future safety counters.
+- **Gate transition:** Previous gate
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; current gate
+  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`; design status
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
+  Runtime blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
+  live readiness remains `BLOCKED`; native execution remains
+  `NOT_IMPLEMENTED`; execution authorization remains false.
+- **Implementation:** Updated the existing fail-closed scaffold, offline-suite
+  output, and readiness output only to report the new pending design-audit
+  gate. Added manifest generator/validator support for schema
+  `chatpad-native-adapter-execution-design-gate-v1`, exact status/prerequisite
+  arrays, and eight exact integer zero counters. No P/Invoke invocation,
+  native load/resolution/query/mutation implementation, declaration, parser,
+  compile-only harness, production driver, INF, project/solution, package, or
+  deployment behavior changed.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/EXACT-INSTANCE-BINDING-RESTORATION-DESIGN.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/WORKLOG.md`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadiness.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Focused fail-closed validation:** PASS under Windows PowerShell 5.1 and
+  PowerShell 7: 9/9 checks per runtime, zero cross-runtime operation-result
+  deltas, all three operations blocked with
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, zero execution attempts,
+  zero native operations, zero device queries, and zero Windows mutations.
+- **Legacy offline-suite result:** The dual-runtime full exact-instance suite
+  was attempted but is not an acceptance gate for this task. It returned FAIL
+  from a pre-existing guard issue in unchanged
+  `tools/Test-ChatpadStaticMetadataParser.ps1`: a literal `DllImport` negative
+  test string is classified as a declaration outside the allowlist. The saved
+  PowerShell 7 run had 209 tests, 839 assertions, and seven cascading failures
+  (`G9`, `G10`, `G61`, `G91`, `G97`, `G98`, `G129`) from that one match.
+  Initial combined execution exceeded 120 seconds; separate runs completed.
+  No native/device/Windows/driver action occurred. The unrelated guard was not
+  repaired or reinterpreted as PASS.
+- **Preliminary manifest validation:** Generator PASS with 39 entries.
+  Windows PowerShell 5.1 and PowerShell 7 validators both returned PASS, zero
+  defects, `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT`, artifact opening false, and
+  metadata parsing false. Manifest shape remained 39 entries, duplicate IDs
+  0, duplicate paths 0, `NO_PATH` 0, real-DLL entry count 0, and design-gate
+  counter sum 0.
+- **Static and safety checks:** All five modified PowerShell files parsed with
+  zero syntax errors. Repository safety PASS with deployment, signing,
+  packaging, certificate/key creation, Windows mutation, device query,
+  hardware access, tracked artifact/evidence, and non-ignored evidence
+  counters all zero. Forbidden tracked generated files, tracked artifact
+  files, and untracked non-ignored files were zero. Current-state stale
+  static-review wording and both named malformed runtime-path terms were
+  absent. Prohibited-name hits added by this task occur only in documentation
+  that explicitly forbids those tools; no executable invocation was added.
+  `git diff --check` passed.
+- **Command corrections:** One preflight helper initially failed on a
+  PowerShell `-gt1` spacing typo; the corrected full preflight passed before
+  branching. One documentation patch missed exact line wrapping and was
+  reapplied successfully. The first focused-test wrapper had operator-spacing
+  errors and was discarded; the corrected strict wrapper produced the PASS
+  result above. During final validation, the manifest validator was first
+  passed an unsupported absolute `-ManifestPath`; because the validator joins
+  that argument to the repository root, both runtimes rejected the resulting
+  doubled path. The supported repository-relative path then passed under both
+  runtimes. A raw JSON-text identity helper also reported a mismatch because
+  Windows PowerShell serialized `total_defects` as `0` while PowerShell 7
+  serialized the same numeric value as `0.0`; the corrected typed semantic
+  comparison covered 49 result, defect, and accounting fields and returned
+  zero deltas, including entry-count and total-defect deltas of zero. A final
+  regeneration attempt first used an older authorization-plumbing synthetic
+  evidence record that no longer satisfies the generator's exact
+  status-boundary contract and failed before writing the manifest. The
+  generator was rerun with the already-approved ignored
+  `static-parser-status-boundary-remediation/parser-validation-final`
+  synthetic record; no parser or real artifact was run or accessed.
+- **Safety:** The static metadata parser was not run. The real DLL and ignored
+  real-review evidence were not opened, read, hashed, parsed, written,
+  overwritten, loaded, reflected over, executed, or modified. No native
+  library load, entry-point resolution, P/Invoke or SetupAPI/Newdev call,
+  device query, USB/HID/IOCTL/PnP/power action, Windows mutation, or driver
+  build/link/sign/CAT/package/stage/install/load/unload/bind/restore/restart
+  occurred.
+- **Commit and push:** Commit subject will be
+  `docs: open native adapter execution design gate`; Git is authoritative for
+  the resulting hash. Push target is
+  `origin/feature/native-adapter-execution-design-gate`.
+- **Next task:** Independent strict read-only audit of this native-adapter
+  execution design gate. Do not implement or execute native behavior during
+  that audit.

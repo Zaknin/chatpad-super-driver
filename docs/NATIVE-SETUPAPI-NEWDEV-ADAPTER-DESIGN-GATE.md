@@ -8,9 +8,14 @@ Authoritative current state:
 
 - Live readiness: `BLOCKED`.
 - Current gate:
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`.
+  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
 - Live adapter status: `SCAFFOLD_NON_EXECUTING`.
 - Capability blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Native execution status: `NOT_IMPLEMENTED`.
+- Execution design status:
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
+- Static metadata lane: `ACCEPTED_CLOSED` at
+  `cb80939a862d33efb1abf26a14d5c75d43a77b30`.
 - Live binding/restoration/restart authorization: `false`.
 - Live device queries, native operations, and Windows mutations performed: `0`.
 - Source audit verdict: `AUDIT PASS` for audited commit
@@ -27,6 +32,140 @@ Authoritative source files:
 - `tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1`
 - `tools/ExactInstance/CompileOnlyValidation/Chatpad.NativeInterop.CompileOnlyValidation.csproj`
 - `tools/ExactInstance/CompileOnlyValidation/CompileOnlyContracts.cs`
+
+## Native Adapter Execution Definition
+
+Native adapter execution means that repository code crosses from deterministic
+planning or declaration inspection into any runtime use of SetupAPI or Newdev.
+The boundary includes loading a native library, resolving an entry point,
+creating or opening a device-information set, querying a device, enumerating or
+selecting driver nodes, invoking `DiInstallDevice`, releasing native handles,
+or performing any related Windows, device, package, restart, or recovery
+action.
+
+The current PowerShell adapter remains non-executing. Its `Apply`, `Restore`,
+and `Restart` operations return
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; no public or exported
+function accepts caller-supplied authority that can change that result. This
+design gate does not implement native execution and does not authorize a live
+run.
+
+## Fail-Closed Authorization State Model
+
+The execution state model is:
+
+1. `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`: no execution design gate
+   has been accepted and no native implementation is available.
+2. `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`: this document and
+   its manifest contract exist, but independent audit has not accepted them.
+3. A future design-audit acceptance gate may authorize a separate
+   implementation task only. It must not authorize execution.
+4. A future implementation-audit gate may accept non-live implementation
+   evidence only. It must not authorize execution.
+5. A future live-execution authorization must name the exact implementation,
+   device instance, artifact/package, operation, host/session, rollback plan,
+   evidence root, and permitted Windows mutations.
+
+Missing, expired, malformed, mismatched, replayed, caller-created, synthetic,
+or partially validated authorization fails closed before native library load,
+entry-point resolution, device query, or mutation. Elevation, branch name,
+command-line intent, public strings, Boolean switches, object possession,
+module state, and prior audit success are never execution authority.
+
+## Prerequisites Before Native Execution
+
+Every item below requires separate evidence and acceptance:
+
+1. An independently audited implementation with no caller-controlled
+   authorization surface.
+2. Exact-instance binding using one complete canonical Plug and Play instance
+   ID, reopened and compared ordinally before every operation.
+3. An approved device snapshot proving class, container, parent, location,
+   hardware/compatible IDs, status/problem code, current driver, and immutable
+   driver-node identity.
+4. An approved artifact and package identity: canonical paths, byte sizes,
+   SHA-256 values, INF/catalog/signature identity, architecture, model/install
+   section, provider, service, and exact target/prior driver-node identities.
+5. An independently audited rollback/recovery plan that restores the exact
+   prior driver, treats uncertain post-mutation state as manual recovery, and
+   never substitutes a first, best, newest, or merely compatible driver.
+6. Explicit Windows-mutation authorization scoped to one operation, instance,
+   host/session, and evidence root.
+7. Separate package, signing, catalog, staging, installation, restart, or
+   reboot authorization whenever the approved operation needs it.
+8. A live-evidence contract that binds inputs, ordered native calls, Win32
+   results, cleanup, postconditions, counters, and terminal state.
+
+Any unmet prerequisite returns a blocked result with every native/device/
+Windows/driver action counter unchanged.
+
+## Future Call Scope
+
+The proposed exact-instance Apply/Restore implementation may eventually use
+only the reviewed call family:
+
+- opening and canonical identity/property capture through
+  `SetupDiCreateDeviceInfoList`, `SetupDiOpenDeviceInfoW`,
+  `SetupDiGetDeviceInstanceIdW`, `SetupDiGetDevicePropertyW`, and
+  `SetupDiGetDeviceRegistryPropertyW`;
+- exact compatible-driver list construction and inspection through
+  `SetupDiBuildDriverInfoList`, `SetupDiEnumDriverInfoW`,
+  `SetupDiGetDriverInfoDetailW`, and
+  `SetupDiGetDriverInstallParamsW`;
+- exact selected-node association through `SetupDiSetSelectedDriverW`;
+- exact-device installation through `DiInstallDevice`; and
+- deterministic cleanup through `SetupDiDestroyDriverInfoList` and
+  `SetupDiDestroyDeviceInfoList`.
+
+This is design scope, not invocation authorization. Any missing declaration,
+including future device-install-parameter APIs needed to constrain an INF
+search, requires its own source change, compile-only validation, and
+independent audit before implementation acceptance.
+
+Restart remains a separate future exact-device operation with no current API
+declaration or execution path.
+
+## Calls And Actions Still Forbidden
+
+Until future explicit authorization, the following remain forbidden:
+
+- loading `setupapi.dll`, `newdev.dll`, or another native library;
+- resolving or invoking any native entry point or P/Invoke declaration;
+- device enumeration, device query, handle creation, or property retrieval;
+- `DiInstallDriver`, `UpdateDriverForPlugAndPlayDevices`, Configuration
+  Manager mutation, DIFx, PnPUtil, DevCon, WMI/CIM mutation, registry/service
+  mutation, broad rescans, or class/hardware-ID-wide selection;
+- USB, HID, IOCTL, PnP, power, restart, reboot, or hardware operations; and
+- driver build, link, sign, CAT generation, package, stage, install, load,
+  unload, bind, restore, or restart.
+
+## Future Safety Counters
+
+Future attempt evidence must record exact integer counters for authorization
+rejections, native library load attempts/successes, entry-point resolution
+attempts/successes, SetupAPI/Newdev calls by entry point, device queries,
+selected-driver mutations, install calls, cleanup attempts/failures,
+postcondition queries/failures, rollback attempts/results, restart/reboot
+requirements, Windows mutations, driver actions, uncertain-state events, and
+unexpected exceptions. A design, implementation, or live audit must reject
+missing, non-integer, negative, inconsistent, or unaccounted counters.
+
+The current design-gate manifest records zero native library loads, entry-point
+resolutions, SetupAPI/Newdev invocations, device queries, Windows mutations,
+driver actions, authorization attempts, and uncertain-state events.
+
+## Required Independent Audits
+
+Independent design audit must verify the complete contract, exact status
+vocabulary, fail-closed prerequisites, call allowlist, forbidden operations,
+counter requirements, documentation consistency, manifest validation, and
+absence of an executable path.
+
+Any later implementation requires a separate independent source and
+adversarial audit covering malformed/missing authorization, identity drift,
+duplicate/ambiguous driver nodes, cleanup failure, post-mutation uncertainty,
+replay, public API shape, module-state introspection, and proof that no live
+operation can occur before a distinct exact live-run authorization.
 
 ## Declaration Boundary
 
@@ -183,6 +322,8 @@ passed independent audit at `f0be4746ad4cc548334336c1e66f07007b71859f`.
 No task may open, hash, or parse compiled output, load or reflect over it,
 resolve entry points, invoke native APIs, query devices, or mutate Windows
 unless that exact action is later authorized. The current gate is
-`BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION`; the
+`BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`; the
 capability blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`;
-native execution remains `NOT_IMPLEMENTED`.
+native execution remains `NOT_IMPLEMENTED`. The next task is an independent
+read-only audit of this execution design gate and its fail-closed manifest and
+scaffold vocabulary. It is not an implementation or live-execution task.

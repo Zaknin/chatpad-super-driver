@@ -49,10 +49,11 @@ $acceptedSuiteGates=if($NoArtifactOpenDesignGateAudit){
         'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION',
         'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT',
         'BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT',
-        'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED',
+        'BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'
     )
 }else{
-    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT','BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED')
+    @('BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUTHORIZATION','BLOCKED_PENDING_STATIC_METADATA_PARSER_IMPLEMENTATION_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_METADATA_REVIEW_AUTHORIZATION','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_AUTHORIZATION_PLUMBING_AUDIT','BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT','BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED','BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT')
 }
 $acceptedSuiteMetadataStatuses=if($NoArtifactOpenDesignGateAudit){
     @(
@@ -192,12 +193,49 @@ $manifest=[pscustomobject][ordered]@{
     real_artifact_static_metadata_review_completed=$true
     framework_status='PASS'
     live_installation_readiness='BLOCKED'
-    current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+    current_gate='BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'
     capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     native_execution_status='NOT_IMPLEMENTED'
     manifest_generation_mode=if($NoArtifactOpenDesignGateAudit){'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'}else{'STANDARD_READINESS_RESULT'}
     live_adapter_status='SCAFFOLD_NON_EXECUTING'
     live_binding_authorized=$false
+    native_adapter_execution_design_gate=[pscustomobject][ordered]@{
+        schema_version='chatpad-native-adapter-execution-design-gate-v1'
+        status='NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT'
+        current_gate='BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'
+        opened_from_commit='cb80939a862d33efb1abf26a14d5c75d43a77b30'
+        design_document_path='docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md'
+        implementation_status='NOT_IMPLEMENTED'
+        execution_authorized=$false
+        independent_audit_required=$true
+        live_installation_readiness='BLOCKED'
+        capability_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        static_metadata_lane_status='ACCEPTED_CLOSED'
+        supported_operations=@('Apply','Restore','Restart')
+        native_api_families=@('SetupAPI','Newdev')
+        required_evidence=@(
+            'EXACT_INSTANCE_BINDING',
+            'APPROVED_DEVICE_INSTANCE_IDENTITY',
+            'APPROVED_ARTIFACT_IDENTITY',
+            'APPROVED_ROLLBACK_RECOVERY_PLAN'
+        )
+        required_future_authorizations=@(
+            'NATIVE_ADAPTER_IMPLEMENTATION',
+            'WINDOWS_MUTATION',
+            'DRIVER_PACKAGE_SIGNING_STAGING_WHEN_APPLICABLE',
+            'LIVE_EXECUTION'
+        )
+        safety_counters=[pscustomobject][ordered]@{
+            native_library_load_attempts=0
+            entry_point_resolution_attempts=0
+            setupapi_newdev_invocation_attempts=0
+            device_query_attempts=0
+            windows_mutation_attempts=0
+            driver_action_attempts=0
+            authorization_rejections=0
+            uncertain_state_events=0
+        }
+    }
     native_interop_source_audit=[pscustomobject][ordered]@{
         verdict='AUDIT PASS'
         audited_branch='feature/runtime-bringup-native-interop-source-boundary'
@@ -239,7 +277,7 @@ $manifest=[pscustomobject][ordered]@{
     compiled_artifact_metadata_review_design_gate=[pscustomobject][ordered]@{
         status='STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED'
         native_execution_status='NOT_IMPLEMENTED'
-        current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+        current_gate='BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'
         real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
         runtime_blocker='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         status_boundary_audit_acceptance=[pscustomobject][ordered]@{
@@ -291,7 +329,7 @@ $manifest=[pscustomobject][ordered]@{
         independent_design_audit_artifact_inventory_sha256='2EED833A5CF5948126A766FFAAA87FD267E548DD32B2237E1DA5644BF7355A3B'
         static_metadata_parser_implementation_design=[pscustomobject][ordered]@{
             status='DESIGN_AUDIT_ACCEPTED_PENDING_IMPLEMENTATION_AUTHORIZATION'
-            current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+            current_gate='BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'
             real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
             transition_base_commit='382aa85980408939a93043583b48e942ebfbf018'
             design_document_path='docs/STATIC-METADATA-PARSER-IMPLEMENTATION-DESIGN.md'
@@ -325,7 +363,7 @@ $manifest=[pscustomobject][ordered]@{
         }
         static_metadata_parser_implementation=[pscustomobject][ordered]@{
             status='ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED'
-            current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+            current_gate='BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'
             real_artifact_review_authorization_transition_commit='baab23aece902cbb06e11a308d9092fdc0f9ce0d'
             independent_implementation_audit_verdict='AUDIT PASS'
             independent_implementation_audit_branch='feature/runtime-bringup-static-metadata-parser-preflight-output-remediation'

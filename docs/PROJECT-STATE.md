@@ -1,18 +1,23 @@
 # Project State
 
-*Last updated: 2026-07-06 (real-artifact static metadata review audit accepted; static metadata lane closed)*
+*Last updated: 2026-07-06 (native adapter execution design gate opened; pending independent audit)*
 
 ## Current State
 
-- **Branch:** `feature/runtime-bringup-real-artifact-static-metadata-review-authorized`.
-- **Transition base:** `83eb4acf44d50d8c43a09f7827728763e726e9c2`.
+- **Branch:** `feature/native-adapter-execution-design-gate`.
+- **Starting commit:** `cb80939a862d33efb1abf26a14d5c75d43a77b30`.
 - **Current transition commit:** Git is authoritative because this document,
   the generator, validator, manifest, and transition record are committed
   atomically.
 - **Previous gate:**
-  `BLOCKED_PENDING_REAL_ARTIFACT_STATIC_REVIEW_STATUS_BOUNDARY_AUDIT`.
-- **Current gate and runtime blocker:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Current gate:**
+  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
+- **Runtime blocker:**
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Execution design status:**
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
+- **Execution authorized:** `false`.
 - **Real-artifact path gate:** `STATUS_BOUNDARY_ACCEPTED`.
 - **Metadata/parser accepted status:**
   `STATIC_METADATA_PARSER_ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_STATUS_BOUNDARY_ACCEPTED`.
@@ -25,10 +30,26 @@
   authorized static review.
 - **Real artifact write/overwrite:** `NOT_PERFORMED`.
 
-The generator now emits, and the validator requires, the accepted post-audit
-vocabulary. The static metadata lane is formally accepted and closed. This
-does not authorize runtime/native execution or any device, Windows, or driver
-action.
+The static metadata lane remains accepted and closed. The generator now emits,
+and the validator requires, the pending native-adapter execution-design audit
+gate plus zero execution-attempt counters. This does not authorize runtime/
+native execution or any device, Windows, package, signing, or driver action.
+
+## Native Adapter Execution Design Gate
+
+`docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` defines:
+
+- the exact boundary between planning/declarations and native execution;
+- fail-closed design, implementation-audit, and future live-run gates;
+- exact-instance, device, artifact/package, rollback, Windows-mutation, and
+  evidence prerequisites;
+- the only proposed SetupAPI/Newdev call family;
+- operations that remain forbidden; and
+- future attempt, cleanup, rollback, uncertainty, and driver-action counters.
+
+The existing PowerShell native-adapter scaffold remains non-executing. Only its
+current-gate vocabulary changed. No P/Invoke invocation, native library load,
+entry-point resolution, device query, or Windows/driver action was added.
 
 ## Accepted Audit
 
@@ -81,25 +102,38 @@ the DLL during this transition:
 - Driver build, link, sign, CAT generation, package, stage, install, load,
   unload, bind, restore, and restart remain unauthorized and did not occur.
 - Parser source, parser tests, native declarations, compile-only harness,
-  runtime adapter, production driver source, INF, projects/solutions,
-  binaries, frozen artifacts, and `legacy/` are unchanged.
+  production driver source, INF, projects/solutions, binaries, frozen
+  artifacts, and `legacy/` are unchanged. The non-executing PowerShell adapter
+  scaffold changed only its current-gate constant.
 
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
 - Manifest entries: 39; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
-- Manifest validation: required under Windows PowerShell 5.1 and PowerShell 7.
-- Cross-runtime manifest identity: required to match 39/39.
-- Repository safety and forbidden generated-file scans: required to pass.
+- Manifest validation: `PASS`, zero defects under Windows PowerShell 5.1 and
+  PowerShell 7 in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode.
+- Focused fail-closed adapter checks: `PASS`, 9/9 under each runtime, with
+  identical blocked operation results and all action counters zero.
+- Cross-runtime manifest identity: `PASS`, 39/39 entries, zero deltas.
+- Repository safety and forbidden generated-file scans: `PASS`, zero prohibited
+  counters/files.
+- The broader legacy exact-instance suite remains blocked by a pre-existing
+  native-guard false positive against a literal `DllImport` negative-test
+  string in unchanged parser tests. This task does not repair that unrelated
+  baseline.
 
 ## Unresolved Blockers
 
+- Independent audit has not accepted the native-adapter execution design.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
+- The legacy full exact-instance suite has the unrelated native-guard baseline
+  failure described above; focused changed-surface checks pass.
 - Live readiness remains `BLOCKED`.
 - Native execution remains `NOT_IMPLEMENTED`.
 
 ## Next Task
 
-Open a separately authorized native-adapter execution design/implementation
-gate. Do not infer live execution, device access, Windows mutation, or driver
-action authorization from static metadata acceptance.
+Perform an independent strict read-only audit of the native-adapter execution
+design gate. Do not implement or execute the adapter, query devices, mutate
+Windows, or perform any package, signing, staging, installation, or driver
+action.
