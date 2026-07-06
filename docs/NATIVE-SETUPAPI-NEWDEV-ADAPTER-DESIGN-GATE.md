@@ -14,6 +14,9 @@ Authoritative current state:
 - Native execution status: `NOT_IMPLEMENTED`.
 - Execution design status:
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
+- Fail-closed scaffolding status:
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
+- Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - Static metadata lane: `ACCEPTED_CLOSED` at
   `cb80939a862d33efb1abf26a14d5c75d43a77b30`.
 - Live binding/restoration/restart authorization: `false`.
@@ -35,6 +38,11 @@ Authoritative current state:
   and native/file loading members unreachable. Design-gate operations use
   tracked evidence records only in mode
   `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- Fail-closed scaffolding from branch
+  `feature/native-adapter-fail-closed-scaffolding` adds inert operation
+  request, evidence-state, authorization-state, and deterministic blocked
+  execution-result records. It does not add native implementation, artifact
+  I/O, live device lookup, Windows mutation, or driver action.
 
 Authoritative source files:
 
@@ -60,6 +68,16 @@ and `Restart` operations return
 function accepts caller-supplied authority that can change that result. This
 design gate does not implement native execution and does not authorize a live
 run.
+
+The fail-closed scaffolding records the requested operation, target identity,
+evidence state, authorization state, planned call family, and zero action
+counters for audit. Target identity fields are inert request data and do not
+trigger enumeration, property reads, current-driver inspection, package
+selection, or any live lookup. Unsupported operations return
+`UNSUPPORTED_NATIVE_ADAPTER_OPERATION`. Missing or malformed tracked evidence,
+missing authorization, stale authorization, design-gate-only authorization, and
+future-live authorization all fail closed before any artifact, native, device,
+Windows, or driver boundary.
 
 The failed audit found that the blocked operation result still reached
 `Test-ChatpadNativeInteropCompileOnlyValidationEvidence`, whose compile-output
@@ -88,6 +106,10 @@ The execution state model is:
 5. A future live-execution authorization must name the exact implementation,
    device instance, artifact/package, operation, host/session, rollback plan,
    evidence root, and permitted Windows mutations.
+
+The current fail-closed scaffolding intentionally rejects every authorization
+shape, including future-live-looking records. It exposes authorization state
+only as evidence that execution is not authorized under this branch.
 
 Missing, expired, malformed, mismatched, replayed, caller-created, synthetic,
 or partially validated authorization fails closed before native library load,
@@ -341,6 +363,14 @@ G133-G152 add the original compile-only validation coverage. G153-G170 add:
 - preservation of the historical pending re-audit transition in compile
   evidence while the active gate advances after audit acceptance.
 
+Focused fail-closed scaffolding coverage adds 16 checks under both Windows
+PowerShell 5.1 and PowerShell 7 for blocked `Apply`, `Restore`, and `Restart`;
+unsupported operation rejection; missing and malformed evidence rejection;
+missing, malformed, stale, design-gate, and future-live authorization
+rejection; inert target identity handling; and zero native/device/Windows/
+driver/artifact counters. The no-artifact-I/O regression traces 11 functions
+and requires zero forbidden commands.
+
 ## Next Boundary
 
 The remediated compiled-artifact metadata-review design gate passed independent
@@ -350,10 +380,12 @@ implementation design passed independent audit at
 passed independent audit at `f0be4746ad4cc548334336c1e66f07007b71859f`.
 The native-adapter execution design gate and no-artifact-I/O remediation passed
 independent audit at `d71c6a46b0066eb8bc48e8de14795c223cdaa00c` and are
-accepted and closed. No task may open, hash, or parse compiled output, load or reflect over it,
-resolve entry points, invoke native APIs, query devices, or mutate Windows
-unless that exact action is later authorized. The current gate is
+accepted and closed. Fail-closed scaffolding is now implemented as
+`NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`, but no task
+may open, hash, or parse compiled output, load or reflect over it, resolve
+entry points, invoke native APIs, query devices, or mutate Windows unless that
+exact action is later authorized. The current gate is
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; the capability blocker has
 the same value; live readiness remains `BLOCKED`; native execution remains
-`NOT_IMPLEMENTED`. The next implementation/scaffolding step requires separate
-authorization and independent audit and must remain non-live and fail-closed.
+`NOT_IMPLEMENTED`. The next step is an independent strict read-only audit of
+the fail-closed scaffolding and must remain non-live and fail-closed.

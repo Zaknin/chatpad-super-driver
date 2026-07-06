@@ -10012,3 +10012,82 @@
   current gate and runtime blocker
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness `BLOCKED`,
   and native execution `NOT_IMPLEMENTED`.
+
+---
+
+## 2026-07-06 12:40 +04:00 - Add fail-closed native adapter scaffolding
+
+- **Objective:** Create branch
+  `feature/native-adapter-fail-closed-scaffolding` from exact commit
+  `788ce8adfd0500741783ee1e359d5f805db710dd` and add only non-live,
+  fail-closed native-adapter execution scaffolding. Keep native execution
+  unimplemented and prohibit static parser, full compile-output validator, real
+  DLL access, device query, Windows mutation, and driver actions.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`,
+  branch `feature/native-adapter-execution-design-gate`, HEAD
+  `788ce8adfd0500741783ee1e359d5f805db710dd`, upstream synchronized `0/0`,
+  clean tree and index, ignored `IDEA.md`, parent
+  `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`, accepted design status
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`,
+  current gate and runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, and native execution `NOT_IMPLEMENTED`.
+- **Implementation:** Added inert native adapter execution request records,
+  evidence-state checks, authorization-state checks, and a deterministic
+  fail-closed execution result in
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`. `Apply`,
+  `Restore`, and `Restart` still return
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; unsupported operations
+  return `UNSUPPORTED_NATIVE_ADAPTER_OPERATION`; malformed or non-current
+  evidence/authorization states fail closed; target identity fields remain
+  request data only. Added status
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO` and kept
+  evidence mode `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- **Focused tests:** Added
+  `Test-ChatpadNativeAdapterFailClosedScaffolding` with 16 checks covering
+  blocked Apply/Restore/Restart, unsupported operation rejection, missing and
+  malformed evidence rejection, missing/malformed/stale/design-gate/future-live
+  authorization rejection, inert target identity handling, and zero native/
+  device/Windows/driver/artifact counters. Expanded
+  `Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression` to trace 11
+  functions and verify the added fail-closed fields and counters.
+- **Manifest and docs:** Updated the readiness manifest generator and validator
+  to emit and require
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
+  Regenerated `docs/evidence/runtime-bringup-readiness-manifest.json`.
+  Updated `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PROJECT-STATE.md`, and
+  `docs/NEXT-TASK.md`. No durable workflow or architecture decision required a
+  `docs/DECISIONS.md` entry.
+- **Validation:** Final validation is recorded in the commit handoff and final
+  response. Required checks include PowerShell syntax parsing under Windows
+  PowerShell 5.1 and PowerShell 7, focused fail-closed scaffolding tests under
+  both runtimes, no-artifact-I/O regression under both runtimes, manifest
+  validation under both runtimes, cross-runtime manifest identity, repository
+  safety/prohibited-pattern scans, forbidden generated-file scan, documentation
+  consistency checks, runtime-bringup spelling-variant search,
+  and `git diff --check`.
+- **Command corrections:** Early compact validation wrappers accidentally let
+  PowerShell interpolate `$r` or otherwise parse wrapper code before producing
+  useful evidence. They changed no repository state. The checks were rerun as
+  focused commands and are not counted as passed until their explicit PASS
+  summaries are recorded.
+- **Safety:** The static metadata parser was not run. The full compile-output
+  validator was not run. The real DLL or compile outputs were not opened, read,
+  hashed, parsed, written, loaded, reflected over, executed, stated, or scanned.
+  No native library load, entry-point resolution, SetupAPI/Newdev invocation,
+  device query, hardware access, Windows mutation, or driver build/link/sign/
+  CAT/package/stage/install/load/unload/bind/restore/restart occurred.
+- **Final state:** Current gate and runtime blocker remain
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live readiness remains
+  `BLOCKED`; native execution remains `NOT_IMPLEMENTED`; fail-closed
+  scaffolding status is
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
+- **Commit and push:** Commit subject will be
+  `feat: add fail-closed native adapter scaffolding`; Git is authoritative for
+  the resulting hash. Push target is
+  `origin/feature/native-adapter-fail-closed-scaffolding`.
+- **Next task:** Independent strict read-only audit of this fail-closed
+  scaffolding. Verify the request, evidence, authorization, and execution-result
+  paths fail closed without artifact I/O, native loading, entry-point
+  resolution, device query, Windows mutation, or driver action.

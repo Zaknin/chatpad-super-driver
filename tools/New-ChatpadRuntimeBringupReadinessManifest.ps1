@@ -202,6 +202,7 @@ $manifest=[pscustomobject][ordered]@{
     native_adapter_execution_design_gate=[pscustomobject][ordered]@{
         schema_version='chatpad-native-adapter-execution-design-gate-v1'
         status='NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO'
+        fail_closed_scaffolding_status='NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO'
         current_gate='BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         opened_from_commit='cb80939a862d33efb1abf26a14d5c75d43a77b30'
         design_document_path='docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md'

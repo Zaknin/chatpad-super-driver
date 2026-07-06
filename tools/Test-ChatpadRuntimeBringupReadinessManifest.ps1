@@ -883,6 +883,7 @@ else{
     $executionCounters=$executionDesign.PSObject.Properties['safety_counters']
     if($executionDesign.schema_version-ne'chatpad-native-adapter-execution-design-gate-v1'-or
         $executionDesign.status-ne'NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO'-or
+        $executionDesign.fail_closed_scaffolding_status-ne'NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO'-or
         $executionDesign.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $executionDesign.opened_from_commit-ne'cb80939a862d33efb1abf26a14d5c75d43a77b30'-or
         $executionDesign.design_document_path-ne'docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md'-or

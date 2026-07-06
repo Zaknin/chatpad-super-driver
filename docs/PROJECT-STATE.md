@@ -1,22 +1,25 @@
 # Project State
 
-*Last updated: 2026-07-06 (native adapter execution design gate accepted and closed)*
+*Last updated: 2026-07-06 (fail-closed native adapter scaffolding added)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-execution-design-gate`.
-- **Starting commit:** `cb80939a862d33efb1abf26a14d5c75d43a77b30`.
+- **Branch:** `feature/native-adapter-fail-closed-scaffolding`.
+- **Starting commit:** `788ce8adfd0500741783ee1e359d5f805db710dd`.
 - **Current transition commit:** Git is authoritative because this document,
-  the generator, validator, manifest, and transition record are committed
+  the implementation, tests, generator, validator, and manifest are committed
   atomically.
 - **Previous gate:**
-  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Runtime blocker:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Execution design status:**
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
+- **Fail-closed scaffolding status:**
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
+- **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - **Execution authorized:** `false`.
 - **Real-artifact path gate:** `STATUS_BOUNDARY_ACCEPTED`.
 - **Metadata/parser accepted status:**
@@ -31,27 +34,18 @@
 - **Real artifact write/overwrite:** `NOT_PERFORMED`.
 
 The static metadata lane and native-adapter execution design gate are accepted
-and closed. The generator emits, and the validator requires, the exact accepted
-design status, audit facts, final implementation blocker, and zero action
-counters. This does not authorize runtime/native execution or any device,
-Windows, package, signing, or driver action.
+and closed. This transition adds only non-live fail-closed execution scaffolding:
+request shaping, evidence-state checking, authorization-state checking, and a
+deterministic fail-closed execution result for `Apply`, `Restore`, and
+`Restart`. It does not implement native execution or authorize any runtime,
+device, Windows, package, signing, or driver action.
 
-Independent audit of
-`dddd4afab914c1929de5683d6822fde5cbf46c6a` failed because fail-closed native
-adapter operations reached the full compile-output evidence validator and
-therefore opened and hashed the real DLL. The remediated operation path uses
-tracked evidence records only in
-`EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` mode. The full compile-output validator
-remains available outside this design-gate path for separately authorized
-artifact-validation work.
-
-Independent strict read-only audit of remediation commit
-`d71c6a46b0066eb8bc48e8de14795c223cdaa00c` returned `AUDIT PASS`. It traced
-17 transitive functions, reached record-only validation, and found the full
-compile-output validator, `Get-FileHash`, output enumeration, and native/file
-loading members unreachable. Apply, Restore, and Restart were 3/3 blocked per
-runtime under Windows PowerShell 5.1 and PowerShell 7. Missing or malformed
-tracked evidence failed closed without artifact I/O.
+`Apply`, `Restore`, and `Restart` still return
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Unsupported operations
+return `UNSUPPORTED_NATIVE_ADAPTER_OPERATION`. Missing or malformed tracked
+evidence and every non-current authorization shape fail closed before any native
+or artifact I/O boundary. Target identity fields are accepted only as inert
+request data and do not trigger live lookup.
 
 ## Native Adapter Execution Design Gate
 
@@ -65,68 +59,26 @@ tracked evidence failed closed without artifact I/O.
 - operations that remain forbidden; and
 - future attempt, cleanup, rollback, uncertainty, and driver-action counters.
 
-The existing PowerShell native-adapter scaffold remains non-executing. Its
-operation, production-adapter, source-boundary-contract, call-plan, and audit
-acceptance paths now use only the tracked compile-only evidence record and
-tracked readiness manifest. No compile-output path is opened, read, hashed,
-parsed, written, or scanned by these paths. No P/Invoke invocation, native
-library load, entry-point resolution, device query, or Windows/driver action
-was added.
+The PowerShell native-adapter scaffold remains non-executing. Its operation,
+production-adapter, source-boundary-contract, call-plan, audit-acceptance, and
+fail-closed scaffolding paths use tracked evidence records only in
+`EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` mode. No compile-output path is opened,
+read, hashed, parsed, written, loaded, reflected over, executed, or scanned by
+these paths. No P/Invoke invocation, native library load, entry-point
+resolution, device query, or Windows/driver action was added.
 
 ## Accepted Audit
 
+Independent strict read-only audit of remediation commit
+`d71c6a46b0066eb8bc48e8de14795c223cdaa00c` returned `AUDIT PASS`. It traced
+17 transitive functions, reached record-only validation, and found the full
+compile-output validator, `Get-FileHash`, output enumeration, and native/file
+loading members unreachable. Apply, Restore, and Restart were 3/3 blocked per
+runtime under Windows PowerShell 5.1 and PowerShell 7. Missing or malformed
+tracked evidence failed closed without artifact I/O.
+
 The post-audit vocabulary-design remediation at
 `83eb4acf44d50d8c43a09f7827728763e726e9c2` received `AUDIT PASS`.
-Initial and final audit Git status were empty.
-
-- Parser source net change versus `eedf2a5`: none.
-- Premature transition from `6372adf`: reverted.
-- Parser rerun during remediation/audit: no.
-- Real DLL access during remediation/audit: no.
-- Runtime/native/device/Windows/driver actions: none.
-
-The ignored evidence inventory represents 16 physical files and 15
-authoritative files. Validation was `15/15`; its self-entry is
-`authoritative: false` under self-reference policy
-`excluded_from_authoritative_size_hash`. The
-`3bb2e73-preflight-boundary` subtree accounts for 14 files.
-
-## Accepted Review Evidence
-
-- Review evidence:
-  `artifacts/logs/real-artifact-static-metadata-review/static-metadata-parser-real-artifact-review.json`
-- Review evidence SHA-256:
-  `024693B23AA26C42CD2F9D5AB995956CEB202A76FBA5481264EF828AAEDF0875`
-- Evidence inventory:
-  `artifacts/logs/real-artifact-static-metadata-review/evidence-inventory.json`
-- Result: `STATIC_METADATA_VALIDATED`
-
-Approved artifact identity, recorded from existing evidence without accessing
-the DLL during this transition:
-
-- Path:
-  `artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll`
-- SHA-256:
-  `77E352F13B7B0C0115CD3518A16865FA463E6FA8D330F5AFBBB300B14D91B862`
-- PE type/machine: `PE32Plus` / `Amd64`
-- Assembly: `Chatpad.NativeInterop.CompileOnlyValidation` v0.0.0.0
-- Types/methods/P/Invokes: 24 / 71 / 13
-- Native module references: `newdev.dll`, `setupapi.dll`
-
-## Safety Boundary
-
-- The static metadata parser was not rerun for this transition.
-- The real DLL was not opened, read, hashed, parsed, written, overwritten,
-  loaded, reflected over, or executed for this transition.
-- Native DLL loading, entry-point resolution, native or SetupAPI/Newdev
-  invocation, device query, hardware access, and Windows mutation remain
-  unauthorized and did not occur.
-- Driver build, link, sign, CAT generation, package, stage, install, load,
-  unload, bind, restore, and restart remain unauthorized and did not occur.
-- Parser source/tests, native-adapter design-gate modules, native declarations,
-  compile-only harness, production driver source, INF, projects/solutions,
-  binaries, frozen artifacts, and `legacy/` are unchanged by this acceptance
-  transition.
 
 ## Validation Snapshot
 
@@ -134,10 +86,13 @@ the DLL during this transition:
 - Manifest entries: 39; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Manifest validation: `PASS`, zero defects under Windows PowerShell 5.1 and
   PowerShell 7 in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode.
-- Focused fail-closed adapter checks: `PASS`, 9/9 under each runtime, with
-  identical blocked operation results and all action counters zero.
+- Focused fail-closed scaffolding checks: `PASS`, 16/16 under each runtime,
+  with Apply, Restore, and Restart blocked; invalid operation rejected; missing
+  and malformed evidence blocked; missing, malformed, stale, design-gate, and
+  future-live authorization states rejected; and all native/device/Windows/
+  driver/artifact counters zero.
 - No-artifact-I/O regression: `PASS` under Windows PowerShell 5.1 and
-  PowerShell 7; 7/7 traced functions, three blocked operations per runtime,
+  PowerShell 7; 11/11 traced functions, three blocked operations per runtime,
   zero forbidden commands, zero native loads/invocations, zero device queries,
   zero Windows mutations, and zero native operations.
 - Cross-runtime manifest identity: `PASS`, 39/39 entries, zero deltas.
@@ -151,14 +106,17 @@ the DLL during this transition:
 ## Unresolved Blockers
 
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
-- The legacy full exact-instance suite has the unrelated native-guard baseline
-  failure described above; focused changed-surface checks pass.
 - Live readiness remains `BLOCKED`.
 - Native execution remains `NOT_IMPLEMENTED`.
+- Independent strict read-only audit of this fail-closed scaffolding is still
+  required before any later non-live implementation expansion.
+- The legacy full exact-instance suite has the unrelated native-guard baseline
+  failure described above; focused changed-surface checks pass.
 
 ## Next Task
 
-Perform an independent strict read-only audit of this audit-acceptance
-transition. Verify the exact accepted vocabulary and recorded audit facts while
-keeping native execution unimplemented and all runtime/device/Windows/driver
-actions unauthorized.
+Perform an independent strict read-only audit of the fail-closed native adapter
+scaffolding on branch `feature/native-adapter-fail-closed-scaffolding`. Verify
+that all new request, authorization, evidence, and execution-result paths fail
+closed without artifact I/O, native loading, entry-point resolution, device
+query, Windows mutation, or driver action.

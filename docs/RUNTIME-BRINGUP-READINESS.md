@@ -21,15 +21,20 @@ remediation passed independent audit at
 `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`. The design gate is accepted and
 closed; the current blocker is native adapter execution not implemented.
 
-Branch `feature/native-adapter-execution-design-gate` opens the next
-non-executing contract stage from accepted static metadata transition
-`cb80939a862d33efb1abf26a14d5c75d43a77b30`. The accepted compile-only
+Branch `feature/native-adapter-fail-closed-scaffolding` adds the next
+non-executing scaffolding stage from accepted design-gate transition
+`788ce8adfd0500741783ee1e359d5f805db710dd`. The accepted compile-only
 validation, declaration-only SetupAPI/Newdev source boundary, static metadata
-review, and exact-instance offline framework remain underlying evidence; none
-authorizes execution. The future API sequence, structures, driver-node
+review, exact-instance offline framework, and accepted no-artifact-I/O
+design-gate audit remain underlying evidence; none authorizes execution. This
+stage adds request shaping, evidence-state checking, authorization-state
+checking, and deterministic fail-closed operation results only. It does not add
+native implementation, live lookup, artifact I/O, device query, Windows
+mutation, or driver behavior. The future API sequence, structures, driver-node
 identity evidence, exact-instance binding/restoration proof, restart/reboot
 separation, error taxonomy, authorization prerequisites, safety counters,
-source-boundary guard, and compile-only evidence validator are documented in
+source-boundary guard, compile-only evidence validator, and fail-closed
+scaffolding status are documented in
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` and implemented as
 offline gate logic in `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`.
 The declaration source and static boundary validator live under
@@ -90,6 +95,8 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Native execution status: `NOT_IMPLEMENTED`.
 - Execution design status:
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
+- Fail-closed scaffolding status:
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
 - Native adapter design-gate remediation audit: `AUDIT PASS` for
   `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`; 17 functions traced; full
   compile-output validator, `Get-FileHash`, output enumeration, and native/file
@@ -115,6 +122,12 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Native source has now been compiled only in the isolated non-production
   harness. Compiled output remains unloaded, unexecuted, unreflected, and
   uninvoked. Native adapter execution remains unimplemented.
+- Fail-closed native adapter scaffolding now records inert request, evidence,
+  authorization, and execution-result models. `Apply`, `Restore`, and
+  `Restart` remain blocked with
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; unsupported operations
+  are rejected; malformed or non-current evidence/authorization states fail
+  closed; and all native/device/Windows/driver/action counters remain zero.
 - Tracked text evidence uses explicit `canonical_lf_text`; raw working-tree
   identity is informational. Compile outputs use `raw_file_bytes`.
 - Old v1 compile-output hashes are superseded historical ignored derived
@@ -845,11 +858,12 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform an independent strict read-only audit of the native-adapter execution
-design gate. Native execution remains `NOT_IMPLEMENTED`, live readiness
-remains `BLOCKED`, and SetupAPI/Newdev invocation remains unauthorized. Do not
-implement the adapter, rerun the parser, or open, read, hash, parse, write,
-load, reflect over, or execute the real DLL. Continue to prohibit native DLL
-loading, entry-point resolution, native invocation, device query, hardware
-access, Windows mutation, and driver build/link/sign/CAT/package/stage/install/
-load/unload/bind/restore/restart actions.
+Perform an independent strict read-only audit of the fail-closed native adapter
+scaffolding. Native execution remains `NOT_IMPLEMENTED`, live readiness remains
+`BLOCKED`, and SetupAPI/Newdev invocation remains unauthorized. Do not implement
+the adapter, rerun the parser, run the full compile-output validator, or open,
+read, hash, parse, write, load, reflect over, execute, stat, or scan the real
+DLL or compile outputs. Continue to prohibit native DLL loading, entry-point
+resolution, native invocation, device query, hardware access, Windows mutation,
+and driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
+restart actions.

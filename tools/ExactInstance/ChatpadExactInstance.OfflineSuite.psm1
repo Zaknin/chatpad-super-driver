@@ -45,6 +45,10 @@ function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
         'Add-NativeAuditAcceptanceFields',
         'Get-ChatpadNativeInteropCallPlan',
         'Get-ChatpadNativeInteropSourceBoundaryContract',
+        'New-ChatpadNativeAdapterExecutionRequest',
+        'Test-ChatpadNativeAdapterExecutionEvidence',
+        'Test-ChatpadNativeAdapterExecutionAuthorization',
+        'Invoke-ChatpadNativeAdapterFailClosedExecution',
         'New-ChatpadProductionNativeAdapter',
         'Resolve-ChatpadNativeAdapter',
         'Invoke-ChatpadNativeAdapterOperation'
@@ -80,7 +84,7 @@ function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
     }
     $records = @($dynamic.records)
     [pscustomobject][ordered]@{
-        result = if ($parseErrors.Count -eq 0 -and $safeFunctions.Count -eq $safeFunctionNames.Count -and $forbiddenCommands.Count -eq 0 -and $safeText -notmatch '\[IO\.File\]::(ReadAllBytes|ReadAllLines|Open|OpenRead|WriteAllBytes)' -and -not $dynamic.exception -and $records.Count -eq 3 -and @($records | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or $_.compile_only_validation.validation_mode -ne 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO' -or $_.compile_only_validation.artifact_io_performed -ne $false -or $_.compile_only_validation.compile_output_directory_scanned -ne $false -or $_.compile_only_validation.real_dll_accessed -ne $false -or $_.native_loading_performed -ne $false -or $_.native_invocation_performed -ne $false -or $_.live_device_queries_performed -ne 0 -or $_.windows_mutations_performed -ne 0 -or $_.native_operations_performed -ne 0 }).Count -eq 0) { 'PASS' } else { 'FAIL' }
+        result = if ($parseErrors.Count -eq 0 -and $safeFunctions.Count -eq $safeFunctionNames.Count -and $forbiddenCommands.Count -eq 0 -and $safeText -notmatch '\[IO\.File\]::(ReadAllBytes|ReadAllLines|Open|OpenRead|WriteAllBytes)' -and -not $dynamic.exception -and $records.Count -eq 3 -and @($records | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or $_.compile_only_validation.validation_mode -ne 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO' -or $_.compile_only_validation.artifact_io_performed -ne $false -or $_.compile_only_validation.compile_output_directory_scanned -ne $false -or $_.compile_only_validation.real_dll_accessed -ne $false -or $_.native_loading_performed -ne $false -or $_.native_invocation_performed -ne $false -or $_.native_invocation_count -ne 0 -or $_.device_query_count -ne 0 -or $_.windows_mutation_count -ne 0 -or $_.driver_action_count -ne 0 -or $_.artifact_io_performed -ne $false -or $_.native_library_load_performed -ne $false -or $_.entry_point_resolution_performed -ne $false -or $_.setupapi_newdev_invocation_performed -ne $false -or $_.live_device_queries_performed -ne 0 -or $_.windows_mutations_performed -ne 0 -or $_.native_operations_performed -ne 0 }).Count -eq 0) { 'PASS' } else { 'FAIL' }
         result_code = 'NATIVE_ADAPTER_DESIGN_GATE_NO_ARTIFACT_IO_REGRESSION'
         parsed_function_count = $safeFunctions.Count
         expected_function_count = $safeFunctionNames.Count
@@ -90,6 +94,78 @@ function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
         dynamic_exception = $dynamic.exception
         operation_count = $records.Count
         records = $records
+    }
+}
+
+function Test-ChatpadNativeAdapterFailClosedScaffolding {
+    [CmdletBinding(PositionalBinding = $false)]
+    param()
+
+    $blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
+    $status = 'NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO'
+    $evidenceMode = 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO'
+    $records = @('Apply','Restore','Restart' | ForEach-Object {
+        Invoke-ChatpadNativeAdapterOperation -Operation $_ -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+    })
+    $invalidOperation = Invoke-ChatpadNativeAdapterOperation -Operation 'InstallPackage' -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+    $missingEvidence = Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+    $malformedEvidence = Invoke-ChatpadNativeAdapterOperation -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -Evidence 'not-an-evidence-record'
+    $authorization = [pscustomobject][ordered]@{
+        missing = Test-ChatpadNativeAdapterExecutionAuthorization
+        malformed = Test-ChatpadNativeAdapterExecutionAuthorization -AuthorizationState 'bad'
+        stale = Test-ChatpadNativeAdapterExecutionAuthorization -AuthorizationState ([pscustomobject]@{schema_version='chatpad-native-adapter-execution-authorization-v1';status='future-live-authorization';expires_utc='2026-07-05T00:00:00Z'})
+        design_gate = Test-ChatpadNativeAdapterExecutionAuthorization -AuthorizationState ([pscustomobject]@{schema_version='chatpad-native-adapter-execution-authorization-v1';status='NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO';expires_utc='2026-07-07T00:00:00Z'})
+        future_live = Test-ChatpadNativeAdapterExecutionAuthorization -AuthorizationState ([pscustomobject]@{schema_version='chatpad-native-adapter-execution-authorization-v1';status='NATIVE_ADAPTER_EXECUTION_AUTHORIZED_LIVE';expires_utc='2026-07-07T00:00:00Z'})
+    }
+    $request = New-ChatpadNativeAdapterExecutionRequest -Operation Apply -AdapterName 'chatpad-windows-exact-instance-adapter-v1' -TargetInstanceId 'USB\VID_045E&PID_028E\TARGET-0001' -TargetDriverIdentity ([pscustomobject]@{published_inf='oem42.inf'})
+    $all = @($records + $invalidOperation + $missingEvidence + $malformedEvidence)
+    $badCounters = @($all | Where-Object {
+        $_.native_invocation_count -ne 0 -or
+        $_.device_query_count -ne 0 -or
+        $_.windows_mutation_count -ne 0 -or
+        $_.driver_action_count -ne 0 -or
+        $_.artifact_io_performed -ne $false -or
+        $_.native_library_load_performed -ne $false -or
+        $_.entry_point_resolution_performed -ne $false -or
+        $_.setupapi_newdev_invocation_performed -ne $false -or
+        $_.device_query_performed -ne $false -or
+        $_.windows_mutation_performed -ne $false -or
+        $_.driver_action_performed -ne $false -or
+        $_.live_device_queries_performed -ne 0 -or
+        $_.windows_mutations_performed -ne 0 -or
+        $_.native_operations_performed -ne 0
+    })
+    $checks = @(
+        ($records.Count -eq 3),
+        (@($records | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne $blocker -or $_.native_execution_status -ne 'NOT_IMPLEMENTED' -or $_.live_readiness -ne 'BLOCKED' -or $_.evidence_mode -ne $evidenceMode -or $_.fail_closed_scaffolding_status -ne $status }).Count -eq 0),
+        ($invalidOperation.result -eq 'BLOCKED'),
+        ($invalidOperation.result_code -eq 'UNSUPPORTED_NATIVE_ADAPTER_OPERATION'),
+        ($missingEvidence.execution_evidence_state.result_code -eq 'NATIVE_ADAPTER_EXECUTION_EVIDENCE_MISSING'),
+        ($malformedEvidence.execution_evidence_state.result_code -eq 'NATIVE_ADAPTER_EXECUTION_EVIDENCE_MALFORMED'),
+        ($authorization.missing.result_code -eq 'NATIVE_ADAPTER_EXECUTION_AUTHORIZATION_MISSING'),
+        ($authorization.malformed.result_code -eq 'NATIVE_ADAPTER_EXECUTION_AUTHORIZATION_MALFORMED'),
+        ($authorization.stale.result_code -eq 'NATIVE_ADAPTER_EXECUTION_AUTHORIZATION_STALE'),
+        ($authorization.design_gate.result_code -eq $blocker),
+        ($authorization.future_live.result_code -eq 'NATIVE_ADAPTER_EXECUTION_AUTHORIZATION_REJECTED'),
+        ($request.schema_version -eq 'chatpad-native-adapter-execution-request-v1'),
+        ($request.operation -eq 'Apply'),
+        ($request.target_identity.live_lookup_performed -eq $false),
+        ($request.evidence_mode -eq $evidenceMode),
+        ($badCounters.Count -eq 0)
+    )
+    [pscustomobject][ordered]@{
+        schema_version = 'chatpad-native-adapter-fail-closed-scaffolding-test-v1'
+        result = if (@($checks | Where-Object { $_ -ne $true }).Count) { 'FAIL' } else { 'PASS' }
+        result_code = 'NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_TEST'
+        test_count = $checks.Count
+        failed_check_count = @($checks | Where-Object { $_ -ne $true }).Count
+        operation_results = @($records)
+        invalid_operation = $invalidOperation
+        missing_evidence = $missingEvidence
+        malformed_evidence = $malformedEvidence
+        authorization = $authorization
+        request = $request
+        zero_counter_violation_count = $badCounters.Count
     }
 }
 
@@ -177,7 +253,7 @@ function Invoke-ChatpadExactInstanceOfflineSuite {
     $nativeOperationBlocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
     $historicalCompileOnlyGate = 'BLOCKED_NATIVE_INTEROP_COMPILE_ONLY_VALIDATION_NOT_AUTHORIZED'
     $compileEvidenceAuditGate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_COMPILE_ONLY_REAUDIT'
-    $scaffoldAuditGate = 'BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT'
+    $scaffoldAuditGate = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
 
     $results.Add((Invoke-ChatpadExactCase T1 'two devices with identical hardware IDs' {
         $e=New-ChatpadExactSuiteEnvironment
