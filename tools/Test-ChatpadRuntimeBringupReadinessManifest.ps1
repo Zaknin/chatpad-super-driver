@@ -928,6 +928,8 @@ else{
         if($executionScope.schema_version-ne'chatpad-native-adapter-execution-scope-boundary-v1'-or
             $executionScope.status-ne'NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO'-or
             $executionScope.scope_boundary_commit-ne'4cdde55e392e78db8a7a38858fb2f436557fbe2e'-or
+            $executionScope.audit_acceptance_status-ne'NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO'-or
+            $executionScope.audit_acceptance_target-ne'f0b10d862d23d0ede28b1139c2ccb726bfcddc48'-or
             $executionScope.opened_from_non_live_audit_acceptance_commit-ne'bb6cc27c2281e04dee2166c5a67e124092055f9f'-or
             (@($executionScope.required_operation_classes)-join'|')-ne'NATIVE_ADAPTER_APPLY|NATIVE_ADAPTER_RESTORE|NATIVE_ADAPTER_RESTART'-or
             $executionScope.required_authorized_operation_class_count-ne1-or

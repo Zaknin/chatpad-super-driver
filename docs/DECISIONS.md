@@ -3205,3 +3205,24 @@ its exact defining commit. The runtime blocker remains
 `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence mode
 remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. This continuity remediation
 grants no artifact, native, device, hardware, Windows, or driver authority.
+
+## 2026-07-06 - Accept the execution scope-boundary continuity audit
+
+**Decision:** Accept independent strict read-only audit target
+`f0b10d862d23d0ede28b1139c2ccb726bfcddc48` with status
+`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+
+**Rationale:** The audit verified exact scope-boundary identity
+`4cdde55e392e78db8a7a38858fb2f436557fbe2e`, validator enforcement, the nine
+authorized changed paths, dual-runtime manifest identity, and unchanged
+blocked authority.
+
+**Alternatives rejected:** Leaving the remediated boundary pending acceptance;
+treating audit acceptance as artifact or execution authority; changing adapter
+behavior; or combining acceptance with native implementation or execution.
+
+**Consequences:** The boundary continuity audit is accepted. The runtime
+blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live
+readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
+evidence mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. No artifact,
+native, device, hardware, Windows, or driver authority is granted.

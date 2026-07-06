@@ -2,17 +2,17 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the native adapter execution
-scope-boundary identity remediation commit.
+Perform an independent strict read-only audit of the documentation-only native
+adapter execution scope-boundary audit-acceptance commit.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-scope-boundary`.
 - Required starting commit: the commit with subject
-  `docs: record native adapter execution boundary identity`; obtain its exact
-  full hash from Git, require parent
-  `4cdde55e392e78db8a7a38858fb2f436557fbe2e`, and require upstream
+  `docs: accept native adapter execution boundary audit`; obtain its exact full
+  hash from Git, require parent
+  `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`, and require upstream
   synchronization `0/0`.
 - Execution scope-boundary commit:
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
@@ -30,6 +30,10 @@ scope-boundary identity remediation commit.
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Execution-scope boundary status:
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+- Execution-scope boundary audit acceptance:
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted execution-scope boundary audit target:
+  `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`.
 - Execution design status:
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
 - Scaffolding status:
@@ -58,7 +62,9 @@ scope-boundary identity remediation commit.
 
 ## Audit Scope
 
-- Verify the manifest records and the generator/validator enforce exact
+- Verify the manifest records and the generator/validator enforce audit target
+  `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`, acceptance status
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`, and
   scope-boundary commit `4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
 - Verify the boundary status and all prior implementation/audit identities and
   statuses remain exact and consistent.

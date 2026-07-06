@@ -10596,3 +10596,45 @@
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e`, scope-boundary identity and
   status enforcement, all prior identities/statuses, and unchanged blocked/
   no-artifact-I/O restrictions.
+
+---
+
+## 2026-07-06 - Accept native adapter execution boundary audit
+
+- **Objective:** Record documentation-only acceptance of independent strict
+  read-only audit target `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-scope-boundary`, exact HEAD and upstream
+  `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`, parent
+  `4cdde55e392e78db8a7a38858fb2f436557fbe2e`, ahead/behind `0/0`, and a clean
+  tree/index.
+- **Acceptance:** Recorded `AUDIT PASS` with status
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+  Preserved boundary commit `4cdde55e392e78db8a7a38858fb2f436557fbe2e`,
+  all prior implementation/audit identities and statuses, gate/blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness `BLOCKED`,
+  native execution `NOT_IMPLEMENTED`, and evidence mode
+  `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Validation:** Final record-only manifest validation passed under Windows
+  PowerShell 5.1 and PowerShell 7 with schema v4, 39 entries, zero defects,
+  duplicate IDs/paths `0/0`, `NO_PATH` `0`, and semantic cross-runtime
+  identity. Identity/status consistency, authorization, prohibited-pattern,
+  constrained repository-safety, generated-file, spelling-variant, changed-
+  path, and `git diff --check` checks passed.
+- **Safety:** No behavior test, static parser, full compile-output validator,
+  real DLL/output access, native library load, entry-point resolution,
+  SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+  or driver build/sign/package/install/load/bind/restore/restart occurred.
+- **Commit and push:** Commit subject is
+  `docs: accept native adapter execution boundary audit`; push target is
+  `origin/feature/native-adapter-execution-scope-boundary`.
+- **Next task:** Independent strict read-only audit of this documentation-only
+  acceptance commit, exact accepted target/status, manifest enforcement, and
+  unchanged blocked/no-artifact-I/O boundary.

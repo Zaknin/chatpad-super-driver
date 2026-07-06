@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-06 (execution scope-boundary identity remediation)*
+*Last updated: 2026-07-06 (execution scope-boundary audit accepted)*
 
 ## Current State
 
@@ -19,6 +19,8 @@
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - **Execution scope-boundary commit:**
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e`.
+- **Execution scope-boundary audit target:**
+  `f0b10d862d23d0ede28b1139c2ccb726bfcddc48`.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -37,6 +39,8 @@
   `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - **Execution-scope boundary status:**
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
+- **Execution-scope boundary audit acceptance:**
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -149,6 +153,13 @@ blocked authority, dual-runtime manifest validation, and safety checks passed.
 This remediation records and validator-enforces the omitted identity without
 changing adapter or offline-suite behavior.
 
+Independent strict read-only audit of continuity remediation commit
+`f0b10d862d23d0ede28b1139c2ccb726bfcddc48` returned `AUDIT PASS`.
+Acceptance status is
+`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+Acceptance grants no artifact, native, device, hardware, Windows, or driver
+authority.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -201,11 +212,8 @@ driver authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the execution scope-boundary
-identity remediation commit on branch
-`feature/native-adapter-execution-scope-boundary`. Require parent
-`4cdde55e392e78db8a7a38858fb2f436557fbe2e`; verify the exact envelope, status
-`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`, accepted base
-`bb6cc27c2281e04dee2166c5a67e124092055f9f`, exact scope-boundary commit
-identity, manifest enforcement, and the unchanged blocked/no-artifact-I/O
+Perform an independent strict read-only audit of the documentation-only
+scope-boundary audit-acceptance commit. Require parent
+`f0b10d862d23d0ede28b1139c2ccb726bfcddc48`; verify the accepted audit target,
+acceptance status, manifest enforcement, and unchanged blocked/no-artifact-I/O
 safety boundary.
