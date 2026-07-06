@@ -10728,3 +10728,71 @@
   is `origin/feature/native-adapter-execution-scope-boundary`.
 - **Next task:** Independent strict read-only audit of this acceptance commit
   and unchanged closed/blocked boundary.
+
+---
+
+## 2026-07-06 22:11:42 +04:00 - Final closeout of native adapter execution scope-boundary lane
+
+- **Objective:** Record final documentation-only closeout based on accepted
+  audit target `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, without
+  recording the new closeout commit's unknowable self-identity.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-scope-boundary`, exact HEAD/upstream
+  `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, parent
+  `9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f`, ahead/behind `0/0`,
+  and clean tree/index after an explicit remote fetch.
+- **Investigation and documentation discrepancy:** Git verified that the
+  accepted target changed only the nine authorized documentation, manifest,
+  generator, and validator paths. The current identity/status records were
+  otherwise consistent, but `docs/PROJECT-STATE.md` still recommended auditing
+  the older lane-closeout transition and the `docs/RUNTIME-BRINGUP-READINESS.md`
+  exact-next-task section still recommended the earlier scaffolding audit.
+  Both stale continuation sections were corrected to the final-closeout audit.
+- **Closeout record:** Added and validator-enforced accepted target
+  `f7f6041d6987ea8e3752546bd4c9116c88fbe56a` and final status
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
+  Preserved prior accepted target
+  `9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f`, lane-closeout commit
+  `e68ed58e3c5a2560c331f4b69dfe021ae54531e1`, prior boundary identities,
+  all prior statuses, closeout `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`, and
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Preliminary validation:** Generator/validator syntax passed under Windows
+  PowerShell 5.1 and PowerShell 7. Record-only generation and validation passed
+  under both runtimes with schema v4, 39 entries, total defects `0`, duplicate
+  IDs/paths `0/0`, `NO_PATH` `0`, and identical manifests after timestamp
+  normalization. Documentation consistency, positive-authorization additions,
+  prohibited executable-pattern additions, constrained Git/index repository
+  safety, forbidden generated changed paths, non-ignored untracked files,
+  spelling variants, and `git diff --check` passed with zero defects.
+  Preliminary generated records are under ignored
+  `artifacts/logs/native-adapter-final-scope-closeout/`.
+- **Final validation:** After the complete worklog update, canonical manifest
+  generation under Windows PowerShell 5.1 and comparison generation under
+  PowerShell 7 both reported 39 entries, framework `PASS`, and live readiness
+  `BLOCKED`. The canonical manifest passed the record-only validator under both
+  runtimes with schema v4, total defects `0`, duplicate IDs/paths `0/0`,
+  `NO_PATH` `0`, and cross-runtime manifest identity.
+- **Safety:** No behavior test, static parser, full compile-output validator,
+  full exact/readiness suite, real DLL or compile-output open/read/hash/parse/
+  stat/scan/write/load/reflection/execution, native library load, entry-point
+  resolution, SetupAPI/Newdev invocation, device query, hardware access,
+  Windows mutation, or driver build/sign/package/install/load/bind/restore/
+  restart occurred.
+- **Commit and push:** Subject is
+  `docs: close native adapter execution boundary scope`; push target is
+  `origin/feature/native-adapter-execution-scope-boundary`. Git and the final
+  response are authoritative for the resulting commit identity; this commit
+  intentionally does not contain its own hash.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`.
+- **Next task:** Independent strict read-only audit of the final closeout
+  commit. Derive its identity from Git and verify subject, parent
+  `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, changed paths, content, manifest
+  enforcement, and blocked authority without requiring self-reference.

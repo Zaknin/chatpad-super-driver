@@ -142,6 +142,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Accepted closeout-identity audit target:
   `9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f`.
+- Final lane closeout:
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
+- Accepted final-closeout audit target:
+  `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -932,12 +936,13 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform an independent strict read-only audit of the fail-closed native adapter
-scaffolding. Native execution remains `NOT_IMPLEMENTED`, live readiness remains
-`BLOCKED`, and SetupAPI/Newdev invocation remains unauthorized. Do not implement
-the adapter, rerun the parser, run the full compile-output validator, or open,
-read, hash, parse, write, load, reflect over, execute, stat, or scan the real
-DLL or compile outputs. Continue to prohibit native DLL loading, entry-point
-resolution, native invocation, device query, hardware access, Windows mutation,
-and driver build/link/sign/CAT/package/stage/install/load/unload/bind/restore/
-restart actions.
+Perform an independent strict read-only audit of the final documentation-only
+closeout commit. Derive its exact identity from Git; require subject
+`docs: close native adapter execution boundary scope`, parent
+`f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, authorized changed paths, and
+content recording that accepted audit target. Do not require the closeout
+commit to contain its own hash. Native execution remains `NOT_IMPLEMENTED`,
+live readiness remains `BLOCKED`, and SetupAPI/Newdev invocation remains
+unauthorized. Do not run the parser or full compile-output validator, inspect
+the real DLL or compile outputs, or perform artifact, native, device, hardware,
+Windows, or driver actions.

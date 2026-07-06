@@ -50,6 +50,10 @@ Authoritative current state:
   `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Accepted closeout-identity audit target:
   `9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f`.
+- Final lane closeout:
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
+- Accepted final-closeout audit target:
+  `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -524,7 +528,12 @@ the technical implementation safe but failed continuity identity recording.
 Independent strict read-only audit of the resulting documentation/evidence
 remediation at `5e7a6f39d0363121b8bd3f6e4b38ceb517889679` returned
 `AUDIT PASS`; acceptance status is
-`NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`. The next step is an
-independent strict read-only audit of this documentation-only acceptance
-commit. No artifact, native, device, hardware, Windows, or driver authority is
-granted.
+`NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`. Independent strict
+read-only audit of closeout-identity audit-acceptance commit
+`f7f6041d6987ea8e3752546bd4c9116c88fbe56a` returned `AUDIT PASS`. The
+execution scope-boundary lane is finally closed with status
+`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`. The next
+step is an independent strict read-only audit of the final documentation-only
+closeout commit, deriving its identity from Git rather than requiring the
+commit to contain its own hash. No artifact, native, device, hardware, Windows,
+or driver authority is granted.

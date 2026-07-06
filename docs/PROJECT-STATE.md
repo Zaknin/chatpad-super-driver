@@ -27,6 +27,8 @@
   `e68ed58e3c5a2560c331f4b69dfe021ae54531e1`.
 - **Accepted closeout-identity audit target:**
   `9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f`.
+- **Accepted final-closeout audit target:**
+  `f7f6041d6987ea8e3752546bd4c9116c88fbe56a`.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -51,6 +53,8 @@
   `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`.
 - **Closeout-identity audit acceptance:**
   `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- **Final lane closeout:**
+  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -180,6 +184,13 @@ that exact closeout identity was absent from continuity records. This
 remediation records and validator-enforces it while preserving
 `d1372ba8f7812d24a09b87238793e78435ac4492` as the accepted audit target.
 
+Independent strict read-only audit of closeout-identity audit-acceptance commit
+`f7f6041d6987ea8e3752546bd4c9116c88fbe56a` returned `AUDIT PASS`. Final lane
+status is
+`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
+This final closeout records the accepted audit target and does not record its
+own commit identity; the next audit must derive that identity from Git.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -233,7 +244,9 @@ driver authority.
 ## Next Task
 
 Perform an independent strict read-only audit of the documentation-only lane
-closeout commit. Require parent
-`d1372ba8f7812d24a09b87238793e78435ac4492`; verify the closeout target/result,
-all boundary identities/statuses, manifest enforcement, and unchanged blocked/
-no-artifact-I/O safety boundary.
+closeout commit. Obtain its exact identity from Git, require subject
+`docs: close native adapter execution boundary scope` and parent
+`f7f6041d6987ea8e3752546bd4c9116c88fbe56a`, and verify changed paths, content,
+all boundary identities/statuses, manifest enforcement, and the unchanged
+blocked/no-artifact-I/O safety boundary. Do not require the commit to contain
+its own hash.

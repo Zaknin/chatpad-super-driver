@@ -935,6 +935,8 @@ else{
             $executionScope.lane_closeout_commit-ne'e68ed58e3c5a2560c331f4b69dfe021ae54531e1'-or
             $executionScope.closeout_identity_audit_acceptance_status-ne'NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO'-or
             $executionScope.closeout_identity_audit_acceptance_target-ne'9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f'-or
+            $executionScope.final_lane_closeout_status-ne'NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO'-or
+            $executionScope.final_lane_closeout_audit_target-ne'f7f6041d6987ea8e3752546bd4c9116c88fbe56a'-or
             $executionScope.opened_from_non_live_audit_acceptance_commit-ne'bb6cc27c2281e04dee2166c5a67e124092055f9f'-or
             (@($executionScope.required_operation_classes)-join'|')-ne'NATIVE_ADAPTER_APPLY|NATIVE_ADAPTER_RESTORE|NATIVE_ADAPTER_RESTART'-or
             $executionScope.required_authorized_operation_class_count-ne1-or

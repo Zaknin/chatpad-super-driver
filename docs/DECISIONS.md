@@ -3283,3 +3283,24 @@ as execution authority.
 **Consequences:** The closed lane is audit-accepted without authorizing
 artifact, native, device, hardware, Windows, or driver action. The runtime
 blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+## 2026-07-06 - Finalize the execution scope-boundary lane closeout
+
+**Decision:** Accept independent audit target
+`f7f6041d6987ea8e3752546bd4c9116c88fbe56a` and record final lane status
+`NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
+
+**Rationale:** The audit accepted the distinct closeout-identity acceptance
+record, its exact identities, manifest enforcement, and unchanged blocked
+authority. The lane therefore has no remaining documentation transition.
+
+**Alternatives rejected:** Leaving the accepted lane open; recording the new
+final-closeout commit's unknowable self-identity in its own content; or treating
+closeout as artifact access or execution authority.
+
+**Consequences:** The lane is finally closed. The final-closeout commit is
+verified later by Git identity, subject, parent, changed paths, and content
+rather than self-reference. The runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live readiness remains
+`BLOCKED`; native execution remains `NOT_IMPLEMENTED`; no artifact, native,
+device, hardware, Windows, or driver authority is granted.
