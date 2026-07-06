@@ -12,7 +12,7 @@
     "canonical_text_encoding": "UTF-8 without BOM",
     "canonical_text_line_endings": "LF"
   },
-  "generated_utc": "2026-07-06T03:50:00.6612982Z",
+  "generated_utc": "2026-07-06T04:24:32.1377721Z",
   "real_artifact_static_metadata_review_completed": true,
   "framework_status": "PASS",
   "live_installation_readiness": "BLOCKED",
@@ -971,7 +971,7 @@
     "frozen_baseline_commit": "f49b5cbe9e6bba423cfb59313dbdc9be92c785ca",
     "prior_readiness_implementation_commit": "ac0e25c5f5cab5cc2c3e3ae382b455bb0aaffd10",
     "prior_readiness_finalization_commit": "88e3cbba3a64828322b7c703765e6b1e2369f698",
-    "current_readiness_implementation_commit": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+    "current_readiness_implementation_commit": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
     "current_readiness_finalization_commit_source": "external exact 40-character audit input after finalization commit"
   },
   "accepted_offline_baseline": {
@@ -1232,7 +1232,7 @@
       "tracked_total": 55,
       "analyzed_file_count": 55,
       "error_count": 0,
-      "warning_count": 206,
+      "warning_count": 207,
       "information_count": 1004,
       "tool_failure_count": 0,
       "findings": [
@@ -2560,172 +2560,53 @@
           "message": "The cmdlet 'Get-ChatpadFakeDeviceBytes' uses a plural noun. A singular noun should be used instead."
         },
         {
+          "rule_name": "PSAvoidOverwritingBuiltInCmdlets",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 69,
+          "severity": "Warning",
+          "message": "'Get-FileHash' is a cmdlet that is included with PowerShell (version desktop-5.1.14393.206-windows) whose definition should not be overridden"
+        },
+        {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 36,
+          "line": 98,
           "severity": "Warning",
           "message": "Function 'New-ChatpadExactSuiteEnvironment' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 61,
+          "line": 123,
           "severity": "Warning",
           "message": "Function 'New-ChatpadExactSuitePlan' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSUseSingularNouns",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 76,
+          "line": 138,
           "severity": "Warning",
           "message": "The cmdlet 'Test-ChatpadAllChecks' uses a plural noun. A singular noun should be used instead."
         },
         {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 81,
+          "line": 143,
           "severity": "Warning",
           "message": "Function 'New-ChatpadExactTestRecord' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 104,
+          "line": 166,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactTestRecord' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 106,
+          "line": 168,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactTestRecord' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 120,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 123,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 130,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 132,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 136,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 139,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 143,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 145,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 151,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 152,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 158,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 159,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 164,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 165,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 170,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 171,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 176,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 177,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
@@ -2737,13 +2618,6 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 183,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 185,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
@@ -2751,28 +2625,21 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 191,
+          "line": 192,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 192,
+          "line": 194,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 195,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 200,
+          "line": 198,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -2786,63 +2653,56 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 203,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 209,
+          "line": 205,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 210,
+          "line": 207,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 216,
+          "line": 213,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 217,
+          "line": 214,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 222,
+          "line": 220,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 223,
+          "line": 221,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 229,
+          "line": 226,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 230,
+          "line": 227,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -2850,6 +2710,13 @@
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 232,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 233,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -2884,9 +2751,23 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 256,
+          "line": 247,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 253,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 254,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
@@ -2912,21 +2793,28 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 268,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 269,
+          "line": 265,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 274,
+          "line": 271,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 272,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 278,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -2934,13 +2822,6 @@
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 279,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 280,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -2961,77 +2842,119 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 297,
+          "line": 291,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 298,
+          "line": 292,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 303,
+          "line": 294,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 300,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 304,
+          "line": 301,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 313,
+          "line": 306,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 314,
+          "line": 307,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 322,
+          "line": 318,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 323,
+          "line": 319,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 324,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 325,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 330,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 331,
           "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 336,
+          "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 332,
+          "line": 341,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 342,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 338,
+          "line": 346,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3040,14 +2963,7 @@
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 347,
           "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 353,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
@@ -3055,6 +2971,13 @@
           "line": 359,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 360,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
@@ -3073,58 +2996,51 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 372,
+          "line": 375,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 373,
+          "line": 376,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 387,
+          "line": 384,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 390,
+          "line": 385,
           "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 393,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 394,
           "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 395,
-          "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 401,
+          "line": 400,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 402,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
@@ -3136,21 +3052,35 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 418,
+          "line": 415,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 425,
+          "line": 421,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 430,
+          "line": 427,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 428,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 434,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3159,54 +3089,61 @@
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 435,
           "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 442,
+          "line": 449,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 448,
+          "line": 452,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 456,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 455,
+          "line": 457,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 463,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 462,
+          "line": 464,
+          "severity": "Information",
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 471,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 469,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 475,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 481,
+          "line": 480,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3220,28 +3157,21 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 488,
-          "severity": "Information",
-          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 494,
+          "line": 492,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 501,
+          "line": 497,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 509,
+          "line": 504,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3250,47 +3180,75 @@
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 510,
           "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 517,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 524,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 531,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 537,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 543,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 549,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 550,
+          "severity": "Information",
           "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 518,
+          "line": 556,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 527,
+          "line": 563,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 535,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 542,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 553,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 562,
+          "line": 571,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3299,12 +3257,12 @@
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 572,
           "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+          "message": "Cmdlet 'New-ChatpadExactSuitePlan' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 582,
+          "line": 580,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3318,14 +3276,7 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 594,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 600,
+          "line": 597,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3339,56 +3290,28 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 609,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSPossibleIncorrectComparisonWithNull",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 611,
-          "severity": "Warning",
-          "message": "$null should be on the left side of equality comparisons."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 613,
+          "line": 615,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 617,
+          "line": 624,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 633,
+          "line": 634,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 637,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 642,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 646,
+          "line": 644,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3402,28 +3325,21 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 655,
+          "line": 656,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 659,
+          "line": 662,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 663,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 667,
+          "line": 666,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3435,6 +3351,13 @@
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
+          "rule_name": "PSPossibleIncorrectComparisonWithNull",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 673,
+          "severity": "Warning",
+          "message": "$null should be on the left side of equality comparisons."
+        },
+        {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 675,
@@ -3444,49 +3367,70 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 680,
+          "line": 679,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 684,
+          "line": 695,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 688,
+          "line": 699,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 693,
+          "line": 704,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 697,
+          "line": 708,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 723,
+          "line": 713,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 728,
+          "line": 717,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 721,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 725,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 729,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3500,56 +3444,42 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 739,
+          "line": 737,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 744,
+          "line": 742,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 751,
+          "line": 746,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 756,
+          "line": 750,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 762,
+          "line": 755,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 769,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 774,
-          "severity": "Information",
-          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
-        },
-        {
-          "rule_name": "PSAvoidUsingPositionalParameters",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 779,
+          "line": 759,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3570,14 +3500,14 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 796,
+          "line": 795,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 802,
+          "line": 801,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3591,126 +3521,126 @@
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 811,
+          "line": 813,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 815,
+          "line": 818,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 819,
+          "line": 824,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 823,
+          "line": 831,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 827,
+          "line": 836,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 833,
+          "line": 841,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 867,
+          "line": 847,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 899,
+          "line": 852,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
-          "rule_name": "PSAvoidGlobalVars",
+          "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 900,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 903,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 904,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 905,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 906,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 907,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 910,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 916,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
-        },
-        {
-          "rule_name": "PSAvoidGlobalVars",
-          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 923,
-          "severity": "Warning",
-          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+          "line": 858,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 927,
+          "line": 864,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 868,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 873,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 877,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 881,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 885,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 889,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 895,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 929,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3722,51 +3652,128 @@
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
-          "rule_name": "PSAvoidUsingPositionalParameters",
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 962,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 965,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 966,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 967,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 968,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 969,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 972,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 978,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidGlobalVars",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
           "line": 985,
+          "severity": "Warning",
+          "message": "Found global variable 'global:ChatpadNativeCallerSideEffects'."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 989,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 1004,
+          "line": 1023,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 1017,
+          "line": 1047,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 1033,
+          "line": 1066,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 1044,
+          "line": 1079,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 1119,
+          "line": 1095,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
         {
           "rule_name": "PSAvoidUsingPositionalParameters",
           "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
-          "line": 1182,
+          "line": 1106,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 1181,
+          "severity": "Information",
+          "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
+        },
+        {
+          "rule_name": "PSAvoidUsingPositionalParameters",
+          "file": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1",
+          "line": 1244,
           "severity": "Information",
           "message": "Cmdlet 'Invoke-ChatpadExactCase' has positional parameter. Please use named parameters instead of positional parameters when calling a command."
         },
@@ -3983,84 +3990,84 @@
         {
           "rule_name": "PSUseSingularNouns",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 312,
+          "line": 429,
           "severity": "Warning",
           "message": "The cmdlet 'Add-NativeAuditAcceptanceFields' uses a plural noun. A singular noun should be used instead."
         },
         {
           "rule_name": "PSUseSingularNouns",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 374,
+          "line": 491,
           "severity": "Warning",
           "message": "The cmdlet 'Get-ChatpadNativeSupportedOperationIdentifiers' uses a plural noun. A singular noun should be used instead."
         },
         {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 378,
+          "line": 495,
           "severity": "Warning",
           "message": "Function 'New-ChatpadNativeZeroCounters' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSUseSingularNouns",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 378,
+          "line": 495,
           "severity": "Warning",
           "message": "The cmdlet 'New-ChatpadNativeZeroCounters' uses a plural noun. A singular noun should be used instead."
         },
         {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 389,
+          "line": 506,
           "severity": "Warning",
           "message": "Function 'New-ChatpadProductionNativeAdapter' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 436,
+          "line": 553,
           "severity": "Warning",
           "message": "Function 'New-ChatpadSyntheticAdapterMetadata' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSReviewUnusedParameter",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 464,
+          "line": 581,
           "severity": "Warning",
           "message": "The parameter 'RequireExplicitSelection' has been declared but not used."
         },
         {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 689,
+          "line": 806,
           "severity": "Warning",
           "message": "Function 'New-ChatpadNativeReadOnlyDesignProbe' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSUseShouldProcessForStateChangingFunctions",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 693,
+          "line": 810,
           "severity": "Warning",
           "message": "Function 'New-ChatpadNativeMutationCapability' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'."
         },
         {
           "rule_name": "PSReviewUnusedParameter",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 703,
+          "line": 820,
           "severity": "Warning",
           "message": "The parameter 'IsElevated' has been declared but not used."
         },
         {
           "rule_name": "PSReviewUnusedParameter",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 704,
+          "line": 821,
           "severity": "Warning",
           "message": "The parameter 'AllowWindowsMutation' has been declared but not used."
         },
         {
           "rule_name": "PSUseDeclaredVarsMoreThanAssignments",
           "file": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1",
-          "line": 972,
+          "line": 1089,
           "severity": "Warning",
           "message": "The variable 'compileOnlyHarnessProject' is assigned but never used."
         },
@@ -9732,7 +9739,7 @@
       "raw_working_tree_sha256": "F686E350456E347519D812B921F08E5CEFCF08072C72A8C2B579272CA274951F",
       "byte_size": 7842,
       "sha256": "F686E350456E347519D812B921F08E5CEFCF08072C72A8C2B579272CA274951F",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -9745,13 +9752,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 171494,
-      "canonical_sha256": "7778B6343FC3F3CE9CD2977ABF69B0D4D47DF5646C5CCEB1086F2854922C5511",
-      "raw_working_tree_byte_size": 174426,
-      "raw_working_tree_sha256": "202BE03BF838EC3481ED13BFEA646AE9BDB6976196CDC58669DD4F97BC07ADE9",
-      "byte_size": 171494,
-      "sha256": "7778B6343FC3F3CE9CD2977ABF69B0D4D47DF5646C5CCEB1086F2854922C5511",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 173158,
+      "canonical_sha256": "9AF32E69DBB8DCDC93DC324519E3288DAC9BC39C4C5FC84E3A726D61AF7BCD45",
+      "raw_working_tree_byte_size": 176086,
+      "raw_working_tree_sha256": "4F46E42CCE777D2179BDE69CA4F560866FE9B17D2D0E6FE917B8CBB28753F4C1",
+      "byte_size": 173158,
+      "sha256": "9AF32E69DBB8DCDC93DC324519E3288DAC9BC39C4C5FC84E3A726D61AF7BCD45",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -9770,7 +9777,7 @@
       "raw_working_tree_sha256": "63BF44FFAF2B0194305C1D009C69E628DB3F096E58190F39CEDB1C35A46A7F1E",
       "byte_size": 4526,
       "sha256": "27DC9A0D94069B3FED8B6E38C687D9201E9300EBA25ED0B98F77BF4E9CE9FDBC",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -9789,7 +9796,7 @@
       "raw_working_tree_sha256": "B6FFE0F0E32148C00745525F107D6CD7E8F4FFFDEE1F3AB70B12A6055ACBD96E",
       "byte_size": 7462,
       "sha256": "279ABBEC30DBF12021F1A3BC8C6242C4910175A6EBC24BFD051B56D1F2F46CB5",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -9808,7 +9815,7 @@
       "raw_working_tree_sha256": "7149C553661C55F051FA7184CBA0EFD04840DCDE4044992F8B056D3CB47AF3BC",
       "byte_size": 54408,
       "sha256": "D9963836F4620F7BE374065604802ED3F67F70273870B3083F881C4AB8D5583A",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -9827,7 +9834,7 @@
       "raw_working_tree_sha256": "D939491E11972C708DA5FCFF2458C262BAB8EABE0357CF0A943A0B2CC498F0AA",
       "byte_size": 8274,
       "sha256": "D939491E11972C708DA5FCFF2458C262BAB8EABE0357CF0A943A0B2CC498F0AA",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -9846,7 +9853,7 @@
       "raw_working_tree_sha256": "E69B45D6E09B30EEC0601B1C8BB3F52A314C543D58157ACF607437F3CECE5D92",
       "byte_size": 19197,
       "sha256": "D8801827CB39D153EB63667DF98669DD49D079903CE7E9BB3A0F902CEEF2B794",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -9859,13 +9866,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 17573,
-      "canonical_sha256": "3FDF7745DFFB0F9FF71D4C2DD3266A8A01E01D0093242CC977600B1DF04BFE92",
-      "raw_working_tree_byte_size": 17693,
-      "raw_working_tree_sha256": "62022996A634853785947BAABA7C46271504835C3003509E4E7A9F9BDDD253F7",
-      "byte_size": 17573,
-      "sha256": "3FDF7745DFFB0F9FF71D4C2DD3266A8A01E01D0093242CC977600B1DF04BFE92",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 19109,
+      "canonical_sha256": "D527B392FCF0BB6C91B94BFF37A6FDD22551B2CD439B6B09893F20264F823883",
+      "raw_working_tree_byte_size": 19229,
+      "raw_working_tree_sha256": "644617216C362663C06F35ECD0AAB17D341EEDB0203F03370D8DD565CBC3E0F3",
+      "byte_size": 19109,
+      "sha256": "D527B392FCF0BB6C91B94BFF37A6FDD22551B2CD439B6B09893F20264F823883",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -9878,13 +9885,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 3806,
-      "canonical_sha256": "C1768BD30C3EA2DA9D679A3896F7B37AB11F0EE1692C9401B2D3938696DF9EE4",
-      "raw_working_tree_byte_size": 3806,
-      "raw_working_tree_sha256": "C1768BD30C3EA2DA9D679A3896F7B37AB11F0EE1692C9401B2D3938696DF9EE4",
-      "byte_size": 3806,
-      "sha256": "C1768BD30C3EA2DA9D679A3896F7B37AB11F0EE1692C9401B2D3938696DF9EE4",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 3975,
+      "canonical_sha256": "C8B38FD0DEDDB6B6F977E777ED9BC19F479D67D3F63523A3CAA1E4004FF45692",
+      "raw_working_tree_byte_size": 3975,
+      "raw_working_tree_sha256": "C8B38FD0DEDDB6B6F977E777ED9BC19F479D67D3F63523A3CAA1E4004FF45692",
+      "byte_size": 3975,
+      "sha256": "C8B38FD0DEDDB6B6F977E777ED9BC19F479D67D3F63523A3CAA1E4004FF45692",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -9903,7 +9910,7 @@
       "raw_working_tree_sha256": "3134207EFED96E4DBF37E370762D94C62385FBF1CB604785FA6E38961110A2D5",
       "byte_size": 23735,
       "sha256": "BEA18C4CA5B39A976028FA1429B2845F36CC02FC33C22D0FC857B016CCCF02B4",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -9916,13 +9923,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 6426,
-      "canonical_sha256": "5A6DB337FC8EFCA92627643F787F9CA2E494B0E13B938D9F11FDB05E3B109E5B",
-      "raw_working_tree_byte_size": 6426,
-      "raw_working_tree_sha256": "5A6DB337FC8EFCA92627643F787F9CA2E494B0E13B938D9F11FDB05E3B109E5B",
-      "byte_size": 6426,
-      "sha256": "5A6DB337FC8EFCA92627643F787F9CA2E494B0E13B938D9F11FDB05E3B109E5B",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 7628,
+      "canonical_sha256": "9E9C0F39C10661C97D7171309F88DE5F4A366C570F4D97AA5B97234872F690B0",
+      "raw_working_tree_byte_size": 7628,
+      "raw_working_tree_sha256": "9E9C0F39C10661C97D7171309F88DE5F4A366C570F4D97AA5B97234872F690B0",
+      "byte_size": 7628,
+      "sha256": "9E9C0F39C10661C97D7171309F88DE5F4A366C570F4D97AA5B97234872F690B0",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -9935,13 +9942,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 43084,
-      "canonical_sha256": "95C65363E506BD58CB227D0890B5EB0D2E656C8AEB533FCBB43659D4E62ABF11",
-      "raw_working_tree_byte_size": 43745,
-      "raw_working_tree_sha256": "A1001B8D4A0B521434AEBA555A8584E5177FEFB40107520B881C993D17908F21",
-      "byte_size": 43084,
-      "sha256": "95C65363E506BD58CB227D0890B5EB0D2E656C8AEB533FCBB43659D4E62ABF11",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 43928,
+      "canonical_sha256": "99A616296CEE9DB8C5A297BF052882EA9AF651FFB062C61BA94D90A674303374",
+      "raw_working_tree_byte_size": 44588,
+      "raw_working_tree_sha256": "DB554F477F677094FB9EE74A59F01C25B9D35F58B16EF8292487444B35E81AEB",
+      "byte_size": 43928,
+      "sha256": "99A616296CEE9DB8C5A297BF052882EA9AF651FFB062C61BA94D90A674303374",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -9960,7 +9967,7 @@
       "raw_working_tree_sha256": "A8E5369D834B21A339756DD7CAAFEA66265D7BEF697018DB5DE35ACEC06DDF0A",
       "byte_size": 28687,
       "sha256": "A8E5369D834B21A339756DD7CAAFEA66265D7BEF697018DB5DE35ACEC06DDF0A",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -9973,13 +9980,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 643749,
-      "canonical_sha256": "8EF1856E145297B8C3C40C520283DE13319EE9E5FE94C21BE1157E29855F512E",
-      "raw_working_tree_byte_size": 653226,
-      "raw_working_tree_sha256": "01E49E9543AD1AC3F210E9531E0DDFFDEEE44464A6E2EB98678A92F342E3B9B3",
-      "byte_size": 643749,
-      "sha256": "8EF1856E145297B8C3C40C520283DE13319EE9E5FE94C21BE1157E29855F512E",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 650928,
+      "canonical_sha256": "8EF84769005E30CB474420A3A2F9D394F299DA61C90360F9AB4CF7E18275F87E",
+      "raw_working_tree_byte_size": 660405,
+      "raw_working_tree_sha256": "B0F5F1B3D926F364018D969A62E1444C5F6797A0C42C5F2065712F4E58CA328E",
+      "byte_size": 650928,
+      "sha256": "8EF84769005E30CB474420A3A2F9D394F299DA61C90360F9AB4CF7E18275F87E",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -9998,7 +10005,7 @@
       "raw_working_tree_sha256": "E412E854ADDDE32ECA64C19854463836846A3403CB253164DC870DDB8210F345",
       "byte_size": 55646,
       "sha256": "9E6B16B478B9DBE421B29B68BA638E244BE225D515323ED5197429FF738F03A6",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10017,7 +10024,7 @@
       "raw_working_tree_sha256": "682B8840493F34A9E64C63D1CA7E230135DA4CBA07BE119258AE8F517F744B91",
       "byte_size": 13315,
       "sha256": "4A72D8F3D2F7FCCD9CB0120DC9C959AE87740DE2413960206D7E7738D1D3D018",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10030,13 +10037,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 153681,
-      "canonical_sha256": "3662E1F4FFCE7E42CD50A0738BFF31CE001C4F9EF107BBE3076837FC8B15CC64",
-      "raw_working_tree_byte_size": 154942,
-      "raw_working_tree_sha256": "5FBD48EADB8A47DADD8FDB09337A3212A3DAFF19DD1E9B23C30C2B949D5EE223",
-      "byte_size": 153681,
-      "sha256": "3662E1F4FFCE7E42CD50A0738BFF31CE001C4F9EF107BBE3076837FC8B15CC64",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 157702,
+      "canonical_sha256": "8916CDB2D813F265126578D05495CD65FAE6C03997C7E131B648AAB30EF43CD5",
+      "raw_working_tree_byte_size": 158961,
+      "raw_working_tree_sha256": "02DD816B8DEF7B351457BD1DF218DF201079BAEBDE9AAF13D902995B77268A8C",
+      "byte_size": 157702,
+      "sha256": "8916CDB2D813F265126578D05495CD65FAE6C03997C7E131B648AAB30EF43CD5",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10055,7 +10062,7 @@
       "raw_working_tree_sha256": "6CC2DA7829F2C50B926FACF02891D3DD803780806A79C7CDE743F4A084B81D5B",
       "byte_size": 24607,
       "sha256": "0C732EDFAAC21FBBDE6CD85DC51C01612E87F9767029719875C7E4FED7EE3B75",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10068,13 +10075,13 @@
       "state": "tracked",
       "content_classification": "text",
       "hash_policy": "canonical_lf_text",
-      "canonical_byte_size": 59644,
-      "canonical_sha256": "88D774B551DD16D468BE2B9766D530B957D4F4B4228D8006838811B20DD77C3C",
-      "raw_working_tree_byte_size": 60600,
-      "raw_working_tree_sha256": "9D57E1C9BD8812302ED14BBCD971983068CF538EBF873FDA871B852FFCE57702",
-      "byte_size": 59644,
-      "sha256": "88D774B551DD16D468BE2B9766D530B957D4F4B4228D8006838811B20DD77C3C",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "canonical_byte_size": 67030,
+      "canonical_sha256": "635CAECD6BD2BC4C9426DFC913E54AA6CFAE29F54B85D7A77846CE93114C464B",
+      "raw_working_tree_byte_size": 67981,
+      "raw_working_tree_sha256": "1EA61BB7D541631EBEB6A01F2E0BD975064F8D45BA7477A9FBB68AC3216BA370",
+      "byte_size": 67030,
+      "sha256": "635CAECD6BD2BC4C9426DFC913E54AA6CFAE29F54B85D7A77846CE93114C464B",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10093,7 +10100,7 @@
       "raw_working_tree_sha256": "D0289FBD6F572E2943435E99709030F59988265BC9C0021D96D632B66580C409",
       "byte_size": 900,
       "sha256": "4336A64B4B5C0C5AA8EEA00A3D9A52749DD719285952B0EC58E3DA467EF133AD",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10112,7 +10119,7 @@
       "raw_working_tree_sha256": "6C7A53E54B5467BF4EBA0229D780A6F5C9AD17D4AC2A2233229E8CED0CAE9FC6",
       "byte_size": 5299,
       "sha256": "72ECEF56F910C1BDE4AA5B7749A7006DADB6DAB8D19EAE2ABF9226F17A9C1ABA",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10131,7 +10138,7 @@
       "raw_working_tree_sha256": "BE87E401ED3190E31B3B1AD9EA4D685031A4DCEBB62F90C8FF975ADC653DBD58",
       "byte_size": 663,
       "sha256": "02F9C16DE567EB14F1C20F993343FB40575150612E57B1DA6A202B005005EB63",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10150,7 +10157,7 @@
       "raw_working_tree_sha256": "EEE30064DEF4817ABD43E9BEFF6A6726AC125E62F96CE4F1B71C6A5FBA498703",
       "byte_size": 9783,
       "sha256": "127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10169,7 +10176,7 @@
       "raw_working_tree_sha256": "B3C0FA54B4FBA657135E4E876465DAAD82236CC4AFA34227F95A97D1F1338957",
       "byte_size": 17395,
       "sha256": "3E7E3119A467330A413280658503B294C0FFB38271A9CA847056BAF6B2E778D3",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10188,7 +10195,7 @@
       "raw_working_tree_sha256": "E4A3CF1EB69782684E7377801B8061DABF6203A30FBA45E37EAB6D3C51A252DE",
       "byte_size": 3769,
       "sha256": "806759F5E29990BE0FCC179D18E2E595D176E4B5423D864AD0963F416B29D886",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10207,7 +10214,7 @@
       "raw_working_tree_sha256": "02D8A049A2A2C4AAB4F23071C393A848D7067CD7861B1D2FBC33FF69D5563B44",
       "byte_size": 3180,
       "sha256": "EC641DA402CE074FAA6EB7395D93F40885028C742DBB04795D4CA5D386D2F772",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10226,7 +10233,7 @@
       "raw_working_tree_sha256": "F896385E2DB48D94A46286414D0B20BFBA9F3088944A3CB1C178436D6DAA67CA",
       "byte_size": 20197,
       "sha256": "871D8C4A441342F907ABA4E78AC2399F9F76C492E2D63005B1710996D956A714",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10245,7 +10252,7 @@
       "raw_working_tree_sha256": "AF735F380CE96693048F526C7B72B296A105DBB6B3434C5D263A35DC3DFAF8BA",
       "byte_size": 40267,
       "sha256": "C6AF52AC8894DCF9A6849FD68490A5EB1671DF43758CF6D55071034E162EA2FB",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10264,7 +10271,7 @@
       "raw_working_tree_sha256": "96172D512EAF1B4D0790C54FBB8D81925F49F5FF41614AF87D83F18ED8D6AD10",
       "byte_size": 95806,
       "sha256": "D38DFA005CA7999F60F817106EE379261F8BA4A4962151B2C8B0B57285F93F66",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10283,7 +10290,7 @@
       "raw_working_tree_sha256": "AA310C3459C06C87E3B5ABC05A8811F1D3AB6D478D8A62973E0B7C900AC184B1",
       "byte_size": 738,
       "sha256": "AA310C3459C06C87E3B5ABC05A8811F1D3AB6D478D8A62973E0B7C900AC184B1",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -10302,7 +10309,7 @@
       "raw_working_tree_sha256": "284C7F68B8D81040E16EECB3017319E49C45199F2AB8C7593F7A07EBBDBA1244",
       "byte_size": 78937,
       "sha256": "284C7F68B8D81040E16EECB3017319E49C45199F2AB8C7593F7A07EBBDBA1244",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -10321,7 +10328,7 @@
       "raw_working_tree_sha256": "D17774AC550CA90F7AB3C215A153F546190F3267A21D916DB77D474D9C6C72DF",
       "byte_size": 1056,
       "sha256": "266D6F5D2EC7085502D0301EA42F5E1488378F141C9BF91EE2D08E86B9055E6C",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10340,7 +10347,7 @@
       "raw_working_tree_sha256": "E71891A9828D81FCABA70846D81A170B9BE4C5DA70A62C8EB21729AEBAA0ED51",
       "byte_size": 5332,
       "sha256": "569BC240C015FB641B060F0063C6FFFF711F2F0F192CEF2CA86FFD1C991BC7F4",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10359,7 +10366,7 @@
       "raw_working_tree_sha256": "C11C8708F6854CAEBA3D4E27134485D23E011B2087DC753C26236735AC4E8076",
       "byte_size": 95118,
       "sha256": "E5553A40AD1BAD10672DE6A2A2565A170C495A7370BF00D09DD87C68D64D4139",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10378,7 +10385,7 @@
       "raw_working_tree_sha256": "E8306733247574078528267FCAA30E9025E3177980725FFF71E216FF11B4C792",
       "byte_size": 103814,
       "sha256": "096631C00368D9515E74C31FD866B4CBC245135A247CDBF3F4BB35F5B081E0BB",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "mixed",
       "raw_and_canonical_differ": true,
@@ -10397,7 +10404,7 @@
       "raw_working_tree_sha256": "011194CA0F36961709CC284D9B6B377D530B486C52A3BDD5C98F691992166499",
       "byte_size": 851,
       "sha256": "6A1346BB40D7BD97EF0DDD5A52A7023567FE9636D5D94C59B1E8CCBA9EDC43B8",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10416,7 +10423,7 @@
       "raw_working_tree_sha256": "FC43D0DF848C577948A2BDB50C1BC0B8FCCBA4A2D28807D06B5A98F96F58EB34",
       "byte_size": 76357,
       "sha256": "FC43D0DF848C577948A2BDB50C1BC0B8FCCBA4A2D28807D06B5A98F96F58EB34",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "LF",
       "raw_and_canonical_differ": false,
@@ -10435,7 +10442,7 @@
       "raw_working_tree_sha256": "A52CAB10D700BFBF8B371C8ED25224726DCA7268C3DEFB67F2B10D7A29C8150E",
       "byte_size": 16208733,
       "sha256": "31F5EA9803612A47B0B34F2DBB17990BFE0BE3A7EAF727EBE5F42EC224E3DAEC",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,
@@ -10454,7 +10461,7 @@
       "raw_working_tree_sha256": "041C6A58CB9D4F46429F691821445145B26594C40370C09C0EDA03D41D91C2F5",
       "byte_size": 124054,
       "sha256": "279CDD757B690B702146B4926AD1A24F0314D640874806F21260AE5CDF30D52D",
-      "commit_represented": "cb80939a862d33efb1abf26a14d5c75d43a77b30",
+      "commit_represented": "dddd4afab914c1929de5683d6822fde5cbf46c6a",
       "line_ending_policy": "utf8_no_bom_lf",
       "working_tree_line_endings": "CRLF",
       "raw_and_canonical_differ": true,

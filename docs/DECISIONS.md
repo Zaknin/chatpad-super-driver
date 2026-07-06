@@ -3006,3 +3006,32 @@ task is an independent read-only audit of the plumbing, not real-artifact
 metadata review. Real artifact open/read/hash/parse/write and metadata review
 remain unauthorized until that audit passes and a separate task reopens the
 scope.
+
+## 2026-07-06 - Keep design-gate evidence validation record-only
+
+**Decision:** Fail-closed native adapter operations and design-gate probes may
+validate compile-only acceptance only from tracked JSON evidence records. They
+must use explicit mode `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` and must not call
+the full compile-output validator or inspect any path recorded as a produced
+compile output.
+
+**Rationale:** Independent audit of
+`dddd4afab914c1929de5683d6822fde5cbf46c6a` proved that a blocked operation
+still opened and hashed the real DLL through
+`Test-ChatpadNativeInteropCompileOnlyValidationEvidence`. A fail-closed result
+does not make artifact I/O audit-safe. Recorded path, size, SHA-256, acceptance,
+gate, and safety values are sufficient for this non-executing design gate.
+
+**Alternatives rejected:** Removing or weakening the full compile-output
+validator globally would discard valid separately authorized validation;
+silently adding an unsafe default mode would preserve the defect; statting or
+hashing only the primary DLL would still violate the audit boundary.
+
+**Consequences:** The full compile-output validator remains available for a
+separately authorized context. Native adapter operation, production-adapter,
+source-boundary-contract, call-plan, and audit-acceptance paths use the
+record-only validator. Static and dynamic regressions reject any return to
+`Get-FileHash`, compile-output enumeration, native load/invocation, device
+query, Windows mutation, or driver action. The runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness remains
+`BLOCKED`, and native execution remains `NOT_IMPLEMENTED`.

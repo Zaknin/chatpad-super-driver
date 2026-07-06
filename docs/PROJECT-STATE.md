@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-06 (native adapter execution design gate opened; pending independent audit)*
+*Last updated: 2026-07-06 (native adapter design-gate artifact-I/O audit remediation pending independent audit)*
 
 ## Current State
 
@@ -35,6 +35,15 @@ and the validator requires, the pending native-adapter execution-design audit
 gate plus zero execution-attempt counters. This does not authorize runtime/
 native execution or any device, Windows, package, signing, or driver action.
 
+Independent audit of
+`dddd4afab914c1929de5683d6822fde5cbf46c6a` failed because fail-closed native
+adapter operations reached the full compile-output evidence validator and
+therefore opened and hashed the real DLL. The remediated operation path uses
+tracked evidence records only in
+`EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` mode. The full compile-output validator
+remains available outside this design-gate path for separately authorized
+artifact-validation work.
+
 ## Native Adapter Execution Design Gate
 
 `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md` defines:
@@ -47,9 +56,13 @@ native execution or any device, Windows, package, signing, or driver action.
 - operations that remain forbidden; and
 - future attempt, cleanup, rollback, uncertainty, and driver-action counters.
 
-The existing PowerShell native-adapter scaffold remains non-executing. Only its
-current-gate vocabulary changed. No P/Invoke invocation, native library load,
-entry-point resolution, device query, or Windows/driver action was added.
+The existing PowerShell native-adapter scaffold remains non-executing. Its
+operation, production-adapter, source-boundary-contract, call-plan, and audit
+acceptance paths now use only the tracked compile-only evidence record and
+tracked readiness manifest. No compile-output path is opened, read, hashed,
+parsed, written, or scanned by these paths. No P/Invoke invocation, native
+library load, entry-point resolution, device query, or Windows/driver action
+was added.
 
 ## Accepted Audit
 
@@ -114,6 +127,10 @@ the DLL during this transition:
   PowerShell 7 in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode.
 - Focused fail-closed adapter checks: `PASS`, 9/9 under each runtime, with
   identical blocked operation results and all action counters zero.
+- No-artifact-I/O regression: `PASS` under Windows PowerShell 5.1 and
+  PowerShell 7; 7/7 traced functions, three blocked operations per runtime,
+  zero forbidden commands, zero native loads/invocations, zero device queries,
+  zero Windows mutations, and zero native operations.
 - Cross-runtime manifest identity: `PASS`, 39/39 entries, zero deltas.
 - Repository safety and forbidden generated-file scans: `PASS`, zero prohibited
   counters/files.
@@ -124,7 +141,9 @@ the DLL during this transition:
 
 ## Unresolved Blockers
 
-- Independent audit has not accepted the native-adapter execution design.
+- Independent audit failed for
+  `dddd4afab914c1929de5683d6822fde5cbf46c6a`; this artifact-I/O remediation
+  has not yet received independent acceptance.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
   failure described above; focused changed-surface checks pass.
@@ -133,7 +152,8 @@ the DLL during this transition:
 
 ## Next Task
 
-Perform an independent strict read-only audit of the native-adapter execution
-design gate. Do not implement or execute the adapter, query devices, mutate
-Windows, or perform any package, signing, staging, installation, or driver
-action.
+Perform an independent strict read-only audit of this native-adapter
+design-gate artifact-I/O remediation. Prove the fail-closed operation path
+cannot reach compile-output hashing or any real-DLL access. Do not run the
+static metadata parser or full compile-output validator, implement or execute
+the adapter, query devices, mutate Windows, or perform any driver action.

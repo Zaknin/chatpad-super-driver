@@ -9768,3 +9768,111 @@
 - **Next task:** Independent strict read-only audit of this native-adapter
   execution design gate. Do not implement or execute native behavior during
   that audit.
+
+---
+
+## 2026-07-06 08:16 +04:00 - Remediate native adapter design-gate artifact I/O
+
+- **Objective:** Remediate the failed independent audit of
+  `dddd4afab914c1929de5683d6822fde5cbf46c6a` by removing real-DLL hashing and
+  all compile-output I/O from fail-closed native adapter operations and their
+  design-gate probes.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`, branch
+  `feature/native-adapter-execution-design-gate`, HEAD and upstream
+  `dddd4afab914c1929de5683d6822fde5cbf46c6a`, ahead/behind `0/0`, empty
+  working tree/index, and `IDEA.md` ignored by `.git/info/exclude` and absent
+  from status. The manifest was schema v4 with 39 entries, duplicate IDs `0`,
+  duplicate paths `0`, `NO_PATH` `0`, no real-DLL entry, current gate
+  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`, runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, and native execution `NOT_IMPLEMENTED`.
+- **Audit finding confirmed:** `Invoke-ChatpadNativeAdapterOperation` called
+  `Get-ChatpadNativeInteropSourceBoundaryContract`, production adapter and call
+  plan decorators, and directly emitted compile validation. Those paths all
+  reached `Test-ChatpadNativeInteropCompileOnlyValidationEvidence`, which
+  calls `Get-FileHash` for each produced output, including the real DLL.
+- **Implementation:** Added explicit
+  `Test-ChatpadNativeInteropCompileOnlyValidationEvidenceRecordOnly`. It reads
+  only fixed tracked compile-only evidence and readiness-manifest JSON,
+  validates recorded status, counters, output-record shape/path/size/SHA-256,
+  and compares the primary DLL identity recorded in both records. It does not
+  stat, enumerate, open, read, hash, parse, write, load, reflect over, or
+  execute any recorded compile output. Operation, production-adapter,
+  source-boundary-contract, call-plan, and audit-acceptance paths now call only
+  this record-only validator. The full compile-output validator is retained
+  unchanged for separately authorized contexts.
+- **Regression coverage:** Added exported isolated probe
+  `Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression`. Its AST check
+  covers seven critical functions and rejects the full validator,
+  `Get-FileHash`, output enumeration, artifact byte-reading APIs, native/device
+  commands, and executable loading patterns. Its dynamic check replaces the
+  full validator and `Get-FileHash` with throwing functions, then proves Apply,
+  Restore, and Restart remain blocked and use
+  `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` with all action counters zero.
+- **Focused validation:** The isolated regression passed under Windows
+  PowerShell 5.1 and PowerShell 7.6.3: 7/7 functions, three blocked operations
+  per runtime, zero forbidden commands, zero dynamic exceptions, zero native
+  loads/invocations, zero device queries, zero Windows mutations, and zero
+  native operations. A recursive static call graph from
+  `Invoke-ChatpadNativeAdapterOperation` reached 12 local functions, reached
+  the record-only validator, and did not reach `Get-FileHash`, the full
+  validator, `Get-Item`, or `Get-ChildItem`.
+- **Manifest validation:** Regenerated only from existing ignored synthetic
+  suite/parser records with `-NoArtifactOpenDesignGateAudit`; neither the
+  readiness suite nor parser ran. Windows PowerShell 5.1 and PowerShell 7
+  generated 39 entries with zero cross-runtime identity deltas and zero
+  real-DLL entries. Canonical validation passed under both runtimes with zero
+  defects, duplicate IDs `0`, duplicate paths `0`, and `NO_PATH` `0`.
+- **Static and safety validation:** Both changed PowerShell modules parsed with
+  zero errors under Windows PowerShell 5.1 and PowerShell 7. Prohibited-command
+  AST scan returned zero executable hits. Documentation state and authorization
+  searches found the required blocked/not-implemented vocabulary and no
+  positive authorization claim. `runtime-beatup` and
+  `runtime-bringup-readings` were absent. Changed-path forbidden generated
+  files, legacy changes, and untracked non-ignored files were zero. Repository
+  safety passed with deployment, signing, packaging, certificate creation, key
+  creation, Windows mutation, device query, hardware access, unexpected tracked
+  artifact, tracked evidence, and non-ignored evidence counters all zero.
+  `git diff --check` passed with line-ending conversion warnings only.
+- **Command corrections:** A combined three-generation wrapper exceeded its
+  120-second timeout while the final generator's analyzer child was still
+  running; both temporary manifests had completed, and the already-running
+  canonical generator completed successfully before continuation. The first
+  dual-runtime syntax wrapper incorrectly placed `-Files` after
+  `-EncodedCommand`; it displayed command usage and performed no repository
+  action. The corrected embedded-file-list wrapper passed under both runtimes.
+  A later combined final-check helper repeated the PowerShell spacing typo
+  `-gt1` while projecting manifest duplicate counts; it stopped after both
+  manifest validators and both isolated regressions had passed, performed no
+  repository action, and was rerun with `-gt 1`.
+  A display-only staged-call-site `rg --pcre2` pattern later had an unmatched
+  parenthesis and closed its `git show` input pipe; staged-path and staged-diff
+  checks had already passed, no file changed, and final inspection used literal
+  string searches instead.
+- **Files modified:**
+  `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/PROJECT-STATE.md`,
+  `docs/NEXT-TASK.md`, `docs/DECISIONS.md`, `docs/WORKLOG.md`, and regenerated
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Safety:** The static metadata parser and full compile-output validator were
+  not run. The real DLL was not opened, read, hashed, parsed, written,
+  overwritten, loaded, reflected over, or executed. No native library load,
+  entry-point resolution, SetupAPI/Newdev invocation, device query, hardware
+  access, Windows mutation, or driver build/link/sign/CAT/package/stage/
+  install/load/unload/bind/restore/restart occurred.
+- **Final state:** Current gate remains
+  `BLOCKED_PENDING_NATIVE_ADAPTER_EXECUTION_DESIGN_AUDIT`; runtime blocker
+  remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live readiness
+  remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`. The
+  remediation remains blocked pending independent audit acceptance.
+- **Commit and push:** Commit subject will be
+  `fix: keep native adapter design gate from hashing artifacts`; Git is
+  authoritative for the exact resulting hash. Push target is
+  `origin/feature/native-adapter-execution-design-gate`.
+- **Next task:** Independent strict read-only audit of this remediation. Prove
+  fail-closed operation/probe call chains cannot reach real-DLL or
+  compile-output I/O; do not run the parser, full compile-output validator,
+  full exact/readiness suites, native/device/Windows operations, or driver
+  actions.

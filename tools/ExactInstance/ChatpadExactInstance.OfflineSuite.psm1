@@ -31,6 +31,68 @@ function Invoke-ChatpadIsolatedIntegrityProbe {
     ($raw-join"`n")|ConvertFrom-Json
 }
 
+function Test-ChatpadNativeAdapterDesignGateNoArtifactIoRegression {
+    [CmdletBinding(PositionalBinding = $false)]
+    param()
+
+    $module = Get-Module ChatpadNativeAdapterDesignGate
+    $modulePath = Join-Path $PSScriptRoot 'ChatpadNativeAdapterDesignGate.psm1'
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [Management.Automation.Language.Parser]::ParseFile($modulePath, [ref]$tokens, [ref]$parseErrors)
+    $safeFunctionNames = @(
+        'Test-ChatpadNativeInteropCompileOnlyValidationEvidenceRecordOnly',
+        'Add-NativeAuditAcceptanceFields',
+        'Get-ChatpadNativeInteropCallPlan',
+        'Get-ChatpadNativeInteropSourceBoundaryContract',
+        'New-ChatpadProductionNativeAdapter',
+        'Resolve-ChatpadNativeAdapter',
+        'Invoke-ChatpadNativeAdapterOperation'
+    )
+    $safeFunctions = @($ast.FindAll({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -in $safeFunctionNames
+    }, $true))
+    $safeText = ($safeFunctions | ForEach-Object { $_.Extent.Text }) -join "`n"
+    $safeCommands = @($safeFunctions | ForEach-Object {
+        $_.FindAll({ param($node) $node -is [Management.Automation.Language.CommandAst] }, $true) |
+            ForEach-Object { $_.GetCommandName() }
+    })
+    $forbiddenCommands = @($safeCommands | Where-Object {
+        $_ -in @('Test-ChatpadNativeInteropCompileOnlyValidationEvidence','Get-FileHash','Get-Item','Get-ChildItem','Add-Type','Get-PnpDevice','Get-PnpDeviceProperty','pnputil','devcon','dism')
+    })
+
+    $dynamic = & $module {
+        $originalUnsafeValidator = ${function:Test-ChatpadNativeInteropCompileOnlyValidationEvidence}
+        try {
+            function Test-ChatpadNativeInteropCompileOnlyValidationEvidence { throw 'UNSAFE_COMPILE_OUTPUT_VALIDATOR_REACHED' }
+            function Get-FileHash { throw 'GET_FILE_HASH_REACHED' }
+            $records = @('Apply','Restore','Restart' | ForEach-Object {
+                Invoke-ChatpadNativeAdapterOperation -Operation $_ -AdapterName 'chatpad-windows-exact-instance-adapter-v1'
+            })
+            [pscustomobject]@{ records = $records; exception = $null }
+        } catch {
+            [pscustomobject]@{ records = @(); exception = $_.Exception.Message }
+        } finally {
+            Set-Item -LiteralPath function:Test-ChatpadNativeInteropCompileOnlyValidationEvidence -Value $originalUnsafeValidator
+            Remove-Item -LiteralPath function:Get-FileHash -ErrorAction SilentlyContinue
+        }
+    }
+    $records = @($dynamic.records)
+    [pscustomobject][ordered]@{
+        result = if ($parseErrors.Count -eq 0 -and $safeFunctions.Count -eq $safeFunctionNames.Count -and $forbiddenCommands.Count -eq 0 -and $safeText -notmatch '\[IO\.File\]::(ReadAllBytes|ReadAllLines|Open|OpenRead|WriteAllBytes)' -and -not $dynamic.exception -and $records.Count -eq 3 -and @($records | Where-Object { $_.result -ne 'BLOCKED' -or $_.result_code -ne 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED' -or $_.compile_only_validation.validation_mode -ne 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO' -or $_.compile_only_validation.artifact_io_performed -ne $false -or $_.compile_only_validation.compile_output_directory_scanned -ne $false -or $_.compile_only_validation.real_dll_accessed -ne $false -or $_.native_loading_performed -ne $false -or $_.native_invocation_performed -ne $false -or $_.live_device_queries_performed -ne 0 -or $_.windows_mutations_performed -ne 0 -or $_.native_operations_performed -ne 0 }).Count -eq 0) { 'PASS' } else { 'FAIL' }
+        result_code = 'NATIVE_ADAPTER_DESIGN_GATE_NO_ARTIFACT_IO_REGRESSION'
+        parsed_function_count = $safeFunctions.Count
+        expected_function_count = $safeFunctionNames.Count
+        parse_error_count = $parseErrors.Count
+        forbidden_command_count = $forbiddenCommands.Count
+        forbidden_commands = $forbiddenCommands
+        dynamic_exception = $dynamic.exception
+        operation_count = $records.Count
+        records = $records
+    }
+}
+
 $script:Branch=Get-ChatpadExactSuiteBranch
 
 function New-ChatpadExactSuiteEnvironment {

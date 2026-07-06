@@ -287,6 +287,123 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
     $resultRecord
 }
 
+function Test-ChatpadNativeInteropCompileOnlyValidationEvidenceRecordOnly {
+    [CmdletBinding(PositionalBinding = $false)]
+    param()
+
+    $constants = Get-NativeScaffoldConstants
+    $defects = [Collections.Generic.List[object]]::new()
+    $root = [IO.Path]::GetFullPath((& git rev-parse --show-toplevel).Trim())
+    $evidenceRelativePath = 'docs/evidence/native-interop-compile-only-validation.json'
+    $manifestRelativePath = 'docs/evidence/runtime-bringup-readiness-manifest.json'
+    $evidencePath = Join-Path $root $evidenceRelativePath
+    $manifestPath = Join-Path $root $manifestRelativePath
+
+    foreach ($relativePath in @($evidenceRelativePath, $manifestRelativePath)) {
+        $tracked = @(& git -C $root ls-files --error-unmatch -- $relativePath 2>$null)
+        if ($LASTEXITCODE -ne 0 -or $tracked.Count -ne 1 -or $tracked[0].Replace('\','/') -cne $relativePath) {
+            $defects.Add([pscustomobject][ordered]@{ id = 'tracked-evidence-record-required'; value = $relativePath })
+        }
+    }
+
+    try {
+        $evidence = Get-Content -LiteralPath $evidencePath -Raw | ConvertFrom-Json
+    } catch {
+        $defects.Add([pscustomobject][ordered]@{ id = 'compile-evidence-record-invalid'; value = $_.Exception.Message })
+        $evidence = $null
+    }
+    try {
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    } catch {
+        $defects.Add([pscustomobject][ordered]@{ id = 'readiness-manifest-record-invalid'; value = $_.Exception.Message })
+        $manifest = $null
+    }
+
+    $primaryDllPath = 'artifacts/compile-only/native-interop/bin/Release/x64/net9.0-windows10.0.26100.0/Chatpad.NativeInterop.CompileOnlyValidation.dll'
+    if ($null -ne $evidence) {
+        if ([string]$evidence.schema_version -ne 'chatpad-native-interop-compile-only-validation-v2' -or
+            [string]$evidence.build_result.result -ne 'PASS' -or
+            [int]$evidence.build_result.compiler_exit_code -ne 0 -or
+            [int]$evidence.build_result.warning_count -ne 0 -or
+            [int]$evidence.build_result.error_count -ne 0 -or
+            [string]$evidence.readiness_transition.previous_gate -ne $constants.prior_compile_only_gate -or
+            [string]$evidence.readiness_transition.resulting_readiness_gate -ne $constants.compile_only_evidence_gate -or
+            [string]$evidence.readiness_transition.remaining_blocker -ne $constants.execution_blocker -or
+            [bool]$evidence.readiness_transition.transition_allowed -ne $true) {
+            $defects.Add([pscustomobject][ordered]@{ id = 'compile-evidence-record-status-invalid'; value = $evidence.readiness_transition })
+        }
+        $producedFiles = @($evidence.build_result.produced_files)
+        $producedPaths = @($producedFiles | ForEach-Object { [string]$_.relative_path })
+        if ([int]$evidence.build_result.produced_file_count -ne $producedFiles.Count -or
+            $producedFiles.Count -lt 1 -or
+            @($producedPaths | Group-Object | Where-Object Count -gt 1).Count -ne 0) {
+            $defects.Add([pscustomobject][ordered]@{ id = 'compile-output-record-set-invalid'; value = $producedPaths })
+        }
+        foreach ($file in $producedFiles) {
+            $relative = [string]$file.relative_path
+            if ($relative -notmatch '^artifacts/compile-only/native-interop/' -or
+                $relative -match '(^|/)(\.|\.\.)(/|$)' -or
+                [string]$file.hash_policy -ne 'raw_file_bytes' -or
+                [string]$file.content_classification -ne 'compile-output-artifact' -or
+                [bool]$file.ignored -ne $true -or
+                [long]$file.byte_size -lt 0 -or
+                [string]$file.sha256 -notmatch '^[A-F0-9]{64}$' -or
+                [long]$file.raw_file_byte_size -ne [long]$file.byte_size -or
+                [string]$file.raw_file_sha256 -cne [string]$file.sha256) {
+                $defects.Add([pscustomobject][ordered]@{ id = 'compile-output-record-identity-invalid'; value = $relative })
+            }
+            foreach ($flag in @('assembly_loaded','reflection_inspection_used','managed_code_executed','native_api_invoked')) {
+                if ($null -eq $file.PSObject.Properties[$flag] -or [bool]$file.$flag -ne $false) {
+                    $defects.Add([pscustomobject][ordered]@{ id = 'compile-output-record-prohibited-action-invalid'; value = "$relative::$flag" })
+                }
+            }
+        }
+        foreach ($name in @('assemblyLoaded','managedCodeExecuted','nativeInvocationOccurred','deviceQueryOccurred','exactInstanceAccessed','windowsMutationOccurred','producedAssemblyExecuted','testHostExecuted','reflectionInspectionUsed','postBuildExecutionOccurred','driverBuildOccurred','driverSigningOccurred','driverPackagingOccurred','driverInstallationOccurred')) {
+            if ($null -eq $evidence.prohibited_actions.PSObject.Properties[$name] -or [bool]$evidence.prohibited_actions.$name -ne $false) {
+                $defects.Add([pscustomobject][ordered]@{ id = 'compile-evidence-record-prohibited-action-invalid'; value = $name })
+            }
+        }
+    } else {
+        $producedFiles = @()
+    }
+
+    $primaryRecords = @($producedFiles | Where-Object { [string]$_.relative_path -ceq $primaryDllPath })
+    if ($primaryRecords.Count -ne 1) {
+        $defects.Add([pscustomobject][ordered]@{ id = 'primary-dll-record-missing-or-duplicate'; value = $primaryDllPath })
+    }
+    if ($null -ne $manifest) {
+        $manifestHash = [string]$manifest.native_interop_compile_only_evidence_reaudit.current_v2_primary_dll_sha256
+        $acceptedPath = [string]$manifest.compiled_artifact_metadata_review_design_gate.status_boundary_audit_acceptance.approved_real_artifact_path
+        $acceptedHash = [string]$manifest.compiled_artifact_metadata_review_design_gate.status_boundary_audit_acceptance.approved_real_artifact_sha256
+        if ([string]$manifest.schema_version -ne 'chatpad-runtime-bringup-readiness-manifest-v4' -or
+            [string]$manifest.current_gate -ne $constants.scaffold_gate -or
+            [string]$manifest.capability_blocker -ne $constants.execution_blocker -or
+            [string]$manifest.live_installation_readiness -ne 'BLOCKED' -or
+            [string]$manifest.native_execution_status -ne 'NOT_IMPLEMENTED' -or
+            $primaryRecords.Count -ne 1 -or
+            $acceptedPath -cne $primaryDllPath -or
+            $manifestHash -notmatch '^[A-F0-9]{64}$' -or
+            $acceptedHash -cne $manifestHash -or
+            [string]$primaryRecords[0].sha256 -cne $manifestHash) {
+            $defects.Add([pscustomobject][ordered]@{ id = 'manifest-recorded-primary-dll-identity-mismatch'; value = $primaryDllPath })
+        }
+    }
+
+    [pscustomobject][ordered]@{
+        result = if ($defects.Count) { 'FAIL' } else { 'PASS' }
+        result_code = if ($defects.Count) { 'NATIVE_INTEROP_COMPILE_ONLY_EVIDENCE_RECORD_INVALID' } else { 'NATIVE_INTEROP_COMPILE_ONLY_EVIDENCE_RECORD_VALID' }
+        validation_mode = 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO'
+        defect_count = $defects.Count
+        defects = @($defects)
+        evidence_path = $evidenceRelativePath
+        manifest_path = $manifestRelativePath
+        evidence = $evidence
+        artifact_io_performed = $false
+        compile_output_directory_scanned = $false
+        real_dll_accessed = $false
+    }
+}
+
 function Get-NativeSourceAuditAcceptanceRecord {
     $constants = Get-NativeScaffoldConstants
     [pscustomobject][ordered]@{
@@ -313,7 +430,7 @@ function Add-NativeAuditAcceptanceFields {
     param([Parameter(Mandatory)][object]$Record)
     $constants = Get-NativeScaffoldConstants
     $audit = Get-NativeSourceAuditAcceptanceRecord
-    $compileValidation = Test-ChatpadNativeInteropCompileOnlyValidationEvidence
+    $compileValidation = Test-ChatpadNativeInteropCompileOnlyValidationEvidenceRecordOnly
     if ($Record.PSObject.Properties['current_gate']) {
         $Record.current_gate = $constants.scaffold_gate
     }
@@ -417,7 +534,7 @@ function New-ChatpadProductionNativeAdapter {
         compile_only_validation_authorized = $true
         compile_only_validation_performed = $true
         structure_layout_cbsize_validated = $true
-        compile_only_validation = Test-ChatpadNativeInteropCompileOnlyValidationEvidence
+        compile_only_validation = Test-ChatpadNativeInteropCompileOnlyValidationEvidenceRecordOnly
         device_queries_available = $false
         windows_mutation_available = $false
         future_elevation_required = $true
@@ -627,7 +744,7 @@ function Invoke-ChatpadNativeAdapterOperation {
         compile_only_validation_authorized = $true
         compile_only_validation_performed = $true
         structure_layout_cbsize_validated = $true
-        compile_only_validation = Test-ChatpadNativeInteropCompileOnlyValidationEvidence
+        compile_only_validation = Test-ChatpadNativeInteropCompileOnlyValidationEvidenceRecordOnly
         device_queries_available = $false
         windows_mutation_available = $false
         execution_attempted = $false

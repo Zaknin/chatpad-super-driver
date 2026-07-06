@@ -24,6 +24,13 @@ Authoritative current state:
   `3e922470f2e46d5eeb4b6fe7500c4f105c608b3b`; evidence
   `docs/evidence/native-interop-compile-only-validation.json`; validation ID
   `native-interop-compile-only-20260703T194533Z`.
+- Independent audit of design-gate commit
+  `dddd4afab914c1929de5683d6822fde5cbf46c6a`: `AUDIT FAIL`. The fail-closed
+  operation path called the full compile-output evidence validator, which
+  opened and hashed the real DLL.
+- Remediation status: pending independent strict read-only audit. Design-gate
+  operations now use tracked evidence records only and report validation mode
+  `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 
 Authoritative source files:
 
@@ -49,6 +56,17 @@ and `Restart` operations return
 function accepts caller-supplied authority that can change that result. This
 design gate does not implement native execution and does not authorize a live
 run.
+
+The failed audit found that the blocked operation result still reached
+`Test-ChatpadNativeInteropCompileOnlyValidationEvidence`, whose compile-output
+identity checks call `Get-FileHash` on produced files, including the real DLL.
+The remediated operation path instead calls the explicit record-only validator.
+It reads only the tracked compile-only evidence JSON and tracked readiness
+manifest, compares their recorded path, size, SHA-256, status, and safety
+claims, and never stats, scans, opens, reads, hashes, parses, writes, loads,
+reflects over, or executes any recorded compile output. The full compile-output
+validator remains available only for separately authorized artifact-validation
+contexts and is unreachable from fail-closed design-gate operations and probes.
 
 ## Fail-Closed Authorization State Model
 
@@ -153,6 +171,12 @@ missing, non-integer, negative, inconsistent, or unaccounted counters.
 The current design-gate manifest records zero native library loads, entry-point
 resolutions, SetupAPI/Newdev invocations, device queries, Windows mutations,
 driver actions, authorization attempts, and uncertain-state events.
+
+During design-gate audits and fail-closed probes, the real compile-only DLL
+must not be opened, read, hashed, parsed, written, loaded, reflected over, or
+executed. Those probes may read tracked JSON evidence records only. They must
+not scan the compile-output directory or verify a recorded output identity
+against the live output file.
 
 ## Required Independent Audits
 

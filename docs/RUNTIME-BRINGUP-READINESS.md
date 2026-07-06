@@ -8,6 +8,17 @@ or touch hardware.
 
 ## Current native adapter design-gate status
 
+Independent audit of
+`dddd4afab914c1929de5683d6822fde5cbf46c6a` failed because the fail-closed
+native adapter operation path called the full compile-output evidence
+validator, which opened and hashed the real DLL with `Get-FileHash`. The
+remediation keeps the full validator for separately authorized compile-output
+validation, but removes it from the operation/design-gate call chain. Blocked
+operations now use only tracked evidence records in explicit mode
+`EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`; they do not stat, scan, open, read,
+hash, parse, write, load, reflect over, or execute compile outputs. The current
+gate remains pending independent native-adapter execution-design audit.
+
 Branch `feature/native-adapter-execution-design-gate` opens the next
 non-executing contract stage from accepted static metadata transition
 `cb80939a862d33efb1abf26a14d5c75d43a77b30`. The accepted compile-only
@@ -78,6 +89,9 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
 - Execution design status:
   `NATIVE_ADAPTER_EXECUTION_DESIGN_DEFINED_PENDING_INDEPENDENT_AUDIT`.
 - Native execution authorization: `false`.
+- Design-gate operation evidence validation:
+  `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- Real DLL access during remediation and fail-closed probes: `false`.
 - Static metadata parser implementation:
   `ACCEPTED_STATIC_ONLY_WITH_AUTHORIZATION_PLUMBING_ACCEPTED`.
 - Parser execution against the real artifact: `STATIC_METADATA_VALIDATED`.
