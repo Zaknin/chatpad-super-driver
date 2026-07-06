@@ -1,14 +1,14 @@
 # Project State
 
-*Last updated: 2026-07-06 (fail-closed scaffolding audit accepted)*
+*Last updated: 2026-07-06 (non-live native adapter planning implemented)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-fail-closed-scaffolding`.
-- **Starting commit:** `788ce8adfd0500741783ee1e359d5f805db710dd`.
+- **Branch:** `feature/native-adapter-non-live-implementation-phase`.
+- **Starting commit:** `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - **Fail-closed scaffolding commit:**
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
-- **Current documentation-remediation commit:** Git is authoritative because
+- **Current non-live implementation commit:** Git is authoritative because
   this document, the other current-state docs, and the regenerated manifest
   are committed atomically.
 - **Previous gate:**
@@ -23,6 +23,8 @@
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
 - **Fail-closed scaffolding audit acceptance:**
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- **Non-live implementation status:**
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -53,7 +55,11 @@ evidence and every non-current authorization shape fail closed before any native
 or artifact I/O boundary. Target identity fields are accepted only as inert
 request data and do not trigger live lookup.
 
-SetupAPI/Newdev invocation, native DLL loading, native entry-point resolution,
+The separately authorized non-live phase adds inert operation-plan,
+precondition-evaluation, always-deny authorization-decision, and typed
+zero-counter result models. It performs no target lookup and every plan for
+`Apply`, `Restore`, or `Restart` remains blocked. SetupAPI/Newdev invocation,
+native DLL loading, native entry-point resolution,
 device query, and Windows mutation are not authorized. Driver build, sign,
 package, install, load, bind, restore, and restart are not authorized. Real DLL
 or compile-output access is not authorized by this remediation.
@@ -117,8 +123,11 @@ authorization false. Acceptance status is
   and malformed evidence blocked; missing, malformed, stale, design-gate, and
   future-live authorization states rejected; and all native/device/Windows/
   driver/artifact counters zero.
+- Focused non-live planning checks: `PASS`, 16/16 under each runtime, including
+  three inert blocked plans, always-deny authorization, invalid input
+  rejection, zero counters, and no live target lookup.
 - No-artifact-I/O regression: `PASS` under Windows PowerShell 5.1 and
-  PowerShell 7; 11/11 traced functions, three blocked operations per runtime,
+  PowerShell 7; 15/15 traced functions, three blocked operations per runtime,
   zero forbidden commands, zero native loads/invocations, zero device queries,
   zero Windows mutations, and zero native operations.
 - Cross-runtime manifest identity: `PASS`, 39/39 entries, zero deltas.
@@ -141,9 +150,10 @@ authorization false. Acceptance status is
 
 ## Next Task
 
-Perform an independent strict read-only audit of the documentation-only
-scaffolding-audit acceptance transition on branch
-`feature/native-adapter-fail-closed-scaffolding`. Verify accepted target
-`af41a8eaeea96dcbcad75fb2e261c4352b2a468e`, implementation commit
-`7560fc242a39228d6a95f42ff908bb4be438d6ad`, exact acceptance status, and the
-unchanged blocked/no-artifact-I/O safety boundary.
+Perform an independent strict read-only audit of the non-live native adapter
+planning implementation on branch
+`feature/native-adapter-non-live-implementation-phase`. Verify the resulting
+implementation commit from Git, parent
+`748ba24b3e795cd70b3325b6a54fb88569427ed6`, exact non-live status, blocked
+plans and results, always-deny authorization, zero counters, and the unchanged
+no-artifact-I/O/native/device/Windows/driver safety boundary.

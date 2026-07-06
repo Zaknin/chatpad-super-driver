@@ -18,6 +18,7 @@ function Get-NativeScaffoldConstants {
         accepted_execution_gate = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         execution_design_status = 'NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO'
         fail_closed_scaffolding_status = 'NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO'
+        non_live_plan_status = 'NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO'
         evidence_mode = 'EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO'
         source_audit_result = 'AUDIT PASS'
         source_audit_branch = 'feature/runtime-bringup-native-interop-source-boundary'
@@ -499,7 +500,11 @@ function Get-ChatpadNativeSupportedOperationIdentifiers {
 function New-ChatpadNativeZeroCounters {
     [pscustomobject][ordered]@{
         native_invocation_count = 0
+        native_library_load_count = 0
+        entry_point_resolution_count = 0
+        setupapi_newdev_invocation_count = 0
         device_query_count = 0
+        hardware_access_count = 0
         windows_mutation_count = 0
         driver_action_count = 0
         artifact_io_performed = $false
@@ -552,6 +557,7 @@ function New-ChatpadNativeAdapterExecutionRequest {
         current_gate = $constants.accepted_execution_gate
         design_status = $constants.execution_design_status
         fail_closed_scaffolding_status = $constants.fail_closed_scaffolding_status
+        non_live_implementation_status = $constants.non_live_plan_status
         native_execution_status = 'NOT_IMPLEMENTED'
         live_readiness = 'BLOCKED'
     }
@@ -656,6 +662,159 @@ function Test-ChatpadNativeAdapterExecutionAuthorization {
     }
 }
 
+function Get-ChatpadNativeAdapterNonLiveAuthorizationDecision {
+    [CmdletBinding(PositionalBinding = $false)]
+    param([AllowNull()][object]$AuthorizationState = $null)
+
+    $constants = Get-NativeScaffoldConstants
+    $evaluation = Test-ChatpadNativeAdapterExecutionAuthorization -AuthorizationState $AuthorizationState
+    [pscustomobject][ordered]@{
+        schema_version = 'chatpad-native-adapter-non-live-authorization-decision-v1'
+        result = 'BLOCKED'
+        result_code = $constants.execution_blocker
+        source_result_code = [string]$evaluation.result_code
+        phase_status = $constants.non_live_plan_status
+        evidence_mode = $constants.evidence_mode
+        current_gate = $constants.accepted_execution_gate
+        native_execution_status = 'NOT_IMPLEMENTED'
+        live_readiness = 'BLOCKED'
+        authorizes_execution = $false
+        accepts_future_live_authorization = $false
+        would_invoke_native = $false
+        would_touch_device = $false
+        would_mutate_windows = $false
+        would_access_artifact = $false
+    }
+}
+
+function Test-ChatpadNativeAdapterNonLivePreconditions {
+    [CmdletBinding(PositionalBinding = $false)]
+    param(
+        [AllowNull()][object]$Request = $null,
+        [AllowNull()][object]$Evidence = $null,
+        [AllowNull()][object]$AuthorizationState = $null
+    )
+
+    $constants = Get-NativeScaffoldConstants
+    $evidenceState = Test-ChatpadNativeAdapterExecutionEvidence -Evidence $Evidence
+    $authorizationDecision = Get-ChatpadNativeAdapterNonLiveAuthorizationDecision -AuthorizationState $AuthorizationState
+    $requestValid = (
+        $Request -is [pscustomobject] -and
+        $null -ne $Request.PSObject.Properties['schema_version'] -and
+        [string]$Request.schema_version -eq 'chatpad-native-adapter-execution-request-v1'
+    )
+    $operationKnown = ($requestValid -and [bool]$Request.operation_known)
+    $preconditionCode = if (-not $requestValid) {
+        'NATIVE_ADAPTER_NON_LIVE_PLAN_REQUEST_MALFORMED'
+    } elseif (-not $operationKnown) {
+        'UNSUPPORTED_NATIVE_ADAPTER_OPERATION'
+    } elseif ([string]$evidenceState.result_code -in @(
+        'NATIVE_ADAPTER_EXECUTION_EVIDENCE_MISSING',
+        'NATIVE_ADAPTER_EXECUTION_EVIDENCE_MALFORMED'
+    )) {
+        [string]$evidenceState.result_code
+    } elseif ([string]$authorizationDecision.source_result_code -ne $constants.execution_blocker) {
+        [string]$authorizationDecision.source_result_code
+    } else {
+        $constants.execution_blocker
+    }
+
+    [pscustomobject][ordered]@{
+        schema_version = 'chatpad-native-adapter-non-live-precondition-result-v1'
+        result = 'BLOCKED'
+        result_code = $constants.execution_blocker
+        precondition_result_code = $preconditionCode
+        phase_status = $constants.non_live_plan_status
+        request_valid = $requestValid
+        operation_known = $operationKnown
+        evidence_binding = $evidenceState
+        authorization_decision = $authorizationDecision
+        evidence_mode = $constants.evidence_mode
+        all_preconditions_satisfied = $false
+        execution_permitted = $false
+        artifact_io_performed = $false
+        compile_output_directory_scanned = $false
+        live_device_lookup_performed = $false
+    }
+}
+
+function New-ChatpadNativeAdapterNonLiveOperationPlan {
+    [CmdletBinding(PositionalBinding = $false)]
+    param(
+        [AllowNull()][object]$Operation = $null,
+        [AllowNull()][object]$AdapterName = $null,
+        [string]$TargetInstanceId = '',
+        [AllowNull()][object]$TargetDriverIdentity = $null,
+        [AllowNull()][object]$RestorationDriverIdentity = $null,
+        [ValidateSet('none','exact-device-separate-authorization','reboot-never-automatic')][string]$RestartPolicy = 'none',
+        [AllowNull()][object]$Evidence = $null,
+        [AllowNull()][object]$AuthorizationState = $null
+    )
+
+    $constants = Get-NativeScaffoldConstants
+    $request = New-ChatpadNativeAdapterExecutionRequest -Operation $Operation -AdapterName $AdapterName -TargetInstanceId $TargetInstanceId -TargetDriverIdentity $TargetDriverIdentity -RestorationDriverIdentity $RestorationDriverIdentity -RestartPolicy $RestartPolicy
+    $preconditions = Test-ChatpadNativeAdapterNonLivePreconditions -Request $request -Evidence $Evidence -AuthorizationState $AuthorizationState
+    [pscustomobject][ordered]@{
+        schema_version = 'chatpad-native-adapter-non-live-operation-plan-v1'
+        phase_status = $constants.non_live_plan_status
+        result = 'BLOCKED'
+        result_code = $constants.execution_blocker
+        operation = [string]$request.operation
+        requested_operation = [string]$request.requested_operation
+        operation_known = [bool]$request.operation_known
+        adapter_identity = [string]$request.adapter_identity
+        target_identity = $request.target_identity
+        restart_policy = [string]$request.restart_policy
+        request = $request
+        preconditions = $preconditions
+        authorization_decision = $preconditions.authorization_decision
+        evidence_binding = $preconditions.evidence_binding
+        evidence_mode = $constants.evidence_mode
+        current_gate = $constants.accepted_execution_gate
+        native_execution_status = 'NOT_IMPLEMENTED'
+        live_readiness = 'BLOCKED'
+        would_invoke_native = $false
+        would_load_native_library = $false
+        would_resolve_entry_point = $false
+        would_invoke_setupapi_newdev = $false
+        would_touch_device = $false
+        would_access_hardware = $false
+        would_mutate_windows = $false
+        would_perform_driver_action = $false
+        would_access_artifact = $false
+    }
+}
+
+function New-ChatpadNativeAdapterNonLivePlanResult {
+    [CmdletBinding(PositionalBinding = $false)]
+    param([Parameter(Mandatory)][object]$Plan)
+
+    $constants = Get-NativeScaffoldConstants
+    $counters = New-ChatpadNativeZeroCounters
+    [pscustomobject][ordered]@{
+        schema_version = 'chatpad-native-adapter-non-live-plan-result-v1'
+        phase_status = $constants.non_live_plan_status
+        result = 'BLOCKED'
+        result_code = $constants.execution_blocker
+        operation = if ($Plan.PSObject.Properties['operation']) { [string]$Plan.operation } else { '' }
+        plan = $Plan
+        evidence_mode = $constants.evidence_mode
+        current_gate = $constants.accepted_execution_gate
+        runtime_blocker = $constants.execution_blocker
+        native_execution_status = 'NOT_IMPLEMENTED'
+        live_readiness = 'BLOCKED'
+        native_invocation_count = $counters.native_invocation_count
+        native_library_load_count = $counters.native_library_load_count
+        entry_point_resolution_count = $counters.entry_point_resolution_count
+        setupapi_newdev_invocation_count = $counters.setupapi_newdev_invocation_count
+        device_query_count = $counters.device_query_count
+        hardware_access_count = $counters.hardware_access_count
+        windows_mutation_count = $counters.windows_mutation_count
+        driver_action_count = $counters.driver_action_count
+        artifact_io_performed = $false
+    }
+}
+
 function Invoke-ChatpadNativeAdapterFailClosedExecution {
     [CmdletBinding(PositionalBinding = $false)]
     param(
@@ -687,6 +846,7 @@ function Invoke-ChatpadNativeAdapterFailClosedExecution {
         current_gate = $constants.accepted_execution_gate
         design_status = $constants.execution_design_status
         fail_closed_scaffolding_status = $constants.fail_closed_scaffolding_status
+        non_live_implementation_status = $constants.non_live_plan_status
         live_readiness = 'BLOCKED'
         native_execution_status = 'NOT_IMPLEMENTED'
         native_invocation_count = $counters.native_invocation_count
@@ -747,6 +907,7 @@ function New-ChatpadProductionNativeAdapter {
         current_gate = $constants.accepted_execution_gate
         design_status = $constants.execution_design_status
         fail_closed_scaffolding_status = $constants.fail_closed_scaffolding_status
+        non_live_implementation_status = $constants.non_live_plan_status
         evidence_mode = $constants.evidence_mode
         capability_blocker = $constants.execution_blocker
         compatibility_capability_api_authorizes_mutation = $false
@@ -947,6 +1108,7 @@ function Invoke-ChatpadNativeAdapterOperation {
         live_readiness = $execution.live_readiness
         design_status = $execution.design_status
         fail_closed_scaffolding_status = $execution.fail_closed_scaffolding_status
+        non_live_implementation_status = $execution.non_live_implementation_status
         evidence_mode = $execution.evidence_mode
         source_audit_result = $constants.source_audit_result
         source_audit_accepted = $true
@@ -1166,6 +1328,7 @@ function Get-ChatpadNativeAdapterDesignContract {
         current_gate = $constants.accepted_execution_gate
         design_status = $constants.execution_design_status
         fail_closed_scaffolding_status = $constants.fail_closed_scaffolding_status
+        non_live_implementation_status = $constants.non_live_plan_status
         evidence_mode = $constants.evidence_mode
         capability_blocker = $constants.execution_blocker
         source_audit = Get-NativeSourceAuditAcceptanceRecord

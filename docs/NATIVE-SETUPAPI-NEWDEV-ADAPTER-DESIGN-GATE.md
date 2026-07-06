@@ -20,6 +20,10 @@ Authoritative current state:
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
 - Fail-closed scaffolding audit acceptance:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Non-live implementation status:
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
+- Non-live phase base:
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - Accepted scaffolding audit target:
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -53,6 +57,10 @@ Authoritative current state:
 - The independent audit of that commit returned `AUDIT FAIL` only because
   current-state documentation omitted the exact scaffolding commit. The
   technical fail-closed and no-artifact-I/O checks passed.
+- The separately authorized non-live implementation phase adds only inert
+  operation plans, in-memory precondition evaluation, an always-deny
+  authorization decision, and typed blocked results with zero counters. Target
+  identity is not resolved and no execution or artifact-I/O boundary is crossed.
 
 Authoritative source files:
 
@@ -381,6 +389,12 @@ rejection; inert target identity handling; and zero native/device/Windows/
 driver/artifact counters. The no-artifact-I/O regression traces 11 functions
 and requires zero forbidden commands.
 
+Focused non-live planning coverage adds 16 checks under both runtimes for three
+blocked plans, always-deny authorization, invalid evidence/operation rejection,
+inert target identity, and typed zero-counter results. The expanded
+no-artifact-I/O regression traces 15 functions and requires zero forbidden
+commands.
+
 ## Next Boundary
 
 The remediated compiled-artifact metadata-review design gate passed independent
@@ -405,5 +419,9 @@ no-artifact-I/O regression passed. Independent strict read-only audit target
 status is
 `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 Acceptance does not authorize native execution, artifact I/O, device query,
-Windows mutation, or driver action. The next step is an independent strict
-read-only audit of this documentation-only acceptance transition.
+Windows mutation, or driver action. The separately authorized non-live phase
+implements inert planning with status
+`NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`; its commit is
+authoritative in Git because code, evidence, and continuity updates are
+committed atomically. The next step is an independent strict read-only audit of
+that non-live implementation.

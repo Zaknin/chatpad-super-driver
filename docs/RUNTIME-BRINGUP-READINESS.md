@@ -21,7 +21,15 @@ remediation passed independent audit at
 `d71c6a46b0066eb8bc48e8de14795c223cdaa00c`. The design gate is accepted and
 closed; the current blocker is native adapter execution not implemented.
 
-Branch `feature/native-adapter-fail-closed-scaffolding` adds the next
+Branch `feature/native-adapter-non-live-implementation-phase` adds the next
+separately authorized non-live planning phase from accepted audit transition
+`748ba24b3e795cd70b3325b6a54fb88569427ed6`. It preserves all earlier
+fail-closed scaffolding and adds only inert operation-plan, in-memory
+precondition, always-deny authorization-decision, and typed zero-counter result
+models. No target lookup, native execution, artifact I/O, device access,
+Windows mutation, or driver behavior is added.
+
+The earlier branch `feature/native-adapter-fail-closed-scaffolding` added the
 non-executing scaffolding stage from accepted design-gate transition
 `788ce8adfd0500741783ee1e359d5f805db710dd`. The fail-closed native adapter
 scaffolding was added at
@@ -103,6 +111,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `7560fc242a39228d6a95f42ff908bb4be438d6ad`.
 - Fail-closed scaffolding audit acceptance:
   `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Non-live implementation status:
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
+- Non-live phase base:
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`.
 - Accepted scaffolding audit target:
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Native adapter design-gate remediation audit: `AUDIT PASS` for
@@ -136,6 +148,9 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; unsupported operations
   are rejected; malformed or non-current evidence/authorization states fail
   closed; and all native/device/Windows/driver/action counters remain zero.
+- Non-live operation planning now evaluates only caller-provided in-memory
+  records, always denies execution, emits inert plans for Apply/Restore/Restart,
+  and returns typed blocked results with all counters and action flags zero.
 - The no-artifact-I/O regression passed under Windows PowerShell 5.1 and
   PowerShell 7. SetupAPI/Newdev invocation, native DLL loading, entry-point
   resolution, device query, Windows mutation, and driver build/sign/package/

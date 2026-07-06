@@ -10230,3 +10230,87 @@
   acceptance status, manifest identity, and unchanged blocked/no-artifact-I/O
   restrictions without editing or running artifact/native/device/Windows/
   driver paths.
+
+---
+
+## 2026-07-06 - Add non-live native adapter operation planning
+
+- **Objective:** Start the separately authorized non-live implementation phase
+  with the smallest auditable operation-plan, precondition-evaluation,
+  always-deny authorization-decision, and typed blocked-result models while
+  preserving every no-execution and no-artifact-I/O restriction.
+- **Starting state:** Verified repository `C:\Dev\chatpad-super-driver`, branch
+  `feature/native-adapter-fail-closed-scaffolding`, exact HEAD
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`, parent
+  `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`, upstream equality,
+  ahead/behind `0/0`, clean tree/index, no untracked non-ignored files, and
+  ignored `IDEA.md`. Created branch
+  `feature/native-adapter-non-live-implementation-phase`.
+- **Implementation:** Added inert plans for `Apply`, `Restore`, and `Restart`;
+  in-memory-only precondition evaluation; authorization decisions that always
+  return `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; and typed results
+  with native invocation, library load, entry-point resolution,
+  SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+  driver action, and artifact-I/O counts/flags all zero. Target identity remains
+  request data and no live lookup is performed.
+- **Status:** Added
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO` while preserving
+  design status
+  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`,
+  scaffolding status
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`,
+  scaffolding audit acceptance
+  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`,
+  evidence mode `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`, live readiness
+  `BLOCKED`, and native execution `NOT_IMPLEMENTED`.
+- **Files modified:** `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`,
+  `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/DECISIONS.md`, this worklog, and
+  regenerated `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Focused validation:** PowerShell syntax passed for all four changed tool/
+  module files under Windows PowerShell 5.1 and PowerShell 7. Fail-closed
+  scaffolding, non-live planning, and no-artifact-I/O regression tests passed
+  under both runtimes. Non-live planning passed 16/16; no-artifact regression
+  traced 15/15 selected functions, produced three blocked plans/results, and
+  found zero forbidden commands.
+- **Manifest:** Regenerated schema-v4 readiness evidence with 39 entries,
+  framework `PASS`, live readiness `BLOCKED`, phase base
+  `748ba24b3e795cd70b3325b6a54fb88569427ed6`, approved existing suite/parser
+  evidence records, and no artifact-open design-gate mode. Validation passed
+  under Windows PowerShell 5.1 and PowerShell 7 with zero defects; duplicate
+  IDs/paths and `NO_PATH` entries are zero.
+- **Safety validation:** Changed paths matched the 11 authorized files;
+  positive-authorization additions, prohibited executable-pattern additions,
+  forbidden tracked/dirty generated paths, and new prohibited spelling-variant
+  hits were all zero.
+  The spelling search still reports three historical self-referential worklog
+  statements and this change adds none. Documentation/status consistency and
+  `git diff --check` passed.
+- **Command corrections:** The first generator attempt used a `.\`-prefixed
+  parser-evidence path and was rejected by the allowlist before writing. The
+  second omitted the established parser path and was rejected because the
+  default record was not the accepted status-boundary evidence. Regeneration
+  succeeded with the manifest-recorded approved path. The first validator
+  wrapper incorrectly projected properties from JSON text and failed locally;
+  deserializing the same validator output produced `PASS` with zero defects in
+  both runtimes. None of these corrections ran the parser or full
+  compile-output validator.
+- **Safety:** The static parser and full compile-output validator were not run.
+  No real DLL or compile output was opened, read, hashed, parsed, statted,
+  scanned, written, loaded, reflected over, or executed. No native library was
+  loaded, no entry point resolved, and no SetupAPI/Newdev, device, hardware,
+  Windows, build, link, sign, CAT, package, stage, install, load, unload, bind,
+  restore, or restart action occurred.
+- **Commit and push:** Commit subject is
+  `feat: add non-live native adapter operation planning`; Git is authoritative
+  for the resulting full hash. Push target is
+  `origin/feature/native-adapter-non-live-implementation-phase`; exact push and
+  final synchronization are reported in the final response.
+- **Next task:** Independent strict read-only audit of the resulting
+  implementation commit. Trace the four new data-only functions, reproduce the
+  focused dual-runtime tests and manifest checks, and verify that no artifact,
+  native, device, hardware, Windows, or driver boundary is reachable.

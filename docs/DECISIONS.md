@@ -3091,3 +3091,30 @@ remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence
 mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Real DLL/compile-output
 access, native loading, entry-point resolution, SetupAPI/Newdev invocation,
 device query, Windows mutation, and driver actions remain unauthorized.
+
+## 2026-07-06 - Keep non-live native adapter plans data-only and always denied
+
+**Decision:** Implement the separately authorized non-live adapter phase as
+inert operation-plan, in-memory precondition-evaluation, always-deny
+authorization-decision, and typed zero-counter result models with exact status
+`NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
+
+**Rationale:** Planning and validation can be audited without crossing the
+native execution boundary. Keeping target identity as inert request data and
+making authorization unconditionally blocked prevents caller input or future
+authorization vocabulary from enabling execution.
+
+**Alternatives rejected:** Resolving target devices, loading libraries,
+resolving entry points, calling SetupAPI/Newdev, touching compile outputs, or
+accepting caller-supplied execution authority would exceed this phase. Returning
+untyped ad hoc objects would weaken auditability of blocked results and
+counters.
+
+**Consequences:** Apply, Restore, and Restart can produce deterministic
+non-live plans and blocked results, but the runtime blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness remains
+`BLOCKED`, and native execution remains `NOT_IMPLEMENTED`. Artifact I/O and
+native/device/hardware/Windows/driver behavior remain unauthorized. Existing
+scaffolding status
+`NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO` and evidence
+mode `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` are unchanged.
