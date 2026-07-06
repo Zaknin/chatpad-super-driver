@@ -120,6 +120,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
 - Non-live implementation commit:
   `4522510a17354fe53d163546e16ff24af5fa0374`.
+- Non-live implementation audit acceptance:
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted non-live planning audit target:
+  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Native adapter design-gate remediation audit: `AUDIT PASS` for
@@ -165,6 +169,12 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   Acceptance records the status transition only; it does not authorize native
   execution, real DLL or compile-output access, device query, Windows mutation,
   or driver action.
+- Independent strict read-only audit of non-live planning continuity target
+  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679` returned `AUDIT PASS`.
+  Acceptance status is
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`; implementation
+  remains `4522510a17354fe53d163546e16ff24af5fa0374`, and all operation plans and
+  results remain blocked/non-executing.
 - Tracked text evidence uses explicit `canonical_lf_text`; raw working-tree
   identity is informational. Compile outputs use `raw_file_bytes`.
 - Old v1 compile-output hashes are superseded historical ignored derived

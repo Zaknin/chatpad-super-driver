@@ -28,6 +28,10 @@ Authoritative current state:
   `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
 - Non-live implementation commit:
   `4522510a17354fe53d163546e16ff24af5fa0374`.
+- Non-live implementation audit acceptance:
+  `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted non-live planning audit target:
+  `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -428,5 +432,10 @@ implements inert planning with status
 `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO` at
 `4522510a17354fe53d163546e16ff24af5fa0374`. Its first independent audit found
 the technical implementation safe but failed continuity identity recording.
-The next step is an independent strict read-only audit of the resulting
-documentation/evidence remediation commit.
+Independent strict read-only audit of the resulting documentation/evidence
+remediation at `5e7a6f39d0363121b8bd3f6e4b38ceb517889679` returned
+`AUDIT PASS`; acceptance status is
+`NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`. The next step is an
+independent strict read-only audit of this documentation-only acceptance
+commit. No artifact, native, device, hardware, Windows, or driver authority is
+granted.

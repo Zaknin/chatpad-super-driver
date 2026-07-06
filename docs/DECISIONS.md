@@ -3122,3 +3122,31 @@ native/device/hardware/Windows/driver behavior remain unauthorized. Existing
 scaffolding status
 `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO` and evidence
 mode `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO` are unchanged.
+
+## 2026-07-06 - Accept the non-live native adapter planning audit
+
+**Decision:** Accept independent strict read-only audit target
+`5e7a6f39d0363121b8bd3f6e4b38ceb517889679` with exact status
+`NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`, while retaining
+non-live implementation commit
+`4522510a17354fe53d163546e16ff24af5fa0374` and all prior scaffolding
+identities and statuses.
+
+**Rationale:** The audit confirmed that the continuity remediation records and
+the validator enforces the exact non-live implementation identity, scaffolding
+audit identity/status, blocked execution boundary, and record-only evidence
+mode. The planning implementation is technically passable and continuity-
+correct without artifact I/O or native/device/Windows/driver behavior.
+
+**Alternatives rejected:** Keeping the remediated planning state pending audit
+would contradict the accepted result; changing planning or fail-closed
+behavior would exceed this documentation-only transition; treating acceptance
+as artifact-access or execution authority would cross the audited boundary.
+
+**Consequences:** The planning audit is accepted, but the runtime blocker
+remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and evidence
+mode remains `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`. Operation plans/results
+remain blocked/non-executing. Real DLL and compile-output access, native
+loading, entry-point resolution, SetupAPI/Newdev invocation, device query,
+hardware access, Windows mutation, and driver actions remain forbidden.

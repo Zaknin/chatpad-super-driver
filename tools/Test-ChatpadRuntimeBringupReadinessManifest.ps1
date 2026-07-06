@@ -890,7 +890,9 @@ else{
         $executionDesign.fail_closed_scaffolding_audit_remediation_commit-ne'af41a8eaeea96dcbcad75fb2e261c4352b2a468e'-or
         $executionDesign.non_live_implementation_status-ne'NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO'-or
         $executionDesign.non_live_implementation_commit-ne'4522510a17354fe53d163546e16ff24af5fa0374'-or
-        $executionDesign.non_live_implementation_audit_required-ne$true-or
+        $executionDesign.non_live_implementation_audit_status-ne'NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO'-or
+        $executionDesign.non_live_implementation_audit_target_commit-ne'5e7a6f39d0363121b8bd3f6e4b38ceb517889679'-or
+        $executionDesign.non_live_implementation_audit_required-ne$false-or
         $executionDesign.current_gate-ne'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'-or
         $executionDesign.opened_from_commit-ne'cb80939a862d33efb1abf26a14d5c75d43a77b30'-or
         $executionDesign.design_document_path-ne'docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md'-or
