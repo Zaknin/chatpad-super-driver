@@ -46,6 +46,10 @@ Authoritative current state:
   `d1372ba8f7812d24a09b87238793e78435ac4492`.
 - Execution-scope boundary lane-closeout commit:
   `e68ed58e3c5a2560c331f4b69dfe021ae54531e1`.
+- Closeout-identity audit acceptance:
+  `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted closeout-identity audit target:
+  `9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:

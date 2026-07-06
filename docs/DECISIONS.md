@@ -3265,3 +3265,21 @@ changing behavior or execution authority.
 status remains `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`; runtime blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; no artifact, native,
 device, hardware, Windows, or driver authority is granted.
+
+## 2026-07-06 - Accept the boundary closeout-identity audit
+
+**Decision:** Accept independent audit target
+`9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f` with status
+`NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+
+**Rationale:** The audit verified distinct accepted-audit and lane-closeout
+identities, exact validator enforcement, dual-runtime manifest identity, and
+unchanged blocked authority.
+
+**Alternatives rejected:** Leaving the remediated closeout identity pending
+acceptance; conflating prior audit and closeout commits; or treating acceptance
+as execution authority.
+
+**Consequences:** The closed lane is audit-accepted without authorizing
+artifact, native, device, hardware, Windows, or driver action. The runtime
+blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

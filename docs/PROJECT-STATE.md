@@ -25,6 +25,8 @@
   `d1372ba8f7812d24a09b87238793e78435ac4492`.
 - **Execution scope-boundary lane-closeout commit:**
   `e68ed58e3c5a2560c331f4b69dfe021ae54531e1`.
+- **Accepted closeout-identity audit target:**
+  `9c9af5cf0cfdffde67a0f2b4e41e8eceb42d673f`.
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
@@ -47,6 +49,8 @@
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - **Execution-scope boundary lane closeout:**
   `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`.
+- **Closeout-identity audit acceptance:**
+  `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
