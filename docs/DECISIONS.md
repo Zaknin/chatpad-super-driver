@@ -4,6 +4,40 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-07 - Design a non-mutating exact-instance binding dry-run without implementing it
+
+**Decision:** Record
+`EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`
+as a documentation/manifest-only design for a future exact-instance binding
+dry-run. The design targets the accepted USB HID interface candidate
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` and defines future input
+requirements, allowed-match predicates, rejection predicates, dry-run decision
+vocabulary, planned-action reporting, future result evidence schema
+`chatpad-exact-instance-binding-dry-run-result-v1`, and follow-up audit
+requirements.
+
+**Rationale:** The accepted design gate identified the exact future target and
+required a non-mutating dry-run before any implementation can be considered.
+The repository needs an auditable contract for a future predicate-validation
+and planned-action-reporting step that answers whether the accepted target is
+matchable without turning the dry-run into binding execution or mutation
+authority.
+
+**Alternatives rejected:** Implementing or executing the dry-run in this task;
+performing a fresh live observation or device query; binding, installing,
+loading, restoring, restarting, or mutating a driver; loading native
+libraries; resolving entry points; invoking SetupAPI/Newdev; mutating Windows;
+opening artifact or compile-output binaries; or creating the future dry-run
+result evidence file before a separate authorized task.
+
+**Consequences:** Future dry-run execution remains unauthorized and requires a
+separate task after independent audit. Binding implementation and binding
+execution remain unauthorized and not performed. Live readiness remains
+`BLOCKED`; native execution remains `NOT_IMPLEMENTED`; binding implementation
+remains `NOT_IMPLEMENTED`; execution authorization and binding implementation
+authorization remain false; artifact and compile-output I/O remain false; and
+all native/device/hardware/Windows/driver counters remain zero.
+
 ## 2026-07-07 - Open an exact-instance binding implementation design gate without implementing binding
 
 **Decision:** Record

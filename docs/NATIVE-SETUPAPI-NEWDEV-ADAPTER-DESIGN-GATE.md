@@ -750,3 +750,45 @@ confirmation, rollback/no-op behavior, evidence, and audit. It does not
 implement binding, authorize binding, query devices, load native libraries,
 resolve entry points, invoke SetupAPI/Newdev, mutate Windows, perform driver
 actions, or access artifacts or compile outputs.
+
+The non-mutating exact-instance binding dry-run design is completed with
+status
+`EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`
+and evidence path `docs/evidence/exact-instance-binding-dry-run-design.json`.
+It is documentation/manifest-only and defines a future predicate-validation
+and planned-action-reporting step for the accepted USB HID interface target
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`. The future dry-run must answer
+only whether the accepted target is matchable, which allowed-match predicates
+pass, which rejection predicates trigger, whether a future binding action
+would be accepted or rejected, what planned action would be proposed without
+execution, what evidence would be emitted, and what audit would follow.
+
+The future dry-run input model must bind source observation, source analysis,
+and source design-gate evidence; accepted target InstanceId, parent InstanceId,
+ContainerId, HardwareIds, class, and service; blocked current safety state;
+operator-provided dry-run-only intent; and a non-mutating dry-run mode flag. A
+future implementation may require a separately authorized read-only
+current-state device query, but this design task does not authorize or perform
+that query.
+
+The future dry-run result model is limited to
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`,
+`DRY_RUN_REJECTED_TARGET_ABSENT_NO_MUTATION`,
+`DRY_RUN_REJECTED_TARGET_MISMATCH_NO_MUTATION`,
+`DRY_RUN_REJECTED_AMBIGUOUS_TARGET_NO_MUTATION`,
+`DRY_RUN_REJECTED_UNSAFE_STATE_NO_MUTATION`,
+`DRY_RUN_REJECTED_UNAUTHORIZED_ACTION_REQUIRED_NO_MUTATION`, and
+`DRY_RUN_BLOCKED_SOURCE_EVIDENCE_INVALID_NO_MUTATION`. All decisions are
+non-mutating. The planned action is descriptive only and is not an executable
+instruction.
+
+Future dry-run result evidence must use schema
+`chatpad-exact-instance-binding-dry-run-result-v1`, but this task does not
+create `docs/evidence/exact-instance-binding-dry-run-result.json`. No dry-run
+implementation, dry-run execution, binding implementation, binding execution,
+new live observation, device query, hardware access, native execution, native
+library load, entry-point resolution, SetupAPI/Newdev invocation, Windows
+mutation, driver action, driver build/sign/package/install/load/bind/restore/
+restart, or artifact/compile-output access is authorized or performed. Future
+dry-run execution and future binding implementation require separate tasks
+after independent audit.

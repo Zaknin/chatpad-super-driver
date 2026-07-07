@@ -2,25 +2,33 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the exact-instance binding
-implementation design-gate commit.
+Perform an independent strict read-only audit of the non-mutating
+exact-instance binding dry-run design commit.
+
+This next task is not dry-run implementation, dry-run execution, binding
+implementation, binding execution, native execution, SetupAPI/Newdev
+invocation, Windows mutation, driver action, or artifact/compile-output access.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
-- Required starting commit before the design gate:
-  `3d26a70aeaa1467aabc6d47a996a9b4596bd8b6d`.
+- Required starting commit before the dry-run design:
+  `7865356e640d08a052b9e32366f2755352a7d9c5`.
 - Required commit subject:
-  `docs: open exact instance binding design gate`.
+  `docs: design exact instance binding dry run`.
 - Required upstream:
   `origin/feature/native-adapter-execution-envelope-verifier`.
 - Required synchronization and tree before audit: `0/0` and clean.
-- Design-gate evidence path:
+- Dry-run design evidence path:
+  `docs/evidence/exact-instance-binding-dry-run-design.json`.
+- Dry-run design evidence schema:
+  `chatpad-exact-instance-binding-dry-run-design-v1`.
+- Dry-run design status:
+  `EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`.
+- Source design-gate evidence path:
   `docs/evidence/exact-instance-binding-implementation-design-gate.json`.
-- Design-gate evidence schema:
-  `chatpad-exact-instance-binding-implementation-design-gate-v1`.
-- Design-gate status:
+- Source design-gate status:
   `EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`.
 - Source analysis evidence path:
   `docs/evidence/exact-instance-binding-analysis.json`.
@@ -41,8 +49,10 @@ implementation design-gate commit.
 - Execution authorized: `false`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Binding implementation authorized: `false`.
 - Binding implementation status: `NOT_IMPLEMENTED`.
+- Binding implementation authorized: `false`.
+- Dry-run implementation status: `NOT_IMPLEMENTED`.
+- Dry-run execution authorized: `false`.
 - Artifact opening/access: `false`.
 - Artifact/compile-output I/O: `false`.
 - Compile-output hash verification: `false`.
@@ -55,8 +65,8 @@ implementation design-gate commit.
 
 ## Preconditions
 
-1. Follow `AGENTS.md`; verify exact branch, commit subject, parent, upstream,
-   remote equality, `0/0`, and clean tree/index.
+1. Follow `AGENTS.md`; verify exact branch, target commit identity, parent,
+   upstream, remote equality, `0/0`, and clean tree/index.
 2. Verify changed paths are limited to:
    - `docs/DECISIONS.md`
    - `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
@@ -65,48 +75,50 @@ implementation design-gate commit.
    - `docs/RUNTIME-BRINGUP-READINESS.md`
    - `docs/WORKLOG.md`
    - `docs/evidence/runtime-bringup-readiness-manifest.json`
-   - `docs/evidence/exact-instance-binding-implementation-design-gate.json`
-3. Confirm verifier behavior modules, offline-suite behavior modules, static
-   parser, real artifact, compile outputs, harness/evidence policy, driver,
-   INF/project/solution, packaging, signing, staging, deployment, binaries,
-   tools, and `legacy/` are unchanged.
+   - `docs/evidence/exact-instance-binding-dry-run-design.json`
+3. Confirm no tool, source, INF, project, solution, parser, verifier,
+   offline-suite, packaging, signing, staging, deployment, binary, artifact,
+   frozen-output, or `legacy/` path changed.
+4. Confirm `docs/evidence/exact-instance-binding-dry-run-result.json` was not
+   created.
 
 ## Audit Scope
 
-- Verify target commit Git identity, subject, parent, changed paths, and
-  pushed branch.
-- Verify design-gate evidence file schema and status.
-- Verify source analysis evidence reference and source analysis status.
-- Verify source observation evidence reference and source observation status.
-- Verify source gate status and verifier lane closeout.
-- Verify the accepted three-node target chain:
+- Verify target commit Git identity.
+- Verify dry-run design evidence file schema and status.
+- Verify source design-gate evidence reference.
+- Verify source analysis evidence reference.
+- Verify source observation evidence reference.
+- Verify accepted three-node target chain:
   `USB\VID_045E&PID_028E\1C21F10` ->
   `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` ->
   `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`.
-- Verify the recommended future implementation target candidate is the USB HID
-  interface child `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`.
+- Verify dry-run target InstanceId:
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`.
 - Verify allowed match predicates.
 - Verify rejection predicates.
-- Verify non-mutation dry-run requirements.
-- Verify operator confirmation requirements.
-- Verify rollback/no-op requirements.
-- Verify evidence requirements.
-- Verify audit requirements.
-- Verify no binding implementation occurred.
-- Verify no new live observation occurred.
-- Verify no device query occurred.
-- Verify no hardware access occurred.
-- Verify no native execution occurred or was authorized.
-- Verify no SetupAPI/Newdev invocation occurred or was authorized.
-- Verify no native library load occurred.
-- Verify no entry-point resolution occurred.
-- Verify no Windows mutation occurred.
-- Verify no driver action occurred.
-- Verify no artifact/compile-output access occurred.
+- Verify dry-run decision model.
+- Verify planned-action reporting requirements.
+- Verify future dry-run evidence schema
+  `chatpad-exact-instance-binding-dry-run-result-v1`.
+- Verify future audit requirements.
+- Verify no dry-run implementation.
+- Verify no dry-run execution.
+- Verify no binding implementation.
+- Verify no binding execution.
+- Verify no new live observation.
+- Verify no device query.
+- Verify no hardware access.
+- Verify no native execution.
+- Verify no SetupAPI/Newdev invocation.
+- Verify no native library load.
+- Verify no entry-point resolution.
+- Verify no Windows mutation.
+- Verify no driver action.
+- Verify no artifact/compile-output access.
 - Verify live readiness remains `BLOCKED`.
 - Verify native execution remains `NOT_IMPLEMENTED`.
 - Verify execution authorized remains `false`.
-- Verify binding implementation remains unauthorized and not implemented.
 
 ## Safety Restrictions
 
@@ -120,16 +132,15 @@ build, package, sign, install, load, bind, restore, restart, `pnputil`,
 ## Acceptance Criteria
 
 - Git identity, subject, parent, changed paths, and content establish the exact
-  design-gate transition without self-reference.
-- Design-gate evidence JSON and manifest JSON parse successfully.
+  dry-run design transition without self-reference.
+- Dry-run design evidence JSON and manifest JSON parse successfully.
 - Manifest validation passes with schema
   `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Design-gate evidence schema, status, source evidence references, accepted
-  target chain, recommended future implementation target candidate, allowed
-  match predicates, rejection predicates, future dry-run requirements,
-  operator confirmation requirements, rollback/no-op requirements, evidence
-  requirements, audit requirements, and explicit safety counters match the
-  design-gate record.
+- Dry-run design evidence schema, status, source evidence references, accepted
+  target chain, dry-run target InstanceId, allowed match predicates, rejection
+  predicates, dry-run decision model, planned-action reporting requirements,
+  future dry-run evidence schema, future audit requirements, and explicit
+  safety counters match the design record.
 - Documentation consistency, positive-status search, prohibited executable
   pattern search, changed-path safety, forbidden vocabulary scan,
   spelling-variant scan, and `git diff --check` pass.
@@ -144,7 +155,8 @@ build, package, sign, install, load, bind, restore, restart, `pnputil`,
 5. Latest `docs/WORKLOG.md` entry
 6. `docs/RUNTIME-BRINGUP-READINESS.md`
 7. `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
-8. `docs/evidence/exact-instance-binding-implementation-design-gate.json`
-9. `docs/evidence/exact-instance-binding-analysis.json`
-10. `docs/evidence/live-readonly-equipment-observation.json`
-11. `docs/evidence/runtime-bringup-readiness-manifest.json`
+8. `docs/evidence/exact-instance-binding-dry-run-design.json`
+9. `docs/evidence/exact-instance-binding-implementation-design-gate.json`
+10. `docs/evidence/exact-instance-binding-analysis.json`
+11. `docs/evidence/live-readonly-equipment-observation.json`
+12. `docs/evidence/runtime-bringup-readiness-manifest.json`

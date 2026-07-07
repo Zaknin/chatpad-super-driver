@@ -1046,21 +1046,80 @@ native execution remains `NOT_IMPLEMENTED`, binding implementation status
 remains `NOT_IMPLEMENTED`, execution authorized remains `false`, and the
 blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+## Exact-Instance Binding Dry-Run Design
+
+The non-mutating exact-instance binding dry-run design is completed with
+status
+`EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`
+and evidence path `docs/evidence/exact-instance-binding-dry-run-design.json`.
+This is documentation/manifest-only. It defines a future predicate-validation
+and planned-action-reporting dry-run for the accepted USB HID interface target
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`; it does not implement or execute
+that dry-run.
+
+The future dry-run input model must bind the source observation, source
+analysis, and source design-gate evidence paths; the accepted target
+InstanceId, parent InstanceId, ContainerId, HardwareIds, class, and service;
+the current blocked safety state; an explicit operator-provided dry-run-only
+intent; and a non-mutating dry-run mode flag. A future implementation may
+require a separately authorized read-only current-state device query, but this
+design task does not authorize or perform that query.
+
+The future dry-run must validate exact InstanceId, HardwareIds, class,
+service, parent, ContainerId, accepted source statuses, blocked live
+readiness, `NOT_IMPLEMENTED` native execution, false execution authorization,
+`NOT_IMPLEMENTED` binding implementation status, and false binding
+implementation authorization. It must reject or no-op on absent, mismatched,
+wrong-node, ambiguous, invalid-source, unsafe, artifact-dependent,
+native-dependent, SetupAPI/Newdev-dependent, Windows-mutation-dependent, or
+driver-action-dependent states.
+
+The dry-run decision model is limited to non-mutating results:
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`,
+`DRY_RUN_REJECTED_TARGET_ABSENT_NO_MUTATION`,
+`DRY_RUN_REJECTED_TARGET_MISMATCH_NO_MUTATION`,
+`DRY_RUN_REJECTED_AMBIGUOUS_TARGET_NO_MUTATION`,
+`DRY_RUN_REJECTED_UNSAFE_STATE_NO_MUTATION`,
+`DRY_RUN_REJECTED_UNAUTHORIZED_ACTION_REQUIRED_NO_MUTATION`, and
+`DRY_RUN_BLOCKED_SOURCE_EVIDENCE_INVALID_NO_MUTATION`. Planned-action reporting
+is descriptive only and is not an executable instruction.
+
+Future dry-run result evidence must use schema
+`chatpad-exact-instance-binding-dry-run-result-v1` and record source evidence
+chain, target identity, target chain, shared ContainerId, predicate results,
+rejection results, final dry-run decision, planned-action summary,
+no-mutation safety fields, current safety state, exact commands run if any are
+separately authorized in that future task, skipped commands, and audit
+requirements. This task did not create
+`docs/evidence/exact-instance-binding-dry-run-result.json`.
+
+No dry-run implementation occurred. No dry-run execution occurred. No binding
+implementation or binding execution occurred. No new live observation, device
+query, hardware access, native execution, native library load, entry-point
+resolution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+artifact access, or compile-output access occurred or is authorized. Future
+dry-run execution and future binding implementation remain unauthorized and
+require separate tasks after independent audit. Live readiness remains
+`BLOCKED`, native execution remains `NOT_IMPLEMENTED`, binding implementation
+status remains `NOT_IMPLEMENTED`, execution authorized remains `false`, and
+the blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Exact next task
 
-Perform an independent strict read-only audit of this exact-instance binding
-implementation design-gate commit. Derive its exact identity from Git; require
-subject `docs: open exact instance binding design gate`, starting commit
-`3d26a70aeaa1467aabc6d47a996a9b4596bd8b6d`, design-gate evidence schema
-`chatpad-exact-instance-binding-implementation-design-gate-v1`, design-gate
+Perform an independent strict read-only audit of this non-mutating
+exact-instance binding dry-run design commit. Derive its exact identity from
+Git; require subject `docs: design exact instance binding dry run`, starting
+commit `7865356e640d08a052b9e32366f2755352a7d9c5`, dry-run design evidence
+schema `chatpad-exact-instance-binding-dry-run-design-v1`, dry-run design
 status
-`EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`,
-source analysis evidence, source observation evidence, accepted three-node
-target chain, recommended future implementation target candidate, allowed
-match predicates, rejection predicates, non-mutation dry-run requirements,
-operator confirmation requirements, rollback/no-op requirements, evidence
-requirements, audit requirements, and unchanged blocked state. The audit must
-confirm no binding implementation, new live observation, device query,
-hardware access, native execution, native library load, entry-point
-resolution, SetupAPI/Newdev invocation, Windows mutation, driver action, or
-artifact/compile-output access was authorized or performed.
+`EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+source design-gate evidence, source analysis evidence, source observation
+evidence, accepted three-node target chain, dry-run target InstanceId, allowed
+match predicates, rejection predicates, dry-run decision model,
+planned-action reporting requirements, future dry-run evidence schema, future
+audit requirements, and unchanged blocked state. The audit must confirm no
+dry-run implementation, dry-run execution, binding implementation, binding
+execution, new live observation, device query, hardware access, native
+execution, native library load, entry-point resolution, SetupAPI/Newdev
+invocation, Windows mutation, driver action, or artifact/compile-output access
+was authorized or performed.
