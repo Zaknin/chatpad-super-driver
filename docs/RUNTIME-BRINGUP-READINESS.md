@@ -166,6 +166,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier audit-pass record target:
   `b64a672984b6e7db16765f13de385b22f3491f11`.
+- Execution-envelope verifier audit-pass acceptance audit pass:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit-pass acceptance audit target:
+  `75a083a684c79b729de04c770371fb6190c9c9e7`.
 - Prior execution-envelope verifier audit-pass record target:
   `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
 - Prior execution-envelope verifier audit-pass transition target:
@@ -961,17 +965,18 @@ hash verification, and metadata parsing recorded as not performed.
 ## Exact next task
 
 Perform an independent strict read-only audit of this record-only
-execution-envelope verifier audit-pass-acceptance transition commit. Derive its
-exact identity from Git; require subject
-`docs: accept native adapter verifier audit pass`, parent
-`b64a672984b6e7db16765f13de385b22f3491f11`, authorized documentation/
-manifest/tool-only changed paths, accepted audit-pass record target
-`b64a672984b6e7db16765f13de385b22f3491f11`, transition status
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`,
-preservation of prior audit-pass record target
-`f235879fe6d74dcc02dfe2e56297ef14e5a48800`, preservation of prior audit-pass
-transition target `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and preservation
-of prior verifier implementation audit target
+execution-envelope verifier audit-pass-acceptance audit-pass transition commit.
+Derive its exact identity from Git; require subject
+`docs: record native adapter verifier audit pass acceptance`, parent
+`75a083a684c79b729de04c770371fb6190c9c9e7`, authorized documentation/
+manifest/tool-only changed paths, accepted audit-pass acceptance audit target
+`75a083a684c79b729de04c770371fb6190c9c9e7`, transition status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`,
+preservation of accepted audit-pass record target
+`b64a672984b6e7db16765f13de385b22f3491f11`, preservation of prior audit-pass
+record target `f235879fe6d74dcc02dfe2e56297ef14e5a48800`, preservation of
+prior audit-pass transition target `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`,
+and preservation of prior verifier implementation audit target
 `4849d1959cab9c289952655eb73e3279117779d2`. Do not require this transition
 commit to contain its own hash. Native execution remains `NOT_IMPLEMENTED`,
 live readiness remains `BLOCKED`, and SetupAPI/Newdev invocation remains
