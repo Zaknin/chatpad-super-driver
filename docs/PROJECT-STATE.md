@@ -1,10 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-07 (execution-envelope verifier audit-pass acceptance audit accepted)*
+*Last updated: 2026-07-07 (execution-envelope verifier lane closed)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
+- **Current transition commit identity:** to be derived from Git after commit;
+  expected subject `docs: close native adapter verifier lane`, parent
+  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -82,6 +85,12 @@
 - **Execution-envelope verifier audit-pass acceptance audit accepted:**
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - **Accepted execution-envelope verifier audit-pass acceptance audit-pass target:**
+  `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
+- **Execution-envelope verifier lane closeout:**
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+- **Accepted execution-envelope verifier lane-closeout audit target:**
+  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
+- **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
   `75a083a684c79b729de04c770371fb6190c9c9e7`.
@@ -309,6 +318,24 @@ accepted audit target and does not record its own commit identity; the next
 audit must derive that identity from Git. It grants no artifact, native,
 device, hardware, Windows, driver, or execution authority.
 
+Independent strict read-only audit of verifier audit-pass-acceptance
+audit-acceptance transition commit
+`e271e5c8dd464ba0aeee82e4dc163b12ae28b8de` returned `AUDIT PASS`. The
+verifier lane is closed with status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+The accepted audit-pass acceptance audit-pass target remains
+`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, the prior accepted audit target
+remains `75a083a684c79b729de04c770371fb6190c9c9e7`, the accepted audit-pass
+record target remains `b64a672984b6e7db16765f13de385b22f3491f11`, the prior
+audit-pass record target remains `f235879fe6d74dcc02dfe2e56297ef14e5a48800`,
+the prior audit-pass transition target remains
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and the prior verifier
+implementation audit target remains
+`4849d1959cab9c289952655eb73e3279117779d2`. This closeout records only the
+accepted audit target and does not record its own commit identity; the next
+audit must derive that identity from Git. It grants no artifact, native,
+device, hardware, Windows, driver, or execution authority.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -363,6 +390,9 @@ driver authority.
 - Execution-envelope verifier audit-pass acceptance audit is accepted for
   target `ba952444d9d3e306da8985e25b93b74aa5f6cff6` with status
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Execution-envelope verifier lane is closed for accepted audit target
+  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de` with status
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -385,20 +415,22 @@ driver authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of this audit-pass-acceptance
-audit-acceptance transition commit. Derive its exact identity from Git, require
-subject `docs: accept native adapter verifier audit pass acceptance`, parent
-`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, authorized documentation/
-manifest/tool-only changed paths, exact accepted audit target
-`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, transition status
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`,
-preservation of the prior accepted audit target
-`75a083a684c79b729de04c770371fb6190c9c9e7`, preservation of the accepted
-audit-pass record target `b64a672984b6e7db16765f13de385b22f3491f11`,
-preservation of the prior audit-pass record target
-`f235879fe6d74dcc02dfe2e56297ef14e5a48800`, preservation of the prior
-audit-pass transition target `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`,
-preservation of the prior verifier implementation audit target
+Perform an independent strict read-only audit of this verifier-lane closeout
+transition commit. Derive its exact identity from Git, require subject
+`docs: close native adapter verifier lane`, parent
+`e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, authorized documentation/
+manifest/tool-only changed paths, accepted audit target
+`e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, lane closeout status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`,
+preservation of the accepted audit-pass acceptance audit-pass target
+`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, preservation of the prior
+accepted audit target `75a083a684c79b729de04c770371fb6190c9c9e7`,
+preservation of the accepted audit-pass record target
+`b64a672984b6e7db16765f13de385b22f3491f11`, preservation of the prior
+audit-pass record target `f235879fe6d74dcc02dfe2e56297ef14e5a48800`,
+preservation of the prior audit-pass transition target
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, preservation of the prior
+verifier implementation audit target
 `4849d1959cab9c289952655eb73e3279117779d2`, manifest enforcement, and
-unchanged blocked/no-artifact-I/O safety state. Do not require this transition
+unchanged blocked/no-artifact-I/O safety state. Do not require this closeout
 commit to contain its own hash.

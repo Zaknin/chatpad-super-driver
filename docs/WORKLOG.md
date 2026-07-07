@@ -11358,3 +11358,98 @@
   preserved verifier implementation audit target, manifest enforcement, and
   unchanged blocked/no-artifact-I/O state without requiring commit
   self-reference.
+
+---
+
+## 2026-07-07 13:18:27 +04:00 - Close native adapter verifier lane
+
+- **Objective:** Create a documentation/manifest-only continuation transition
+  after the independent `AUDIT PASS` for native adapter verifier audit-pass
+  acceptance audit target `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, close
+  the verifier lane, and replace the completed audit in `docs/NEXT-TASK.md`.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, parent
+  `ba952444d9d3e306da8985e25b93b74aa5f6cff6`, subject
+  `docs: accept native adapter verifier audit pass acceptance`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tracked tree/index.
+- **Transition record:** Added and validator-enforced verifier-lane closeout
+  status
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO` for
+  accepted audit target `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`. Preserved
+  accepted audit-pass acceptance audit-pass target
+  `ba952444d9d3e306da8985e25b93b74aa5f6cff6`, prior accepted audit target
+  `75a083a684c79b729de04c770371fb6190c9c9e7`, accepted audit-pass record
+  target `b64a672984b6e7db16765f13de385b22f3491f11`, prior audit-pass record
+  target `f235879fe6d74dcc02dfe2e56297ef14e5a48800`, prior audit-pass
+  transition target `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, verifier
+  implementation/audit target `4849d1959cab9c289952655eb73e3279117779d2`,
+  verifier audit acceptance
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`,
+  audit-acceptance audit pass
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`,
+  audit-pass record
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`,
+  audit-pass acceptance
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`,
+  audit-pass acceptance audit-pass
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`,
+  audit-pass acceptance audit accepted
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`,
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, execution
+  authorization false, native execution `NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, artifact and compile-output I/O false, and all native/device/
+  hardware/Windows/driver counters `0`.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Validation:** Safe validation only. Manifest generation under PowerShell 7
+  passed with 39 entries, framework `PASS`, and live readiness `BLOCKED`;
+  final canonical regeneration after this worklog entry will be rerun so the
+  manifest records the final worklog state. Script parse passed under Windows
+  PowerShell 5.1 and PowerShell 7 for both changed manifest scripts with `0`
+  parse errors. Canonical manifest validation passed under both runtimes with
+  result `PASS`, schema v4, 39 entries, total defects `0`, duplicate IDs/paths
+  `0/0`, `NO_PATH` `0`, artifact opening false, compile-output hash
+  verification false, and metadata parsing false. Cross-runtime comparison
+  manifests matched after normalizing only `generated_utc`; both contained
+  lane closeout status
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO` and
+  target `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`. Targeted identity/status
+  checks, documentation consistency, positive-authorization, prohibited
+  executable-pattern, forbidden generated tracked path, spelling-variant,
+  changed-path, and `git diff --check` checks are part of final validation
+  before commit.
+- **Generated artifacts:** Ignored comparison manifests at
+  `artifacts/logs/native-adapter-verifier-lane-closeout-transition/readiness-windows-powershell.json`
+  and
+  `artifacts/logs/native-adapter-verifier-lane-closeout-transition/readiness-pwsh7.json`.
+- **Safety:** No verifier behavior test, offline-suite behavior test, static
+  parser, full compile-output validator, full exact/readiness suite, real DLL
+  or compile-output open/read/hash/parse/stat/scan/write/load/reflection/
+  execution, native library load, entry-point resolution, SetupAPI/Newdev
+  invocation, device query, hardware access, registry/service/certificate
+  action, Windows mutation, live preflight, live equipment observation, or
+  driver build/sign/package/install/load/bind/restore/restart occurred.
+- **Commit and push:** Subject will be
+  `docs: close native adapter verifier lane`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  execution authority remains false.
+- **Next task:** Independent strict read-only audit of this verifier-lane
+  closeout transition commit by Git identity, subject, parent
+  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, authorized changed paths,
+  verifier-lane closeout target/status, preserved accepted audit-pass
+  acceptance audit-pass target, preserved prior accepted audit target,
+  preserved accepted audit-pass record target, preserved prior audit-pass
+  record target, preserved prior audit-pass transition target, preserved
+  verifier implementation audit target, manifest enforcement, and unchanged
+  blocked/no-artifact-I/O state without requiring commit self-reference.

@@ -174,6 +174,12 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier audit-pass acceptance audit-pass target:
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
+- Execution-envelope verifier lane closeout:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier lane-closeout audit target:
+  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
+- Prior execution-envelope verifier audit-pass acceptance audit accepted target:
+  `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - Prior accepted execution-envelope verifier audit-pass acceptance audit target:
   `75a083a684c79b729de04c770371fb6190c9c9e7`.
 - Prior execution-envelope verifier audit-pass record target:
@@ -971,21 +977,21 @@ hash verification, and metadata parsing recorded as not performed.
 ## Exact next task
 
 Perform an independent strict read-only audit of this record-only
-execution-envelope verifier audit-pass-acceptance audit-acceptance transition
-commit. Derive its exact identity from Git; require subject
-`docs: accept native adapter verifier audit pass acceptance`, parent
-`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, authorized documentation/
+execution-envelope verifier lane-closeout transition commit. Derive its exact
+identity from Git; require subject `docs: close native adapter verifier lane`,
+parent `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, authorized documentation/
 manifest/tool-only changed paths, accepted audit target
-`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, transition status
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`,
-preservation of prior accepted audit target
-`75a083a684c79b729de04c770371fb6190c9c9e7`, preservation of accepted
-audit-pass record target `b64a672984b6e7db16765f13de385b22f3491f11`,
+`e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, verifier-lane closeout status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`,
+preservation of accepted audit-pass acceptance audit-pass target
+`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, preservation of prior accepted
+audit target `75a083a684c79b729de04c770371fb6190c9c9e7`, preservation of
+accepted audit-pass record target `b64a672984b6e7db16765f13de385b22f3491f11`,
 preservation of prior audit-pass record target
 `f235879fe6d74dcc02dfe2e56297ef14e5a48800`, preservation of prior audit-pass
-transition target `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and
-preservation of prior verifier implementation audit target
-`4849d1959cab9c289952655eb73e3279117779d2`. Do not require this transition
+transition target `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and preservation
+of prior verifier implementation audit target
+`4849d1959cab9c289952655eb73e3279117779d2`. Do not require this closeout
 commit to contain its own hash. Native execution remains `NOT_IMPLEMENTED`,
 live readiness remains `BLOCKED`, and SetupAPI/Newdev invocation remains
 unauthorized. Do not run the parser or full compile-output validator, inspect

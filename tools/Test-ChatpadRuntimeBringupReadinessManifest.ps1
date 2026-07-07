@@ -991,6 +991,9 @@ else{
             $envelopeVerifier.audit_pass_acceptance_audit_target_commit-ne'75a083a684c79b729de04c770371fb6190c9c9e7'-or
             $envelopeVerifier.audit_pass_acceptance_audit_accepted_status-ne'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO'-or
             $envelopeVerifier.audit_pass_acceptance_audit_accepted_target_commit-ne'ba952444d9d3e306da8985e25b93b74aa5f6cff6'-or
+            $envelopeVerifier.lane_closeout_status-ne'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO'-or
+            $envelopeVerifier.lane_closeout_audit_target_commit-ne'e271e5c8dd464ba0aeee82e4dc163b12ae28b8de'-or
+            $envelopeVerifier.prior_audit_pass_acceptance_audit_accepted_target_commit-ne'ba952444d9d3e306da8985e25b93b74aa5f6cff6'-or
             $envelopeVerifier.prior_audit_pass_acceptance_audit_target_commit-ne'75a083a684c79b729de04c770371fb6190c9c9e7'-or
             $envelopeVerifier.prior_audit_pass_record_target_commit-ne'f235879fe6d74dcc02dfe2e56297ef14e5a48800'-or
             $envelopeVerifier.prior_audit_pass_transition_target_commit-ne'b6bdd01588e9d72113dd9b09fcfa9baf2026424d'-or
