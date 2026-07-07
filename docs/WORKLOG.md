@@ -11525,3 +11525,94 @@
   planning-only gate status, manifest schema, forbidden vocabulary absence, and
   unchanged blocked/no-artifact-I/O state. Actual live read-only observation
   must be separately authorized after audit.
+
+---
+
+## 2026-07-07 18:20:37 +04:00 - Capture live read-only equipment observation
+
+- **Objective:** Perform the first separately authorized live read-only
+  USB/HID/PnP equipment observation for candidate Chatpad/controller devices,
+  record evidence, update the manifest and continuity docs, and keep native
+  execution, SetupAPI/Newdev, Windows mutation, driver action, and
+  artifact/compile-output access closed.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `cd81f875dade6fd2a7ea3a7ca3ab65b28532f54b`, subject
+  `docs: open live readonly observation gate`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tree/index.
+- **Observation:** Created
+  `docs/evidence/live-readonly-equipment-observation.json` with schema
+  `chatpad-live-readonly-equipment-observation-evidence-v1` and status
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`.
+  The evidence records source gate
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`, verifier
+  closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`,
+  starting commit `cd81f875dade6fd2a7ea3a7ca3ab65b28532f54b`, branch name,
+  generated UTC timestamp, hostname, OS/computer facts, read-only commands run,
+  skipped commands, candidate device inventory, candidate property map, and
+  explicit safety counters.
+- **Observed counts:** Candidate devices `120`; `VID_045E` candidates `3`;
+  `HIDClass` candidates `44`; USB candidates `67`; controller/game/chatpad
+  keyword candidates `40`; clear `VID_045E&PID_028E` target candidates `3`;
+  live read-only device query count `125`; skipped read-only commands `0`.
+- **Clear target candidates:** The clear target set includes
+  `USB\VID_045E&PID_028E\1C21F10` (`Xbox 360 Controller for Windows`,
+  class `XnaComposite`, service `xusb22`),
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` (`USB Input Device`,
+  class `HIDClass`, service `HidUsb`), and
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`
+  (`HID-compliant game controller`, class `HIDClass`).
+- **Files created or modified:** Created
+  `docs/evidence/live-readonly-equipment-observation.json`; modified
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Implementation details:** A temporary PowerShell collector was created
+  under `%TEMP%`, run under PowerShell 7, and removed. One first collector
+  attempt failed before writing evidence with `Argument types do not match`;
+  it used only authorized read-only observation command families. The final
+  evidence records that failed attempt and the later read-only diagnostic
+  inspection. No helper script was added to the repository.
+- **Commands and validation:** JSON parse of the observation evidence and
+  readiness manifest passed. The first manifest validation after adding the
+  evidence entry failed with one `declared_result` defect because the new
+  manifest entry used a non-standard entry-level evidence classification; the
+  evidence file's own observation status was preserved and the manifest entry
+  was corrected to the existing validator convention. Manifest validation then
+  passed in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode with schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, entries `40`, total defects
+  `0`, duplicate IDs/paths `0/0`, `NO_PATH` `0`, artifact opening false,
+  compiled-output hash verification false, and metadata parsing false.
+  Targeted schema/status/blocker/safety assertions passed. Changed-path safety
+  found 7 intended paths, 0 unexpected paths, and 0 changed tool files.
+  Forbidden vocabulary scan found no tracked hits. Added-line
+  prohibited-pattern hits were denial/audit-scope text only, not executable
+  implementation or authorization. The requested spelling-variant scan found
+  no hits. `git diff --check` passed. Git and the final response are
+  authoritative for the final commit hash and pushed branch.
+- **Safety:** Authorized read-only commands were limited to
+  `Get-PnpDevice -PresentOnly`, `Get-PnpDeviceProperty` for discovered present
+  candidate instance IDs, `Get-CimInstance` for `Win32_OperatingSystem`,
+  `Win32_ComputerSystem`, `Win32_PnPEntity`, and
+  `Win32_USBControllerDevice`, `Get-Date`, JSON conversion/local evidence
+  writes, Git read commands, and manifest JSON parse/validation. No native
+  execution, native library load, entry-point resolution, SetupAPI/Newdev
+  invocation, Windows mutation, driver action, driver build/sign/package/
+  install/load/bind/restore/restart, verifier behavior test, offline-suite
+  behavior test, static parser, full compile-output validator, full
+  exact/readiness suite, or real DLL/compile-output open/read/hash/parse/stat/
+  scan/write/load/reflection/execution occurred.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  execution authority remains false; artifact and compile-output I/O remain
+  false.
+- **Next task:** Independent strict read-only audit of this live read-only
+  observation capture commit by Git identity, subject, parent, evidence schema
+  and status, observed device candidates, manifest entry and safety counters,
+  changed paths, no tool/source changes, unchanged blocked state, and absence
+  of native execution, SetupAPI/Newdev invocation, native library load,
+  entry-point resolution, Windows mutation, driver action, and
+  artifact/compile-output access.

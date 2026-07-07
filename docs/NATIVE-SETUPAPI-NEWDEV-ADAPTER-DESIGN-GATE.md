@@ -88,11 +88,15 @@ Authoritative current state:
   `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
 - Live read-only equipment observation gate:
   `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
-- Live read-only equipment observation gate mode:
-  documentation/manifest-only planning. It does not authorize live preflight,
-  live observation, device query, hardware access, Windows mutation,
-  SetupAPI/Newdev invocation, native library load, entry-point resolution,
-  artifact access, compile-output access, or any driver action.
+- Live read-only equipment observation status:
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`.
+- Live read-only equipment observation evidence:
+  `docs/evidence/live-readonly-equipment-observation.json`.
+- Live read-only equipment observation mode:
+  read-only USB/HID/PnP inventory capture only. It does not authorize native
+  execution, SetupAPI/Newdev invocation, native library load, entry-point
+  resolution, Windows mutation, driver action, artifact access,
+  compile-output access, or exact-instance binding implementation.
 - Prior execution-envelope verifier audit-pass acceptance audit accepted target:
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - Prior accepted execution-envelope verifier audit-pass acceptance audit target:

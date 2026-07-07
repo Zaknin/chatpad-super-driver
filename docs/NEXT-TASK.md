@@ -2,24 +2,30 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the live read-only equipment
-observation gate-opening commit.
+Perform an independent strict read-only audit of the live read-only observation
+capture commit.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
-- Required starting commit: derive the exact full hash from Git and require
-  subject `docs: open live readonly observation gate`.
-- Required parent:
-  `a38264fa06db15a36ed46f0ac8daba9cdecf1ba9`.
+- Required starting commit before the capture:
+  `cd81f875dade6fd2a7ea3a7ca3ab65b28532f54b`.
+- Required commit subject:
+  `docs: capture live readonly equipment observation`.
 - Required upstream:
   `origin/feature/native-adapter-execution-envelope-verifier`.
-- Required synchronization and tree: `0/0` and clean.
+- Required synchronization and tree before audit: `0/0` and clean.
+- Observation evidence path:
+  `docs/evidence/live-readonly-equipment-observation.json`.
+- Observation evidence schema:
+  `chatpad-live-readonly-equipment-observation-evidence-v1`.
+- Observation status:
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`.
+- Source gate status:
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
 - Verifier lane closeout:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
-- Live read-only equipment observation gate:
-  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
 - Manifest schema:
   `chatpad-runtime-bringup-readiness-manifest-v4`.
 - Gate/runtime blocker:
@@ -27,87 +33,81 @@ observation gate-opening commit.
 - Execution authorized: `false`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
-- Artifact opening: `false`.
+- Artifact opening/access: `false`.
 - Artifact/compile-output I/O: `false`.
 - Compile-output hash verification: `false`.
 - Metadata parsing: `false`.
 - Native library load count: `0`.
 - Entry-point resolution count: `0`.
 - SetupAPI/Newdev invocation count: `0`.
-- Device query count: `0`.
-- Hardware access count: `0`.
 - Windows mutation count: `0`.
 - Driver action count: `0`.
-
-This gate-opening commit should not be rejected for omitting its own hash.
-Establish its identity from Git.
+- Exact-instance binding implementation: not authorized and not implemented.
 
 ## Preconditions
 
-1. Follow `AGENTS.md`; verify exact branch, subject, parent, upstream, remote
-   equality, `0/0`, and clean tree/index.
+1. Follow `AGENTS.md`; verify exact branch, commit subject, parent, upstream,
+   remote equality, `0/0`, and clean tree/index.
 2. Verify changed paths are limited to:
-   - `docs/DECISIONS.md`
    - `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
    - `docs/NEXT-TASK.md`
    - `docs/PROJECT-STATE.md`
    - `docs/RUNTIME-BRINGUP-READINESS.md`
    - `docs/WORKLOG.md`
    - `docs/evidence/runtime-bringup-readiness-manifest.json`
+   - `docs/evidence/live-readonly-equipment-observation.json`
 3. Confirm verifier behavior modules, offline-suite behavior modules, static
    parser, real artifact, compile outputs, harness/evidence policy, driver,
-   INF/project/solution, packaging, signing, staging, deployment, binaries, and
-   `legacy/` are unchanged.
+   INF/project/solution, packaging, signing, staging, deployment, binaries,
+   tools, and `legacy/` are unchanged.
 
 ## Audit Scope
 
-- Verify the commit records the new gate status exactly as
+- Verify target commit Git identity, subject, parent, changed paths, and
+  pushed branch.
+- Verify observation evidence JSON parses and records schema
+  `chatpad-live-readonly-equipment-observation-evidence-v1`.
+- Verify observation status is
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`.
+- Verify source gate status is
   `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
-- Verify the verifier lane remains closed with status
+- Verify verifier lane remains closed with status
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
-- Verify no new manifest schema is introduced and schema remains
-  `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Verify the forbidden alternate vocabularies from the gate-opening request
-  are absent from tracked repository content.
-- Verify the gate/runtime blocker remains
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Verify execution authorization remains false, native execution remains
-  `NOT_IMPLEMENTED`, and live readiness remains `BLOCKED`.
-- Verify artifact opening, artifact/compile-output I/O, compile-output hash
-  verification, and metadata parsing remain false.
-- Verify native library load, entry-point resolution, SetupAPI/Newdev
-  invocation, device query, hardware access, Windows mutation, and driver
-  action counters remain zero.
-- Verify `docs/NEXT-TASK.md` points to audit of this gate-opening commit, not
-  actual live observation.
-- Verify `docs/NEXT-TASK.md` does not authorize live preflight, device query,
-  hardware access, Windows mutation, driver action, or actual live
-  observation.
+- Verify observed device candidates, including candidate counts and clear
+  target candidate details.
+- Verify no native execution occurred or was authorized.
+- Verify no SetupAPI/Newdev invocation occurred or was authorized.
+- Verify no native library load occurred.
+- Verify no entry-point resolution occurred.
+- Verify no Windows mutation occurred.
+- Verify no driver action occurred.
+- Verify no artifact/compile-output access occurred.
+- Verify live readiness remains `BLOCKED`.
+- Verify native execution remains `NOT_IMPLEMENTED`.
+- Verify execution authorized remains `false`.
+- Verify exact-instance binding implementation is still not the next task.
 
 ## Safety Restrictions
 
-This audit is read-only. No live preflight is authorized by this commit. No
-device query is authorized by this commit. No hardware access is authorized by
-this commit. No Windows mutation is authorized by this commit. No driver action
-is authorized by this commit. Actual live read-only observation must be
-separately authorized after audit.
-
-Do not edit, commit, or push during the audit. Do not run verifier behavior
-tests, offline-suite behavior tests, the static parser, full compile-output
-validator, full exact/readiness suites, or any artifact, native, device,
-hardware, Windows, or driver path. Do not open, read, hash, parse, stat, scan,
-write, load, reflect over, or execute the real DLL or compile outputs.
+This audit is strict read-only. Do not perform new live observation. Do not run
+native adapter execution, SetupAPI/Newdev, verifier behavior tests,
+offline-suite behavior tests, the static parser, the full compile-output
+validator, full exact/readiness suites, build, package, sign, install, load,
+bind, restore, restart, `pnputil`, `devcon`, driver/service mutation, or
+artifact/compile-output access.
 
 ## Acceptance Criteria
 
 - Git identity, subject, parent, changed paths, and content establish the exact
-  gate-opening transition without self-reference.
+  observation capture transition without self-reference.
+- Evidence JSON and manifest JSON parse successfully.
 - Manifest validation passes with schema
-  `chatpad-runtime-bringup-readiness-manifest-v4`, 39 entries, duplicate
-  IDs/paths `0/0`, and `NO_PATH` `0`.
+  `chatpad-runtime-bringup-readiness-manifest-v4`.
+- Observation evidence schema, status, source gate, verifier closeout,
+  candidate inventory, and explicit safety counters match the capture record.
 - Documentation consistency, positive-authorization search, prohibited
-  executable-pattern search for changed tools, changed-path safety, forbidden
-  generated-file scan, spelling-variant scan, and `git diff --check` pass.
+  executable-pattern search, changed-path safety, forbidden vocabulary scan,
+  spelling-variant scan, and `git diff --check` pass.
 - Final Git status remains clean and synchronized `0/0`.
 
 ## Inspect First
@@ -119,4 +119,5 @@ write, load, reflect over, or execute the real DLL or compile outputs.
 5. Latest `docs/WORKLOG.md` entry
 6. `docs/RUNTIME-BRINGUP-READINESS.md`
 7. `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
-8. `docs/evidence/runtime-bringup-readiness-manifest.json`
+8. `docs/evidence/live-readonly-equipment-observation.json`
+9. `docs/evidence/runtime-bringup-readiness-manifest.json`
