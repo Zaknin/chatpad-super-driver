@@ -1184,20 +1184,57 @@ implementation status remains `NOT_IMPLEMENTED`, execution authorized remains
 remains false, and native-library-load, entry-point-resolution,
 SetupAPI/Newdev, Windows-mutation, and driver-action counters remain zero.
 
+## Exact-Instance Binding Implementation Authorization Design Gate
+
+The exact-instance binding implementation authorization design gate is opened
+with status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and evidence path
+`docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json`.
+This transition is documentation/manifest-only. The accepted dry-run result
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY` is sufficient to
+justify preparing the authorization design, but it is not sufficient to
+authorize binding implementation or binding execution by itself.
+
+The gate defines a future authorization contract only: future authorization
+purpose, the accepted USB HID interface target
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`, the required accepted source
+evidence chain, future authorization preconditions, rejection/no-op
+conditions, operator confirmation package requirements, rollback/no-op plan
+requirements, future authorization evidence requirements, and future audit
+requirements. Selecting the root/composite node or HID game-controller child
+requires separate future authorization and is not allowed by this design gate.
+
+No binding implementation occurred. No binding execution occurred. No dry-run
+was performed in this task. No new live observation, device query, hardware
+access, native execution, native library load, entry-point resolution,
+SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access,
+compile-output access, compile-output hash verification, or metadata parsing
+occurred. Actual binding remains unauthorized. Future binding requires a
+separate task after independent audit. Live readiness remains `BLOCKED`,
+native execution remains `NOT_IMPLEMENTED`, binding implementation status
+remains `NOT_IMPLEMENTED`, execution authorized remains `false`, and the
+blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Exact next task
 
-Perform an independent strict read-only audit of this non-mutating
-exact-instance binding dry-run result commit. Derive its exact identity from
-Git; require subject `docs: capture exact instance binding dry run result`,
-starting commit `2616b6caa1fc1dff5e386f4219926d42a84b6b87`, dry-run result
-evidence schema `chatpad-exact-instance-binding-dry-run-result-v1`, dry-run
-result status `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`,
-source execution-gate evidence, source dry-run design evidence, source
-design-gate evidence, source analysis evidence, source observation evidence,
-accepted three-node target chain, dry-run target InstanceId, current-state
-candidate facts, allowed-match predicate results, rejection predicate results,
-final dry-run decision, descriptive planned action only, and unchanged blocked
-state. The audit must confirm no binding implementation, binding execution,
-native execution, native library load, entry-point resolution, SetupAPI/Newdev
-invocation, Windows mutation, driver action, or artifact/compile-output access
-was authorized or performed.
+Perform an independent strict read-only audit of this exact-instance binding
+implementation authorization design-gate commit. Derive its exact identity
+from Git; require subject `docs: open binding implementation authorization
+gate`, starting commit `3ffe4d5e7cc33ec454b0f145353a86c8cd07f7b6`,
+authorization design-gate evidence schema
+`chatpad-exact-instance-binding-implementation-authorization-design-gate-v1`,
+authorization design-gate status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+source dry-run result evidence, source execution-gate evidence, source dry-run
+design evidence, source design-gate evidence, source analysis evidence, source
+observation evidence, accepted dry-run result, accepted three-node target
+chain, target InstanceId, future authorization purpose, future implementation
+target, required source evidence chain, future authorization preconditions,
+rejection/no-op conditions, operator confirmation package requirements,
+rollback/no-op plan requirements, future authorization evidence requirements,
+future audit requirements, and unchanged blocked state. The audit must confirm
+no binding implementation, binding execution, dry-run in this task, new live
+observation, device query, hardware access, native execution, native library
+load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
+driver action, or artifact/compile-output access was authorized or performed.

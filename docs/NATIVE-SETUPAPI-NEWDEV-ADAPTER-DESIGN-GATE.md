@@ -826,3 +826,27 @@ action is descriptive only; no action was executed and actual binding remains
 unauthorized. Future binding, future mutation, and any future
 SetupAPI/Newdev/native execution still require separate tasks and audit
 boundaries.
+
+The exact-instance binding implementation authorization design gate is now
+opened with status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and evidence path
+`docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json`.
+It is documentation/manifest-only. The accepted dry-run result supports
+preparing the future authorization contract, but it does not authorize binding
+implementation, binding execution, native execution, SetupAPI/Newdev
+invocation, Windows mutation, or driver action.
+
+The authorization design gate defines only the future target contract, source
+evidence chain, authorization preconditions, rejection/no-op conditions,
+operator confirmation package, rollback/no-op plan, future authorization
+evidence, and future audit requirements. The only default future target
+candidate is
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`; binding the root/composite
+node or HID game-controller child requires separate future authorization.
+No binding implementation, binding execution, dry-run in this task, new live
+observation, device query, hardware access, native execution, native library
+load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
+driver action, driver build/sign/package/install/load/bind/restore/restart,
+or artifact/compile-output access is authorized or performed by this gate.
+Future binding still requires a separate task after independent audit.

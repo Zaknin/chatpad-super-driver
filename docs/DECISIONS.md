@@ -39,6 +39,37 @@ execution authorization, and binding implementation authorization remain false;
 artifact and compile-output I/O remain false; and all native/device/hardware/
 Windows/driver counters remain zero.
 
+## 2026-07-08 - Open a binding implementation authorization design gate without authorizing binding
+
+**Decision:** Record
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+as a documentation/manifest-only authorization design gate for a future
+exact-instance binding implementation authorization task. The accepted dry-run
+result supports preparing this authorization contract only; it does not
+authorize binding implementation or binding execution.
+
+**Rationale:** The accepted non-mutating dry-run identified one exact USB HID
+interface target with all allowed predicates passing and zero rejection
+predicates, but moving from dry-run evidence to mutation-capable implementation
+requires a separate authorization, operator-confirmation, rollback/no-op, and
+audit contract. Recording that contract as a design gate keeps the next step
+auditable without turning dry-run success into execution authority.
+
+**Alternatives rejected:** Implementing binding; executing binding; performing
+a new dry-run; performing fresh live observation or device query; collecting
+operator confirmation in this task; implementing rollback or restore; loading
+native libraries; resolving entry points; invoking SetupAPI/Newdev; mutating
+Windows; performing driver actions; or opening artifact or compile-output
+binaries.
+
+**Consequences:** Future binding implementation remains unauthorized and must
+be separately tasked after independent strict read-only audit of this
+authorization design-gate commit. Live readiness remains `BLOCKED`; native
+execution remains `NOT_IMPLEMENTED`; binding implementation remains
+`NOT_IMPLEMENTED`; execution authorization and binding implementation
+authorization remain false; artifact and compile-output I/O remain false; and
+all native/device/hardware/Windows/driver counters remain zero.
+
 ## 2026-07-07 - Design a non-mutating exact-instance binding dry-run without implementing it
 
 **Decision:** Record
