@@ -62,6 +62,10 @@ Authoritative current state:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier audit target:
   `4849d1959cab9c289952655eb73e3279117779d2`.
+- Execution-envelope verifier audit-acceptance audit pass:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit-acceptance audit target:
+  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -537,6 +541,16 @@ The acceptance is record-only and does not authorize artifact access, native
 loading, entry-point resolution, SetupAPI/Newdev invocation, device query,
 hardware access, Windows mutation, driver action, or execution.
 
+Independent strict read-only audit accepted verifier audit-acceptance commit
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d` with transition status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
+The prior verifier implementation audit target remains
+`4849d1959cab9c289952655eb73e3279117779d2`. This record does not contain the
+new transition commit's own identity; the next audit must derive it from Git.
+It grants no artifact access, native loading, entry-point resolution,
+SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+driver action, or execution.
+
 ## Next Boundary
 
 The remediated compiled-artifact metadata-review design gate passed independent
@@ -581,7 +595,11 @@ verifier implementation commit
 `4849d1959cab9c289952655eb73e3279117779d2` returned `AUDIT PASS`; acceptance
 status is
 `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-The next step is an independent strict read-only audit of this audit-acceptance
-commit, deriving its identity from Git rather than requiring the commit to
-contain its own hash. No artifact, native, device, hardware, Windows, driver,
-or execution authority is granted.
+Independent strict read-only audit of the audit-acceptance commit
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d` returned `AUDIT PASS`; transition
+status is
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
+The next step is an independent strict read-only audit of this audit-pass
+transition commit, deriving its identity from Git rather than requiring the
+commit to contain its own hash. No artifact, native, device, hardware, Windows,
+driver, or execution authority is granted.

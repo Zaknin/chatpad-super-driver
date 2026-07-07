@@ -154,6 +154,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier audit target:
   `4849d1959cab9c289952655eb73e3279117779d2`.
+- Execution-envelope verifier audit-acceptance audit pass:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit-acceptance audit target:
+  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -945,14 +949,15 @@ hash verification, and metadata parsing recorded as not performed.
 ## Exact next task
 
 Perform an independent strict read-only audit of this record-only
-execution-envelope verifier audit-acceptance commit. Derive its exact identity
-from Git; require subject
-`docs: accept native adapter execution envelope verifier audit`, parent
-`4849d1959cab9c289952655eb73e3279117779d2`, authorized documentation/
-manifest/tool-only changed paths, accepted audit target
-`4849d1959cab9c289952655eb73e3279117779d2`, acceptance status
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`, and
-unchanged blocked/no-artifact-I/O safety state. Do not require the acceptance
+execution-envelope verifier audit-pass transition commit. Derive its exact
+identity from Git; require subject
+`docs: record native adapter envelope verifier audit pass`, parent
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, authorized documentation/
+manifest/tool-only changed paths, accepted audit-acceptance audit target
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, transition status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`,
+and preservation of prior verifier implementation audit target
+`4849d1959cab9c289952655eb73e3279117779d2`. Do not require this transition
 commit to contain its own hash. Native execution remains `NOT_IMPLEMENTED`,
 live readiness remains `BLOCKED`, and SetupAPI/Newdev invocation remains
 unauthorized. Do not run the parser or full compile-output validator, inspect

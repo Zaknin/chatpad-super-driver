@@ -3,16 +3,16 @@
 ## Objective
 
 Perform an independent strict read-only audit of the record-only native-adapter
-execution-envelope verifier audit-acceptance commit.
+execution-envelope verifier audit-pass transition commit.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
 - Required starting commit: derive the exact full hash from Git and require
-  subject `docs: accept native adapter execution envelope verifier audit`.
+  subject `docs: record native adapter envelope verifier audit pass`.
 - Required parent:
-  `4849d1959cab9c289952655eb73e3279117779d2`.
+  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
 - Required upstream:
   `origin/feature/native-adapter-execution-envelope-verifier`.
 - Required synchronization and tree: `0/0` and clean.
@@ -24,6 +24,10 @@ execution-envelope verifier audit-acceptance commit.
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
 - Verifier audit acceptance:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Verifier audit-acceptance audit pass:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
+- Accepted verifier audit-acceptance audit target:
+  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
 - Final boundary lane:
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
 - Boundary closeout-identity audit:
@@ -50,8 +54,8 @@ execution-envelope verifier audit-acceptance commit.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
 
-This audit-acceptance commit should not be rejected for omitting its own hash.
-Establish its identity from Git.
+This audit-pass transition commit should not be rejected for omitting its own
+hash. Establish its identity from Git.
 
 ## Preconditions
 
@@ -74,11 +78,15 @@ Establish its identity from Git.
 
 ## Audit Scope
 
-- Verify this commit records accepted audit target
-  `4849d1959cab9c289952655eb73e3279117779d2` and parent
+- Verify this commit records accepted audit-acceptance audit target
+  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
+- Verify prior verifier implementation audit target remains recorded as
+  `4849d1959cab9c289952655eb73e3279117779d2` with parent
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - Verify audit acceptance status is exactly
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Verify audit-acceptance audit-pass status is exactly
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
 - Verify verifier implementation status remains exactly
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
 - Verify the gate/runtime blocker remains
@@ -101,9 +109,10 @@ outputs.
 ## Acceptance Criteria
 
 - Git identity, subject, parent, changed paths, and content establish the exact
-  audit-acceptance transition without self-reference.
-- Accepted target and audit-acceptance status are recorded in continuity docs,
-  generated manifest, generator, and validator.
+  audit-pass transition without self-reference.
+- Accepted audit-acceptance target, audit-pass status, prior verifier
+  implementation audit target, and audit-acceptance status are recorded in
+  continuity docs, generated manifest, generator, and validator.
 - Manifest validation passes under Windows PowerShell 5.1 and PowerShell 7 with
   zero defects.
 - Documentation consistency, positive-authorization search, prohibited
