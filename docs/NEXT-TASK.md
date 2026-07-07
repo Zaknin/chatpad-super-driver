@@ -3,23 +3,27 @@
 ## Objective
 
 Perform an independent strict read-only audit of the record-only native-adapter
-execution authorization-envelope verifier implementation commit.
+execution-envelope verifier audit-acceptance commit.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
-- Required starting commit: obtain the exact full hash from Git and require
-  subject `feat: add native adapter execution envelope verifier`.
+- Required starting commit: derive the exact full hash from Git and require
+  subject `docs: accept native adapter execution envelope verifier audit`.
 - Required parent:
-  `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
+  `4849d1959cab9c289952655eb73e3279117779d2`.
 - Required upstream:
   `origin/feature/native-adapter-execution-envelope-verifier`.
 - Required synchronization and tree: `0/0` and clean.
 - Accepted execution scope-boundary final-closeout commit:
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
-- Verifier status:
+- Record-only verifier implementation commit and accepted audit target:
+  `4849d1959cab9c289952655eb73e3279117779d2`.
+- Verifier implementation status:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+- Verifier audit acceptance:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Final boundary lane:
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
 - Boundary closeout-identity audit:
@@ -42,39 +46,49 @@ execution authorization-envelope verifier implementation commit.
 - Scope audit:
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
+- Execution authorized: `false`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
 
-The verifier implementation commit must not be rejected for omitting its own
-hash. Establish its identity from Git.
+This audit-acceptance commit should not be rejected for omitting its own hash.
+Establish its identity from Git.
 
 ## Preconditions
 
 1. Follow `AGENTS.md`; verify exact branch, subject, parent, upstream, remote
    equality, `0/0`, and clean tree/index.
-2. Verify changed paths are limited to the existing non-live adapter module,
-   focused safe offline tests, continuity documents, manifest, generator, and
-   validator.
-3. Confirm static parser, compile-output harness/evidence policy, real artifact,
-   driver source, INF/project files, packaging, binaries, and `legacy/` are
-   unchanged.
+2. Verify changed paths are limited to:
+   - `docs/DECISIONS.md`
+   - `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
+   - `docs/NEXT-TASK.md`
+   - `docs/PROJECT-STATE.md`
+   - `docs/RUNTIME-BRINGUP-READINESS.md`
+   - `docs/WORKLOG.md`
+   - `docs/evidence/runtime-bringup-readiness-manifest.json`
+   - `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+   - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+3. Confirm verifier behavior modules, offline-suite behavior modules, static
+   parser, real artifact, compile outputs, harness/evidence policy, driver,
+   INF/project/solution, packaging, signing, staging, deployment, binaries, and
+   `legacy/` are unchanged.
 
 ## Audit Scope
 
-- Trace `Test-ChatpadNativeAdapterExecutionAuthorizationEnvelope` and every
-  helper transitively.
-- Verify exact-property whitelists and strict declared-value validation for
-  operation, future authorization, artifact identity, allowlists, device
-  binding, dry-run evidence, rollback, mutation classification, operator
-  confirmation, audits, and current denial.
-- Verify missing, malformed, stale, future/live, injected-authority, wildcard,
-  wrong numeric type, and complete envelopes all remain blocked.
-- Verify the verifier is not connected to production operation dispatch.
-- Verify no verifier path reaches artifact/compile-output I/O, parser, native
-  loading, entry-point resolution, SetupAPI/Newdev, device/hardware query,
-  registry/service/certificate access, Windows mutation, or driver action.
+- Verify this commit records accepted audit target
+  `4849d1959cab9c289952655eb73e3279117779d2` and parent
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
+- Verify audit acceptance status is exactly
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Verify verifier implementation status remains exactly
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+- Verify the gate/runtime blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- Verify execution authorization remains false, native execution remains
+  `NOT_IMPLEMENTED`, and live readiness remains `BLOCKED`.
+- Verify artifact/compile-output I/O fields remain false and all native,
+  device, hardware, Windows, and driver counters remain zero.
 - Validate manifest schema v4, 39 entries, duplicate IDs/paths `0/0`, `NO_PATH`
-  `0`, and cross-runtime identity.
+  `0`, and cross-runtime identity if the generator/validator changed.
 
 ## Safety Restrictions
 
@@ -87,14 +101,14 @@ outputs.
 ## Acceptance Criteria
 
 - Git identity, subject, parent, changed paths, and content establish the exact
-  implementation without self-reference.
-- Focused verifier tests pass under Windows PowerShell 5.1 and PowerShell 7.
-- No-artifact-I/O call-chain regression passes under both runtimes with 23/23
-  functions and zero forbidden commands/members.
-- Every result has execution authorization false, native execution
-  `NOT_IMPLEMENTED`, live readiness `BLOCKED`, exact blocker, false artifact
-  I/O, and zero native/device/hardware/Windows/driver counters.
-- Manifest validation passes under both runtimes with zero defects.
+  audit-acceptance transition without self-reference.
+- Accepted target and audit-acceptance status are recorded in continuity docs,
+  generated manifest, generator, and validator.
+- Manifest validation passes under Windows PowerShell 5.1 and PowerShell 7 with
+  zero defects.
+- Documentation consistency, positive-authorization search, prohibited
+  executable-pattern search, repository safety, forbidden generated-file scan,
+  spelling-variant scan, and `git diff --check` pass.
 - Final Git status remains clean and synchronized `0/0`.
 
 ## Inspect First
@@ -104,8 +118,6 @@ outputs.
 3. `docs/DECISIONS.md`
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
-6. `tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1`
-7. `tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1`
-8. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
-9. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
-10. `docs/evidence/runtime-bringup-readiness-manifest.json`
+6. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
+7. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+8. `docs/evidence/runtime-bringup-readiness-manifest.json`

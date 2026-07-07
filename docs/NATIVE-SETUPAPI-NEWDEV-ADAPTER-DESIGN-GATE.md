@@ -58,6 +58,10 @@ Authoritative current state:
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - Execution-envelope verifier:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+- Execution-envelope verifier audit acceptance:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit target:
+  `4849d1959cab9c289952655eb73e3279117779d2`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -523,8 +527,15 @@ The verifier is not connected to production operation dispatch. It does not
 inspect the filesystem, real DLL, compile outputs, registry, services,
 certificates, devices, hardware, drivers, or Windows state. Its implementation
 status is
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`; its
-implementation commit identity is intentionally deferred to independent audit.
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+
+Independent strict read-only audit accepted verifier implementation commit
+`4849d1959cab9c289952655eb73e3279117779d2`, parent
+`68099a441db5f8b517dbeb296ab234a9ee639bdb`, with status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+The acceptance is record-only and does not authorize artifact access, native
+loading, entry-point resolution, SetupAPI/Newdev invocation, device query,
+hardware access, Windows mutation, driver action, or execution.
 
 ## Next Boundary
 
@@ -565,7 +576,12 @@ execution scope-boundary lane is finally closed with status
 `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`. The next
 separately authorized lane starts from accepted final-closeout commit
 `68099a441db5f8b517dbeb296ab234a9ee639bdb` and implements only the record-only
-execution-envelope verifier. The next step is an independent strict read-only
-audit of that verifier implementation commit, deriving its identity from Git
-rather than requiring the commit to contain its own hash. No artifact, native,
-device, hardware, Windows, or driver authority is granted.
+execution-envelope verifier. Independent strict read-only audit of that
+verifier implementation commit
+`4849d1959cab9c289952655eb73e3279117779d2` returned `AUDIT PASS`; acceptance
+status is
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+The next step is an independent strict read-only audit of this audit-acceptance
+commit, deriving its identity from Git rather than requiring the commit to
+contain its own hash. No artifact, native, device, hardware, Windows, driver,
+or execution authority is granted.

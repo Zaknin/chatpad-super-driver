@@ -3332,3 +3332,32 @@ remains `NOT_IMPLEMENTED`, live readiness remains `BLOCKED`, artifact and
 compile-output I/O remain false, and all native/device/hardware/Windows/driver
 counters remain zero. Independent audit must derive the implementation commit
 identity from Git because the implementation commit does not self-reference.
+
+## 2026-07-07 - Accept the execution-envelope verifier audit
+
+**Decision:** Accept independent strict read-only audit target
+`4849d1959cab9c289952655eb73e3279117779d2` with status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`, while
+retaining verifier implementation status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO` and
+parent `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
+
+**Rationale:** The audit accepted the record-only verifier implementation by
+Git identity, subject, parent, changed paths, strict declared-value
+validation, focused dual-runtime checks, call-chain isolation, manifest
+enforcement, and unchanged blocked/no-artifact-I/O state. Recording the audit
+result and candidate identity makes the accepted state machine-verifiable
+without changing verifier behavior.
+
+**Alternatives rejected:** Leaving the verifier implementation pending audit;
+requiring the implementation commit to self-reference its own hash; changing
+verifier, offline-suite, parser, harness, driver, INF, packaging, signing,
+staging, or deployment behavior during acceptance; or treating audit acceptance
+as artifact, native, device, hardware, Windows, driver, or execution authority.
+
+**Consequences:** The verifier audit is accepted, but the verifier remains
+record-only and always blocked. Execution authorization remains false, native
+execution remains `NOT_IMPLEMENTED`, live readiness remains `BLOCKED`, artifact
+and compile-output I/O remain false, and all native/device/hardware/Windows/
+driver counters remain zero. The next task is an independent strict read-only
+audit of this audit-acceptance commit, deriving its identity from Git.

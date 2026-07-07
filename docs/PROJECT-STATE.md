@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-06 (record-only execution-envelope verifier implemented)*
+*Last updated: 2026-07-07 (execution-envelope verifier audit accepted)*
 
 ## Current State
 
@@ -59,6 +59,10 @@
   `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
 - **Execution-envelope verifier:**
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+- **Execution-envelope verifier audit acceptance:**
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- **Accepted execution-envelope verifier audit target:**
+  `4849d1959cab9c289952655eb73e3279117779d2`.
 - **Accepted scaffolding audit target:**
   `af41a8eaeea96dcbcad75fb2e261c4352b2a468e`.
 - **Evidence mode:** `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
@@ -205,6 +209,15 @@ execution, change live readiness, or change native execution status. It does
 not inspect artifacts, compile outputs, filesystems, devices, hardware,
 registry, services, certificates, drivers, or Windows state.
 
+Independent strict read-only audit of record-only verifier implementation
+commit `4849d1959cab9c289952655eb73e3279117779d2` returned `AUDIT PASS`.
+Acceptance status is
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+The accepted implementation parent is
+`68099a441db5f8b517dbeb296ab234a9ee639bdb`. This acceptance records only the
+audit result and candidate identity; it grants no artifact, native, device,
+hardware, Windows, driver, or execution authority.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -241,6 +254,9 @@ driver authority.
 - Focused execution-envelope verifier checks: `PASS`, 18/18 under Windows
   PowerShell 5.1 and PowerShell 7; all valid-looking and adversarial envelopes
   remained blocked with zero unsafe results.
+- Execution-envelope verifier audit acceptance is recorded for target
+  `4849d1959cab9c289952655eb73e3279117779d2` with status
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -263,11 +279,10 @@ driver authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of the record-only
-execution-envelope verifier implementation commit. Obtain its exact identity
-from Git, require subject
-`feat: add native adapter execution envelope verifier` and parent
-`68099a441db5f8b517dbeb296ab234a9ee639bdb`, and verify changed paths, exact
-schema validation, always-blocked results, call-chain isolation, manifest
-enforcement, and unchanged blocked/no-artifact-I/O safety state. Do not require
-the implementation commit to contain its own hash.
+Perform an independent strict read-only audit of this audit-acceptance commit.
+Derive its exact identity from Git, require subject
+`docs: accept native adapter execution envelope verifier audit`, parent
+`4849d1959cab9c289952655eb73e3279117779d2`, authorized documentation/
+manifest/tool-only changed paths, exact audit-acceptance status/target
+recording, manifest enforcement, and unchanged blocked/no-artifact-I/O safety
+state. Do not require the acceptance commit to contain its own hash.

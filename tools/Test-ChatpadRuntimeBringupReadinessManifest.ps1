@@ -977,7 +977,12 @@ else{
             $envelopeVerifier.status-ne'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO'-or
             $envelopeVerifier.opened_from_closed_boundary_commit-ne'68099a441db5f8b517dbeb296ab234a9ee639bdb'-or
             $envelopeVerifier.implementation_commit_recorded-ne$false-or
-            $envelopeVerifier.independent_implementation_audit_required-ne$true-or
+            $envelopeVerifier.independent_implementation_audit_required-ne$false-or
+            $envelopeVerifier.audit_acceptance_status-ne'NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO'-or
+            $envelopeVerifier.accepted_audit_target_commit-ne'4849d1959cab9c289952655eb73e3279117779d2'-or
+            $envelopeVerifier.accepted_audit_target_parent_commit-ne'68099a441db5f8b517dbeb296ab234a9ee639bdb'-or
+            $envelopeVerifier.audit_acceptance_recorded-ne$true-or
+            $envelopeVerifier.audit_acceptance_grants_execution_authority-ne$false-or
             $envelopeVerifier.declared_field_validation_only-ne$true-or
             (@($envelopeVerifier.supported_operation_classes)-join'|')-ne'Apply|Restore|Restart'-or
             $envelopeVerifier.missing_envelope_result-ne'BLOCKED'-or

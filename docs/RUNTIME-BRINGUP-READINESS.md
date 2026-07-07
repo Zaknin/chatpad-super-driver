@@ -150,6 +150,10 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - Execution-envelope verifier:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+- Execution-envelope verifier audit acceptance:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit target:
+  `4849d1959cab9c289952655eb73e3279117779d2`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -940,14 +944,17 @@ hash verification, and metadata parsing recorded as not performed.
 
 ## Exact next task
 
-Perform an independent strict read-only audit of the record-only
-execution-envelope verifier implementation commit. Derive its exact identity
+Perform an independent strict read-only audit of this record-only
+execution-envelope verifier audit-acceptance commit. Derive its exact identity
 from Git; require subject
-`feat: add native adapter execution envelope verifier`, parent
-`68099a441db5f8b517dbeb296ab234a9ee639bdb`, authorized changed paths, and
-content proving every envelope remains blocked. Do not require the
-implementation commit to contain its own hash. Native execution remains
-`NOT_IMPLEMENTED`, live readiness remains `BLOCKED`, and SetupAPI/Newdev
-invocation remains unauthorized. Do not run the parser or full compile-output
-validator, inspect the real DLL or compile outputs, or perform artifact,
-native, device, hardware, Windows, or driver actions.
+`docs: accept native adapter execution envelope verifier audit`, parent
+`4849d1959cab9c289952655eb73e3279117779d2`, authorized documentation/
+manifest/tool-only changed paths, accepted audit target
+`4849d1959cab9c289952655eb73e3279117779d2`, acceptance status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`, and
+unchanged blocked/no-artifact-I/O safety state. Do not require the acceptance
+commit to contain its own hash. Native execution remains `NOT_IMPLEMENTED`,
+live readiness remains `BLOCKED`, and SetupAPI/Newdev invocation remains
+unauthorized. Do not run the parser or full compile-output validator, inspect
+the real DLL or compile outputs, or perform artifact, native, device, hardware,
+Windows, or driver actions.

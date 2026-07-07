@@ -10889,3 +10889,69 @@
   implementation commit by Git identity, subject, parent, changed paths,
   transitive call chain, focused tests, manifest enforcement, and unchanged
   blocked/no-artifact-I/O state without requiring commit self-reference.
+
+---
+
+## 2026-07-07 07:16:20 +04:00 - Accept native adapter execution-envelope verifier audit
+
+- **Objective:** Record the successful independent strict read-only audit of
+  record-only verifier implementation commit
+  `4849d1959cab9c289952655eb73e3279117779d2`, without changing verifier,
+  offline-suite, parser, harness, driver, package, deployment, or runtime
+  behavior.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `4849d1959cab9c289952655eb73e3279117779d2`, parent
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb`, subject
+  `feat: add native adapter execution envelope verifier`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, remote equality,
+  ahead/behind `0/0`, and clean tree/index.
+- **Acceptance record:** Added and validator-enforced
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`,
+  accepted audit target
+  `4849d1959cab9c289952655eb73e3279117779d2`, and accepted target parent
+  `68099a441db5f8b517dbeb296ab234a9ee639bdb`. Preserved verifier
+  implementation status
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`, all
+  prior lane statuses, runtime blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, execution authorization
+  false, native execution `NOT_IMPLEMENTED`, live readiness `BLOCKED`, artifact
+  and compile-output I/O false, and zero native/device/hardware/Windows/driver
+  counters.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`, and
+  `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`.
+- **Validation:** Manifest generation passed under Windows PowerShell 5.1 and
+  PowerShell 7 with 39 entries, framework `PASS`, and live readiness `BLOCKED`.
+  The first generator invocation used the stale default parser-evidence path
+  and failed before manifest generation with no tracked output; rerunning with
+  the parser evidence already recorded by the current manifest succeeded. The
+  canonical manifest passed record-only validation under Windows PowerShell 5.1
+  and PowerShell 7 with schema v4, total defects `0`, duplicate IDs/paths
+  `0/0`, `NO_PATH` `0`, artifact opening false, compiled-output hash
+  verification false, metadata parsing false, and cross-runtime manifest
+  identity after generated-time normalization.
+- **Safety:** No verifier behavior test, offline-suite behavior test, static
+  parser, full compile-output validator, full exact/readiness suite, real DLL
+  or compile-output open/read/hash/parse/stat/scan/write/load/reflection/
+  execution, native library load, entry-point resolution, SetupAPI/Newdev
+  invocation, device query, hardware access, registry/service/certificate
+  action, Windows mutation, or driver build/sign/package/install/load/bind/
+  restore/restart occurred.
+- **Commit and push:** Subject is
+  `docs: accept native adapter execution envelope verifier audit`; push target
+  is `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  execution authority remains false.
+- **Next task:** Independent strict read-only audit of this audit-acceptance
+  commit by Git identity, subject, parent
+  `4849d1959cab9c289952655eb73e3279117779d2`, authorized changed paths,
+  accepted audit target/status, manifest enforcement, and unchanged blocked/
+  no-artifact-I/O state without requiring commit self-reference.
