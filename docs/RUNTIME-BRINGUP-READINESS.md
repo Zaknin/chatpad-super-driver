@@ -158,6 +158,12 @@ under `tools/ExactInstance/CompileOnlyValidation/`.
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier audit-acceptance audit target:
   `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
+- Execution-envelope verifier audit pass recorded:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit-pass target:
+  `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
+- Prior execution-envelope verifier audit-pass transition target:
+  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
 - Accepted non-live planning audit target:
   `5e7a6f39d0363121b8bd3f6e4b38ceb517889679`.
 - Accepted scaffolding audit target:
@@ -949,17 +955,18 @@ hash verification, and metadata parsing recorded as not performed.
 ## Exact next task
 
 Perform an independent strict read-only audit of this record-only
-execution-envelope verifier audit-pass transition commit. Derive its exact
-identity from Git; require subject
-`docs: record native adapter envelope verifier audit pass`, parent
-`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, authorized documentation/
-manifest/tool-only changed paths, accepted audit-acceptance audit target
-`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, transition status
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`,
-and preservation of prior verifier implementation audit target
-`4849d1959cab9c289952655eb73e3279117779d2`. Do not require this transition
-commit to contain its own hash. Native execution remains `NOT_IMPLEMENTED`,
-live readiness remains `BLOCKED`, and SetupAPI/Newdev invocation remains
-unauthorized. Do not run the parser or full compile-output validator, inspect
-the real DLL or compile outputs, or perform artifact, native, device, hardware,
-Windows, or driver actions.
+execution-envelope verifier audit-pass-recording transition commit. Derive its
+exact identity from Git; require subject
+`docs: record native adapter verifier audit pass`, parent
+`f235879fe6d74dcc02dfe2e56297ef14e5a48800`, authorized documentation/
+manifest/tool-only changed paths, accepted audit-pass target
+`f235879fe6d74dcc02dfe2e56297ef14e5a48800`, transition status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`,
+preservation of prior audit-pass transition target
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and preservation of prior verifier
+implementation audit target `4849d1959cab9c289952655eb73e3279117779d2`. Do not
+require this transition commit to contain its own hash. Native execution
+remains `NOT_IMPLEMENTED`, live readiness remains `BLOCKED`, and SetupAPI/Newdev
+invocation remains unauthorized. Do not run the parser or full compile-output
+validator, inspect the real DLL or compile outputs, or perform artifact,
+native, device, hardware, Windows, or driver actions.
