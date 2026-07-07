@@ -3,20 +3,24 @@
 ## Objective
 
 Perform an independent strict read-only audit of the record-only native-adapter
-execution-envelope verifier audit-pass-recording transition commit.
+execution-envelope verifier audit-pass-acceptance transition commit.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
 - Required starting commit: derive the exact full hash from Git and require
-  subject `docs: record native adapter verifier audit pass`.
+  subject `docs: accept native adapter verifier audit pass`.
 - Required parent:
-  `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
+  `b64a672984b6e7db16765f13de385b22f3491f11`.
 - Required upstream:
   `origin/feature/native-adapter-execution-envelope-verifier`.
 - Required synchronization and tree: `0/0` and clean.
-- Accepted verifier audit-pass target:
+- Accepted verifier audit-pass record target:
+  `b64a672984b6e7db16765f13de385b22f3491f11`.
+- Verifier audit-pass acceptance status:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
+- Prior verifier audit-pass record target:
   `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
 - Verifier audit-pass recorded status:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
@@ -80,12 +84,16 @@ Establish its identity from Git.
 
 ## Audit Scope
 
-- Verify this commit records accepted audit-pass target
+- Verify this commit records accepted audit-pass record target
+  `b64a672984b6e7db16765f13de385b22f3491f11`.
+- Verify prior audit-pass record target remains recorded as
   `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
 - Verify prior audit-pass transition target remains recorded as
   `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
 - Verify prior verifier implementation audit target remains recorded as
   `4849d1959cab9c289952655eb73e3279117779d2`.
+- Verify audit-pass acceptance status is exactly
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
 - Verify audit-pass recorded status is exactly
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
 - Verify audit-acceptance audit-pass status is exactly
@@ -114,11 +122,12 @@ outputs.
 ## Acceptance Criteria
 
 - Git identity, subject, parent, changed paths, and content establish the exact
-  audit-pass-recording transition without self-reference.
-- Accepted audit-pass target, audit-pass recorded status, prior audit-pass
-  transition target, prior verifier implementation audit target, audit-pass
-  status, and audit-acceptance status are recorded in continuity docs,
-  generated manifest, generator, and validator.
+  audit-pass-acceptance transition without self-reference.
+- Accepted audit-pass record target, audit-pass acceptance status, prior
+  audit-pass record target, prior audit-pass transition target, prior verifier
+  implementation audit target, audit-pass recorded status, audit-pass status,
+  and audit-acceptance status are recorded in continuity docs, generated
+  manifest, generator, and validator.
 - Manifest validation passes under Windows PowerShell 5.1 and PowerShell 7 with
   zero defects.
 - Documentation consistency, positive-authorization search, prohibited

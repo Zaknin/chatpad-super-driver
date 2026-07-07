@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-07 (execution-envelope verifier audit-pass recorded)*
+*Last updated: 2026-07-07 (execution-envelope verifier audit-pass accepted)*
 
 ## Current State
 
@@ -70,6 +70,12 @@
 - **Execution-envelope verifier audit pass recorded:**
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
 - **Accepted execution-envelope verifier audit-pass target:**
+  `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
+- **Execution-envelope verifier audit-pass acceptance:**
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
+- **Accepted execution-envelope verifier audit-pass record target:**
+  `b64a672984b6e7db16765f13de385b22f3491f11`.
+- **Prior execution-envelope verifier audit-pass record target:**
   `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
 - **Prior execution-envelope verifier audit-pass transition target:**
   `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
@@ -250,6 +256,19 @@ accepted audit target and does not record its own commit identity; the next
 audit must derive that identity from Git. It grants no artifact, native,
 device, hardware, Windows, driver, or execution authority.
 
+Independent strict read-only audit of verifier audit-pass-recording commit
+`b64a672984b6e7db16765f13de385b22f3491f11` returned `AUDIT PASS`.
+Transition status is
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
+The prior audit-pass record target remains
+`f235879fe6d74dcc02dfe2e56297ef14e5a48800`, the prior audit-pass transition
+target remains `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and the prior
+verifier implementation audit target remains
+`4849d1959cab9c289952655eb73e3279117779d2`. This transition records only the
+accepted audit target and does not record its own commit identity; the next
+audit must derive that identity from Git. It grants no artifact, native,
+device, hardware, Windows, driver, or execution authority.
+
 The record-only execution-scope boundary defines the exact envelope that a
 future native-adapter implementation or execution request would have to
 satisfy. It requires a single-operation authorization statement, exact real-
@@ -295,6 +314,9 @@ driver authority.
 - Execution-envelope verifier audit pass is recorded for target
   `f235879fe6d74dcc02dfe2e56297ef14e5a48800` with status
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
+- Execution-envelope verifier audit-pass acceptance is recorded for target
+  `b64a672984b6e7db16765f13de385b22f3491f11` with status
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.

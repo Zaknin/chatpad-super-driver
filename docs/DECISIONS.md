@@ -3427,3 +3427,38 @@ execution remains `NOT_IMPLEMENTED`, live readiness remains `BLOCKED`, artifact
 and compile-output I/O remain false, and all native/device/hardware/Windows/
 driver counters remain zero. The next task is an independent strict read-only
 audit of this transition commit, deriving its identity from Git.
+
+## 2026-07-07 - Accept the verifier audit-pass recording audit
+
+**Decision:** Accept independent strict read-only audit target
+`b64a672984b6e7db16765f13de385b22f3491f11` with transition status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`,
+while retaining audit-pass record status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`,
+prior audit-pass record target `f235879fe6d74dcc02dfe2e56297ef14e5a48800`,
+prior audit-pass transition target `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`,
+verifier audit-acceptance status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`, and
+prior verifier implementation audit target
+`4849d1959cab9c289952655eb73e3279117779d2`.
+
+**Rationale:** The independent audit accepted the audit-pass-recording
+transition by Git identity, subject, parent, changed paths, content, manifest
+enforcement, and unchanged blocked/no-artifact-I/O state. Recording the audit
+target makes the accepted state machine-verifiable without requiring this new
+transition commit to contain its own unknowable final hash.
+
+**Alternatives rejected:** Requiring this transition commit to self-reference
+its own future hash; replacing the prior audit-pass record target, prior
+audit-pass transition target, or prior verifier implementation audit target;
+changing verifier, offline-suite, parser, harness, driver, INF, packaging,
+signing, staging, or deployment behavior; or treating the audit pass as
+artifact, native, device, hardware, Windows, driver, or execution authority.
+
+**Consequences:** The verifier audit-pass record is accepted, but the verifier
+remains record-only and always blocked. Execution authorization remains false,
+native execution remains `NOT_IMPLEMENTED`, live readiness remains `BLOCKED`,
+artifact and compile-output I/O remain false, and all
+native/device/hardware/Windows/driver counters remain zero. The next task is an
+independent strict read-only audit of this transition commit, deriving its
+identity from Git.

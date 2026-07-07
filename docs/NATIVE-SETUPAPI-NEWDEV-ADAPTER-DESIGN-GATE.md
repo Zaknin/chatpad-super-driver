@@ -70,6 +70,12 @@ Authoritative current state:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier audit-pass target:
   `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
+- Execution-envelope verifier audit-pass acceptance:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit-pass record target:
+  `b64a672984b6e7db16765f13de385b22f3491f11`.
+- Prior execution-envelope verifier audit-pass record target:
+  `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
 - Prior execution-envelope verifier audit-pass transition target:
   `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
 - Accepted non-live planning audit target:
@@ -563,6 +569,19 @@ commit `f235879fe6d74dcc02dfe2e56297ef14e5a48800` with transition status
 The prior audit-pass transition target remains
 `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and the prior verifier
 implementation audit target remains
+`4849d1959cab9c289952655eb73e3279117779d2`. This record does not contain the
+new transition commit's own identity; the next audit must derive it from Git.
+It grants no artifact access, native loading, entry-point resolution,
+SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+driver action, or execution.
+
+Independent strict read-only audit accepted verifier audit-pass-recording
+commit `b64a672984b6e7db16765f13de385b22f3491f11` with transition status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
+The prior audit-pass record target remains
+`f235879fe6d74dcc02dfe2e56297ef14e5a48800`, the prior audit-pass transition
+target remains `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and the prior
+verifier implementation audit target remains
 `4849d1959cab9c289952655eb73e3279117779d2`. This record does not contain the
 new transition commit's own identity; the next audit must derive it from Git.
 It grants no artifact access, native loading, entry-point resolution,
