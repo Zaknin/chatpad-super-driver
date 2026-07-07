@@ -1,0 +1,227 @@
+{
+  "schema": "chatpad-exact-instance-binding-implementation-design-gate-v1",
+  "status": "EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION",
+  "source_analysis_evidence_path": "docs/evidence/exact-instance-binding-analysis.json",
+  "source_analysis_status": "EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION",
+  "source_observation_evidence_path": "docs/evidence/live-readonly-equipment-observation.json",
+  "source_observation_status": "LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO",
+  "source_gate_status": "LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO",
+  "verifier_closeout_status": "NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO",
+  "starting_commit": "3d26a70aeaa1467aabc6d47a996a9b4596bd8b6d",
+  "branch": "feature/native-adapter-execution-envelope-verifier",
+  "generated_utc": "2026-07-07T15:39:41.5162602Z",
+  "accepted_target_chain": [
+    {
+      "role": "root_composite_xbox_controller_node",
+      "instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+      "name": "Xbox 360 Controller for Windows",
+      "class": "XnaComposite",
+      "service": "xusb22",
+      "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+      "parent": "USB\\ROOT_HUB30\\7&dacba&0&0",
+      "child": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+      "analysis_note": "Physical and container anchor; lower priority for future binding because selection may affect broader Xbox controller function."
+    },
+    {
+      "role": "usb_hid_interface_child",
+      "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+      "name": "USB Input Device",
+      "class": "HIDClass",
+      "service": "HidUsb",
+      "hardware_ids": [
+        "USB\\VID_045E&PID_028E&IG_00"
+      ],
+      "compatible_ids": [
+        "USB\\Class_03&Subclass_00&Prot_00",
+        "USB\\Class_03&Subclass_00",
+        "USB\\Class_03"
+      ],
+      "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+      "parent": "USB\\VID_045E&PID_028E\\1C21F10",
+      "child": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "driver_provider": "Microsoft",
+      "driver_version": "10.0.26100.8521",
+      "analysis_note": "Recommended future implementation target candidate; concrete USB interface carrying VID_045E&PID_028E&IG_00 and using HidUsb."
+    },
+    {
+      "role": "hid_game_controller_child",
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "name": "HID-compliant game controller",
+      "class": "HIDClass",
+      "service": null,
+      "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+      "parent": "USB\\VID_045E&PID_028E&IG_00\\8&2af61d70&1&00",
+      "child": null,
+      "analysis_note": "Identity correlation and runtime behavior node; lower priority for future binding because it is already HID-enumerated."
+    }
+  ],
+  "shared_container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+  "recommended_future_implementation_target_candidate": {
+    "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+    "role": "usb_hid_interface_child",
+    "name": "USB Input Device",
+    "class": "HIDClass",
+    "service": "HidUsb",
+    "hardware_ids": [
+      "USB\\VID_045E&PID_028E&IG_00"
+    ],
+    "compatible_ids": [
+      "USB\\Class_03&Subclass_00&Prot_00",
+      "USB\\Class_03&Subclass_00",
+      "USB\\Class_03"
+    ],
+    "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+    "parent": "USB\\VID_045E&PID_028E\\1C21F10",
+    "driver_provider": "Microsoft",
+    "driver_version": "10.0.26100.8521"
+  },
+  "active_binding_authorization_statement": "This is a future implementation target candidate only. This design gate does not authorize or perform binding.",
+  "allowed_match_predicates": [
+    {
+      "name": "exact_instance_id",
+      "requirement": "InstanceId equals or canonicalizes to USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00"
+    },
+    {
+      "name": "hardware_id",
+      "requirement": "HardwareIds include USB\\VID_045E&PID_028E&IG_00"
+    },
+    {
+      "name": "class",
+      "requirement": "Class equals HIDClass"
+    },
+    {
+      "name": "service",
+      "requirement": "Service equals HidUsb"
+    },
+    {
+      "name": "parent",
+      "requirement": "Parent equals or canonicalizes to USB\\VID_045E&PID_028E\\1C21F10"
+    },
+    {
+      "name": "container_id",
+      "requirement": "ContainerId equals {828F4587-006F-5AD1-B169-6AF57905DFDE}"
+    },
+    {
+      "name": "source_observation_status",
+      "requirement": "Source observation status is LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO"
+    },
+    {
+      "name": "source_analysis_status",
+      "requirement": "Source analysis status is EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION"
+    }
+  ],
+  "rejection_predicates": [
+    "target_instance_id_absent",
+    "target_instance_id_differs_from_accepted_target",
+    "class_differs_from_HIDClass",
+    "service_differs_from_HidUsb",
+    "hardware_ids_missing_USB_VID_045E_PID_028E_IG_00",
+    "container_id_differs_from_accepted_container",
+    "parent_differs_from_accepted_parent",
+    "multiple_candidate_interface_nodes_satisfy_only_partial_predicates",
+    "root_composite_node_selected_without_separate_explicit_authorization",
+    "hid_game_controller_child_selected_without_separate_explicit_authorization",
+    "any_required_safety_counter_non_zero",
+    "live_readiness_not_BLOCKED",
+    "native_execution_not_NOT_IMPLEMENTED",
+    "execution_authorized_not_false",
+    "binding_implementation_authorized_not_false_before_separate_future_implementation_task",
+    "artifact_or_compile_output_access_would_be_required",
+    "setupapi_newdev_or_native_execution_would_be_required_before_future_design_explicitly_authorizes_it"
+  ],
+  "future_non_mutation_dry_run_requirements": [
+    "perform_no_binding",
+    "perform_no_windows_mutation",
+    "perform_no_driver_action",
+    "perform_no_setupapi_newdev_invocation",
+    "perform_no_native_execution",
+    "validate_exact_match_predicates",
+    "validate_rejection_predicates",
+    "emit_planned_action_only",
+    "record_whether_target_would_be_accepted_or_rejected",
+    "record_exact_reasons",
+    "remain_safe_if_target_absent_or_ambiguous"
+  ],
+  "future_operator_confirmation_requirements": [
+    "present_exact_target_instance_id",
+    "present_target_class_and_service",
+    "present_parent_instance_id",
+    "present_container_id",
+    "present_hardware_ids",
+    "present_compatible_ids",
+    "present_current_provider_and_version",
+    "present_planned_operation",
+    "present_expected_no_op_or_rejection_behavior",
+    "present_rollback_restore_plan",
+    "present_evidence_path_to_be_written",
+    "present_followup_audit_task"
+  ],
+  "future_rollback_no_op_requirements": [
+    "no_op_on_absent_target",
+    "no_op_on_ambiguous_target",
+    "no_op_on_predicate_mismatch",
+    "no_op_if_safety_state_is_not_blocked_non_executing",
+    "no_op_if_artifact_or_compile_output_access_would_be_required_unexpectedly",
+    "no_op_if_setupapi_newdev_or_native_execution_would_be_required_before_explicit_authorization",
+    "durable_evidence_for_every_no_op_reason",
+    "rollback_restore_plan_before_any_mutating_action_is_later_authorized"
+  ],
+  "future_evidence_requirements": [
+    "source_observation_evidence_identity",
+    "source_analysis_evidence_identity",
+    "exact_target_instance_id",
+    "allowed_match_predicate_results",
+    "rejection_predicate_results",
+    "accepted_or_rejected_target_decision",
+    "dry_run_planned_action",
+    "operator_confirmation_state",
+    "no_op_rollback_state",
+    "all_safety_counters",
+    "no_artifact_compile_output_access_unless_separately_authorized",
+    "no_native_execution_unless_separately_authorized",
+    "no_setupapi_newdev_invocation_unless_separately_authorized",
+    "no_windows_mutation_unless_separately_authorized",
+    "no_driver_action_unless_separately_authorized"
+  ],
+  "future_audit_requirements": [
+    "target_commit_identity",
+    "target_evidence_schema_and_status",
+    "source_evidence_chain",
+    "exact_target_instance_id",
+    "predicate_results",
+    "no_op_rejection_handling",
+    "safety_counters",
+    "no_unauthorized_native_execution",
+    "no_unauthorized_setupapi_newdev_invocation",
+    "no_unauthorized_windows_mutation",
+    "no_unauthorized_driver_action",
+    "no_unauthorized_artifact_compile_output_access"
+  ],
+  "binding_implementation_status": "NOT_IMPLEMENTED",
+  "binding_implementation_authorized": false,
+  "native_execution": "NOT_IMPLEMENTED",
+  "execution_authorized": false,
+  "live_readiness": "BLOCKED",
+  "blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
+  "safety": {
+    "binding_implementation_performed": false,
+    "binding_implementation_authorized": false,
+    "new_live_observation_performed": false,
+    "device_query_performed": false,
+    "hardware_access_performed": false,
+    "native_library_load_performed": false,
+    "native_library_load_count": 0,
+    "entry_point_resolution_performed": false,
+    "entry_point_resolution_count": 0,
+    "setupapi_newdev_invocation_performed": false,
+    "setupapi_newdev_invocation_count": 0,
+    "windows_mutation_performed": false,
+    "windows_mutation_count": 0,
+    "driver_action_performed": false,
+    "driver_action_count": 0,
+    "artifact_opening_performed": false,
+    "artifact_compile_output_io_performed": false,
+    "compile_output_hash_verification_performed": false,
+    "metadata_parsing_performed": false
+  }
+}

@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-07 - Open an exact-instance binding implementation design gate without implementing binding
+
+**Decision:** Record
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`
+as a documentation/manifest-only design gate for a future exact-instance
+binding implementation task. The gate defaults future analysis to the accepted
+USB HID interface target candidate
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`, but it does not authorize or
+perform binding.
+
+**Rationale:** The accepted live observation and exact-instance binding
+analysis identify a three-node PnP chain and a preferred USB interface target.
+Before any implementation can be considered, the repository needs an auditable
+contract for exact target identity, allowed-match predicates, rejection
+predicates, non-mutation dry-run behavior, operator confirmation, no-op and
+rollback behavior, evidence fields, and follow-up audit requirements.
+
+**Alternatives rejected:** Implementing binding in the design-gate task;
+performing fresh live observation or device query; loading native libraries;
+resolving entry points; invoking SetupAPI/Newdev; mutating Windows; performing
+driver actions; opening artifact or compile-output binaries; or selecting the
+root/composite node or HID-enumerated child without a separate explicit
+authorization.
+
+**Consequences:** Live readiness remains `BLOCKED`; native execution remains
+`NOT_IMPLEMENTED`; binding implementation remains `NOT_IMPLEMENTED`;
+binding implementation authorization and execution authorization remain false;
+artifact and compile-output I/O remain false; metadata parsing remains false;
+and all native/device/hardware/Windows/driver counters remain zero. A future
+implementation or dry-run task must be separately authorized and then followed
+by an independent strict read-only audit.
+
 ## 2026-07-07 - Open the live read-only equipment observation gate as planning only
 
 **Decision:** Record

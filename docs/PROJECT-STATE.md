@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-07 (exact-instance binding analysis completed)*
+*Last updated: 2026-07-07 (exact-instance binding implementation design gate opened)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: analyze exact instance binding target`,
-  starting commit `ba69235c5e461c8d860f80e454eeae8ad12aa0e9`.
+  expected subject `docs: open exact instance binding design gate`,
+  starting commit `3d26a70aeaa1467aabc6d47a996a9b4596bd8b6d`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -100,6 +100,10 @@
   `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`.
 - **Exact-instance binding analysis evidence:**
   `docs/evidence/exact-instance-binding-analysis.json`.
+- **Exact-instance binding implementation design-gate status:**
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`.
+- **Exact-instance binding implementation design-gate evidence:**
+  `docs/evidence/exact-instance-binding-implementation-design-gate.json`.
 - **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
@@ -383,10 +387,24 @@ interface carrying `VID_045E&PID_028E&IG_00`, uses `HidUsb`, and parents to
 the Xbox composite node. This is analysis only; binding implementation remains
 unauthorized and not implemented.
 
+The exact-instance binding implementation design gate is opened with status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`
+in `docs/evidence/exact-instance-binding-implementation-design-gate.json`.
+It defines future allowed-match predicates, rejection predicates,
+non-mutation dry-run requirements, operator confirmation requirements,
+rollback/no-op requirements, evidence requirements, and audit requirements for
+a later separately authorized binding implementation task. This transition is
+documentation/manifest-only. It performs no binding implementation, no new
+live observation, no device query, no hardware access, no native execution, no
+native library load, no entry-point resolution, no SetupAPI/Newdev invocation,
+no Windows mutation, no driver action, and no artifact/compile-output access.
+Future binding implementation remains unauthorized and requires a separate
+task after independent audit.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: 41; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Manifest entries: 42; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Scope-boundary commit
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
   enforced by the generator and validator.
@@ -446,6 +464,14 @@ unauthorized and not implemented.
   native execution, no native library load, no entry-point resolution, no
   SetupAPI/Newdev invocation, no Windows mutation, no driver action, no
   artifact/compile-output access, and no binding implementation.
+- Exact-instance binding implementation design gate is recorded with status
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`
+  and evidence path
+  `docs/evidence/exact-instance-binding-implementation-design-gate.json`.
+  It records no binding implementation, no new live observation, no device
+  query, no hardware access, no native execution, no native library load, no
+  entry-point resolution, no SetupAPI/Newdev invocation, no Windows mutation,
+  no driver action, and no artifact/compile-output access.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -468,6 +494,9 @@ unauthorized and not implemented.
   binding implementation, native execution, SetupAPI/Newdev invocation,
   Windows mutation, driver action, device query, hardware access, or
   artifact/compile-output access.
+- The exact-instance binding implementation design gate is open, but future
+  binding implementation remains unauthorized until a separate task after
+  independent audit. Binding implementation status remains `NOT_IMPLEMENTED`.
 - Audit acceptance does not authorize native execution, real DLL or
   compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
@@ -476,20 +505,17 @@ unauthorized and not implemented.
 ## Next Task
 
 Perform an independent strict read-only audit of this exact-instance binding
-analysis commit. Derive its exact identity from Git, require subject
-`docs: analyze exact instance binding target`, starting commit
-`ba69235c5e461c8d860f80e454eeae8ad12aa0e9`, analysis evidence schema
-`chatpad-exact-instance-binding-analysis-v1`, analysis status
-`EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
-source observation evidence
-`docs/evidence/live-readonly-equipment-observation.json`, source observation
-status `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
-source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
-verifier lane closeout
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`, manifest
-schema `chatpad-runtime-bringup-readiness-manifest-v4`, the three-node target
-chain, recommended analysis target, and unchanged blocked state. The audit
-must confirm no new live observation, device query, hardware access, native
+implementation design-gate commit. Derive its exact identity from Git, require
+subject `docs: open exact instance binding design gate`, starting commit
+`3d26a70aeaa1467aabc6d47a996a9b4596bd8b6d`, design-gate evidence schema
+`chatpad-exact-instance-binding-implementation-design-gate-v1`, design-gate
+status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`,
+source analysis and source observation evidence references, accepted
+three-node chain, recommended future implementation target candidate, design
+predicates and future dry-run/confirmation/rollback/evidence/audit
+requirements, and unchanged blocked state. The audit must confirm no binding
+implementation, new live observation, device query, hardware access, native
 execution, native library load, entry-point resolution, SetupAPI/Newdev
-invocation, Windows mutation, driver action, artifact/compile-output access,
-or binding implementation was authorized or performed.
+invocation, Windows mutation, driver action, or artifact/compile-output access
+was authorized or performed.

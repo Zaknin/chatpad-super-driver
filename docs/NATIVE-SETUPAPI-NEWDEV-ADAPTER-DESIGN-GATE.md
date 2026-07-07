@@ -740,3 +740,13 @@ That analysis prefers the USB HID interface child
 while preserving the root/composite node and HID game-controller child as
 correlation and precondition evidence. No binding implementation, artifact,
 native, device, hardware, Windows, driver, or execution authority is granted.
+
+The follow-on exact-instance binding implementation design gate is opened with
+status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`.
+It defines only future constraints for exact target identity, allowed-match
+predicates, rejection predicates, non-mutation dry-run behavior, operator
+confirmation, rollback/no-op behavior, evidence, and audit. It does not
+implement binding, authorize binding, query devices, load native libraries,
+resolve entry points, invoke SetupAPI/Newdev, mutate Windows, perform driver
+actions, or access artifacts or compile outputs.

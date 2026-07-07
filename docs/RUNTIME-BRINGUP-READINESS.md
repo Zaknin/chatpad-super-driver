@@ -1012,23 +1012,55 @@ compile-output access occurred or is authorized. Live readiness remains
 remains `false`, and the blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+## Exact-Instance Binding Implementation Design Gate
+
+The exact-instance binding implementation design gate is opened with status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`
+and evidence path
+`docs/evidence/exact-instance-binding-implementation-design-gate.json`. This
+is documentation/manifest-only and does not implement binding. It defines a
+future implementation contract for the accepted USB HID interface target
+candidate `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`, while preserving the
+root/composite node and HID game-controller child as correlation and
+precondition evidence.
+
+Before any future action could proceed, a later separately authorized task
+must require exact target identity, `HIDClass`, `HidUsb`, the accepted
+HardwareId, the accepted parent, the shared ContainerId, the accepted source
+observation status, and the accepted source analysis status. It must reject or
+no-op on absent, ambiguous, partial, wrong-node, mismatched, unsafe,
+artifact-dependent, or premature native/SetupAPI/Newdev-dependent states. A
+future non-mutation dry-run must perform no binding, Windows mutation, driver
+action, SetupAPI/Newdev invocation, or native execution; it must emit planned
+action only and record exact accept/reject reasons. Future operator
+confirmation, rollback/no-op, evidence, and follow-up audit requirements are
+recorded in the design-gate evidence.
+
+No binding implementation occurred. No new live observation, device query,
+hardware access, native execution, native library load, entry-point
+resolution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+artifact access, or compile-output access occurred or is authorized by this
+gate. Future binding implementation remains unauthorized and requires a
+separate task after independent audit. Live readiness remains `BLOCKED`,
+native execution remains `NOT_IMPLEMENTED`, binding implementation status
+remains `NOT_IMPLEMENTED`, execution authorized remains `false`, and the
+blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Exact next task
 
 Perform an independent strict read-only audit of this exact-instance binding
-analysis commit. Derive its exact identity from Git; require subject
-`docs: analyze exact instance binding target`, starting commit
-`ba69235c5e461c8d860f80e454eeae8ad12aa0e9`, analysis evidence schema
-`chatpad-exact-instance-binding-analysis-v1`, analysis status
-`EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
-source observation evidence path
-`docs/evidence/live-readonly-equipment-observation.json`, source observation
-status `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
-source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
-verifier lane closeout
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`, manifest
-schema `chatpad-runtime-bringup-readiness-manifest-v4`, three-node target
-chain, recommended analysis target, and unchanged blocked state. The audit
-must confirm no new live observation, device query, hardware access, native
-execution, native library load, entry-point resolution, SetupAPI/Newdev
-invocation, Windows mutation, driver action, artifact/compile-output access,
-or binding implementation was authorized or performed.
+implementation design-gate commit. Derive its exact identity from Git; require
+subject `docs: open exact instance binding design gate`, starting commit
+`3d26a70aeaa1467aabc6d47a996a9b4596bd8b6d`, design-gate evidence schema
+`chatpad-exact-instance-binding-implementation-design-gate-v1`, design-gate
+status
+`EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`,
+source analysis evidence, source observation evidence, accepted three-node
+target chain, recommended future implementation target candidate, allowed
+match predicates, rejection predicates, non-mutation dry-run requirements,
+operator confirmation requirements, rollback/no-op requirements, evidence
+requirements, audit requirements, and unchanged blocked state. The audit must
+confirm no binding implementation, new live observation, device query,
+hardware access, native execution, native library load, entry-point
+resolution, SetupAPI/Newdev invocation, Windows mutation, driver action, or
+artifact/compile-output access was authorized or performed.
