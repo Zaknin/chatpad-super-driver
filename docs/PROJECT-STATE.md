@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-07 (execution-envelope verifier lane closed)*
+*Last updated: 2026-07-07 (live read-only equipment observation gate opened as planning only)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: close native adapter verifier lane`, parent
-  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
+  expected subject `docs: open live readonly observation gate`, parent
+  `a38264fa06db15a36ed46f0ac8daba9cdecf1ba9`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -90,6 +90,8 @@
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
 - **Accepted execution-envelope verifier lane-closeout audit target:**
   `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
+- **Live read-only equipment observation gate:**
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
 - **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
@@ -347,6 +349,17 @@ current repository does not satisfy the envelope. This boundary implements no
 native execution and grants no artifact, native, device, hardware, Windows, or
 driver authority.
 
+The live read-only equipment observation gate is opened only as a
+documentation/manifest planning lane with status
+`LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`. This transition
+does not perform or authorize live preflight, live observation, device query,
+hardware access, Windows mutation, SetupAPI/Newdev invocation, native library
+load, entry-point resolution, artifact access, compile-output access, driver
+build, sign, package, install, load, bind, restore, or restart. Actual live
+read-only observation and native adapter implementation remain separate future
+tasks requiring explicit authorization after independent audit of this
+gate-opening commit.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
@@ -393,6 +406,11 @@ driver authority.
 - Execution-envelope verifier lane is closed for accepted audit target
   `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de` with status
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+- Live read-only equipment observation gate is recorded as planning-only status
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`; live
+  readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`,
+  execution authorization remains false, artifact and compile-output I/O remain
+  false, and all native/device/hardware/Windows/driver counters remain zero.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -408,6 +426,8 @@ driver authority.
 - Native SetupAPI/Newdev adapter execution remains unimplemented.
 - Live readiness remains `BLOCKED`.
 - Native execution remains `NOT_IMPLEMENTED`.
+- Live read-only observation is not performed or authorized by this transition;
+  it requires a separately authorized future task after independent audit.
 - Audit acceptance does not authorize native execution, real DLL or
   compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
@@ -415,22 +435,17 @@ driver authority.
 
 ## Next Task
 
-Perform an independent strict read-only audit of this verifier-lane closeout
-transition commit. Derive its exact identity from Git, require subject
-`docs: close native adapter verifier lane`, parent
-`e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, authorized documentation/
-manifest/tool-only changed paths, accepted audit target
-`e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`, lane closeout status
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`,
-preservation of the accepted audit-pass acceptance audit-pass target
-`ba952444d9d3e306da8985e25b93b74aa5f6cff6`, preservation of the prior
-accepted audit target `75a083a684c79b729de04c770371fb6190c9c9e7`,
-preservation of the accepted audit-pass record target
-`b64a672984b6e7db16765f13de385b22f3491f11`, preservation of the prior
-audit-pass record target `f235879fe6d74dcc02dfe2e56297ef14e5a48800`,
-preservation of the prior audit-pass transition target
-`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, preservation of the prior
-verifier implementation audit target
-`4849d1959cab9c289952655eb73e3279117779d2`, manifest enforcement, and
-unchanged blocked/no-artifact-I/O safety state. Do not require this closeout
-commit to contain its own hash.
+Perform an independent strict read-only audit of this live read-only equipment
+observation gate-opening commit. Derive its exact identity from Git, require
+subject `docs: open live readonly observation gate`, parent
+`a38264fa06db15a36ed46f0ac8daba9cdecf1ba9`, authorized documentation and
+manifest-only changed paths, verifier-lane closeout status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`, new gate
+status `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`, manifest
+schema `chatpad-runtime-bringup-readiness-manifest-v4`, and unchanged blocked
+state. The audit must confirm this commit does not authorize live preflight,
+device query, hardware access, Windows mutation, driver action, artifact or
+compile-output access, native library load, entry-point resolution, or
+SetupAPI/Newdev invocation. Actual live read-only observation must be separately
+authorized after audit. Do not require this gate-opening commit to contain its
+own hash.

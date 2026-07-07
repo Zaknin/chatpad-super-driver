@@ -86,6 +86,13 @@ Authoritative current state:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier lane-closeout audit target:
   `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
+- Live read-only equipment observation gate:
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
+- Live read-only equipment observation gate mode:
+  documentation/manifest-only planning. It does not authorize live preflight,
+  live observation, device query, hardware access, Windows mutation,
+  SetupAPI/Newdev invocation, native library load, entry-point resolution,
+  artifact access, compile-output access, or any driver action.
 - Prior execution-envelope verifier audit-pass acceptance audit accepted target:
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - Prior accepted execution-envelope verifier audit-pass acceptance audit target:

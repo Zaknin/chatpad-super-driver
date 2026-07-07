@@ -11453,3 +11453,75 @@
   record target, preserved prior audit-pass transition target, preserved
   verifier implementation audit target, manifest enforcement, and unchanged
   blocked/no-artifact-I/O state without requiring commit self-reference.
+
+---
+
+## 2026-07-07 17:50:46 +04:00 - Open live read-only equipment observation gate
+
+- **Objective:** Open
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO` as a
+  documentation/manifest-only planning transition while preserving the closed
+  verifier lane and all blocked, false, and zero execution state.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `a38264fa06db15a36ed46f0ac8daba9cdecf1ba9`, subject
+  `docs: close native adapter verifier lane`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`. Authorized preflight cleanup removed only untracked scratch files
+  `hermes-generator-validator-partial.diff` and `nul`; post-clean tree/index
+  were clean.
+- **Transition record:** Preserved verifier-lane closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO` and
+  added the planning-only live read-only equipment observation gate status
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`. The manifest
+  schema remains `chatpad-runtime-bringup-readiness-manifest-v4`.
+- **Files modified:** `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Implementation details:** No generator or validator change was made. The
+  existing manifest was directly updated for this planning-only lane and the
+  changed tracked-document identities were refreshed. No synthetic suite result
+  was created.
+- **Validation:** Safe validation only. Manifest JSON parse passed and recorded
+  schema `chatpad-runtime-bringup-readiness-manifest-v4`, 39 entries, gate
+  status `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`, live
+  readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, blocker
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, and verifier-lane
+  closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+  Manifest validator passed in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode with
+  result `PASS`, total defects `0`, artifact opening false, compile-output
+  hash verification false, metadata parsing false, entries `39`, duplicate
+  IDs/paths `0/0`, and `NO_PATH` `0`. Forbidden alternate vocabularies were
+  absent from tracked repo content. Changed-path safety passed with 7 changed
+  paths and 0 unexpected paths. No tools changed, so prohibited
+  executable-pattern additions in changed tools were `0`. Forbidden tracked
+  generated path scan found `0` hits. Added-line scan for the requested typo
+  variants found `0` hits. `git diff --check` passed.
+  Added authorization wording was denial-only or future-audit-only and did not
+  grant current execution, live, device, hardware, Windows, artifact,
+  compile-output, native, SetupAPI/Newdev, or driver authority.
+- **Safety:** No verifier behavior test, offline-suite behavior test, static
+  parser, full compile-output validator, full exact/readiness suite, real DLL
+  or compile-output open/read/hash/parse/stat/scan/write/load/reflection/
+  execution, native library load, entry-point resolution, SetupAPI/Newdev
+  invocation, device query, hardware access, registry/service/certificate
+  action, Windows mutation, live preflight, live equipment observation, or
+  driver build/sign/package/install/load/bind/restore/restart occurred.
+- **Commit and push:** Subject will be
+  `docs: open live readonly observation gate`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  execution authority remains false.
+- **Next task:** Independent strict read-only audit of this gate-opening commit
+  by Git identity, subject, parent
+  `a38264fa06db15a36ed46f0ac8daba9cdecf1ba9`, authorized documentation/
+  manifest-only changed paths, verifier-lane closeout preservation, new
+  planning-only gate status, manifest schema, forbidden vocabulary absence, and
+  unchanged blocked/no-artifact-I/O state. Actual live read-only observation
+  must be separately authorized after audit.

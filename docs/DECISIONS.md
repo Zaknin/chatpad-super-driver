@@ -4,6 +4,37 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-07 - Open the live read-only equipment observation gate as planning only
+
+**Decision:** Record
+`LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO` as a
+documentation/manifest-only planning lane inside existing readiness manifest
+schema `chatpad-runtime-bringup-readiness-manifest-v4`, after verifier-lane
+closeout status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+
+**Rationale:** The verifier lane is closed, so the next useful transition is
+to prepare an independently auditable planning gate for a later live read-only
+equipment observation task. That planning record must be explicit that no live
+preflight, device query, hardware access, Windows mutation, SetupAPI/Newdev
+invocation, native library load, entry-point resolution, artifact access,
+compile-output access, driver action, or native execution authority is granted.
+
+**Alternatives rejected:** Creating a new manifest schema; using alternate
+planning vocabularies; changing
+`native_adapter_execution_design_gate.current_gate`; implementing native
+execution; performing live observation in the same transition; querying
+devices; accessing hardware; opening or hashing artifacts; or changing
+verifier, adapter runtime, offline-suite, parser, build, package, signing,
+staging, deployment, or driver behavior.
+
+**Consequences:** Live readiness remains `BLOCKED`; native execution remains
+`NOT_IMPLEMENTED`; execution authorization remains false; artifact and
+compile-output I/O remain false; metadata parsing remains false; and all
+native/device/hardware/Windows/driver counters remain zero. Any actual live
+read-only observation and any native adapter implementation require separate
+future authorization after independent audit of this gate-opening commit.
+
 ## 2026-07-06 - Open the native adapter execution design gate without authorizing execution
 
 **Decision:** Open

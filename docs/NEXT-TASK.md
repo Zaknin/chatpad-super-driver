@@ -2,72 +2,28 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the record-only native-adapter
-execution-envelope verifier lane-closeout transition commit.
+Perform an independent strict read-only audit of the live read-only equipment
+observation gate-opening commit.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
 - Required starting commit: derive the exact full hash from Git and require
-  subject `docs: close native adapter verifier lane`.
+  subject `docs: open live readonly observation gate`.
 - Required parent:
-  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
+  `a38264fa06db15a36ed46f0ac8daba9cdecf1ba9`.
 - Required upstream:
   `origin/feature/native-adapter-execution-envelope-verifier`.
 - Required synchronization and tree: `0/0` and clean.
-- Accepted verifier lane-closeout audit target:
-  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
 - Verifier lane closeout:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
-- Accepted verifier audit-pass acceptance audit-pass target:
-  `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
-- Verifier audit-pass acceptance audit accepted:
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Prior accepted verifier audit-pass acceptance audit target:
-  `75a083a684c79b729de04c770371fb6190c9c9e7`.
-- Verifier audit-pass acceptance audit-pass status:
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
-- Accepted verifier audit-pass record target:
-  `b64a672984b6e7db16765f13de385b22f3491f11`.
-- Verifier audit-pass acceptance status:
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
-- Prior verifier audit-pass record target:
-  `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
-- Verifier audit-pass recorded status:
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
-- Prior verifier audit-pass transition target:
-  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
-- Prior verifier audit-acceptance audit pass:
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
-- Record-only verifier implementation commit and accepted audit target:
-  `4849d1959cab9c289952655eb73e3279117779d2`.
-- Verifier implementation status:
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
-- Verifier audit acceptance:
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Final boundary lane:
-  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_LANE_CLOSED_NO_NATIVE_IO`.
-- Boundary closeout-identity audit:
-  `NATIVE_ADAPTER_EXECUTION_BOUNDARY_CLOSEOUT_IDENTITY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Closeout: `AUDIT_PASS_LANE_CLOSED_NO_NATIVE_IO`.
+- Live read-only equipment observation gate:
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
+- Manifest schema:
+  `chatpad-runtime-bringup-readiness-manifest-v4`.
 - Gate/runtime blocker:
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Design:
-  `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
-- Scaffolding:
-  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_IMPLEMENTED_NO_NATIVE_IO`.
-- Scaffolding audit:
-  `NATIVE_ADAPTER_FAIL_CLOSED_SCAFFOLDING_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Non-live implementation:
-  `NATIVE_ADAPTER_NON_LIVE_PLAN_IMPLEMENTED_NO_NATIVE_IO`.
-- Non-live audit:
-  `NATIVE_ADAPTER_NON_LIVE_PLAN_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Scope:
-  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_DEFINED_NO_NATIVE_IO`.
-- Scope audit:
-  `NATIVE_ADAPTER_EXECUTION_SCOPE_BOUNDARY_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Evidence mode: `EVIDENCE_RECORD_ONLY_NO_ARTIFACT_IO`.
 - Execution authorized: `false`.
 - Live readiness: `BLOCKED`.
 - Native execution: `NOT_IMPLEMENTED`.
@@ -75,15 +31,16 @@ execution-envelope verifier lane-closeout transition commit.
 - Artifact/compile-output I/O: `false`.
 - Compile-output hash verification: `false`.
 - Metadata parsing: `false`.
-- Native/device/hardware/Windows/driver counters: `0`.
+- Native library load count: `0`.
+- Entry-point resolution count: `0`.
+- SetupAPI/Newdev invocation count: `0`.
+- Device query count: `0`.
+- Hardware access count: `0`.
+- Windows mutation count: `0`.
+- Driver action count: `0`.
 
-This closeout transition commit should not be rejected for omitting its own
-hash. Establish its identity from Git.
-
-No verifier-lane work remains except this closeout audit. Any native-adapter
-implementation, artifact access, device access, Windows mutation, live
-equipment observation, or live execution must begin as a separately authorized
-future task.
+This gate-opening commit should not be rejected for omitting its own hash.
+Establish its identity from Git.
 
 ## Preconditions
 
@@ -97,8 +54,6 @@ future task.
    - `docs/RUNTIME-BRINGUP-READINESS.md`
    - `docs/WORKLOG.md`
    - `docs/evidence/runtime-bringup-readiness-manifest.json`
-   - `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
-   - `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
 3. Confirm verifier behavior modules, offline-suite behavior modules, static
    parser, real artifact, compile outputs, harness/evidence policy, driver,
    INF/project/solution, packaging, signing, staging, deployment, binaries, and
@@ -106,70 +61,53 @@ future task.
 
 ## Audit Scope
 
-- Verify this commit records accepted verifier lane-closeout audit target
-  `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de`.
-- Verify verifier lane closeout status is exactly
+- Verify the commit records the new gate status exactly as
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`.
+- Verify the verifier lane remains closed with status
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
-- Verify accepted audit-pass acceptance audit-pass target remains recorded as
-  `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
-- Verify audit-pass acceptance audit accepted status remains exactly
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Verify prior accepted audit-pass acceptance audit target remains recorded as
-  `75a083a684c79b729de04c770371fb6190c9c9e7`.
-- Verify audit-pass acceptance audit-pass status remains exactly
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
-- Verify accepted audit-pass record target remains recorded as
-  `b64a672984b6e7db16765f13de385b22f3491f11`.
-- Verify prior audit-pass record target remains recorded as
-  `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
-- Verify prior audit-pass transition target remains recorded as
-  `b6bdd01588e9d72113dd9b09fcfa9baf2026424d`.
-- Verify prior verifier implementation audit target remains recorded as
-  `4849d1959cab9c289952655eb73e3279117779d2`.
-- Verify audit-pass acceptance status is exactly
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTED_NO_NATIVE_IO`.
-- Verify audit-pass recorded status is exactly
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_RECORDED_NO_NATIVE_IO`.
-- Verify audit-acceptance audit-pass status is exactly
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
-- Verify audit acceptance status is exactly
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_ACCEPTED_NO_NATIVE_IO`.
-- Verify verifier implementation status remains exactly
-  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_IMPLEMENTED_NO_NATIVE_IO`.
+- Verify no new manifest schema is introduced and schema remains
+  `chatpad-runtime-bringup-readiness-manifest-v4`.
+- Verify the forbidden alternate vocabularies from the gate-opening request
+  are absent from tracked repository content.
 - Verify the gate/runtime blocker remains
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Verify execution authorization remains false, native execution remains
   `NOT_IMPLEMENTED`, and live readiness remains `BLOCKED`.
-- Verify artifact/compile-output I/O fields remain false and all native,
-  device, hardware, Windows, and driver counters remain zero.
-- Validate manifest schema v4, 39 entries, duplicate IDs/paths `0/0`, `NO_PATH`
-  `0`, and cross-runtime identity if the generator/validator changed.
+- Verify artifact opening, artifact/compile-output I/O, compile-output hash
+  verification, and metadata parsing remain false.
+- Verify native library load, entry-point resolution, SetupAPI/Newdev
+  invocation, device query, hardware access, Windows mutation, and driver
+  action counters remain zero.
+- Verify `docs/NEXT-TASK.md` points to audit of this gate-opening commit, not
+  actual live observation.
+- Verify `docs/NEXT-TASK.md` does not authorize live preflight, device query,
+  hardware access, Windows mutation, driver action, or actual live
+  observation.
 
 ## Safety Restrictions
 
-This is read-only. Do not edit, commit, or push during the audit. Do not run
-the static parser, full compile-output validator, full exact/readiness suites,
-or any artifact, native, device, hardware, Windows, or driver path. Do not
-open, read, hash, parse, stat, scan, write, load, reflect over, or execute the
-real DLL or compile outputs. Do not authorize live preflight or live equipment
-observation.
+This audit is read-only. No live preflight is authorized by this commit. No
+device query is authorized by this commit. No hardware access is authorized by
+this commit. No Windows mutation is authorized by this commit. No driver action
+is authorized by this commit. Actual live read-only observation must be
+separately authorized after audit.
+
+Do not edit, commit, or push during the audit. Do not run verifier behavior
+tests, offline-suite behavior tests, the static parser, full compile-output
+validator, full exact/readiness suites, or any artifact, native, device,
+hardware, Windows, or driver path. Do not open, read, hash, parse, stat, scan,
+write, load, reflect over, or execute the real DLL or compile outputs.
 
 ## Acceptance Criteria
 
 - Git identity, subject, parent, changed paths, and content establish the exact
-  verifier-lane closeout transition without self-reference.
-- Accepted verifier lane-closeout audit target, verifier lane closeout status,
-  accepted audit-pass acceptance audit-pass target, prior accepted audit-pass
-  acceptance audit target, accepted audit-pass record target, prior audit-pass
-  record target, prior audit-pass transition target, prior verifier
-  implementation audit target, audit-pass acceptance status, audit-pass
-  recorded status, audit-pass status, and audit-acceptance status are recorded
-  in continuity docs, generated manifest, generator, and validator.
-- Manifest validation passes under Windows PowerShell 5.1 and PowerShell 7 with
-  zero defects.
+  gate-opening transition without self-reference.
+- Manifest validation passes with schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, 39 entries, duplicate
+  IDs/paths `0/0`, and `NO_PATH` `0`.
 - Documentation consistency, positive-authorization search, prohibited
-  executable-pattern search, repository safety, forbidden generated-file scan,
-  spelling-variant scan, and `git diff --check` pass.
+  executable-pattern search for changed tools, changed-path safety, forbidden
+  generated-file scan, spelling-variant scan, and `git diff --check` pass.
 - Final Git status remains clean and synchronized `0/0`.
 
 ## Inspect First
@@ -179,6 +117,6 @@ observation.
 3. `docs/DECISIONS.md`
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
-6. `tools/New-ChatpadRuntimeBringupReadinessManifest.ps1`
-7. `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`
+6. `docs/RUNTIME-BRINGUP-READINESS.md`
+7. `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
 8. `docs/evidence/runtime-bringup-readiness-manifest.json`
