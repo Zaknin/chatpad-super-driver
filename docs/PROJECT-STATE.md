@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-07 (live read-only equipment observation captured)*
+*Last updated: 2026-07-07 (exact-instance binding analysis completed)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: capture live readonly equipment observation`,
-  starting commit `cd81f875dade6fd2a7ea3a7ca3ab65b28532f54b`.
+  expected subject `docs: analyze exact instance binding target`,
+  starting commit `ba69235c5e461c8d860f80e454eeae8ad12aa0e9`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -96,6 +96,10 @@
   `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`.
 - **Live read-only equipment observation evidence:**
   `docs/evidence/live-readonly-equipment-observation.json`.
+- **Exact-instance binding analysis status:**
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`.
+- **Exact-instance binding analysis evidence:**
+  `docs/evidence/exact-instance-binding-analysis.json`.
 - **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
@@ -364,10 +368,25 @@ Windows mutation, SetupAPI/Newdev invocation, native library load, entry-point
 resolution, artifact access, compile-output access, or driver build, sign,
 package, install, load, bind, restore, or restart.
 
+The exact-instance binding target analysis is completed from the accepted
+tracked observation evidence with status
+`EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`
+in `docs/evidence/exact-instance-binding-analysis.json`. The analysis records
+that the observed target is a three-node PnP chain, not a single flat device:
+`USB\VID_045E&PID_028E\1C21F10` ->
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` ->
+`HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`, all sharing ContainerId
+`{828F4587-006F-5AD1-B169-6AF57905DFDE}`. The primary analysis target is the
+USB HID interface child
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` because it is the concrete USB
+interface carrying `VID_045E&PID_028E&IG_00`, uses `HidUsb`, and parents to
+the Xbox composite node. This is analysis only; binding implementation remains
+unauthorized and not implemented.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: 40; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Manifest entries: 41; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Scope-boundary commit
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
   enforced by the generator and validator.
@@ -420,6 +439,13 @@ package, install, load, bind, restore, or restart.
   authorization remains false, artifact and compile-output I/O remain false,
   and native-library-load, entry-point-resolution, SetupAPI/Newdev,
   Windows-mutation, and driver-action counters remain zero.
+- Exact-instance binding analysis is recorded with status
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`
+  and evidence path `docs/evidence/exact-instance-binding-analysis.json`.
+  It records no new live observation, no device query, no hardware access, no
+  native execution, no native library load, no entry-point resolution, no
+  SetupAPI/Newdev invocation, no Windows mutation, no driver action, no
+  artifact/compile-output access, and no binding implementation.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -438,6 +464,10 @@ package, install, load, bind, restore, or restart.
 - Live read-only observation was captured, but it does not authorize native
   execution, SetupAPI/Newdev invocation, Windows mutation, driver action, or
   exact-instance binding implementation.
+- Exact-instance binding analysis was completed, but it does not authorize
+  binding implementation, native execution, SetupAPI/Newdev invocation,
+  Windows mutation, driver action, device query, hardware access, or
+  artifact/compile-output access.
 - Audit acceptance does not authorize native execution, real DLL or
   compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
@@ -445,17 +475,21 @@ package, install, load, bind, restore, or restart.
 
 ## Next Task
 
-Perform an independent strict read-only audit of this live read-only
-observation capture commit. Derive its exact identity from Git, require subject
-`docs: capture live readonly equipment observation`, starting commit
-`cd81f875dade6fd2a7ea3a7ca3ab65b28532f54b`, evidence schema
-`chatpad-live-readonly-equipment-observation-evidence-v1`, observation status
-`LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`, source
-gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`, verifier
-lane closeout
+Perform an independent strict read-only audit of this exact-instance binding
+analysis commit. Derive its exact identity from Git, require subject
+`docs: analyze exact instance binding target`, starting commit
+`ba69235c5e461c8d860f80e454eeae8ad12aa0e9`, analysis evidence schema
+`chatpad-exact-instance-binding-analysis-v1`, analysis status
+`EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
+source observation evidence
+`docs/evidence/live-readonly-equipment-observation.json`, source observation
+status `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
+verifier lane closeout
 `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`, manifest
-schema `chatpad-runtime-bringup-readiness-manifest-v4`, and unchanged blocked
-state. The audit must verify observed device candidates and confirm no native
+schema `chatpad-runtime-bringup-readiness-manifest-v4`, the three-node target
+chain, recommended analysis target, and unchanged blocked state. The audit
+must confirm no new live observation, device query, hardware access, native
 execution, native library load, entry-point resolution, SetupAPI/Newdev
 invocation, Windows mutation, driver action, artifact/compile-output access,
-or exact-instance binding implementation was authorized or performed.
+or binding implementation was authorized or performed.

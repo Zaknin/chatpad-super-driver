@@ -731,8 +731,12 @@ transition commit `ba952444d9d3e306da8985e25b93b74aa5f6cff6` returned
 Independent strict read-only audit of that audit-acceptance transition commit
 `e271e5c8dd464ba0aeee82e4dc163b12ae28b8de` returned `AUDIT PASS`; verifier
 lane status is
-`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`. The next
-step is an independent strict read-only audit of this closeout transition
-commit, deriving its identity from Git rather than requiring the commit to
-contain its own hash. No artifact, native, device, hardware, Windows, driver,
-or execution authority is granted.
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`. The
+accepted live read-only observation evidence supports a documentation/manifest
+only exact-instance binding analysis with status
+`EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`.
+That analysis prefers the USB HID interface child
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` as the primary analysis target,
+while preserving the root/composite node and HID game-controller child as
+correlation and precondition evidence. No binding implementation, artifact,
+native, device, hardware, Windows, driver, or execution authority is granted.

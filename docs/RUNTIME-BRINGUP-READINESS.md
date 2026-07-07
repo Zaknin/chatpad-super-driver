@@ -985,19 +985,50 @@ JSON Booleans, records field-level defects for non-Boolean values, requires
 `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` with artifact opening, compiled-output
 hash verification, and metadata parsing recorded as not performed.
 
+## Exact-Instance Binding Analysis
+
+The exact-instance binding analysis is completed from the accepted tracked
+live read-only observation evidence with status
+`EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`
+and evidence path `docs/evidence/exact-instance-binding-analysis.json`. The
+analysis records a three-node PnP chain, not a single flat device:
+`USB\VID_045E&PID_028E\1C21F10` ->
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` ->
+`HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`, sharing ContainerId
+`{828F4587-006F-5AD1-B169-6AF57905DFDE}`.
+
+The primary analysis target is the USB HID interface child
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` because it carries
+`VID_045E&PID_028E&IG_00`, uses `HidUsb`, and parents to the Xbox composite
+node. The HID game-controller child remains important for identity correlation
+and runtime behavior reasoning, but it is already HID-enumerated. The
+root/composite Xbox node remains the physical/container anchor, but selecting
+it blindly may affect broader Xbox controller function. This is analysis only:
+no new live observation, device query, hardware access, binding implementation,
+native execution, native library load, entry-point resolution, SetupAPI/Newdev
+invocation, Windows mutation, driver action, artifact access, or
+compile-output access occurred or is authorized. Live readiness remains
+`BLOCKED`, native execution remains `NOT_IMPLEMENTED`, execution authorized
+remains `false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Exact next task
 
-Perform an independent strict read-only audit of this live read-only
-observation capture commit. Derive its exact identity from Git; require subject
-`docs: capture live readonly equipment observation`, starting commit
-`cd81f875dade6fd2a7ea3a7ca3ab65b28532f54b`, evidence schema
-`chatpad-live-readonly-equipment-observation-evidence-v1`, observation status
-`LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`, source
-gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`, verifier
-lane closeout
+Perform an independent strict read-only audit of this exact-instance binding
+analysis commit. Derive its exact identity from Git; require subject
+`docs: analyze exact instance binding target`, starting commit
+`ba69235c5e461c8d860f80e454eeae8ad12aa0e9`, analysis evidence schema
+`chatpad-exact-instance-binding-analysis-v1`, analysis status
+`EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
+source observation evidence path
+`docs/evidence/live-readonly-equipment-observation.json`, source observation
+status `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
+verifier lane closeout
 `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`, manifest
-schema `chatpad-runtime-bringup-readiness-manifest-v4`, observed device
-candidates, and unchanged blocked state. The audit must confirm no native
+schema `chatpad-runtime-bringup-readiness-manifest-v4`, three-node target
+chain, recommended analysis target, and unchanged blocked state. The audit
+must confirm no new live observation, device query, hardware access, native
 execution, native library load, entry-point resolution, SetupAPI/Newdev
 invocation, Windows mutation, driver action, artifact/compile-output access,
-or exact-instance binding implementation was authorized or performed.
+or binding implementation was authorized or performed.

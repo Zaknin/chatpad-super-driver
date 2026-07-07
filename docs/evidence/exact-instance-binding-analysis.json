@@ -1,0 +1,162 @@
+{
+  "schema": "chatpad-exact-instance-binding-analysis-v1",
+  "status": "EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION",
+  "source_observation_evidence_path": "docs/evidence/live-readonly-equipment-observation.json",
+  "source_observation_status": "LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO",
+  "source_gate_status": "LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO",
+  "verifier_closeout_status": "NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO",
+  "starting_commit": "ba69235c5e461c8d860f80e454eeae8ad12aa0e9",
+  "branch": "feature/native-adapter-execution-envelope-verifier",
+  "generated_utc": "2026-07-07T14:44:08.4834006Z",
+  "analysis_summary": {
+    "observed_device_shape": "THREE_NODE_PNP_CHAIN",
+    "conclusion": "The accepted observation identifies a root/composite Xbox controller node, a USB HID interface child, and a HID game-controller child. Future exact-instance binding must deliberately choose one target and must not treat the device as a single flat instance.",
+    "implementation_status": "ANALYSIS_ONLY_BINDING_NOT_IMPLEMENTED"
+  },
+  "observed_target_chain": [
+    {
+      "rank": 2,
+      "role": "root_composite_xbox_controller_node",
+      "instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+      "label": "Xbox 360 Controller for Windows",
+      "name": "Xbox 360 Controller for Windows",
+      "class": "XnaComposite",
+      "service": "xusb22",
+      "hardware_ids": [
+        "USB\\VID_045E&PID_028E&REV_0114",
+        "USB\\VID_045E&PID_028E"
+      ],
+      "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+      "parent": "USB\\ROOT_HUB30\\7&dacba&0&0",
+      "child": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+      "driver_provider": "Microsoft",
+      "driver_version": "10.0.26100.8521"
+    },
+    {
+      "rank": 1,
+      "role": "usb_hid_interface_child",
+      "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+      "label": "USB Input Device",
+      "name": "USB Input Device",
+      "class": "HIDClass",
+      "service": "HidUsb",
+      "hardware_ids": [
+        "USB\\VID_045E&PID_028E&IG_00"
+      ],
+      "compatible_ids": [
+        "USB\\Class_03&Subclass_00&Prot_00",
+        "USB\\Class_03&Subclass_00",
+        "USB\\Class_03"
+      ],
+      "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+      "parent": "USB\\VID_045E&PID_028E\\1C21F10",
+      "child": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "driver_provider": "Microsoft",
+      "driver_version": "10.0.26100.8521"
+    },
+    {
+      "rank": 3,
+      "role": "hid_game_controller_child",
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "label": "HID-compliant game controller",
+      "name": "HID-compliant game controller",
+      "class": "HIDClass",
+      "service": null,
+      "hardware_ids": [
+        "HID\\VID_045E&PID_028E&IG_00",
+        "HID\\VID_045E&UP:0001_U:0005",
+        "HID_DEVICE_SYSTEM_GAME",
+        "HID_DEVICE_UP:0001_U:0005",
+        "HID_DEVICE"
+      ],
+      "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+      "parent": "USB\\VID_045E&PID_028E&IG_00\\8&2af61d70&1&00",
+      "child": null,
+      "driver_provider": "Microsoft",
+      "driver_version": "10.0.26100.8521"
+    }
+  ],
+  "shared_container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+  "parent_child_precondition_chain": [
+    "USB\\VID_045E&PID_028E\\1C21F10",
+    "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+    "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000"
+  ],
+  "candidate_target_ranking": [
+    {
+      "rank": 1,
+      "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+      "role": "usb_hid_interface_child",
+      "analysis_priority": "PRIMARY_ANALYSIS_TARGET",
+      "reason": "This is the concrete USB interface carrying VID_045E&PID_028E&IG_00, uses HidUsb, and parents to the Xbox composite node."
+    },
+    {
+      "rank": 2,
+      "instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+      "role": "root_composite_xbox_controller_node",
+      "analysis_priority": "PHYSICAL_CONTAINER_ANCHOR_LOWER_PRIORITY_FOR_BINDING",
+      "reason": "This node is the physical and container anchor, but selecting it blindly could affect the broader Xbox controller function."
+    },
+    {
+      "rank": 3,
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "role": "hid_game_controller_child",
+      "analysis_priority": "IDENTITY_CORRELATION_AND_RUNTIME_REASONING_LOWER_PRIORITY_FOR_BINDING",
+      "reason": "This child is important for correlation and runtime behavior reasoning, but it is already HID-enumerated rather than the USB interface node."
+    }
+  ],
+  "recommended_analysis_target": {
+    "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+    "role": "usb_hid_interface_child",
+    "recommendation": "PRIMARY_ANALYSIS_TARGET_ONLY_DO_NOT_BIND",
+    "reason": "It is the concrete USB interface carrying VID_045E&PID_028E&IG_00, uses HidUsb, and parents to the Xbox composite node."
+  },
+  "lower_priority_targets": [
+    {
+      "instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+      "reason": "Important physical/container anchor, but binding it may risk broader Xbox controller function impact."
+    },
+    {
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "reason": "Important for identity correlation and runtime behavior reasoning, but less appropriate as a driver-binding target because it is already HID-enumerated."
+    }
+  ],
+  "binding_implementation_status": "NOT_IMPLEMENTED",
+  "binding_implementation_authorized": false,
+  "native_execution": "NOT_IMPLEMENTED",
+  "execution_authorized": false,
+  "live_readiness": "BLOCKED",
+  "blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
+  "required_future_design_preconditions": [
+    "exact_target_instance_id",
+    "allowed_match_predicates",
+    "rejection_predicates",
+    "precondition_checks",
+    "rollback_no_op_behavior",
+    "non_mutation_dry_run_behavior",
+    "operator_confirmation_points",
+    "evidence_requirements",
+    "audit_requirements"
+  ],
+  "safety": {
+    "new_live_observation_performed": false,
+    "device_query_performed": false,
+    "hardware_access_performed": false,
+    "native_library_load_performed": false,
+    "native_library_load_count": 0,
+    "entry_point_resolution_performed": false,
+    "entry_point_resolution_count": 0,
+    "setupapi_newdev_invocation_performed": false,
+    "setupapi_newdev_invocation_count": 0,
+    "windows_mutation_performed": false,
+    "windows_mutation_count": 0,
+    "driver_action_performed": false,
+    "driver_action_count": 0,
+    "artifact_opening_performed": false,
+    "artifact_compile_output_io_performed": false,
+    "compile_output_hash_verification_performed": false,
+    "metadata_parsing_performed": false,
+    "binding_implementation_performed": false,
+    "driver_install_load_bind_restart_performed": false
+  }
+}

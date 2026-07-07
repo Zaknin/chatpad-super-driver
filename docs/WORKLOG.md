@@ -11616,3 +11616,96 @@
   of native execution, SetupAPI/Newdev invocation, native library load,
   entry-point resolution, Windows mutation, driver action, and
   artifact/compile-output access.
+
+---
+
+## 2026-07-07 18:46:22 +04:00 - Analyze exact-instance binding target
+
+- **Objective:** Prepare a documentation/manifest-only exact-instance binding
+  analysis from accepted tracked live read-only observation evidence, without
+  new live observation, device query, hardware access, native execution,
+  SetupAPI/Newdev invocation, Windows mutation, driver action, binding
+  implementation, or artifact/compile-output access.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `ba69235c5e461c8d860f80e454eeae8ad12aa0e9`, subject
+  `docs: capture live readonly equipment observation`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tree/index.
+- **Analysis evidence:** Created
+  `docs/evidence/exact-instance-binding-analysis.json` with schema
+  `chatpad-exact-instance-binding-analysis-v1` and status
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`.
+  The evidence references
+  `docs/evidence/live-readonly-equipment-observation.json`, source observation
+  status `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+  source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
+  verifier closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`, and
+  starting commit `ba69235c5e461c8d860f80e454eeae8ad12aa0e9`.
+- **Target chain:** The accepted observation identifies a three-node PnP
+  chain, not a single flat device:
+  `USB\VID_045E&PID_028E\1C21F10` ->
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` ->
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`, sharing ContainerId
+  `{828F4587-006F-5AD1-B169-6AF57905DFDE}`.
+- **Recommended analysis target:** The USB HID interface child
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` is the primary analysis target
+  because it is the concrete USB interface carrying
+  `VID_045E&PID_028E&IG_00`, uses `HidUsb`, and parents to the Xbox composite
+  node. The root/composite node remains the physical/container anchor but may
+  affect broader Xbox controller function if selected blindly. The HID
+  game-controller child remains important for identity correlation and runtime
+  behavior reasoning but is already HID-enumerated.
+- **Files created or modified:** Created
+  `docs/evidence/exact-instance-binding-analysis.json`; modified
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Implementation details:** No binding implementation was added. No generator
+  or validator change was made. The manifest was updated within existing schema
+  `chatpad-runtime-bringup-readiness-manifest-v4` to record the analysis
+  status and evidence path, keep live readiness `BLOCKED`, keep native
+  execution `NOT_IMPLEMENTED`, keep execution authorization false, and keep all
+  native/device/hardware/Windows/driver/artifact counters false or zero.
+- **Validation:** Safe validation only. Source observation evidence parsed and
+  retained expected schema/status/gate/closeout. The three expected target
+  candidate instance IDs and shared ContainerId were found in accepted tracked
+  evidence. Analysis evidence parsed with schema
+  `chatpad-exact-instance-binding-analysis-v1` and status
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`.
+  Manifest JSON parsed with schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`; manifest validation passed
+  in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode with entries `41`, total
+  defects `0`, duplicate IDs/paths `0/0`, `NO_PATH` `0`, artifact opening
+  false, compiled-output hash verification false, and metadata parsing false.
+  Final targeted status/safety assertions, changed-path safety, forbidden
+  vocabulary scan, added-line prohibited-action scan, requested typo-variant
+  scan, and `git diff --check` passed before commit.
+- **Safety:** No new live observation, device query, hardware access, native
+  execution, native library load, entry-point resolution, SetupAPI/Newdev
+  invocation, Windows mutation, driver action, binding implementation, driver
+  build/sign/package/install/load/bind/restore/restart, verifier behavior test,
+  offline-suite behavior test, static parser, full compile-output validator,
+  generator, full exact/readiness suite, or artifact/compile-output access
+  occurred.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  execution authority remains false; binding implementation remains
+  unauthorized and not implemented; artifact and compile-output I/O remain
+  false.
+- **Commit and push:** Subject will be
+  `docs: analyze exact instance binding target`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Next task:** Independent strict read-only audit of this exact-instance
+  binding analysis commit by Git identity, subject, parent, analysis evidence
+  schema/status, source observation evidence reference, three-node target
+  chain, recommended analysis target, manifest entry and safety counters,
+  changed paths, no tool/source changes, unchanged blocked state, and absence
+  of new live observation, device query, hardware access, native execution,
+  SetupAPI/Newdev invocation, native library load, entry-point resolution,
+  Windows mutation, driver action, binding implementation, and
+  artifact/compile-output access.
