@@ -1158,24 +1158,46 @@ status remains `NOT_IMPLEMENTED`, dry-run execution authorization remains
 implementation authorization remains `false`, and all native/device/hardware/
 Windows/driver/artifact counters remain false or zero.
 
+## Exact-Instance Binding Dry-Run Result
+
+The first separately authorized non-mutating exact-instance binding dry-run was
+executed with status
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY` and evidence path
+`docs/evidence/exact-instance-binding-dry-run-result.json`. The result uses
+schema `chatpad-exact-instance-binding-dry-run-result-v1`.
+
+The dry-run performed read-only current-state predicate checks only:
+`Get-PnpDevice -PresentOnly` and `Get-PnpDeviceProperty` for the three
+discovered relevant PnP InstanceIds. It recorded 4 read-only query operations,
+3 relevant `VID_045E&PID_028E` candidates, 1 exact target candidate, 0 skipped
+commands, all allowed-match predicates passing, 0 rejection reasons, and final
+decision `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`.
+
+The planned action is descriptive only. No action was executed, actual binding
+remains unauthorized, and this result does not authorize future binding,
+mutation, native execution, SetupAPI/Newdev invocation, Windows mutation, or
+driver action. Future binding implementation requires a separate task after
+independent strict read-only audit of this dry-run result. Live readiness
+remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, binding
+implementation status remains `NOT_IMPLEMENTED`, execution authorized remains
+`false`, artifact/compile-output access remains false, metadata parsing
+remains false, and native-library-load, entry-point-resolution,
+SetupAPI/Newdev, Windows-mutation, and driver-action counters remain zero.
+
 ## Exact next task
 
 Perform an independent strict read-only audit of this non-mutating
-exact-instance binding dry-run execution-gate commit. Derive its exact
-identity from Git; require subject
-`docs: open exact instance binding dry run gate`, starting commit
-`b6190057ef8999a6e584b98c21fee1180c051b64`, execution-gate evidence schema
-`chatpad-exact-instance-binding-dry-run-execution-gate-v1`, execution-gate
-status
-`EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
-source dry-run design evidence, source design-gate evidence, source analysis
-evidence, source observation evidence, accepted three-node target chain,
-dry-run target InstanceId, future dry-run execution scope, future execution
-preconditions, future authorization boundary, future result path/schema as
-future-only, absence of the future result file, future result status options,
-future result evidence requirements, future audit requirements, and unchanged
-blocked state. The audit must confirm no dry-run logic implementation, dry-run
-execution, binding implementation, binding execution, new live observation,
-device query, hardware access, native execution, native library load,
-entry-point resolution, SetupAPI/Newdev invocation, Windows mutation, driver
-action, or artifact/compile-output access was authorized or performed.
+exact-instance binding dry-run result commit. Derive its exact identity from
+Git; require subject `docs: capture exact instance binding dry run result`,
+starting commit `2616b6caa1fc1dff5e386f4219926d42a84b6b87`, dry-run result
+evidence schema `chatpad-exact-instance-binding-dry-run-result-v1`, dry-run
+result status `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`,
+source execution-gate evidence, source dry-run design evidence, source
+design-gate evidence, source analysis evidence, source observation evidence,
+accepted three-node target chain, dry-run target InstanceId, current-state
+candidate facts, allowed-match predicate results, rejection predicate results,
+final dry-run decision, descriptive planned action only, and unchanged blocked
+state. The audit must confirm no binding implementation, binding execution,
+native execution, native library load, entry-point resolution, SetupAPI/Newdev
+invocation, Windows mutation, driver action, or artifact/compile-output access
+was authorized or performed.

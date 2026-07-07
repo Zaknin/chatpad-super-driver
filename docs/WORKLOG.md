@@ -12014,3 +12014,115 @@
   device query, hardware access, native execution, SetupAPI/Newdev invocation,
   native library load, entry-point resolution, Windows mutation, driver action,
   and artifact/compile-output access.
+
+---
+
+## 2026-07-08 01:31:00 +04:00 - Capture exact-instance binding dry-run result
+
+- **Objective:** Perform the first separately authorized non-mutating
+  exact-instance binding dry-run execution for the accepted USB HID interface
+  target, limited to read-only current-state predicate checks and dry-run
+  result evidence.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `2616b6caa1fc1dff5e386f4219926d42a84b6b87`, subject
+  `docs: open exact instance binding dry run gate`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tree/index before this task's edits.
+- **Source evidence:** Reused accepted tracked evidence:
+  `docs/evidence/exact-instance-binding-dry-run-execution-gate.json` with
+  status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+  `docs/evidence/exact-instance-binding-dry-run-design.json` with status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+  `docs/evidence/exact-instance-binding-implementation-design-gate.json` with
+  status
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`,
+  `docs/evidence/exact-instance-binding-analysis.json` with status
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
+  and `docs/evidence/live-readonly-equipment-observation.json` with status
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+  source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
+  and verifier closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+- **Dry-run execution:** Created
+  `docs/evidence/exact-instance-binding-dry-run-result.json` with schema
+  `chatpad-exact-instance-binding-dry-run-result-v1` and status
+  `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`. The dry-run
+  target was
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` in the accepted chain
+  `USB\VID_045E&PID_028E\1C21F10` ->
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` ->
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`, shared ContainerId
+  `{828F4587-006F-5AD1-B169-6AF57905DFDE}`.
+- **Current-state predicate checks:** Ran only authorized read-only command
+  families: `Get-Date`, `Get-PnpDevice -PresentOnly`, and
+  `Get-PnpDeviceProperty` for three discovered relevant present InstanceIds.
+  The result recorded 4 read-only PnP query operations, 322 present devices, 3
+  relevant `VID_045E&PID_028E` candidates, 1 exact target candidate, 1 USB
+  interface partial candidate, 0 skipped commands, all 16 allowed-match
+  predicates passing, and 0 rejection reasons.
+- **Planned action:** The planned action is descriptive only: future separately
+  authorized binding implementation could target the accepted USB HID
+  interface InstanceId after operator confirmation, rollback/no-op design, and
+  independent audit prerequisites are satisfied.
+- **Files created or modified:** Created
+  `docs/evidence/exact-instance-binding-dry-run-result.json`; modified
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Manifest:** Preserved schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, recorded the dry-run result
+  status and evidence path, increased tracked entries to `45`, preserved
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness
+  `BLOCKED`, native execution `NOT_IMPLEMENTED`, execution authorization
+  false, binding implementation status `NOT_IMPLEMENTED`, binding
+  implementation authorization false, and all native/artifact/Windows/driver
+  counters false or zero.
+- **Safety:** No action was executed. Actual binding remains unauthorized.
+  No binding implementation, binding execution, new live observation, hardware
+  access, native execution, native library load, entry-point resolution,
+  SetupAPI/Newdev invocation, Windows mutation, driver action, artifact
+  opening, artifact/compile-output I/O, compile-output hash verification,
+  metadata parsing, verifier behavior test, offline-suite behavior test,
+  static parser, full compile-output validator, generator, build, package,
+  sign, install, load, bind, restore, or restart occurred.
+- **Validation:** Safe validation only. Starting branch/HEAD/upstream/tree
+  preflight passed. Source evidence JSON, dry-run result JSON, and manifest
+  JSON parsed successfully. Source statuses, accepted target chain, shared
+  ContainerId, dry-run target InstanceId, dry-run result schema/status,
+  manifest schema, dry-run performed true, dry-run evidence created true,
+  read-only query performed/count, binding implementation false, binding
+  execution false, new live observation false, hardware access false, native
+  execution `NOT_IMPLEMENTED`, execution authorization false, live readiness
+  `BLOCKED`, binding implementation status `NOT_IMPLEMENTED`, binding
+  implementation authorization false, zero native-library-load,
+  entry-point-resolution, SetupAPI/Newdev, Windows-mutation, and driver-action
+  counters, artifact/compile-output access false, planned action descriptive
+  only, actual binding unauthorized, changed-path safety, forbidden vocabulary
+  scan, typo-variant scan, added-line prohibited-action review, `git diff
+  --check`, and manifest validation are the required closeout checks before
+  commit. Git and the final response are authoritative for final command
+  results after this continuity entry and manifest hash refresh.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  binding implementation remains unauthorized and not implemented; execution
+  authority remains false; artifact and compile-output I/O remain false.
+- **Commit and push:** Subject will be
+  `docs: capture exact instance binding dry run result`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Next task:** Independent strict read-only audit of this non-mutating
+  exact-instance binding dry-run result commit by Git identity, subject,
+  parent, dry-run result evidence schema/status, source execution-gate,
+  dry-run design, design-gate, analysis, and observation evidence references,
+  accepted three-node target chain, dry-run target InstanceId, current-state
+  candidate facts, allowed-match predicate results, rejection predicate
+  results, final dry-run decision, descriptive planned action only, manifest
+  entry and safety counters, changed paths, no tool or source changes,
+  unchanged blocked state, and absence of binding implementation, binding
+  execution, native execution, SetupAPI/Newdev invocation, native library load,
+  entry-point resolution, Windows mutation, driver action, and
+  artifact/compile-output access.

@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-07 (non-mutating exact-instance binding dry-run execution gate opened)*
+*Last updated: 2026-07-08 (non-mutating exact-instance binding dry-run result captured)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: open exact instance binding dry run gate`,
-  starting commit `b6190057ef8999a6e584b98c21fee1180c051b64`.
+  expected subject `docs: capture exact instance binding dry run result`,
+  starting commit `2616b6caa1fc1dff5e386f4219926d42a84b6b87`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -112,6 +112,10 @@
   `EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`.
 - **Exact-instance binding dry-run execution-gate evidence:**
   `docs/evidence/exact-instance-binding-dry-run-execution-gate.json`.
+- **Exact-instance binding dry-run result status:**
+  `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`.
+- **Exact-instance binding dry-run result evidence:**
+  `docs/evidence/exact-instance-binding-dry-run-result.json`.
 - **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
@@ -440,10 +444,36 @@ dry-run execution remains unauthorized until a separate task explicitly
 authorizes it after independent audit. Future binding implementation remains
 unauthorized.
 
+The first separately authorized non-mutating exact-instance binding dry-run was
+executed with status
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY` in
+`docs/evidence/exact-instance-binding-dry-run-result.json`. It performed
+read-only current-state predicate checks only: `Get-PnpDevice -PresentOnly`
+plus read-only `Get-PnpDeviceProperty` calls for the three discovered relevant
+PnP InstanceIds. The result recorded 4 read-only query operations, 3 relevant
+`VID_045E&PID_028E` candidates, 1 exact target candidate, 0 skipped commands,
+all 16 allowed-match predicates passing, and 0 rejection reasons. The planned
+action is descriptive only: future separately authorized binding
+implementation could target the accepted USB HID interface InstanceId after
+operator confirmation, rollback/no-op design, and independent audit
+prerequisites are satisfied.
+
+No action was executed. Actual binding remains unauthorized. The dry-run
+result is descriptive only; future mutation, future binding, and any future
+SetupAPI/Newdev/native execution require separate tasks and audit boundaries.
+No binding implementation, binding execution, new live observation, hardware
+access, native execution, native library load, entry-point resolution,
+SetupAPI/Newdev invocation, Windows mutation, driver action, artifact opening,
+artifact/compile-output I/O, compile-output hash verification, or metadata
+parsing occurred. Live readiness remains `BLOCKED`, native execution remains
+`NOT_IMPLEMENTED`, binding implementation status remains `NOT_IMPLEMENTED`,
+execution authorized remains `false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: 44; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Manifest entries: 45; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Scope-boundary commit
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
   enforced by the generator and validator.
@@ -531,6 +561,17 @@ unauthorized.
   artifact/compile-output access. SetupAPI/Newdev invocation count remains
   `0`; native-library-load and entry-point-resolution counts remain `0`;
   Windows-mutation and driver-action counts remain `0`.
+- Exact-instance binding dry-run result is recorded with schema
+  `chatpad-exact-instance-binding-dry-run-result-v1`, status
+  `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`, and evidence path
+  `docs/evidence/exact-instance-binding-dry-run-result.json`. It records 4
+  read-only current-state device query operations, 3 relevant candidates, 1
+  exact target candidate, all allowed-match predicates passing, zero rejection
+  reasons, zero skipped commands, a descriptive planned action only, actual
+  binding unauthorized, no binding implementation, no binding execution, no
+  new live observation, no hardware access, no native execution, no native
+  library load, no entry-point resolution, no SetupAPI/Newdev invocation, no
+  Windows mutation, no driver action, and no artifact/compile-output access.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -560,10 +601,11 @@ unauthorized.
   execution remains unauthorized until a separate task after independent audit.
   Dry-run implementation status remains `NOT_IMPLEMENTED`; dry-run execution
   authorization remains false.
-- The exact-instance binding dry-run execution gate is opened, but future
-  dry-run execution remains unauthorized until a separate task explicitly
-  authorizes it after independent audit. The future dry-run result file was not
-  created.
+- The exact-instance binding dry-run execution gate was opened, and the first
+  separately authorized non-mutating dry-run result is now captured. Future
+  binding implementation remains unauthorized until a separate task after
+  independent audit of the dry-run result. Binding implementation status
+  remains `NOT_IMPLEMENTED`.
 - Audit acceptance does not authorize native execution, real DLL or
   compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
@@ -572,21 +614,18 @@ unauthorized.
 ## Next Task
 
 Perform an independent strict read-only audit of this non-mutating
-exact-instance binding dry-run execution-gate commit. Derive its exact identity
-from Git, require subject `docs: open exact instance binding dry run gate`,
-starting commit `b6190057ef8999a6e584b98c21fee1180c051b64`, execution-gate
-evidence schema
-`chatpad-exact-instance-binding-dry-run-execution-gate-v1`, execution-gate
-status
-`EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
-source dry-run design, source design-gate, source analysis, and source
-observation evidence references, accepted three-node chain, dry-run target
-InstanceId, future dry-run execution scope, future execution preconditions,
-future authorization boundary, future result path/schema as future-only,
-absence of the future result file, future result status options, future result
-evidence requirements, future audit requirements, and unchanged blocked state.
-The audit must confirm no dry-run implementation, dry-run execution, binding
-implementation, binding execution, new live observation, device query,
-hardware access, native execution, native library load, entry-point
-resolution, SetupAPI/Newdev invocation, Windows mutation, driver action, or
-artifact/compile-output access was authorized or performed.
+exact-instance binding dry-run result commit. Derive its exact identity from
+Git, require subject `docs: capture exact instance binding dry run result`,
+starting commit `2616b6caa1fc1dff5e386f4219926d42a84b6b87`, dry-run result
+evidence schema `chatpad-exact-instance-binding-dry-run-result-v1`, dry-run
+result status `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`,
+source execution-gate, source dry-run design, source design-gate, source
+analysis, and source observation evidence references, accepted three-node
+target chain, dry-run target InstanceId, current-state candidate facts,
+allowed-match predicate results, rejection predicate results, final dry-run
+decision, and descriptive planned action only. The audit must confirm no
+binding implementation, binding execution, native execution, SetupAPI/Newdev
+invocation, native library load, entry-point resolution, Windows mutation,
+driver action, artifact/compile-output access, or future mutation authority was
+introduced, and that live readiness remains `BLOCKED`, native execution
+remains `NOT_IMPLEMENTED`, and execution authorized remains `false`.

@@ -1,0 +1,481 @@
+{
+  "schema": "chatpad-exact-instance-binding-dry-run-result-v1",
+  "status": "DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY",
+  "source_execution_gate_evidence_path": "docs/evidence/exact-instance-binding-dry-run-execution-gate.json",
+  "source_execution_gate_status": "EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO",
+  "source_dry_run_design_evidence_path": "docs/evidence/exact-instance-binding-dry-run-design.json",
+  "source_dry_run_design_status": "EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO",
+  "source_design_gate_evidence_path": "docs/evidence/exact-instance-binding-implementation-design-gate.json",
+  "source_design_gate_status": "EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION",
+  "source_analysis_evidence_path": "docs/evidence/exact-instance-binding-analysis.json",
+  "source_analysis_status": "EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION",
+  "source_observation_evidence_path": "docs/evidence/live-readonly-equipment-observation.json",
+  "source_observation_status": "LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO",
+  "source_gate_status": "LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO",
+  "verifier_closeout_status": "NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO",
+  "starting_commit": "2616b6caa1fc1dff5e386f4219926d42a84b6b87",
+  "branch": "feature/native-adapter-execution-envelope-verifier",
+  "generated_utc": "2026-07-07T21:43:39Z",
+  "target_instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+  "target_chain": [
+    {
+      "role": "root_composite_xbox_controller_node",
+      "instance_id": "USB\\VID_045E&PID_028E\\1C21F10"
+    },
+    {
+      "role": "usb_hid_interface_child",
+      "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00"
+    },
+    {
+      "role": "hid_game_controller_child",
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000"
+    }
+  ],
+  "shared_container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+  "accepted_source_target_facts": {
+    "target_instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+    "parent_instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+    "child_instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+    "shared_container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+    "required_hardware_id": "USB\\VID_045E&PID_028E&IG_00",
+    "required_class": "HIDClass",
+    "required_service": "HidUsb"
+  },
+  "current_state_candidate_facts_gathered_by_read_only_query": {
+    "present_device_count": 322,
+    "relevant_candidate_count": 3,
+    "exact_target_candidate_count": 1,
+    "partial_vid_pid_candidate_count": 3,
+    "usb_interface_partial_candidate_count": 1,
+    "candidates": [
+      {
+        "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+        "canonical_instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+        "present": true,
+        "friendly_name": "HID-compliant game controller",
+        "name": "HID-compliant game controller",
+        "class": "HIDClass",
+        "status": "OK",
+        "problem": 0,
+        "manufacturer": "(Standard system devices)",
+        "service": "",
+        "parent": "USB\\VID_045E&PID_028E&IG_00\\8&2af61d70&1&00",
+        "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+        "hardware_ids": [
+          "HID\\VID_045E&PID_028E&IG_00",
+          "HID\\VID_045E&UP:0001_U:0005",
+          "HID_DEVICE_SYSTEM_GAME",
+          "HID_DEVICE_UP:0001_U:0005",
+          "HID_DEVICE"
+        ]
+      },
+      {
+        "instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+        "canonical_instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+        "present": true,
+        "friendly_name": "Xbox 360 Controller for Windows",
+        "name": "Xbox 360 Controller for Windows",
+        "class": "XnaComposite",
+        "status": "OK",
+        "problem": 0,
+        "manufacturer": "Microsoft",
+        "service": "xusb22",
+        "parent": "USB\\ROOT_HUB30\\7&dacba&0&0",
+        "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+        "hardware_ids": [
+          "USB\\VID_045E&PID_028E&REV_0114",
+          "USB\\VID_045E&PID_028E"
+        ]
+      },
+      {
+        "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+        "canonical_instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+        "present": true,
+        "friendly_name": "USB Input Device",
+        "name": "USB Input Device",
+        "class": "HIDClass",
+        "status": "OK",
+        "problem": 0,
+        "manufacturer": "(Standard system devices)",
+        "service": "HidUsb",
+        "parent": "USB\\VID_045E&PID_028E\\1C21F10",
+        "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+        "hardware_ids": [
+          "USB\\VID_045E&PID_028E&IG_00"
+        ]
+      }
+    ]
+  },
+  "exact_commands_run": [
+    {
+      "command": "Get-Date",
+      "purpose": "Generate UTC evidence timestamp."
+    },
+    {
+      "command": "Get-PnpDevice -PresentOnly",
+      "purpose": "Discover present PnP devices for read-only predicate checks.",
+      "result": "completed",
+      "returned_count": 322
+    },
+    {
+      "command": "Get-PnpDeviceProperty -InstanceId 'USB\\VID_045E&PID_028E\\1C21F10'",
+      "purpose": "Read PnP properties for discovered relevant present InstanceId.",
+      "result": "completed",
+      "returned_count": 70
+    },
+    {
+      "command": "Get-PnpDeviceProperty -InstanceId 'USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00'",
+      "purpose": "Read PnP properties for discovered relevant present InstanceId.",
+      "result": "completed",
+      "returned_count": 57
+    },
+    {
+      "command": "Get-PnpDeviceProperty -InstanceId 'HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000'",
+      "purpose": "Read PnP properties for discovered relevant present InstanceId.",
+      "result": "completed",
+      "returned_count": 58
+    }
+  ],
+  "skipped_commands_and_reasons": [],
+  "allowed_match_predicate_results": [
+    {
+      "id": "P01_TARGET_INSTANCE_ID",
+      "description": "Target InstanceId equals or canonicalizes to the accepted USB HID interface target.",
+      "passed": true,
+      "expected": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+      "actual": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00"
+    },
+    {
+      "id": "P02_HARDWARE_IDS",
+      "description": "HardwareIds include the accepted USB HID interface hardware ID.",
+      "passed": true,
+      "expected": "USB\\VID_045E&PID_028E&IG_00",
+      "actual": "USB\\VID_045E&PID_028E&IG_00"
+    },
+    {
+      "id": "P03_CLASS",
+      "description": "Class equals HIDClass.",
+      "passed": true,
+      "expected": "HIDClass",
+      "actual": "HIDClass"
+    },
+    {
+      "id": "P04_SERVICE",
+      "description": "Service equals HidUsb.",
+      "passed": true,
+      "expected": "HidUsb",
+      "actual": "HidUsb"
+    },
+    {
+      "id": "P05_PARENT",
+      "description": "Parent equals or canonicalizes to the accepted Xbox composite node.",
+      "passed": true,
+      "expected": "USB\\VID_045E&PID_028E\\1C21F10",
+      "actual": "USB\\VID_045E&PID_028E\\1C21F10"
+    },
+    {
+      "id": "P06_CONTAINER_ID",
+      "description": "ContainerId equals the shared accepted ContainerId.",
+      "passed": true,
+      "expected": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+      "actual": "{828F4587-006F-5AD1-B169-6AF57905DFDE}"
+    },
+    {
+      "id": "P07_SOURCE_OBSERVATION_STATUS",
+      "description": "Source observation evidence status is accepted.",
+      "passed": true,
+      "expected": "LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO",
+      "actual": "LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO"
+    },
+    {
+      "id": "P08_SOURCE_ANALYSIS_STATUS",
+      "description": "Source analysis evidence status is accepted.",
+      "passed": true,
+      "expected": "EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION",
+      "actual": "EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION"
+    },
+    {
+      "id": "P09_SOURCE_DESIGN_GATE_STATUS",
+      "description": "Source implementation design-gate status is accepted.",
+      "passed": true,
+      "expected": "EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION",
+      "actual": "EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION"
+    },
+    {
+      "id": "P10_SOURCE_DRY_RUN_DESIGN_STATUS",
+      "description": "Source dry-run design status is accepted.",
+      "passed": true,
+      "expected": "EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO",
+      "actual": "EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO"
+    },
+    {
+      "id": "P11_SOURCE_DRY_RUN_EXECUTION_GATE_STATUS",
+      "description": "Source dry-run execution-gate status is accepted.",
+      "passed": true,
+      "expected": "EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO",
+      "actual": "EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO"
+    },
+    {
+      "id": "P12_LIVE_READINESS",
+      "description": "Live readiness remains BLOCKED.",
+      "passed": true,
+      "expected": "BLOCKED",
+      "actual": "BLOCKED"
+    },
+    {
+      "id": "P13_NATIVE_EXECUTION",
+      "description": "Native execution remains NOT_IMPLEMENTED.",
+      "passed": true,
+      "expected": "NOT_IMPLEMENTED",
+      "actual": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P14_EXECUTION_AUTHORIZED",
+      "description": "Execution authorized remains false.",
+      "passed": true,
+      "expected": false,
+      "actual": false
+    },
+    {
+      "id": "P15_BINDING_IMPLEMENTATION_STATUS",
+      "description": "Binding implementation status remains NOT_IMPLEMENTED.",
+      "passed": true,
+      "expected": "NOT_IMPLEMENTED",
+      "actual": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "P16_BINDING_IMPLEMENTATION_AUTHORIZED",
+      "description": "Binding implementation authorized remains false.",
+      "passed": true,
+      "expected": false,
+      "actual": false
+    }
+  ],
+  "rejection_predicate_results": [
+    {
+      "id": "R01_TARGET_ABSENT",
+      "description": "Target InstanceId is absent.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R02_TARGET_DIFFERS",
+      "description": "Target InstanceId differs from the accepted target.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R03_CLASS_DIFFERS",
+      "description": "Class differs from HIDClass.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R04_SERVICE_DIFFERS",
+      "description": "Service differs from HidUsb.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R05_HARDWARE_ID_MISSING",
+      "description": "HardwareIds do not include USB\\VID_045E&PID_028E&IG_00.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R06_CONTAINER_DIFFERS",
+      "description": "ContainerId differs from accepted shared ContainerId.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R07_PARENT_DIFFERS",
+      "description": "Parent differs from accepted parent.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R08_ROOT_SELECTED",
+      "description": "Root/composite node is selected instead of the interface node.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R09_HID_CHILD_SELECTED",
+      "description": "HID game-controller child is selected instead of the interface node.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R10_AMBIGUOUS_TARGET",
+      "description": "Multiple partial candidates exist and ambiguity is unresolved.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R11_SOURCE_OBSERVATION_INVALID",
+      "description": "Source observation evidence is missing or not accepted.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R12_SOURCE_ANALYSIS_INVALID",
+      "description": "Source analysis evidence is missing or not accepted.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R13_SOURCE_DESIGN_GATE_INVALID",
+      "description": "Source design-gate evidence is missing or not accepted.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R14_SOURCE_DRY_RUN_DESIGN_INVALID",
+      "description": "Source dry-run design evidence is missing or not accepted.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R15_SOURCE_EXECUTION_GATE_INVALID",
+      "description": "Source execution-gate evidence is missing or not accepted.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R16_LIVE_READINESS_NOT_BLOCKED",
+      "description": "Live readiness is not BLOCKED.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R17_NATIVE_EXECUTION_NOT_IMPLEMENTED_MISMATCH",
+      "description": "Native execution is not NOT_IMPLEMENTED.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R18_EXECUTION_AUTHORIZED_TRUE",
+      "description": "Execution authorized is not false.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R19_BINDING_STATUS_MISMATCH",
+      "description": "Binding implementation status is not NOT_IMPLEMENTED.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R20_BINDING_AUTHORIZED_TRUE",
+      "description": "Binding implementation authorized is not false.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R21_NATIVE_LOAD_COUNTER_NONZERO",
+      "description": "Native library load counter is non-zero.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R22_ENTRY_POINT_COUNTER_NONZERO",
+      "description": "Entry-point resolution counter is non-zero.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R23_SETUPAPI_COUNTER_NONZERO",
+      "description": "SetupAPI/Newdev counter is non-zero.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R24_WINDOWS_MUTATION_COUNTER_NONZERO",
+      "description": "Windows mutation counter is non-zero.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R25_DRIVER_ACTION_COUNTER_NONZERO",
+      "description": "Driver action counter is non-zero.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R26_ARTIFACT_REQUIRED",
+      "description": "Artifact or compile-output access would be required.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R27_NATIVE_EXECUTION_REQUIRED",
+      "description": "Native execution would be required.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R28_SETUPAPI_REQUIRED",
+      "description": "SetupAPI/Newdev invocation would be required.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R29_WINDOWS_MUTATION_REQUIRED",
+      "description": "Windows mutation would be required.",
+      "triggered": false,
+      "reason": ""
+    },
+    {
+      "id": "R30_DRIVER_ACTION_REQUIRED",
+      "description": "Driver action would be required.",
+      "triggered": false,
+      "reason": ""
+    }
+  ],
+  "final_dry_run_decision": "DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY",
+  "rejection_reason_list": [],
+  "planned_action_summary": "Future separately authorized binding implementation could target the accepted USB HID interface InstanceId after operator confirmation, rollback/no-op design, and independent audit prerequisites are satisfied.",
+  "no_action_was_executed_statement": "No action was executed; this dry-run performed read-only predicate checks and wrote descriptive evidence only.",
+  "binding_remains_unauthorized_statement": "Actual binding remains unauthorized.",
+  "dry_run_result_descriptive_only_statement": "The dry-run result is descriptive only and is not executable authority.",
+  "future_mutation_requires_separate_task_statement": "Future mutation requires a separate task.",
+  "future_binding_requires_separate_task_statement": "Future binding requires a separate task.",
+  "future_setupapi_newdev_native_execution_requires_separate_task_and_audit_boundary_statement": "Future SetupAPI/Newdev/native execution, if ever needed, requires a separate task and audit boundary.",
+  "audit_task_required_after_this_dry_run": "Independent strict read-only audit of this dry-run result commit is required before any further step.",
+  "exact_future_task_needed_before_any_mutation": "Independent strict read-only audit of this non-mutating dry-run result commit, followed by a separate explicit future task before any mutation or binding implementation.",
+  "current_safety_state": {
+    "blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
+    "execution_authorized": false,
+    "live_readiness": "BLOCKED",
+    "native_execution": "NOT_IMPLEMENTED",
+    "binding_implementation_status": "NOT_IMPLEMENTED",
+    "binding_implementation_authorized": false,
+    "artifact_opening": false,
+    "artifact_compile_output_io": false,
+    "compile_output_hash_verification": false,
+    "metadata_parsing": false
+  },
+  "dry_run_performed": true,
+  "dry_run_result_evidence_created": true,
+  "binding_implementation_performed": false,
+  "binding_execution_performed": false,
+  "new_live_observation_performed": false,
+  "read_only_current_state_device_query_performed": true,
+  "read_only_current_state_device_query_count": 4,
+  "hardware_access_performed": false,
+  "native_library_load_performed": false,
+  "native_library_load_count": 0,
+  "entry_point_resolution_performed": false,
+  "entry_point_resolution_count": 0,
+  "setupapi_newdev_invocation_performed": false,
+  "setupapi_newdev_invocation_count": 0,
+  "windows_mutation_performed": false,
+  "windows_mutation_count": 0,
+  "driver_action_performed": false,
+  "driver_action_count": 0,
+  "artifact_opening_performed": false,
+  "artifact_compile_output_io_performed": false,
+  "compile_output_hash_verification_performed": false,
+  "metadata_parsing_performed": false
+}

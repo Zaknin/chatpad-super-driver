@@ -812,3 +812,17 @@ hardware access, native execution, native library load, entry-point
 resolution, SetupAPI/Newdev invocation, Windows mutation, driver action,
 driver build/sign/package/install/load/bind/restore/restart, or
 artifact/compile-output access is authorized or performed by this gate.
+
+The first separately authorized non-mutating exact-instance binding dry-run
+result is now captured with status
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`, schema
+`chatpad-exact-instance-binding-dry-run-result-v1`, and evidence path
+`docs/evidence/exact-instance-binding-dry-run-result.json`. It performed only
+read-only current-state predicate checks for the accepted USB HID interface
+target and recorded 4 read-only query operations, 3 relevant
+`VID_045E&PID_028E` candidates, 1 exact target candidate, all allowed-match
+predicates passing, 0 skipped commands, and 0 rejection reasons. The planned
+action is descriptive only; no action was executed and actual binding remains
+unauthorized. Future binding, future mutation, and any future
+SetupAPI/Newdev/native execution still require separate tasks and audit
+boundaries.
