@@ -78,6 +78,12 @@ Authoritative current state:
   `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
 - Accepted execution-envelope verifier audit-pass acceptance audit target:
   `75a083a684c79b729de04c770371fb6190c9c9e7`.
+- Execution-envelope verifier audit-pass acceptance audit accepted:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+- Accepted execution-envelope verifier audit-pass acceptance audit-pass target:
+  `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
+- Prior accepted execution-envelope verifier audit-pass acceptance audit target:
+  `75a083a684c79b729de04c770371fb6190c9c9e7`.
 - Prior execution-envelope verifier audit-pass record target:
   `f235879fe6d74dcc02dfe2e56297ef14e5a48800`.
 - Prior execution-envelope verifier audit-pass transition target:
@@ -606,6 +612,23 @@ It grants no artifact access, native loading, entry-point resolution,
 SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
 driver action, or execution.
 
+Independent strict read-only audit accepted verifier audit-pass-acceptance
+audit-pass transition commit `ba952444d9d3e306da8985e25b93b74aa5f6cff6` with
+transition status
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
+The prior accepted audit target remains
+`75a083a684c79b729de04c770371fb6190c9c9e7`, the accepted audit-pass record
+target remains `b64a672984b6e7db16765f13de385b22f3491f11`, the prior
+audit-pass record target remains `f235879fe6d74dcc02dfe2e56297ef14e5a48800`,
+the prior audit-pass transition target remains
+`b6bdd01588e9d72113dd9b09fcfa9baf2026424d`, and the prior verifier
+implementation audit target remains
+`4849d1959cab9c289952655eb73e3279117779d2`. This record does not contain the
+new transition commit's own identity; the next audit must derive it from Git.
+It grants no artifact access, native loading, entry-point resolution,
+SetupAPI/Newdev invocation, device query, hardware access, Windows mutation,
+driver action, or execution.
+
 ## Next Boundary
 
 The remediated compiled-artifact metadata-review design gate passed independent
@@ -666,7 +689,11 @@ Independent strict read-only audit of the audit-pass-acceptance commit
 `75a083a684c79b729de04c770371fb6190c9c9e7` returned `AUDIT PASS`; transition
 status is
 `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_PASS_NO_NATIVE_IO`.
+Independent strict read-only audit of the audit-pass-acceptance audit-pass
+transition commit `ba952444d9d3e306da8985e25b93b74aa5f6cff6` returned
+`AUDIT PASS`; transition status is
+`NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_AUDIT_PASS_ACCEPTANCE_AUDIT_ACCEPTED_NO_NATIVE_IO`.
 The next step is an independent strict read-only audit of this audit-pass-
-acceptance audit-pass transition commit, deriving its identity from Git rather
-than requiring the commit to contain its own hash. No artifact, native, device,
-hardware, Windows, driver, or execution authority is granted.
+acceptance audit-acceptance transition commit, deriving its identity from Git
+rather than requiring the commit to contain its own hash. No artifact, native,
+device, hardware, Windows, driver, or execution authority is granted.
