@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-07 (non-mutating exact-instance binding dry-run design completed)*
+*Last updated: 2026-07-07 (non-mutating exact-instance binding dry-run execution gate opened)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: design exact instance binding dry run`,
-  starting commit `7865356e640d08a052b9e32366f2755352a7d9c5`.
+  expected subject `docs: open exact instance binding dry run gate`,
+  starting commit `b6190057ef8999a6e584b98c21fee1180c051b64`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -108,6 +108,10 @@
   `EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`.
 - **Exact-instance binding dry-run design evidence:**
   `docs/evidence/exact-instance-binding-dry-run-design.json`.
+- **Exact-instance binding dry-run execution-gate status:**
+  `EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`.
+- **Exact-instance binding dry-run execution-gate evidence:**
+  `docs/evidence/exact-instance-binding-dry-run-execution-gate.json`.
 - **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
@@ -419,10 +423,27 @@ artifact/compile-output access. Future dry-run execution and future binding
 implementation remain unauthorized and require separate tasks after
 independent audit.
 
+The non-mutating exact-instance binding dry-run execution gate is opened with
+status
+`EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`
+in `docs/evidence/exact-instance-binding-dry-run-execution-gate.json`. This
+transition is documentation/manifest-only. It defines the scope,
+preconditions, authorization boundary, future result path/schema, result status
+options, result evidence requirements, and follow-up audit requirements for a
+later separately authorized non-mutating dry-run execution task. It does not
+implement dry-run logic, execute the dry-run, create
+`docs/evidence/exact-instance-binding-dry-run-result.json`, implement binding,
+execute binding, perform new live observation, query devices, access hardware,
+load native libraries, resolve entry points, invoke SetupAPI/Newdev, mutate
+Windows, perform driver action, or access artifacts or compile outputs. Future
+dry-run execution remains unauthorized until a separate task explicitly
+authorizes it after independent audit. Future binding implementation remains
+unauthorized.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: 43; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Manifest entries: 44; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Scope-boundary commit
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
   enforced by the generator and validator.
@@ -498,6 +519,18 @@ independent audit.
   query, no hardware access, no native execution, no native library load, no
   entry-point resolution, no SetupAPI/Newdev invocation, no Windows mutation,
   no driver action, and no artifact/compile-output access.
+- Exact-instance binding dry-run execution gate is recorded with status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`
+  and evidence path
+  `docs/evidence/exact-instance-binding-dry-run-execution-gate.json`. It
+  records no dry-run implementation, no dry-run execution, no future dry-run
+  result evidence file creation, no binding implementation, no binding
+  execution, no new live observation, no device query, no hardware access, no
+  native execution, no native library load, no entry-point resolution, no
+  SetupAPI/Newdev invocation, no Windows mutation, no driver action, and no
+  artifact/compile-output access. SetupAPI/Newdev invocation count remains
+  `0`; native-library-load and entry-point-resolution counts remain `0`;
+  Windows-mutation and driver-action counts remain `0`.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -527,6 +560,10 @@ independent audit.
   execution remains unauthorized until a separate task after independent audit.
   Dry-run implementation status remains `NOT_IMPLEMENTED`; dry-run execution
   authorization remains false.
+- The exact-instance binding dry-run execution gate is opened, but future
+  dry-run execution remains unauthorized until a separate task explicitly
+  authorizes it after independent audit. The future dry-run result file was not
+  created.
 - Audit acceptance does not authorize native execution, real DLL or
   compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
@@ -535,19 +572,21 @@ independent audit.
 ## Next Task
 
 Perform an independent strict read-only audit of this non-mutating
-exact-instance binding dry-run design commit. Derive its exact identity from
-Git, require subject `docs: design exact instance binding dry run`, starting
-commit `7865356e640d08a052b9e32366f2755352a7d9c5`, dry-run design evidence
-schema `chatpad-exact-instance-binding-dry-run-design-v1`, dry-run design
+exact-instance binding dry-run execution-gate commit. Derive its exact identity
+from Git, require subject `docs: open exact instance binding dry run gate`,
+starting commit `b6190057ef8999a6e584b98c21fee1180c051b64`, execution-gate
+evidence schema
+`chatpad-exact-instance-binding-dry-run-execution-gate-v1`, execution-gate
 status
-`EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
-source design-gate, source analysis, and source observation evidence
-references, accepted three-node chain, dry-run target InstanceId, allowed-match
-predicates, rejection predicates, dry-run decision model, planned-action
-reporting requirements, future dry-run result evidence schema, future audit
-requirements, and unchanged blocked state. The audit must confirm no dry-run
-implementation, dry-run execution, binding implementation, binding execution,
-new live observation, device query, hardware access, native execution, native
-library load, entry-point resolution, SetupAPI/Newdev invocation, Windows
-mutation, driver action, or artifact/compile-output access was authorized or
-performed.
+`EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+source dry-run design, source design-gate, source analysis, and source
+observation evidence references, accepted three-node chain, dry-run target
+InstanceId, future dry-run execution scope, future execution preconditions,
+future authorization boundary, future result path/schema as future-only,
+absence of the future result file, future result status options, future result
+evidence requirements, future audit requirements, and unchanged blocked state.
+The audit must confirm no dry-run implementation, dry-run execution, binding
+implementation, binding execution, new live observation, device query,
+hardware access, native execution, native library load, entry-point
+resolution, SetupAPI/Newdev invocation, Windows mutation, driver action, or
+artifact/compile-output access was authorized or performed.

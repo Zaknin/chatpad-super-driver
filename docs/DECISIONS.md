@@ -4,6 +4,41 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-07 - Open a dry-run execution gate without executing it
+
+**Decision:** Record
+`EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`
+as a documentation/manifest-only gate for a future separately authorized
+non-mutating exact-instance binding dry-run execution task. The gate binds the
+accepted dry-run design, design-gate, analysis, and observation evidence;
+preserves the accepted USB HID interface target
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`; and defines future execution
+scope, preconditions, authorization boundary, result path/schema, status
+options, evidence requirements, and audit requirements.
+
+**Rationale:** The accepted dry-run design defines the future predicate model,
+but execution of even a non-mutating dry-run needs its own auditable gate
+before any later task can run it. The gate makes the future task's input,
+output, and safety evidence explicit while preserving the current prohibition
+on implementation, execution, device access, Windows mutation, native
+execution, and artifact access.
+
+**Alternatives rejected:** Implementing or executing dry-run logic in this
+task; creating `docs/evidence/exact-instance-binding-dry-run-result.json`;
+performing live observation or device query; implementing or executing
+binding; loading native libraries; resolving entry points; invoking
+SetupAPI/Newdev; mutating Windows; performing driver actions; opening artifact
+or compile-output binaries; or treating this gate as runtime authority.
+
+**Consequences:** Future dry-run execution remains unauthorized until a
+separate task explicitly authorizes it after independent audit. Future binding
+implementation and binding execution remain unauthorized. Live readiness
+remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`; dry-run
+implementation remains `NOT_IMPLEMENTED`; execution authorization, dry-run
+execution authorization, and binding implementation authorization remain false;
+artifact and compile-output I/O remain false; and all native/device/hardware/
+Windows/driver counters remain zero.
+
 ## 2026-07-07 - Design a non-mutating exact-instance binding dry-run without implementing it
 
 **Decision:** Record

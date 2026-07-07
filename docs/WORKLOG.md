@@ -11905,3 +11905,112 @@
   query, hardware access, native execution, SetupAPI/Newdev invocation, native
   library load, entry-point resolution, Windows mutation, driver action, and
   artifact/compile-output access.
+
+---
+
+## 2026-07-08 00:23:17 +04:00 - Open exact-instance binding dry-run execution gate
+
+- **Objective:** Prepare a documentation/manifest-only non-mutating
+  exact-instance binding dry-run execution gate from the accepted dry-run
+  design, design-gate, analysis, and observation evidence, without
+  implementing or executing a dry-run and without binding implementation,
+  binding execution, fresh live observation, device query, hardware access,
+  native execution, SetupAPI/Newdev invocation, Windows mutation, driver
+  action, or artifact/compile-output access.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `b6190057ef8999a6e584b98c21fee1180c051b64`, subject
+  `docs: design exact instance binding dry run`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tree/index before this task's edits.
+- **Source evidence:** Reused accepted tracked evidence only:
+  `docs/evidence/exact-instance-binding-dry-run-design.json` with status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+  `docs/evidence/exact-instance-binding-implementation-design-gate.json` with
+  status
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`,
+  `docs/evidence/exact-instance-binding-analysis.json` with status
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
+  and `docs/evidence/live-readonly-equipment-observation.json` with status
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+  source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
+  and verifier closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+- **Execution-gate evidence:** Created
+  `docs/evidence/exact-instance-binding-dry-run-execution-gate.json` with
+  schema `chatpad-exact-instance-binding-dry-run-execution-gate-v1` and status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`.
+  The gate records the accepted three-node chain
+  `USB\VID_045E&PID_028E\1C21F10` ->
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` ->
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`, shared ContainerId
+  `{828F4587-006F-5AD1-B169-6AF57905DFDE}`, and the USB HID interface child as
+  the future dry-run target InstanceId.
+- **Implementation details:** No dry-run logic implementation was added, no
+  dry-run execution occurred, and no future dry-run result evidence file was
+  created. The gate defines future dry-run execution scope, preconditions,
+  authorization boundary, future result path
+  `docs/evidence/exact-instance-binding-dry-run-result.json`, future result
+  schema `chatpad-exact-instance-binding-dry-run-result-v1`, result status
+  options, result evidence requirements, and follow-up audit requirements.
+  The manifest remains schema `chatpad-runtime-bringup-readiness-manifest-v4`,
+  records the execution-gate status and evidence path, increases tracked
+  entries to `44`, keeps live readiness `BLOCKED`, keeps native execution
+  `NOT_IMPLEMENTED`, keeps execution authorization false, keeps dry-run and
+  binding implementation unauthorized and not implemented, keeps dry-run
+  execution unauthorized, and keeps all native/device/hardware/Windows/
+  driver/artifact counters false or zero.
+- **Files created or modified:** Created
+  `docs/evidence/exact-instance-binding-dry-run-execution-gate.json`;
+  modified `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Validation:** Safe validation only. Starting branch/HEAD/upstream/tree
+  preflight passed. Source observation, source analysis, source design-gate,
+  source dry-run design, execution-gate evidence, and manifest JSON parsed
+  successfully during the task. Source statuses, gate, verifier closeout,
+  accepted three-node target chain, shared ContainerId, dry-run target
+  InstanceId, execution-gate schema/status, future result path/schema,
+  absence of future dry-run result evidence, blocker, blocked live readiness,
+  `NOT_IMPLEMENTED` native execution, false execution authorization, false
+  dry-run execution authorization, false binding authorization, zero native/
+  device/hardware/Windows/driver counters, no artifact/compile-output access,
+  changed-path safety, forbidden vocabulary scan, typo-variant scan,
+  added-line prohibited-action review, `git diff --check`, and manifest
+  validation are the required closeout checks before commit. Git and the final
+  response are authoritative for the final command results after this
+  continuity entry and manifest hash refresh.
+- **Safety:** No dry-run implementation, dry-run execution, binding
+  implementation, binding execution, new live observation, device query,
+  hardware access, native execution, native library load, entry-point
+  resolution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+  driver build/sign/package/install/load/bind/restore/restart, verifier
+  behavior test, offline-suite behavior test, static parser, full
+  compile-output validator, generator, full exact/readiness suite, or
+  artifact/compile-output access occurred.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  execution authority remains false; dry-run execution remains unauthorized;
+  binding implementation remains unauthorized and not implemented; artifact
+  and compile-output I/O remain false.
+- **Commit and push:** Subject will be
+  `docs: open exact instance binding dry run gate`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Next task:** Independent strict read-only audit of this non-mutating
+  exact-instance binding dry-run execution-gate commit by Git identity,
+  subject, parent, execution-gate evidence schema/status, source dry-run
+  design, design-gate, analysis, and observation evidence references, accepted
+  target chain, dry-run target InstanceId, future execution scope,
+  preconditions, authorization boundary, future result path/schema as
+  future-only, absence of future result evidence, result status options,
+  future result evidence requirements, future audit requirements, manifest
+  entry and safety counters, changed paths, no tool or source changes,
+  unchanged blocked state, absence of dry-run logic implementation, dry-run
+  execution, binding implementation, binding execution, new live observation,
+  device query, hardware access, native execution, SetupAPI/Newdev invocation,
+  native library load, entry-point resolution, Windows mutation, driver action,
+  and artifact/compile-output access.

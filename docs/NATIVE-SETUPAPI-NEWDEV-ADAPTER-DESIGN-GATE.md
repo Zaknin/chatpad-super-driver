@@ -792,3 +792,23 @@ mutation, driver action, driver build/sign/package/install/load/bind/restore/
 restart, or artifact/compile-output access is authorized or performed. Future
 dry-run execution and future binding implementation require separate tasks
 after independent audit.
+
+The non-mutating exact-instance binding dry-run execution gate is now opened
+with status
+`EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`
+and evidence path
+`docs/evidence/exact-instance-binding-dry-run-execution-gate.json`. It is
+documentation/manifest-only and defines the future dry-run execution scope,
+preconditions, authorization boundary, result path/schema, result status
+options, result evidence requirements, and follow-up audit requirements. The
+future result path remains
+`docs/evidence/exact-instance-binding-dry-run-result.json` with schema
+`chatpad-exact-instance-binding-dry-run-result-v1`; this gate does not create
+that file. Future dry-run execution remains unauthorized until a separate task
+explicitly authorizes it after independent audit, and future binding remains
+unauthorized. No dry-run logic implementation, dry-run execution, binding
+implementation, binding execution, new live observation, device query,
+hardware access, native execution, native library load, entry-point
+resolution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+driver build/sign/package/install/load/bind/restore/restart, or
+artifact/compile-output access is authorized or performed by this gate.
