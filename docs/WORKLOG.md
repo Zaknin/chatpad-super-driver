@@ -13102,3 +13102,47 @@
   collection was performed in TASK 6D-DOC-REPAIR-VERIFY.
 - **Next task:** TASK 6E - final validation, stage, commit, and push operator
   confirmation collection result docs/manifest/evidence.
+
+## 2026-07-09T01:41:38+04:00 - TASK 6F-REMEDIATION: repair stale continuation docs after failed audit
+
+- **Objective:** Repair stale continuation documentation found by TASK 6F,
+  then validate, stage, commit, and push the narrow docs-only remediation.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` /
+  `c423ced463f3bdf4cb2a295f19e687278db798e3`
+  (`docs: record operator confirmation collection result`).
+- **Starting parent:** `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`.
+- **Starting state:** upstream ahead/behind was `0/0` and `git status --short`
+  was clean.
+- **Investigation:** TASK 6F independent read-only audit failed on stale
+  continuation docs only. Git identity, changed files, result evidence,
+  manifest section, canonical LF hashes, source template/design hashes, target
+  `PID_045E=0` / `VID_045E=3` counts, safety fields, forbidden-claim scan,
+  clean status, and remote sync passed.
+- **Remediation:** Repaired `docs/PROJECT-STATE.md` so the current-state block
+  records the committed TASK 6E HEAD, parent, pushed remote sync, clean final
+  status, and committed result evidence state instead of an unstaged pending
+  transition. Replaced `docs/NEXT-TASK.md` with TASK 6F-RERUN as the next
+  independent read-only audit after stale-doc remediation.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and
+  `docs/WORKLOG.md`.
+- **Files intentionally unchanged:** No evidence JSON or manifest files were
+  changed. `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`,
+  and `docs/evidence/runtime-bringup-readiness-manifest.json` were not
+  modified.
+- **Required values preserved:** Result status
+  `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  operator confirmation ID `operator-confirmation-c445630fbb303c7c`,
+  canonical LF text SHA-256
+  `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`,
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, native execution
+  `NOT_IMPLEMENTED`, live readiness `BLOCKED`, and binding
+  implementation/execution remains unauthorized.
+- **Authorization phrase preserved:** binding implementation/execution remains unauthorized.
+- **Safety state:** No new operator confirmation was collected. No binding
+  implementation, binding execution, native execution, SetupAPI/Newdev
+  invocation, Windows mutation, driver action, rollback implementation,
+  restore, live query, device query, identity capture, artifact access, or
+  compile-output access was authorized or performed.
+- **Next task:** TASK 6F-RERUN - independent read-only audit of committed
+  operator confirmation collection result after stale-doc remediation.

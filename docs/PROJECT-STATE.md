@@ -1,15 +1,21 @@
 ﻿# Project State
 
-|*Last updated: 2026-07-08 (TASK 6D-DOC-REPAIR-VERIFY docs repaired, no evidence or manifest mutation)*
+|*Last updated: 2026-07-09 (TASK 6F-REMEDIATION stale continuation docs repaired, no evidence or manifest mutation)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
-- **Current HEAD:** `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`
+- **Current HEAD:** `c423ced463f3bdf4cb2a295f19e687278db798e3`
+  (`docs: record operator confirmation collection result`).
+- **Current parent:** `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`
   (`TASK 5E: operator confirmation collection template gate final validation -- audit-only`).
-- **Current uncommitted transition:** TASK 6B/6C/6D operator confirmation
-  collection result evidence, manifest section, and documentation updates are
-  present in the working tree and remain unstaged/uncommitted pending TASK 6E.
+- **Remote sync:** TASK 6E was committed and pushed to
+  `origin/feature/native-adapter-execution-envelope-verifier`; upstream
+  ahead/behind was verified as `0/0`.
+- **Working tree:** final git status after TASK 6E was clean.
+- **Operator confirmation result state:** result evidence is committed at
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`;
+  it is not pending or untracked.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -175,6 +181,8 @@
   `NOT_IMPLEMENTED` (BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED).
 - **Exact-instance binding operator-confirmation collection result binding implementation authorized:**
   `false` (binding implementation and execution NOT authorized; no binding implementation or execution has been performed).
+- **Exact-instance binding operator-confirmation collection result authorization phrase:**
+  binding implementation/execution remains unauthorized.
 - **Exact-instance binding operator-confirmation collection result execution
   state:**
   Operator confirmation collection is completed as evidence only. Operator
