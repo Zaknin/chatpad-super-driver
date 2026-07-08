@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-08 (prior-driver/provider identity evidence remediated)*
+*Last updated: 2026-07-08 (final binding implementation readiness gate opened)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: remediate prior identity evidence shape`, starting
-  commit `e7a385826f9d2c22c2e70f86d7588409cd3ff2dc`.
+  expected subject `docs: add final implementation readiness gate evidence for exact-instance-binding`, starting
+  commit `8d9cf5a8c6e9daed670e0b48d3c39e25b8de8b48`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -592,10 +592,66 @@ execution remains `NOT_IMPLEMENTED`, binding implementation status remains
 `NOT_IMPLEMENTED`, execution authorized remains `false`, and the blocker
 remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
-## Validation Snapshot
+## Final Binding Implementation Readiness Gate
+
+The final binding implementation readiness gate is opened with status
+`EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and readiness classification
+`READY_TO_PREPARE_BINDING_IMPLEMENTATION_AUTHORIZATION_TASK_ONLY`. The evidence
+file is
+`docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json`.
+
+This is a documentation/manifest-only readiness gate. It is NOT live readiness
+promotion. It only means the project is ready to prepare a future binding
+implementation authorization task. It does not authorize or perform any binding
+implementation, binding execution, native execution, SetupAPI/Newdev invocation,
+Windows mutation, driver action, artifact/compile-output access, or operator
+confirmation collection.
+
+The gate verifies that all accepted source evidence exists, the dry-run result
+is accepted, the target chain and identity are recorded, and all 30 readiness
+checks pass. Operator confirmation was not collected. Rollback was not
+implemented. Restore was not performed. Binding implementation was not
+authorized or performed. Binding execution was not performed. No live query
+occurred. No native execution occurred. No SetupAPI/Newdev invocation occurred.
+No Windows mutation occurred. No driver action occurred. No artifact or
+compile-output access occurred.
+
+Live readiness remains `BLOCKED`. Native execution remains `NOT_IMPLEMENTED`.
+Execution authorized remains `false`. The blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+## Final Binding Implementation Readiness Gate
+
+The final binding implementation readiness gate is opened with status
+`EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and readiness classification
+`READY_TO_PREPARE_BINDING_IMPLEMENTATION_AUTHORIZATION_TASK_ONLY`. The evidence
+file is
+`docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json`.
+
+This is a documentation/manifest-only readiness gate. It is NOT live readiness
+promotion. It only means the project is ready to prepare a future binding
+implementation authorization task. It does not authorize or perform any binding
+implementation, binding execution, native execution, SetupAPI/Newdev invocation,
+Windows mutation, driver action, artifact/compile-output access, or operator
+confirmation collection.
+
+The gate verifies that all accepted source evidence exists, the dry-run result
+is accepted, the target chain and identity are recorded, and all 30 readiness
+checks pass. Operator confirmation was not collected. Rollback was not
+implemented. Restore was not performed. Binding implementation was not
+authorized or performed. Binding execution was not performed. No live query
+occurred. No native execution occurred. No SetupAPI/Newdev invocation occurred.
+No Windows mutation occurred. No driver action occurred. No artifact or
+compile-output access occurred.
+
+Live readiness remains `BLOCKED`. Native execution remains `NOT_IMPLEMENTED`.
+Execution authorized remains `false`. The blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: 49; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Manifest entries: 50; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Scope-boundary commit
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
   enforced by the generator and validator.
@@ -613,7 +669,7 @@ remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
   PowerShell 7; 15/15 traced functions, three blocked operations per runtime,
   zero forbidden commands, zero native loads/invocations, zero device queries,
   zero Windows mutations, and zero native operations.
-- Cross-runtime manifest identity: `PASS`, 39/39 entries, zero deltas.
+- Cross-runtime manifest identity: `PASS`, 50/50 entries, zero deltas.
 - Focused execution-envelope verifier checks: `PASS`, 18/18 under Windows
   PowerShell 5.1 and PowerShell 7; all valid-looking and adversarial envelopes
   remained blocked with zero unsafe results.
@@ -775,6 +831,17 @@ remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
   members, and all native/device/hardware/Windows/driver counters zero.
 - Repository safety and forbidden generated-file scans: `PASS`, zero prohibited
   counters/files.
+- Final readiness gate: opened with status
+  `EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  readiness classification
+  `READY_TO_PREPARE_BINDING_IMPLEMENTATION_AUTHORIZATION_TASK_ONLY`. All 30
+  final readiness checks pass. This is documentation/manifest-only; it does
+  not authorize or perform binding implementation, binding execution, native
+  execution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+  artifact/compile-output access, or operator confirmation collection. Live
+  readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`,
+  execution authorized remains `false`, and the blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - The broader legacy exact-instance suite remains blocked by a pre-existing
   native-guard false positive against a literal `DllImport` negative-test
   string in unchanged parser tests. This task does not repair that unrelated
