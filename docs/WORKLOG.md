@@ -12943,3 +12943,38 @@
 - **Commit**: `docs: repair operator confirmation gate integrity`
 - **Push**: `origin/feature/native-adapter-execution-envelope-verifier`
 - **Remaining blocker**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Next task: independent strict read-only audit of repaired operator confirmation collection design-gate state.
+
+## 2026-07-08T14:45Z — TASK 5A: operator confirmation collection lane source inventory
+
+- **Objective**: Independent strict read-only audit of the operator confirmation collection lane source inventory. Verify git state, design-gate state, manifest alignment, accepted target chain, captured prior identities, future package contract (43 fields), future preconditions (20 entries), operator confirmation collection statuses (6 canonical), and safety state.
+- **Starting branch and commit**: `feature/native-adapter-execution-envelope-verifier` / `73d5aae50992802f81e74e580dfccd0f661c23cd` (`docs: complete operator confirmation gate remediation docs`), parent `1c66c31e508b466ef41a398a2b5cc1de44bcc7d0`, upstream `0/0` (up to date).
+- **Investigation**: Verified all required evidence files exist (design-gate, template-gate, manifest, NEXT-TASK). Confirmed design-gate evidence JSON has 43 required fields, 6 canonical statuses, 20 future_preconditions, captured_prior_identities (target/parent/child), all safety fields false/zero. Confirmed manifest has 40 top-level keys, template-gate section correctly placed.
+- **Audit verdict**: `AUDIT PASS` — all source inventory items verified.
+- **Safety state preserved**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. No operator confirmation collected. No rollback implemented. No restore performed. No binding implementation executed. No binding execution occurred. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact/compile-output access. Live readiness remains `BLOCKED`.
+
+## 2026-07-08T14:50Z — TASK 5B: operator confirmation collection template gate
+
+- **Objective**: Create documentation-only operator confirmation collection template gate evidence. Define the future operator confirmation result shape without collecting any confirmation, asking the operator to confirm, or creating any real operator confirmation.
+- **Starting branch and commit**: `feature/native-adapter-execution-envelope-verifier` / `73d5aae50992802f81e74e580dfccd0f661c23cd`.
+- **Implementation**: Created `docs/evidence/exact-instance-binding-operator-confirmation-collection-template-gate.json` (269 lines, 20,831 bytes) with schema `chatpad-exact-instance-binding-operator-confirmation-collection-template-gate-v1`. Defined future result schema (`chatpad-exact-instance-binding-operator-confirmation-collection-result-v1`), 6 allowed statuses, 43 required fields, 5 acknowledgement fields, 20 preconditions, rejection/no-op rules, future audit requirements, template placeholders policy, expiration policy. All safety fields `false`/`0`. Evidence SHA-256: `7E167C035AFB5C7C8B1E54743C780569F1A49103BFAC1B86D9127664F469A5E3`.
+- **Verification**: Wrote and executed `hermes-verify-template-gate.py` (228 lines) — exit 0, all checks PASS (0 errors, 0 warnings). All 43 required fields, 5 acknowledgement fields, 20 preconditions, 20 rejection/no-op rules, template placeholders policy verified.
+- **Safety state preserved**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. No operator confirmation collected. No real `operator_confirmation_id` created. No real confirmation timestamps created. No acknowledgement value set to true. No completed operator confirmation result created. No binding implementation authorized. No binding execution performed. No live/device query. No identity capture. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact/compile-output access. Live readiness remains `BLOCKED`.
+
+## 2026-07-08T14:55Z — TASK 5C: manifest update for operator confirmation collection template gate
+
+- **Objective**: Update runtime-bringup-readiness-manifest.json with the operator confirmation collection template gate section using proper JSON parsing to avoid corruption.
+- **Starting branch and commit**: `feature/native-adapter-execution-envelope-verifier` / `73d5aae50992802f81e74e580dfccd0f661c23cd`.
+- **Implementation**: Parsed manifest with Python `pathlib` and `json`, added template gate section with `exact_instance_binding_operator_confirmation_collection_template_gate` key, all 8 required top-level fields, all 6 sub-fields, all 6 sub-sections (design_gate, template_gate, future_result, future_preconditions, rejection_rules, operator_confirmation_collection_statuses), all safety/execution fields `false`/`0`. Manifest now has 40 top-level keys.
+- **Verification**: Manifest parses correctly (40 keys), template gate section present, all required fields present, no corruption, all safety fields false/zero. `git status` shows manifest modified (+49 lines).
+- **Safety state preserved**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. No operator confirmation collected. No binding implementation authorized. No binding execution performed. No live/device query. No identity capture. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact/compile-output access. Live readiness remains `BLOCKED`.
+
+## 2026-07-08T15:00Z — TASK 5D: update docs and NEXT-TASK for operator confirmation collection template gate
+
+- **Objective**: Update documentation for the operator confirmation collection template gate. Document template gate status in PROJECT-STATE.md, RUNTIME-BRINGUP-READINESS.md, and NEXT-TASK.md. Set NEXT-TASK to independent strict read-only audit of the template-gate commit.
+- **Starting branch and commit**: `feature/native-adapter-execution-envelope-verifier` / `73d5aae50992802f81e74e580dfccd0f661c23cd`.
+- **Implementation**:
+  - **PROJECT-STATE.md**: Added template-gate status (5 lines), readiness (2 lines), evidence path (2 lines), schema (2 lines) immediately after design-gate section.
+  - **RUNTIME-BRINGUP-READINESS.md**: Added `## Exact-Instance Binding Operator Confirmation Collection Template Gate` section (64 lines) with schema, status, readiness classification, evidence path, SHA-256 hash, future result contract, accepted target chain, shared ContainerId, captured prior identities, and comprehensive safety wording (all prohibited actions explicitly denied).
+  - **NEXT-TASK.md**: Replaced current task section with TASK 5A-D completion summary, advanced NEXT-TASK to independent strict read-only audit with 15 verification sub-tasks (1-2 completed, 3-4 pending).
+  - **WORKLOG.md**: Appended TASK 5A through 5D entries with full audit details, safety statements, and evidence SHA-256.
+- **Safety state preserved**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. No operator confirmation collected. No operator asked to confirm. No real `operator_confirmation_id` created. No real confirmation timestamps created. No acknowledgement value set to true. No completed operator confirmation result created. No rollback implemented. No restore performed. No binding implementation authorized. No binding execution performed. No live/device query. No identity capture. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact/compile-output access. Live readiness remains `BLOCKED`.

@@ -1297,6 +1297,64 @@ implementation status remains `NOT_IMPLEMENTED`, execution authorized remains
 `false`, and the blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+## Exact-Instance Binding Operator Confirmation Collection Template Gate
+
+The exact-instance binding operator confirmation collection template gate is
+opened with status
+`EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_TEMPLATE_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and readiness classification
+`READY_TO_PREPARE_OPERATOR_CONFIRMATION_COLLECTION_RESULT_ONLY`
+and evidence path
+`docs/evidence/exact-instance-binding-operator-confirmation-collection-template-gate.json`
+and schema
+`chatpad-exact-instance-binding-operator-confirmation-collection-template-gate-v1`
+and SHA-256
+`7E167C035AFB5C7C8B1E54743C780569F1A49103BFAC1B86D9127664F469A5E3`
+(source design gate evidence SHA-256
+`54E69D047929D97C786079300890BF4837199B73DB8F756BCD61BC95449C12A4`).
+This transition is documentation/manifest-only. It defines the future
+operator confirmation result shape (schema
+`chatpad-exact-instance-binding-operator-confirmation-collection-result-v1`,
+six allowed statuses, 43 required fields, 5 explicit acknowledgement fields,
+20 preconditions, rejection/no-op rules, future audit requirements, template
+placeholders policy, expiration policy) but it does not collect confirmation,
+does not ask the operator to confirm, does not create a real
+`operator_confirmation_id`, does not create real confirmation timestamps, does
+not set any acknowledgement value to true, does not create a completed operator
+confirmation result, does not implement rollback, does not perform restore,
+does not authorize binding implementation, does not implement binding, does
+not execute binding, does not perform live query, does not perform device
+query, does not perform identity capture, does not perform native execution,
+does not invoke SetupAPI/Newdev, does not mutate Windows, does not perform
+driver action, does not access artifacts or compile outputs, and does not
+promote live runtime bring-up readiness.
+
+The template gate preserves the accepted target chain
+(`USB\\VID_045E&PID_028E\\1C21F10` ->
+`USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00` ->
+`HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000`), the shared ContainerId
+`{828F4587-006F-5AD1-B169-6AF57905DFDE}`, and the accepted target InstanceId
+`USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`. It preserves captured prior
+identities (target: `HidUsb`, `input.inf`, key `{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0086`; parent:
+`xusb22`, `xusb22.inf`, key `{d61ca365-5af4-4486-998b-9db4734c6ca3}\0000`; child:
+`HidUsb`, `input.inf`, key `{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0088`).
+
+No actual operator confirmation was collected. No operator was asked to
+confirm. No real `operator_confirmation_id` was created. No real
+`confirmation_timestamp_utc` or `confirmation_expiry_utc` was created. No
+acknowledgement value was set to true. No completed operator confirmation
+result was created. No rollback was implemented. No restore was performed. No
+binding implementation was authorized. No binding implementation was
+performed. No binding execution occurred. No new live observation, device
+query, hardware access, native execution, native library load, entry-point
+resolution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+artifact access, or compile-output access occurred. Actual binding remains
+unauthorized. Future binding requires a separate task after independent
+audit. Live readiness remains `BLOCKED`, native execution remains
+`NOT_IMPLEMENTED`, binding implementation status remains `NOT_IMPLEMENTED`,
+execution authorized remains `false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Exact-Instance Binding Prior-Driver/Provider Identity Capture Design Gate
 
 The prior-driver/provider identity capture design gate is opened with status

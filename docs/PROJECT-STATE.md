@@ -132,6 +132,18 @@
 - **Exact-instance binding operator-confirmation collection design-gate
   evidence:**
   `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`.
+- **Exact-instance binding operator-confirmation collection template-gate
+  status:**
+  `EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_TEMPLATE_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Exact-instance binding operator-confirmation collection template-gate
+  readiness:**
+  `READY_TO_PREPARE_OPERATOR_CONFIRMATION_COLLECTION_RESULT_ONLY`.
+- **Exact-instance binding operator-confirmation collection template-gate
+  evidence:**
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-template-gate.json`.
+- **Exact-instance binding operator-confirmation collection template-gate
+  schema:**
+  `chatpad-exact-instance-binding-operator-confirmation-collection-template-gate-v1`.
 - **Exact-instance binding prior-driver/provider identity capture design-gate
   status:**
   `EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
