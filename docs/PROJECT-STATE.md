@@ -1,6 +1,6 @@
 # Project State
 
-*Last updated: 2026-07-08 (final binding implementation readiness gate opened)*
+|*Last updated: 2026-07-08 (TASK 4B-REMEDIATION complete — design-gate remediated)*
 
 ## Current State
 

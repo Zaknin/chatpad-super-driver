@@ -1,10 +1,21 @@
 # Next Task
 
-## Objective
+|## Objective
 
-Independent strict read-only audit of the operator confirmation collection design-gate commit.
+Re-audit the remediated operator confirmation collection design-gate (TASK 4C).
 
 This next task is not operator confirmation collection, rollback implementation, restore execution, binding implementation, binding execution, dry-run execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, live observation, hardware access, identity capture, device query, live query, or artifact/compile-output access.
+
+## Context: TASK 4B-REMEDIATION Complete
+
+TASK 4B FAIL identified 5 gaps in the operator confirmation package specification (missing required fields, non-required fields not documented as such, status naming mismatch). TASK 4B-REMEDIATION addressed all gaps:
+1. Added `generated_utc`, `operator_confirmation_id`, `confirmation_expiry_utc` to `required_fields`
+2. Added target/parent/child prior-driver identity fields to future requirements
+3. Added `upstream_evidence_requirements` documenting all 4 upstream evidence files
+4. Replaced simplified status naming (CONFIRMED/REJECTED/NO_OP/PENDING_VERIFICATION/INSUFFICIENT_DATA/MANUALLY_REVOKED) with canonical `OPERATOR_CONFIRMATION_COLLECTION_*` vocabulary (6 canonical statuses)
+5. Updated `future_package_audit_requirements` to reference remediated fields
+
+Design-gate SHA-256 after remediation: `a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb792345`.
 
 ## Exact Current State
 
@@ -68,7 +79,10 @@ Verify the operator confirmation collection design-gate explicitly:
 
 7. `operator_confirmation_package_purpose` describes the minimum operator confirmation collection package required before binding implementation authorization.
 
-8. `required_operator_confirmation_fields` contains exactly 13 fields as defined.
+|8. `required_fields` contains exactly 3 fields (added by remediation):
+   - `generated_utc`
+   - `operator_confirmation_id`
+   - `confirmation_expiry_utc`
 
 9. `operator_confirmation_rejection_no_op_rules` contains exactly 6 rules:
    - CONFIRMED → authorization_task_proceeds_with_binding
@@ -155,7 +169,7 @@ Verify the operator confirmation collection design-gate explicitly:
 - Verify captured target identity.
 - Verify captured parent/child identity.
 - Verify unavailable/skipped property summary.
-- Verify future operator confirmation package fields (13 required fields, 6 rejection/no-op rules, 12 rollback no-op fields, 8 prior driver provider requirements, 8 package evidence requirements, 10 package audit requirements).
+|  - Verify future operator confirmation package fields (3 required_fields, 6 rejection/no-op rules with canonical OPERATOR_CONFIRMATION_COLLECTION_* vocabulary, 12 rollback no-op fields, 8 prior driver provider requirements, 8 package evidence requirements, 13 package audit requirements, 4 upstream evidence requirements).
 - Verify operator confirmation package preconditions.
 - Verify no operator confirmation collected.
 - Verify no rollback implemented.

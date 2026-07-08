@@ -11458,7 +11458,7 @@
     "status": "EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
     "readiness_classification": "READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY",
     "evidence_path": "docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json",
-    "evidence_sha256": "264087701C4A3A40DC043E86CDC3FB4AA34E712671C1E227F36A025D80765975",
+    "evidence_sha256": "a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb792345",
     "evidence_hash_policy": "canonical_lf_text",
     "blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
     "binding_implementation_authorized": false,

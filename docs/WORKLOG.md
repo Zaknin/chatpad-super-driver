@@ -12853,3 +12853,24 @@
   6. `docs/RUNTIME-BRINGUP-READINESS.md` (modified)
 - **Remaining:** TASK 3E (final validation, commit, push) — blocked until
   explicitly instructed.
+
+## 2026-07-08T14:30+04:00 — TASK 4B-REMEDIATION complete (design-gate gaps fixed)
+
+- **Objective:** Fix 5 documentation gaps in operator confirmation package specification identified by TASK 4B FAIL audit.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` / `184f70e800f43901701d28367f07cf15d8864574`.
+- **Investigation:** TASK 4B audit found gaps: missing `generated_utc`/`operator_confirmation_id`/`confirmation_expiry_utc` in required fields, no target/parent/child prior-driver identity fields, no upstream evidence requirements, simplified status naming, insufficient future audit requirements.
+- **Files modified:**
+  - `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json` — remediated all 5 gaps; 19 required fields, 6 canonical OPERATOR_CONFIRMATION_COLLECTION_* statuses, 4 upstream evidence requirements, 13 future package audit requirements, 8 prior-driver identity fields, 8 package evidence requirements.
+  - `docs/evidence/runtime-bringup-readiness-manifest.json` — updated SHA-256 to `a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb792345`.
+  - `docs/NEXT-TASK.md` — updated to point to TASK 4C re-audit.
+  - `docs/PROJECT-STATE.md` — updated last-modified timestamp.
+- **Validation:**
+  - JSON parse: OK.
+  - SHA-256 match: `a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb792345` matches manifest.
+  - Required fields: 19 (3 confirmation + 16 future).
+  - Canonical statuses: 6 OPERATOR_CONFIRMATION_COLLECTION_*.
+  - Upstream evidence: 4 files documented.
+  - Future audit: 13 requirements.
+  - Prior-driver identity: 8 fields (device instance ID, provider, version, service, class, driver key, INF, host).
+  - Safety fields all false/zero. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Remaining:** TASK 4C — re-audit remediated design-gate for PASS verdict.

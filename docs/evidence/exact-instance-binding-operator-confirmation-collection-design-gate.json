@@ -1,6 +1,7 @@
 {
   "schema": "chatpad-exact-instance-binding-operator-confirmation-collection-design-gate-v1",
   "status": "EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+  "readiness_classification": "READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY",
   "source_authorization_design_gate_evidence_path": "docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json",
   "source_authorization_design_gate_status": "EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
   "source_authorization_design_gate_evidence_sha256": "",
@@ -27,7 +28,6 @@
   "starting_commit": "6af8b8ea82213235e53c8125c7b0da6f929cefef",
   "branch": "feature/native-adapter-execution-envelope-verifier",
   "generated_utc": "2026-07-08T00:00:00Z",
-  "readiness_classification": "READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY",
   "source_evidence_chain": [
     {
       "index": 1,
@@ -210,11 +210,25 @@
     "Timestamp verification for all confirmations",
     "Issuer verification for all confirmations",
     "Source verification for all confirmations",
-    "Status transition audit trail (CONFIRMED → REJECTED → NO_OP → PENDING_VERIFICATION → INSUFFICIENT_DATA → MANUALLY_REVOKED)",
+    "Status transition audit trail (OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO → OPERATOR_CONFIRMATION_COLLECTION_REJECTED_TARGET_MISMATCH_NO_MUTATION → OPERATOR_CONFIRMATION_COLLECTION_REJECTED_SOURCE_EVIDENCE_INVALID_NO_MUTATION → OPERATOR_CONFIRMATION_COLLECTION_REJECTED_EXPIRED_OR_MISSING_ACK_NO_MUTATION → OPERATOR_CONFIRMATION_COLLECTION_REJECTED_UNSAFE_STATE_NO_MUTATION → OPERATOR_CONFIRMATION_COLLECTION_BLOCKED_UNAUTHORIZED_ACTION_REQUIRED_NO_MUTATION)",
     "Hash policy: canonical_lf_text for all evidence files",
     "Encoding policy: UTF-8 without BOM for all InstanceIds",
     "No native IO, no Windows mutation, no driver action during design gate",
-    "All safety fields false/zero during design gate"
+    "All safety fields false/zero during design gate",
+    "Required fields verified: generated_utc, operator_confirmation_id, confirmation_expiry_utc",
+    "Target/parent/child prior-driver identity fields verified: InstanceId, Provider, Version, Service, Class, DriverKey, INF for each node",
+    "Upstream evidence requirements verified: dry-run, prior-identity capture, final-readiness-gate, operator-rollback package"
+  ],
+  "required_fields": [
+    "generated_utc (string, ISO 8601 UTC timestamp of design gate generation)",
+    "operator_confirmation_id (string, unique identifier for this operator confirmation collection event)",
+    "confirmation_expiry_utc (string, ISO 8601 UTC timestamp after which the confirmation is no longer valid)"
+  ],
+  "upstream_evidence_requirements": [
+    "exact-instance-binding-dry-run-result.json (DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY)",
+    "exact-instance-binding-prior-driver-provider-identity-capture-result.json (PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO)",
+    "exact-instance-binding-final-implementation-readiness-gate.json (EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO)",
+    "exact-instance-binding-operator-rollback-package-design-gate.json (EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO)"
   ],
   "current_task_does_not_collect_operator_confirmation_statement": "This task does NOT collect operator confirmation. This task does NOT implement operator confirmation collection. This task does NOT authorize binding implementation. This task does NOT perform binding. This task does NOT execute binding. This task does NOT perform native execution. This task does NOT perform device query. This task does NOT perform identity capture. This task does NOT invoke SetupAPI or Newdev. This task does NOT mutate Windows. This task does NOT perform driver action. This task does NOT access artifacts or compile outputs.",
   "current_task_does_not_implement_rollback_statement": "This task does NOT implement rollback. This task does NOT perform restore. This task does NOT authorize rollback implementation.",

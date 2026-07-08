@@ -1396,3 +1396,17 @@ restore execution, binding implementation, binding execution, dry-run in this
 task, new live observation, hardware access, native execution, native library
 load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
 driver action, or artifact/compile-output access.
+
+## TASK 4B-REMEDIATION Complete (2026-07-08)
+
+Operator confirmation package specification gaps remediated:
+- Added `generated_utc`, `operator_confirmation_id`, `confirmation_expiry_utc` to required fields
+- Added target/parent/child prior-driver identity fields (device instance ID, provider, version, service, class, driver key, INF, host)
+- Added `upstream_evidence_requirements` documenting all 4 upstream evidence files
+- Replaced simplified status naming with canonical `OPERATOR_CONFIRMATION_COLLECTION_*` vocabulary (6 canonical statuses)
+- Updated `future_package_audit_requirements` to reference remediated fields
+
+Design-gate SHA-256: `a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb792345`
+Manifest SHA updated to match.
+
+Next: TASK 4C — re-audit remediated design-gate for PASS verdict.
