@@ -2,31 +2,35 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the operator-confirmation and
-rollback/no-op package design-gate commit.
+Perform an independent strict read-only audit of the prior-driver/provider
+identity capture design-gate commit.
 
-This next task is not operator confirmation collection, rollback
-implementation, restore execution, binding implementation, binding execution,
-dry-run execution, native execution, SetupAPI/Newdev invocation, Windows
-mutation, driver action, live observation, hardware access, or
-artifact/compile-output access.
+This next task is not prior-driver/provider identity capture, live query,
+operator confirmation collection, rollback implementation, restore execution,
+binding implementation, binding execution, dry-run execution, native
+execution, SetupAPI/Newdev invocation, Windows mutation, driver action, live
+observation, hardware access, or artifact/compile-output access.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
-- Required starting commit before this package design-gate transition:
-  `e86dfdcf5cbc01b6724f7736657eb9d9c7323540`.
+- Required starting commit before this prior identity design-gate transition:
+  `1bb39e686ac5b55cb43468f24eda832d2d775623`.
 - Required commit subject:
-  `docs: design operator rollback package gate`.
+  `docs: design prior identity capture gate`.
 - Required upstream:
   `origin/feature/native-adapter-execution-envelope-verifier`.
 - Required synchronization and tree before audit: `0/0` and clean.
-- Package design-gate evidence path:
+- Prior identity design-gate evidence path:
+  `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`.
+- Prior identity design-gate evidence schema:
+  `chatpad-exact-instance-binding-prior-driver-provider-identity-capture-design-gate-v1`.
+- Prior identity design-gate status:
+  `EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- Source operator/rollback package design-gate evidence path:
   `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`.
-- Package design-gate evidence schema:
-  `chatpad-exact-instance-binding-operator-rollback-package-design-gate-v1`.
-- Package design-gate status:
+- Source operator/rollback package design-gate status:
   `EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
 - Source authorization design-gate evidence path:
   `docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json`.
@@ -71,7 +75,7 @@ artifact/compile-output access.
   `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`.
 - Manifest schema:
   `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: `47`.
+- Manifest entries: `48`.
 - Blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Execution authorized: `false`.
 - Live readiness: `BLOCKED`.
@@ -80,6 +84,8 @@ artifact/compile-output access.
 - Binding implementation authorized: `false`.
 - Binding implementation performed: `false`.
 - Binding execution performed: `false`.
+- Prior-driver/provider identity captured: `false`.
+- Live query performed: `false`.
 - Actual operator confirmation collected: `false`.
 - Rollback implemented: `false`.
 - Restore performed: `false`.
@@ -109,15 +115,16 @@ artifact/compile-output access.
    - `docs/RUNTIME-BRINGUP-READINESS.md`
    - `docs/WORKLOG.md`
    - `docs/evidence/runtime-bringup-readiness-manifest.json`
-   - `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`
+   - `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`
 3. Confirm no tool, source, INF, project, solution, parser, verifier,
    offline-suite, packaging, signing, staging, deployment, binary, artifact,
-   frozen-output, or `legacy/` path changed.
+   frozen-output, generated-output, or `legacy/` path changed.
 
 ## Audit Scope
 
 - Verify target commit Git identity.
-- Verify package design-gate evidence file schema and status.
+- Verify prior identity design-gate evidence file schema and status.
+- Verify source operator/rollback package design-gate evidence reference.
 - Verify source authorization design-gate evidence reference.
 - Verify source dry-run result evidence reference.
 - Verify source execution-gate evidence reference.
@@ -128,14 +135,19 @@ artifact/compile-output access.
 - Verify accepted dry-run result.
 - Verify accepted three-node target chain.
 - Verify target InstanceId.
-- Verify operator-confirmation package purpose.
-- Verify required operator-confirmation fields.
-- Verify operator-confirmation rejection/no-op rules.
-- Verify rollback/no-op package purpose.
-- Verify required rollback/no-op package fields.
-- Verify future prior-driver/provider identity requirements.
-- Verify future package evidence requirements.
-- Verify future package audit requirements.
+- Verify prior identity capture purpose.
+- Verify future capture authorization boundary.
+- Verify required future capture target scope.
+- Verify required future prior-driver/provider identity fields.
+- Verify future source evidence prerequisites.
+- Verify future capture preconditions.
+- Verify future capture rejection/no-op conditions.
+- Verify future allowed command family.
+- Verify future prohibited command/action family.
+- Verify future prior identity evidence status options.
+- Verify future audit requirements.
+- Verify no prior-driver/provider identity captured.
+- Verify no live query.
 - Verify no actual operator confirmation collected.
 - Verify no rollback implemented.
 - Verify no restore performed.
@@ -158,31 +170,32 @@ artifact/compile-output access.
 
 ## Safety Restrictions
 
-This audit is strict read-only. Do not collect operator confirmation. Do not
+This audit is strict read-only. Do not capture prior-driver/provider identity.
+Do not perform live query. Do not collect operator confirmation. Do not
 implement rollback. Do not perform restore. Do not implement or execute
 binding. Do not perform new live observation. Do not run device query commands,
 hardware access commands, binding execution, dry-run execution, native adapter
 execution, SetupAPI/Newdev, verifier behavior tests, offline-suite behavior
 tests, the static parser, the full compile-output validator, generator, full
 exact/readiness suites, build, package, sign, install, load, bind, restore,
-restart, `pnputil`, `devcon`, driver/service mutation, or
-artifact/compile-output access.
+restart, `pnputil`, `devcon`, driver/service mutation, or artifact/
+compile-output access.
 
 ## Acceptance Criteria
 
 - Git identity, subject, parent, changed paths, and content establish the
-  exact package design-gate transition without self-reference.
-- Package design-gate evidence JSON and manifest JSON parse successfully.
+  exact prior identity design-gate transition without self-reference.
+- Prior identity design-gate evidence JSON and manifest JSON parse
+  successfully.
 - Manifest validation passes with schema
   `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Package design-gate evidence schema/status, source evidence references,
-  accepted dry-run result, accepted target chain, target InstanceId,
-  operator-confirmation package purpose, required operator-confirmation fields,
-  operator-confirmation rejection/no-op rules, rollback/no-op package purpose,
-  required rollback/no-op package fields, future prior-driver/provider identity
-  requirements, future package evidence requirements, future package audit
-  requirements, explicit safety statements, and safety counters match the
-  evidence record.
+- Prior identity design-gate evidence schema/status, source evidence
+  references, accepted dry-run result, accepted target chain, target
+  InstanceId, capture purpose, future capture authorization boundary, target
+  scope, required fields, source evidence prerequisites, preconditions,
+  rejection/no-op conditions, allowed/prohibited command families, status
+  options, audit requirements, explicit safety statements, and safety counters
+  match the evidence record.
 - Documentation consistency, prohibited executable pattern search,
   changed-path safety, forbidden vocabulary scan, spelling-variant scan, and
   `git diff --check` pass.
@@ -197,12 +210,13 @@ artifact/compile-output access.
 5. Latest `docs/WORKLOG.md` entry
 6. `docs/RUNTIME-BRINGUP-READINESS.md`
 7. `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`
-8. `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`
-9. `docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json`
-10. `docs/evidence/exact-instance-binding-dry-run-result.json`
-11. `docs/evidence/exact-instance-binding-dry-run-execution-gate.json`
-12. `docs/evidence/exact-instance-binding-dry-run-design.json`
-13. `docs/evidence/exact-instance-binding-implementation-design-gate.json`
-14. `docs/evidence/exact-instance-binding-analysis.json`
-15. `docs/evidence/live-readonly-equipment-observation.json`
-16. `docs/evidence/runtime-bringup-readiness-manifest.json`
+8. `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`
+9. `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`
+10. `docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json`
+11. `docs/evidence/exact-instance-binding-dry-run-result.json`
+12. `docs/evidence/exact-instance-binding-dry-run-execution-gate.json`
+13. `docs/evidence/exact-instance-binding-dry-run-design.json`
+14. `docs/evidence/exact-instance-binding-implementation-design-gate.json`
+15. `docs/evidence/exact-instance-binding-analysis.json`
+16. `docs/evidence/live-readonly-equipment-observation.json`
+17. `docs/evidence/runtime-bringup-readiness-manifest.json`

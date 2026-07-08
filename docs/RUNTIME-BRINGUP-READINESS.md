@@ -1248,25 +1248,69 @@ binding implementation status remains `NOT_IMPLEMENTED`, execution authorized
 remains `false`, and the blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+## Exact-Instance Binding Prior-Driver/Provider Identity Capture Design Gate
+
+The prior-driver/provider identity capture design gate is opened with status
+`EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and evidence path
+`docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`.
+This transition is documentation/manifest-only. It defines a future capture
+package whose purpose is to preserve the current Windows driver/provider
+identity of the accepted target before any mutation-capable exact-instance
+binding implementation can be considered if driver association might change.
+The accepted dry-run result is
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`; the accepted dry-run
+and operator/rollback package design are not enough to mutate or bind.
+
+The design records the future capture authorization boundary, exact target
+scope, required prior-driver/provider identity fields, source evidence
+prerequisites, capture preconditions, rejection/no-op conditions, future
+allowed read-only command family, prohibited command/action family, future
+non-mutating status options, and future audit requirements. The default target
+remains the USB HID interface child
+`USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`; the accepted parent is
+`USB\VID_045E&PID_028E\1C21F10`, the accepted child is
+`HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`, and the shared ContainerId
+is `{828F4587-006F-5AD1-B169-6AF57905DFDE}`. Capturing unrelated devices is
+rejected.
+
+No prior-driver/provider identity was captured. No live query occurred. No
+actual operator confirmation was collected. No rollback was implemented. No
+restore was performed. No binding implementation occurred. No binding
+execution occurred. No dry-run was performed in this task. No new live
+observation, device query, hardware access, native execution, native library
+load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
+driver action, artifact access, compile-output access, compile-output hash
+verification, or metadata parsing occurred. Actual binding remains
+unauthorized. Future identity capture requires a separate task after
+independent audit, and future binding requires a separate task after
+independent audit. Live readiness remains `BLOCKED`, native execution remains
+`NOT_IMPLEMENTED`, binding implementation status remains `NOT_IMPLEMENTED`,
+execution authorized remains `false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Exact next task
 
-Perform an independent strict read-only audit of this operator-confirmation and
-rollback/no-op package design-gate commit. Derive its exact identity from Git;
-require subject `docs: design operator rollback package gate`, starting commit
-`e86dfdcf5cbc01b6724f7736657eb9d9c7323540`, package design-gate evidence
-schema
-`chatpad-exact-instance-binding-operator-rollback-package-design-gate-v1`,
-package design-gate status
-`EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
-source authorization design-gate evidence, source dry-run result evidence,
-source execution-gate evidence, source dry-run design evidence, source
-design-gate evidence, source analysis evidence, source observation evidence,
-accepted dry-run result, accepted three-node target chain, target InstanceId,
-operator-confirmation package purpose, required operator-confirmation fields,
-operator-confirmation rejection/no-op rules, rollback/no-op package purpose,
-required rollback/no-op package fields, future prior-driver/provider identity
-requirements, future package evidence requirements, future package audit
-requirements, and unchanged blocked state. The audit must confirm no actual
+Perform an independent strict read-only audit of this prior-driver/provider
+identity capture design-gate commit. Derive its exact identity from Git;
+require subject `docs: design prior identity capture gate`, starting commit
+`1bb39e686ac5b55cb43468f24eda832d2d775623`, prior identity design-gate
+evidence schema
+`chatpad-exact-instance-binding-prior-driver-provider-identity-capture-design-gate-v1`,
+prior identity design-gate status
+`EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+source operator/rollback package design-gate evidence, source authorization
+design-gate evidence, source dry-run result evidence, source execution-gate
+evidence, source dry-run design evidence, source design-gate evidence, source
+analysis evidence, source observation evidence, accepted dry-run result,
+accepted three-node target chain, target InstanceId, prior identity capture
+purpose, future capture authorization boundary, required future capture target
+scope, required future prior-driver/provider identity fields, future source
+evidence prerequisites, future capture preconditions, future capture
+rejection/no-op conditions, future allowed command family, future prohibited
+command/action family, future prior identity evidence status options, future
+audit requirements, and unchanged blocked state. The audit must confirm no
+prior-driver/provider identity was captured, no live query occurred, no actual
 operator confirmation was collected, no rollback was implemented, no restore
 was performed, no binding implementation, binding execution, dry-run in this
 task, new live observation, device query, hardware access, native execution,

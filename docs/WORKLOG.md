@@ -12366,3 +12366,147 @@
   observation, device query, hardware access, native execution, SetupAPI/Newdev
   invocation, native library load, entry-point resolution, Windows mutation,
   driver action, and artifact/compile-output access.
+
+---
+
+## 2026-07-08 08:25:00 +04:00 - Open prior-driver/provider identity capture design gate
+
+- **Objective:** Prepare a documentation/manifest-only prior-driver/provider
+  identity capture design gate for the accepted exact-instance binding target,
+  defining the future capture package prerequisites without capturing prior
+  identity, performing live query, collecting operator confirmation,
+  implementing rollback, performing restore, authorizing binding,
+  implementing binding, or executing binding.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `1bb39e686ac5b55cb43468f24eda832d2d775623`, subject
+  `docs: design operator rollback package gate`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tree/index before this task's edits.
+- **Source evidence:** Reused accepted tracked evidence only:
+  `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`
+  with status
+  `EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  `docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json`
+  with status
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  `docs/evidence/exact-instance-binding-dry-run-result.json` with status
+  `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`,
+  `docs/evidence/exact-instance-binding-dry-run-execution-gate.json` with
+  status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+  `docs/evidence/exact-instance-binding-dry-run-design.json` with status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+  `docs/evidence/exact-instance-binding-implementation-design-gate.json` with
+  status
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`,
+  `docs/evidence/exact-instance-binding-analysis.json` with status
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
+  and `docs/evidence/live-readonly-equipment-observation.json` with status
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+  source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
+  and verifier closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+- **Prior identity design-gate evidence:** Created
+  `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`
+  with schema
+  `chatpad-exact-instance-binding-prior-driver-provider-identity-capture-design-gate-v1`
+  and status
+  `EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+  The gate records the accepted dry-run result, accepted three-node chain
+  `USB\VID_045E&PID_028E\1C21F10` ->
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00` ->
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`, shared ContainerId
+  `{828F4587-006F-5AD1-B169-6AF57905DFDE}`, and target InstanceId
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`.
+- **Implementation details:** The design gate defines a future capture package
+  whose purpose is to preserve the current Windows driver/provider identity of
+  the accepted target before mutation-capable binding implementation can be
+  considered if driver association might change. It defines the future
+  authorization boundary, target scope, required identity fields, source
+  evidence prerequisites, preconditions, rejection/no-op conditions, future
+  allowed read-only command family, prohibited command/action family, future
+  non-mutating status options, and future audit requirements. Accepted dry-run
+  plus operator/rollback package design remains insufficient to mutate or bind.
+- **Files created or modified:** Created
+  `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`;
+  modified `docs/DECISIONS.md`,
+  `docs/NATIVE-SETUPAPI-NEWDEV-ADAPTER-DESIGN-GATE.md`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Manifest:** Preserves schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, records the prior identity
+  design-gate status and evidence path, increases tracked entries to `48`,
+  preserves blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live
+  readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, execution
+  authorization false, binding implementation status `NOT_IMPLEMENTED`,
+  binding implementation authorization false, and all native/artifact/Windows/
+  driver counters false or zero.
+- **Safety:** No prior-driver/provider identity was captured. No live query
+  occurred. No actual operator confirmation was collected. No rollback was
+  implemented. No restore was performed. No binding implementation occurred.
+  No binding execution occurred. No dry-run was performed in this task. No new
+  live observation, device query, hardware access, native execution, native
+  library load, entry-point resolution, SetupAPI/Newdev invocation, Windows
+  mutation, driver action, driver build/sign/package/install/load/bind/
+  restore/restart, verifier behavior test, offline-suite behavior test,
+  static parser, full compile-output validator, generator, or
+  artifact/compile-output access occurred.
+- **Validation:** Safe validation only. Starting branch/HEAD/upstream/tree
+  preflight passed. Source evidence JSON, prior identity design-gate JSON, and
+  manifest JSON parsed successfully during the task. Source statuses, accepted
+  dry-run result, accepted target chain, shared ContainerId, target InstanceId,
+  prior identity design-gate schema/status, manifest schema, prior identity
+  captured false, live query performed false, operator confirmation collected
+  false, rollback implemented false, restore performed false, no binding
+  implementation, no binding execution, no dry-run in this task, no new live
+  observation, no device query, no hardware access, native execution
+  `NOT_IMPLEMENTED`, execution authorization false, live readiness `BLOCKED`,
+  binding implementation status `NOT_IMPLEMENTED`, binding implementation
+  authorization false, zero native-library-load, entry-point-resolution,
+  SetupAPI/Newdev, Windows-mutation, and driver-action counters,
+  artifact/compile-output access false, changed-path safety, forbidden
+  vocabulary scan, typo-variant scan, added-line prohibited-action review,
+  `git diff --check`, and manifest validation are the required closeout checks
+  before commit. Git and the final response are authoritative for final
+  command results after this continuity entry.
+- **Closeout validation results:** Source evidence and prior identity
+  design-gate structured validation `PASS`; manifest JSON parse `PASS`;
+  manifest schema `chatpad-runtime-bringup-readiness-manifest-v4`; manifest
+  entries `48`; manifest validator `PASS` in
+  `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode with `0` total defects;
+  manifest entry identity mismatch count `0`; forbidden vocabulary scan
+  `PASS`; added-line typo-variant scan `PASS`; changed-path safety `PASS`;
+  no tool files changed; added-line prohibited-action review found only
+  explicit prohibition text and no executable implementation or authorization;
+  `git diff --check` exit code `0`.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  binding implementation remains unauthorized and not implemented; execution
+  authority remains false; artifact and compile-output I/O remain false.
+- **Commit and push:** Subject will be
+  `docs: design prior identity capture gate`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Next task:** Independent strict read-only audit of this prior-driver/
+  provider identity capture design-gate commit by Git identity, subject,
+  parent, prior identity design-gate evidence schema/status, source
+  operator/rollback package design-gate, authorization design-gate, dry-run
+  result, execution-gate, dry-run design, design-gate, analysis, and
+  observation evidence references, accepted dry-run result, accepted
+  three-node target chain, target InstanceId, prior identity capture purpose,
+  future capture authorization boundary, required future capture target scope,
+  required future prior-driver/provider identity fields, future source
+  evidence prerequisites, future capture preconditions, future capture
+  rejection/no-op conditions, future allowed command family, future prohibited
+  command/action family, future prior identity evidence status options, future
+  audit requirements, manifest entry and safety counters, changed paths, no
+  tool or source changes, unchanged blocked state, and absence of prior
+  identity capture, live query, actual operator confirmation collection,
+  rollback implementation, restore execution, binding implementation, binding
+  execution, dry-run in this task, new live observation, device query, hardware
+  access, native execution, SetupAPI/Newdev invocation, native library load,
+  entry-point resolution, Windows mutation, driver action, and
+  artifact/compile-output access.

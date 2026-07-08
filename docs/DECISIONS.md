@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-08 - Open a prior-driver/provider identity capture design gate without live query
+
+**Decision:** Record
+`EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+as a documentation/manifest-only design gate for a future separately
+authorized prior-driver/provider identity capture package for the accepted
+exact-instance binding target.
+
+**Rationale:** The accepted dry-run result, authorization design gate, and
+operator/rollback package design gate are not enough to mutate or bind. Before
+any mutation-capable binding implementation can be considered, the repository
+needs an audited design for preserving the current Windows driver/provider
+identity of the accepted target so later rollback/no-op reasoning can compare
+the pre-mutation association.
+
+**Alternatives rejected:** Capturing prior-driver/provider identity in this
+task; performing live query; collecting operator confirmation; implementing
+rollback or restore; authorizing, implementing, or executing binding;
+performing a new dry-run; performing fresh live observation or device query;
+loading native libraries; resolving entry points; invoking SetupAPI/Newdev;
+mutating Windows; performing driver actions; or opening artifact or
+compile-output binaries.
+
+**Consequences:** Future prior-driver/provider identity capture requires a
+separate explicitly authorized task after independent strict read-only audit.
+Future binding implementation also remains separate and unauthorized. No
+prior-driver/provider identity is captured; live readiness remains `BLOCKED`;
+native execution remains `NOT_IMPLEMENTED`; binding implementation remains
+`NOT_IMPLEMENTED`; execution authorization and binding implementation
+authorization remain false; artifact and compile-output I/O remain false; and
+all native/device/hardware/Windows/driver counters remain zero.
+
 ## 2026-07-08 - Open an operator-confirmation and rollback/no-op package design gate without collecting confirmation
 
 **Decision:** Record

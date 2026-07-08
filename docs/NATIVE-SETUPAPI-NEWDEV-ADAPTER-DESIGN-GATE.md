@@ -876,3 +876,30 @@ audit. Live readiness remains `BLOCKED`, native execution remains
 `NOT_IMPLEMENTED`, binding implementation status remains `NOT_IMPLEMENTED`,
 execution authorized remains `false`, and the blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+The exact-instance binding prior-driver/provider identity capture design gate
+is now opened with status
+`EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and evidence path
+`docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`.
+It is documentation/manifest-only. It defines the future capture package
+needed to preserve the current Windows driver/provider identity of the
+accepted USB HID interface target before any mutation-capable binding
+implementation can be considered if driver association might change. The
+accepted dry-run result is
+`DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`; the accepted dry-run
+and operator/rollback package design are not enough to mutate or bind.
+
+No prior-driver/provider identity was captured. No live query occurred. No
+actual operator confirmation was collected. No rollback was implemented. No
+restore was performed. No binding implementation occurred. No binding
+execution occurred. No dry-run was performed in this task. No new live
+observation, device query, hardware access, native execution, native library
+load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
+driver action, driver build/sign/package/install/load/bind/restore/restart,
+or artifact/compile-output access is authorized or performed by this design
+gate. Future identity capture and future binding both require separate tasks
+after independent audit. Live readiness remains `BLOCKED`, native execution
+remains `NOT_IMPLEMENTED`, binding implementation status remains
+`NOT_IMPLEMENTED`, execution authorized remains `false`, and the blocker
+remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
