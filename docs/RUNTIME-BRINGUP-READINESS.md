@@ -1355,6 +1355,42 @@ audit. Live readiness remains `BLOCKED`, native execution remains
 execution authorized remains `false`, and the blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+### Exact-Instance Binding Operator Confirmation Collection Result
+
+- **Result evidence file:** `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`
+- **Result manifest section:** `exact_instance_binding_operator_confirmation_collection_result`
+- **Result schema:** `chatpad-exact-instance-binding-operator-confirmation-collection-result-v1`
+- **Result status:** `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+- **Operator:** `operator_handle=zaknin`, `operator_label=zak`
+- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
+- **Confirmation window:** `2026-07-08T00:00:00Z` to `2026-07-18T00:00:00Z`
+- **Canonical LF text SHA-256:** `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`
+- **Verification:** `VERIFIED — result evidence, manifest section, safety fields, implementation status, and state vocabulary all validated read-only`
+- **Binding implementation status:** `NOT_IMPLEMENTED` (BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED)
+- **Binding implementation authorized:** `false` (binding implementation and execution NOT authorized; no binding implementation or execution has been performed)
+- **Accepted target chain:** `USB\VID_045E&PID_028E\1C21F10`;
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`;
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`
+- **Readiness impact:** This advances only the operator confirmation lane.
+  Operator confirmation collection is completed as evidence only; it does not
+  unblock runtime/native execution or driver binding.
+- **Required safety state:** Operator confirmation does not authorize binding
+  implementation. Operator confirmation does not authorize binding execution.
+  Rollback/no-op package is still required before mutation-capable work.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` remains active. Native
+  execution remains `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`.
+  Execution authorized remains `false`. Binding implementation status remains
+  `NOT_IMPLEMENTED`. Binding implementation authorized remains `false`.
+- **TASK 6D prohibited-action result:** SetupAPI/Newdev invocation count
+  remains `0`. Windows mutation count remains `0`. Driver action count
+  remains `0`. Artifact/compile-output access remains `false`/`0`. No live
+  query, device query, native execution, SetupAPI/Newdev, Windows mutation,
+  driver action, or artifact access was performed in TASK 6D.
+- **Safety summary:** `operator_confirmation_collected=true, mutation_performed=0, native_io_performed=0, driver_action_performed=0, artifact_access_performed=0, any_state_change=0, any_device_restarts=0, any_driver_installs=0, any_driver_uninstalls=0, any_driver_start_stops=0, any_driver_state_changes=0, binding_implementation_performed=0`
+- **Source template SHA-256:** `7E167C035AFB5C7C8B1E54743C780569F1A49103BFAC1B86D9127664F469A5E3`
+- **Source design SHA-256:** `54E69D047929D97C786079300890BF4837199B73DB8F756BCD61BC95449C12A4`
+
+
 ## Exact-Instance Binding Prior-Driver/Provider Identity Capture Design Gate
 
 The prior-driver/provider identity capture design gate is opened with status

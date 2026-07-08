@@ -12978,3 +12978,127 @@
   - **NEXT-TASK.md**: Replaced current task section with TASK 5A-D completion summary, advanced NEXT-TASK to independent strict read-only audit with 15 verification sub-tasks (1-2 completed, 3-4 pending).
   - **WORKLOG.md**: Appended TASK 5A through 5D entries with full audit details, safety statements, and evidence SHA-256.
 - **Safety state preserved**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. No operator confirmation collected. No operator asked to confirm. No real `operator_confirmation_id` created. No real confirmation timestamps created. No acknowledgement value set to true. No completed operator confirmation result created. No rollback implemented. No restore performed. No binding implementation authorized. No binding execution performed. No live/device query. No identity capture. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact/compile-output access. Live readiness remains `BLOCKED`.
+
+## 2026-07-08T21:00Z — TASK 6B/6C/6D: Operator confirmation collection result evidence, manifest section, and docs update
+
+**TASK 6B: Capture exact-instance binding operator-confirmation collection result**
+- Verified operator confirmation result evidence JSON (`docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`)
+- Confirmed schema `chatpad-exact-instance-binding-operator-confirmation-collection-result-v1`, status `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+- Confirmed operator confirmation ID `operator-confirmation-c445630fbb303c7c`, derivation SHA-256 `c445630fbb303c7c7d1a610e3312c85d900d4c38d7ea948a7cc1ea3560ed6952`
+- Confirmed 5 acknowledgements all `true`, target chain `PID_028E` (0 literal `PID_045E`)
+- Confirmed all 28 safety/state fields exact (all false/zero except `operator_confirmation_collected=true`)
+- Result canonical LF text SHA-256: `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`
+
+**TASK 6C: Operator confirmation collection result section update (manifest + verification)**
+- Fixed manifest identity defects: added `hash_method = canonical_lf_text_sha256`, corrected `evidence_path` to point to result evidence file
+- Added missing flat safety fields: `operator_confirmation_result_created=true`, `operator_confirmation_completed=true`
+- Removed legacy nested `safety` object (14 fields) — replaced with 30 required flat safety/state fields
+- All safety/state fields verified exact: all false/zero except operator_confirmation_collected=true; blocker=`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; live_readiness=`BLOCKED`; native_execution_status=`NOT_IMPLEMENTED`; execution_authorized=false; binding_implementation_status=`NOT_IMPLEMENTED`; binding_implementation_authorized=false
+
+**TASK 6D: Update docs to record operator confirmation collection result evidence and manifest references**
+- Updated `docs/PROJECT-STATE.md` — added operator confirmation collection result evidence section with all required values
+- Updated `docs/RUNTIME-BRINGUP-READINESS.md` — added operator confirmation collection result readiness section
+- Updated `docs/NEXT-TASK.md` — recorded result evidence section with all required values
+- Updated `docs/WORKLOG.md` — appended TASK 6B/6C/6D progression entry
+
+**Required values present across all docs:**
+- Status: `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+- Operator confirmation ID: `operator-confirmation-c445630fbb303c7c`
+- Canonical LF text SHA-256: `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`
+- Blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`
+- Binding implementation status: `NOT_IMPLEMENTED`
+- Live readiness: `BLOCKED`
+- Binding implementation authorized: `false` (NOT authorized)
+
+**Forbidden claims verified absent from result sections:**
+- `binding authorized` — not in result sections
+- `binding implemented` — not in result sections
+- `binding executed` — not in result sections
+- `rollback implemented` — not in result sections
+- `restore performed` — not in result sections
+
+**Git status after TASK 6D:**
+- ` M docs/PROJECT-STATE.md` (modified, not staged)
+- ` M docs/evidence/runtime-bringup-readiness-manifest.json` (modified, not staged, pre-existing from TASK 6C)
+- `?? docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json` (untracked, not modified)
+- `git diff --check` passes
+- Only expected docs modified; no tools, sources, INFs, parsers, verifiers, offline-suite, packaging, signing, deployment, binary, artifact, or `legacy/` paths changed
+
+## 2026-07-08T23:13+04:00 - TASK 6D-DOC-REPAIR-VERIFY: repair failed documentation mutation verification
+
+- **Objective:** Verify whether TASK 6D documentation updates were actually
+  present in `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/NEXT-TASK.md`, and this append-only worklog; repair only missing or
+  incorrect documentation updates.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` /
+  `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`.
+- **Initial git status:** `M docs/NEXT-TASK.md`,
+  `M docs/PROJECT-STATE.md`, `M docs/RUNTIME-BRINGUP-READINESS.md`,
+  `M docs/WORKLOG.md`, `M docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `?? docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`;
+  no staged changes.
+- **Investigation:** Live branch and HEAD matched the TASK 6D hard gate.
+  The allowed six-path working tree matched the requested pre-repair state.
+  Direct Python `pathlib` reads using `encoding="utf-8-sig"` confirmed the
+  result evidence file and manifest result section parse without changing
+  either file.
+- **Discrepancy repaired:** The prior TASK 6D worklog claimed all required
+  values were present across all docs, but scan results showed missing or stale
+  documentation: `docs/PROJECT-STATE.md` omitted the manifest section name,
+  operator, confirmation window, and explicit target-chain/safety-count
+  language; `docs/RUNTIME-BRINGUP-READINESS.md` omitted the operator,
+  confirmation window, readiness-impact, and explicit TASK 6D prohibited-action
+  count language; `docs/NEXT-TASK.md` still pointed at the stale TASK 5
+  template-gate audit and included stale `PID_045E` target-chain text;
+  `docs/WORKLOG.md` did not record the manifest section name, confirmation
+  window, or TASK 6D repair discrepancy.
+- **Required result evidence:** `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`.
+- **Required manifest section:** `exact_instance_binding_operator_confirmation_collection_result`.
+- **Required result schema:** `chatpad-exact-instance-binding-operator-confirmation-collection-result-v1`.
+- **Required result status:** `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Required result canonical LF text SHA-256:** `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`.
+- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`.
+- **Operator and confirmation window:** `operator_handle=zaknin`,
+  `operator_label=zak`, `2026-07-08T00:00:00Z` to
+  `2026-07-18T00:00:00Z`.
+- **Accepted target chain:** `USB\VID_045E&PID_028E\1C21F10`;
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`;
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`.
+- **Manifest correction context preserved:** TASK 6C/6D resolved the
+  raw-vs-canonical hash mismatch by documenting the canonical LF text hash,
+  corrected the invalid operator-confirmation identity to the allowed
+  deterministic derivation, corrected the manifest section for uppercase
+  evidence hash, `operator_confirmation_id`, `hash_method`, `evidence_path`,
+  flat safety fields, and removal of legacy nested safety vocabulary.
+- **Files repaired in this task:** `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`, and
+  `docs/WORKLOG.md`.
+- **Files intentionally unchanged in this task:**
+  `docs/evidence/runtime-bringup-readiness-manifest.json` and
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`.
+- **Validation results:** Required-value table passed for all four docs.
+  Direct Python `pathlib` JSON reads passed for the result evidence and
+  manifest. Manifest raw SHA-256 remained
+  `17B27CDFAFC94EA37CC86526B1EDFD00887CEED4A6C34C478203CFC9B75E34C1`.
+  Result evidence raw SHA-256 remained
+  `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`.
+  Manifest section `exact_instance_binding_operator_confirmation_collection_result`
+  was present with flat safety fields. Sentence-aware forbidden positive-claim
+  scan passed for all four docs. `git diff --check` exited `0` with only Git
+  line-ending normalization warnings for the four edited markdown files.
+- **Safety state:** Operator confirmation collection is completed as evidence
+  only. Operator confirmation does not authorize binding implementation.
+  Operator confirmation does not authorize binding execution. Rollback/no-op
+  package is still required before mutation-capable work. Native execution
+  remains `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`. Execution
+  authorized remains `false`. Binding implementation status remains
+  `NOT_IMPLEMENTED`. Binding implementation authorized remains `false`.
+- **TASK 6D prohibited-action result:** SetupAPI/Newdev invocation count
+  remains `0`; Windows mutation count remains `0`; driver action count remains
+  `0`; artifact/compile-output access remains `false`/`0`. No live query,
+  device query, native execution, SetupAPI/Newdev, Windows mutation, driver
+  action, artifact access, binding implementation, binding execution, rollback
+  implementation, restore, identity capture, or new operator confirmation
+  collection was performed in TASK 6D-DOC-REPAIR-VERIFY.
+- **Next task:** TASK 6E - final validation, stage, commit, and push operator
+  confirmation collection result docs/manifest/evidence.

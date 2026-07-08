@@ -1,13 +1,15 @@
 ﻿# Project State
 
-|*Last updated: 2026-07-08 (TASK 4B-REMEDIATION complete — design-gate remediated)*
+|*Last updated: 2026-07-08 (TASK 6D-DOC-REPAIR-VERIFY docs repaired, no evidence or manifest mutation)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
-- **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: add final implementation readiness gate evidence for exact-instance-binding`, starting
-  commit `8d9cf5a8c6e9daed670e0b48d3c39e25b8de8b48`.
+- **Current HEAD:** `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`
+  (`TASK 5E: operator confirmation collection template gate final validation -- audit-only`).
+- **Current uncommitted transition:** TASK 6B/6C/6D operator confirmation
+  collection result evidence, manifest section, and documentation updates are
+  present in the working tree and remain unstaged/uncommitted pending TASK 6E.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -144,6 +146,57 @@
 - **Exact-instance binding operator-confirmation collection template-gate
   schema:**
   `chatpad-exact-instance-binding-operator-confirmation-collection-template-gate-v1`.
+- **Exact-instance binding operator-confirmation collection result evidence:**
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`.
+- **Exact-instance binding operator-confirmation collection result manifest
+  section:**
+  `exact_instance_binding_operator_confirmation_collection_result`.
+- **Exact-instance binding operator-confirmation collection result schema:**
+  `chatpad-exact-instance-binding-operator-confirmation-collection-result-v1`.
+- **Exact-instance binding operator-confirmation collection result status:**
+  `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Exact-instance binding operator-confirmation collection result operator:**
+  `operator_handle=zaknin`, `operator_label=zak`.
+- **Exact-instance binding operator-confirmation collection result operator confirmation ID:**
+  `operator-confirmation-c445630fbb303c7c`.
+- **Exact-instance binding operator-confirmation collection result confirmation
+  window:**
+  `2026-07-08T00:00:00Z` to `2026-07-18T00:00:00Z`.
+- **Exact-instance binding operator-confirmation collection result canonical LF text SHA-256:**
+  `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`.
+- **Exact-instance binding operator-confirmation collection result accepted
+  target chain:**
+  `USB\VID_045E&PID_028E\1C21F10`;
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`;
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`.
+- **Exact-instance binding operator-confirmation collection result verification:**
+  `VERIFIED — result evidence, manifest section, safety fields, implementation status, and state vocabulary all validated read-only`.
+- **Exact-instance binding operator-confirmation collection result binding implementation status:**
+  `NOT_IMPLEMENTED` (BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED).
+- **Exact-instance binding operator-confirmation collection result binding implementation authorized:**
+  `false` (binding implementation and execution NOT authorized; no binding implementation or execution has been performed).
+- **Exact-instance binding operator-confirmation collection result execution
+  state:**
+  Operator confirmation collection is completed as evidence only. Operator
+  confirmation does not authorize binding implementation. Operator confirmation
+  does not authorize binding execution. Rollback/no-op package is still
+  required before mutation-capable work. Native execution remains
+  `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`. Execution authorized
+  remains `false`. Binding implementation status remains `NOT_IMPLEMENTED`.
+  Binding implementation authorized remains `false`.
+- **Exact-instance binding operator-confirmation collection result safety summary:**
+  `operator_confirmation_collected=true, mutation_performed=0, native_io_performed=0, driver_action_performed=0, artifact_access_performed=0, any_state_change=0, any_device_restarts=0, any_driver_installs=0, any_driver_uninstalls=0, any_driver_start_stops=0, any_driver_state_changes=0, binding_implementation_performed=0`.
+- **Exact-instance binding operator-confirmation collection result prohibited
+  action counts:**
+  SetupAPI/Newdev invocation count remains `0`. Windows mutation count remains
+  `0`. Driver action count remains `0`. Artifact/compile-output access remains
+  `false`/`0`. No live query, device query, native execution,
+  SetupAPI/Newdev, Windows mutation, driver action, or artifact access was
+  performed in TASK 6D.
+- **Exact-instance binding operator-confirmation collection result source template SHA-256:**
+  `7E167C035AFB5C7C8B1E54743C780569F1A49103BFAC1B86D9127664F469A5E3`.
+- **Exact-instance binding operator-confirmation collection result source design SHA-256:**
+  `54E69D047929D97C786079300890BF4837199B73DB8F756BCD61BC95449C12A4`.
 - **Exact-instance binding prior-driver/provider identity capture design-gate
   status:**
   `EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
