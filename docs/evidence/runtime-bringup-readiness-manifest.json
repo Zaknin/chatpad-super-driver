@@ -11452,5 +11452,34 @@
     "native_execution_status": "NOT_IMPLEMENTED",
     "blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
     "verification_statement": "This gate was opened in this task. No device query, identity capture, live observation, native execution, SetupAPI/Newdev, Windows mutation, driver action, artifact/compile-output access, or binding was performed. All source evidence chain statuses are accepted. All readiness checks passed. All safety fields are false or zero. The gate remains BLOCKED by BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED."
+  },
+  "exact_instance_binding_operator_confirmation_collection_design_gate": {
+    "schema": "chatpad-exact-instance-binding-operator-confirmation-collection-design-gate-v1",
+    "status": "EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+    "readiness_classification": "READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY",
+    "evidence_path": "docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json",
+    "evidence_sha256": "264087701C4A3A40DC043E86CDC3FB4AA34E712671C1E227F36A025D80765975",
+    "evidence_hash_policy": "canonical_lf_text",
+    "blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
+    "binding_implementation_authorized": false,
+    "execution_authorized": false,
+    "live_readiness": "BLOCKED",
+    "native_execution_status": "NOT_IMPLEMENTED",
+    "safety": {
+      "mutation_performed": false,
+      "windows_mutation_performed": false,
+      "driver_action_performed": false,
+      "native_io_performed": false,
+      "setupapi_newdev_invoked": false,
+      "device_state_changed": false,
+      "driver_state_changed": false,
+      "registry_changed": false,
+      "device_state_changes": 0,
+      "driver_state_changes": 0,
+      "device_restarts": 0,
+      "driver_installs": 0,
+      "driver_uninstalls": 0,
+      "driver_start_stops": 0
+    }
   }
 }

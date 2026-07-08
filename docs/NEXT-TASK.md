@@ -2,39 +2,25 @@
 
 ## Objective
 
-Perform an independent strict read-only audit of the final binding implementation
-readiness-gate commit.
+Independent strict read-only audit of the operator confirmation collection design-gate commit.
 
-This next task is not operator confirmation collection, rollback
-implementation, restore execution, binding implementation, binding execution,
-dry-run execution, native execution, SetupAPI/Newdev invocation, Windows
-mutation, driver action, live observation, hardware access, or artifact/
-compile-output access.
+This next task is not operator confirmation collection, rollback implementation, restore execution, binding implementation, binding execution, dry-run execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, live observation, hardware access, identity capture, device query, live query, or artifact/compile-output access.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
-- Required parent commit before this transition:
-  `8d9cf5a8c6e9daed670e0b48d3c39e25b8de8b48`.
-- Required commit subject:
-  `docs: add final implementation readiness gate evidence for exact-instance-binding`.
-- Required upstream:
-  `origin/feature/native-adapter-execution-envelope-verifier`.
+- Required parent commit before this transition: `6af8b8ea82213235e53c8125c7b0da6f929cefef`.
+- Required commit subject: `docs: add operator confirmation collection design gate evidence and manifest entry`.
+- Required upstream: `origin/feature/native-adapter-execution-envelope-verifier`.
 - Required synchronization and tree before audit: `0/0` and clean.
-- Final readiness gate evidence path:
-  `docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json`.
-- Final readiness gate evidence schema:
-  `chatpad-exact-instance-binding-final-implementation-readiness-gate-v1`.
-- Final readiness gate evidence status:
-  `EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
-- Readiness classification:
-  `READY_TO_PREPARE_BINDING_IMPLEMENTATION_AUTHORIZATION_TASK_ONLY`.
-- Manifest path:
-  `docs/evidence/runtime-bringup-readiness-manifest.json`.
-- Manifest schema:
-  `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: `50`.
+- Operator confirmation collection design-gate evidence path: `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`.
+- Operator confirmation collection design-gate evidence schema: `chatpad-exact-instance-binding-operator-confirmation-collection-design-gate-v1`.
+- Operator confirmation collection design-gate evidence status: `EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- Operator confirmation collection design-gate readiness classification: `READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY`.
+- Manifest path: `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
+- Manifest entries: `51`.
 - Blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Execution authorized: `false`.
 - Live readiness: `BLOCKED`.
@@ -52,117 +38,156 @@ compile-output access.
 - SetupAPI/Newdev invocation count: `0`.
 - Windows mutation count: `0`.
 - Driver action count: `0`.
+- Final readiness gate accepted: `EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- Final readiness gate readiness classification: `READY_TO_PREPARE_BINDING_IMPLEMENTATION_AUTHORIZATION_TASK_ONLY`.
+- Accepted target: `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`.
+- Canonical chain:
+  - `USB\VID_045E&PID_028E\1C21F10`
+  - `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`
+  - `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`
+- Shared ContainerId: `{828F4587-006F-5AD1-B169-6AF57905DFDE}`.
 
 ## Required Audit Points
 
-Verify the final readiness gate explicitly:
+Verify the operator confirmation collection design-gate explicitly:
 
-1. `accepted_target_chain` includes:
-   - `root_composite_xbox_controller_node` with InstanceId
-     `USB\VID_045E&PID_028E\1C21F10`
-   - `usb_hid_interface_child` with InstanceId
-     `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`
-   - `hid_game_controller_child` with InstanceId
-     `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`
+1. `schema` equals `chatpad-exact-instance-binding-operator-confirmation-collection-design-gate-v1`.
 
-2. `shared_container_id` equals `{828F4587-006F-5AD1-B169-6AF57905DFDE}`.
+2. `status` equals `EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
 
-3. `accepted_dry_run_summary` includes:
-   - `partial_vid_pid_candidate_count = 3`
-   - `usb_interface_partial_candidate_count = 1`
-   - `read_only_current_state_query_count = 4`
-   - `allowed_predicates_passed = 16/16`
+3. `readiness_classification` equals `READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY`.
 
-4. `target_identity_captured` includes:
-   - `name = USB Input Device`
-   - `class = HIDClass`
-   - `service = HidUsb`
+4. `accepted_target_chain` includes:
+   - `root_composite_xbox_controller_node` with InstanceId `USB\VID_045E&PID_028E\1C21F10`
+   - `usb_hid_interface_child` with InstanceId `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`
+   - `hid_game_controller_child` with InstanceId `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`
 
-5. `parent_identity_captured` includes:
-   - `name = Xbox 360 Controller for Windows`
-   - `class = XnaComposite`
-   - `service = xusb22`
+5. `shared_container_id` equals `{828F4587-006F-5AD1-B169-6AF57905DFDE}`.
 
-6. `child_identity_captured` includes:
-   - `name = HID-compliant game controller`
-   - `class = HIDClass`
+6. `accepted_target_instance_id` equals `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`.
 
-7. `unavailable_skipped_properties` recorded for all three nodes.
+7. `operator_confirmation_package_purpose` describes the minimum operator confirmation collection package required before binding implementation authorization.
 
-8. `final_readiness_checks` all `PASS` (30 checks total).
+8. `required_operator_confirmation_fields` contains exactly 13 fields as defined.
 
-9. `remaining_blocker_count = 12`.
+9. `operator_confirmation_rejection_no_op_rules` contains exactly 6 rules:
+   - CONFIRMED → authorization_task_proceeds_with_binding
+   - REJECTED → binding_implementation_authorized=false, authorization_task_terminated
+   - NO_OP → binding_implementation_authorized=false, authorization_task_terminated, no_action_taken
+   - PENDING_VERIFICATION → authorization_task_blocked_until_verified
+   - INSUFFICIENT_DATA → authorization_task_blocked_until_sufficient_data_provided
+   - MANUALLY_REVOKED → authorization_task_terminated, all prior authorizations invalidated
 
-10. `future_required_task_sequence` has 6 steps:
-    - Step 1: `INDEPENDENT_AUDIT_OF_FINAL_READINESS_GATE` (current task)
-    - Step 2: `BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN`
-    - Step 3: `COLLECT_OPERATOR_CONFIRMATION`
-    - Step 4: `IMPLEMENT_ROLLBACK_NO_OP_PACKAGE`
-    - Step 5: `BINDING_IMPLEMENTATION_EXECUTION`
-    - Step 6: `INDEPENDENT_AUDIT_OF_BINDING_EXECUTION`
+10. `required_rollback_no_op_package_fields` contains exactly 12 fields as defined.
+
+11. `future_prior_driver_provider_identity_requirements` contains exactly 8 requirements.
+
+12. `future_package_evidence_requirements` contains exactly 8 requirements.
+
+13. `future_package_audit_requirements` contains exactly 10 requirements.
+
+14. Source evidence chain entries (5 sources) all present with correct file paths, schemas, and statuses:
+    - `docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json` — `EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+    - `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json` — `EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+    - `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json` — `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`
+    - `docs/evidence/exact-instance-binding-dry-run-result.json` — `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`
+    - `docs/evidence/runtime-bringup-readiness-manifest.json` — `RUNTIME_BRINGUP_READINESS_MANIFEST_V4`
+
+15. `binding_implementation_status` equals `NOT_AUTHORIZED`.
+
+16. `binding_implementation_authorized` is `false`.
+
+17. `binding_execution_performed` is `false`.
+
+18. `native_execution` is `false`.
+
+19. `execution_authorized` is `false`.
+
+20. `live_readiness` is `false`.
+
+21. `blocker` equals `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+22. Safety fields: all `false`/`0` (mutation, windows_mutation, driver_action, native_io, setupapi_newdev, device_state_changed, driver_state_changed, registry_changed, driver_installed, driver_uninstalled, driver_started, driver_stopped, device_restarted, device_state_changes=0, driver_state_changes=0, device_restarts=0, driver_installs=0, driver_uninstalls=0, driver_start_stops=0).
+
+23. Manifest section `exact_instance_binding_operator_confirmation_collection_design_gate` present with:
+    - `schema` matches evidence file schema
+    - `status` matches evidence file status
+    - `readiness_classification` matches evidence file readiness
+    - `evidence_path` equals `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
+    - `evidence_sha256` equals canonical LF text hash of evidence file
+    - `blocker` equals `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`
+    - `execution_authorized` is `false`
+    - `live_readiness` is `BLOCKED`
+    - `native_execution_status` is `NOT_IMPLEMENTED`
+
+24. Prohibited statements all present and explicit:
+    - `current_task_does_not_collect_operator_confirmation_statement`
+    - `current_task_does_not_implement_rollback_statement`
+    - `current_task_does_not_perform_restore_statement`
+    - `current_task_does_not_authorize_binding_implementation_statement`
+    - `current_task_does_not_implement_binding_statement`
+    - `current_task_does_not_execute_binding_statement`
+    - `current_task_does_not_authorize_native_execution_statement`
+    - `current_task_does_not_authorize_setupapi_newdev_statement`
+    - `current_task_does_not_authorize_windows_mutation_statement`
+    - `current_task_does_not_authorize_driver_action_statement`
 
 ## Preconditions
 
-1. Follow `AGENTS.md`; verify exact branch, audit target commit identity,
-   subject, parent, upstream, remote equality, `0/0`, and clean tree/index.
+1. Follow `AGENTS.md`; verify exact branch, audit target commit identity, subject, parent, upstream, remote equality, `0/0`, and clean tree/index.
 2. Verify changed paths are limited to:
    - `docs/NEXT-TASK.md`
    - `docs/PROJECT-STATE.md`
    - `docs/RUNTIME-BRINGUP-READINESS.md`
    - `docs/WORKLOG.md`
    - `docs/evidence/runtime-bringup-readiness-manifest.json`
-   - `docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json`
-3. Confirm no tool, source, INF, project, solution, parser, verifier,
-   offline-suite, packaging, signing, staging, deployment, binary, artifact,
-   frozen-output, generated-output, or `legacy/` path changed.
+   - `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
+3. Confirm no tool, source, INF, project, solution, parser, verifier, offline-suite, packaging, signing, staging, deployment, binary, artifact, frozen-output, generated-output, or `legacy/` path changed.
 
 ## Audit Scope
 
-- Verify target commit Git identity, subject, parent, changed paths, and push
-  state.
-- Verify final readiness-gate evidence JSON and manifest JSON parse successfully.
-- Verify manifest evidence hash for the final readiness-gate evidence file matches
-  the canonical LF text hash.
-- Verify final readiness-gate evidence schema/status.
-- Verify readiness classification.
-- Verify accepted dry-run summary fields listed above.
-- Verify accepted three-node target chain and shared ContainerId.
-- Verify target InstanceId and captured target identity fields.
-- Verify captured parent and child identity fields.
-- Verify unavailable/skipped property reasons.
-- Verify final readiness checks all pass.
-- Verify remaining blockers count and future task sequence.
+- Verify target commit Git identity, subject, parent, changed paths, and push state.
+- Verify operator confirmation collection design-gate evidence JSON and manifest JSON parse successfully.
+- Verify manifest evidence hash for the operator confirmation collection design-gate evidence file matches the canonical LF text hash.
+- Verify operator confirmation collection design-gate evidence schema/status/readiness classification.
+- Verify source evidence chain references (final readiness gate, rollback package design gate, prior identity capture result, dry-run result, manifest).
+- Verify accepted target chain and shared ContainerId.
+- Verify captured target identity.
+- Verify captured parent/child identity.
+- Verify unavailable/skipped property summary.
+- Verify future operator confirmation package fields (13 required fields, 6 rejection/no-op rules, 12 rollback no-op fields, 8 prior driver provider requirements, 8 package evidence requirements, 10 package audit requirements).
+- Verify operator confirmation package preconditions.
+- Verify no operator confirmation collected.
+- Verify no rollback implemented.
+- Verify no restore performed.
+- Verify no binding implementation authorized/performed.
+- Verify no binding execution.
+- Verify no live query in this task.
+- Verify no device query in this task.
+- Verify no identity capture in this task.
+- Verify no native execution.
+- Verify no SetupAPI/Newdev invocation.
+- Verify no Windows mutation.
+- Verify no driver action.
+- Verify no artifact/compile-output access.
 - Verify live readiness remains `BLOCKED`.
 - Verify native execution remains `NOT_IMPLEMENTED`.
 - Verify execution authorized remains `false`.
+- Verify blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Safety Restrictions
 
-This audit is strict read-only. Do not collect operator confirmation. Do not
-implement rollback. Do not perform restore. Do not implement or execute
-binding. Do not perform new live observation. Do not run device query commands,
-hardware access commands, binding execution, dry-run execution, native adapter
-execution, SetupAPI/Newdev, verifier behavior tests, offline-suite behavior
-tests, the static parser, the full compile-output validator, generator, full
-exact/readiness suites, build, package, sign, install, load, bind, restore,
-restart, `pnputil`, `devcon`, driver/service mutation, or artifact/
-compile-output access.
+This audit is strict read-only. Do not collect operator confirmation. Do not implement rollback. Do not perform restore. Do not implement or execute binding. Do not perform new live observation. Do not run device query commands, hardware access commands, binding execution, dry-run execution, native adapter execution, SetupAPI/Newdev, verifier behavior tests, offline-suite behavior tests, the static parser, the full compile-output validator, generator, full exact/readiness suites, build, package, sign, install, load, bind, restore, restart, `pnputil`, `devcon`, driver/service mutation, or artifact/compile-output access.
 
 ## Acceptance Criteria
 
-- Git identity, subject, parent, changed paths, and content establish the exact
-  documentation/manifest-only readiness-gate transition without self-reference.
-- Final readiness-gate evidence JSON and manifest JSON parse successfully.
-- Readiness-gate evidence schema/status, readiness classification, and all
-  audit points above pass exactly.
+- Git identity, subject, parent, changed paths, and content establish the exact documentation/manifest-only operator confirmation collection design-gate transition without self-reference.
+- Operator confirmation collection design-gate evidence JSON and manifest JSON parse successfully.
+- Design-gate evidence schema/status/readiness classification, all audit points above pass exactly.
 - Manifest schema remains `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entry count remains `50`.
-- Manifest hash for
-  `docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json`
-  matches the evidence file.
-- Documentation consistency, changed-path safety, forbidden vocabulary scan,
-  added-line prohibited-action review, no-tool-file-change review, and
-  `git diff --check` pass.
+- Manifest entry count remains `51`.
+- Manifest hash for `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json` matches the evidence file canonical LF text hash.
+- Documentation consistency, changed-path safety, forbidden vocabulary scan, added-line prohibited-action review, no-tool-file-change review, and `git diff --check` pass.
 - Final Git status remains clean and synchronized `0/0`.
 
 ## Inspect First
@@ -173,5 +198,5 @@ compile-output access.
 4. `docs/NEXT-TASK.md`
 5. Latest `docs/WORKLOG.md` entry
 6. `docs/RUNTIME-BRINGUP-READINESS.md`
-7. `docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json`
+7. `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
 8. `docs/evidence/runtime-bringup-readiness-manifest.json`

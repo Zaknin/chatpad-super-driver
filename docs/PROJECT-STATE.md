@@ -126,6 +126,12 @@
 - **Exact-instance binding operator-confirmation and rollback/no-op package
   design-gate evidence:**
   `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`.
+- **Exact-instance binding operator-confirmation collection design-gate
+  status:**
+  `EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Exact-instance binding operator-confirmation collection design-gate
+  evidence:**
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`.
 - **Exact-instance binding prior-driver/provider identity capture design-gate
   status:**
   `EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.

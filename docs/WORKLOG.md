@@ -12712,12 +12712,12 @@
   readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
   binding implementation remains unauthorized and not implemented; execution
   authority remains false; artifact and compile-output I/O remain false.
-- **Commit and push:** Subject will be
+|- **Commit and push:** Subject will be
   `docs: remediate prior identity evidence shape`; push target is
   `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
   final response are authoritative for the resulting commit identity; this
   commit intentionally does not contain its own hash.
-- **Next task:** Independent strict read-only audit of the remediated
+|- **Next task:** Independent strict read-only audit of the remediated
   prior-driver/provider identity capture result commit, specifically verifying
   the added dry-run summary counters, narrowed `exact_commands_run`, separated
   supporting read-command fields, manifest hash update, unchanged captured
@@ -12726,3 +12726,130 @@
   rollback implementation, restore execution, binding implementation, binding
   execution, native execution, SetupAPI/Newdev invocation, Windows mutation,
   driver action, or artifact/compile-output access.
+
+## 2026-07-08T13:54+04:00 — Operator confirmation collection design gate (TASK 3D)
+
+- **Objective:** Open the operator confirmation collection design gate, generate
+  independent evidence JSON, update manifest, update NEXT-TASK.md to independent
+  strict read-only audit, update PROJECT-STATE.md, and append this worklog entry.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` /
+  `6af8b8ea82213235e53c8125c7b0da6f929cefef`.
+- **Continuity discrepancy:** None — prior TASK 3D entries (exact-instance binding
+  dry-run result, authorization design gate, operator-confirmation and rollback
+  package design gate, prior-driver/provider identity capture design gate, prior
+  capture result) all present and accurate.
+- **Implementation:** Generated evidence JSON
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
+  with schema
+  `chatpad-exact-instance-binding-operator-confirmation-collection-design-gate-v1`.
+  Status:
+  `EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+  Readiness:
+  `READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY`.
+  Verifier lane:
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+  Blocker:
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+  Safety fields all false/zero. Blocker field set. No prohibited-action statements.
+  All 27 structural validation checks passed.
+- **Files created:**
+  - `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
+    (258 lines, SHA-256
+    `264087701C4A3A40DC043E86CDC3FB4AA34E712671C1E227F36A025D80765975`).
+- **Files modified:**
+  - `docs/evidence/runtime-bringup-readiness-manifest.json` — added
+    `exact_instance_binding_operator_confirmation_collection_design_gate` entry
+    with evidence path, schema, status, readiness, and SHA-256.
+  - `docs/NEXT-TASK.md` — replaced with independent strict read-only audit of
+    the operator confirmation collection design gate (no implementation or
+    authorization).
+  - `docs/PROJECT-STATE.md` — appended operator confirmation collection design
+    gate status and evidence entries.
+- **Commands and verification:**
+  - JSON structural validation — 27/27 checks passed (schema, status, readiness,
+    verifier closeout, source evidence chain 5/5, target chain 3/3, operator
+    confirmation fields 13/13, rejection/no-op rules 6/6, rollback package fields
+    12/12, future requirements, safety fields).
+  - `git status --short` — 3 modified + 1 untracked as required.
+  - SHA-256 re-verification:
+    `264087701C4A3A40DC043E86CDC3FB4AA34E712671C1E227F36A025D80765975`.
+- **Safety result:** No operator confirmation was collected. No rollback was
+  implemented. No restore was performed. No binding implementation was authorized
+  or performed. No binding execution occurred. No new live observation, device
+  query, hardware access, native execution, native library load, entry-point
+  resolution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+  artifact access, compile-output access, compile-output hash verification, or
+  metadata parsing occurred. All prohibited-action statements remain explicit.
+- **Artifacts:** None generated.
+- **Git status:** 3 modified (manifest, NEXT-TASK, PROJECT-STATE), 1 untracked
+  (operator confirmation collection design-gate JSON). Pending: WORKLOG.md and
+  RUNTIME-BRINGUP-READINESS.md append/update.
+- **Commit and push:** Not yet committed. TASK 3E remains blocked until this
+  follow-up completes cleanly.
+
+## 2026-07-08T13:56+04:00 — TASK 3D follow-up: WORKLOG.md and RUNTIME-BRINGUP-READINESS.md (TASK 3D-FOLLOWUP)
+
+- **Objective:** Append TASK 3D entry to WORKLOG.md and insert operator
+  confirmation collection design-gate section into RUNTIME-BRINGUP-READINESS.md.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` /
+  `6af8b8ea82213235e53c7b0da6f929cefef`.
+- **WORKLOG.md:** Patches using ambiguous anchor
+  `"  driver action, or artifact/compile-output access."` failed because the
+  string matched twice. Switching to unique anchor at end of file (lines
+  12715-12728, last two bullets of prior-driver/provider identity capture audit).
+- **RUNTIME-BRINGUP-READINESS.md:** Insertion point confirmed between "Exact-Instance
+  Binding Operator-Confirmation And Rollback/No-Op Package Design Gate" (ending
+  line 1249) and "Exact-Instance Binding Prior-Driver/Provider Identity Capture
+  Design Gate" (line 1300).
+- **Files modified:**
+  - `docs/WORKLOG.md` — appended TASK 3D operator confirmation collection design
+    gate entry.
+  - `docs/RUNTIME-BRINGUP-READINESS.md` — inserted operator confirmation
+    collection design-gate section at line 1251.
+- **Pending:** `git diff --check` to verify whitespace, final status check.
+
+## 2026-07-08T13:58+04:00 — TASK 3D follow-up completed (TASK 3D-FOLLOWUP)
+
+- **Objective:** Append TASK 3D entry to WORKLOG.md and insert operator
+  confirmation collection design-gate section into RUNTIME-BRINGUP-READINESS.md.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` /
+  `6af8b8ea82213235e53c7b0da6f929cefef`.
+- **Investigation:** WORKLOG.md anchor `"  driver action, or artifact/compile-output access."`
+  matched twice. Switched to end-of-file anchor using the final two bullets
+  (lines 12715-12728) — unique to the prior-driver/provider identity capture
+  audit. RUNTIME-BRINGUP-READINESS.md insertion point confirmed at line 1251
+  between rollback package and prior-driver/provider sections.
+- **Files modified:**
+  - `docs/WORKLOG.md` — appended TASK 3D operator confirmation collection design
+    gate entry.
+  - `docs/RUNTIME-BRINGUP-READINESS.md` — inserted operator confirmation
+    collection design-gate section at line 1251 (between rollback package and
+    prior-driver/provider sections).
+- **Git status:**
+  - Modified: `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+    `docs/WORKLOG.md`, `docs/RUNTIME-BRINGUP-READINESS.md`,
+    `docs/evidence/runtime-bringup-readiness-manifest.json`.
+  - Untracked: `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`.
+- **Validation:**
+  - `git diff --check` — exit 0, no whitespace errors.
+  - Section count: 10 `## Exact-Instance Binding` headings (10 sections).
+  - Operator confirmation collection section present at line 1251, after
+    rollback package section at line 1219, before prior-driver/provider section
+    at line 1300.
+  - Evidence JSON SHA-256 verified:
+    `264087701C4A3A40DC043E86CDC3FB4AA34E712671C1E227F36A025D80765975`.
+  - Manifest entry verified: path points to
+    `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`.
+  - Safety fields all false/zero. No wording promotes live readiness or
+    authorizes confirmation collection, rollback, restore, binding, mutation,
+    native IO, SetupAPI/Newdev, driver action, artifact access, or
+    compile-output access.
+- **Files changed (6 total):**
+  1. `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json` (untracked new)
+  2. `docs/evidence/runtime-bringup-readiness-manifest.json` (modified)
+  3. `docs/NEXT-TASK.md` (modified)
+  4. `docs/PROJECT-STATE.md` (modified)
+  5. `docs/WORKLOG.md` (modified)
+  6. `docs/RUNTIME-BRINGUP-READINESS.md` (modified)
+- **Remaining:** TASK 3E (final validation, commit, push) — blocked until
+  explicitly instructed.

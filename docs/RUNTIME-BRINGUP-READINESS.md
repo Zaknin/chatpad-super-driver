@@ -1248,6 +1248,55 @@ binding implementation status remains `NOT_IMPLEMENTED`, execution authorized
 remains `false`, and the blocker remains
 `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+## Exact-Instance Binding Operator Confirmation Collection Design Gate
+
+The exact-instance binding operator confirmation collection design gate is opened
+with status
+`EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and readiness classification
+`READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY`
+and evidence path
+`docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`.
+This transition is documentation/manifest-only. It defines the future
+operator confirmation collection contract required before any future exact-instance
+binding implementation authorization can be considered, but it does not collect
+confirmation, does not authorize binding implementation or execution, does not
+authorize rollback implementation or execution, does not authorize restore
+execution, does not authorize native execution, does not authorize SetupAPI/Newdev
+invocation, and does not authorize any Windows/device/driver/registry mutation.
+It does not promote live runtime bring-up readiness.
+
+The design gate records the three-node target chain (root composite Xbox
+controller node `USB\\VID_045E&PID_028E\\1C21F10`, USB HID interface child
+`USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`, HID game controller child
+`HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000`), the shared ContainerId
+`{828F4587-006F-5AD1-B169-6AF57905DFDE}`, the accepted target InstanceId
+`USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`, the minimum operator
+confirmation collection contract (13 required fields), rejection/no-op rules
+(6 rules: CONFIRMED proceeds to authorization, REJECTED terminates with
+authorization_task_terminated, NO_OP terminates with no_action_taken,
+PENDING_VERIFICATION blocks until verified, INSUFFICIENT_DATA blocks until
+sufficient data provided, MANUALLY_REVOKED terminates and invalidates all prior
+authorizations), rollback/no-op package fields (12 fields), future prior
+driver/provider identity requirements (8 requirements), future package evidence
+requirements (8 requirements), and future package audit requirements (10
+requirements). All source evidence chain references (5 sources) are recorded
+with their schema/status/evidence paths. All safety fields remain false/zero.
+All prohibited-action statements are explicit.
+
+No actual operator confirmation was collected. No rollback was implemented. No
+restore was performed. No binding implementation was authorized. No binding
+implementation was performed. No binding execution occurred. No new live
+observation, device query, hardware access, native execution, native library
+load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
+driver action, artifact access, compile-output access, compile-output hash
+verification, or metadata parsing occurred. Actual binding remains unauthorized.
+Future binding requires a separate task after independent audit. Live readiness
+remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, binding
+implementation status remains `NOT_IMPLEMENTED`, execution authorized remains
+`false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Exact-Instance Binding Prior-Driver/Provider Identity Capture Design Gate
 
 The prior-driver/provider identity capture design gate is opened with status
