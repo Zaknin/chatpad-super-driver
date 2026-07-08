@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-08 (exact-instance binding implementation authorization design gate opened)*
+*Last updated: 2026-07-08 (operator-confirmation and rollback/no-op package design gate opened)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: open binding implementation authorization gate`,
-  starting commit `3ffe4d5e7cc33ec454b0f145353a86c8cd07f7b6`.
+  expected subject `docs: design operator rollback package gate`, starting
+  commit `e86dfdcf5cbc01b6724f7736657eb9d9c7323540`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -120,6 +120,12 @@
   `EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
 - **Exact-instance binding implementation authorization design-gate evidence:**
   `docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json`.
+- **Exact-instance binding operator-confirmation and rollback/no-op package
+  design-gate status:**
+  `EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Exact-instance binding operator-confirmation and rollback/no-op package
+  design-gate evidence:**
+  `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`.
 - **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
@@ -499,10 +505,36 @@ native execution remains `NOT_IMPLEMENTED`, binding implementation status
 remains `NOT_IMPLEMENTED`, execution authorized remains `false`, and the
 blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+The operator-confirmation and rollback/no-op package design gate is opened
+with status
+`EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+in
+`docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`.
+This transition is documentation/manifest-only. It defines the future
+operator-confirmation package and rollback/no-op package required before any
+future exact-instance binding implementation can be separately authorized. It
+is not operator confirmation collection, rollback implementation, restore
+execution, binding implementation authorization, binding implementation,
+binding execution, native execution authorization, SetupAPI/Newdev
+authorization, Windows mutation authorization, or driver action authorization.
+
+No actual operator confirmation was collected. No rollback was implemented. No
+restore was performed. No binding implementation occurred. No binding
+execution occurred. No dry-run was performed in this task. No new live
+observation, device query, hardware access, native execution, native library
+load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
+driver action, artifact opening, artifact/compile-output I/O, compile-output
+hash verification, or metadata parsing occurred. Actual binding remains
+unauthorized. Future binding requires a separate task after independent audit.
+Live readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`,
+binding implementation status remains `NOT_IMPLEMENTED`, execution authorized
+remains `false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: 46; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Manifest entries: 47; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Scope-boundary commit
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
   enforced by the generator and validator.
@@ -619,6 +651,24 @@ blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
   execution, no native library load, no entry-point resolution, no
   SetupAPI/Newdev invocation, no Windows mutation, no driver action, and no
   artifact/compile-output access.
+- Exact-instance binding operator-confirmation and rollback/no-op package
+  design gate is recorded with schema
+  `chatpad-exact-instance-binding-operator-rollback-package-design-gate-v1`,
+  status
+  `EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  and evidence path
+  `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`.
+  It records the accepted dry-run result, accepted three-node target chain,
+  required operator-confirmation fields, operator-confirmation rejection/no-op
+  rules, rollback/no-op package purpose and fields, future prior-driver/
+  provider identity requirements, future package evidence requirements, and
+  future package audit requirements. It also records no actual operator
+  confirmation collected, no rollback implemented, no restore performed, no
+  binding implementation, no binding execution, no dry-run in this task, no
+  new live observation, no device query, no hardware access, no native
+  execution, no native library load, no entry-point resolution, no
+  SetupAPI/Newdev invocation, no Windows mutation, no driver action, and no
+  artifact/compile-output access.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -654,6 +704,11 @@ blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
   implementation remains unauthorized until a separate task after independent
   audit of this authorization design-gate commit. Binding implementation
   status remains `NOT_IMPLEMENTED`.
+- The operator-confirmation and rollback/no-op package design gate is now
+  opened, but no actual operator confirmation was collected, no rollback was
+  implemented, no restore was performed, and future binding implementation
+  remains unauthorized until a separate task after independent audit of this
+  package design-gate commit.
 - Audit acceptance does not authorize native execution, real DLL or
   compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
@@ -661,24 +716,26 @@ blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Next Task
 
-Perform an independent strict read-only audit of this exact-instance binding
-implementation authorization design-gate commit. Derive its exact identity
-from Git, require subject `docs: open binding implementation authorization
-gate`, starting commit `3ffe4d5e7cc33ec454b0f145353a86c8cd07f7b6`,
-authorization design-gate evidence schema
-`chatpad-exact-instance-binding-implementation-authorization-design-gate-v1`,
-authorization design-gate status
-`EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
-source dry-run result, execution-gate, dry-run design, design-gate, analysis,
-and observation evidence references, accepted dry-run result, accepted
-three-node target chain, target InstanceId, future authorization purpose,
-future implementation target, required source evidence chain, future
-authorization preconditions, rejection/no-op conditions, operator confirmation
-package requirements, rollback/no-op plan requirements, future authorization
-evidence requirements, and future audit requirements. The audit must confirm
-no binding implementation, binding execution, dry-run in this task, new live
-observation, device query, hardware access, native execution, SetupAPI/Newdev
-invocation, native library load, entry-point resolution, Windows mutation,
-driver action, or artifact/compile-output access occurred, and that live
-readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
-execution authorized remains `false`.
+Perform an independent strict read-only audit of this operator-confirmation and
+rollback/no-op package design-gate commit. Derive its exact identity from Git,
+require subject `docs: design operator rollback package gate`, starting commit
+`e86dfdcf5cbc01b6724f7736657eb9d9c7323540`, package design-gate evidence
+schema
+`chatpad-exact-instance-binding-operator-rollback-package-design-gate-v1`,
+package design-gate status
+`EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+source authorization design-gate, dry-run result, execution-gate, dry-run
+design, design-gate, analysis, and observation evidence references, accepted
+dry-run result, accepted three-node target chain, target InstanceId,
+operator-confirmation package purpose, required operator-confirmation fields,
+operator-confirmation rejection/no-op rules, rollback/no-op package purpose,
+required rollback/no-op package fields, future prior-driver/provider identity
+requirements, future package evidence requirements, and future package audit
+requirements. The audit must confirm no actual operator confirmation was
+collected, no rollback was implemented, no restore was performed, no binding
+implementation, binding execution, dry-run in this task, new live observation,
+device query, hardware access, native execution, SetupAPI/Newdev invocation,
+native library load, entry-point resolution, Windows mutation, driver action,
+or artifact/compile-output access occurred, and that live readiness remains
+`BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and execution
+authorized remains `false`.

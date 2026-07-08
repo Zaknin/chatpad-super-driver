@@ -850,3 +850,29 @@ load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
 driver action, driver build/sign/package/install/load/bind/restore/restart,
 or artifact/compile-output access is authorized or performed by this gate.
 Future binding still requires a separate task after independent audit.
+
+The exact-instance binding operator-confirmation and rollback/no-op package
+design gate is now opened with status
+`EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and evidence path
+`docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`.
+It is documentation/manifest-only. It defines the future
+operator-confirmation package and rollback/no-op package required before any
+future binding implementation can be separately authorized, but it does not
+collect operator confirmation, implement rollback, perform restore, authorize
+binding implementation, implement binding, execute binding, authorize native
+execution, authorize SetupAPI/Newdev, authorize Windows mutation, or authorize
+driver action.
+
+No actual operator confirmation was collected. No rollback was implemented. No
+restore was performed. No binding implementation occurred. No binding
+execution occurred. No dry-run was performed in this task. No new live
+observation, device query, hardware access, native execution, native library
+load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
+driver action, driver build/sign/package/install/load/bind/restore/restart,
+or artifact/compile-output access is authorized or performed by this package
+design gate. Future binding still requires a separate task after independent
+audit. Live readiness remains `BLOCKED`, native execution remains
+`NOT_IMPLEMENTED`, binding implementation status remains `NOT_IMPLEMENTED`,
+execution authorized remains `false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

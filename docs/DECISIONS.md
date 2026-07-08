@@ -4,6 +4,38 @@ Durable technical or workflow decisions only. Each entry includes date, decision
 
 ---
 
+## 2026-07-08 - Open an operator-confirmation and rollback/no-op package design gate without collecting confirmation
+
+**Decision:** Record
+`EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+as a documentation/manifest-only design gate for the future
+operator-confirmation package and rollback/no-op package required before any
+exact-instance binding implementation can be separately authorized.
+
+**Rationale:** The accepted dry-run result and implementation authorization
+design gate identify one exact USB HID interface target, but future
+mutation-capable implementation still needs a human confirmation package,
+rollback/no-op package, prior-driver/provider identity requirements, evidence
+duties, and independent audit boundary. Recording those package requirements
+keeps the next step auditable without collecting operator confirmation or
+turning design evidence into binding authority.
+
+**Alternatives rejected:** Collecting operator confirmation in this task;
+implementing rollback or restore; implementing or executing binding;
+performing a new dry-run; performing fresh live observation or device query;
+loading native libraries; resolving entry points; invoking SetupAPI/Newdev;
+mutating Windows; performing driver actions; or opening artifact or
+compile-output binaries.
+
+**Consequences:** Future binding implementation remains unauthorized and must
+be separately tasked after independent strict read-only audit of this package
+design-gate commit. Operator confirmation remains uncollected; rollback and
+restore remain unimplemented; live readiness remains `BLOCKED`; native
+execution remains `NOT_IMPLEMENTED`; binding implementation remains
+`NOT_IMPLEMENTED`; execution authorization and binding implementation
+authorization remain false; artifact and compile-output I/O remain false; and
+all native/device/hardware/Windows/driver counters remain zero.
+
 ## 2026-07-07 - Open a dry-run execution gate without executing it
 
 **Decision:** Record

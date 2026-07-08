@@ -1216,25 +1216,60 @@ native execution remains `NOT_IMPLEMENTED`, binding implementation status
 remains `NOT_IMPLEMENTED`, execution authorized remains `false`, and the
 blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
-## Exact next task
+## Exact-Instance Binding Operator-Confirmation And Rollback/No-Op Package Design Gate
 
-Perform an independent strict read-only audit of this exact-instance binding
-implementation authorization design-gate commit. Derive its exact identity
-from Git; require subject `docs: open binding implementation authorization
-gate`, starting commit `3ffe4d5e7cc33ec454b0f145353a86c8cd07f7b6`,
-authorization design-gate evidence schema
-`chatpad-exact-instance-binding-implementation-authorization-design-gate-v1`,
-authorization design-gate status
-`EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
-source dry-run result evidence, source execution-gate evidence, source dry-run
-design evidence, source design-gate evidence, source analysis evidence, source
-observation evidence, accepted dry-run result, accepted three-node target
-chain, target InstanceId, future authorization purpose, future implementation
-target, required source evidence chain, future authorization preconditions,
-rejection/no-op conditions, operator confirmation package requirements,
-rollback/no-op plan requirements, future authorization evidence requirements,
-future audit requirements, and unchanged blocked state. The audit must confirm
-no binding implementation, binding execution, dry-run in this task, new live
+The operator-confirmation and rollback/no-op package design gate is opened
+with status
+`EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+and evidence path
+`docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json`.
+This transition is documentation/manifest-only. It defines the future
+operator-confirmation package and rollback/no-op package required before any
+future exact-instance binding implementation can be separately authorized, but
+it is not implementation authorization and it is not execution authorization.
+
+The package design records the required future confirmation fields, expiry and
+host/session binding expectations, accepted target identity, accepted dry-run
+and authorization design-gate evidence references and hashes, rejection/no-op
+rules, rollback/no-op package references, future prior-driver/provider identity
+requirements, future package evidence duties, and independent audit
+requirements.
+
+No actual operator confirmation was collected. No rollback was implemented. No
+restore was performed. No binding implementation occurred. No binding
+execution occurred. No dry-run was performed in this task. No new live
 observation, device query, hardware access, native execution, native library
 load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
-driver action, or artifact/compile-output access was authorized or performed.
+driver action, artifact access, compile-output access, compile-output hash
+verification, or metadata parsing occurred. Actual binding remains
+unauthorized. Future binding requires a separate task after independent audit.
+Live readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`,
+binding implementation status remains `NOT_IMPLEMENTED`, execution authorized
+remains `false`, and the blocker remains
+`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+## Exact next task
+
+Perform an independent strict read-only audit of this operator-confirmation and
+rollback/no-op package design-gate commit. Derive its exact identity from Git;
+require subject `docs: design operator rollback package gate`, starting commit
+`e86dfdcf5cbc01b6724f7736657eb9d9c7323540`, package design-gate evidence
+schema
+`chatpad-exact-instance-binding-operator-rollback-package-design-gate-v1`,
+package design-gate status
+`EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+source authorization design-gate evidence, source dry-run result evidence,
+source execution-gate evidence, source dry-run design evidence, source
+design-gate evidence, source analysis evidence, source observation evidence,
+accepted dry-run result, accepted three-node target chain, target InstanceId,
+operator-confirmation package purpose, required operator-confirmation fields,
+operator-confirmation rejection/no-op rules, rollback/no-op package purpose,
+required rollback/no-op package fields, future prior-driver/provider identity
+requirements, future package evidence requirements, future package audit
+requirements, and unchanged blocked state. The audit must confirm no actual
+operator confirmation was collected, no rollback was implemented, no restore
+was performed, no binding implementation, binding execution, dry-run in this
+task, new live observation, device query, hardware access, native execution,
+native library load, entry-point resolution, SetupAPI/Newdev invocation,
+Windows mutation, driver action, or artifact/compile-output access was
+authorized or performed.
