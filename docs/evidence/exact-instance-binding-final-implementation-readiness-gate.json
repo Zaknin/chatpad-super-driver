@@ -1,0 +1,369 @@
+{
+  "schema": "chatpad-exact-instance-binding-final-implementation-readiness-gate-v1",
+  "status": "EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+  "readiness_classification": "READY_TO_PREPARE_BINDING_IMPLEMENTATION_AUTHORIZATION_TASK_ONLY",
+  "starting_commit": "5fa638b3dce686e64d10952a370d8475b8cacc7a",
+  "branch": "feature/native-adapter-execution-envelope-verifier",
+  "generated_utc": "2026-07-08T05:45:00Z",
+  "source_evidence_chain": [
+    {
+      "name": "live-readonly-equipment-observation",
+      "path": "docs/evidence/live-readonly-equipment-observation.json",
+      "status": "LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO",
+      "accepted": true
+    },
+    {
+      "name": "exact-instance-binding-analysis",
+      "path": "docs/evidence/exact-instance-binding-analysis.json",
+      "status": "EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION",
+      "accepted": true
+    },
+    {
+      "name": "implementation-design-gate",
+      "path": "docs/evidence/exact-instance-binding-implementation-design-gate.json",
+      "status": "EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION",
+      "accepted": true
+    },
+    {
+      "name": "dry-run-design",
+      "path": "docs/evidence/exact-instance-binding-dry-run-design.json",
+      "status": "EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO",
+      "accepted": true
+    },
+    {
+      "name": "dry-run-execution-gate",
+      "path": "docs/evidence/exact-instance-binding-dry-run-execution-gate.json",
+      "status": "EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO",
+      "accepted": true
+    },
+    {
+      "name": "dry-run-result",
+      "path": "docs/evidence/exact-instance-binding-dry-run-result.json",
+      "status": "DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY",
+      "accepted": true
+    },
+    {
+      "name": "implementation-authorization-design-gate",
+      "path": "docs/evidence/exact-instance-binding-implementation-authorization-design-gate.json",
+      "status": "EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+      "accepted": true
+    },
+    {
+      "name": "operator-rollback-package-design-gate",
+      "path": "docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json",
+      "status": "EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+      "accepted": true
+    },
+    {
+      "name": "prior-driver-provider-identity-capture-design-gate",
+      "path": "docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json",
+      "status": "EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+      "accepted": true
+    },
+    {
+      "name": "prior-driver-provider-identity-capture-result",
+      "path": "docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json",
+      "status": "PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO",
+      "accepted": true
+    }
+  ],
+  "source_evidence_chain_complete": true,
+  "source_evidence_chain_count": 10,
+  "source_evidence_chain_all_accepted": true,
+  "accepted_target_instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+  "accepted_target_chain": [
+    {
+      "role": "root_composite_xbox_controller_node",
+      "instance_id": "USB\\VID_045E&PID_028E\\1C21F10"
+    },
+    {
+      "role": "usb_hid_interface_child",
+      "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00"
+    },
+    {
+      "role": "hid_game_controller_child",
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000"
+    }
+  ],
+  "shared_container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+  "target_chain_stable": true,
+  "target_chain_stable_reason": "All three nodes share ContainerId {828F4587-006F-5AD1-B169-6AF57905DFDE} across all source evidence.",
+  "accepted_dry_run_summary": {
+    "status": "DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY",
+    "present_device_count": 322,
+    "relevant_candidate_count": 3,
+    "exact_target_candidate_count": 1,
+    "partial_vid_pid_candidate_count": 3,
+    "usb_interface_partial_candidate_count": 1,
+    "allowed_predicates_passed": "16/16",
+    "rejection_predicates_triggered": 0,
+    "read_only_current_state_query_count": 4,
+    "no_mutation": true,
+    "no_native_io": true,
+    "accepted": true
+  },
+  "target_identity_captured": {
+    "name": "USB Input Device",
+    "class": "HIDClass",
+    "service": "HidUsb",
+    "provider": "Microsoft",
+    "driver_version": "10.0.26100.8521",
+    "driver_key": "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\\0086",
+    "inf_name_or_path_identifier": "input.inf",
+    "hardware_ids_include": [
+      "USB\\VID_045E&PID_028E&IG_00"
+    ],
+    "captured_from": "docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json",
+    "captured_status": "PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO"
+  },
+  "parent_identity_captured": {
+    "name": "Xbox 360 Controller for Windows",
+    "name_includes": "Xbox 360 Controller for Windows",
+    "class": "XnaComposite",
+    "service": "xusb22",
+    "provider": "Microsoft",
+    "driver_version": "10.0.26100.8521",
+    "inf_name_or_path_identifier": "xusb22.inf",
+    "captured_from": "docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json",
+    "captured_status": "PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO"
+  },
+  "child_identity_captured": {
+    "name": "HID-compliant game controller",
+    "name_includes": "HID-compliant game controller",
+    "class": "HIDClass",
+    "provider": "Microsoft",
+    "driver_version": "10.0.26100.8521",
+    "inf_name_or_path_identifier": "input.inf",
+    "service": "",
+    "service_unavailable": true,
+    "captured_from": "docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json",
+    "captured_status": "PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO"
+  },
+  "unavailable_skipped_properties": [
+    {
+      "instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+      "field": "full_inf_path",
+      "reason": "Skipped by safety scope; INF file was not opened."
+    },
+    {
+      "instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+      "field": "full_inf_path",
+      "reason": "Skipped by safety scope; INF file was not opened."
+    },
+    {
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "field": "service",
+      "reason": "DEVPKEY_Device_Service was unavailable in returned PnP properties."
+    },
+    {
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "field": "compatible_ids",
+      "reason": "DEVPKEY_Device_CompatibleIds was returned as an empty array."
+    },
+    {
+      "instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+      "field": "full_inf_path",
+      "reason": "Skipped by safety scope; INF file was not opened."
+    },
+    {
+      "instance_id": "accepted_chain",
+      "field": "driver_file_hashes",
+      "reason": "Skipped by explicit prohibition; driver files were not read or hashed."
+    },
+    {
+      "instance_id": "accepted_chain",
+      "field": "inf_file_contents",
+      "reason": "Skipped by explicit prohibition; INF files were not opened."
+    }
+  ],
+  "unavailable_properties_recorded": true,
+  "operator_rollback_design_accepted": true,
+  "operator_rollback_design_path": "docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json",
+  "prior_identity_capture_result_accepted": true,
+  "prior_identity_capture_result_path": "docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json",
+  "final_readiness_checks": {
+    "accepted_target_chain_present": "PASS",
+    "shared_container_id_stable": "PASS",
+    "target_instance_id_stable": "PASS",
+    "target_class_HIDClass": "PASS",
+    "target_service_HidUsb": "PASS",
+    "target_hardware_ids_include_USB_VID_045E_PID_028E_IG_00": "PASS",
+    "dry_run_result_accepted": "PASS",
+    "no_dry_run_rejection_predicates_triggered": "PASS",
+    "target_provider_version_key_inf_captured": "PASS",
+    "parent_identity_captured": "PASS",
+    "child_identity_captured": "PASS",
+    "unavailable_skipped_properties_recorded": "PASS",
+    "operator_rollback_design_accepted": "PASS",
+    "prior_identity_capture_result_accepted": "PASS",
+    "source_evidence_chain_complete": "PASS",
+    "no_operator_confirmation_collected": "PASS",
+    "no_rollback_implemented": "PASS",
+    "no_restore_performed": "PASS",
+    "no_binding_implementation_authorized": "PASS",
+    "no_binding_implementation_performed": "PASS",
+    "no_binding_execution_performed": "PASS",
+    "no_live_query_in_this_task": "PASS",
+    "no_new_identity_capture_in_this_task": "PASS",
+    "no_native_execution": "PASS",
+    "no_setupapi_newdev": "PASS",
+    "no_windows_mutation": "PASS",
+    "no_driver_action": "PASS",
+    "no_artifact_or_compile_output_access": "PASS",
+    "live_readiness_remains_BLOCKED": "PASS",
+    "native_execution_remains_NOT_IMPLEMENTED": "PASS",
+    "execution_authorized_remains_false": "PASS",
+    "blocker_remains_BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED": "PASS"
+  },
+  "readiness_checks_summary": {
+    "total": 30,
+    "passed": 30,
+    "failed": 0,
+    "all_passed": true
+  },
+  "remaining_blockers": [
+    {
+      "id": "BLK_01",
+      "description": "Independent audit of this readiness gate is pending",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_02",
+      "description": "Operator confirmation not collected",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_03",
+      "description": "Rollback/no-op result package not executed/accepted yet, if required by next contract",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_04",
+      "description": "Binding implementation not authorized",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_05",
+      "description": "Binding implementation not implemented",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_06",
+      "description": "Binding execution not authorized",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_07",
+      "description": "Native adapter execution NOT_IMPLEMENTED",
+      "severity": "required",
+      "status": "blocked"
+    },
+    {
+      "id": "BLK_08",
+      "description": "Live readiness BLOCKED",
+      "severity": "required",
+      "status": "blocked"
+    },
+    {
+      "id": "BLK_09",
+      "description": "SetupAPI/Newdev unauthorized",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_10",
+      "description": "Windows mutation unauthorized",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_11",
+      "description": "Driver action unauthorized",
+      "severity": "required",
+      "status": "pending"
+    },
+    {
+      "id": "BLK_12",
+      "description": "Artifact/compile-output access unauthorized",
+      "severity": "required",
+      "status": "pending"
+    }
+  ],
+  "remaining_blocker_count": 12,
+  "remaining_blocker_status_summary": {
+    "blocked": 2,
+    "pending": 10
+  },
+  "future_required_task_sequence": [
+    {
+      "step": 1,
+      "task": "INDEPENDENT_AUDIT_OF_FINAL_READINESS_GATE",
+      "description": "Strict read-only audit of this final-implementation-readiness-gate commit",
+      "prerequisite": "none"
+    },
+    {
+      "step": 2,
+      "task": "BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN",
+      "description": "Design the future binding implementation authorization contract (operator confirmation, rollback/no-op, evidence)",
+      "prerequisite": "step 1 passes"
+    },
+    {
+      "step": 3,
+      "task": "COLLECT_OPERATOR_CONFIRMATION",
+      "description": "Collect explicit operator confirmation package before mutation-capable implementation is considered",
+      "prerequisite": "step 2 passes"
+    },
+    {
+      "step": 4,
+      "task": "IMPLEMENT_ROLLBACK_NO_OP_PACKAGE",
+      "description": "Implement rollback/no-op package for safe fallback before any mutation",
+      "prerequisite": "step 3 passes"
+    },
+    {
+      "step": 5,
+      "task": "BINDING_IMPLEMENTATION_EXECUTION",
+      "description": "Execute binding implementation only after all prior steps pass and native adapter execution is implemented",
+      "prerequisite": "steps 1-4 pass AND BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED resolved"
+    },
+    {
+      "step": 6,
+      "task": "INDEPENDENT_AUDIT_OF_BINDING_EXECUTION",
+      "description": "Strict read-only audit of binding execution results",
+      "prerequisite": "step 5 completes"
+    }
+  ],
+  "final_binding_implementation_readiness_gate_opened": true,
+  "operator_confirmation_collected": false,
+  "rollback_implemented": false,
+  "restore_performed": false,
+  "binding_implementation_authorized": false,
+  "binding_implementation_performed": false,
+  "binding_execution_performed": false,
+  "live_query_performed_in_this_task": false,
+  "prior_identity_capture_performed_in_this_task": false,
+  "dry_run_performed_in_this_task": false,
+  "new_live_observation_performed": false,
+  "device_query_performed_in_this_task": false,
+  "hardware_access_performed": false,
+  "native_library_load_performed": false,
+  "native_library_load_count": 0,
+  "entry_point_resolution_performed": false,
+  "entry_point_resolution_count": 0,
+  "setupapi_newdev_invocation_performed": false,
+  "setupapi_newdev_invocation_count": 0,
+  "windows_mutation_performed": false,
+  "windows_mutation_count": 0,
+  "driver_action_performed": false,
+  "driver_action_count": 0,
+  "artifact_opening_performed": false,
+  "artifact_compile_output_io_performed": false,
+  "compile_output_hash_verification_performed": false,
+  "metadata_parsing_performed": false,
+  "verification_statement": "This gate was opened in this task. No device query, identity capture, live observation, native execution, SetupAPI/Newdev, Windows mutation, driver action, artifact/compile-output access, or binding was performed. All source evidence chain statuses are accepted. All readiness checks passed. All safety fields are false or zero. The gate remains BLOCKED by BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED."
+}
