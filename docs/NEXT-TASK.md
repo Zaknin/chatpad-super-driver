@@ -2,36 +2,37 @@
 
 ## Objective
 
-TASK 6F-RERUN — independent read-only audit of committed operator confirmation collection result after stale-doc remediation.
+TASK 6F-RERUN-2 — independent read-only audit after dynamic-head wording remediation
 
 This task is audit-only. It must validate the committed operator confirmation
-collection result state after TASK 6F-REMEDIATION repaired stale continuation
-docs. Do not modify files, stage, commit, push, collect a new operator
-confirmation, ask the operator to confirm, authorize binding implementation,
-implement binding, execute binding, implement rollback, perform restore, run a
-live or device query, perform identity capture, run native execution, invoke
-SetupAPI/Newdev, mutate Windows, perform driver action, access artifacts, or
-access compile outputs.
+collection result state after TASK 6F-REMEDIATION-2 removed stale dynamic HEAD
+wording from `docs/PROJECT-STATE.md`. Do not modify files, stage, commit,
+push, collect a new operator confirmation, ask the operator to confirm,
+authorize binding implementation, implement binding, execute binding, implement
+rollback, perform restore, run a live or device query, perform identity
+capture, run native execution, invoke SetupAPI/Newdev, mutate Windows, perform
+driver action, access artifacts, or access compile outputs.
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`
 - Required branch: `feature/native-adapter-execution-envelope-verifier`
-- Required starting commit: the TASK 6F-REMEDIATION commit created after
-  `c423ced463f3bdf4cb2a295f19e687278db798e3`.
+- Required starting commit: the TASK 6F-REMEDIATION-2 commit created after
+  `8dd805e5c3de50b691824b7334733e0c9ea11cdc`.
+- The actual Git HEAD, parent, subject, upstream sync, and clean status must
+  be verified from Git, not inferred from dynamic wording in
+  `docs/PROJECT-STATE.md`.
 - TASK 6E result commit:
   `c423ced463f3bdf4cb2a295f19e687278db798e3`
   (`docs: record operator confirmation collection result`).
-- TASK 6E parent:
-  `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`.
-- TASK 6E was committed and pushed to
-  `origin/feature/native-adapter-execution-envelope-verifier`.
-- Final TASK 6E git status was clean and upstream ahead/behind was `0/0`.
-- TASK 6F failed only because stale continuation docs still described TASK 6E
-  as pending and uncommitted.
-- TASK 6F-REMEDIATION repaired `docs/PROJECT-STATE.md` and this file only for
-  stale continuation state, and appended the remediation to `docs/WORKLOG.md`.
-- No evidence JSON or manifest files were changed by TASK 6F-REMEDIATION.
+- TASK 6F stale-continuation remediation commit:
+  `8dd805e5c3de50b691824b7334733e0c9ea11cdc`
+  (`docs: repair operator confirmation audit continuation docs`).
+- TASK 6F-RERUN failed only because `docs/PROJECT-STATE.md` retained stale
+  dynamic HEAD/current-parent wording.
+- TASK 6F-REMEDIATION-2 removes the dynamic HEAD wording and keeps historical
+  task commits as historical references only.
+- No evidence JSON or manifest files were changed by TASK 6F-REMEDIATION-2.
 - Live readiness remains `BLOCKED`.
 - Native execution remains `NOT_IMPLEMENTED`.
 - Execution authorized remains `false`.
@@ -56,35 +57,36 @@ access compile outputs.
   - `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`
   - `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`
 
-## TASK 6F-RERUN Audit Scope
+## TASK 6F-RERUN-2 Audit Scope
 
 Validate all of the following read-only:
 
-1. Current commit identity: branch, HEAD, parent, subject, and changed files.
-2. Remote sync: upstream ahead/behind is `0/0`.
-3. Git status is clean.
-4. Committed result evidence exists, parses with Python `pathlib` using
+1. Actual Git HEAD from Git, not from `PROJECT-STATE.md` dynamic wording.
+2. Current commit identity: branch, HEAD, parent, subject, and changed files.
+3. Remote sync: upstream ahead/behind is `0/0`.
+4. Git status is clean.
+5. Committed result evidence exists, parses with Python `pathlib` using
    `encoding="utf-8-sig"`, and matches the schema, status, hash, operator
    confirmation ID, derivation, operator, confirmation window, accepted target
    chain, and safety fields.
-5. Manifest parses with Python `pathlib` using `encoding="utf-8-sig"` and
+6. Manifest parses with Python `pathlib` using `encoding="utf-8-sig"` and
    contains `exact_instance_binding_operator_confirmation_collection_result`
    with the committed result evidence path, schema, status, uppercase evidence
    hash, `hash_method=canonical_lf_text_sha256`, operator confirmation ID,
    blocker, live readiness, native execution status, execution authorization,
    binding implementation status, binding authorization, source template/design
    hashes, and flat safety fields.
-6. Documentation in `docs/PROJECT-STATE.md`,
+7. Documentation in `docs/PROJECT-STATE.md`,
    `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`, and
    `docs/WORKLOG.md` contains the required result values and safety language.
-7. Docs no longer describe TASK 6E as the pending next task or as an
-   unstaged/uncommitted transition.
-8. No binding/native/mutation/driver/artifact actions were authorized or
+8. `docs/PROJECT-STATE.md` no longer claims any historical task commit is the
+   live current HEAD.
+9. No binding/native/mutation/driver/artifact actions were authorized or
    performed.
 
 ## Safety Restrictions
 
-TASK 6F-RERUN does not authorize binding implementation, binding execution,
+TASK 6F-RERUN-2 does not authorize binding implementation, binding execution,
 native execution, SetupAPI/Newdev invocation, Windows mutation, driver action,
 rollback implementation, restore, live query, device query, identity capture,
 operator confirmation collection, artifact/compile-output access, generator
@@ -95,11 +97,13 @@ No binding/native/mutation/driver/artifact actions are authorized or performed.
 
 ## Acceptance Criteria
 
-- Git identity, changed files, clean status, and upstream sync validate.
+- Git identity, changed files, clean status, and upstream sync validate from
+  Git.
 - Result evidence, manifest section, docs, hashes, safety fields, and source
   references all validate exactly.
-- `docs/PROJECT-STATE.md` and this file no longer contain stale TASK 6E
-  pending/uncommitted continuation state.
+- `docs/PROJECT-STATE.md` uses historical task commit references only and does
+  not contain a dynamic current-HEAD assertion for `c423ced`,
+  `15925bb`, or `8dd805e`.
 - Forbidden claim scan passes:
   - no binding authorized
   - no binding implemented

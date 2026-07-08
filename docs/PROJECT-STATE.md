@@ -1,21 +1,36 @@
 ﻿# Project State
 
-|*Last updated: 2026-07-09 (TASK 6F-REMEDIATION stale continuation docs repaired, no evidence or manifest mutation)*
+|*Last updated: 2026-07-09 (TASK 6F-REMEDIATION-2 removed stale dynamic HEAD wording, no evidence or manifest mutation)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
-- **Current HEAD:** `c423ced463f3bdf4cb2a295f19e687278db798e3`
-  (`docs: record operator confirmation collection result`).
-- **Current parent:** `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`
-  (`TASK 5E: operator confirmation collection template gate final validation -- audit-only`).
-- **Remote sync:** TASK 6E was committed and pushed to
-  `origin/feature/native-adapter-execution-envelope-verifier`; upstream
-  ahead/behind was verified as `0/0`.
-- **Working tree:** final git status after TASK 6E was clean.
+- **Live Git identity:** verify the active repository HEAD, parent, subject,
+  upstream sync, and status with Git during audit/finalization. Do not infer
+  live HEAD from this document.
+- **TASK 6E result commit:** `c423ced463f3bdf4cb2a295f19e687278db798e3`
+  (`docs: record operator confirmation collection result`), parent
+  `15925bb74f7eb5ea90f1c414b5e3ba59e0a86d99`.
+- **TASK 6F stale-continuation remediation commit:**
+  `8dd805e5c3de50b691824b7334733e0c9ea11cdc`
+  (`docs: repair operator confirmation audit continuation docs`), parent
+  `c423ced463f3bdf4cb2a295f19e687278db798e3`.
+- **TASK 6F-RERUN result:** failed only because this file still had stale
+  dynamic HEAD/current-parent wording. Evidence, manifest, hashes, safety,
+  docs tokens, remote sync, and clean tree passed in TASK 6F-RERUN.
+- **TASK 6F-RERUN audit context:** TASK 6F-RERUN failed only because
+  PROJECT-STATE still had stale dynamic HEAD/current-parent wording; evidence,
+  manifest, hashes, safety, docs tokens, remote sync, and clean tree passed in
+  TASK 6F-RERUN.
+- **Continuation repair:** TASK 6F-REMEDIATION-2 removes the stale dynamic HEAD
+  assertion to prevent a repeat stale-HEAD loop. Historical task commit
+  references remain as historical facts only.
 - **Operator confirmation result state:** result evidence is committed at
   `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`;
   it is not pending or untracked.
+- **Manifest result section state:** manifest result section
+  `exact_instance_binding_operator_confirmation_collection_result` is
+  committed.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**

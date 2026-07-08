@@ -13146,3 +13146,46 @@
   compile-output access was authorized or performed.
 - **Next task:** TASK 6F-RERUN - independent read-only audit of committed
   operator confirmation collection result after stale-doc remediation.
+
+## 2026-07-09T01:52:24+04:00 - TASK 6F-REMEDIATION-2: remove stale dynamic HEAD wording
+
+- **Objective:** Repair the remaining stale `docs/PROJECT-STATE.md` wording
+  found by TASK 6F-RERUN without creating another dynamic-current-HEAD loop.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` /
+  `8dd805e5c3de50b691824b7334733e0c9ea11cdc`
+  (`docs: repair operator confirmation audit continuation docs`).
+- **Starting parent:** `c423ced463f3bdf4cb2a295f19e687278db798e3`.
+- **Starting state:** upstream ahead/behind was `0/0` and `git status --short`
+  was clean.
+- **Investigation:** TASK 6F-RERUN failed only on stale PROJECT-STATE dynamic
+  HEAD/current-parent wording. Evidence JSON, manifest section, canonical LF
+  hashes, safety fields, docs tokens, changed files, remote sync, and clean
+  working tree passed.
+- **Remediation:** Removed/reworked dynamic current HEAD/current parent wording
+  from `docs/PROJECT-STATE.md`. The file now records TASK 6E and TASK 6F
+  remediation commits as historical task commits only and requires live Git
+  HEAD, parent, subject, upstream sync, and status to be verified with Git
+  during audit/finalization. This avoids a recurring stale-HEAD loop.
+- **Files modified:** `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and
+  `docs/WORKLOG.md`.
+- **Files intentionally unchanged:** No evidence JSON or manifest files were
+  changed. `docs/RUNTIME-BRINGUP-READINESS.md`,
+  `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`,
+  and `docs/evidence/runtime-bringup-readiness-manifest.json` were not
+  modified.
+- **Required values preserved:** Result status
+  `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  operator confirmation ID `operator-confirmation-c445630fbb303c7c`,
+  canonical LF text SHA-256
+  `A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169`,
+  blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, native execution
+  `NOT_IMPLEMENTED`, live readiness `BLOCKED`, and binding
+  implementation/execution remains unauthorized.
+- **Authorization phrase preserved:** binding implementation/execution remains unauthorized.
+- **Safety state:** No new operator confirmation was collected. No binding
+  implementation, binding execution, native execution, SetupAPI/Newdev
+  invocation, Windows mutation, driver action, rollback implementation,
+  restore, live query, device query, identity capture, artifact access, or
+  compile-output access was authorized or performed.
+- **Next task:** TASK 6F-RERUN-2 - independent read-only audit after
+  dynamic-head wording remediation.
