@@ -2,36 +2,32 @@
 
 |## Objective
 
-Re-audit the remediated operator confirmation collection design-gate (TASK 4C).
+Independent strict read-only audit of the corrected operator confirmation collection design-gate state.
 
-This next task is not operator confirmation collection, rollback implementation, restore execution, binding implementation, binding execution, dry-run execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, live observation, hardware access, identity capture, device query, live query, or artifact/compile-output access.
+This next task is **audit-only**. It does not collect operator confirmation. It does not implement rollback. It does not perform restore. It does not implement or execute binding. It does not perform new live observation. It does not run device query commands, hardware access commands, binding execution, dry-run execution, native adapter execution, SetupAPI/Newdev, verifier behavior tests, offline-suite behavior tests, the static parser, the full compile-output validator, generator, full exact/readiness suites, build, package, sign, install, load, bind, restore, restart, `pnputil`, `devcon`, driver/service mutation, or artifact/compile-output access.
 
-## Context: TASK 4B-REMEDIATION Complete
+## Context: TASK 4D-CORRECTIVE Complete
 
-TASK 4B FAIL identified 5 gaps in the operator confirmation package specification (missing required fields, non-required fields not documented as such, status naming mismatch). TASK 4B-REMEDIATION addressed all gaps:
-1. Added `generated_utc`, `operator_confirmation_id`, `confirmation_expiry_utc` to `required_fields`
-2. Added target/parent/child prior-driver identity fields to future requirements
-3. Added `upstream_evidence_requirements` documenting all 4 upstream evidence files
-4. Replaced simplified status naming (CONFIRMED/REJECTED/NO_OP/PENDING_VERIFICATION/INSUFFICIENT_DATA/MANUALLY_REVOKED) with canonical `OPERATOR_CONFIRMATION_COLLECTION_*` vocabulary (6 canonical statuses)
-5. Updated `future_package_audit_requirements` to reference remediated fields
+TASK 4D FAIL identified critical integrity failures in the operator confirmation collection design-gate evidence state:
+1. Manifest SHA-256 did not match actual evidence file hash
+2. Design-gate JSON missing `future_preconditions` (0 entries, expected many)
+3. Design-gate JSON missing `operator_confirmation_collection_statuses` (0 entries, expected 6 canonical statuses)
+4. Design-gate JSON missing `captured_prior_identities` (0 entries, expected target/parent/child)
+5. Manifest incorrectly flagged `corrective_remediation`, `evidence_updated`, `real_artifact_static_metadata_review_completed` as active true safety flags
+6. NEXT-TASK.md contained prohibited references
 
-Design-gate SHA-256 after remediation: `41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1`.
+TASK 4D-CORRECTIVE repaired all failures by:
+1. Adding 20 entries to `future_preconditions`
+2. Adding 6 canonical `OPERATOR_CONFIRMATION_COLLECTION_*` status strings to `operator_confirmation_collection_statuses`
+3. Populating `captured_prior_identities` with target, parent, and child identities
+4. Recomputing and updating manifest SHA-256 to match corrected evidence file
+5. Setting all safety/action flags to false/zero in manifest section
+6. Rewriting NEXT-TASK.md to audit-only scope with explicit safety statements
 
 ## Exact Current State
 
 - Repository: `C:\Dev\chatpad-super-driver`.
 - Branch: `feature/native-adapter-execution-envelope-verifier`.
-- Required parent commit before this transition: `6af8b8ea82213235e53c8125c7b0da6f929cefef`.
-- Required commit subject: `docs: add operator confirmation collection design gate evidence and manifest entry`.
-- Required upstream: `origin/feature/native-adapter-execution-envelope-verifier`.
-- Required synchronization and tree before audit: `0/0` and clean.
-- Operator confirmation collection design-gate evidence path: `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`.
-- Operator confirmation collection design-gate evidence schema: `chatpad-exact-instance-binding-operator-confirmation-collection-design-gate-v1`.
-- Operator confirmation collection design-gate evidence status: `EXACT_INSTANCE_BINDING_OPERATOR_CONFIRMATION_COLLECTION_DESIGN_GATE_OPENED_NO_OPERATOR_CONFIRMATION_COLLECTED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
-- Operator confirmation collection design-gate readiness classification: `READY_TO_DEFINE_OPERATOR_CONFIRMATION_COLLECTION_CONTRACT_ONLY`.
-- Manifest path: `docs/evidence/runtime-bringup-readiness-manifest.json`.
-- Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: `51`.
 - Blocker: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - Execution authorized: `false`.
 - Live readiness: `BLOCKED`.
@@ -49,8 +45,6 @@ Design-gate SHA-256 after remediation: `41d85e56a55a89e2c2f3fb2ab79ea6e77538691e
 - SetupAPI/Newdev invocation count: `0`.
 - Windows mutation count: `0`.
 - Driver action count: `0`.
-- Final readiness gate accepted: `EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
-- Final readiness gate readiness classification: `READY_TO_PREPARE_BINDING_IMPLEMENTATION_AUTHORIZATION_TASK_ONLY`.
 - Accepted target: `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`.
 - Canonical chain:
   - `USB\VID_045E&PID_028E\1C21F10`
@@ -77,53 +71,28 @@ Verify the operator confirmation collection design-gate explicitly:
 
 6. `accepted_target_instance_id` equals `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`.
 
-7. `operator_confirmation_package_purpose` describes the minimum operator confirmation collection package required before binding implementation authorization.
+7. `future_preconditions` exists and contains at least 20 entries covering: final readiness gate accepted, operator/rollback package design gate accepted, prior identity capture result accepted, dry-run result accepted, target/parent/child matches, ContainerId matches, prior identity matches, live readiness remains BLOCKED, native execution remains NOT_IMPLEMENTED, execution authorized remains false, binding implementation status remains NOT_IMPLEMENTED, rollback remains false, restore remains false, SetupAPI/Newdev count remains 0, Windows mutation count remains 0, driver action count remains 0, artifact/compile-output access remains false.
 
-|8. `required_fields` contains exactly 3 fields (added by remediation):
-   - `generated_utc`
-   - `operator_confirmation_id`
-   - `confirmation_expiry_utc`
+8. `operator_confirmation_collection_statuses` exists and contains exactly 6 canonical status strings:
+   - `OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+   - `OPERATOR_CONFIRMATION_COLLECTION_REJECTED_TARGET_MISMATCH_NO_MUTATION`
+   - `OPERATOR_CONFIRMATION_COLLECTION_REJECTED_SOURCE_EVIDENCE_INVALID_NO_MUTATION`
+   - `OPERATOR_CONFIRMATION_COLLECTION_REJECTED_EXPIRED_OR_MISSING_ACK_NO_MUTATION`
+   - `OPERATOR_CONFIRMATION_COLLECTION_REJECTED_UNSAFE_STATE_NO_MUTATION`
+   - `OPERATOR_CONFIRMATION_COLLECTION_BLOCKED_UNAUTHORIZED_ACTION_REQUIRED_NO_MUTATION`
 
-9. `operator_confirmation_rejection_no_op_rules` contains exactly 6 rules:
-   - CONFIRMED → authorization_task_proceeds_with_binding
-   - REJECTED → binding_implementation_authorized=false, authorization_task_terminated
-   - NO_OP → binding_implementation_authorized=false, authorization_task_terminated, no_action_taken
-   - PENDING_VERIFICATION → authorization_task_blocked_until_verified
-   - INSUFFICIENT_DATA → authorization_task_blocked_until_sufficient_data_provided
-   - MANUALLY_REVOKED → authorization_task_terminated, all prior authorizations invalidated
+9. `captured_prior_identities` exists with `target`, `parent`, and `child` populated:
+   - Target: provider Microsoft, version 10.0.26100.8521, service HidUsb, class HIDClass, driver key {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0086, INF input.inf
+   - Parent: provider Microsoft, version 10.0.26100.8521, service xusb22, class XnaComposite, driver key {d61ca365-5af4-4486-998b-9db4734c6ca3}\0000, INF xusb22.inf
+   - Child: provider Microsoft, version 10.0.26100.8521, service unavailable, class HIDClass, driver key {745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0088, INF input.inf
 
-10. `required_rollback_no_op_package_fields` contains exactly 12 fields as defined.
+10. `future_operator_confirmation_package_fields` contains at least 43 fields, each with `name`, `required`, `purpose` keys.
 
-11. `future_prior_driver_provider_identity_requirements` contains exactly 8 requirements.
+11. `remediation_added_required_fields` contains 3 items: `generated_utc`, `operator_confirmation_id`, `confirmation_expiry_utc`.
 
-12. `future_package_evidence_requirements` contains exactly 8 requirements.
+12. Safety fields: all `false`/`0` (mutation, windows_mutation, driver_action, native_io, setupapi_newdev, device_state_changed, driver_state_changed, registry_changed, driver_installed, driver_uninstalled, driver_started, driver_stopped, device_restarted, device_state_changes=0, driver_state_changes=0, device_restarts=0, driver_installs=0, driver_uninstalls=0, driver_start_stops=0).
 
-13. `future_package_audit_requirements` contains exactly 10 requirements.
-
-14. Source evidence chain entries (5 sources) all present with correct file paths, schemas, and statuses:
-    - `docs/evidence/exact-instance-binding-final-implementation-readiness-gate.json` — `EXACT_INSTANCE_BINDING_FINAL_IMPLEMENTATION_READINESS_GATE_OPENED_NO_OPERATOR_CONFIRMATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
-    - `docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json` — `EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
-    - `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json` — `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`
-    - `docs/evidence/exact-instance-binding-dry-run-result.json` — `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`
-    - `docs/evidence/runtime-bringup-readiness-manifest.json` — `RUNTIME_BRINGUP_READINESS_MANIFEST_V4`
-
-15. `binding_implementation_status` equals `NOT_AUTHORIZED`.
-
-16. `binding_implementation_authorized` is `false`.
-
-17. `binding_execution_performed` is `false`.
-
-18. `native_execution` is `false`.
-
-19. `execution_authorized` is `false`.
-
-20. `live_readiness` is `false`.
-
-21. `blocker` equals `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-
-22. Safety fields: all `false`/`0` (mutation, windows_mutation, driver_action, native_io, setupapi_newdev, device_state_changed, driver_state_changed, registry_changed, driver_installed, driver_uninstalled, driver_started, driver_stopped, device_restarted, device_state_changes=0, driver_state_changes=0, device_restarts=0, driver_installs=0, driver_uninstalls=0, driver_start_stops=0).
-
-23. Manifest section `exact_instance_binding_operator_confirmation_collection_design_gate` present with:
+13. Manifest section `exact_instance_binding_operator_confirmation_collection_design_gate` present with:
     - `schema` matches evidence file schema
     - `status` matches evidence file status
     - `readiness_classification` matches evidence file readiness
@@ -133,8 +102,9 @@ Verify the operator confirmation collection design-gate explicitly:
     - `execution_authorized` is `false`
     - `live_readiness` is `BLOCKED`
     - `native_execution_status` is `NOT_IMPLEMENTED`
+    - No active true safety/action flags: `corrective_remediation`, `evidence_updated`, `real_artifact_static_metadata_review_completed` must be false or absent
 
-24. Prohibited statements all present and explicit:
+14. Prohibited statements all present and explicit:
     - `current_task_does_not_collect_operator_confirmation_statement`
     - `current_task_does_not_implement_rollback_statement`
     - `current_task_does_not_perform_restore_statement`
@@ -164,13 +134,10 @@ Verify the operator confirmation collection design-gate explicitly:
 - Verify operator confirmation collection design-gate evidence JSON and manifest JSON parse successfully.
 - Verify manifest evidence hash for the operator confirmation collection design-gate evidence file matches the canonical LF text hash.
 - Verify operator confirmation collection design-gate evidence schema/status/readiness classification.
-- Verify source evidence chain references (final readiness gate, rollback package design gate, prior identity capture result, dry-run result, manifest).
-- Verify accepted target chain and shared ContainerId.
-- Verify captured target identity.
-- Verify captured parent/child identity.
-- Verify unavailable/skipped property summary.
-|  - Verify future operator confirmation package fields (3 required_fields, 6 rejection/no-op rules with canonical OPERATOR_CONFIRMATION_COLLECTION_* vocabulary, 12 rollback no-op fields, 8 prior driver provider requirements, 8 package evidence requirements, 13 package audit requirements, 4 upstream evidence requirements).
-- Verify operator confirmation package preconditions.
+- Verify `future_preconditions` contains at least 20 entries as specified.
+- Verify `operator_confirmation_collection_statuses` contains exactly 6 canonical status strings.
+- Verify `captured_prior_identities` contains target, parent, and child with all required fields.
+- Verify `future_operator_confirmation_package_fields` contains at least 43 fields.
 - Verify no operator confirmation collected.
 - Verify no rollback implemented.
 - Verify no restore performed.
@@ -191,30 +158,14 @@ Verify the operator confirmation collection design-gate explicitly:
 
 ## Safety Restrictions
 
-This audit is strict read-only. Do not collect operator confirmation. Do not implement rollback. Do not perform restore. Do not implement or execute binding. Do not perform new live observation. Do not run device query commands, hardware access commands, binding execution, dry-run execution, native adapter execution, SetupAPI/Newdev, verifier behavior tests, offline-suite behavior tests, the static parser, the full compile-output validator, generator, full exact/readiness suites, build, package, sign, install, load, bind, restore, restart, `pnputil`, `devcon`, driver/service mutation, or artifact/compile-output access.
+This audit is strict read-only. It does not execute binding. It does not run native adapter execution. It does not run SetupAPI/Newdev. It does not perform windows mutation. It does not perform driver action. It does not perform artifact/compile-output access. It does not implement rollback. It does not perform restore. It does not collect operator confirmation. It does not authorize binding implementation. It does not authorize native execution. It does not authorize windows mutation. It does not authorize driver action. Live readiness remains `BLOCKED`. Native execution remains `NOT_IMPLEMENTED`. Execution authorized remains `false`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Acceptance Criteria
 
-- Git identity, subject, parent, changed paths, and content establish the exact documentation/manifest-only operator confirmation collection design-gate transition without self-reference.
+- Git identity, subject, parent, changed paths, and content establish the exact documentation/manifest-only operator confirmation collection design-gate state without self-reference.
 - Operator confirmation collection design-gate evidence JSON and manifest JSON parse successfully.
 - Design-gate evidence schema/status/readiness classification, all audit points above pass exactly.
 - Manifest schema remains `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entry count remains `51`.
 - Manifest hash for `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json` matches the evidence file canonical LF text hash.
 - Documentation consistency, changed-path safety, forbidden vocabulary scan, added-line prohibited-action review, no-tool-file-change review, and `git diff --check` pass.
 - Final Git status remains clean and synchronized `0/0`.
-
-|## Inspect First
-|
-|1. `AGENTS.md`
-|2. `docs/PROJECT-STATE.md`
-|3. `docs/DECISIONS.md`
-|4. `docs/NEXT-TASK.md`
-|5. Latest `docs/WORKLOG.md` entry
-|6. `docs/RUNTIME-BRINGUP-READINESS.md`
-|7. `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
-|8. `docs/evidence/runtime-bringup-readiness-manifest.json`
-|
-|## Post-Remediation: TASK 4C-CORRECTIVE Committed
-|
-|TASK 4C-CORRECTIVE commit `5a2f83a9aab9cd4f42155edffe50dca0bac361f2` is committed and pushed to `origin/feature/native-adapter-execution-envelope-verifier` with upstream sync `0/0`. The corrective patch added 43 fields to `future_operator_confirmation_package_fields` and preserved `remediation_added_required_fields` as 3 items. Manifest SHA refreshed to `41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1`. NEXT-TASK.md, PROJECT-STATE.md, RUNTIME-BRINGUP-READINESS.md, and WORKLOG.md all updated.
