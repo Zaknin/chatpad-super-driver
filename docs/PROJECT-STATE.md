@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-08 (prior-driver/provider identity captured)*
+*Last updated: 2026-07-08 (prior-driver/provider identity evidence remediated)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: capture prior driver identity`, starting
-  commit `456b845b4157dbbd31a3f75386bce3b81d59152f`.
+  expected subject `docs: remediate prior identity evidence shape`, starting
+  commit `e7a385826f9d2c22c2e70f86d7588409cd3ff2dc`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -569,6 +569,16 @@ version `10.0.26100.8521`, INF identifier `xusb22.inf`; the child is provider
 `Microsoft`, driver version `10.0.26100.8521`, INF identifier `input.inf`,
 with `DEVPKEY_Device_Service` unavailable from the read-only property result.
 
+The documentation/manifest-only evidence-shape remediation keeps the capture
+facts unchanged while recording the accepted source dry-run counters
+`partial_vid_pid_candidate_count = 3`,
+`usb_interface_partial_candidate_count = 1`, and
+`read_only_current_state_device_query_count = 4` inside
+`accepted_dry_run_summary`. It narrows `exact_commands_run` to only
+`Get-Date`, `Get-PnpDevice -PresentOnly`, and the three scoped
+`Get-PnpDeviceProperty -InstanceId ...` capture commands. Git and tracked
+source-evidence read commands are preserved only in separate supporting fields.
+
 No actual operator confirmation was collected. No rollback was implemented. No
 restore was performed. No binding implementation occurred. No binding
 execution occurred. No dry-run was performed in this task. No new live
@@ -754,9 +764,12 @@ remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
   `{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0086`, target INF identifier
   `input.inf`, parent provider `Microsoft`, parent service `xusb22`, parent
   INF identifier `xusb22.inf`, child provider `Microsoft`, child INF
-  identifier `input.inf`, and zero failed commands. Full INF paths, driver file
-  hashes, and INF contents were skipped by safety scope; the child service was
-  unavailable from returned PnP properties.
+  identifier `input.inf`, and zero failed commands. The remediated evidence
+  shape records accepted dry-run counters `3`, `1`, and `4`, keeps
+  `exact_commands_run` limited to the five authorized capture commands, and
+  preserves Git/source-evidence reads only in separate supporting fields. Full
+  INF paths, driver file hashes, and INF contents were skipped by safety scope;
+  the child service was unavailable from returned PnP properties.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -808,26 +821,30 @@ remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Next Task
 
-Perform an independent strict read-only audit of this prior-driver/provider
-identity capture result commit. Derive its exact identity from Git, require
-subject `docs: capture prior driver identity`, starting commit
-`456b845b4157dbbd31a3f75386bce3b81d59152f`, result evidence schema
+Perform an independent strict read-only audit of this remediated
+prior-driver/provider identity capture result commit. Derive its exact
+identity from Git, require subject
+`docs: remediate prior identity evidence shape`, starting commit
+`e7a385826f9d2c22c2e70f86d7588409cd3ff2dc`, result evidence schema
 `chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1`,
 result status `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
 source prior identity design-gate evidence, source operator/rollback package
 design-gate, authorization design-gate, dry-run result, execution-gate, dry-run
 design, design-gate, analysis, and observation evidence references, accepted
-dry-run result, accepted three-node target chain, shared ContainerId, target
-InstanceId, captured target/parent/child provider/version/service/driver
-identity fields, unavailable/skipped properties, exact commands run, failed
-commands, precondition result, rejection/no-op result, final capture decision,
-manifest entry and safety counters, changed paths, no tool or source changes,
-and unchanged blocked state. The audit must confirm prior-driver/provider
-identity was captured only by scoped read-only current-state identity queries;
-no actual operator confirmation was collected; no rollback was implemented; no
-restore was performed; no binding implementation, binding execution, dry-run in
-this task, new live observation, hardware access, native execution, SetupAPI/
-Newdev invocation, native library load, entry-point resolution, Windows
-mutation, driver action, or artifact/compile-output access occurred; and live
+dry-run result summary including `partial_vid_pid_candidate_count = 3`,
+`usb_interface_partial_candidate_count = 1`, and
+`read_only_current_state_device_query_count = 4`, accepted three-node target
+chain, shared ContainerId, target InstanceId, captured target/parent/child
+provider/version/service/driver identity fields, unavailable/skipped
+properties, narrowed `exact_commands_run`, separated supporting repository/
+source-evidence read command fields, failed commands, precondition result,
+rejection/no-op result, final capture decision, manifest entry and safety
+counters, changed paths, no tool or source changes, and unchanged blocked
+state. The audit must confirm no new live query, identity capture, operator
+confirmation collection, rollback implementation, restore execution, binding
+implementation, binding execution, dry-run in this task, new live observation,
+hardware access, native execution, SetupAPI/Newdev invocation, native library
+load, entry-point resolution, Windows mutation, driver action, or
+artifact/compile-output access occurred during this remediation; and live
 readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
 execution authorized remains `false`.

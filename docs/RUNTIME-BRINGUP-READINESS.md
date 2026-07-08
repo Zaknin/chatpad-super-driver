@@ -1299,6 +1299,17 @@ identifier `input.inf`; its `DEVPKEY_Device_Service` field was unavailable
 from the read-only property result. The shared ContainerId remained
 `{828F4587-006F-5AD1-B169-6AF57905DFDE}`.
 
+The remediated evidence shape records the accepted source dry-run counters
+inside `accepted_dry_run_summary`: `partial_vid_pid_candidate_count = 3`,
+`usb_interface_partial_candidate_count = 1`, and
+`read_only_current_state_device_query_count = 4`. It also narrows
+`exact_commands_run` to only `Get-Date`, `Get-PnpDevice -PresentOnly`, and the
+three scoped `Get-PnpDeviceProperty -InstanceId ...` capture commands. Git and
+tracked source-evidence read commands are preserved only in separate supporting
+fields and do not imply new execution, live query, identity capture, mutation,
+binding, native execution, SetupAPI/Newdev invocation, driver action, or
+artifact/compile-output access.
+
 No actual operator confirmation was collected. No rollback was implemented. No
 restore was performed. No binding implementation occurred. No binding
 execution occurred. No dry-run was performed in this task. No new live
@@ -1314,10 +1325,10 @@ remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Exact next task
 
-Perform an independent strict read-only audit of this prior-driver/provider
-identity capture result commit. Derive its exact identity from Git; require
-subject `docs: capture prior driver identity`, starting commit
-`456b845b4157dbbd31a3f75386bce3b81d59152f`, result evidence schema
+Perform an independent strict read-only audit of this remediated
+prior-driver/provider identity capture result commit. Derive its exact identity
+from Git; require subject `docs: remediate prior identity evidence shape`,
+starting commit `e7a385826f9d2c22c2e70f86d7588409cd3ff2dc`, result evidence schema
 `chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1`,
 result status `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
 source prior identity design-gate evidence, source operator/rollback package
@@ -1326,12 +1337,13 @@ dry-run result evidence, source execution-gate evidence, source dry-run design
 evidence, source design-gate evidence, source analysis evidence, source
 observation evidence, accepted dry-run result, accepted three-node target
 chain, target InstanceId, captured target/parent/child identity fields,
-unavailable/skipped property reasons, exact commands run, failed commands,
-precondition result, rejection/no-op result, final capture decision, and
-unchanged blocked state. The audit must confirm prior-driver/provider identity
-was captured only by scoped read-only current-state identity queries; no actual
-operator confirmation was collected; no rollback was implemented; no restore
-was performed; no binding implementation, binding execution, dry-run in this
+unavailable/skipped property reasons, accepted dry-run summary counters
+`3`, `1`, and `4`, narrowed `exact_commands_run`, separated supporting
+repository/source-evidence read commands, failed commands, precondition
+result, rejection/no-op result, final capture decision, and unchanged blocked
+state. The audit must confirm the remediation performed no new live query,
+identity capture, operator confirmation collection, rollback implementation,
+restore execution, binding implementation, binding execution, dry-run in this
 task, new live observation, hardware access, native execution, native library
 load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
-driver action, or artifact/compile-output access was authorized or performed.
+driver action, or artifact/compile-output access.

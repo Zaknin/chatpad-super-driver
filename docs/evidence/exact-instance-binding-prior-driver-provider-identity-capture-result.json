@@ -55,6 +55,9 @@
     "present_device_count": 322,
     "relevant_candidate_count": 3,
     "exact_target_candidate_count": 1,
+    "partial_vid_pid_candidate_count": 3,
+    "usb_interface_partial_candidate_count": 1,
+    "read_only_current_state_device_query_count": 4,
     "allowed_predicates_passed": "16/16",
     "rejection_predicates_triggered": 0,
     "planned_action_only": true,
@@ -299,14 +302,18 @@
     }
   ],
   "exact_commands_run": [
-    "git branch --show-current; git rev-parse HEAD; git rev-parse --abbrev-ref --symbolic-full-name '@{u}'; git rev-list --left-right --count 'HEAD...@{u}'; git status --short",
-    "git log -5 --oneline --decorate",
-    "Get-Content <tracked source evidence JSON> -Raw | ConvertFrom-Json -Depth 100",
     "Get-Date",
     "Get-PnpDevice -PresentOnly",
     "Get-PnpDeviceProperty -InstanceId 'USB\\VID_045E&PID_028E\\1C21F10'",
     "Get-PnpDeviceProperty -InstanceId 'USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00'",
     "Get-PnpDeviceProperty -InstanceId 'HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000'"
+  ],
+  "supporting_repository_read_commands": [
+    "git branch --show-current; git rev-parse HEAD; git rev-parse --abbrev-ref --symbolic-full-name '@{u}'; git rev-list --left-right --count 'HEAD...@{u}'; git status --short",
+    "git log -5 --oneline --decorate"
+  ],
+  "source_evidence_read_commands": [
+    "Get-Content <tracked source evidence JSON> -Raw | ConvertFrom-Json -Depth 100"
   ],
   "failed_commands_and_reasons": [],
   "skipped_commands_and_reasons": [

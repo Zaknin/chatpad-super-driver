@@ -12627,3 +12627,102 @@
   task, new live observation, hardware access, native execution, SetupAPI/
   Newdev invocation, native library load, entry-point resolution, Windows
   mutation, driver action, and artifact/compile-output access.
+
+---
+
+## 2026-07-08 09:51:39 +04:00 - Remediate prior identity evidence shape
+
+- **Objective:** Create a documentation/manifest-only remediation commit for
+  the prior-driver/provider identity capture result evidence shape, fixing the
+  two audit defects in commit
+  `e7a385826f9d2c22c2e70f86d7588409cd3ff2dc` without performing a new identity
+  capture, live query, device query, native execution, mutation, binding,
+  driver action, or artifact/compile-output access.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `e7a385826f9d2c22c2e70f86d7588409cd3ff2dc`, subject
+  `docs: capture prior driver identity`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tree/index before this task's edits.
+- **Investigation:** Parsed the existing result evidence shape and checked the
+  accepted source dry-run result evidence. The source dry-run result records
+  `partial_vid_pid_candidate_count = 3`,
+  `usb_interface_partial_candidate_count = 1`, and
+  `read_only_current_state_device_query_count = 4`. The result evidence
+  previously omitted those fields from `accepted_dry_run_summary` and mixed
+  Git/source-evidence read commands into `exact_commands_run`.
+- **Files modified:** `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json`,
+  `docs/evidence/runtime-bringup-readiness-manifest.json`,
+  `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, and this append-only worklog.
+- **Implementation details:** Added the three source dry-run counters to
+  `accepted_dry_run_summary`. Narrowed `exact_commands_run` to only
+  `Get-Date`, `Get-PnpDevice -PresentOnly`, and the three scoped
+  `Get-PnpDeviceProperty -InstanceId ...` commands recorded from the original
+  authorized capture. Moved the Git preflight/history reads to
+  `supporting_repository_read_commands` and the tracked source-evidence JSON
+  read to `source_evidence_read_commands`. Updated the runtime-bringup
+  manifest hash for the remediated result evidence and the tracked continuity
+  document identities affected by this documentation-only transition.
+- **Preserved result facts:** Schema remains
+  `chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1`;
+  status remains `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`;
+  target InstanceId remains
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`; the accepted three-node
+  chain, shared ContainerId, target provider/version/service/driver key/INF,
+  parent provider/service/version/INF, child provider/version/INF, empty or
+  unavailable child service, `CAPTURE_ACCEPTED` decision, empty failed command
+  list, skipped full INF paths/contents/driver files/hashes, and false/zero
+  safety counters remain unchanged.
+- **Safety:** No new identity capture occurred. No live query occurred. No
+  device query command was run. No `Get-PnpDevice`, `Get-PnpDeviceProperty`,
+  `pnputil`, `devcon`, WMI/CIM device class, SetupAPI/Newdev, native library
+  load, entry-point resolution, registry/service mutation, driver build/sign/
+  package/install/load/bind/restore/restart, verifier/offline behavior test,
+  static metadata parser, full compile-output validator, generator, or
+  artifact/compile-output access occurred.
+- **Validation plan:** Safe validation only. Required closeout checks are JSON
+  parse of the remediated result and manifest, explicit remediation-field
+  checks, exact command-list check, separated supporting-command-field check,
+  manifest schema and entry-count checks, canonical LF hash check for the
+  remediated evidence and tracked changed documents, changed-path safety, no
+  tool-file changes, forbidden vocabulary scan, added-line prohibited-action
+  review, manifest validator if read-only, `git diff --check`, final clean
+  status, and final upstream sync `0/0`. Git and the final response are
+  authoritative for the exact command results after this continuity entry.
+- **Closeout validation results:** Result evidence JSON parse `PASS`; manifest
+  JSON parse `PASS`; `accepted_dry_run_summary` remediation `PASS` with
+  `partial_vid_pid_candidate_count = 3`,
+  `usb_interface_partial_candidate_count = 1`, and
+  `read_only_current_state_device_query_count = 4`; `exact_commands_run`
+  remediation `PASS` with only the five authorized capture commands; separated
+  supporting repository/source-evidence read command fields `PASS`; failed
+  command list remains empty; final capture decision remains
+  `CAPTURE_ACCEPTED`; manifest schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`; manifest entries `49`;
+  remediated evidence canonical hash
+  `447A234302ABC3191C9E057BC8BB83A6B816C5487883B6F651C63E2570D1C6B4`; tracked
+  changed-document hash/size checks `PASS`; manifest validator `PASS` in
+  `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode with `0` total defects and
+  artifact opening, compile-output hash verification, and metadata parsing all
+  false; changed-path safety `PASS`; no tool files changed; forbidden
+  vocabulary scan `PASS`; positive added-line authorization scan `PASS`;
+  `git diff --check` exit code `0`.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  binding implementation remains unauthorized and not implemented; execution
+  authority remains false; artifact and compile-output I/O remain false.
+- **Commit and push:** Subject will be
+  `docs: remediate prior identity evidence shape`; push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Next task:** Independent strict read-only audit of the remediated
+  prior-driver/provider identity capture result commit, specifically verifying
+  the added dry-run summary counters, narrowed `exact_commands_run`, separated
+  supporting read-command fields, manifest hash update, unchanged captured
+  identity facts, unchanged blocker state, changed-path safety, and absence of
+  new live query, device query, identity capture, operator confirmation,
+  rollback implementation, restore execution, binding implementation, binding
+  execution, native execution, SetupAPI/Newdev invocation, Windows mutation,
+  driver action, or artifact/compile-output access.
