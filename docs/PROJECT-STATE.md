@@ -1,13 +1,13 @@
 # Project State
 
-*Last updated: 2026-07-08 (prior-driver/provider identity capture design gate opened)*
+*Last updated: 2026-07-08 (prior-driver/provider identity captured)*
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Current transition commit identity:** to be derived from Git after commit;
-  expected subject `docs: design prior identity capture gate`, starting
-  commit `1bb39e686ac5b55cb43468f24eda832d2d775623`.
+  expected subject `docs: capture prior driver identity`, starting
+  commit `456b845b4157dbbd31a3f75386bce3b81d59152f`.
 - **Accepted execution scope-boundary final-closeout commit:**
   `68099a441db5f8b517dbeb296ab234a9ee639bdb`.
 - **Accepted non-live planning audit commit:**
@@ -132,6 +132,12 @@
 - **Exact-instance binding prior-driver/provider identity capture design-gate
   evidence:**
   `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-design-gate.json`.
+- **Exact-instance binding prior-driver/provider identity capture result
+  status:**
+  `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`.
+- **Exact-instance binding prior-driver/provider identity capture result
+  evidence:**
+  `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json`.
 - **Prior execution-envelope verifier audit-pass acceptance audit accepted target:**
   `ba952444d9d3e306da8985e25b93b74aa5f6cff6`.
 - **Prior accepted execution-envelope verifier audit-pass acceptance audit target:**
@@ -549,25 +555,37 @@ accepted dry-run result is
 `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`; the accepted dry-run
 and operator/rollback package design are not enough to mutate or bind.
 
-No prior-driver/provider identity was captured. No live query occurred. No
-actual operator confirmation was collected. No rollback was implemented. No
+The separately authorized prior-driver/provider identity capture result is
+recorded with status
+`PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO` in
+`docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json`.
+Only scoped read-only current-state identity queries were performed for the
+accepted three-node chain. The target remains `USB Input Device`, class
+`HIDClass`, service `HidUsb`, provider `Microsoft`, driver version
+`10.0.26100.8521`, driver key
+`{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0086`, and INF identifier
+`input.inf`. The parent is provider `Microsoft`, service `xusb22`, driver
+version `10.0.26100.8521`, INF identifier `xusb22.inf`; the child is provider
+`Microsoft`, driver version `10.0.26100.8521`, INF identifier `input.inf`,
+with `DEVPKEY_Device_Service` unavailable from the read-only property result.
+
+No actual operator confirmation was collected. No rollback was implemented. No
 restore was performed. No binding implementation occurred. No binding
 execution occurred. No dry-run was performed in this task. No new live
-observation, device query, hardware access, native execution, native library
-load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
-driver action, artifact opening, artifact/compile-output I/O, compile-output
-hash verification, or metadata parsing occurred. Actual binding remains
-unauthorized. Future identity capture requires a separate task after
-independent audit, and future binding requires a separate task after
-independent audit. Live readiness remains `BLOCKED`, native execution remains
-`NOT_IMPLEMENTED`, binding implementation status remains `NOT_IMPLEMENTED`,
-execution authorized remains `false`, and the blocker remains
-`BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+observation, hardware access, native execution, native library load,
+entry-point resolution, SetupAPI/Newdev invocation, Windows mutation, driver
+action, artifact opening, artifact/compile-output I/O, compile-output hash
+verification, or metadata parsing occurred. Actual binding remains
+unauthorized. Future binding requires a separate task after independent audit
+of the identity capture result. Live readiness remains `BLOCKED`, native
+execution remains `NOT_IMPLEMENTED`, binding implementation status remains
+`NOT_IMPLEMENTED`, execution authorized remains `false`, and the blocker
+remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
 ## Validation Snapshot
 
 - Manifest schema: `chatpad-runtime-bringup-readiness-manifest-v4`.
-- Manifest entries: 48; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
+- Manifest entries: 49; duplicate IDs 0; duplicate paths 0; `NO_PATH` 0.
 - Scope-boundary commit
   `4cdde55e392e78db8a7a38858fb2f436557fbe2e` is recorded in the manifest and
   enforced by the generator and validator.
@@ -724,6 +742,21 @@ execution authorized remains `false`, and the blocker remains
   native execution, no native library load, no entry-point resolution, no
   SetupAPI/Newdev invocation, no Windows mutation, no driver action, and no
   artifact/compile-output access.
+- Exact-instance binding prior-driver/provider identity capture result is
+  recorded with schema
+  `chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1`,
+  status `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+  and evidence path
+  `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json`.
+  The scoped read-only query found all three accepted chain nodes present and
+  captured target provider `Microsoft`, target driver version
+  `10.0.26100.8521`, target service `HidUsb`, target driver key
+  `{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0086`, target INF identifier
+  `input.inf`, parent provider `Microsoft`, parent service `xusb22`, parent
+  INF identifier `xusb22.inf`, child provider `Microsoft`, child INF
+  identifier `input.inf`, and zero failed commands. Full INF paths, driver file
+  hashes, and INF contents were skipped by safety scope; the child service was
+  unavailable from returned PnP properties.
 - Envelope-verifier no-artifact-I/O call-chain regression: `PASS` under both
   runtimes; 23/23 functions traced, zero forbidden commands, zero forbidden
   members, and all native/device/hardware/Windows/driver counters zero.
@@ -764,11 +797,10 @@ execution authorized remains `false`, and the blocker remains
   implemented, no restore was performed, and future binding implementation
   remains unauthorized until a separate task after independent audit of this
   package design-gate commit.
-- The prior-driver/provider identity capture design gate is now opened, but no
-  prior-driver/provider identity was captured and no live query occurred.
-  Future prior-driver/provider identity capture requires a separate task after
-  independent audit of this design-gate commit, and future binding
-  implementation remains unauthorized.
+- The prior-driver/provider identity capture result is now recorded, but no
+  operator confirmation was collected, no rollback was implemented, no restore
+  was performed, and future binding implementation remains unauthorized until a
+  separate task after independent audit of this capture result commit.
 - Audit acceptance does not authorize native execution, real DLL or
   compile-output access, device query, Windows mutation, or driver action.
 - The legacy full exact-instance suite has the unrelated native-guard baseline
@@ -777,28 +809,25 @@ execution authorized remains `false`, and the blocker remains
 ## Next Task
 
 Perform an independent strict read-only audit of this prior-driver/provider
-identity capture design-gate commit. Derive its exact identity from Git,
-require subject `docs: design prior identity capture gate`, starting commit
-`1bb39e686ac5b55cb43468f24eda832d2d775623`, prior identity design-gate
-evidence schema
-`chatpad-exact-instance-binding-prior-driver-provider-identity-capture-design-gate-v1`,
-prior identity design-gate status
-`EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
-source operator/rollback package design-gate, authorization design-gate,
-dry-run result, execution-gate, dry-run design, design-gate, analysis, and
-observation evidence references, accepted dry-run result, accepted three-node
-target chain, target InstanceId, prior identity capture purpose, future capture
-authorization boundary, required future capture target scope, required future
-prior-driver/provider identity fields, future source evidence prerequisites,
-future capture preconditions, future capture rejection/no-op conditions, future
-allowed command family, future prohibited command/action family, future prior
-identity evidence status options, future audit requirements, and unchanged
-blocked state. The audit must confirm no prior-driver/provider identity was
-captured, no live query occurred, no actual operator confirmation was
-collected, no rollback was implemented, no restore was performed, no binding
-implementation, binding execution, dry-run in this task, new live observation,
-device query, hardware access, native execution, SetupAPI/Newdev invocation,
-native library load, entry-point resolution, Windows mutation, driver action,
-or artifact/compile-output access occurred, and that live readiness remains
-`BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and execution
-authorized remains `false`.
+identity capture result commit. Derive its exact identity from Git, require
+subject `docs: capture prior driver identity`, starting commit
+`456b845b4157dbbd31a3f75386bce3b81d59152f`, result evidence schema
+`chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1`,
+result status `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+source prior identity design-gate evidence, source operator/rollback package
+design-gate, authorization design-gate, dry-run result, execution-gate, dry-run
+design, design-gate, analysis, and observation evidence references, accepted
+dry-run result, accepted three-node target chain, shared ContainerId, target
+InstanceId, captured target/parent/child provider/version/service/driver
+identity fields, unavailable/skipped properties, exact commands run, failed
+commands, precondition result, rejection/no-op result, final capture decision,
+manifest entry and safety counters, changed paths, no tool or source changes,
+and unchanged blocked state. The audit must confirm prior-driver/provider
+identity was captured only by scoped read-only current-state identity queries;
+no actual operator confirmation was collected; no rollback was implemented; no
+restore was performed; no binding implementation, binding execution, dry-run in
+this task, new live observation, hardware access, native execution, SetupAPI/
+Newdev invocation, native library load, entry-point resolution, Windows
+mutation, driver action, or artifact/compile-output access occurred; and live
+readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
+execution authorized remains `false`.

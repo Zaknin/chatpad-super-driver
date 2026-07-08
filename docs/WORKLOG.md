@@ -12510,3 +12510,120 @@
   access, native execution, SetupAPI/Newdev invocation, native library load,
   entry-point resolution, Windows mutation, driver action, and
   artifact/compile-output access.
+
+---
+
+## 2026-07-08 09:27:23 +04:00 - Capture prior-driver/provider identity
+
+- **Objective:** Perform the separately authorized non-mutating prior-driver/
+  provider identity capture for the accepted exact-instance binding target
+  chain, using only scoped read-only current-state identity queries.
+- **Starting state:** Verified branch
+  `feature/native-adapter-execution-envelope-verifier`, exact HEAD/upstream
+  `456b845b4157dbbd31a3f75386bce3b81d59152f`, subject
+  `docs: design prior identity capture gate`, upstream
+  `origin/feature/native-adapter-execution-envelope-verifier`, ahead/behind
+  `0/0`, and clean tree/index before this task's edits.
+- **Source evidence:** Parsed accepted tracked source evidence only:
+  prior identity design-gate status
+  `EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  operator/rollback package design-gate status
+  `EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  authorization design-gate status
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_AUTHORIZATION_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`,
+  dry-run result status `DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY`,
+  execution-gate status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_EXECUTION_GATE_OPENED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+  dry-run design status
+  `EXACT_INSTANCE_BINDING_DRY_RUN_DESIGN_COMPLETED_NO_EXECUTION_NO_MUTATION_NO_NATIVE_IO`,
+  implementation design-gate status
+  `EXACT_INSTANCE_BINDING_IMPLEMENTATION_DESIGN_GATE_OPENED_NO_NATIVE_IO_NO_MUTATION`,
+  analysis status
+  `EXACT_INSTANCE_BINDING_ANALYSIS_COMPLETED_FROM_ACCEPTED_OBSERVATION_NO_NATIVE_IO_NO_MUTATION`,
+  observation status
+  `LIVE_READONLY_EQUIPMENT_OBSERVATION_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
+  source gate `LIVE_READONLY_EQUIPMENT_OBSERVATION_GATE_OPENED_NO_DEVICE_IO`,
+  and verifier closeout
+  `NATIVE_ADAPTER_EXECUTION_ENVELOPE_VERIFIER_LANE_CLOSED_NO_NATIVE_IO`.
+- **Read-only current-state identity queries:** Ran `Get-Date`,
+  `Get-PnpDevice -PresentOnly`, and `Get-PnpDeviceProperty` for only these
+  exact InstanceIds:
+  `USB\VID_045E&PID_028E\1C21F10`,
+  `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`, and
+  `HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000`. All three accepted chain
+  nodes were present; read-only current-state identity query count is `4`.
+- **Captured identity result:** Created
+  `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json`
+  with schema
+  `chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1`
+  and status `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`.
+  Target provider is `Microsoft`, driver version `10.0.26100.8521`, service
+  `HidUsb`, driver key `{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\0086`, and INF
+  identifier `input.inf`. Parent provider is `Microsoft`, service `xusb22`,
+  driver version `10.0.26100.8521`, and INF identifier `xusb22.inf`. Child
+  provider is `Microsoft`, driver version `10.0.26100.8521`, and INF
+  identifier `input.inf`; child service was unavailable from returned PnP
+  properties.
+- **Unavailable/skipped properties:** Full INF paths, INF contents, driver file
+  reads, and driver file hashes were skipped by safety scope. Child compatible
+  IDs were returned as an empty array, and child service was unavailable from
+  returned PnP properties.
+- **Files created or modified:** Created
+  `docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json`;
+  modified `docs/NEXT-TASK.md`, `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, this append-only worklog, and
+  `docs/evidence/runtime-bringup-readiness-manifest.json`.
+- **Manifest:** Preserves schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`, records the capture result
+  evidence path, schema, status, hash, source evidence paths/statuses/hashes,
+  prior identity captured true, live query performed true, read-only current-
+  state identity query count `4`, and increases tracked entries to `49`.
+  Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live
+  readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`,
+  binding implementation status remains `NOT_IMPLEMENTED`, execution
+  authorization remains false, artifact/compile-output I/O remains false, and
+  all native/Windows/driver counters remain zero.
+- **Safety:** No actual operator confirmation was collected. No rollback was
+  implemented. No restore was performed. No binding implementation occurred.
+  No binding execution occurred. No dry-run was performed in this task. No new
+  live observation, hardware access, native execution, native library load,
+  entry-point resolution, SetupAPI/Newdev invocation, Windows mutation, driver
+  action, driver build/sign/package/install/load/bind/restore/restart,
+  verifier behavior test, offline-suite behavior test, static parser, full
+  compile-output validator, generator, or artifact/compile-output access
+  occurred.
+- **Validation:** Source evidence status validation `PASS`; result evidence JSON
+  parse `PASS`; manifest JSON parse `PASS`; manifest schema
+  `chatpad-runtime-bringup-readiness-manifest-v4`; manifest entries `49`;
+  manifest validator `PASS` in `NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT` mode with
+  `0` total defects and artifact opening, compile-output hash verification, and
+  metadata parsing all false; forbidden vocabulary scan `PASS`; changed-path
+  safety `PASS`; no tool files changed; added-line prohibited-action counter
+  scan `PASS`; broader added-line keyword review found only explicit
+  prohibition/status text and no executable implementation or authorization;
+  `git diff --check` exit code `0`.
+- **Remaining blocker:** Native adapter execution remains unimplemented; live
+  readiness remains `BLOCKED`; native execution remains `NOT_IMPLEMENTED`;
+  binding implementation remains unauthorized and not implemented; execution
+  authority remains false; artifact and compile-output I/O remain false.
+- **Commit and push:** Subject will be `docs: capture prior driver identity`;
+  push target is
+  `origin/feature/native-adapter-execution-envelope-verifier`. Git and the
+  final response are authoritative for the resulting commit identity; this
+  commit intentionally does not contain its own hash.
+- **Next task:** Independent strict read-only audit of this prior-driver/
+  provider identity capture result commit by Git identity, subject, parent,
+  result evidence schema/status, source prior identity design-gate,
+  operator/rollback package design-gate, authorization design-gate, dry-run
+  result, execution-gate, dry-run design, design-gate, analysis, and
+  observation evidence references, accepted dry-run result, accepted
+  three-node target chain, target InstanceId, captured target/parent/child
+  provider/version/service/driver identity fields, unavailable/skipped
+  properties, exact commands run, failed commands, precondition result,
+  rejection/no-op result, final capture decision, manifest entry and safety
+  counters, changed paths, no tool or source changes, unchanged blocked state,
+  and absence of operator confirmation collection, rollback implementation,
+  restore execution, binding implementation, binding execution, dry-run in this
+  task, new live observation, hardware access, native execution, SetupAPI/
+  Newdev invocation, native library load, entry-point resolution, Windows
+  mutation, driver action, and artifact/compile-output access.
