@@ -204,13 +204,17 @@ This audit is strict read-only. Do not collect operator confirmation. Do not imp
 - Documentation consistency, changed-path safety, forbidden vocabulary scan, added-line prohibited-action review, no-tool-file-change review, and `git diff --check` pass.
 - Final Git status remains clean and synchronized `0/0`.
 
-## Inspect First
-
-1. `AGENTS.md`
-2. `docs/PROJECT-STATE.md`
-3. `docs/DECISIONS.md`
-4. `docs/NEXT-TASK.md`
-5. Latest `docs/WORKLOG.md` entry
-6. `docs/RUNTIME-BRINGUP-READINESS.md`
-7. `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
-8. `docs/evidence/runtime-bringup-readiness-manifest.json`
+|## Inspect First
+|
+|1. `AGENTS.md`
+|2. `docs/PROJECT-STATE.md`
+|3. `docs/DECISIONS.md`
+|4. `docs/NEXT-TASK.md`
+|5. Latest `docs/WORKLOG.md` entry
+|6. `docs/RUNTIME-BRINGUP-READINESS.md`
+|7. `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
+|8. `docs/evidence/runtime-bringup-readiness-manifest.json`
+|
+|## Post-Remediation: TASK 4C-CORRECTIVE Committed
+|
+|TASK 4C-CORRECTIVE commit `5a2f83a9aab9cd4f42155edffe50dca0bac361f2` is committed and pushed to `origin/feature/native-adapter-execution-envelope-verifier` with upstream sync `0/0`. The corrective patch added 43 fields to `future_operator_confirmation_package_fields` and preserved `remediation_added_required_fields` as 3 items. Manifest SHA refreshed to `41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1`. NEXT-TASK.md, PROJECT-STATE.md, RUNTIME-BRINGUP-READINESS.md, and WORKLOG.md all updated.
