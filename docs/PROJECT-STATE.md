@@ -933,3 +933,18 @@ execution authorized remains `false`.
 - **WORKLOG.md**: corrective entry appended (12924 lines).
 - **RUNTIME-BRINGUP-READINESS.md**: corrective entry appended (1428 lines).
 - **PENDING**: commit `docs: correct operator confirmation package contract`, push, validate, then TASK 4D.
+- **TASK 4C-CORRECTIVE**: completed and committed as `5a2f83a9aab9cd4f42155edffe50dca0bac361f2`, pushed to `origin/feature/native-adapter-execution-envelope-verifier`.
+- **TASK 4D**: FAIL — independent strict read-only audit identified critical integrity failures:
+  - Manifest SHA-256 did not match actual evidence file hash
+  - Design-gate JSON missing `future_preconditions` (0 entries)
+  - Design-gate JSON missing `operator_confirmation_collection_statuses` (0 entries, expected 6 canonical)
+  - Design-gate JSON missing `captured_prior_identities` (0 entries, expected target/parent/child)
+  - Manifest incorrectly flagged `corrective_remediation`, `evidence_updated`, `real_artifact_static_metadata_review_completed` as active true safety flags
+- **TASK 4D-CORRECTIVE**: completed and committed as `1c66c31e508b466ef41a398a2b5cc1de44bcc7d0`, pushed to `origin/feature/native-adapter-execution-envelope-verifier`. Repaired:
+  - Added 20 entries to `future_preconditions`
+  - Added 6 canonical `OPERATOR_CONFIRMATION_COLLECTION_*` status strings to `operator_confirmation_collection_statuses`
+  - Populated `captured_prior_identities` with target, parent, and child identities
+  - Recomputed and updated manifest SHA-256 to match corrected evidence file
+  - Set all safety/action flags to false/zero in manifest section
+  - Rewrote NEXT-TASK.md to audit-only scope
+- **BLOCKER**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`

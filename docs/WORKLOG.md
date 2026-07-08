@@ -12921,3 +12921,25 @@
 - **Remaining risks or limitations**:
   - `PATCH` tool over-replacement issue — `patch` replaces entire region, stripping adjacent context
   - `write_file` tool double-escapes backslashes — must bypass via `execute_code` with Python `json.dump`
+
+## 2026-07-08T2026-07-08T11:35:09Z — TASK 4D-CORRECTIVE: Repair operator confirmation gate integrity
+
+- **Objective**: Repair critical integrity failures identified by TASK 4D FAIL — manifest SHA-256 mismatch, missing future_preconditions, missing operator_confirmation_collection_statuses, missing captured_prior_identities, incorrect manifest safety flags.
+- **Starting branch and commit**: `feature/native-adapter-execution-envelope-verifier` / `c24527935fec2d680cc1df885206a529f2ef93c5`.
+- **Investigation**: TASK 4D independent strict read-only audit identified:
+  1. Manifest SHA-256 recorded `a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb792345` but actual evidence file SHA was `41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1` — mismatch
+  2. Design-gate JSON `future_preconditions` had 0 entries (spec required many)
+  3. Design-gate JSON `operator_confirmation_collection_statuses` had 0 entries (spec required 6 canonical statuses)
+  4. Design-gate JSON `captured_prior_identities` had 0 entries (spec required target/parent/child)
+  5. Manifest incorrectly flagged `corrective_remediation`, `evidence_updated`, `real_artifact_static_metadata_review_completed` as active true safety flags
+- **Files modified**:
+  - `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json` — added future_preconditions (20 entries), operator_confirmation_collection_statuses (6 canonical statuses), captured_prior_identities (target/parent/child)
+  - `docs/evidence/runtime-bringup-readiness-manifest.json` — recomputed SHA-256, fixed incorrect safety flags
+  - `docs/NEXT-TASK.md` — rewritten to audit-only scope with explicit safety statements
+  - `docs/PROJECT-STATE.md` — updated with TASK 4D-CORRECTIVE completion marker
+  - `docs/RUNTIME-BRINGUP-READINESS.md` — inserted TASK 4D-CORRECTIVE section
+- **Safety state preserved**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. No operator confirmation collected. No rollback implemented. No restore performed. No binding implementation executed. No binding execution occurred. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact/compile-output access. Live readiness remains `BLOCKED`.
+- **Validation**: Evidence JSON parse OK. SHA-256 matches manifest. All 43 package fields present. 6 canonical statuses present. captured_prior_identities populated. Safety flags false/zero. NEXT-TASK.md audit-only. `git diff --check` exit 0.
+- **Commit**: `docs: repair operator confirmation gate integrity`
+- **Push**: `origin/feature/native-adapter-execution-envelope-verifier`
+- **Remaining blocker**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. Next task: independent strict read-only audit of repaired operator confirmation collection design-gate state.

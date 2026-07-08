@@ -1411,6 +1411,27 @@ Manifest SHA updated to match.
 
 Next: TASK 4C — re-audit remediated design-gate for PASS verdict.
 
+## TASK 4D-CORRECTIVE: Repair operator confirmation design-gate integrity (2026-07-08)
+
+TASK 4D independent strict read-only audit identified critical integrity failures in the operator confirmation collection design-gate state. TASK 4D-CORRECTIVE repaired all failures:
+
+- **Evidence file**: `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
+  - Added 20 entries to `future_preconditions` (final readiness gate accepted, operator/rollback package design gate accepted, prior identity capture result accepted, dry-run result accepted, target/parent/child matches, ContainerId matches, prior identity matches, live readiness BLOCKED, native execution NOT_IMPLEMENTED, execution authorized false, binding implementation NOT_IMPLEMENTED, rollback false, restore false, SetupAPI/Newdev count 0, Windows mutation count 0, driver action count 0, artifact/compile-output access false)
+  - Added 6 canonical `OPERATOR_CONFIRMATION_COLLECTION_*` status strings to `operator_confirmation_collection_statuses`
+  - Populated `captured_prior_identities` with target (Microsoft/HidUsb/HIDClass), parent (Microsoft/xusb22/XnaComposite), and child (Microsoft/unavailable/HIDClass) identities
+  - Preserved schema, status, readiness_classification, accepted_target_chain, shared_container_id, blocker, and all safety fields
+- **Manifest**: `docs/evidence/runtime-bringup-readiness-manifest.json`
+  - Recomputed evidence SHA-256 from corrected design-gate file
+  - Updated manifest SHA-256 to match corrected evidence file
+  - Set `corrective_remediation`, `evidence_updated`, `real_artifact_static_metadata_review_completed` to false (were incorrectly true)
+  - Verified all safety/action flags are false/zero
+- **NEXT-TASK.md**: Rewritten to audit-only scope with explicit safety statements
+- **PROJECT-STATE.md**: Updated with TASK 4D-CORRECTIVE completion marker
+- **WORKLOG.md**: Appended TASK 4D-CORRECTIVE entry
+
+**Safety state preserved**: `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. No operator confirmation collected. No rollback implemented. No restore performed. No binding implementation authorized. No binding implementation performed. No binding execution occurred. No live query in this task. No device query in this task. No identity capture in this task. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact/compile-output access. Live readiness remains `BLOCKED`. Native execution remains `NOT_IMPLEMENTED`. Execution authorized remains `false`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+
 ## 2026-07-08T09:59Z — TASK 4C-CORRECTIVE: operator confirmation package contract
 
 - **Status**: CORRECTIVE PATCH APPLIED
