@@ -1,4 +1,4 @@
-# Controlled Windows 11 Runtime Bring-Up Readiness
+﻿# Controlled Windows 11 Runtime Bring-Up Readiness
 
 This document is the authoritative preparation plan for the first controlled
 Windows 11 runtime bring-up of the rewritten Chatpad driver. This commit is
@@ -1410,3 +1410,18 @@ Design-gate SHA-256: `a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb
 Manifest SHA updated to match.
 
 Next: TASK 4C — re-audit remediated design-gate for PASS verdict.
+
+## 2026-07-08T09:59Z — TASK 4C-CORRECTIVE: operator confirmation package contract
+
+- **Status**: CORRECTIVE PATCH APPLIED
+- **Design-gate file**: `docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json`
+- **Design-gate SHA-256**: `41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1`
+- **Patch applied**: Added `future_operator_confirmation_package_fields` (43 fields),
+  renamed `required_fields` → `remediation_added_required_fields` (3 items)
+- **Manifest updated**: SHA-256 refreshed to match current design-gate file
+- **Current state**: All operator confirmation collection design-gate contract fields defined.
+  43 fields in `future_operator_confirmation_package_fields`. 6 canonical statuses defined.
+  13 audit requirements defined. 4 upstream evidence requirements defined.
+  Safety: all mutation/execution/bind flags false. Blocker BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED.
+- **Pending**: commit `docs: correct operator confirmation package contract`, push, validate
+  (independent strict read-only audit), then TASK 4D

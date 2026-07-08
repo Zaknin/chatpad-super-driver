@@ -1,4 +1,4 @@
-# Project State
+﻿# Project State
 
 |*Last updated: 2026-07-08 (TASK 4B-REMEDIATION complete — design-gate remediated)*
 
@@ -921,3 +921,15 @@ load, entry-point resolution, Windows mutation, driver action, or
 artifact/compile-output access occurred during this remediation; and live
 readiness remains `BLOCKED`, native execution remains `NOT_IMPLEMENTED`, and
 execution authorized remains `false`.
+
+
+## TASK 4C-CORRECTIVE — in progress (correction applied, commit pending)
+
+- **Status**: PATCH APPLIED — 43 fields added to `future_operator_confirmation_package_fields`,
+  `required_fields` renamed to `remediation_added_required_fields` (3 items preserved as sibling note).
+- **Design-gate SHA-256**: `41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1`
+- **Manifest**: SHA-256 refreshed to match current design-gate file.
+- **NEXT-TASK.md**: stale SHA refreshed to current `41d85e56...`.
+- **WORKLOG.md**: corrective entry appended (12924 lines).
+- **RUNTIME-BRINGUP-READINESS.md**: corrective entry appended (1428 lines).
+- **PENDING**: commit `docs: correct operator confirmation package contract`, push, validate, then TASK 4D.

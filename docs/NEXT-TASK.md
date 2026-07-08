@@ -1,4 +1,4 @@
-# Next Task
+﻿# Next Task
 
 |## Objective
 
@@ -15,7 +15,7 @@ TASK 4B FAIL identified 5 gaps in the operator confirmation package specificatio
 4. Replaced simplified status naming (CONFIRMED/REJECTED/NO_OP/PENDING_VERIFICATION/INSUFFICIENT_DATA/MANUALLY_REVOKED) with canonical `OPERATOR_CONFIRMATION_COLLECTION_*` vocabulary (6 canonical statuses)
 5. Updated `future_package_audit_requirements` to reference remediated fields
 
-Design-gate SHA-256 after remediation: `a7e7821929b4a3363045b511c167b30a10364de9d7be3fc332d0d495cb792345`.
+Design-gate SHA-256 after remediation: `41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1`.
 
 ## Exact Current State
 

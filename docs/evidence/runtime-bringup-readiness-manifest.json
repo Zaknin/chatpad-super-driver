@@ -11481,5 +11481,11 @@
       "driver_uninstalls": 0,
       "driver_start_stops": 0
     }
-  }
+  },
+  "evidence_sha256": "41d85e56a55a89e2c2f3fb2ab79ea6e77538691ef7882d4e431511125b195db1",
+  "evidence_path": "docs/evidence/exact-instance-binding-operator-confirmation-collection-design-gate.json",
+  "evidence_updated": true,
+  "corrective_remediation": true,
+  "corrective_remediation_description": "Added future_operator_confirmation_package_fields (43 fields) and renamed required_fields to remediation_added_required_fields",
+  "corrective_remediation_timestamp": "2026-07-08T09:54:30Z"
 }
