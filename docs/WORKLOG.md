@@ -13279,3 +13279,55 @@ mutation/driver/artifact action performed or authorized.
 - **Manifest update:** Added `exact_instance_binding_rollback_no_op_package` section to `docs/evidence/runtime-bringup-readiness-manifest.json` with 70 fields: identity (11), chain (3), source evidence chain (7), package decision (8), preconditions (9), safety (26), readiness (13).
 - **Docs updated:** `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`, `docs/WORKLOG.md`.
 - **Next task:** TASK 8B-4 — validate manifest/docs update for rollback/no-op package evidence
+
+## TASK 8B-7 — Record Rollback/No-Op Package Evidence Audit Acceptance (2026-07-09)
+
+- **Objective:** Record accepted TASK 8B-6C independent audit result for the
+  committed rollback/no-op package evidence in the runtime bring-up manifest
+  and project documentation.
+- **Starting branch and commit:** `feature/native-adapter-execution-envelope-verifier` /
+  `356f79963489fb999245df23e70f22740564789e`
+  (`docs: finalize rollback/no-op package evidence`).
+- **Starting parent:** `ffad232eea24fb2dcda0ce09aa6809180cad880c`.
+- **Starting state:** upstream ahead/behind was `0/0` and `git status --short`
+  was clean.
+- **Accepted audit result:** TASK 8B-6C `PASS` / `ACCEPTED`.
+- **Evidence state:** rollback/no-op package evidence committed, pushed, and audited.
+- **Evidence path:** `docs/evidence/exact-instance-binding-rollback-no-op-package.json`.
+- **Evidence hash:** `03AA4058D9CDB6DA00ED7EF4DC3FEFB01E314438CA07974E73659B8D8C4FDCD3`.
+- **Schema:** `chatpad-exact-instance-binding-rollback-no-op-package-v1`.
+- **Status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_DEFINED_NO_ROLLBACK_IMPLEMENTED_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Readiness:** `READY_FOR_ROLLBACK_NO_OP_PACKAGE_EVIDENCE_AUDIT_ONLY`.
+- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`.
+- **Implementation details:** Added flat TASK 8B-6C audit-acceptance fields to
+  `exact_instance_binding_rollback_no_op_package` in
+  `docs/evidence/runtime-bringup-readiness-manifest.json`. Removed the duplicate
+  manifest object key for that section while preserving the package-evidence
+  creation-time `source_evidence_chain.readiness_manifest` hash.
+- **Docs updated:** `docs/PROJECT-STATE.md`,
+  `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`, and
+  `docs/WORKLOG.md`.
+- **NEXT-TASK replacement:** TASK 8C-0 — next-lane readiness preflight after
+  accepted rollback/no-op package evidence audit.
+- **Validation target:** evidence file hash unchanged; manifest schema remains
+  `chatpad-runtime-bringup-readiness-manifest-v4`; manifest section remains flat
+  with no nested `safety_state` or `readiness_decision`; docs contain required
+  TASK 8B-6C audit acceptance and safety tokens; forbidden positive-claim scan
+  clean; `git diff --check` clean apart from line-ending normalization warnings
+  if emitted by Git.
+- **Safety state:** Binding implementation/execution remains unauthorized.
+  Rollback package implementation remains unauthorized. Rollback implementation
+  remains unauthorized. Restore remains unauthorized. Native execution remains
+  `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`. Blocker remains
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Prohibited actions not performed:** No rollback package implementation,
+  rollback implementation, restore, binding implementation, binding execution,
+  native execution, SetupAPI/Newdev invocation, Windows mutation, driver action,
+  artifact access, compile-output access, metadata parsing, live query, device
+  query, identity capture, new operator confirmation collection, build, sign,
+  package, install, load, bind, restart, project generator, verifier, parser, or
+  full compile-output validator was performed or authorized.
+- **Commit:** this docs/manifest-only closeout commit; exact hash is reported
+  by Git after commit creation and in the final task response.
+- **Next task:** TASK 8B-8 — independent read-only audit of audit-acceptance
+  closeout commit.
