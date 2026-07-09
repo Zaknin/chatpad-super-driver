@@ -1,4 +1,4 @@
-﻿# Worklog
+# Worklog
 
 *Entries are appended chronologically. Do not rewrite or delete valid historical entries.*
 
@@ -13331,3 +13331,21 @@ mutation/driver/artifact action performed or authorized.
   by Git after commit creation and in the final task response.
 - **Next task:** TASK 8B-8 — independent read-only audit of audit-acceptance
   closeout commit.
+
+
+## TASK 8C-3 - Next Non-Mutating Implementation Contract Scope Evidence Recorded (2026-07-10)
+
+- **Objective:** Update manifest/docs for the validated next non-mutating implementation contract scope evidence.
+- **Evidence path:** `docs/evidence/exact-instance-binding-next-non-mutating-implementation-contract-scope.json`.
+- **Evidence hash:** `A105F637D349E8CE324E57DB35D5F79D4614EBD2E511381D1480F20F52499666`.
+- **Schema:** `chatpad-exact-instance-binding-next-non-mutating-implementation-contract-scope-v1`.
+- **Status:** `EXACT_INSTANCE_BINDING_NEXT_NON_MUTATING_IMPLEMENTATION_CONTRACT_SCOPE_DEFINED_NO_IMPLEMENTATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Readiness:** `READY_TO_DEFINE_NON_MUTATING_IMPLEMENTATION_CONTRACT_ONLY`.
+- **TASK 8C-1 created next non-mutating implementation contract scope evidence.**
+- **TASK 8C-2 validated next non-mutating implementation contract scope evidence.**
+- **Source commit:** `0ab8c6df594f278602212fadfef1d3675bee54ef` on branch `feature/native-adapter-execution-envelope-verifier`.
+- **Manifest update:** Added flat section `exact_instance_binding_next_non_mutating_implementation_contract_scope` with evidence identity, accepted target chain, PID_045E count `0`, VID_045E count `3`, source evidence chain, accepted preconditions, non-mutating next-lane scope, authorization-denial flags, safety fields, and readiness fields.
+- **Recorded manifest source hash in evidence:** `9E81DB3EF9DA0CEA4BC03C6BA83FA77E72B6B99E6B399F9E6BA99480699EBB18`. This remains the 8C-1 creation-time manifest identity; current manifest hash drift after this update is expected and is not evidence-file drift.
+- **Safety state:** rollback/no-op package evidence remains accepted. Binding implementation/execution remains unauthorized. Rollback package implementation remains unauthorized. Rollback implementation remains unauthorized. Restore remains unauthorized. Native execution remains `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Next lane:** non-mutating implementation contract only. This does not authorize rollback package implementation, rollback implementation, restore, binding implementation, binding execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, metadata parsing, live/device query, identity capture, operator confirmation collection, build, sign, package, install, load, bind, restart, or source/tool/native/driver code changes.
+- **Next task:** TASK 8C-4 — validate manifest/docs update for next non-mutating implementation contract scope evidence.

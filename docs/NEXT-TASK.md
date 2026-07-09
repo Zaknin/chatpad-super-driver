@@ -1,50 +1,36 @@
-# Next Task
-
-## Objective
-
-TASK 8C-0 — next-lane readiness preflight after accepted rollback/no-op package evidence audit
+# TASK 8C-4 — validate manifest/docs update for next non-mutating implementation contract scope evidence
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-execution-envelope-verifier`
-- **Required starting commit:** the TASK 8B-7 commit that records TASK 8B-6C audit acceptance
-- **Accepted audit target:** `356f79963489fb999245df23e70f22740564789e`
-- **Accepted audit parent:** `ffad232eea24fb2dcda0ce09aa6809180cad880c`
-- **Accepted audit result:** TASK 8B-6C `PASS` / `ACCEPTED`
-- **Audit upstream state:** `0/0`; working tree clean at audit
-- **Evidence state:** rollback/no-op package evidence committed, pushed, and audited
-
-## Evidence Reference
-
-- **Evidence path:** `docs/evidence/exact-instance-binding-rollback-no-op-package.json`
-- **Schema:** `chatpad-exact-instance-binding-rollback-no-op-package-v1`
-- **Status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_DEFINED_NO_ROLLBACK_IMPLEMENTED_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
-- **Readiness:** `READY_FOR_ROLLBACK_NO_OP_PACKAGE_EVIDENCE_AUDIT_ONLY`
-- **Evidence hash (SHA-256):** `03AA4058D9CDB6DA00ED7EF4DC3FEFB01E314438CA07974E73659B8D8C4FDCD3`
-- **Hash method:** `canonical_lf_text_sha256`
-- **Source commit:** `ffad232eea24fb2dcda0ce09aa6809180cad880c`
-- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
-- **Accepted target instance ID:** `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`
-
-## Preconditions
-
-1. Verify the live branch, HEAD, parent, upstream sync, and `git status` before any next-lane work.
-2. Verify the rollback/no-op package evidence hash remains `03AA4058D9CDB6DA00ED7EF4DC3FEFB01E314438CA07974E73659B8D8C4FDCD3`.
-3. Verify the manifest section `exact_instance_binding_rollback_no_op_package` records TASK 8B-6C `PASS` / `ACCEPTED` and remains flat with no nested `safety_state` or `readiness_decision`.
+- **Branch:** `feature/native-adapter-execution-envelope-verifier`.
+- **Starting commit:** `0ab8c6df594f278602212fadfef1d3675bee54ef`.
+- **Expected status before validation:** modified docs/manifest files from TASK 8C-3 plus untracked `docs/evidence/exact-instance-binding-next-non-mutating-implementation-contract-scope.json`.
+- **Evidence path:** `docs/evidence/exact-instance-binding-next-non-mutating-implementation-contract-scope.json`.
+- **Evidence hash:** `A105F637D349E8CE324E57DB35D5F79D4614EBD2E511381D1480F20F52499666`.
+- **Schema:** `chatpad-exact-instance-binding-next-non-mutating-implementation-contract-scope-v1`.
+- **Status:** `EXACT_INSTANCE_BINDING_NEXT_NON_MUTATING_IMPLEMENTATION_CONTRACT_SCOPE_DEFINED_NO_IMPLEMENTATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Readiness:** `READY_TO_DEFINE_NON_MUTATING_IMPLEMENTATION_CONTRACT_ONLY`.
+- **Manifest section:** `exact_instance_binding_next_non_mutating_implementation_contract_scope`.
+- **Recorded manifest source hash in evidence:** `9E81DB3EF9DA0CEA4BC03C6BA83FA77E72B6B99E6B399F9E6BA99480699EBB18`. Do not update this evidence-file hash; current manifest hash drift after TASK 8C-3 is expected.
 
 ## Safety Restrictions
 
-- binding implementation/execution remains unauthorized.
-- rollback package implementation remains unauthorized.
-- rollback implementation remains unauthorized.
-- restore remains unauthorized.
-- Native execution remains `NOT_IMPLEMENTED`.
-- Live readiness remains `BLOCKED`.
-- Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
-- Do not perform live/device queries, identity capture, new operator confirmation collection, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, or metadata parsing unless a later task explicitly authorizes that exact action.
+This is validation-only unless a later task explicitly authorizes a narrow repair. Do not perform live/device query, identity capture, operator confirmation collection, rollback package implementation, rollback implementation, restore, binding implementation, binding execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, metadata parsing, build, sign, package, install, load, bind, restart, or source/tool/native/driver code changes.
 
 ## Acceptance Criteria
 
-- Next-lane preflight confirms the accepted rollback/no-op package evidence audit state.
-- No unsupported claim is introduced about rollback package implementation, rollback implementation, restore, binding, native execution, SetupAPI/Newdev, Windows mutation, driver action, artifact access, compile-output access, metadata parsing, or blocker removal.
-- Continuation docs remain consistent with the live repository state.
+- Verify the evidence file hash remains `A105F637D349E8CE324E57DB35D5F79D4614EBD2E511381D1480F20F52499666`.
+- Verify manifest schema remains `chatpad-runtime-bringup-readiness-manifest-v4`.
+- Verify manifest section `exact_instance_binding_next_non_mutating_implementation_contract_scope` exists and is flat.
+- Verify manifest section records evidence path/hash/schema/status/readiness/source commit and TASK 8C-1/TASK 8C-2 provenance.
+- Verify source evidence chain contains the eight expected roles and hashes.
+- Verify safety/readiness fields preserve blocker `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`, live readiness `BLOCKED`, native execution `NOT_IMPLEMENTED`, and all implementation/mutation/action readiness flags false.
+- Verify docs record TASK 8C-1 creation, TASK 8C-2 validation, evidence identity, branch, accepted rollback/no-op package evidence, unauthorized implementation/execution/restore state, and next lane remains non-mutating implementation contract only.
+- Verify forbidden positive-claim scan is clean.
+
+## Recommended First Checks
+
+1. `git status --short`
+2. Validate `docs/evidence/exact-instance-binding-next-non-mutating-implementation-contract-scope.json` with canonical LF hash.
+3. Validate `docs/evidence/runtime-bringup-readiness-manifest.json` section `exact_instance_binding_next_non_mutating_implementation_contract_scope`.
+4. Inspect docs tokens in `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`, and `docs/WORKLOG.md`.
