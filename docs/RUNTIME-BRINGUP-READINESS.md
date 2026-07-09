@@ -1483,6 +1483,27 @@ remains `NOT_IMPLEMENTED`, binding implementation status remains
 `NOT_IMPLEMENTED`, execution authorized remains `false`, and the blocker
 remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 
+## Exact-Instance Binding Rollback/No-Op Package Contract Definition Gate
+
+- **Status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_CONTRACT_DEFINITION_GATE_OPENED_NO_ROLLBACK_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+- **Evidence:** `docs/evidence/exact-instance-binding-rollback-no-op-package-contract-definition-gate.json`
+- **Schema:** `chatpad-exact-instance-binding-rollback-no-op-package-contract-definition-gate-v1`
+- **Evidence SHA-256:** `AD4D6D1F949E66C8847610BFFDBA5628DD9BBBF57D5BD60ED7625F30A47C6714`
+- **Readiness:** `READY_TO_DEFINE_ROLLBACK_NO_OP_PACKAGE_CONTRACT_ONLY`
+- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
+- **Accepted target instance ID:** `USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`
+- **Shared container ID:** `{828F4587-006F-5AD1-B169-6AF57905DFDE}`
+- **Accepted target chain:** `USB\\VID_045E&PID_028E\\1C21F10`; `USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`; `HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000`
+- **Source evidence chain:** 6 sources (preparation gate, design gate, operator confirmation, prior identity capture, dry-run, readiness manifest)
+- **Safety state:** all zeros. `blocker=BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`; `live_readiness=BLOCKED`; `native_execution_status=NOT_IMPLEMENTED`; `execution_authorized=false`; `binding_implementation_status=NOT_IMPLEMENTED`; `binding_implementation_authorized=false`.
+- **Readiness decision:** `ready_to_define_rollback_no_op_package_contract_only=true`; all other readiness flags=false.
+- **No rollback package implementation.** No rollback implementation.** No restore.** No binding implementation.** No binding execution.** No native execution.** No SetupAPI/Newdev.** No Windows mutation.** No driver action.** No artifact access.** No compile-output access.** No metadata parsing.**
+- **Rollback package implementation, rollback implementation, and restore remain unauthorized.**
+- **Binding implementation/execution remains unauthorized.**
+- **Native execution remains `NOT_IMPLEMENTED`.**
+- **Live readiness remains `BLOCKED`.**
+- **Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.**
+
 ## Exact next task
 
 Perform an independent strict read-only audit of this remediated

@@ -13215,3 +13215,37 @@ and `docs/WORKLOG.md` to reference the validated gate evidence.
 No evidence file modification during 7C-1. No new operator confirmation collected.
 No live/device query, identity capture, rollback implementation, restore, binding/native/
 mutation/driver/artifact action performed or authorized.
+
+## TASK 8A-1 — Rollback/No-Op Package Contract Definition Gate Evidence (2026-07-09)
+
+- **Objective:** Create rollback/no-op package contract definition gate evidence file.
+- **Starting branch:** `feature/native-adapter-execution-envelope-verifier` / `a6344a2fc479b1879ff2ad48acecdb406e28e628`.
+- **File created:** `docs/evidence/exact-instance-binding-rollback-no-op-package-contract-definition-gate.json`
+- **Schema:** `chatpad-exact-instance-binding-rollback-no-op-package-contract-definition-gate-v1`
+- **Status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_CONTRACT_DEFINITION_GATE_OPENED_NO_ROLLBACK_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+- **Readiness:** `READY_TO_DEFINE_ROLLBACK_NO_OP_PACKAGE_CONTRACT_ONLY`
+- **Evidence hash:** `AD4D6D1F949E66C8847610BFFDBA5628DD9BBBF57D5BD60ED7625F30A47C6714`
+- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
+- **Accepted target instance ID:** `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`
+- **Shared container ID:** `{828F4587-006F-5AD1-B169-6AF57905DFDE}`
+- **Source evidence chain:** 6 sources (preparation gate, design gate, operator confirmation, prior identity capture, dry-run, readiness manifest).
+- **Safety state:** all zeros, all safety booleans false except explicitly true fields.
+- **Readiness:** only `ready_to_define_rollback_no_op_package_contract_only = true`; all execution/implementation/restore fields false.
+- **No live/device query, no native execution, no mutation, no driver action, no artifact access performed or authorized.**
+
+## TASK 8A-2R — Clean Verification of Contract Definition Gate Evidence (2026-07-09)
+
+- **Objective:** Independently validate the new evidence file without any temp/helper files.
+- **Verified:** schema, status, readiness_classification, hashes, source_evidence_chain (6 sources), accepted_target_chain (3 items, VID_045E count=3, PID_045E count=0), prior identity (target/parent/child), safety state (30 fields), readiness decision (13 fields), explicit non-authorization statement (12 categories), hash `AD4D6D1F949E66C8847610BFFDBA5628DD9BBBF57D5BD60ED7625F30A47C6714`.
+- **Result:** TASK 8A-2R: PASS.
+- **No temp/helper files created.**
+
+## TASK 8A-3 — Update Manifest and Docs for Contract Definition Gate (2026-07-09)
+
+- **Objective:** Update readiness manifest and all project docs to reference the validated rollback/no-op package contract definition gate evidence.
+- **Manifest updated:** Added `exact_instance_binding_rollback_no_op_package_contract_definition_gate` section with evidence path, schema, status, readiness_classification, evidence SHA-256, hash method, task reference, source commit, operator confirmation ID, accepted target instance ID, shared container ID, accepted target chain (3 items), source evidence chain (6 sources as dict), safety state (30 fields), readiness decision (13 fields).
+- **Docs updated:** `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`, `docs/WORKLOG.md`.
+- **No evidence file modification during 8A-3.**
+- **No new operator confirmation collected.**
+- **No live/device query, identity capture, rollback package implementation, rollback implementation, restore, binding/native/mutation/driver/artifact action performed or authorized.**
+- **Safety summary:** All safety fields zero. Readiness only `READY_TO_DEFINE_ROLLBACK_NO_OP_PACKAGE_CONTRACT_ONLY`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.

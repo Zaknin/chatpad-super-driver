@@ -230,7 +230,17 @@
   - **Accepted target instance ID:** `USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`
   - **Shared container ID:** `{828F4587-006F-5AD1-B169-6AF57905DFDE}`
   - **State:** rollback/no-op package preparation gate opened; rollback implementation not authorized; restore not authorized; binding implementation/execution remains unauthorized; native execution remains `NOT_IMPLEMENTED`; live readiness remains `BLOCKED`.
-- **Exact-instance binding prior-driver/provider identity capture design-gate
+- **Exact-instance binding rollback/no-op package contract definition gate:**
+  - **Gate status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_CONTRACT_DEFINITION_GATE_OPENED_NO_ROLLBACK_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+  - **Gate evidence path:** `docs/evidence/exact-instance-binding-rollback-no-op-package-contract-definition-gate.json`
+  - **Gate schema:** `chatpad-exact-instance-binding-rollback-no-op-package-contract-definition-gate-v1`
+  - **Gate evidence SHA-256:** `AD4D6D1F949E66C8847610BFFDBA5628DD9BBBF57D5BD60ED7625F30A47C6714`
+  - **Readiness classification:** `READY_TO_DEFINE_ROLLBACK_NO_OP_PACKAGE_CONTRACT_ONLY`
+  - **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
+  - **Accepted target instance ID:** `USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`
+  - **Shared container ID:** `{828F4587-006F-5AD1-B169-6AF57905DFDE}`
+  - **State:** rollback/no-op package contract definition gate opened; rollback package implementation not authorized; rollback implementation not authorized; restore not authorized; binding implementation/execution remains unauthorized; native execution remains `NOT_IMPLEMENTED`; live readiness remains `BLOCKED`.
+|- **Exact-instance binding prior-driver/provider identity capture design-gate
   status:**
   `EXACT_INSTANCE_BINDING_PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURE_DESIGN_GATE_OPENED_NO_LIVE_QUERY_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
 - **Exact-instance binding prior-driver/provider identity capture design-gate
