@@ -1390,6 +1390,23 @@ execution authorized remains `false`, and the blocker remains
 - **Source template SHA-256:** `7E167C035AFB5C7C8B1E54743C780569F1A49103BFAC1B86D9127664F469A5E3`
 - **Source design SHA-256:** `54E69D047929D97C786079300890BF4837199B73DB8F756BCD61BC95449C12A4`
 
+### Exact-Instance Binding Rollback/No-Op Package Preparation Gate
+
+- **Gate status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_PREPARATION_GATE_OPENED_NO_ROLLBACK_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+- **Gate evidence path:** `docs/evidence/exact-instance-binding-rollback-no-op-package-preparation-gate.json`
+- **Gate schema:** `chatpad-exact-instance-binding-rollback-no-op-package-preparation-gate-v1`
+- **Gate evidence SHA-256:** `31C0FE15B864DC7121CFDE05A3032D913152FBC976E03ACCE59753719CCF388D`
+- **Readiness classification:** `READY_TO_DEFINE_ROLLBACK_NO_OP_PACKAGE_CONTRACT_ONLY`
+- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
+- **Accepted target instance ID:** `USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00`
+- **Shared container ID:** `{828F4587-006F-5AD1-B169-6AF57905DFDE}`
+- **State:** rollback/no-op package preparation gate opened; rollback implementation not authorized; restore not authorized; binding implementation/execution remains unauthorized; native execution remains `NOT_IMPLEMENTED`; live readiness remains `BLOCKED`.
+- **Safety summary:** No rollback implemented. No restore performed. No binding implementation or execution authorized or performed. No native execution. No SetupAPI/Newdev invocation. No Windows mutation. No driver action. No artifact access. Live readiness remains `BLOCKED`. Native execution remains `NOT_IMPLEMENTED`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+- **TASK 7C-0 validated rollback/no-op package preparation gate evidence.**
+- **TASK 7C-1 updated manifest and docs for rollback/no-op package preparation gate.**
+- **TASK 7C-2 validates the manifest/docs update and finalizes the rollback/no-op package preparation gate evidence commit.**
+
 
 ## Exact-Instance Binding Prior-Driver/Provider Identity Capture Design Gate
 

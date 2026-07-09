@@ -13187,5 +13187,31 @@
   invocation, Windows mutation, driver action, rollback implementation,
   restore, live query, device query, identity capture, artifact access, or
   compile-output access was authorized or performed.
-- **Next task:** TASK 6F-RERUN-2 - independent read-only audit after
-  dynamic-head wording remediation.
+- **Next task:** TASK 7C-2 — validate manifest/docs update and finalize rollback/no-op preparation gate evidence commit.
+
+## TASK 7B — Rollback/No-Op Package Preparation Gate Evidence (2026-07-09)
+
+Created exact-instance binding rollback/no-op package preparation gate evidence at
+`docs/evidence/exact-instance-binding-rollback-no-op-package-preparation-gate.json`.
+
+Evidence records the operator confirmation result state, exact instance binding dry-run
+accepted target chain, and rollback/no-op package design gate readiness. Readiness is
+only `READY_TO_DEFINE_ROLLBACK_NO_OP_PACKAGE_CONTRACT_ONLY`. Rollback implementation
+is not authorized. Restore is not authorized. Binding implementation/execution remains
+unauthorized. Native execution remains `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`.
+
+## TASK 7C-0 — Validate Rollback/No-Op Package Preparation Gate Evidence (2026-07-09)
+
+Validated the rollback/no-op package preparation gate evidence against the schema.
+All scalars, target chain, source evidence chain, safety fields, and readiness
+decision fields verified. Evidence hash: `31C0FE15B864DC7121CFDE05A3032D913152FBC976E03ACCE59753719CCF388D`.
+
+## TASK 7C-1 — Update Manifest and Docs for Rollback/No-Op Package Preparation Gate (2026-07-09)
+
+Updated `docs/evidence/runtime-bringup-readiness-manifest.json` with the new section.
+Updated `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`,
+and `docs/WORKLOG.md` to reference the validated gate evidence.
+
+No evidence file modification during 7C-1. No new operator confirmation collected.
+No live/device query, identity capture, rollback implementation, restore, binding/native/
+mutation/driver/artifact action performed or authorized.
