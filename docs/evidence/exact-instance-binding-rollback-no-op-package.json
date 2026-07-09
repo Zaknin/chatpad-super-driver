@@ -1,0 +1,273 @@
+{
+  "schema": "chatpad-exact-instance-binding-rollback-no-op-package-v1",
+  "status": "EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_DEFINED_NO_ROLLBACK_IMPLEMENTED_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+  "readiness_classification": "READY_FOR_ROLLBACK_NO_OP_PACKAGE_EVIDENCE_AUDIT_ONLY",
+  "created_from_task": "TASK 8B-1",
+  "source_commit": "ffad232eea24fb2dcda0ce09aa6809180cad880c",
+  "generated_utc": "2026-07-09T00:00:00Z",
+  "hash_method": "canonical_lf_text_sha256",
+  "operator_confirmation_id": "operator-confirmation-c445630fbb303c7c",
+  "accepted_target_instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+  "accepted_target_chain": [
+    "USB\\VID_045E&PID_028E\\1C21F10",
+    "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+    "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000"
+  ],
+  "shared_container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+  "source_evidence_chain": [
+    {
+      "path": "docs/evidence/exact-instance-binding-rollback-no-op-package-contract-definition-gate.json",
+      "schema": "chatpad-exact-instance-binding-rollback-no-op-package-contract-definition-gate-v1",
+      "status": "EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_CONTRACT_DEFINITION_GATE_OPENED_NO_ROLLBACK_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+      "canonical_lf_text_sha256": "AD4D6D1F949E66C8847610BFFDBA5628DD9BBBF57D5BD60ED7625F30A47C6714",
+      "role": "rollback_no_op_package_contract_definition_gate"
+    },
+    {
+      "path": "docs/evidence/exact-instance-binding-rollback-no-op-package-preparation-gate.json",
+      "schema": "chatpad-exact-instance-binding-rollback-no-op-package-preparation-gate-v1",
+      "status": "EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_PREPARATION_GATE_OPENED_NO_ROLLBACK_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+      "canonical_lf_text_sha256": "31C0FE15B864DC7121CFDE05A3032D913152FBC976E03ACCE59753719CCF388D",
+      "role": "rollback_no_op_package_preparation_gate"
+    },
+    {
+      "path": "docs/evidence/exact-instance-binding-operator-rollback-package-design-gate.json",
+      "schema": "chatpad-exact-instance-binding-operator-rollback-package-design-gate-v1",
+      "status": "EXACT_INSTANCE_BINDING_OPERATOR_ROLLBACK_PACKAGE_DESIGN_GATE_OPENED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+      "canonical_lf_text_sha256": "D70CF0742484B65BD7E5A3BA0CEE24B4326440C1F020E47931D3049AC9B6AD2F",
+      "role": "rollback_no_op_design_gate"
+    },
+    {
+      "path": "docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json",
+      "schema": "chatpad-exact-instance-binding-operator-confirmation-collection-result-v1",
+      "status": "OPERATOR_CONFIRMATION_COLLECTION_COMPLETED_NO_BINDING_NO_MUTATION_NO_NATIVE_IO",
+      "canonical_lf_text_sha256": "A15D6C85F92246CBF345096E5E2547D52562763953FC2C31F6556307E5335169",
+      "role": "operator_confirmation_result"
+    },
+    {
+      "path": "docs/evidence/exact-instance-binding-prior-driver-provider-identity-capture-result.json",
+      "schema": "chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1",
+      "status": "PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO",
+      "canonical_lf_text_sha256": "447A234302ABC3191C9E057BC8BB83A6B816C5487883B6F651C63E2570D1C6B4",
+      "role": "prior_driver_provider_identity_capture"
+    },
+    {
+      "path": "docs/evidence/exact-instance-binding-dry-run-result.json",
+      "schema": "chatpad-exact-instance-binding-dry-run-result-v1",
+      "status": "DRY_RUN_ACCEPTED_TARGET_NO_MUTATION_PLANNED_ACTION_ONLY",
+      "canonical_lf_text_sha256": "75EB09A1FB0BEE7BF35AF6AFF678194C74D5CDD92DC320D38EED63F2AE7BE716",
+      "role": "exact_instance_binding_dry_run"
+    },
+    {
+      "path": "docs/evidence/runtime-bringup-readiness-manifest.json",
+      "schema": "chatpad-runtime-bringup-readiness-manifest-v4",
+      "status": "MANIFEST_RECORDING_ALL_GATE_STATUSES",
+      "canonical_lf_text_sha256": "E11D489E0A2FC7465D7C24F1BF6F8120D815077EEF5EB4CD9807E1E86BF3DE35",
+      "role": "readiness_manifest"
+    }
+  ],
+  "package_scope": {
+    "purpose": "this is an evidence-only rollback/no-op package",
+    "records": "this package records required rollback/no-op decision data only",
+    "does_not_implement": [
+      "this package does not implement rollback package tooling",
+      "this package does not implement rollback",
+      "this package does not perform restore",
+      "this package does not implement or execute binding",
+      "this package does not authorize native execution, SetupAPI/Newdev, Windows mutation, driver action, artifact access, compile-output access, or metadata parsing"
+    ],
+    "requires_audit": "this package requires independent audit before any future mutation-capable task"
+  },
+  "package_decision": {
+    "package_type": "evidence_only_rollback_no_op_package",
+    "current_action": "no_action",
+    "rollback_package_implementation_performed": false,
+    "rollback_implementation_performed": false,
+    "restore_performed": false,
+    "binding_implementation_performed": false,
+    "binding_execution_performed": false,
+    "mutation_capable_work_authorized": false
+  },
+  "required_preconditions": {
+    "operator_confirmation_available": true,
+    "operator_confirmation_id": "operator-confirmation-c445630fbb303c7c",
+    "operator_confirmation_does_not_authorize_binding": true,
+    "accepted_target_available": true,
+    "accepted_target_chain_available": true,
+    "prior_identity_snapshot_available": true,
+    "dry_run_result_available": true,
+    "contract_definition_gate_available": true,
+    "independent_audit_required_before_mutation_capable_work": true,
+    "separate_future_authorization_required_for_any_mutation_capable_work": true
+  },
+  "prior_identity_snapshot": {
+    "target": {
+      "provider": "Microsoft",
+      "driver_version": "10.0.26100.8521",
+      "service": "HidUsb",
+      "class": "HIDClass",
+      "driver_key": "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\\0086",
+      "inf": "input.inf"
+    },
+    "parent": {
+      "provider": "Microsoft",
+      "driver_version": "10.0.26100.8521",
+      "service": "xusb22",
+      "class": "XnaComposite",
+      "driver_key": "{d61ca365-5af4-4486-998b-9db4734c6ca3}\\0000",
+      "inf": "xusb22.inf"
+    },
+    "child": {
+      "provider": "Microsoft",
+      "driver_version": "10.0.26100.8521",
+      "service": "empty_or_unavailable",
+      "class": "HIDClass",
+      "driver_key": "{745a17a0-74d3-11d0-b6fe-00a0c90f57da}\\0088",
+      "inf": "input.inf"
+    }
+  },
+  "rollback_decision_rules": {
+    "not_authorized": "rollback implementation is not authorized by this package",
+    "requires_separate_authorization": "rollback must require separate future authorization",
+    "requires_audited_evidence": "rollback must require independently audited rollback/no-op package evidence",
+    "no_op_conditions": [
+      "rollback must no-op if accepted target instance ID differs",
+      "rollback must no-op if accepted target chain differs",
+      "rollback must no-op if shared container ID differs",
+      "rollback must no-op if prior target identity is missing or mismatched",
+      "rollback must no-op if prior parent identity is missing or mismatched",
+      "rollback must no-op if prior child identity is missing or mismatched",
+      "rollback must no-op if operator confirmation is missing, expired, or mismatched",
+      "rollback must no-op if SetupAPI/Newdev is not explicitly authorized in a future task",
+      "rollback must no-op if Windows mutation is not explicitly authorized in a future task",
+      "rollback must no-op if driver action is not explicitly authorized in a future task",
+      "rollback must no-op if native execution is not explicitly authorized in a future task"
+    ]
+  },
+  "restore_preconditions": {
+    "not_authorized": "restore is not authorized by this package",
+    "requires_separate_authorization": "restore must require separate future authorization",
+    "requires_audited_evidence": "restore must require independently audited rollback/no-op package evidence",
+    "requires_exact_match": [
+      "restore must require accepted target chain exact match",
+      "restore must require prior identity exact match"
+    ],
+    "requires_explicit_future_authorization": [
+      "restore must require explicit future authorization for SetupAPI/Newdev",
+      "restore must require explicit future authorization for Windows mutation",
+      "restore must require explicit future authorization for driver action",
+      "restore must require explicit future authorization for native execution"
+    ],
+    "no_op_conditions": "restore must no-op if any required authorization is absent"
+  },
+  "no_op_rejection_rules": {
+    "operator_confirmation": [
+      "no-op if operator confirmation is missing",
+      "no-op if operator confirmation is expired",
+      "no-op if operator confirmation ID mismatches"
+    ],
+    "target_chain": [
+      "no-op if accepted target instance ID mismatches",
+      "no-op if accepted target chain mismatches",
+      "no-op if PID_045E appears in accepted target chain",
+      "no-op if VID_045E count in accepted target chain is not 3",
+      "no-op if shared container ID mismatches"
+    ],
+    "prior_identity": [
+      "no-op if prior identity evidence is missing",
+      "no-op if prior target identity mismatches",
+      "no-op if prior parent identity mismatches",
+      "no-op if prior child identity mismatches"
+    ],
+    "audit_and_authorization": [
+      "no-op if rollback/no-op package is not independently audited",
+      "no-op if execution authorization is absent"
+    ],
+    "counters": [
+      "no-op if SetupAPI/Newdev counters are non-zero",
+      "no-op if Windows mutation counters are non-zero",
+      "no-op if driver action counters are non-zero",
+      "no-op if native library load or entry-point resolution counters are non-zero"
+    ],
+    "access_detection": [
+      "no-op if artifact access or compile-output access is detected",
+      "no-op if metadata parsing is detected"
+    ]
+  },
+  "validation_rules": {
+    "schema_and_status": [
+      "validate schema/status/readiness exact values",
+      "validate operator confirmation ID exact match",
+      "validate accepted target instance ID exact match",
+      "validate accepted target chain exact match"
+    ],
+    "target_chain_counts": [
+      "validate PID_045E literal count equals 0",
+      "validate VID_045E literal count equals 3"
+    ],
+    "identity": [
+      "validate shared container ID exact match",
+      "validate prior target identity exact match",
+      "validate prior parent identity exact match",
+      "validate prior child identity exact match"
+    ],
+    "source_evidence": "validate source evidence chain hashes",
+    "safety_counters": "validate all safety counters are zero",
+    "mutation_flags": "validate all mutation/native/driver/artifact flags are false",
+    "audit_requirement": "validate independent audit acceptance before any future mutation-capable task"
+  },
+  "audit_requirements": {
+    "validation_before_update": "this rollback/no-op package evidence must be validated before manifest/docs update",
+    "audit_before_commit": "manifest/docs update must be audited before commit acceptance",
+    "independent_audit": "committed rollback/no-op package evidence must be independently audited",
+    "separate_authorization": "future mutation-capable task must require separate explicit authorization and must not rely on this package as authorization"
+  },
+  "safety_state": {
+    "blocker": "BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED",
+    "live_readiness": "BLOCKED",
+    "native_execution_status": "NOT_IMPLEMENTED",
+    "execution_authorized": false,
+    "binding_implementation_status": "NOT_IMPLEMENTED",
+    "binding_implementation_authorized": false,
+    "rollback_package_implementation_performed": false,
+    "rollback_implemented": false,
+    "restore_performed": false,
+    "binding_implementation_performed": false,
+    "binding_execution_performed": false,
+    "live_query_performed_in_this_task": false,
+    "device_query_performed_in_this_task": false,
+    "prior_identity_capture_performed_in_this_task": false,
+    "operator_confirmation_collected_in_this_task": false,
+    "new_live_observation_performed": false,
+    "hardware_access_performed": false,
+    "native_library_load_performed": false,
+    "native_library_load_count": 0,
+    "entry_point_resolution_performed": false,
+    "entry_point_resolution_count": 0,
+    "setupapi_newdev_invocation_performed": false,
+    "setupapi_newdev_invocation_count": 0,
+    "windows_mutation_performed": false,
+    "windows_mutation_count": 0,
+    "driver_action_performed": false,
+    "driver_action_count": 0,
+    "artifact_opening_performed": false,
+    "artifact_compile_output_io_performed": false,
+    "compile_output_hash_verification_performed": false,
+    "metadata_parsing_performed": false
+  },
+  "readiness_decision": {
+    "ready_for_rollback_no_op_package_evidence_audit_only": true,
+    "ready_for_rollback_package_implementation": false,
+    "ready_for_rollback_implementation": false,
+    "ready_for_restore": false,
+    "ready_for_binding_implementation": false,
+    "ready_for_binding_execution": false,
+    "ready_for_native_execution": false,
+    "ready_for_setupapi_newdev_invocation": false,
+    "ready_for_windows_mutation": false,
+    "ready_for_driver_action": false,
+    "ready_for_artifact_access": false,
+    "ready_for_compile_output_access": false,
+    "ready_for_metadata_parsing": false
+  },
+  "explicit_non_authorization_statement": "This rollback/no-op package evidence does not authorize rollback package implementation, rollback implementation, restore, binding implementation, binding execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, or metadata parsing."
+}

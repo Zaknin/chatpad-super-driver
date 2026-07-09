@@ -13249,3 +13249,33 @@ mutation/driver/artifact action performed or authorized.
 - **No new operator confirmation collected.**
 - **No live/device query, identity capture, rollback package implementation, rollback implementation, restore, binding/native/mutation/driver/artifact action performed or authorized.**
 - **Safety summary:** All safety fields zero. Readiness only `READY_TO_DEFINE_ROLLBACK_NO_OP_PACKAGE_CONTRACT_ONLY`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+
+## TASK 8B-1 — Rollback/No-Op Package Evidence Creation (2026-07-09)
+
+- **Objective:** Create the rollback/no-op package evidence file.
+- **Evidence path:** `docs/evidence/exact-instance-binding-rollback-no-op-package.json`
+- **Schema:** `chatpad-exact-instance-binding-rollback-no-op-package-v1`
+- **Status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_DEFINED_NO_ROLLBACK_IMPLEMENTED_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+- **Readiness:** `READY_FOR_ROLLBACK_NO_OP_PACKAGE_EVIDENCE_AUDIT_ONLY`
+- **Source commit:** `ffad232eea24fb2dcda0ce09aa6809180cad880c`
+- **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
+- **Accepted target instance ID:** `USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00`
+- **Shared container ID:** `{828F4587-006F-5AD1-B169-6AF57905DFDE}`
+- **Evidence hash:** `03AA4058D9CDB6DA00ED7EF4DC3FEFB01E314438CA07974E73659B8D8C4FDCD3`
+- **Safety:** binding implementation/execution remains unauthorized; rollback package implementation remains unauthorized; rollback implementation remains unauthorized; restore remains unauthorized; native execution remains `NOT_IMPLEMENTED`; live readiness remains `BLOCKED`; blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`
+- **Next task:** TASK 8B-2 — validate rollback/no-op package evidence
+
+## TASK 8B-2R — Clean No-Temp Validation of Rollback/No-Op Package Evidence (2026-07-09)
+
+- **Objective:** Validate the rollback/no-op package evidence file using inline Python only. No temp/helper files created.
+- **Validation method:** Inline Python (`python3 -c "..."`)
+- **Result:** All 24 required fields present, all values match, safety state all false/zero, readiness decision correct, non-authorization statement complete, SHA256 `03AA4058D9CDB6DA00ED7EF4DC3FEFB01E314438CA07974E73659B8D8C4FDCD3` verified.
+- **Confirmation:** No helper/temp file created.
+- **Next task:** TASK 8B-3 — update manifest/docs for rollback/no-op package evidence
+
+## TASK 8B-3 — Update Manifest/Docs for Rollback/No-Op Package Evidence (2026-07-09)
+
+- **Objective:** Update the runtime bring-up readiness manifest and documentation to record the validated rollback/no-op package evidence.
+- **Manifest update:** Added `exact_instance_binding_rollback_no_op_package` section to `docs/evidence/runtime-bringup-readiness-manifest.json` with 70 fields: identity (11), chain (3), source evidence chain (7), package decision (8), preconditions (9), safety (26), readiness (13).
+- **Docs updated:** `docs/PROJECT-STATE.md`, `docs/RUNTIME-BRINGUP-READINESS.md`, `docs/NEXT-TASK.md`, `docs/WORKLOG.md`.
+- **Next task:** TASK 8B-4 — validate manifest/docs update for rollback/no-op package evidence

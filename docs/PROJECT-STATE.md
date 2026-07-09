@@ -167,6 +167,16 @@
 - **Exact-instance binding operator-confirmation collection template-gate
   schema:**
   `chatpad-exact-instance-binding-operator-confirmation-collection-template-gate-v1`.
+- **Exact-instance binding rollback/no-op package evidence:**
+  - **Evidence path:** `docs/evidence/exact-instance-binding-rollback-no-op-package.json`
+  - **Schema:** `chatpad-exact-instance-binding-rollback-no-op-package-v1`
+  - **Status:** `EXACT_INSTANCE_BINDING_ROLLBACK_NO_OP_PACKAGE_DEFINED_NO_ROLLBACK_IMPLEMENTED_NO_RESTORE_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`
+  - **Readiness:** `READY_FOR_ROLLBACK_NO_OP_PACKAGE_EVIDENCE_AUDIT_ONLY`
+  - **Source commit:** `ffad232eea24fb2dcda0ce09aa6809180cad880c`
+  - **Operator confirmation ID:** `operator-confirmation-c445630fbb303c7c`
+  - **Evidence hash:** `03AA4058D9CDB6DA00ED7EF4DC3FEFB01E314438CA07974E73659B8D8C4FDCD3`
+  - **Safety:** binding implementation/execution remains unauthorized; rollback package implementation remains unauthorized; rollback implementation remains unauthorized; restore remains unauthorized; native execution remains `NOT_IMPLEMENTED`; live readiness remains `BLOCKED`; blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`
+  - **Next task:** TASK 8B-4 — validate manifest/docs update for rollback/no-op package evidence
 - **Exact-instance binding operator-confirmation collection result evidence:**
   `docs/evidence/exact-instance-binding-operator-confirmation-collection-result.json`.
 - **Exact-instance binding operator-confirmation collection result manifest
