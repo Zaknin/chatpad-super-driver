@@ -381,6 +381,46 @@ function Invoke-ChatpadTask8ERegression {
     }finally{if(Test-Path $temp){Remove-Item -LiteralPath $temp -Recurse -Force}}
 }
 
+function Get-ChatpadExactOrdinalArrayValueDefects {
+    param(
+        [Parameter(Mandatory)][AllowNull()][object]$ExpectedValues,
+        [Parameter(Mandatory)][AllowNull()][object]$ActualValues,
+        [Parameter(Mandatory)][string]$FieldName
+    )
+    $defects=[Collections.Generic.List[string]]::new()
+    if($ExpectedValues-is[string]-or$ExpectedValues-isnot[System.Collections.IList]){
+        $defects.Add("${FieldName}: expected value is not an array/list (actual type: $(if($null-eq$ExpectedValues){'null'}else{$ExpectedValues.GetType().FullName})).")
+        return [pscustomobject]@{defects=@($defects)}
+    }
+    if($null-eq$ActualValues-or$ActualValues-is[string]-or$ActualValues-isnot[System.Collections.IList]){
+        $defects.Add("${FieldName}: expected array/list, actual type: $(if($null-eq$ActualValues){'null'}else{$ActualValues.GetType().FullName}).")
+        return [pscustomobject]@{defects=@($defects)}
+    }
+    if($ExpectedValues.Count-ne$ActualValues.Count){$defects.Add("${FieldName}: expected count $($ExpectedValues.Count), actual count $($ActualValues.Count).")}
+    $ordinalCount=[Math]::Min($ExpectedValues.Count,$ActualValues.Count)
+    for($index=0;$index-lt$ordinalCount;$index++){
+        $expectedValue=$ExpectedValues[$index];$actualValue=$ActualValues[$index]
+        if($actualValue-isnot[string]-or-not[string]::Equals($expectedValue,$actualValue,[StringComparison]::Ordinal)){
+            $actualDescription=if($null-eq$actualValue){'<null>'}elseif($actualValue-is[string]){"'$actualValue'"}else{"<$($actualValue.GetType().FullName)> '$actualValue'"}
+            $defects.Add("${FieldName}: failing index $index; expected '$expectedValue', actual $actualDescription.")
+        }
+    }
+    [pscustomobject]@{defects=@($defects)}
+}
+
+function Get-ChatpadExactOrdinalArrayPropertyDefects {
+    param(
+        [Parameter(Mandatory)][object]$Object,
+        [Parameter(Mandatory)][string]$PropertyName,
+        [Parameter(Mandatory)][object]$ExpectedValues,
+        [Parameter(Mandatory)][string]$FieldName
+    )
+    if($null-eq$Object-or$null-eq$Object.PSObject.Properties[$PropertyName]){
+        return [pscustomobject]@{defects=@("${FieldName}: property is missing.")}
+    }
+    Get-ChatpadExactOrdinalArrayValueDefects -ExpectedValues $ExpectedValues -ActualValues $Object.PSObject.Properties[$PropertyName].Value -FieldName $FieldName
+}
+
 function Test-ChatpadTask8FManifestEvidence {
     param([Parameter(Mandatory)][string]$RepositoryRoot,[Parameter(Mandatory)][object]$Manifest)
     $defects=[Collections.Generic.List[string]]::new()
@@ -391,10 +431,18 @@ function Test-ChatpadTask8FManifestEvidence {
     }
     foreach($pair in $expected.GetEnumerator()){if([string](Get-ChatpadTask8EValue $section $pair.Key)-cne$pair.Value){$defects.Add("section.$($pair.Key)")}}
     $expectedChain=@('USB\VID_045E&PID_028E\1C21F10','USB\VID_045E&PID_028E&IG_00\8&2AF61D70&1&00','HID\VID_045E&PID_028E&IG_00\9&2E72F677&0&0000')
-    foreach($name in @('accepted_target_chain','public_exports','private_backend_surface','native_api_declarations_represented')){if(@(Get-ChatpadTask8EValue $section $name).Count-eq0){$defects.Add("section.$name")}}
+    # This declaration inventory is intentionally not the execution call plan.
+    $expectedNativeApiDeclarations=@('SetupDiCreateDeviceInfoList','SetupDiDestroyDeviceInfoList','SetupDiOpenDeviceInfoW','SetupDiGetDeviceInstanceIdW','SetupDiGetDevicePropertyW','SetupDiGetDeviceRegistryPropertyW','SetupDiBuildDriverInfoList','SetupDiDestroyDriverInfoList','SetupDiEnumDriverInfoW','SetupDiGetDriverInfoDetailW','SetupDiGetDriverInstallParamsW','SetupDiSetSelectedDriverW','DiInstallDevice')
+    $expectedPublicExports=@('Get-ChatpadNonExecutingNativeAdapterContract','Test-ChatpadNonExecutingNativeAdapterRequest','Invoke-ChatpadNonExecutingNativeAdapter','New-ChatpadNativeAdapterFakeRecordingBackend')
+    $expectedPrivateBackendSurface=@('New-GatedProductionNativeProviderDescriptor','New-GatedProductionRecordingProvider','Invoke-GatedProductionProviderCall','Invoke-GatedProductionBackendRecordingPlan')
+    $exactArrayFields=@(
+        [pscustomobject]@{name='native_api_declarations_represented';expected=$expectedNativeApiDeclarations},
+        [pscustomobject]@{name='public_exports';expected=$expectedPublicExports},
+        [pscustomobject]@{name='private_backend_surface';expected=$expectedPrivateBackendSurface}
+    )
+    foreach($name in @('accepted_target_chain')){if(@(Get-ChatpadTask8EValue $section $name).Count-eq0){$defects.Add("section.$name")}}
     if((@(Get-ChatpadTask8EValue $section 'accepted_target_chain')-join'|')-cne($expectedChain-join'|')){$defects.Add('section.accepted_target_chain')}
-    if((@(Get-ChatpadTask8EValue $section 'public_exports')-join'|')-cne('Get-ChatpadNonExecutingNativeAdapterContract|Test-ChatpadNonExecutingNativeAdapterRequest|Invoke-ChatpadNonExecutingNativeAdapter|New-ChatpadNativeAdapterFakeRecordingBackend')){$defects.Add('section.public_exports')}
-    if((@(Get-ChatpadTask8EValue $section 'native_api_declarations_represented')-join'|')-cne('SetupDiCreateDeviceInfoList|SetupDiDestroyDeviceInfoList|SetupDiOpenDeviceInfoW|SetupDiGetDeviceInstanceIdW|SetupDiGetDevicePropertyW|SetupDiGetDeviceRegistryPropertyW|SetupDiBuildDriverInfoList|SetupDiDestroyDriverInfoList|SetupDiEnumDriverInfoW|SetupDiGetDriverInfoDetailW|SetupDiGetDriverInstallParamsW|SetupDiSetSelectedDriverW|DiInstallDevice')){$defects.Add('section.native_api_declarations_represented')}
+    foreach($arrayField in $exactArrayFields){foreach($defect in (Get-ChatpadExactOrdinalArrayPropertyDefects -Object $section -PropertyName $arrayField.name -ExpectedValues $arrayField.expected -FieldName "section.$($arrayField.name)").defects){$defects.Add($defect)}}
     foreach($name in @('device_query_count','native_invocation_count','setupapi_newdev_invocation_count','binding_count','windows_mutation_count','driver_action_count','rollback_count','restore_count','artifact_compile_output_access_count')){$value=Get-ChatpadTask8EValue $section $name;if($null-eq$value-or$value-is[string]-or$value-is[array]-or[int]$value-ne0){$defects.Add("section.$name")}}
     foreach($name in @('production_backend_loaded','production_backend_selected_by_default','production_backend_constructed_during_import','execution_authorized','native_execution_performed','live_device_access_performed','binding_performed','windows_mutation_performed','driver_action_performed','rollback_performed','restore_performed','ready_for_native_execution','ready_for_binding_execution','ready_for_windows_mutation','ready_for_driver_action','ready_for_artifact_access','ready_for_compile_output_access')){if((Get-ChatpadTask8EValue $section $name)-isnot[bool]-or(Get-ChatpadTask8EValue $section $name)){$defects.Add("section.$name")}}
     foreach($name in @('production_backend_source_present','ready_for_independent_audit_only')){if((Get-ChatpadTask8EValue $section $name)-isnot[bool]-or-not(Get-ChatpadTask8EValue $section $name)){$defects.Add("section.$name")}}
@@ -402,7 +450,12 @@ function Test-ChatpadTask8FManifestEvidence {
     $evidencePath=[IO.Path]::GetFullPath((Join-Path $RepositoryRoot ([string](Get-ChatpadTask8EValue $section 'evidence_path'))))
     if(-not$evidencePath.StartsWith($RepositoryRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not(Test-Path -LiteralPath $evidencePath -PathType Leaf)){$defects.Add('evidence.path');return [pscustomobject]@{result='FAIL';defect_count=$defects.Count;defects=@($defects)}}
     try{$evidence=Get-Content -LiteralPath $evidencePath -Raw|ConvertFrom-Json}catch{$defects.Add('evidence.json');return [pscustomobject]@{result='FAIL';defect_count=$defects.Count;defects=@($defects)}}
-    foreach($name in @($expected.Keys|Where-Object{$_-ne'evidence_path'})+@('accepted_target_chain','public_exports','private_backend_surface','native_api_declarations_represented','production_backend_source_present','production_backend_loaded','production_backend_selected_by_default','production_backend_constructed_during_import','execution_authorized','device_query_count','native_invocation_count','setupapi_newdev_invocation_count','binding_count','windows_mutation_count','driver_action_count','rollback_count','restore_count','artifact_compile_output_access_count','native_execution_performed','live_device_access_performed','binding_performed','windows_mutation_performed','driver_action_performed','rollback_performed','restore_performed','ready_for_independent_audit_only','ready_for_native_execution','ready_for_binding_execution','ready_for_windows_mutation','ready_for_driver_action','ready_for_artifact_access','ready_for_compile_output_access','powershell_7_result','powershell_7_test_count','powershell_7_assertion_count','windows_powershell_result','windows_powershell_test_count','windows_powershell_assertion_count')){if(([string](Get-ChatpadTask8EValue $evidence $name))-cne([string](Get-ChatpadTask8EValue $section $name))){$defects.Add("evidence.$name")}}
+    foreach($name in @($expected.Keys|Where-Object{$_-ne'evidence_path'})+@('accepted_target_chain','production_backend_source_present','production_backend_loaded','production_backend_selected_by_default','production_backend_constructed_during_import','execution_authorized','device_query_count','native_invocation_count','setupapi_newdev_invocation_count','binding_count','windows_mutation_count','driver_action_count','rollback_count','restore_count','artifact_compile_output_access_count','native_execution_performed','live_device_access_performed','binding_performed','windows_mutation_performed','driver_action_performed','rollback_performed','restore_performed','ready_for_independent_audit_only','ready_for_native_execution','ready_for_binding_execution','ready_for_windows_mutation','ready_for_driver_action','ready_for_artifact_access','ready_for_compile_output_access','powershell_7_result','powershell_7_test_count','powershell_7_assertion_count','windows_powershell_result','windows_powershell_test_count','windows_powershell_assertion_count')){if(([string](Get-ChatpadTask8EValue $evidence $name))-cne([string](Get-ChatpadTask8EValue $section $name))){$defects.Add("evidence.$name")}}
+    foreach($arrayField in $exactArrayFields){
+        foreach($defect in (Get-ChatpadExactOrdinalArrayPropertyDefects -Object $evidence -PropertyName $arrayField.name -ExpectedValues $arrayField.expected -FieldName "evidence.$($arrayField.name)").defects){$defects.Add($defect)}
+        $sectionArrayProperty=$section.PSObject.Properties[$arrayField.name];$evidenceArrayProperty=$evidence.PSObject.Properties[$arrayField.name]
+        if($null-ne$sectionArrayProperty-and$null-ne$evidenceArrayProperty){foreach($defect in (Get-ChatpadExactOrdinalArrayValueDefects -ExpectedValues $sectionArrayProperty.Value -ActualValues $evidenceArrayProperty.Value -FieldName "manifest-evidence.$($arrayField.name)").defects){$defects.Add($defect)}}
+    }
     foreach($name in @('capability_adversarial_result','sessionstate_extraction_result','exact_target_result','recording_shim_result','provider_failure_cleanup_result')){if(-not([string](Get-ChatpadTask8EValue $evidence $name)).StartsWith('PASS:',[StringComparison]::Ordinal)){$defects.Add("evidence.$name")}}
     foreach($file in @(@{path=$expected.backend_source_path;sha256=$expected.backend_source_sha256},@{path=$expected.focused_test_path;sha256=$expected.focused_test_sha256})){$source=[IO.Path]::GetFullPath((Join-Path $RepositoryRoot $file.path));if(-not(Test-Path -LiteralPath $source -PathType Leaf)-or(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash-cne$file.sha256){$defects.Add("source.$($file.path)")}}
     [pscustomobject]@{result=if($defects.Count){'FAIL'}else{'PASS'};defect_count=$defects.Count;defects=@($defects)}
@@ -421,8 +474,20 @@ function Invoke-ChatpadTask8FRegression {
         foreach($field in @('device_query_count','native_invocation_count','setupapi_newdev_invocation_count','binding_count','windows_mutation_count','driver_action_count','rollback_count','restore_count','artifact_compile_output_access_count')){$cases.Add([pscustomobject]@{id="counter-$field";mutate=([scriptblock]::Create("param(`$m,`$e) `$m.gated_production_native_adapter_backend.$field=1"))})}
         foreach($field in @('production_backend_loaded','production_backend_selected_by_default','production_backend_constructed_during_import','execution_authorized','native_execution_performed','live_device_access_performed','binding_performed','windows_mutation_performed','driver_action_performed')){$cases.Add([pscustomobject]@{id="forbidden-$field";mutate=([scriptblock]::Create("param(`$m,`$e) `$m.gated_production_native_adapter_backend.$field=`$true"))})}
         $cases.Add([pscustomobject]@{id='target-chain-reordered';mutate={param($m,$e)$m.gated_production_native_adapter_backend.accepted_target_chain=@($m.gated_production_native_adapter_backend.accepted_target_chain[1],$m.gated_production_native_adapter_backend.accepted_target_chain[0],$m.gated_production_native_adapter_backend.accepted_target_chain[2])}});$cases.Add([pscustomobject]@{id='evidence-disagreement';mutate={param($m,$e)$e.status='tampered'}})
+        foreach($arrayField in @('native_api_declarations_represented','public_exports','private_backend_surface')){
+            $sectionField="`$m.gated_production_native_adapter_backend.$arrayField";$evidenceField="`$e.$arrayField";$expectedCategory="section.${arrayField}:";$mismatchCategory="manifest-evidence.${arrayField}:"
+            $cases.Add([pscustomobject]@{id="$arrayField-entry-removed";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) $sectionField=@($sectionField|Select-Object -Skip 1)"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-entry-added";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) $sectionField=@($sectionField)+@('TASK8F_UNAUTHORIZED_ADDED_ENTRY')"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-reordered";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) `$values=@($sectionField);`$first=`$values[0];`$values[0]=`$values[1];`$values[1]=`$first;$sectionField=`$values"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-entry-renamed";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) `$values=@($sectionField);`$values[0]='TASK8F_RENAMED_ENTRY';$sectionField=`$values"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-duplicate-entry";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) `$values=@($sectionField);`$values[1]=`$values[0];$sectionField=`$values"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-scalar";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) $sectionField='TASK8F_SCALAR'"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-null";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) $sectionField=`$null"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-empty";expected_defect_category=$expectedCategory;mutate=([scriptblock]::Create("param(`$m,`$e) $sectionField=@()"))})
+            $cases.Add([pscustomobject]@{id="$arrayField-manifest-evidence-mismatch";expected_defect_category=$mismatchCategory;mutate=([scriptblock]::Create("param(`$m,`$e) `$values=@($evidenceField);`$values[0]='TASK8F_MANIFEST_EVIDENCE_MISMATCH';$evidenceField=`$values"))})
+        }
         $results=[Collections.Generic.List[object]]::new();$canonical=Get-Content $manifestFile -Raw|ConvertFrom-Json;$pass=Test-ChatpadTask8FManifestEvidence -RepositoryRoot $temp -Manifest $canonical;$results.Add([pscustomobject]@{id='canonical';result=$pass.result;passed=($pass.result-eq'PASS')})
-        foreach($case in $cases){[IO.File]::WriteAllText($manifestFile,$manifestText,[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($evidenceFile,$evidenceText,[Text.UTF8Encoding]::new($false));$m=Get-Content $manifestFile -Raw|ConvertFrom-Json;$e=Get-Content $evidenceFile -Raw|ConvertFrom-Json;& $case.mutate $m $e;[IO.File]::WriteAllText($manifestFile,($m|ConvertTo-Json -Depth 30)+[Environment]::NewLine,[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($evidenceFile,($e|ConvertTo-Json -Depth 30)+[Environment]::NewLine,[Text.UTF8Encoding]::new($false));$result=Test-ChatpadTask8FManifestEvidence -RepositoryRoot $temp -Manifest $m;$results.Add([pscustomobject]@{id=$case.id;result=$result.result;passed=($result.result-eq'FAIL')})}
+        foreach($case in $cases){[IO.File]::WriteAllText($manifestFile,$manifestText,[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($evidenceFile,$evidenceText,[Text.UTF8Encoding]::new($false));$m=Get-Content $manifestFile -Raw|ConvertFrom-Json;$e=Get-Content $evidenceFile -Raw|ConvertFrom-Json;& $case.mutate $m $e;[IO.File]::WriteAllText($manifestFile,($m|ConvertTo-Json -Depth 30)+[Environment]::NewLine,[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($evidenceFile,($e|ConvertTo-Json -Depth 30)+[Environment]::NewLine,[Text.UTF8Encoding]::new($false));$result=Test-ChatpadTask8FManifestEvidence -RepositoryRoot $temp -Manifest $m;$expectedCategory=[string](Get-ChatpadTask8EValue $case 'expected_defect_category');$categoryMatched=[string]::IsNullOrEmpty($expectedCategory)-or@($result.defects|Where-Object{$_-like"$expectedCategory*"}).Count-gt0;$results.Add([pscustomobject]@{id=$case.id;result=$result.result;expected_defect_category=$expectedCategory;passed=($result.result-eq'FAIL'-and$categoryMatched)})}
         $failed=@($results|Where-Object{-not $_.passed});[pscustomobject]@{result=if($failed.Count){'FAIL'}else{'PASS'};test_count=$results.Count;assertion_count=$results.Count;failed_test_count=$failed.Count;tests=@($results);temporary_data_removed=$true}
     }finally{if(Test-Path $temp){Remove-Item -LiteralPath $temp -Recurse -Force}}
 }
