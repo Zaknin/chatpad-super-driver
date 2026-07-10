@@ -1,9 +1,9 @@
-# TASK 8G-2 — Independent read-only audit of the one-shot production execution coordinator
+# TASK 8G-2 — Independent read-only audit of the atomic one-shot production execution coordinator
 
 ## Current state
 
 - **Required branch:** `feature/native-adapter-execution-coordinator`.
-- **Starting commit:** the TASK 8G-1 commit with subject `feat: implement one-shot native execution coordinator`; verify its exact hash and parent with Git.
+- **Starting commit:** the TASK 8G-1R4A2B commit with subject `fix: enforce atomic coordinator evidence contract`; verify its exact hash and parent with Git.
 - **Evidence:** `docs/evidence/one-shot-native-execution-coordinator-task-8g-1.json`.
 - **Manifest section:** `one_shot_native_execution_coordinator`.
 - **Current blocker:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
@@ -19,7 +19,8 @@
 
 - Read-only inspection only: do not edit, stage, commit, push, execute native APIs, query a live device, bind, mutate Windows, install, load, restart, rollback, restore, package, sign, build, or open compile outputs.
 - Verify the four public exports are unchanged; coordinator/backend export nothing; the private reference-identity record cannot select a production provider.
-- Verify exact request/evidence binding, one-shot consumption, replay/transfer rejection, recording-plan failure cleanup, and zero counters.
+- Verify exact request/evidence binding, `Interlocked.CompareExchange` one-shot consumption, real two-runspace race, replay/transfer/forgery rejection, and zero counters.
+- Verify direct replay rejection after normal provider failure, a thrown recording-provider-path exception, and cleanup failure, while confirming the test-local wrapper restores the private recording-call seam.
 - Run TASK 8E, TASK 8F, and TASK 8G focused tests under both runtimes, the canonical validator, and `-RunTask8GRegression` without live access.
 
 ## Acceptance criteria

@@ -14,6 +14,31 @@ $coordinatorModule=Get-Module -Name ChatpadOneShotNativeExecutionCoordinator | S
 function New-Provider([string]$FailAt=''){ & $backendModule { param($f) New-GatedProductionRecordingProvider -FailAt $f } $FailAt }
 function New-Cap($r,$p=$null,[string]$op='APPLY'){ (& $coordinatorModule { param($r,$o) New-TestOnlyRecordingProviderAuthorization -Request $r -Operation $o } $r $op).authorization }
 function Invoke-Coordinator($r,$cap,$p=$null,[string]$op='APPLY'){ & $coordinatorModule { param($r,$c,$o) Invoke-OneShotNativeExecutionCoordinator -Request $r -AuthorizationCapability $c -Operation $o } $r $cap $op }
+function Invoke-RecordingProviderThrowScenario([string]$ThrowEntryPoint) {
+    $state=[pscustomobject]@{provider_call_count=0;provider_identity='';native_io_performed=$false}
+    $original=& $backendModule { (Get-Command -Name Invoke-GatedProductionProviderCall -CommandType Function).ScriptBlock }
+    & $backendModule {
+        param($Original,$State,$EntryPointToThrow)
+        $replacement={
+            param([Parameter(Mandatory)][object]$Provider,[Parameter(Mandatory)][string]$EntryPoint,[Parameter(Mandatory)][object]$Arguments)
+            $State.provider_call_count++
+            $State.provider_identity=[string]$Provider.provider_identity
+            $State.native_io_performed=[bool]$Provider.native_io_performed
+            $result=& $Original -Provider $Provider -EntryPoint $EntryPoint -Arguments $Arguments
+            if([string]::Equals($EntryPoint,$EntryPointToThrow,[StringComparison]::Ordinal)){throw [InvalidOperationException]::new("OFFLINE_RECORDING_PROVIDER_THROW:$EntryPoint")}
+            $result
+        }.GetNewClosure()
+        Set-Item -Path Function:Invoke-GatedProductionProviderCall -Value $replacement
+    } $original $state $ThrowEntryPoint
+    try{
+        $request=New-Request;$cap=New-Cap $request;$thrown=$null
+        try{[void](Invoke-Coordinator $request $cap)}catch{$thrown=$_.Exception.Message}
+        $callsAfterThrow=$state.provider_call_count;$replay=Invoke-Coordinator $request $cap
+        [pscustomobject]@{thrown=$thrown;calls_after_throw=$callsAfterThrow;calls_after_replay=$state.provider_call_count;replay=$replay;provider_identity=$state.provider_identity;native_io_performed=$state.native_io_performed;prohibited_counters=(& $coordinatorModule { New-OneShotCoordinatorZeroCounters })}
+    }finally{
+        & $backendModule {param($Original) Set-Item -Path Function:Invoke-GatedProductionProviderCall -Value $Original} $original
+    }
+}
 Test-Case 'import and exports expose no coordinator capability or provider' { Assert-OneShot ($coordinatorModule.ExportedFunctions.Count -eq 0) 'coordinator exported a function'; Assert-OneShot ($backendModule.ExportedFunctions.Count -eq 0) 'backend exported a function'; Assert-OneShot ($coordinatorModule.SessionState.PSVariable.GetValue('ProductionAuthorizationCapability',$null) -eq $null) 'production capability variable present' }
 Test-Case 'public adapter remains prohibited' { $r=Invoke-ChatpadNonExecutingNativeAdapter -Request (New-Request); Assert-OneShot ($r.result_code -eq 'NATIVE_EXECUTION_PROHIBITED') 'public execution changed'; foreach($c in $r.counters.PSObject.Properties){Assert-OneShot ($c.Value -eq 0) 'public counter changed'} }
 Test-Case 'ordinary forged wrapped and serialized capabilities fail before provider' { foreach($cap in @($null,'allow',$true,[pscustomobject]@{allow=$true},([Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize([pscustomobject]@{allow=$true}))))) { $p=New-Provider; $r=Invoke-Coordinator (New-Request) $cap $p; Assert-OneShot ($r.provider_call_count -eq 0) 'forged capability reached provider'; Assert-OneShot ($r.result -match 'AUTHORIZATION') 'forged capability was accepted' } }
@@ -46,5 +71,7 @@ Test-Case 'duplicate target fails before calls' { $r=New-Request;$r.target_chain
 Test-Case 'wrong confirmation fails before calls' { $r=New-Request;$r.operator_confirmation_id='wrong';$p=New-Provider;$cap=New-Cap (New-Request) $p;$out=Invoke-Coordinator $r $cap $p;Assert-OneShot ($out.provider_call_count -eq 0) 'wrong confirmation reached provider' }
 Test-Case 'wrong TASK 8E evidence fails before calls' { $r=New-Request;$r.task_8e_evidence_path='wrong';$p=New-Provider;$cap=New-Cap (New-Request) $p;$out=Invoke-Coordinator $r $cap $p;Assert-OneShot ($out.provider_call_count -eq 0) 'wrong 8E evidence reached provider' }
 Test-Case 'cleanup calls never claim native operation' { $r=New-Request;$p=New-Provider 'SetupDiEnumDriverInfoW';$cap=New-Cap $r $p;$out=Invoke-Coordinator $r $cap $p;Assert-OneShot (-not $out.native_operation_performed) 'native operation claimed';Assert-OneShot $out.production_execution_prohibited 'production prohibition missing' }
+Test-Case 'replay is rejected after a thrown internally bound recording-provider exception' { $out=Invoke-RecordingProviderThrowScenario 'SetupDiOpenDeviceInfoW';Assert-OneShot ($out.thrown -match 'OFFLINE_RECORDING_PROVIDER_THROW:SetupDiOpenDeviceInfoW') 'controlled provider exception did not occur';Assert-OneShot ($out.calls_after_throw -gt 0) 'genuine provider plan did not enter';Assert-OneShot ($out.provider_identity -eq 'chatpad-gated-production-native-adapter-recording-shim-v1') 'non-recording provider entered';Assert-OneShot (-not $out.native_io_performed) 'recording provider claimed native I/O';Assert-OneShot ($out.replay.result -eq 'AUTHORIZATION_REPLAY_REJECTED_NO_PROVIDER_CALL') 'exception replay was accepted';Assert-OneShot ($out.replay.provider_call_count -eq 0) 'exception replay entered provider';Assert-OneShot ($out.calls_after_replay -eq $out.calls_after_throw) 'exception replay retried recording plan';foreach($c in $out.prohibited_counters.PSObject.Properties){Assert-OneShot ($c.Value -eq 0) 'exception scenario counter changed'} }
+Test-Case 'replay is rejected after a recording-provider cleanup failure' { $out=Invoke-RecordingProviderThrowScenario 'SetupDiDestroyDriverInfoList';Assert-OneShot ($out.thrown -match 'OFFLINE_RECORDING_PROVIDER_THROW:SetupDiDestroyDriverInfoList') 'controlled cleanup failure did not occur';Assert-OneShot ($out.calls_after_throw -gt 0) 'cleanup scenario did not enter provider';Assert-OneShot ($out.provider_identity -eq 'chatpad-gated-production-native-adapter-recording-shim-v1') 'cleanup scenario used a non-recording provider';Assert-OneShot (-not $out.native_io_performed) 'cleanup scenario claimed native I/O';Assert-OneShot ($out.replay.result -eq 'AUTHORIZATION_REPLAY_REJECTED_NO_PROVIDER_CALL') 'cleanup-failure replay was accepted';Assert-OneShot ($out.replay.provider_call_count -eq 0) 'cleanup-failure replay entered provider';Assert-OneShot ($out.calls_after_replay -eq $out.calls_after_throw) 'cleanup-failure replay retried recording plan';foreach($c in $out.prohibited_counters.PSObject.Properties){Assert-OneShot ($c.Value -eq 0) 'cleanup-failure counter changed'} }
 Test-Case 'source excludes implicit selection and native fallbacks' { $text=Get-Content -Raw $modulePath;foreach($pattern in @('Get-CimInstance','Get-WmiObject','Get-PnpDevice','Get-ItemProperty','pnputil','devcon','Start-Process','LoadLibrary','GetProcAddress','\$env:','IsWindows')){Assert-OneShot ($text -notmatch $pattern) "forbidden pattern $pattern"} }
 $failed=@($tests|Where-Object result -ne 'PASS');$report=[pscustomobject][ordered]@{schema_version='chatpad-one-shot-native-execution-coordinator-offline-test-v1';result=if($failed.Count){'FAIL'}else{'PASS'};test_count=$tests.Count;assertion_count=$assertionCount;failed_test_count=$failed.Count;runtime=$PSVersionTable.PSEdition;powershell_version=$PSVersionTable.PSVersion.ToString();tests=@($tests);prohibited_operation_counters=(& $coordinatorModule { New-OneShotCoordinatorZeroCounters })};$report;if($failed.Count){exit 1}

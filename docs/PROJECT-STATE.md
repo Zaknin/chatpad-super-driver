@@ -1,6 +1,6 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8G-1 added a private one-shot recording-provider coordinator; live execution remains blocked)*
+|*Last updated: 2026-07-10 (TASK 8G-1R4A2B completed offline outcome coverage and strict atomic-coordinator evidence enforcement; live execution remains blocked)*
 
 ## Current State
 
@@ -64,9 +64,11 @@
 - **Runtime blocker:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
 - **TASK 8F:** independently closed by TASK 8F-2; its source/evidence identities remain unchanged.
-- **TASK 8G-1 coordinator:** `tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1` is private and recording-provider-only. It exports nothing, does not select or construct the production provider, and consumes a reference-bound test authorization before plan invocation.
+- **TASK 8G coordinator:** `tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1` is private and recording-provider-only. It exports nothing, does not select or construct the production provider, and atomically consumes a reference-bound test authorization before plan invocation.
 - **TASK 8G-1 evidence:** `docs/evidence/one-shot-native-execution-coordinator-task-8g-1.json`.
-- **TASK 8G next task:** TASK 8G-2 — Independent read-only audit of the one-shot production execution coordinator.
+- **TASK 8G evidence state:** v2 records 23 focused tests / 105 assertions in PowerShell 7 and Windows PowerShell 5.1. Direct offline coverage rejects replay after success, provider failure, thrown recording-provider-path exception, and cleanup failure; the real two-contender race yielded one winner, one provider entry, and one replay rejection.
+- **TASK 8G safety:** only the internally-created inert recording provider was used. Production provider registration, selection, construction, loading, and invocation remained false; all prohibited counters remained zero.
+- **TASK 8G next task:** TASK 8G-2 — Independent read-only audit of the atomic one-shot production execution coordinator.
 - **TASK 8E-1 non-executing native adapter status:**
   `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`.
 - **TASK 8E-1 evidence:**

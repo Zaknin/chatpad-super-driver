@@ -3815,3 +3815,29 @@ separately authorized future task. Execution authorization remains false,
 native execution remains `NOT_IMPLEMENTED`, live readiness remains `BLOCKED`,
 artifact and compile-output I/O remain false, and all
 native/device/hardware/Windows/driver counters remain zero.
+
+## 2026-07-10 - Enforce the TASK 8G atomic coordinator evidence contract
+
+**Decision:** Preserve the TASK 8F backend source and evidence unchanged, and
+prove thrown-provider and cleanup-failure replay handling with a test-local,
+private wrapper around the existing inert recording-provider call seam. Require
+schema-v2 typed evidence, exact manifest parity, and comprehensive negative
+tampering coverage for the atomic TASK 8G coordinator.
+
+**Rationale:** The production provider remains structurally unavailable to the
+factory, while the wrapper invokes the genuine internally-created recording
+provider before throwing at a selected recording or cleanup entry. This proves
+authorization is consumed before the provider plan without changing the closed
+TASK 8F source identity or introducing a native interface.
+
+**Alternatives rejected:** Modifying the TASK 8F recording-provider source and
+invalidating its closed evidence identity; accepting untyped `PASS:` prose;
+or treating ordinary provider failure as proof of thrown-exception and
+cleanup-failure replay behavior.
+
+**Consequences:** TASK 8G evidence records direct offline replay rejection
+after success, ordinary provider failure, a thrown recording-provider-path
+exception, and cleanup failure. The coordinator remains private and
+recording-provider-only; production provider registration, selection,
+construction, loading, and invocation remain false. Live readiness remains
+`BLOCKED` pending independent audit.

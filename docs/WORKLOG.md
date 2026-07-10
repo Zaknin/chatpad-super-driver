@@ -13473,3 +13473,14 @@ mutation/driver/artifact action performed or authorized.
 - **Safety:** No live query, native invocation, SetupAPI/Newdev call, binding, mutation, rollback, restore, driver action, build, installation, or artifact/compile-output access occurred; all prohibited counters remain zero.
 - **Blocker transition:** TASK 8F audit is closed; current source-lane blocker is `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
 - **Next task:** TASK 8G-2 — Independent read-only audit of the one-shot production execution coordinator.
+
+## 2026-07-10T00:00+04:00 - TASK 8G-1R4A2B atomic coordinator outcome coverage and evidence enforcement
+
+- **Objective:** Complete the TASK 8G v2 evidence model without creating an audit-acceptance or lane-close commit.
+- **Starting state:** `feature/native-adapter-execution-coordinator` at `28925a28cb3c18b41f5c81bb0254d1e84e66c7e4`, clean, upstream `0/0`, with the matching remote branch at that commit.
+- **Investigation:** The existing TASK 8F inert recording-provider constructor had no direct throw or cleanup-failure option. A test-local wrapper around its private call seam invokes the genuine internally-created recording provider, throws only after the selected recording or cleanup entry, and restores the original function in `finally`; no TASK 8F source or evidence changed.
+- **Files modified:** `tools/Test-ChatpadOneShotNativeExecutionCoordinator.ps1`; `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`; TASK 8G evidence and readiness manifest; `docs/DECISIONS.md`; `docs/NEXT-TASK.md`; `docs/PROJECT-STATE.md`; `docs/RUNTIME-BRINGUP-READINESS.md`; and this worklog.
+- **Implementation:** Added direct replay-after-thrown-exception and replay-after-cleanup-failure coverage. Evidence is a single typed v2 record; the validator enforces exact v2 scalar types/values, ordered arrays, source/evidence identities, manifest/evidence parity, and a 253-case TASK 8G tampering regression.
+- **Validation before finalization:** TASK 8E passed 12 tests / 81 assertions, TASK 8F passed 7 / 62, and TASK 8G passed 23 / 105 in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655. The TASK 8G regression passed 253 / 253 in PowerShell 7; dual-runtime regression, canonical validator, diff, safety scan, commit, and push remain to be recorded after final validation.
+- **Safety:** No live/native/device/binding/mutation/rollback/restore/build/artifact/compile-output operation occurred. No output binary was emitted. Production provider registration, selection, construction, loading, and invocation remained false; every prohibited counter remained zero.
+- **Blocker and next task:** live readiness remains `BLOCKED` with `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`. Next: TASK 8G-2 — Independent read-only audit of the atomic one-shot production execution coordinator.
