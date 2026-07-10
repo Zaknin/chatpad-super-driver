@@ -2,6 +2,7 @@
 param(
     [string]$ManifestPath='docs/evidence/runtime-bringup-readiness-manifest.json',
     [switch]$RunCorruptionRegression,
+    [switch]$RunTask8ERegression,
     [switch]$RunParserEvidencePathRegression,
     [switch]$NoArtifactOpenDesignGateAudit
 )
@@ -310,6 +311,73 @@ function Get-ChatpadIntegerPropertySum {
         if($null -ne $number){$sum += $number}
     }
     return $sum
+}
+
+function Get-ChatpadTask8EValue {
+    param([AllowNull()][object]$Object,[Parameter(Mandatory)][string]$Name)
+    if($null-eq$Object){return $null}
+    $property=$Object.PSObject.Properties[$Name]
+    if($null-eq$property){return $null}
+    $property.Value
+}
+
+function Test-ChatpadTask8EManifestEvidence {
+    param([Parameter(Mandatory)][string]$RepositoryRoot,[Parameter(Mandatory)][object]$Manifest)
+    $defects=[Collections.Generic.List[string]]::new()
+    $section=Get-ChatpadTask8EValue $Manifest 'nonexecuting_native_adapter_implementation'
+    if($null-eq$section-or$section-is[array]){return [pscustomobject]@{result='FAIL';defect_count=1;defects=@('section') }}
+    $expected=[ordered]@{
+        evidence_path='docs/evidence/native-adapter-nonexecuting-implementation-task-8e-1.json';schema='chatpad-native-adapter-nonexecuting-implementation-evidence-v1';status='SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS';readiness='READY_FOR_INDEPENDENT_NONEXECUTING_NATIVE_ADAPTER_AUDIT_ONLY';starting_branch='feature/native-adapter-execution-envelope-verifier';starting_commit='79955ef434ed4424a72b6dea8ec870a66ad5d8ef';implementation_branch='feature/native-adapter-nonexecuting-implementation';implementation_commit_parent='79955ef434ed4424a72b6dea8ec870a66ad5d8ef';implementation_commit_subject='feat: implement non-executing native adapter surface';contract_evidence_path='docs/evidence/exact-instance-binding-non-mutating-implementation-contract.json';contract_evidence_sha256='1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080';adapter_source_path='tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1';adapter_source_sha256='78B85CBC2EB0FF58D65A5B97D35DEA9561FD7EA80E910444C2BEDC415C5AB919';focused_test_path='tools/Test-ChatpadNonExecutingNativeAdapter.ps1';focused_test_sha256='5CEB63F658DB2FF232DFE9E872BC2228060AD34048503CBCF5A8D8F39FDDE254';capability_adversarial_result='PASS';sessionstate_extraction_result='PASS';live_readiness='BLOCKED';blocker='BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED'
+    }
+    foreach($pair in $expected.GetEnumerator()){if([string](Get-ChatpadTask8EValue $section $pair.Key)-cne$pair.Value){$defects.Add("section.$($pair.Key)")}}
+    foreach($name in @('device_query_count','native_invocation_count','setupapi_newdev_invocation_count','binding_count','windows_mutation_count','driver_action_count','artifact_compile_output_access_count','failed_validation_fake_backend_call_count')){$value=Get-ChatpadTask8EValue $section $name;if($null-eq$value-or$value-is[string]-or$value-is[array]-or[int]$value-ne0){$defects.Add("section.$name")}}
+    if([int](Get-ChatpadTask8EValue $section 'approved_fake_backend_call_count')-ne1){$defects.Add('section.approved_fake_backend_call_count')}
+    foreach($name in @('production_backend_present','production_backend_loaded','production_backend_selected_by_default','rollback_performed','restore_performed','native_execution_authorized','ready_for_native_execution','ready_for_binding_execution','ready_for_windows_mutation','ready_for_driver_action','ready_for_artifact_access','ready_for_compile_output_access')){if((Get-ChatpadTask8EValue $section $name)-isnot[bool]-or(Get-ChatpadTask8EValue $section $name)){$defects.Add("section.$name")}}
+    if((Get-ChatpadTask8EValue $section 'ready_for_independent_audit_only')-isnot[bool]-or-not(Get-ChatpadTask8EValue $section 'ready_for_independent_audit_only')){$defects.Add('section.ready_for_independent_audit_only')}
+    if([string](Get-ChatpadTask8EValue $section 'powershell_7_result')-cne'PASS'-or[int](Get-ChatpadTask8EValue $section 'powershell_7_test_count')-ne12-or[int](Get-ChatpadTask8EValue $section 'powershell_7_assertion_count')-ne81-or[string](Get-ChatpadTask8EValue $section 'windows_powershell_result')-cne'PASS'-or[int](Get-ChatpadTask8EValue $section 'windows_powershell_test_count')-ne12-or[int](Get-ChatpadTask8EValue $section 'windows_powershell_assertion_count')-ne81){$defects.Add('section.runtime-results')}
+    $evidencePath=[IO.Path]::GetFullPath((Join-Path $RepositoryRoot ([string](Get-ChatpadTask8EValue $section 'evidence_path'))))
+    if(-not$evidencePath.StartsWith($RepositoryRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not(Test-Path -LiteralPath $evidencePath -PathType Leaf)){$defects.Add('evidence.path');return [pscustomobject]@{result='FAIL';defect_count=$defects.Count;defects=@($defects)}}
+    try{$evidence=Get-Content -LiteralPath $evidencePath -Raw|ConvertFrom-Json}catch{$defects.Add('evidence.json');return [pscustomobject]@{result='FAIL';defect_count=$defects.Count;defects=@($defects)}}
+    foreach($name in @('schema','status','readiness','starting_branch','starting_commit','implementation_branch','implementation_commit_parent','implementation_commit_subject','contract_evidence_path','contract_evidence_sha256','production_backend_present','production_backend_loaded','production_backend_selected_by_default','device_query_count','native_invocation_count','setupapi_newdev_invocation_count','binding_count','windows_mutation_count','driver_action_count','artifact_compile_output_access_count','rollback_performed','restore_performed','native_execution_authorized','live_readiness')){if([string](Get-ChatpadTask8EValue $evidence $name)-cne[string](Get-ChatpadTask8EValue $section $name)){$defects.Add("evidence.$name")}}
+    foreach($name in @('capability_adversarial_result','sessionstate_extraction_result')){if([string](Get-ChatpadTask8EValue $section $name)-cne'PASS'-or-not([string](Get-ChatpadTask8EValue $evidence $name)).StartsWith('PASS:',[StringComparison]::Ordinal)){$defects.Add("evidence.$name")}}
+    if([string](Get-ChatpadTask8EValue $evidence 'remaining_blocker')-cne[string](Get-ChatpadTask8EValue $section 'blocker')-or[string](Get-ChatpadTask8EValue $evidence 'fake_backend_result')-cne'PASS: failed validation made zero fake calls; the internal seam recorded one approved fake non-native operation only.'){$defects.Add('evidence.blocker-or-fake-result')}
+    $files=@(Get-ChatpadTask8EValue $evidence 'implementation_files')
+    $expectedFiles=@([pscustomobject]@{path=$expected.adapter_source_path;sha256=$expected.adapter_source_sha256},[pscustomobject]@{path=$expected.focused_test_path;sha256=$expected.focused_test_sha256})
+    if($files.Count-ne2){$defects.Add('evidence.implementation_files')}
+    for($index=0;$index-lt$expectedFiles.Count;$index++){
+        if($files.Count-le$index-or[string](Get-ChatpadTask8EValue $files[$index] 'path')-cne$expectedFiles[$index].path-or[string](Get-ChatpadTask8EValue $files[$index] 'sha256')-cne$expectedFiles[$index].sha256){$defects.Add("evidence.file.$index")}
+        $source=[IO.Path]::GetFullPath((Join-Path $RepositoryRoot $expectedFiles[$index].path))
+        if(-not(Test-Path -LiteralPath $source -PathType Leaf)-or(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash-cne$expectedFiles[$index].sha256){$defects.Add("source.file.$index")}
+    }
+    $runtimes=@(Get-ChatpadTask8EValue $evidence 'test_runtimes')
+    foreach($runtimeName in @('PowerShell 7','Windows PowerShell')){$runtime=@($runtimes|Where-Object{[string](Get-ChatpadTask8EValue $_ 'name')-ceq$runtimeName});if($runtime.Count-ne1-or[string](Get-ChatpadTask8EValue $runtime[0] 'result')-cne'PASS'-or[int](Get-ChatpadTask8EValue $runtime[0] 'test_count')-ne12-or[int](Get-ChatpadTask8EValue $runtime[0] 'assertion_count')-ne81){$defects.Add("evidence.runtime.$runtimeName")}}
+    [pscustomobject]@{result=if($defects.Count){'FAIL'}else{'PASS'};defect_count=$defects.Count;defects=@($defects)}
+}
+
+function Invoke-ChatpadTask8ERegression {
+    param([Parameter(Mandatory)][string]$ManifestPath)
+    $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
+    $temp=Join-Path ([IO.Path]::GetTempPath()) ('chatpad-task8e-'+[guid]::NewGuid().ToString('N'))
+    $paths=@($ManifestPath,'docs/evidence/native-adapter-nonexecuting-implementation-task-8e-1.json','docs/evidence/exact-instance-binding-non-mutating-implementation-contract.json','tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1','tools/Test-ChatpadNonExecutingNativeAdapter.ps1')
+    New-Item -ItemType Directory -Path $temp|Out-Null
+    try{
+        foreach($relative in $paths){$target=Join-Path $temp $relative;New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force|Out-Null;Copy-Item -LiteralPath (Join-Path $root $relative) -Destination $target -Force}
+        $manifestFile=Join-Path $temp $ManifestPath;$evidenceFile=Join-Path $temp 'docs/evidence/native-adapter-nonexecuting-implementation-task-8e-1.json';$manifestText=Get-Content $manifestFile -Raw;$evidenceText=Get-Content $evidenceFile -Raw
+        $cases=[Collections.Generic.List[object]]::new();$cases.Add([pscustomobject]@{id='section-removed';mutate={param($m,$e)[void]$m.PSObject.Properties.Remove('nonexecuting_native_adapter_implementation')}});$cases.Add([pscustomobject]@{id='section-array';mutate={param($m,$e)$m.nonexecuting_native_adapter_implementation=@()}})
+        foreach($field in @('evidence_path','schema','status','readiness','implementation_branch','contract_evidence_sha256','adapter_source_sha256','focused_test_sha256','blocker')){$cases.Add([pscustomobject]@{id="section-$field";mutate=([scriptblock]::Create("param(`$m,`$e) `$m.nonexecuting_native_adapter_implementation.$field='tampered'"))})}
+        foreach($field in @('device_query_count','native_invocation_count','setupapi_newdev_invocation_count','binding_count','windows_mutation_count','driver_action_count','artifact_compile_output_access_count')){$cases.Add([pscustomobject]@{id="counter-$field";mutate=([scriptblock]::Create("param(`$m,`$e) `$m.nonexecuting_native_adapter_implementation.$field=1"))})}
+        foreach($field in @('production_backend_present','production_backend_loaded','production_backend_selected_by_default')){$cases.Add([pscustomobject]@{id="production-$field";mutate=([scriptblock]::Create("param(`$m,`$e) `$m.nonexecuting_native_adapter_implementation.$field=`$true"))})}
+        $cases.Add([pscustomobject]@{id='section-starting-commit';mutate={param($m,$e)$m.nonexecuting_native_adapter_implementation.starting_commit='tampered'}})
+        $cases.Add([pscustomobject]@{id='adapter-source-identity-removed';mutate={param($m,$e)[void]$m.nonexecuting_native_adapter_implementation.PSObject.Properties.Remove('adapter_source_sha256')}})
+        $cases.Add([pscustomobject]@{id='focused-test-identity-removed';mutate={param($m,$e)[void]$m.nonexecuting_native_adapter_implementation.PSObject.Properties.Remove('focused_test_sha256')}})
+        $cases.Add([pscustomobject]@{id='unsupported-native-readiness';mutate={param($m,$e)$m.nonexecuting_native_adapter_implementation.ready_for_native_execution=$true}})
+        $cases.Add([pscustomobject]@{id='fake-represented-native';mutate={param($m,$e)$e.fake_backend_result='PASS: native execution occurred'}})
+        $cases.Add([pscustomobject]@{id='evidence-disagreement';mutate={param($m,$e)$e.status='tampered'}})
+        $results=[Collections.Generic.List[object]]::new()
+        $canonical=Get-Content $manifestFile -Raw|ConvertFrom-Json;$pass=Test-ChatpadTask8EManifestEvidence -RepositoryRoot $temp -Manifest $canonical;$results.Add([pscustomobject]@{id='canonical';result=$pass.result;passed=($pass.result-eq'PASS')})
+        foreach($case in $cases){[IO.File]::WriteAllText($manifestFile,$manifestText,[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($evidenceFile,$evidenceText,[Text.UTF8Encoding]::new($false));$m=Get-Content $manifestFile -Raw|ConvertFrom-Json;$e=Get-Content $evidenceFile -Raw|ConvertFrom-Json;& $case.mutate $m $e;[IO.File]::WriteAllText($manifestFile,($m|ConvertTo-Json -Depth 30)+[Environment]::NewLine,[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($evidenceFile,($e|ConvertTo-Json -Depth 30)+[Environment]::NewLine,[Text.UTF8Encoding]::new($false));$result=Test-ChatpadTask8EManifestEvidence -RepositoryRoot $temp -Manifest $m;$results.Add([pscustomobject]@{id=$case.id;result=$result.result;passed=($result.result-eq'FAIL')})}
+        $failed=@($results|Where-Object{-not $_.passed});[pscustomobject]@{result=if($failed.Count){'FAIL'}else{'PASS'};test_count=$results.Count;assertion_count=$results.Count;failed_test_count=$failed.Count;tests=@($results);temporary_data_removed=$true}
+    }finally{if(Test-Path $temp){Remove-Item -LiteralPath $temp -Recurse -Force}}
 }
 
 function Compare-ChatpadIntegerProperty {
@@ -790,10 +858,17 @@ if($RunCorruptionRegression){
     exit 0
 }
 
+if($RunTask8ERegression){
+    $regression=Invoke-ChatpadTask8ERegression -ManifestPath $ManifestPath
+    $regression|ConvertTo-Json -Depth 8
+    if($regression.result-ne'PASS'){exit 1}
+    exit 0
+}
+
 $root=[IO.Path]::GetFullPath((&git rev-parse --show-toplevel).Trim())
 $manifest=Get-Content -LiteralPath (Join-Path $root $ManifestPath) -Raw|ConvertFrom-Json
 $entries=@($manifest.entries)
-$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;hash_policy=0;state=0;containment=0;declared_result=0;top_level=0;compile_validation=0;metadata_review_gate=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
+$defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;hash_policy=0;state=0;containment=0;declared_result=0;top_level=0;task_8e=0;compile_validation=0;metadata_review_gate=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
 $accountingDetails=[ordered]@{}
 $readinessCounts=[ordered]@{}
 $parserEvidencePathRegression=[ordered]@{result='NOT_RUN';case_count=0;passed_count=0;failed_count=0;cases=@()}
@@ -874,6 +949,8 @@ $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$ma
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
 if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.real_artifact_static_metadata_review_completed-ne$true-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
+$task8EValidation=Test-ChatpadTask8EManifestEvidence -RepositoryRoot $root -Manifest $manifest
+$defects.task_8e=[int]$task8EValidation.defect_count
 $executionDesignProperty=$manifest.PSObject.Properties['native_adapter_execution_design_gate']
 if($null-eq$executionDesignProperty-or$null-eq$executionDesignProperty.Value-or$executionDesignProperty.Value-is[array]){
     $defects.top_level++
