@@ -1,6 +1,6 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8D-2 validated non-mutating implementation contract evidence, docs/manifest only)*
+|*Last updated: 2026-07-10 (TASK 8D-4 recorded accepted non-mutating implementation contract audit, docs/manifest only)*
 
 ## Current State
 
@@ -1059,6 +1059,28 @@ Execution authorized remains `false`. The blocker remains
 - **Safety state:** Binding implementation/execution remains unauthorized. Rollback package implementation remains unauthorized. Rollback implementation remains unauthorized. Restore remains unauthorized. Native execution remains `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Prohibited actions not performed:** No implementation, mutation-capable, native, driver, artifact, compile-output, metadata, or live/device action was authorized or performed. No rollback package implementation, rollback implementation, restore, binding implementation, binding execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, metadata parsing, live/device query, identity capture, operator confirmation collection, build, sign, package, install, load, bind, or restart was authorized or performed.
 - **Next task:** TASK 8D-3 - independent read-only audit of non-mutating implementation contract commit.
+
+
+## TASK 8D-4 - Non-Mutating Implementation Contract Audit Acceptance (2026-07-10)
+
+- **Objective:** Record TASK 8D-3 independent audit acceptance for the committed non-mutating implementation contract evidence.
+- **Audit result:** TASK 8D-3 independent audit accepted (`PASS` / `ACCEPTED`).
+- **Audited commit:** `9bd1fc26f5630f0eea9c25938868b5a4c07fdcef` (`docs: record non-mutating implementation contract evidence`), parent `3939b73ba083034d47a92acb767dbb8aa19177c6`.
+- **Branch / upstream:** `feature/native-adapter-execution-envelope-verifier` / `0/0`.
+- **Working tree at audit:** clean.
+- **Evidence state:** non-mutating implementation contract evidence committed, pushed, and audited.
+- **Evidence path:** `docs/evidence/exact-instance-binding-non-mutating-implementation-contract.json`.
+- **Evidence hash:** `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
+- **Schema:** `chatpad-exact-instance-binding-non-mutating-implementation-contract-v1`.
+- **Status:** `EXACT_INSTANCE_BINDING_NON_MUTATING_IMPLEMENTATION_CONTRACT_DEFINED_NO_IMPLEMENTATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
+- **Readiness:** `READY_TO_VALIDATE_NON_MUTATING_IMPLEMENTATION_CONTRACT_ONLY`.
+- **Manifest audit acceptance:** Added flat TASK 8D-3 audit-acceptance fields to `exact_instance_binding_non_mutating_implementation_contract` in `docs/evidence/runtime-bringup-readiness-manifest.json`, preserving identity, source-chain, accepted-precondition, contract summary, authorization, safety, and readiness fields.
+- **Manifest hash note:** TASK 8D-3 observed current manifest hash `793CCDB982C5B9E66B4BF1AA3F81517A997F4337F08D43285B897E7CB41218FA`; the evidence file keeps its 8D-1 recorded manifest source hash `76D37D432F3E1909C5B87750320713EA5E4A8D3E3EE7799FC5B4310631AD07C1` and that drift remains expected.
+- **Accepted preconditions:** next non-mutating scope evidence remains accepted; rollback/no-op package evidence remains accepted.
+- **Contract state:** implementation contract remains non-mutating and evidence-only.
+- **Safety state:** Binding implementation/execution remains unauthorized. Rollback package implementation remains unauthorized. Rollback implementation remains unauthorized. Restore remains unauthorized. Native execution remains `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Prohibited actions not performed:** No implementation, mutation-capable, native, driver, artifact, compile-output, metadata, or live/device action was authorized or performed. No rollback package implementation, rollback implementation, restore, binding implementation, binding execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, metadata parsing, live/device query, identity capture, operator confirmation collection, build, sign, package, install, load, bind, or restart was authorized or performed.
+- **Next task:** TASK 8D-5 - independent read-only audit of non-mutating implementation contract audit-acceptance closeout commit.
 
 ## TASK 8C-3 - Next Non-Mutating Implementation Contract Scope Evidence Recorded (2026-07-10)
 

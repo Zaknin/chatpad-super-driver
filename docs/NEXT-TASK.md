@@ -1,10 +1,13 @@
-# TASK 8D-3 — independent read-only audit of non-mutating implementation contract commit
+# TASK 8D-5 — independent read-only audit of non-mutating implementation contract audit-acceptance closeout commit
 
 ## Current State
 
 - **Branch:** `feature/native-adapter-execution-envelope-verifier`.
 - **Required branch:** `feature/native-adapter-execution-envelope-verifier`.
-- **Starting commit:** this TASK 8D-2 commit.
+- **Starting commit:** this TASK 8D-4 commit.
+- **Audit acceptance task:** TASK 8D-4.
+- **Accepted audit:** TASK 8D-3 independent audit accepted (`PASS` / `ACCEPTED`).
+- **Audited commit:** `9bd1fc26f5630f0eea9c25938868b5a4c07fdcef`.
 - **Evidence path:** `docs/evidence/exact-instance-binding-non-mutating-implementation-contract.json`.
 - **Evidence hash:** `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
 - **Manifest section:** `exact_instance_binding_non_mutating_implementation_contract`.
@@ -18,8 +21,9 @@ This is independent read-only audit scope. Do not modify the repository. Do not 
 
 ## Acceptance Criteria
 
-- Verify the TASK 8D-2 commit identity from Git.
+- Verify the TASK 8D-4 closeout commit identity from Git.
 - Verify the evidence hash remains `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
-- Verify manifest section `exact_instance_binding_non_mutating_implementation_contract` records the evidence identity, nine-entry source chain, flat authorization fields, safety state, and readiness decision.
-- Verify docs record TASK 8D-1 evidence creation, TASK 8D-2 validation, branch `feature/native-adapter-execution-envelope-verifier`, and unchanged blocked safety state.
+- Verify the manifest section records TASK 8D-3 `PASS` / `ACCEPTED` with audited commit `9bd1fc26f5630f0eea9c25938868b5a4c07fdcef`.
+- Verify the manifest section remains flat and preserves identity, source-chain, accepted-precondition, contract summary, authorization, safety, and readiness fields.
+- Verify docs record TASK 8D-3 audit acceptance, branch `feature/native-adapter-execution-envelope-verifier`, upstream `0/0`, working tree clean at audit, and the unchanged blocked safety state.
 - Verify forbidden positive-claim scan is clean.
