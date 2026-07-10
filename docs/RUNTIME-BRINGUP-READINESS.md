@@ -1527,30 +1527,33 @@ remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Live readiness remains `BLOCKED`.**
 - **Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.**
 
+## TASK 8G-1R5 - Managed Provider-Injection Surface Remediation
+
+- **Status:** `ATOMIC_ONE_SHOT_EXECUTION_COORDINATOR_SOURCE_PRESENT_GENUINE_RECORDING_PROVIDER_ONLY_PRODUCTION_PROVIDER_NOT_SELECTED_OR_CONSTRUCTED_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_LIVE_EXECUTION_UNAUTHORIZED`.
+- **Evidence:** `docs/evidence/one-shot-native-execution-coordinator-task-8g-1.json`.
+- **Managed registry:** `tools/ExactInstance/ChatpadOneShotAuthorizationRegistry.cs` exposes only `CreateRecordingAuthorization(object key, string fingerprint)` and `TryConsume(object key, string fingerprint)`. The obsolete `Register(object key, string fingerprint, object provider)` signature is absent.
+- **Provider binding:** the managed registry stores no provider and exposes no provider replacement, authorization reset, consumed-state reset, production descriptor, or arbitrary provider-candidate binding surface. The coordinator resolves only the inert TASK 8F recording provider created by the approved private factory and held in a private reference map.
+- **Direct managed-boundary tests:** arbitrary PSCustomObject, shape-compatible fake provider, wrapper, deserialized object, string, Boolean, and TASK 8F production-provider descriptor attempts cannot bind a provider or enter the provider plan.
+- **Atomic behavior:** `Interlocked.CompareExchange` remains the consume primitive. The bounded real two-runspace race ran 16 iterations; each iteration had two contenders, one successful consumption, one provider-plan entry, one replay rejection, and zero native invocations.
+- **Offline tests:** TASK 8G passed in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 with 25 tests / 259 assertions in each runtime.
+- **Validator:** canonical readiness validation passes with zero defects and enforces exact managed method/constructor signature arrays, provider-provenance booleans, source/test/evidence identities, manifest/evidence equality, bounded race fields, and the expanded TASK 8G tampering regression.
+- **Safety:** no live query, native invocation, SetupAPI/Newdev call, binding, mutation, rollback, restore, driver action, artifact access, compile-output access, binary emission, production-provider construction, or production-provider invocation occurred.
+- **Readiness:** `READY_FOR_INDEPENDENT_SOURCE_AUDIT_ONLY`. Live readiness remains `BLOCKED`; blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`. TASK 8G remains pending repeated independent audit and is not lane-closed.
+
 ## Exact next task
 
-Perform an independent strict read-only audit of this remediated
-prior-driver/provider identity capture result commit. Derive its exact identity
-from Git; require subject `docs: remediate prior identity evidence shape`,
-starting commit `e7a385826f9d2c22c2e70f86d7588409cd3ff2dc`, result evidence schema
-`chatpad-exact-instance-binding-prior-driver-provider-identity-capture-result-v1`,
-result status `PRIOR_DRIVER_PROVIDER_IDENTITY_CAPTURED_NO_MUTATION_NO_NATIVE_IO`,
-source prior identity design-gate evidence, source operator/rollback package
-design-gate evidence, source authorization design-gate evidence, source
-dry-run result evidence, source execution-gate evidence, source dry-run design
-evidence, source design-gate evidence, source analysis evidence, source
-observation evidence, accepted dry-run result, accepted three-node target
-chain, target InstanceId, captured target/parent/child identity fields,
-unavailable/skipped property reasons, accepted dry-run summary counters
-`3`, `1`, and `4`, narrowed `exact_commands_run`, separated supporting
-repository/source-evidence read commands, failed commands, precondition
-result, rejection/no-op result, final capture decision, and unchanged blocked
-state. The audit must confirm the remediation performed no new live query,
-identity capture, operator confirmation collection, rollback implementation,
-restore execution, binding implementation, binding execution, dry-run in this
-task, new live observation, hardware access, native execution, native library
-load, entry-point resolution, SetupAPI/Newdev invocation, Windows mutation,
-driver action, or artifact/compile-output access.
+Perform TASK 8G-2: independent strict read-only audit of the TASK 8G-1R5
+remediated one-shot coordinator commit. Derive its exact identity from Git;
+require subject `fix: eliminate coordinator provider injection surface`, parent
+`3baca0fb97d80ec61bae9e07fd62d12cb21e733d`, evidence schema
+`chatpad-one-shot-native-execution-coordinator-evidence-v2`, exact managed
+method signatures, empty managed constructor-signature array, direct
+managed-boundary negative-test results, 16-iteration race result, manifest/
+evidence equality, and unchanged blocked state. The audit must confirm no live
+query, native invocation, SetupAPI/Newdev invocation, binding, mutation,
+rollback, restore, driver action, artifact/compile-output access, binary
+emission, production-provider construction, or production-provider invocation
+occurred, and it must not create an acceptance or lane-close commit.
 
 ## TASK 4B-REMEDIATION Complete (2026-07-08)
 

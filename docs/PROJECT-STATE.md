@@ -1,6 +1,6 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8G-1R4A2B completed offline outcome coverage and strict atomic-coordinator evidence enforcement; live execution remains blocked)*
+|*Last updated: 2026-07-10 (TASK 8G-1R5 removed the managed arbitrary-provider registration surface; live execution remains blocked)*
 
 ## Current State
 
@@ -65,10 +65,11 @@
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
 - **TASK 8F:** independently closed by TASK 8F-2; its source/evidence identities remain unchanged.
 - **TASK 8G coordinator:** `tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1` is private and recording-provider-only. It exports nothing, does not select or construct the production provider, and atomically consumes a reference-bound test authorization before plan invocation.
+- **TASK 8G managed registry remediation:** `tools/ExactInstance/ChatpadOneShotAuthorizationRegistry.cs` no longer exposes `Register(object key, string fingerprint, object provider)`. The public managed surface is `CreateRecordingAuthorization(object key, string fingerprint)` and `TryConsume(object key, string fingerprint)` only; no managed method accepts, stores, returns, replaces, or resets a provider.
 - **TASK 8G-1 evidence:** `docs/evidence/one-shot-native-execution-coordinator-task-8g-1.json`.
-- **TASK 8G evidence state:** v2 records 23 focused tests / 105 assertions in PowerShell 7 and Windows PowerShell 5.1. Direct offline coverage rejects replay after success, provider failure, thrown recording-provider-path exception, and cleanup failure; the real two-contender race yielded one winner, one provider entry, and one replay rejection.
-- **TASK 8G safety:** only the internally-created inert recording provider was used. Production provider registration, selection, construction, loading, and invocation remained false; all prohibited counters remained zero.
-- **TASK 8G next task:** TASK 8G-2 — Independent read-only audit of the atomic one-shot production execution coordinator.
+- **TASK 8G evidence state:** v2 records 25 focused tests / 259 assertions in PowerShell 7 and Windows PowerShell 5.1. Direct managed-boundary adversarial tests reject arbitrary and production-provider candidates; replay after success, provider failure, thrown recording-provider-path exception, and cleanup failure remains rejected. The bounded real two-runspace race ran 16 iterations, each yielding one winner, one provider-plan entry, and one replay rejection.
+- **TASK 8G safety:** only the internally-created inert recording provider was reachable. Production provider registration, binding, selection, construction, loading, and invocation remained false; all prohibited counters remained zero.
+- **TASK 8G next task:** TASK 8G-2 — Independent read-only audit of the remediated atomic one-shot production execution coordinator. TASK 8G remains pending repeated independent audit; the lane is not closed.
 - **TASK 8E-1 non-executing native adapter status:**
   `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`.
 - **TASK 8E-1 evidence:**

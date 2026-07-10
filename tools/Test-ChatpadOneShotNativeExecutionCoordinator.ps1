@@ -14,6 +14,17 @@ $coordinatorModule=Get-Module -Name ChatpadOneShotNativeExecutionCoordinator | S
 function New-Provider([string]$FailAt=''){ & $backendModule { param($f) New-GatedProductionRecordingProvider -FailAt $f } $FailAt }
 function New-Cap($r,$p=$null,[string]$op='APPLY'){ (& $coordinatorModule { param($r,$o) New-TestOnlyRecordingProviderAuthorization -Request $r -Operation $o } $r $op).authorization }
 function Invoke-Coordinator($r,$cap,$p=$null,[string]$op='APPLY'){ & $coordinatorModule { param($r,$c,$o) Invoke-OneShotNativeExecutionCoordinator -Request $r -AuthorizationCapability $c -Operation $o } $r $cap $op }
+function Get-RegistrySignatureText([Reflection.MethodBase]$Member) {
+    $parameters = @($Member.GetParameters() | ForEach-Object { "$($_.ParameterType.FullName) $($_.Name)" })
+    "$($Member.ReturnType.FullName) $($Member.DeclaringType.FullName).$($Member.Name)($($parameters -join ', '))"
+}
+function Get-ManagedRegistrySurface {
+    $type = [Chatpad.OneShotAuthorization.Registry]
+    [pscustomobject]@{
+        methods = @($type.GetMethods([Reflection.BindingFlags]'Public,Static') | Where-Object DeclaringType -eq $type | Sort-Object Name | ForEach-Object { Get-RegistrySignatureText $_ })
+        constructors = @($type.GetConstructors([Reflection.BindingFlags]'Public,Instance,Static') | Sort-Object Name | ForEach-Object { Get-RegistrySignatureText $_ })
+    }
+}
 function Invoke-RecordingProviderThrowScenario([string]$ThrowEntryPoint) {
     $state=[pscustomobject]@{provider_call_count=0;provider_identity='';native_io_performed=$false}
     $original=& $backendModule { (Get-Command -Name Invoke-GatedProductionProviderCall -CommandType Function).ScriptBlock }
@@ -41,6 +52,41 @@ function Invoke-RecordingProviderThrowScenario([string]$ThrowEntryPoint) {
 }
 Test-Case 'import and exports expose no coordinator capability or provider' { Assert-OneShot ($coordinatorModule.ExportedFunctions.Count -eq 0) 'coordinator exported a function'; Assert-OneShot ($backendModule.ExportedFunctions.Count -eq 0) 'backend exported a function'; Assert-OneShot ($coordinatorModule.SessionState.PSVariable.GetValue('ProductionAuthorizationCapability',$null) -eq $null) 'production capability variable present' }
 Test-Case 'public adapter remains prohibited' { $r=Invoke-ChatpadNonExecutingNativeAdapter -Request (New-Request); Assert-OneShot ($r.result_code -eq 'NATIVE_EXECUTION_PROHIBITED') 'public execution changed'; foreach($c in $r.counters.PSObject.Properties){Assert-OneShot ($c.Value -eq 0) 'public counter changed'} }
+Test-Case 'managed helper signature exposes no provider injection reset or replacement surface' {
+    $surface=Get-ManagedRegistrySurface
+    $expected=@('System.Void Chatpad.OneShotAuthorization.Registry.CreateRecordingAuthorization(System.Object key, System.String fingerprint)','System.Boolean Chatpad.OneShotAuthorization.Registry.TryConsume(System.Object key, System.String fingerprint)')
+    Assert-OneShot ((@($surface.methods) -join '|') -eq ($expected -join '|')) 'managed method signature surface changed'
+    Assert-OneShot (@($surface.constructors).Count -eq 0) 'managed registry exposed a constructor'
+    foreach($signature in @($surface.methods + $surface.constructors)){
+        Assert-OneShot ($signature -notmatch 'Register\\(System\\.Object key, System\\.String fingerprint, System\\.Object provider\\)') 'obsolete Register signature present'
+        Assert-OneShot ($signature -notmatch 'System\\.Object provider|Replace|Reset|SetProvider|providerCandidate|descriptor') "unsafe managed signature present: $signature"
+    }
+}
+Test-Case 'direct managed arbitrary provider registration attempts cannot bind candidates' {
+    $type=[Chatpad.OneShotAuthorization.Registry]
+    $obsolete=@($type.GetMethods([Reflection.BindingFlags]'Public,Static')|Where-Object{$_.Name -eq 'Register' -and @($_.GetParameters()).Count -eq 3})
+    Assert-OneShot ($obsolete.Count -eq 0) 'obsolete provider-accepting Register method exists'
+    $request=New-Request
+    $fingerprint=& $coordinatorModule { param($r) Get-OneShotRequestFingerprint -Request $r -Operation 'APPLY' } $request
+    $productionDescriptor=& $backendModule { New-GatedProductionNativeProviderDescriptor }
+    $fakeProvider=[pscustomobject]@{provider_identity='chatpad-gated-production-native-adapter-recording-shim-v1';calls=[Collections.Generic.List[object]]::new();native_io_performed=$false}
+    $wrapper=[pscustomobject]@{Provider=$fakeProvider}
+    $deserialized=[Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize($fakeProvider))
+    $candidates=@([pscustomobject]@{name='pscustomobject';value=[pscustomobject]@{provider='candidate'}},[pscustomobject]@{name='shape-compatible-fake';value=$fakeProvider},[pscustomobject]@{name='wrapper';value=$wrapper},[pscustomobject]@{name='deserialized';value=$deserialized},[pscustomobject]@{name='string';value='provider'},[pscustomobject]@{name='boolean';value=$true},[pscustomobject]@{name='production-descriptor';value=$productionDescriptor})
+    foreach($candidate in $candidates){
+        $threeArgumentRejected=$false
+        try{[void]$type.InvokeMember('CreateRecordingAuthorization',[Reflection.BindingFlags]'InvokeMethod,Public,Static',$null,$null,@([pscustomobject]@{key=$candidate.name},$fingerprint,$candidate.value))}catch{$threeArgumentRejected=$true}
+        Assert-OneShot $threeArgumentRejected "three-argument managed bind accepted $($candidate.name)"
+        $directKey=[pscustomobject]@{direct_managed_key=$candidate.name}
+        [Chatpad.OneShotAuthorization.Registry]::CreateRecordingAuthorization($directKey,$fingerprint)
+        $out=Invoke-Coordinator $request $directKey
+        Assert-OneShot ($out.result -eq 'AUTHORIZATION_PROVIDER_BINDING_REJECTED_NO_PROVIDER_CALL') "direct managed key bound provider for $($candidate.name)"
+        Assert-OneShot ($out.provider_call_count -eq 0) "direct managed key reached provider for $($candidate.name)"
+        foreach($c in $out.counters.PSObject.Properties){Assert-OneShot ($c.Value -eq 0) "direct managed counter changed for $($candidate.name)"}
+    }
+    Assert-OneShot (-not $productionDescriptor.native_invocation_available) 'production descriptor became invocable'
+    Assert-OneShot (-not $productionDescriptor.selected_by_default) 'production descriptor became selected'
+}
 Test-Case 'ordinary forged wrapped and serialized capabilities fail before provider' { foreach($cap in @($null,'allow',$true,[pscustomobject]@{allow=$true},([Management.Automation.PSSerializer]::Deserialize([Management.Automation.PSSerializer]::Serialize([pscustomobject]@{allow=$true}))))) { $p=New-Provider; $r=Invoke-Coordinator (New-Request) $cap $p; Assert-OneShot ($r.provider_call_count -eq 0) 'forged capability reached provider'; Assert-OneShot ($r.result -match 'AUTHORIZATION') 'forged capability was accepted' } }
 Test-Case 'caller provider is ignored and cannot substitute bound provider' { $r=New-Request;$cap=New-Cap $r;$wrong=[pscustomobject]@{provider_identity='wrong';calls=[Collections.Generic.List[object]]::new();native_io_performed=$false};$result=Invoke-Coordinator $r $cap $wrong;Assert-OneShot ($result.result -eq 'RECORDING_PROVIDER_PLAN_COMPLETED_NOT_NATIVE') 'bound provider was not used';Assert-OneShot ($wrong.calls.Count -eq 0) 'caller provider was used' }
 Test-Case 'exact request enters recording provider once and consumes authorization' { $r=New-Request;$p=New-Provider;$cap=New-Cap $r $p;$result=Invoke-Coordinator $r $cap $p;Assert-OneShot ($result.result -eq 'RECORDING_PROVIDER_PLAN_COMPLETED_NOT_NATIVE') 'recording plan did not complete';Assert-OneShot ($result.provider_call_count -eq 13) 'wrong recording count';Assert-OneShot $result.authorization_consumed 'authorization not consumed';foreach($c in $result.counters.PSObject.Properties){Assert-OneShot ($c.Value -eq 0) 'counter changed'} }
@@ -48,17 +94,21 @@ Test-Case 'identity operation and replay tampering makes zero calls' { $variants
 Test-Case 'authorization cannot transfer and is consumed' { $r=New-Request;$cap=New-Cap $r;$other=New-Provider;$out=Invoke-Coordinator $r $cap $other;Assert-OneShot ($out.result -eq 'RECORDING_PROVIDER_PLAN_COMPLETED_NOT_NATIVE') 'bound provider did not execute';$again=Invoke-Coordinator $r $cap;Assert-OneShot ($again.result -eq 'AUTHORIZATION_REPLAY_REJECTED_NO_PROVIDER_CALL') 'authorization remained reusable' }
 Test-Case 'production descriptor is never selected or constructed' { $descriptor=& $backendModule { New-GatedProductionNativeProviderDescriptor };Assert-OneShot (-not $descriptor.native_invocation_available) 'native provider enabled';Assert-OneShot (-not $descriptor.selected_by_default) 'production selected';Assert-OneShot (-not $descriptor.constructed_during_import) 'production constructed' }
 Test-Case 'two same-process contenders atomically admit one recording plan' {
-    $request=New-Request;$cap=New-Cap $request;$ready=[Threading.CountdownEvent]::new(2);$go=[Threading.ManualResetEventSlim]::new($false)
+    $iterations=16
     $script=@'
 param($modulePath,$request,$capability,$ready,$go)
 Import-Module $modulePath -Force
 $m=Get-Module ChatpadOneShotNativeExecutionCoordinator
 & $m { param($r,$c,$ready,$go) Invoke-OneShotNativeExecutionCoordinator -Request $r -AuthorizationCapability $c -RaceReady $ready -RaceGo $go } $request $capability $ready $go
 '@
-    $p1=[PowerShell]::Create();$p2=[PowerShell]::Create()
-    foreach($p in @($p1,$p2)){[void]$p.AddScript($script).AddArgument($modulePath).AddArgument($request).AddArgument($cap).AddArgument($ready).AddArgument($go)}
-    $a1=$p1.BeginInvoke();$a2=$p2.BeginInvoke();Assert-OneShot ($ready.Wait(5000)) 'race contenders did not reach atomic gate';$go.Set();$r1=@($p1.EndInvoke($a1))[0];$r2=@($p2.EndInvoke($a2))[0];$p1.Dispose();$p2.Dispose();$ready.Dispose();$go.Dispose()
-    $results=@($r1,$r2);Assert-OneShot ((@($results|Where-Object result -eq 'RECORDING_PROVIDER_PLAN_COMPLETED_NOT_NATIVE').Count -eq 1)) 'race did not yield one winner';Assert-OneShot ((@($results|Where-Object result -eq 'AUTHORIZATION_REPLAY_REJECTED_NO_PROVIDER_CALL').Count -eq 1)) 'race did not yield one replay rejection';Assert-OneShot ((@($results|Measure-Object provider_call_count -Sum).Sum -eq 13)) 'race did not yield one recording plan'
+    for($iteration=1;$iteration -le $iterations;$iteration++){
+        $request=New-Request;$cap=New-Cap $request;$ready=[Threading.CountdownEvent]::new(2);$go=[Threading.ManualResetEventSlim]::new($false)
+        $p1=[PowerShell]::Create();$p2=[PowerShell]::Create()
+        foreach($p in @($p1,$p2)){[void]$p.AddScript($script).AddArgument($modulePath).AddArgument($request).AddArgument($cap).AddArgument($ready).AddArgument($go)}
+        $a1=$p1.BeginInvoke();$a2=$p2.BeginInvoke();Assert-OneShot ($ready.Wait(5000)) "race contenders did not reach atomic gate at iteration $iteration";$go.Set();$r1=@($p1.EndInvoke($a1))[0];$r2=@($p2.EndInvoke($a2))[0];$p1.Dispose();$p2.Dispose();$ready.Dispose();$go.Dispose()
+        $results=@($r1,$r2);Assert-OneShot ((@($results|Where-Object result -eq 'RECORDING_PROVIDER_PLAN_COMPLETED_NOT_NATIVE').Count -eq 1)) "race did not yield one winner at iteration $iteration";Assert-OneShot ((@($results|Where-Object result -eq 'AUTHORIZATION_REPLAY_REJECTED_NO_PROVIDER_CALL').Count -eq 1)) "race did not yield one replay rejection at iteration $iteration";Assert-OneShot ((@($results|Measure-Object provider_call_count -Sum).Sum -eq 13)) "race did not yield one recording plan at iteration $iteration"
+    }
+    Assert-OneShot ($iterations -eq 16) 'race iteration count changed'
 }
 Test-Case 'SessionState has no effective production authorization' { Assert-OneShot ($coordinatorModule.SessionState.PSVariable.GetValue('ProductionAuthorizationCapability',$null) -eq $null) 'production authorization exposed';Assert-OneShot ($coordinatorModule.SessionState.PSVariable.GetValue('NativeAdapterExecutionCapability',$null) -eq $null) 'native capability exposed' }
 Test-Case 'copied authorization wrapper fails' { $r=New-Request;$p=New-Provider;$cap=New-Cap $r $p;$out=Invoke-Coordinator $r ([pscustomobject]@{inner=$cap}) $p;Assert-OneShot ($out.provider_call_count -eq 0) 'wrapper reached provider' }

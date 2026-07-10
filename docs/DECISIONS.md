@@ -1,14 +1,29 @@
 # Decisions
 
-## 2026-07-10 - TASK 8G one-shot coordinator isolation
+## 2026-07-10 - TASK 8G managed provider-injection surface removed
 
-**Decision:** Use a private `ConditionalWeakTable` reference-identity record for the recording-provider-only test authorization, bound to `APPLY`, the exact request fingerprint, and the supplied recording-provider object; consume it before invoking the plan.
+**Decision:** Keep the managed one-shot authorization registry limited to key,
+fingerprint, and atomic consumed state. The registry no longer accepts,
+stores, or returns a provider; the PowerShell coordinator binds the internally
+created TASK 8F inert recording provider through a private reference map and
+rejects direct managed records that lack that private binding.
 
-**Rationale:** Object-reference lookup rejects strings, Booleans, wrappers, copied objects, forged type names, and serialized substitutes without retaining an effective production authorization capability in a normal module variable. The coordinator structurally accepts only the existing non-native recording provider.
+**Rationale:** The earlier managed `Register(object key, string fingerprint,
+object provider)` shape let a direct caller supply the provider object. Removing
+that parameter makes the public managed surface structurally incapable of
+binding arbitrary or production provider candidates while preserving
+`Interlocked.CompareExchange` one-shot consumption.
 
-**Alternatives rejected:** Caller-supplied authorization objects, type-name/Boolean/string sentinels, environment/platform selection, reusable tokens, production-provider defaults, or an ordinary script-scope production capability.
+**Alternatives rejected:** Keeping a caller-supplied provider parameter;
+replacing `object provider` with a wrapper that could contain caller-controlled
+objects; accepting production-provider descriptors; reset/replacement methods;
+or treating shape validation as authority.
 
-**Consequences:** TASK 8G source establishes a test-only one-shot boundary but grants no live execution, provider construction, native invocation, binding, or mutation authority. Independent TASK 8G-2 audit remains required.
+**Consequences:** Valid coordinator execution can reach only the inert TASK 8F
+recording-provider path created by the approved factory. Direct managed-boundary
+abuse attempts cannot bind providers or enter the plan. Live execution,
+provider construction, native invocation, binding, and mutation remain
+unauthorized. Independent TASK 8G-2 audit remains required.
 
 Durable technical or workflow decisions only. Each entry includes date, decision, rationale, alternatives rejected, and consequences.
 

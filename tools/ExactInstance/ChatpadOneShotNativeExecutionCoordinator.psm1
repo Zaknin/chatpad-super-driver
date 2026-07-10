@@ -6,6 +6,13 @@ $ErrorActionPreference = 'Stop'
 # native loader, device discovery, or public export.
 Import-Module (Join-Path $PSScriptRoot 'ChatpadGatedProductionNativeAdapterBackend.psm1') -Force
 if ($null -eq ('Chatpad.OneShotAuthorization.Registry' -as [type])) { Add-Type -Path (Join-Path $PSScriptRoot 'ChatpadOneShotAuthorizationRegistry.cs') }
+$script:OneShotRecordingProviderMapKey = 'Chatpad.OneShotAuthorization.RecordingProviders.v1'
+$existingProviderMap = [AppDomain]::CurrentDomain.GetData($script:OneShotRecordingProviderMapKey)
+if ($null -eq $existingProviderMap) {
+    $existingProviderMap = [System.Runtime.CompilerServices.ConditionalWeakTable[object, object]]::new()
+    [AppDomain]::CurrentDomain.SetData($script:OneShotRecordingProviderMapKey, $existingProviderMap)
+}
+$script:OneShotRecordingProviders = $existingProviderMap
 
 function Get-OneShotValue {
     param([AllowNull()][object]$Object, [Parameter(Mandatory)][string]$Name, [AllowNull()][object]$Default = $null)
@@ -76,7 +83,8 @@ function New-TestOnlyRecordingProviderAuthorization {
     $backend = Get-Module ChatpadGatedProductionNativeAdapterBackend
     $provider = & $backend { New-GatedProductionRecordingProvider }
     $capability = [pscustomobject]@{ test_recording_provider_only = $true }
-    [Chatpad.OneShotAuthorization.Registry]::Register($capability,(Get-OneShotRequestFingerprint -Request $Request -Operation $Operation),$provider)
+    [Chatpad.OneShotAuthorization.Registry]::CreateRecordingAuthorization($capability,(Get-OneShotRequestFingerprint -Request $Request -Operation $Operation))
+    $script:OneShotRecordingProviders.Add($capability, $provider)
     return [pscustomobject]@{ authorization = $capability; observation = [pscustomobject]@{ provider_kind = 'OFFLINE_RECORDING_PROVIDER_ONLY' } }
 }
 
@@ -85,9 +93,10 @@ function Invoke-OneShotNativeExecutionCoordinator {
     $counters = New-OneShotCoordinatorZeroCounters
     $requestState = Test-OneShotExecutionRequest -Request $Request -Operation $Operation
     if ($requestState -ne 'REQUEST_VALIDATED') { return [pscustomobject][ordered]@{ result = 'REQUEST_VALIDATION_REJECTED_NO_PROVIDER_CALL'; result_code = $requestState; provider_call_count = 0; authorization_consumed = $false; counters = $counters; native_operation_performed = $false } }
-    $provider = $null
     if ($null -ne $RaceReady -and $null -ne $RaceGo) { [void]$RaceReady.Signal(); $RaceGo.Wait() }
-    if ($null -eq $AuthorizationCapability -or -not [Chatpad.OneShotAuthorization.Registry]::TryConsume($AuthorizationCapability,(Get-OneShotRequestFingerprint -Request $Request -Operation $Operation),[ref]$provider)) { return [pscustomobject][ordered]@{ result = 'AUTHORIZATION_REPLAY_REJECTED_NO_PROVIDER_CALL'; result_code = 'AUTHORIZATION_UNAVAILABLE_REPLAYED_OR_MISMATCHED'; provider_call_count = 0; authorization_consumed = $true; counters = $counters; native_operation_performed = $false } }
+    if ($null -eq $AuthorizationCapability -or -not [Chatpad.OneShotAuthorization.Registry]::TryConsume($AuthorizationCapability,(Get-OneShotRequestFingerprint -Request $Request -Operation $Operation))) { return [pscustomobject][ordered]@{ result = 'AUTHORIZATION_REPLAY_REJECTED_NO_PROVIDER_CALL'; result_code = 'AUTHORIZATION_UNAVAILABLE_REPLAYED_OR_MISMATCHED'; provider_call_count = 0; authorization_consumed = $true; counters = $counters; native_operation_performed = $false } }
+    $provider = $null
+    if (-not $script:OneShotRecordingProviders.TryGetValue($AuthorizationCapability, [ref]$provider)) { return [pscustomobject][ordered]@{ result = 'AUTHORIZATION_PROVIDER_BINDING_REJECTED_NO_PROVIDER_CALL'; result_code = 'AUTHORIZATION_PROVIDER_BINDING_UNAVAILABLE'; provider_call_count = 0; authorization_consumed = $true; counters = $counters; native_operation_performed = $false } }
     $backend = Get-Module ChatpadGatedProductionNativeAdapterBackend
     $plan = & $backend { param($r, $p) Invoke-GatedProductionBackendRecordingPlan -Request $r -Provider $p } $Request $Provider
     [pscustomobject][ordered]@{
