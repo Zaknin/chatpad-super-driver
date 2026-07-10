@@ -1,10 +1,10 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8G-1R5 removed the managed arbitrary-provider registration surface; live execution remains blocked)*
+|*Last updated: 2026-07-10 (TASK 8H-1 added the explicit one-shot live-authorization gate source; live execution remains blocked pending independent audit)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-execution-coordinator`.
+- **Branch:** `feature/native-adapter-live-execution-authorization-gate`.
 - **Live Git identity:** verify the active repository HEAD, parent, subject,
   upstream sync, and status with Git during audit/finalization. Do not infer
   live HEAD from this document.
@@ -60,9 +60,32 @@
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
 - **Runtime blocker:**
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
+- **TASK 8H live-authorization gate:** `tools/ExactInstance/ChatpadLiveExecutionAuthorizationGate.psm1`
+  exports only `New-ChatpadOneShotLiveNativeApplyAuthorization`. It requires the exact
+  `APPLY` operation, ordered three-node target chain, shared ContainerId, operator
+  confirmation identity, explicit phrase
+  `AUTHORIZE_ONE_LIVE_NATIVE_APPLY_ATTEMPT`, accepted TASK 8E/8F/8G evidence identities,
+  audited TASK 8G implementation commit `79ec174dabd7e73f2d01021168921021bc118702`,
+  current critical source hashes, rollback/recovery acknowledgement, and one-shot
+  acknowledgement. It does not construct, register, select, load, or invoke the production
+  provider.
+- **TASK 8H evidence:** `docs/evidence/live-execution-authorization-gate-task-8h-1.json`,
+  schema `chatpad-live-execution-authorization-gate-evidence-v1`, status
+  `EXPLICIT_ONE_SHOT_LIVE_AUTHORIZATION_GATE_SOURCE_PRESENT_RECORDING_ONLY_TESTED_PRODUCTION_PROVIDER_NOT_CONSTRUCTED_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_LIVE_EXECUTION_STILL_UNAUTHORIZED_PENDING_INDEPENDENT_AUDIT`,
+  SHA-256 `A4D889E8E60707978E23A8CA958BBCC765F98CAFDC8392D299716A3476093AC2`.
+- **TASK 8H tests:** PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 both pass
+  28 tests / 860 assertions. The bounded actual-registry race runs 16 iterations with
+  two contenders, one successful consumption, one replay rejection, zero production
+  constructions, and zero native invocations.
+- **TASK 8H safety:** production-provider registered/selected/constructed/loaded/invoked
+  flags are all false; device query, native invocation, SetupAPI/Newdev invocation,
+  binding, Windows mutation, driver action, rollback, restore, and artifact/compile-output
+  counters all remain zero. No live authority was exercised.
+- **TASK 8H next task:** TASK 8H-2 — Independent read-only audit of the explicit
+  one-shot live-execution authorization gate.
 - **TASK 8F:** independently closed by TASK 8F-2; its source/evidence identities remain unchanged.
 - **TASK 8G coordinator:** `tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1` is private and recording-provider-only. It exports nothing, does not select or construct the production provider, and atomically consumes a reference-bound test authorization before plan invocation.
 - **TASK 8G managed registry remediation:** `tools/ExactInstance/ChatpadOneShotAuthorizationRegistry.cs` no longer exposes `Register(object key, string fingerprint, object provider)`. The public managed surface is `CreateRecordingAuthorization(object key, string fingerprint)` and `TryConsume(object key, string fingerprint)` only; no managed method accepts, stores, returns, replaces, or resets a provider.

@@ -13462,6 +13462,22 @@ mutation/driver/artifact action performed or authorized.
 - **Commit / push:** the requested single commit and push are recorded by Git in finalization.
 - **Next task:** TASK 8F-2 — Independent read-only audit of the gated production native-adapter backend source.
 
+## 2026-07-10T00:00+04:00 - TASK 8H-1 explicit one-shot live-execution authorization gate
+
+- **Objective:** Implement an explicit operator-controlled one-shot live-execution authorization gate without invoking the production provider, native APIs, SetupAPI/Newdev, devices, or Windows mutation.
+- **Starting branch and commit:** `feature/native-adapter-execution-coordinator` at `79ec174dabd7e73f2d01021168921021bc118702`; upstream `origin/feature/native-adapter-execution-coordinator` was `0/0`, the remote branch resolved to the same commit, and the worktree/index had no tracked or untracked changes.
+- **Implementation branch:** `feature/native-adapter-live-execution-authorization-gate`.
+- **Files created:** `tools/ExactInstance/ChatpadLiveAuthorizationRegistry.cs`; `tools/ExactInstance/ChatpadLiveExecutionAuthorizationGate.psm1`; `tools/Test-ChatpadLiveExecutionAuthorizationGate.ps1`; `docs/evidence/live-execution-authorization-gate-task-8h-1.json`.
+- **Files modified:** `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`; `docs/evidence/runtime-bringup-readiness-manifest.json`; `docs/DECISIONS.md`; `docs/NEXT-TASK.md`; `docs/PROJECT-STATE.md`; `docs/RUNTIME-BRINGUP-READINESS.md`; this worklog.
+- **Implementation details:** Added a separate live authorization type `Chatpad.LiveAuthorization.LiveNativeApplyAuthorization` and registry. The gate exports only `New-ChatpadOneShotLiveNativeApplyAuthorization`, requires exact explicit inputs, and returns structured fail-closed results. Production-provider registration, selection, construction, loading, and invocation remain unavailable.
+- **Authorization inputs:** exact operation `APPLY`; exact ordered target chain; exact ContainerId; operator confirmation `operator-confirmation-c445630fbb303c7c`; phrase `AUTHORIZE_ONE_LIVE_NATIVE_APPLY_ATTEMPT`; accepted TASK 8E/8F/8G evidence identities; audited TASK 8G commit `79ec174dabd7e73f2d01021168921021bc118702`; critical coordinator/backend source hashes; rollback/recovery review acknowledgement; one-shot acknowledgement.
+- **Evidence:** `docs/evidence/live-execution-authorization-gate-task-8h-1.json`, schema `chatpad-live-execution-authorization-gate-evidence-v1`, status `EXPLICIT_ONE_SHOT_LIVE_AUTHORIZATION_GATE_SOURCE_PRESENT_RECORDING_ONLY_TESTED_PRODUCTION_PROVIDER_NOT_CONSTRUCTED_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_LIVE_EXECUTION_STILL_UNAUTHORIZED_PENDING_INDEPENDENT_AUDIT`, SHA-256 `A4D889E8E60707978E23A8CA958BBCC765F98CAFDC8392D299716A3476093AC2`.
+- **Tests run:** TASK 8E focused suite passed in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 with 12 tests / 81 assertions each. TASK 8F passed in both runtimes with 7 tests / 62 assertions each. TASK 8G passed in both runtimes with 25 tests / 259 assertions each. TASK 8H passed in both runtimes with 28 tests / 860 assertions each.
+- **Validator and regression:** Canonical readiness validator passed in both runtimes with zero defects. TASK 8G tampering regression passed 297 / 297 in both runtimes. TASK 8H tampering regression passed 244 / 244 in both runtimes.
+- **Safety result:** No production provider was registered, selected, constructed, loaded, or invoked. No live/device query, native invocation, SetupAPI/Newdev invocation, binding, Windows mutation, driver action, rollback, restore, artifact access, compile-output access, binary emission, build, signing, packaging, installation, loading, restart, or live execution occurred. Every prohibited counter remained zero.
+- **Blocker and next task:** live readiness remains `BLOCKED`; blocker is `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`. Next: TASK 8H-2 — Independent read-only audit of the explicit one-shot live-execution authorization gate.
+- **Commit / push:** the requested single commit and push are recorded by Git in finalization.
+
 ## 2026-07-10T00:00+04:00 - TASK 8G-1 one-shot native execution coordinator
 
 - **Objective:** Add a private one-shot coordinator connected only to the TASK 8F recording provider; no live execution authority was introduced.

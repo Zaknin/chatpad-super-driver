@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-07-10 - Separate live authorization gate from production execution
+
+**Decision:** Add a distinct TASK 8H live-authorization gate and managed live
+authorization type without connecting it to production-provider construction or
+invocation. Recording authorization, live gate authorization, and production
+execution remain separate authorities.
+
+**Rationale:** A later live operation needs an explicit, one-shot,
+operator-controlled authorization object bound to exact target, evidence,
+source hashes, acknowledgements, and phrase. Creating that gate now makes the
+future precondition auditable while preserving the current prohibition on
+production provider use and native execution.
+
+**Alternatives rejected:** Reusing the TASK 8G recording authorization; adding
+conversion or wrapper paths; accepting arbitrary provider objects or payloads;
+constructing/selecting the production provider in this task; or treating the
+new live authorization as execution authority.
+
+**Consequences:** The gate can issue only a process-local,
+reference-identity-bound one-shot object after exact input validation. TASK
+8H-1 tests consume it only through an inert recording consumer. Live execution
+remains blocked pending independent TASK 8H-2 audit and a separate later
+operator instruction.
+
 ## 2026-07-10 - TASK 8G managed provider-injection surface removed
 
 **Decision:** Keep the managed one-shot authorization registry limited to key,
