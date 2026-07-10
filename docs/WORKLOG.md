@@ -13446,3 +13446,18 @@ mutation/driver/artifact action performed or authorized.
 - **Safety:** no live query, native invocation, SetupAPI/Newdev call, binding, mutation, driver action, rollback, restore, artifact access, compile-output access, build, package, signing, installation, load, or restart occurred. All prohibited-operation counters are zero.
 - **Commit / push:** the atomic TASK 8E-1 commit and requested branch push are recorded by Git in finalization.
 - **Next task:** TASK 8E-2 — Independent read-only audit of the non-executing native adapter implementation.
+
+## 2026-07-10T00:00+04:00 - TASK 8F-1 gated production native-adapter backend source
+
+- **Objective:** Implement the accepted production SetupAPI/Newdev backend source and offline recording-shim coverage without opening a live execution path.
+- **Starting state:** `feature/native-adapter-nonexecuting-implementation` at `22ce984beaf3b881a43b4aad3cc3d2c14d74fc4e`; clean worktree/index; upstream `origin/feature/native-adapter-nonexecuting-implementation` was `0/0`; remote resolved to the same commit.
+- **Implementation branch:** `feature/native-adapter-production-backend-source`.
+- **Files created:** `tools/ExactInstance/ChatpadGatedProductionNativeAdapterBackend.psm1`; `tools/Test-ChatpadGatedProductionNativeAdapterBackend.ps1`; `docs/evidence/native-adapter-production-backend-source-task-8f-1.json`.
+- **Files modified:** `tools/Test-ChatpadRuntimeBringupReadinessManifest.ps1`; `docs/evidence/runtime-bringup-readiness-manifest.json`; `docs/NEXT-TASK.md`; `docs/PROJECT-STATE.md`; `docs/RUNTIME-BRINGUP-READINESS.md`; this worklog.
+- **Implementation details:** Added one non-exported source-only provider boundary for the 13 accepted SetupAPI/Newdev declaration names. The provider descriptor cannot invoke native code; a private recording shim validates exact call order, exact accepted identity arguments, deterministic simulated error propagation, and cleanup ordering. The existing four public TASK 8E adapter exports and prohibited public invocation path were not modified.
+- **Evidence and validator:** Added schema `chatpad-gated-production-native-adapter-backend-evidence-v1`, manifest section `gated_production_native_adapter_backend`, strict validator enforcement, and a 30-case Task 8F negative-tampering regression. TASK 8E evidence, adapter source, and focused test identities remain unchanged.
+- **Tests run:** Task 8F focused offline test passed in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655: 7 tests / 62 assertions each. Existing TASK 8E focused test passed in both runtimes: 12 tests / 81 assertions each. Canonical readiness validator passed with zero defects; Task 8F tampering regression passed 30/30.
+- **Safety result:** No live device query, native library load, entry-point resolution, SetupAPI/Newdev invocation, binding, Windows mutation, driver action, rollback, restore, artifact/compile-output access, build, package, signing, installation, load, or restart occurred. Device query, native invocation, SetupAPI/Newdev invocation, binding, mutation, driver action, rollback, restore, and artifact/compile-output access counters are all `0`.
+- **Blocker transition:** `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED` to `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`. Public execution and live readiness remain `BLOCKED`.
+- **Commit / push:** the requested single commit and push are recorded by Git in finalization.
+- **Next task:** TASK 8F-2 — Independent read-only audit of the gated production native-adapter backend source.

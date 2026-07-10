@@ -1,10 +1,10 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8E-1 implemented the source-only, non-executing native adapter surface and passed offline fake-backend tests)*
+|*Last updated: 2026-07-10 (TASK 8F-1 added the source-only gated production native-adapter backend and passed offline recording-shim tests)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-nonexecuting-implementation`.
+- **Branch:** `feature/native-adapter-production-backend-source`.
 - **Live Git identity:** verify the active repository HEAD, parent, subject,
   upstream sync, and status with Git during audit/finalization. Do not infer
   live HEAD from this document.
@@ -60,9 +60,9 @@
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
-  `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`.
 - **Runtime blocker:**
-  `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`.
 - **TASK 8E-1 non-executing native adapter status:**
   `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`.
 - **TASK 8E-1 evidence:**
@@ -71,8 +71,11 @@
   `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
 - **TASK 8E-1 focused offline tests:** Windows PowerShell 5.1 and PowerShell 7
   passed 12 tests / 81 assertions each; every prohibited-operation counter was zero.
-- **TASK 8E-1 next task:** TASK 8E-2 — Independent read-only audit of the
-  non-executing native adapter implementation.
+- **TASK 8E:** independently closed by TASK 8E-2; its evidence, adapter source, and focused-test identities remain unchanged.
+- **TASK 8F-1 production backend source:** `tools/ExactInstance/ChatpadGatedProductionNativeAdapterBackend.psm1` is private, unexported, non-default, unconstructed during import, and callable only through an offline recording-provider test seam.
+- **TASK 8F-1 evidence:** `docs/evidence/native-adapter-production-backend-source-task-8f-1.json`.
+- **TASK 8F-1 offline tests:** PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 passed 7 tests / 62 assertions each; public execution stayed prohibited and every counter was zero.
+- **TASK 8F next task:** TASK 8F-2 — Independent read-only audit of the gated production native-adapter backend source.
 - **TASK 8D non-mutating implementation-contract lane:**
   `CLOSED_CONTRACT_EVIDENCE_AUDIT_ONLY_NO_IMPLEMENTATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
 - **Execution design status:**

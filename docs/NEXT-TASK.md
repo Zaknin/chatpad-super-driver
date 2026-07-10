@@ -1,26 +1,29 @@
-# TASK 8E-2 — Independent read-only audit of the non-executing native adapter implementation
+# TASK 8F-2 — Independent read-only audit of the gated production native-adapter backend source
 
-## Current State
+## Current state
 
-- **Required branch:** `feature/native-adapter-nonexecuting-implementation`.
-- **Starting commit:** the TASK 8E-1 atomic implementation commit, subject `feat: implement non-executing native adapter surface`.
-- **Evidence path:** `docs/evidence/native-adapter-nonexecuting-implementation-task-8e-1.json`.
-- **Contract evidence hash:** `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
-- **Manifest section:** `nonexecuting_native_adapter_implementation`.
-- **Implementation files:** `tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1` and `tools/Test-ChatpadNonExecutingNativeAdapter.ps1`.
-- **Blocker:** `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`.
+- **Required branch:** `feature/native-adapter-production-backend-source`.
+- **Starting commit:** the TASK 8F-1 commit with subject `feat: implement gated production native adapter backend`; verify its exact hash and parent with Git.
+- **Evidence:** `docs/evidence/native-adapter-production-backend-source-task-8f-1.json`.
+- **Manifest section:** `gated_production_native_adapter_backend`.
+- **Current blocker:** `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`.
 - **Live readiness:** `BLOCKED`.
-- **Native execution:** `NOT_IMPLEMENTED`.
 
-## Safety Restrictions
+## Preconditions
 
-This is independent read-only audit scope. Do not modify the repository. Do not perform live/device query, identity capture, operator confirmation collection, rollback package implementation, rollback implementation, restore, binding execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, metadata parsing, build, sign, package, install, load, bind, or restart.
+- Verify branch, HEAD, parent, clean worktree/index, upstream `0/0`, and the matching remote branch before audit conclusions.
+- Confirm TASK 8E is independently closed and its evidence, source, and focused-test identities remain unchanged.
+- Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest relevant `docs/WORKLOG.md` entries.
 
-## Acceptance Criteria
+## Audit scope
 
-- Verify the TASK 8E-1 commit identity, parent `79955ef434ed4424a72b6dea8ec870a66ad5d8ef`, subject, complete changed-file list, clean tree, upstream `0/0`, and matching remote branch.
-- Verify the contract evidence hash and the two implementation-file hashes recorded by TASK 8E-1.
-- Review the public exports, private fake seam, exact ordered target validator, and fail-closed results; confirm no production backend is selected or loaded.
-- Re-run the focused test in Windows PowerShell 5.1 and PowerShell 7 only, confirming 12 tests / 81 assertions each, adversarial-capability rejection, SessionState non-extraction, zero failed-validation fake calls, and one fake non-native seam call.
-- Verify the evidence and manifest parse, maintain flat structure, preserve TASK 8D history, record all zero prohibited-operation counters, and use the narrowed audit blocker without claiming live, native, binding, or runtime success.
-- Verify no live query, native invocation, SetupAPI/Newdev call, binding, mutation, driver action, rollback, restore, artifact access, compile-output access, build, or helper/temp-file creation occurred.
+- Read-only inspection only: do not edit, stage, commit, push, execute native APIs, query a live device, bind, mutate Windows, install, load, restart, rollback, restore, package, sign, build, or open compile outputs.
+- Verify the four public exports are unchanged; the production backend module exports nothing; no default provider, SessionState object, or public capability can enable it.
+- Verify exact ordered targets, ContainerId, confirmation ID, 13 allowed declarations, recording-shim ordering/arguments, failure-stop behavior, cleanup order, and zero counters.
+- Run the TASK 8E and TASK 8F focused tests under PowerShell 7 and Windows PowerShell, the canonical readiness validator, and `-RunTask8FRegression` without live access.
+
+## Acceptance criteria
+
+- Report `PASS` only if evidence/source/test hashes, manifest section, validator, regression, and both-runtime results match exactly with zero defects.
+- Confirm no live query, native invocation, SetupAPI/Newdev call, binding, mutation, rollback, restore, driver action, artifact access, or compile-output access occurred.
+- Do not create an acceptance or lane-close commit in this audit; report findings and leave the repository immutable.

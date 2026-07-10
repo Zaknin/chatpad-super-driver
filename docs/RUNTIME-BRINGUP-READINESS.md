@@ -1701,3 +1701,15 @@ TASK 4D independent strict read-only audit identified critical integrity failure
 - **Readiness:** `READY_FOR_INDEPENDENT_NONEXECUTING_NATIVE_ADAPTER_AUDIT_ONLY`. Live readiness remains `BLOCKED`; native execution, SetupAPI/Newdev invocation, binding, mutation, driver action, rollback, and restore remain unauthorized.
 - **Blocker transition:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` is narrowed to `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`; this is not live or execution readiness.
 - **Next task:** TASK 8E-2 — Independent read-only audit of the non-executing native adapter implementation.
+
+## TASK 8F-1 - Gated Production Native-Adapter Backend Source (2026-07-10)
+
+- **Status:** `PRODUCTION_BACKEND_SOURCE_PRESENT_PRODUCTION_BACKEND_NOT_EXECUTED_NO_LIVE_DEVICE_ACCESS_NO_BINDING_NO_MUTATION_EXECUTION_UNAUTHORIZED`.
+- **Evidence:** `docs/evidence/native-adapter-production-backend-source-task-8f-1.json`.
+- **Source boundary:** `tools/ExactInstance/ChatpadGatedProductionNativeAdapterBackend.psm1` represents only the accepted 13 SetupAPI/Newdev operations behind one private provider boundary. It exports nothing, is not constructed or selected by default, and contains no live invoker or fallback mechanism.
+- **Exact scope:** the fixed three-node chain, shared ContainerId, and operator confirmation identity are validated before any offline recording-provider call. The selected operation target remains the accepted IG_00 interface node.
+- **Offline tests:** `tools/Test-ChatpadGatedProductionNativeAdapterBackend.ps1` passed in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 with 7 tests / 62 assertions in each runtime. It covered import/export/SessionState boundaries, public prohibition, exact ordering and arguments, malformed identity rejection, simulated failure stop/cleanup, fallback absence, and zero counters.
+- **Safety:** no live query, native API invocation, SetupAPI/Newdev call, binding, mutation, driver action, rollback, restore, artifact access, compile-output access, build, package, signing, installation, load, or restart occurred. All recorded prohibited counters are zero.
+- **Readiness:** `READY_FOR_INDEPENDENT_PRODUCTION_NATIVE_ADAPTER_BACKEND_AUDIT_ONLY`; live readiness remains `BLOCKED`.
+- **Blocker:** `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`.
+- **Next task:** TASK 8F-2 — Independent read-only audit of the gated production native-adapter backend source.
