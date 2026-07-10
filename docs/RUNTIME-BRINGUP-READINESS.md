@@ -1687,3 +1687,17 @@ TASK 4D independent strict read-only audit identified critical integrity failure
 - **Runtime boundary:** Executable native adapter remains `NOT_IMPLEMENTED`. Execution remains unauthorized. Exact-instance binding remains not implemented and unauthorized. Rollback package implementation, rollback implementation, and restore remain not implemented and unauthorized. SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, and prohibited metadata parsing remain unauthorized.
 - **Bring-up state:** Runtime bring-up remains `BLOCKED`; blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`. The contract lane closeout is not executable readiness, live readiness, runtime readiness, driver installation, binding, rollback, restore, or usable-driver completion.
 - **Next task:** TASK 8D-7 - independent read-only audit of the TASK 8D lane-close acceptance commit.
+
+## TASK 8E-1 - Non-Executing Native Adapter Source Implementation (2026-07-10)
+
+- **Status:** `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`.
+- **Evidence:** `docs/evidence/native-adapter-nonexecuting-implementation-task-8e-1.json`.
+- **Contract evidence:** `docs/evidence/exact-instance-binding-non-mutating-implementation-contract.json`, SHA-256 `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
+- **Adapter boundary:** `tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1` validates only the accepted evidence identity, exact ordered three-node target chain, shared ContainerId, and operator-confirmation identity. Its public surface is execution-prohibited; its one module-private backend seam can only record a fake non-native test operation.
+- **Capability boundary:** no effective authorization capability is created or stored. Missing, caller-created, forged type-name, Add-Member, wrapper, and serialized candidates are rejected; Module.SessionState and exports cannot retrieve one.
+- **Offline tests:** `tools/Test-ChatpadNonExecutingNativeAdapter.ps1` passed in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 with 12 tests and 81 assertions in each runtime.
+- **Safety counters:** device query `0`; native invocation `0`; SetupAPI/Newdev invocation `0`; binding `0`; Windows mutation `0`; driver action `0`; artifact/compile-output access `0`.
+- **Production backend:** absent, unloaded, and never selected by default. The fake recorder is the only backend used in tests.
+- **Readiness:** `READY_FOR_INDEPENDENT_NONEXECUTING_NATIVE_ADAPTER_AUDIT_ONLY`. Live readiness remains `BLOCKED`; native execution, SetupAPI/Newdev invocation, binding, mutation, driver action, rollback, and restore remain unauthorized.
+- **Blocker transition:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` is narrowed to `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`; this is not live or execution readiness.
+- **Next task:** TASK 8E-2 — Independent read-only audit of the non-executing native adapter implementation.

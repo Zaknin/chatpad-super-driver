@@ -1,10 +1,10 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8D-6 recorded TASK 8D-5 acceptance and closed the non-mutating implementation contract lane, docs/manifest only)*
+|*Last updated: 2026-07-10 (TASK 8E-1 implemented the source-only, non-executing native adapter surface and passed offline fake-backend tests)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-execution-envelope-verifier`.
+- **Branch:** `feature/native-adapter-nonexecuting-implementation`.
 - **Live Git identity:** verify the active repository HEAD, parent, subject,
   upstream sync, and status with Git during audit/finalization. Do not infer
   live HEAD from this document.
@@ -60,9 +60,19 @@
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+  `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`.
 - **Runtime blocker:**
-  `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+  `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`.
+- **TASK 8E-1 non-executing native adapter status:**
+  `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`.
+- **TASK 8E-1 evidence:**
+  `docs/evidence/native-adapter-nonexecuting-implementation-task-8e-1.json`.
+- **TASK 8E-1 contract evidence SHA-256:**
+  `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
+- **TASK 8E-1 focused offline tests:** Windows PowerShell 5.1 and PowerShell 7
+  passed 12 tests / 81 assertions each; every prohibited-operation counter was zero.
+- **TASK 8E-1 next task:** TASK 8E-2 — Independent read-only audit of the
+  non-executing native adapter implementation.
 - **TASK 8D non-mutating implementation-contract lane:**
   `CLOSED_CONTRACT_EVIDENCE_AUDIT_ONLY_NO_IMPLEMENTATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
 - **Execution design status:**

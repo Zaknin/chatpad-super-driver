@@ -13432,3 +13432,17 @@ mutation/driver/artifact action performed or authorized.
 - **Commit:** this TASK 8D-6 lane-close acceptance commit; exact hash is reported by Git after commit creation and in the final task response.
 - **Push:** current branch push to `origin/feature/native-adapter-execution-envelope-verifier`; exact push result is reported in the final task response.
 - **Next task:** TASK 8D-7 - independent read-only audit of the TASK 8D lane-close acceptance commit.
+
+## TASK 8E-1 — Fast-track Implementation of the Non-Executing Native Adapter Surface (2026-07-10)
+
+- **Objective:** Implement the source-only SetupAPI/Newdev adapter surface behind the existing fail-closed envelope and verify it with offline fake-backend tests only.
+- **Starting branch / commit:** `feature/native-adapter-execution-envelope-verifier` / `79955ef434ed4424a72b6dea8ec870a66ad5d8ef`; upstream was `0/0`, remote resolved to that commit, and the index/worktree had no tracked or untracked changes.
+- **Implementation branch:** `feature/native-adapter-nonexecuting-implementation`.
+- **Files created:** `tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1`; `tools/Test-ChatpadNonExecutingNativeAdapter.ps1`; `docs/evidence/native-adapter-nonexecuting-implementation-task-8e-1.json`.
+- **Implementation:** added a module with a fixed accepted evidence identity, exact three-node ordered target-chain validation, exact shared ContainerId and operator-confirmation validation, structured execution-prohibited results, no production backend, and one module-private fake-recording seam. No effective authorization capability is created, persisted, exported, or accepted from callers.
+- **Tests:** `pwsh.exe -NoProfile -File .\tools\Test-ChatpadNonExecutingNativeAdapter.ps1` and `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ChatpadNonExecutingNativeAdapter.ps1` both passed: 12 tests / 81 assertions. The suite covered load zero activity, target rejections, capability adversaries, SessionState/export inspection, fake-call denial, production absence, fake recording, result wording, and zero counters.
+- **Evidence:** schema `chatpad-native-adapter-nonexecuting-implementation-evidence-v1`; status `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`; readiness `READY_FOR_INDEPENDENT_NONEXECUTING_NATIVE_ADAPTER_AUDIT_ONLY`; contract SHA-256 `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
+- **Blocker transition:** `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED` to `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED`. Live readiness stays `BLOCKED`; native execution, SetupAPI/Newdev invocation, binding, mutation, driver action, rollback, and restore remain unauthorized.
+- **Safety:** no live query, native invocation, SetupAPI/Newdev call, binding, mutation, driver action, rollback, restore, artifact access, compile-output access, build, package, signing, installation, load, or restart occurred. All prohibited-operation counters are zero.
+- **Commit / push:** the atomic TASK 8E-1 commit and requested branch push are recorded by Git in finalization.
+- **Next task:** TASK 8E-2 — Independent read-only audit of the non-executing native adapter implementation.

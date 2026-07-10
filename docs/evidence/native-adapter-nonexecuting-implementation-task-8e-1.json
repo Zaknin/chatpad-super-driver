@@ -1,0 +1,69 @@
+{
+  "schema": "chatpad-native-adapter-nonexecuting-implementation-evidence-v1",
+  "status": "SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS",
+  "readiness": "READY_FOR_INDEPENDENT_NONEXECUTING_NATIVE_ADAPTER_AUDIT_ONLY",
+  "created_from_task": "TASK 8E-1",
+  "generated_utc": "2026-07-10T06:35:00Z",
+  "starting_branch": "feature/native-adapter-execution-envelope-verifier",
+  "starting_commit": "79955ef434ed4424a72b6dea8ec870a66ad5d8ef",
+  "implementation_branch": "feature/native-adapter-nonexecuting-implementation",
+  "implementation_commit": "atomic TASK 8E-1 commit; recorded by the branch ref because this evidence is committed in that same atomic commit",
+  "implementation_commit_parent": "79955ef434ed4424a72b6dea8ec870a66ad5d8ef",
+  "implementation_commit_subject": "feat: implement non-executing native adapter surface",
+  "contract_evidence_path": "docs/evidence/exact-instance-binding-non-mutating-implementation-contract.json",
+  "contract_evidence_sha256": "1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080",
+  "implementation_files": [
+    {
+      "path": "tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1",
+      "sha256": "78B85CBC2EB0FF58D65A5B97D35DEA9561FD7EA80E910444C2BEDC415C5AB919"
+    },
+    {
+      "path": "tools/Test-ChatpadNonExecutingNativeAdapter.ps1",
+      "sha256": "5CEB63F658DB2FF232DFE9E872BC2228060AD34048503CBCF5A8D8F39FDDE254"
+    }
+  ],
+  "accepted_target_chain": [
+    "USB\\VID_045E&PID_028E\\1C21F10",
+    "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+    "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000"
+  ],
+  "shared_container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+  "operator_confirmation_id": "operator-confirmation-c445630fbb303c7c",
+  "test_runtimes": [
+    {
+      "name": "PowerShell 7",
+      "edition": "Core",
+      "version": "7.6.3",
+      "test_count": 12,
+      "assertion_count": 81,
+      "result": "PASS"
+    },
+    {
+      "name": "Windows PowerShell",
+      "edition": "Desktop",
+      "version": "5.1.26100.8655",
+      "test_count": 12,
+      "assertion_count": 81,
+      "result": "PASS"
+    }
+  ],
+  "capability_adversarial_result": "PASS: missing, ordinary object, string, Boolean, forged PSTypeNames, Add-Member, wrapper, and serialized substitutes are rejected.",
+  "sessionstate_extraction_result": "PASS: Module.SessionState.PSVariable cannot retrieve an effective capability; no capability variable or factory is exported.",
+  "fake_backend_result": "PASS: failed validation made zero fake calls; the internal seam recorded one approved fake non-native operation only.",
+  "production_backend_present": false,
+  "production_backend_loaded": false,
+  "production_backend_selected_by_default": false,
+  "device_query_count": 0,
+  "native_invocation_count": 0,
+  "setupapi_newdev_invocation_count": 0,
+  "binding_count": 0,
+  "windows_mutation_count": 0,
+  "driver_action_count": 0,
+  "artifact_compile_output_access_count": 0,
+  "rollback_performed": false,
+  "restore_performed": false,
+  "native_execution_authorized": false,
+  "live_readiness": "BLOCKED",
+  "remaining_blocker": "BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED",
+  "explicit_non_authorization_statement": "This evidence records source implementation and offline fake-backend tests only. It does not authorize or perform live query, native invocation, SetupAPI/Newdev call, binding, Windows mutation, driver action, rollback, restore, artifact access, compile-output access, build, packaging, signing, installation, loading, or restart."
+}
