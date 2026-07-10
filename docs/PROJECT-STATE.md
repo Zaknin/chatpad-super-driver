@@ -1,10 +1,10 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8F-1 added the source-only gated production native-adapter backend and passed offline recording-shim tests)*
+|*Last updated: 2026-07-10 (TASK 8G-1 added a private one-shot recording-provider coordinator; live execution remains blocked)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-production-backend-source`.
+- **Branch:** `feature/native-adapter-execution-coordinator`.
 - **Live Git identity:** verify the active repository HEAD, parent, subject,
   upstream sync, and status with Git during audit/finalization. Do not infer
   live HEAD from this document.
@@ -60,9 +60,13 @@
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
-  `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
 - **Runtime blocker:**
-  `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
+- **TASK 8F:** independently closed by TASK 8F-2; its source/evidence identities remain unchanged.
+- **TASK 8G-1 coordinator:** `tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1` is private and recording-provider-only. It exports nothing, does not select or construct the production provider, and consumes a reference-bound test authorization before plan invocation.
+- **TASK 8G-1 evidence:** `docs/evidence/one-shot-native-execution-coordinator-task-8g-1.json`.
+- **TASK 8G next task:** TASK 8G-2 — Independent read-only audit of the one-shot production execution coordinator.
 - **TASK 8E-1 non-executing native adapter status:**
   `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`.
 - **TASK 8E-1 evidence:**

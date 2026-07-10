@@ -13461,3 +13461,15 @@ mutation/driver/artifact action performed or authorized.
 - **Blocker transition:** `BLOCKED_NATIVE_ADAPTER_IMPLEMENTATION_NOT_INDEPENDENTLY_AUDITED` to `BLOCKED_NATIVE_ADAPTER_PRODUCTION_BACKEND_NOT_INDEPENDENTLY_AUDITED`. Public execution and live readiness remain `BLOCKED`.
 - **Commit / push:** the requested single commit and push are recorded by Git in finalization.
 - **Next task:** TASK 8F-2 — Independent read-only audit of the gated production native-adapter backend source.
+
+## 2026-07-10T00:00+04:00 - TASK 8G-1 one-shot native execution coordinator
+
+- **Objective:** Add a private one-shot coordinator connected only to the TASK 8F recording provider; no live execution authority was introduced.
+- **Starting state:** `feature/native-adapter-production-backend-source` at `9147f0af7e8fa8da581554427ebd51908e5d924e`, clean and synchronized with its upstream.
+- **Files created:** `tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1`; `tools/Test-ChatpadOneShotNativeExecutionCoordinator.ps1`; `docs/evidence/one-shot-native-execution-coordinator-task-8g-1.json`.
+- **Files modified:** readiness manifest/validator and the four continuity documents.
+- **Implementation:** A private ConditionalWeakTable records one test-only capability by object reference, exact request fingerprint, `APPLY` operation, and one recording-provider reference. The record is consumed before the plan starts; replay, transfer, forged, wrapped, and serialized substitutes fail before provider calls. Production provider selection/construction remains structurally unavailable.
+- **Validation:** TASK 8G focused tests pass 20 tests / 75 assertions in PowerShell 7 and Windows PowerShell. TASK 8E/TASK 8F suites, canonical readiness validation, and TASK 8G tampering regression are rerun before commit.
+- **Safety:** No live query, native invocation, SetupAPI/Newdev call, binding, mutation, rollback, restore, driver action, build, installation, or artifact/compile-output access occurred; all prohibited counters remain zero.
+- **Blocker transition:** TASK 8F audit is closed; current source-lane blocker is `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`.
+- **Next task:** TASK 8G-2 — Independent read-only audit of the one-shot production execution coordinator.

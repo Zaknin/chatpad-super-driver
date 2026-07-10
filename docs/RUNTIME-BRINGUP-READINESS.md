@@ -1,5 +1,12 @@
 # Controlled Windows 11 Runtime Bring-Up Readiness
 
+## TASK 8G-1 - One-shot Execution Coordinator Source (2026-07-10)
+
+- **Status:** `ONE_SHOT_EXECUTION_COORDINATOR_SOURCE_PRESENT_RECORDING_PROVIDER_TESTED_PRODUCTION_PROVIDER_NOT_SELECTED_NOT_CONSTRUCTED_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_LIVE_EXECUTION_UNAUTHORIZED`.
+- **Boundary:** The coordinator exports nothing and only accepts the existing private recording provider through a reference-bound, one-shot internal test record. Public adapter execution remains prohibited.
+- **Safety:** No production provider selection/construction/loading/invocation, live query, native call, SetupAPI/Newdev call, binding, mutation, rollback, restore, driver action, build, installation, or artifact access occurred. Live readiness remains `BLOCKED`.
+- **Next task:** TASK 8G-2 independent read-only audit.
+
 This document is the authoritative preparation plan for the first controlled
 Windows 11 runtime bring-up of the rewritten Chatpad driver. This commit is
 preparation only: it does not sign, package, stage, install, load, trace, query

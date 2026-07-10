@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-07-10 - TASK 8G one-shot coordinator isolation
+
+**Decision:** Use a private `ConditionalWeakTable` reference-identity record for the recording-provider-only test authorization, bound to `APPLY`, the exact request fingerprint, and the supplied recording-provider object; consume it before invoking the plan.
+
+**Rationale:** Object-reference lookup rejects strings, Booleans, wrappers, copied objects, forged type names, and serialized substitutes without retaining an effective production authorization capability in a normal module variable. The coordinator structurally accepts only the existing non-native recording provider.
+
+**Alternatives rejected:** Caller-supplied authorization objects, type-name/Boolean/string sentinels, environment/platform selection, reusable tokens, production-provider defaults, or an ordinary script-scope production capability.
+
+**Consequences:** TASK 8G source establishes a test-only one-shot boundary but grants no live execution, provider construction, native invocation, binding, or mutation authority. Independent TASK 8G-2 audit remains required.
+
 Durable technical or workflow decisions only. Each entry includes date, decision, rationale, alternatives rejected, and consequences.
 
 ---
