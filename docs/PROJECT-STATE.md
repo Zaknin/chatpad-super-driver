@@ -1,6 +1,6 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8D-4 recorded accepted non-mutating implementation contract audit, docs/manifest only)*
+|*Last updated: 2026-07-10 (TASK 8D-6 recorded TASK 8D-5 acceptance and closed the non-mutating implementation contract lane, docs/manifest only)*
 
 ## Current State
 
@@ -63,6 +63,8 @@
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Runtime blocker:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **TASK 8D non-mutating implementation-contract lane:**
+  `CLOSED_CONTRACT_EVIDENCE_AUDIT_ONLY_NO_IMPLEMENTATION_NO_BINDING_NO_MUTATION_NO_NATIVE_IO`.
 - **Execution design status:**
   `NATIVE_ADAPTER_EXECUTION_DESIGN_GATE_ACCEPTED_FAIL_CLOSED_NO_ARTIFACT_IO`.
 - **Fail-closed scaffolding status:**
@@ -1081,6 +1083,19 @@ Execution authorized remains `false`. The blocker remains
 - **Safety state:** Binding implementation/execution remains unauthorized. Rollback package implementation remains unauthorized. Rollback implementation remains unauthorized. Restore remains unauthorized. Native execution remains `NOT_IMPLEMENTED`. Live readiness remains `BLOCKED`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Prohibited actions not performed:** No implementation, mutation-capable, native, driver, artifact, compile-output, metadata, or live/device action was authorized or performed. No rollback package implementation, rollback implementation, restore, binding implementation, binding execution, native execution, SetupAPI/Newdev invocation, Windows mutation, driver action, artifact access, compile-output access, metadata parsing, live/device query, identity capture, operator confirmation collection, build, sign, package, install, load, bind, or restart was authorized or performed.
 - **Next task:** TASK 8D-5 - independent read-only audit of non-mutating implementation contract audit-acceptance closeout commit.
+
+## TASK 8D-6 - Non-Mutating Implementation Contract Lane Closeout Acceptance (2026-07-10)
+
+- **Objective:** Record TASK 8D-5 independent audit acceptance for the TASK 8D-4 audit-acceptance closeout commit and formally close the TASK 8D non-mutating implementation-contract lane.
+- **Accepted audit:** TASK 8D-5 independent audit returned `PASS` and is now `ACCEPTED`.
+- **Audited closeout commit:** `17d86069c8e9ee66d7d8604910f801b9225a2ea7` (`docs: record non-mutating implementation contract audit acceptance`), parent `9bd1fc26f5630f0eea9c25938868b5a4c07fdcef`.
+- **Closed lane:** TASK 8D non-mutating implementation-contract lane is formally closed only for contract evidence, validation, independent audit, audit acceptance, and closeout documentation.
+- **Evidence path:** `docs/evidence/exact-instance-binding-non-mutating-implementation-contract.json`.
+- **Evidence hash:** `1AE0132CE7CB2162F2D0D4930891A881586968C5523E0DAF8C18CF87EF1DD080`.
+- **Manifest closeout acceptance:** Added flat TASK 8D-5 closeout-audit fields to `exact_instance_binding_non_mutating_implementation_contract` in `docs/evidence/runtime-bringup-readiness-manifest.json`, preserving the TASK 8D-3 audit record, identity, source-chain, accepted-target, authorization, safety, and readiness fields.
+- **Safety state:** Native adapter implementation remains `NOT_IMPLEMENTED`. Native execution remains `NOT_IMPLEMENTED`. Exact-instance binding implementation remains `NOT_IMPLEMENTED`; binding and unbinding remain unauthorized and not performed. Rollback package implementation and rollback implementation remain unauthorized and not performed. Restore remains unauthorized and not performed. SetupAPI/Newdev invocation remains unauthorized and not performed. Windows and driver mutation remain unauthorized and not performed. Binding implementation/execution remains unauthorized. Rollback package implementation, rollback implementation, and restore remain unauthorized. Live readiness remains `BLOCKED`. Blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
+- **Closure boundary:** This closeout is not driver completion, runtime execution, live readiness, installation, binding, rollback, or restore.
+- **Next task:** TASK 8D-7 - independent read-only audit of the TASK 8D lane-close acceptance commit.
 
 ## TASK 8C-3 - Next Non-Mutating Implementation Contract Scope Evidence Recorded (2026-07-10)
 
