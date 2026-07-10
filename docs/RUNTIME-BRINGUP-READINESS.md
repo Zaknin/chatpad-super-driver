@@ -6,7 +6,12 @@
 - **Boundary:** The coordinator exports nothing and consumes its reference-bound authorization with `Interlocked.CompareExchange` before entering the internally-created TASK 8F inert recording provider. Public adapter execution remains prohibited.
 - **Offline evidence:** The real two-runspace race admitted one winner, one provider-plan entry, and one replay rejection. Replay is directly rejected after success, ordinary provider failure, a controlled recording-provider-path exception, and a controlled cleanup failure.
 - **Safety:** Only the recording provider was used; no production provider was registered, selected, constructed, loaded, or invoked. No live query, native call, SetupAPI/Newdev call, binding, mutation, rollback, restore, driver action, build, installation, artifact, or compile-output access occurred. All prohibited counters are zero and live readiness remains `BLOCKED`.
-- **Next task:** TASK 8G-2 — Independent read-only audit of the atomic one-shot production execution coordinator.
+- **TASK 8G closure:** TASK 8G-2 passed for audited commit
+  `79ec174dabd7e73f2d01021168921021bc118702` and directly closed the
+  execution-coordinator source lane. The closure grants no live execution
+  authority.
+- **Next task:** TASK 8H-2 — Repeated independent read-only audit of the
+  remediated explicit one-shot live-execution authorization gate.
 
 This document is the authoritative preparation plan for the first controlled
 Windows 11 runtime bring-up of the rewritten Chatpad driver. This commit is
@@ -1538,22 +1543,25 @@ remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Offline tests:** TASK 8G passed in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 with 25 tests / 259 assertions in each runtime.
 - **Validator:** canonical readiness validation passes with zero defects and enforces exact managed method/constructor signature arrays, provider-provenance booleans, source/test/evidence identities, manifest/evidence equality, bounded race fields, and the expanded TASK 8G tampering regression.
 - **Safety:** no live query, native invocation, SetupAPI/Newdev call, binding, mutation, rollback, restore, driver action, artifact access, compile-output access, binary emission, production-provider construction, or production-provider invocation occurred.
-- **Readiness:** `READY_FOR_INDEPENDENT_SOURCE_AUDIT_ONLY`. Live readiness remains `BLOCKED`; blocker remains `BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED`. TASK 8G remains pending repeated independent audit and is not lane-closed.
+- **Readiness:** TASK 8G-2 passed and the execution-coordinator source lane is
+  closed for audited commit `79ec174dabd7e73f2d01021168921021bc118702`. Live
+  readiness remains `BLOCKED`; the current blocker is
+  `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
+  TASK 8G closure grants no live execution authority.
 
 ## Exact next task
 
-Perform TASK 8G-2: independent strict read-only audit of the TASK 8G-1R5
-remediated one-shot coordinator commit. Derive its exact identity from Git;
-require subject `fix: eliminate coordinator provider injection surface`, parent
-`3baca0fb97d80ec61bae9e07fd62d12cb21e733d`, evidence schema
-`chatpad-one-shot-native-execution-coordinator-evidence-v2`, exact managed
-method signatures, empty managed constructor-signature array, direct
-managed-boundary negative-test results, 16-iteration race result, manifest/
-evidence equality, and unchanged blocked state. The audit must confirm no live
-query, native invocation, SetupAPI/Newdev invocation, binding, mutation,
-rollback, restore, driver action, artifact/compile-output access, binary
-emission, production-provider construction, or production-provider invocation
-occurred, and it must not create an acceptance or lane-close commit.
+Perform TASK 8H-2: repeated independent strict read-only audit of the remediated
+explicit one-shot live-execution authorization gate. The first TASK 8H-2 audit
+failed because of acknowledgement coercion, incomplete runtime source hashing,
+and stale TASK 8G continuity documentation. Start from the TASK 8H-1R1
+remediation commit `badb3fc3c29e6e7bc3ae3bb6a4ae86af49027865` and the
+follow-up documentation-consistency commit that records TASK 8G closure. The
+audit must confirm no live query, native invocation, SetupAPI/Newdev
+invocation, binding, mutation, rollback, restore, driver action,
+artifact/compile-output access, binary emission, production-provider
+construction, production-provider invocation, or production live authorization
+occurred.
 
 ## TASK 4B-REMEDIATION Complete (2026-07-08)
 
@@ -1739,4 +1747,7 @@ TASK 4D independent strict read-only audit identified critical integrity failure
 - **Validator:** canonical readiness validator passed in both runtimes with zero defects. TASK 8G tampering regression passed 297 / 297 in both runtimes. TASK 8H tampering regression passed 286 / 286 in both runtimes.
 - **Safety:** production provider registered/selected/constructed/loaded/invoked all remain false; no production provider was constructed or invoked; no native execution, SetupAPI/Newdev invocation, binding, Windows mutation, device query, rollback, restore, driver action, artifact access, compile-output access, build, signing, packaging, installation, loading, restart, or live invocation occurred.
 - **Blocker:** `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
-- **Next task:** TASK 8H-2 — Independent read-only audit of the explicit one-shot live-execution authorization gate.
+- **First TASK 8H-2 audit result:** failed because of acknowledgement coercion,
+  incomplete runtime source hashing, and stale TASK 8G continuity documentation.
+- **Next task:** TASK 8H-2 — Repeated independent read-only audit of the
+  remediated explicit one-shot live-execution authorization gate.

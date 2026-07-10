@@ -1,12 +1,21 @@
-# TASK 8H-2 — Independent read-only audit of the remediated one-shot live-execution authorization gate
+# TASK 8H-2 — Repeated independent read-only audit of the remediated explicit one-shot live-execution authorization gate
 
 ## Current state
 
 - **Required branch:** `feature/native-adapter-live-execution-authorization-gate`.
-- **Required starting commit:** the TASK 8H-1R1 remediation commit with subject
-  `fix: harden live authorization gate preconditions`; derive its exact hash
-  from Git after commit creation.
-- **Required parent:** `09711c59f272dfaf275b7f7442c607c9c148d34a`.
+- **Required starting commit:** the documentation-consistency commit with subject
+  `docs: record task 8g audit closure`; derive its exact hash from Git after
+  commit creation.
+- **Required parent:** `badb3fc3c29e6e7bc3ae3bb6a4ae86af49027865`.
+- **TASK 8H-1R1 remediation commit:** `badb3fc3c29e6e7bc3ae3bb6a4ae86af49027865`
+  (`fix: harden live authorization gate preconditions`), parent
+  `09711c59f272dfaf275b7f7442c607c9c148d34a`.
+- **TASK 8G closure basis:** TASK 8G-2 passed and directly closed the
+  execution-coordinator source lane for audited commit
+  `79ec174dabd7e73f2d01021168921021bc118702`; no separate TASK 8G acceptance
+  or lane-close commit is required.
+- **First TASK 8H-2 audit result:** failed because of acknowledgement coercion,
+  incomplete runtime source hashing, and stale TASK 8G continuity documentation.
 - **Evidence:** `docs/evidence/live-execution-authorization-gate-task-8h-1.json`.
 - **Evidence SHA-256:** `2EAC8D3C707C53F77859620DC9D7D43903DC61F334774898BBFD56944977DBF2`.
 - **Manifest section:** `live_execution_authorization_gate`.
@@ -20,6 +29,8 @@
 - Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md` entries.
 - Confirm TASK 8E, TASK 8F, and TASK 8G source/evidence identities remain unchanged and the TASK 8G evidence identity is
   `BB2016A9CFD85BFCA06862E7B3D386EE611355AA2416778BFDCB49C7A6C0BD12`.
+- Confirm TASK 8G closure grants no live execution authority and production-provider
+  execution remains unavailable.
 
 ## Audit scope
 

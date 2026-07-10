@@ -531,6 +531,13 @@ function Test-ChatpadTask8GManifestEvidence {
     if($managedHelperSource -match 'Register\s*\(\s*object\s+key\s*,\s*string\s+fingerprint\s*,\s*object\s+provider\s*\)'){$defects.Add('source.managed_helper: obsolete-provider-register-signature')}
     if($managedHelperSource -match 'object\s+provider|Provider\s*;|out\s+object\s+provider|Reset|Replace|SetProvider'){$defects.Add('source.managed_helper: provider-storage-or-reset-surface')}
     if($managedHelperSource -notmatch 'CreateRecordingAuthorization\s*\(\s*object\s+key\s*,\s*string\s+fingerprint\s*\)' -or $managedHelperSource -notmatch 'TryConsume\s*\(\s*object\s+key\s*,\s*string\s+fingerprint\s*\)'){$defects.Add('source.managed_helper: expected-signatures-missing')}
+    $continuityDocPaths=@('docs/DECISIONS.md','docs/NEXT-TASK.md','docs/PROJECT-STATE.md','docs/RUNTIME-BRINGUP-READINESS.md')
+    $continuityDocFiles=@($continuityDocPaths|ForEach-Object{Join-Path $RepositoryRoot $_}|Where-Object{Test-Path -LiteralPath $_ -PathType Leaf})
+    if($continuityDocFiles.Count-eq$continuityDocPaths.Count){
+        $continuityText=($continuityDocFiles|ForEach-Object{Get-Content -LiteralPath $_ -Raw}) -join "`n"
+        foreach($stalePattern in @('TASK 8G remains pending','TASK 8G-2\s+audit remains required','not lane-closed','lane is not closed','BLOCKED_NATIVE_ADAPTER_EXECUTION_COORDINATOR_NOT_INDEPENDENTLY_AUDITED')){if($continuityText -match $stalePattern){$defects.Add("continuity.task8g: stale-state:$stalePattern")}}
+        foreach($requiredPattern in @('TASK 8G-2 passed','execution-coordinator source lane is closed','79ec174dabd7e73f2d01021168921021bc118702','BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED','TASK 8H-2[\s\S]{1,120}Repeated independent read-only audit of the remediated explicit one-shot live-execution authorization gate')){if($continuityText -notmatch $requiredPattern){$defects.Add("continuity.task8g: missing-required:$requiredPattern")}}
+    }
     $evidencePath=[IO.Path]::GetFullPath((Join-Path $RepositoryRoot ([string](Get-ChatpadTask8EValue $section 'evidence_path'))))
     if(-not$evidencePath.StartsWith($RepositoryRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not(Test-Path -LiteralPath $evidencePath -PathType Leaf)){$defects.Add('evidence.path: missing');return [pscustomobject]@{result='FAIL';defect_count=$defects.Count;defects=@($defects)}}
     if((Get-Item -LiteralPath $evidencePath).Length-ne8165){$defects.Add('evidence.byte_size: mismatch')};if((Get-FileHash -LiteralPath $evidencePath -Algorithm SHA256).Hash-cne'BB2016A9CFD85BFCA06862E7B3D386EE611355AA2416778BFDCB49C7A6C0BD12'){$defects.Add('evidence.sha256: mismatch')}

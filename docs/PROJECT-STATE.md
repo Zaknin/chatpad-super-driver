@@ -1,6 +1,6 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8H-1R1 remediated live gate source-integrity and literal-acknowledgement preconditions; live execution remains blocked pending independent audit)*
+|*Last updated: 2026-07-10 (TASK 8G-2 audit closure recorded; TASK 8H-1R1 remediated live gate source-integrity and literal-acknowledgement preconditions; live execution remains blocked pending repeated independent audit)*
 
 ## Current State
 
@@ -66,6 +66,11 @@
 - **TASK 8H-1R1 live-authorization gate remediation:** this commit is expected
   to remediate the TASK 8H-1 source-integrity and literal-acknowledgement
   preconditions; derive its exact hash from Git after commit creation.
+- **TASK 8H first audit result:** the first TASK 8H-2 audit failed because of
+  acknowledgement coercion, incomplete runtime source hashing, and stale TASK
+  8G continuity documentation. Commit
+  `badb3fc3c29e6e7bc3ae3bb6a4ae86af49027865` contains the acknowledgement and
+  source-integrity remediation.
 - **TASK 8H live-authorization gate:** `tools/ExactInstance/ChatpadLiveExecutionAuthorizationGate.psm1`
   exports only `New-ChatpadOneShotLiveNativeApplyAuthorization`. It requires the exact
   `APPLY` operation, ordered three-node target chain, shared ContainerId, operator
@@ -90,15 +95,20 @@
   flags are all false; device query, native invocation, SetupAPI/Newdev invocation,
   binding, Windows mutation, driver action, rollback, restore, and artifact/compile-output
   counters all remain zero. No live authority was exercised.
-- **TASK 8H next task:** TASK 8H-2 — Independent read-only audit of the explicit
-  one-shot live-execution authorization gate.
+- **TASK 8H next task:** TASK 8H-2 — Repeated independent read-only audit of the
+  remediated explicit one-shot live-execution authorization gate.
 - **TASK 8F:** independently closed by TASK 8F-2; its source/evidence identities remain unchanged.
 - **TASK 8G coordinator:** `tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1` is private and recording-provider-only. It exports nothing, does not select or construct the production provider, and atomically consumes a reference-bound test authorization before plan invocation.
 - **TASK 8G managed registry remediation:** `tools/ExactInstance/ChatpadOneShotAuthorizationRegistry.cs` no longer exposes `Register(object key, string fingerprint, object provider)`. The public managed surface is `CreateRecordingAuthorization(object key, string fingerprint)` and `TryConsume(object key, string fingerprint)` only; no managed method accepts, stores, returns, replaces, or resets a provider.
 - **TASK 8G-1 evidence:** `docs/evidence/one-shot-native-execution-coordinator-task-8g-1.json`.
 - **TASK 8G evidence state:** v2 records 25 focused tests / 259 assertions in PowerShell 7 and Windows PowerShell 5.1. Direct managed-boundary adversarial tests reject arbitrary and production-provider candidates; replay after success, provider failure, thrown recording-provider-path exception, and cleanup failure remains rejected. The bounded real two-runspace race ran 16 iterations, each yielding one winner, one provider-plan entry, and one replay rejection.
 - **TASK 8G safety:** only the internally-created inert recording provider was reachable. Production provider registration, binding, selection, construction, loading, and invocation remained false; all prohibited counters remained zero.
-- **TASK 8G next task:** TASK 8G-2 — Independent read-only audit of the remediated atomic one-shot production execution coordinator. TASK 8G remains pending repeated independent audit; the lane is not closed.
+- **TASK 8G closure:** TASK 8G-2 passed and directly closed the execution-coordinator
+  source lane for audited commit `79ec174dabd7e73f2d01021168921021bc118702`.
+  The TASK 8G execution-coordinator source lane is closed.
+  No separate TASK 8G audit-acceptance or lane-close commit was required. TASK
+  8G closure grants no live execution authority; production-provider execution
+  remains unavailable.
 - **TASK 8E-1 non-executing native adapter status:**
   `SOURCE_IMPLEMENTATION_PRESENT_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_NO_LIVE_DEVICE_ACCESS`.
 - **TASK 8E-1 evidence:**

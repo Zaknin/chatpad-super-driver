@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-07-10 - Record TASK 8G-2 audit pass as coordinator source-lane closure
+
+**Decision:** Treat the independent `TASK 8G-2 PASS` result for audited commit
+`79ec174dabd7e73f2d01021168921021bc118702` as the closure basis for the TASK
+8G execution-coordinator source lane. No separate TASK 8G audit-acceptance
+commit, lane-close evidence file, duplicate manifest section, or repeated TASK
+8G audit task is required.
+
+**Rationale:** The independent read-only TASK 8G-2 audit directly accepted the
+remediated coordinator source lane. The remaining live-readiness blocker moved
+to the TASK 8H live-authorization gate, whose first audit later failed because
+of acknowledgement coercion, incomplete runtime source hashing, and stale
+continuity documentation.
+
+**Alternatives rejected:** Creating new TASK 8G closeout bureaucracy; leaving
+TASK 8G marked pending after the accepted audit; treating TASK 8G closure as
+live execution authority; or changing TASK 8G source/evidence identities.
+
+**Consequences:** TASK 8G is source-lane closed with no live execution
+authority. Production-provider execution remains unavailable, no production
+live authorization has been exercised, and TASK 8H remains open under
+`BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`
+pending repeated independent audit of the remediated live gate.
+
 ## 2026-07-10 - Separate live authorization gate from production execution
 
 **Decision:** Add a distinct TASK 8H live-authorization gate and managed live
@@ -47,7 +71,8 @@ or treating shape validation as authority.
 recording-provider path created by the approved factory. Direct managed-boundary
 abuse attempts cannot bind providers or enter the plan. Live execution,
 provider construction, native invocation, binding, and mutation remain
-unauthorized. Independent TASK 8G-2 audit remains required.
+unauthorized. The later independent TASK 8G-2 PASS closes the TASK 8G
+source lane without creating live execution authority.
 
 Durable technical or workflow decisions only. Each entry includes date, decision, rationale, alternatives rejected, and consequences.
 
