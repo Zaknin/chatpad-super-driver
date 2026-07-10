@@ -39,11 +39,36 @@ function New-Request {
 function New-Auth($request = (New-Request)) { (New-ChatpadOneShotLiveNativeApplyAuthorization -Request $request).authorization }
 function Invoke-FakeConsumer($request, $authorization, $outcome = 'Success') { & $gateModule { param($r,$a,$o) Invoke-TestOnlyLiveGateRecordingConsumer -Request $r -Authorization $a -Outcome $o } $request $authorization $outcome }
 function Assert-ZeroCounters($counters, [string]$Context) { foreach ($counter in $counters.PSObject.Properties) { Assert-8H ($counter.Value -eq 0) "$Context changed counter $($counter.Name)" } }
-function Assert-Rejected($request, [string]$ExpectedDefect) {
+function Set-RequestPropertyValue($Request, [string]$Name, [AllowNull()][object]$Value) {
+    [void]$Request.PSObject.Properties.Remove($Name)
+    $Request | Add-Member -NotePropertyName $Name -NotePropertyValue $Value
+}
+function Assert-Rejected($request, [string]$ExpectedDefect, [switch]$PassThru) {
     $result = New-ChatpadOneShotLiveNativeApplyAuthorization -Request $request
     Assert-8H (-not $result.authorization_issued) "$ExpectedDefect issued authorization"
+    Assert-8H ($null -eq $result.authorization) "$ExpectedDefect returned authorization object"
+    Assert-8H (-not $result.pre_authorization_summary.valid) "$ExpectedDefect returned valid summary"
     Assert-8H (@($result.pre_authorization_summary.defects) -contains $ExpectedDefect) "$ExpectedDefect was not reported"
+    Assert-8H (-not $result.pre_authorization_summary.production_provider_registered) "$ExpectedDefect registered production provider"
+    Assert-8H (-not $result.pre_authorization_summary.production_provider_selected) "$ExpectedDefect selected production provider"
+    Assert-8H (-not $result.pre_authorization_summary.production_provider_constructed) "$ExpectedDefect constructed production provider"
+    Assert-8H (-not $result.pre_authorization_summary.production_provider_loaded) "$ExpectedDefect loaded production provider"
+    Assert-8H (-not $result.pre_authorization_summary.production_provider_invoked) "$ExpectedDefect invoked production provider"
+    Assert-8H (-not $result.pre_authorization_summary.live_invocation_performed) "$ExpectedDefect performed live invocation"
     Assert-ZeroCounters $result.pre_authorization_summary.counters $ExpectedDefect
+    if ($PassThru) { $result }
+}
+function Set-TestSourceIntegrityRoot([AllowNull()][string]$Root) { & $gateModule { param($root) $script:LiveGateSourceIntegrityRootOverride = $root } $Root }
+function Set-TestSourceIntegrityPathOverride([AllowNull()][object]$Override) { & $gateModule { param($override) $script:LiveGateSourceIntegrityPathOverride = $override } $Override }
+function Reset-TestSourceIntegrityOverrides { Set-TestSourceIntegrityRoot $null; Set-TestSourceIntegrityPathOverride $null }
+function New-TempSourceIntegrityRoot {
+    $root = Join-Path ([IO.Path]::GetTempPath()) ('chatpad-live-gate-source-fixture-' + [guid]::NewGuid().ToString('N'))
+    foreach ($entry in (New-Request).critical_source_hashes) {
+        $target = Join-Path $root $entry.path
+        New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+        [IO.File]::WriteAllText($target, "modified fixture for $($entry.path)", [Text.UTF8Encoding]::new($false))
+    }
+    $root
 }
 
 Test-Case 'exact valid authorization issuance returns summary and live object' {
@@ -67,8 +92,8 @@ foreach ($case in @(
     @{ name='wrong TASK 8F identity'; field='task_8f_evidence_sha256'; value=('0'*64); defect='task_8f_evidence_sha256' },
     @{ name='wrong TASK 8G identity'; field='task_8g_evidence_sha256'; value=('0'*64); defect='task_8g_evidence_sha256' },
     @{ name='wrong audited commit'; field='task_8g_audited_implementation_commit'; value='0000000000000000000000000000000000000000'; defect='task_8g_audited_implementation_commit' },
-    @{ name='missing recovery acknowledgement'; field='rollback_recovery_reviewed'; value=$false; defect='rollback_recovery_reviewed' },
-    @{ name='missing one-shot acknowledgement'; field='one_shot_attempt_understood'; value=$false; defect='one_shot_attempt_understood' }
+    @{ name='missing recovery acknowledgement'; field='rollback_recovery_reviewed'; value=$false; defect='ROLLBACK_RECOVERY_REVIEWED_MUST_BE_LITERAL_BOOLEAN_TRUE' },
+    @{ name='missing one-shot acknowledgement'; field='one_shot_attempt_understood'; value=$false; defect='ONE_SHOT_ATTEMPT_UNDERSTOOD_MUST_BE_LITERAL_BOOLEAN_TRUE' }
 )) {
     Test-Case $case.name {
         $request = New-Request
@@ -77,10 +102,133 @@ foreach ($case in @(
     }
 }
 
+$ackCases = @(
+    @{ name='false boolean'; value=$false },
+    @{ name='null'; value=$null },
+    @{ name='string false'; value='false' },
+    @{ name='string true'; value='true' },
+    @{ name='string False'; value='False' },
+    @{ name='string True'; value='True' },
+    @{ name='empty string'; value='' },
+    @{ name='string zero'; value='0' },
+    @{ name='string one'; value='1' },
+    @{ name='int zero'; value=0 },
+    @{ name='int one'; value=1 },
+    @{ name='float one'; value=1.0 },
+    @{ name='true array'; value=@($true) },
+    @{ name='pscustomobject'; value=[pscustomobject]@{ value = $true } },
+    @{ name='hashtable'; value=@{ value = $true } },
+    @{ name='switchparameter'; value=[Management.Automation.SwitchParameter]::new($true) }
+)
+
+foreach ($case in $ackCases) {
+    Test-Case "rollback acknowledgement rejects $($case.name)" {
+        $request = New-Request
+        Set-RequestPropertyValue $request 'rollback_recovery_reviewed' $case.value
+        $result = Assert-Rejected $request 'ROLLBACK_RECOVERY_REVIEWED_MUST_BE_LITERAL_BOOLEAN_TRUE' -PassThru
+        Assert-8H (-not $result.pre_authorization_summary.rollback_recovery_reviewed_exact_true) 'rollback acknowledgement was treated as exact true'
+    }
+    Test-Case "one-shot acknowledgement rejects $($case.name)" {
+        $request = New-Request
+        Set-RequestPropertyValue $request 'one_shot_attempt_understood' $case.value
+        $result = Assert-Rejected $request 'ONE_SHOT_ATTEMPT_UNDERSTOOD_MUST_BE_LITERAL_BOOLEAN_TRUE' -PassThru
+        Assert-8H (-not $result.pre_authorization_summary.one_shot_attempt_understood_exact_true) 'one-shot acknowledgement was treated as exact true'
+    }
+}
+
+Test-Case 'both acknowledgement fields reject string false without authorization' {
+    $request = New-Request
+    $request.rollback_recovery_reviewed = 'false'
+    $request.one_shot_attempt_understood = 'false'
+    $result = Assert-Rejected $request 'ROLLBACK_RECOVERY_REVIEWED_MUST_BE_LITERAL_BOOLEAN_TRUE' -PassThru
+    Assert-8H (@($result.pre_authorization_summary.defects) -contains 'ONE_SHOT_ATTEMPT_UNDERSTOOD_MUST_BE_LITERAL_BOOLEAN_TRUE') 'one-shot string false defect missing'
+    Assert-8H (-not $result.pre_authorization_summary.rollback_recovery_reviewed_exact_true) 'rollback string false accepted'
+    Assert-8H (-not $result.pre_authorization_summary.one_shot_attempt_understood_exact_true) 'one-shot string false accepted'
+}
+
 Test-Case 'target removal is rejected' { $request = New-Request; $request.target_chain = @($request.target_chain[0], $request.target_chain[1]); Assert-Rejected $request 'target_chain' }
 Test-Case 'target addition is rejected' { $request = New-Request; $request.target_chain += 'HID\VID_045E&PID_028E\EXTRA'; Assert-Rejected $request 'target_chain' }
 Test-Case 'target reordering is rejected' { $request = New-Request; $request.target_chain = @($request.target_chain[1], $request.target_chain[0], $request.target_chain[2]); Assert-Rejected $request 'target_chain' }
 Test-Case 'wrong critical source hash is rejected' { $request = New-Request; $request.critical_source_hashes[1].sha256 = '0' * 64; Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash extra path is rejected' { $request = New-Request; $request.critical_source_hashes += [pscustomobject][ordered]@{ path = 'tools/ExactInstance/Extra.psm1'; sha256 = 'A' * 64 }; Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash missing path is rejected' { $request = New-Request; $request.critical_source_hashes = @($request.critical_source_hashes | Select-Object -Skip 1); Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash reordered path is rejected' { $request = New-Request; $request.critical_source_hashes = @($request.critical_source_hashes[1], $request.critical_source_hashes[0], $request.critical_source_hashes[2], $request.critical_source_hashes[3]); Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash malformed scalar is rejected' { $request = New-Request; Set-RequestPropertyValue $request 'critical_source_hashes' 'not-an-array'; Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash null is rejected' { $request = New-Request; Set-RequestPropertyValue $request 'critical_source_hashes' $null; Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash wrong type is rejected' { $request = New-Request; $request.critical_source_hashes[0].sha256 = 1; Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash wrong length is rejected' { $request = New-Request; $request.critical_source_hashes[0].sha256 = 'A' * 63; Assert-Rejected $request 'critical_source_hashes' }
+Test-Case 'critical source hash non-hex is rejected' { $request = New-Request; $request.critical_source_hashes[0].sha256 = 'G' * 64; Assert-Rejected $request 'critical_source_hashes' }
+
+Test-Case 'runtime source integrity hashes current fixed inventory' {
+    Reset-TestSourceIntegrityOverrides
+    $result = New-ChatpadOneShotLiveNativeApplyAuthorization -Request (New-Request)
+    Assert-8H $result.authorization_issued 'current fixed source inventory did not authorize'
+    Assert-8H $result.pre_authorization_summary.runtime_current_file_hashing_enabled 'runtime source hashing disabled'
+    Assert-8H $result.pre_authorization_summary.caller_supplied_hash_map_valid 'caller map invalid for canonical request'
+    Assert-8H $result.pre_authorization_summary.current_file_hashes_valid 'current file hashes invalid for canonical request'
+    Assert-8H (@($result.pre_authorization_summary.current_file_hashes).Count -eq 4) 'current file hash inventory count changed'
+}
+
+Test-Case 'runtime source integrity rejects stale current files' {
+    $root = New-TempSourceIntegrityRoot
+    try {
+        Set-TestSourceIntegrityRoot $root
+        $result = Assert-Rejected (New-Request) 'current_critical_source_hashes' -PassThru
+        Assert-8H (-not $result.pre_authorization_summary.current_file_hashes_valid) 'modified current files were accepted'
+    } finally {
+        Reset-TestSourceIntegrityOverrides
+        if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+    }
+}
+
+Test-Case 'runtime source integrity rejects forged caller map' {
+    $request = New-Request
+    $request.critical_source_hashes[0].sha256 = 'A' * 64
+    $result = Assert-Rejected $request 'critical_source_hashes' -PassThru
+    Assert-8H (-not $result.pre_authorization_summary.caller_supplied_hash_map_valid) 'forged caller hash was accepted'
+    Assert-8H $result.pre_authorization_summary.current_file_hashes_valid 'current file hash validation unexpectedly failed'
+}
+
+Test-Case 'runtime source integrity rejects missing current file' {
+    $root = New-TempSourceIntegrityRoot
+    try {
+        Remove-Item -LiteralPath (Join-Path $root 'tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1') -Force
+        Set-TestSourceIntegrityRoot $root
+        $result = Assert-Rejected (New-Request) 'current_critical_source_hashes' -PassThru
+        Assert-8H (@($result.pre_authorization_summary.current_file_hash_defects) -contains 'CURRENT_CRITICAL_SOURCE_MISSING_AT_INDEX_0') 'missing current source defect not reported'
+    } finally {
+        Reset-TestSourceIntegrityOverrides
+        if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+    }
+}
+
+Test-Case 'runtime source integrity rejects directory in current inventory' {
+    $root = New-TempSourceIntegrityRoot
+    try {
+        $path = Join-Path $root 'tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1'
+        Remove-Item -LiteralPath $path -Force
+        New-Item -ItemType Directory -Path $path | Out-Null
+        Set-TestSourceIntegrityRoot $root
+        $result = Assert-Rejected (New-Request) 'current_critical_source_hashes' -PassThru
+        Assert-8H (@($result.pre_authorization_summary.current_file_hash_defects) -contains 'CURRENT_CRITICAL_SOURCE_MISSING_AT_INDEX_0') 'directory current source defect not reported'
+    } finally {
+        Reset-TestSourceIntegrityOverrides
+        if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+    }
+}
+
+Test-Case 'runtime source integrity rejects traversal override in private test seam' {
+    $root = New-TempSourceIntegrityRoot
+    try {
+        Set-TestSourceIntegrityRoot $root
+        Set-TestSourceIntegrityPathOverride @{ 'tools/ExactInstance/ChatpadNonExecutingNativeAdapter.psm1' = '..\outside.psm1' }
+        $result = Assert-Rejected (New-Request) 'current_critical_source_hashes' -PassThru
+        Assert-8H (@($result.pre_authorization_summary.current_file_hash_defects) -contains 'CURRENT_CRITICAL_SOURCE_PATH_TRAVERSAL_AT_INDEX_0') 'path traversal defect not reported'
+    } finally {
+        Reset-TestSourceIntegrityOverrides
+        if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
+    }
+}
 
 Test-Case 'serialization deserialization copy and wrappers are rejected' {
     $request = New-Request; $auth = New-Auth $request

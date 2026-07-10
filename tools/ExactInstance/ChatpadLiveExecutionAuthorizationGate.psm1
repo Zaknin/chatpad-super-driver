@@ -10,10 +10,13 @@ if ($null -eq ('Chatpad.LiveAuthorization.LiveAuthorizationRegistry' -as [type])
 function Get-LiveGateValue {
     param([AllowNull()][object]$Object, [Parameter(Mandatory)][string]$Name, [AllowNull()][object]$Default = $null)
     if ($null -eq $Object) { return $Default }
-    $property = $Object.PSObject.Properties[$Name]
+    $property = $Object.PSObject.Properties.Item($Name)
     if ($null -eq $property) { return $Default }
-    Write-Output -NoEnumerate $property.Value
+    return $property.Value
 }
+
+$script:LiveGateSourceIntegrityRootOverride = $null
+$script:LiveGateSourceIntegrityPathOverride = $null
 
 function Get-LiveExecutionAuthorizationGateConstants {
     [pscustomobject][ordered]@{
@@ -38,6 +41,10 @@ function Get-LiveExecutionAuthorizationGateConstants {
             [pscustomobject][ordered]@{ path = 'tools/ExactInstance/ChatpadGatedProductionNativeAdapterBackend.psm1'; sha256 = '77162617BAC6439921E3856A352ED8E940D43B549A717F2F58233C1445269754' },
             [pscustomobject][ordered]@{ path = 'tools/ExactInstance/ChatpadOneShotNativeExecutionCoordinator.psm1'; sha256 = 'B639AAB4D3FBA440E1DD4183C71F8D5FCF54B632CF3DE2EAA91E50535B7277DA' },
             [pscustomobject][ordered]@{ path = 'tools/ExactInstance/ChatpadOneShotAuthorizationRegistry.cs'; sha256 = '9C85311242920C0C2DDCDAD9A7AED9A10C6F145F70DFA03B092607372485A462' }
+        )
+        externally_validated_root_of_trust_paths = @(
+            'tools/ExactInstance/ChatpadLiveExecutionAuthorizationGate.psm1',
+            'tools/ExactInstance/ChatpadLiveAuthorizationRegistry.cs'
         )
     }
 }
@@ -72,17 +79,117 @@ function Test-LiveGateExactArray {
     return $true
 }
 
-function Test-LiveGateCriticalSourceHashes {
+function Test-LiveGateLiteralBooleanTrue {
+    param([AllowNull()][object]$Value)
+    return ($Value -is [System.Boolean] -and $Value -eq $true)
+}
+
+function Get-LiveGateRuntimeTypeName {
+    param([AllowNull()][object]$Value)
+    if ($null -eq $Value) { return '<null>' }
+    return $Value.GetType().FullName
+}
+
+function Get-LiveGateRepositoryRoot {
+    if (-not [string]::IsNullOrWhiteSpace([string]$script:LiveGateSourceIntegrityRootOverride)) {
+        return [IO.Path]::GetFullPath([string]$script:LiveGateSourceIntegrityRootOverride)
+    }
+    return [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+}
+
+function ConvertTo-LiveGateHexSha256 {
+    param([Parameter(Mandatory)][byte[]]$Bytes)
+    $builder = [Text.StringBuilder]::new(64)
+    foreach ($byte in $Bytes) { [void]$builder.Append($byte.ToString('X2')) }
+    return $builder.ToString()
+}
+
+function Test-LiveGateCallerCriticalSourceHashes {
     param([AllowNull()][object]$Actual)
     $expected = @((Get-LiveExecutionAuthorizationGateConstants).critical_source_hashes)
-    if ($null -eq $Actual -or $Actual -is [string]) { return $false }
-    $values = @($Actual)
-    if ($values.Count -ne $expected.Count) { return $false }
-    for ($index = 0; $index -lt $expected.Count; $index++) {
-        if (-not [string]::Equals([string](Get-LiveGateValue $values[$index] 'path' ''), $expected[$index].path, [StringComparison]::Ordinal)) { return $false }
-        if (-not [string]::Equals([string](Get-LiveGateValue $values[$index] 'sha256' ''), $expected[$index].sha256, [StringComparison]::Ordinal)) { return $false }
+    $defects = [Collections.Generic.List[string]]::new()
+    if ($null -eq $Actual -or $Actual -is [string]) {
+        $defects.Add('CRITICAL_SOURCE_HASHES_MUST_BE_ORDERED_OBJECT_ARRAY')
+        return [pscustomobject][ordered]@{ valid = $false; caller_hashes = @(); defects = @($defects) }
     }
-    return $true
+    $values = @($Actual)
+    if ($values.Count -ne $expected.Count) { $defects.Add('CRITICAL_SOURCE_HASHES_KEY_SET_MUST_MATCH_FIXED_INVENTORY') }
+    for ($index = 0; $index -lt $expected.Count; $index++) {
+        if ($index -ge $values.Count) { break }
+        $pathValue = Get-LiveGateValue $values[$index] 'path' $null
+        $hashValue = Get-LiveGateValue $values[$index] 'sha256' $null
+        if ($pathValue -isnot [string] -or -not [string]::Equals([string]$pathValue, $expected[$index].path, [StringComparison]::Ordinal)) {
+            $defects.Add("CRITICAL_SOURCE_HASHES_PATH_MISMATCH_AT_INDEX_$index")
+        }
+        if ($hashValue -isnot [string] -or -not ([string]$hashValue -cmatch '^[0-9A-F]{64}$')) {
+            $defects.Add("CRITICAL_SOURCE_HASHES_SHA256_FORMAT_MISMATCH_AT_INDEX_$index")
+        } elseif (-not [string]::Equals([string]$hashValue, $expected[$index].sha256, [StringComparison]::Ordinal)) {
+            $defects.Add("CRITICAL_SOURCE_HASHES_SHA256_MISMATCH_AT_INDEX_$index")
+        }
+    }
+    [pscustomobject][ordered]@{
+        valid = ($defects.Count -eq 0)
+        caller_hashes = @($values)
+        defects = @($defects)
+    }
+}
+
+function Test-LiveGateCurrentCriticalSourceHashes {
+    $constants = Get-LiveExecutionAuthorizationGateConstants
+    $expected = @($constants.critical_source_hashes)
+    $defects = [Collections.Generic.List[string]]::new()
+    $hashes = [Collections.Generic.List[object]]::new()
+    $root = Get-LiveGateRepositoryRoot
+    $rootWithSeparator = $root.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+
+    for ($index = 0; $index -lt $expected.Count; $index++) {
+        $declaredRelativePath = [string]$expected[$index].path
+        $relativePath = $declaredRelativePath
+        if ($null -ne $script:LiveGateSourceIntegrityPathOverride -and $script:LiveGateSourceIntegrityPathOverride.ContainsKey($declaredRelativePath)) {
+            $relativePath = [string]$script:LiveGateSourceIntegrityPathOverride[$declaredRelativePath]
+        }
+        if ([IO.Path]::IsPathRooted($relativePath)) {
+            $defects.Add("CURRENT_CRITICAL_SOURCE_PATH_ROOTED_AT_INDEX_$index")
+            continue
+        }
+        $fullPath = [IO.Path]::GetFullPath((Join-Path $root $relativePath))
+        if (-not $fullPath.StartsWith($rootWithSeparator, [StringComparison]::OrdinalIgnoreCase)) {
+            $defects.Add("CURRENT_CRITICAL_SOURCE_PATH_TRAVERSAL_AT_INDEX_$index")
+            continue
+        }
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+            $defects.Add("CURRENT_CRITICAL_SOURCE_MISSING_AT_INDEX_$index")
+            continue
+        }
+        $item = Get-Item -LiteralPath $fullPath -Force
+        if ($item -isnot [IO.FileInfo]) {
+            $defects.Add("CURRENT_CRITICAL_SOURCE_NOT_REGULAR_FILE_AT_INDEX_$index")
+            continue
+        }
+        if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            $defects.Add("CURRENT_CRITICAL_SOURCE_REPARSEPOINT_AT_INDEX_$index")
+            continue
+        }
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try {
+            $hash = ConvertTo-LiveGateHexSha256 -Bytes ($sha.ComputeHash([IO.File]::ReadAllBytes($fullPath)))
+        } finally {
+            $sha.Dispose()
+        }
+        $hashes.Add([pscustomobject][ordered]@{ path = $declaredRelativePath; sha256 = $hash })
+        if (-not [string]::Equals($hash, [string]$expected[$index].sha256, [StringComparison]::Ordinal)) {
+            $defects.Add("CURRENT_CRITICAL_SOURCE_SHA256_MISMATCH_AT_INDEX_$index")
+        }
+    }
+
+    [pscustomobject][ordered]@{
+        valid = ($defects.Count -eq 0)
+        current_hashes = @($hashes)
+        defects = @($defects)
+        repository_root = $root
+        hash_algorithm = 'SHA256'
+        path_resolution_semantics = 'REPOSITORY_RELATIVE_REGULAR_FILE_NO_REPARSEPOINT_NO_TRAVERSAL'
+    }
 }
 
 function Get-LiveGateRequestFingerprint {
@@ -102,8 +209,8 @@ function Get-LiveGateRequestFingerprint {
         [string](Get-LiveGateValue $Request 'task_8g_evidence_sha256' ''),
         [string](Get-LiveGateValue $Request 'task_8g_audited_implementation_commit' ''),
         ($hashPairs -join '|'),
-        [string]([bool](Get-LiveGateValue $Request 'rollback_recovery_reviewed' $false)),
-        [string]([bool](Get-LiveGateValue $Request 'one_shot_attempt_understood' $false))
+        [string](Test-LiveGateLiteralBooleanTrue (Get-LiveGateValue $Request 'rollback_recovery_reviewed' $null)),
+        [string](Test-LiveGateLiteralBooleanTrue (Get-LiveGateValue $Request 'one_shot_attempt_understood' $null))
     ) -join "`n"
 }
 
@@ -121,8 +228,16 @@ function Test-LiveExecutionAuthorizationGateRequest {
     $task8g = [string](Get-LiveGateValue $Request 'task_8g_evidence_sha256' '')
     $auditedCommit = [string](Get-LiveGateValue $Request 'task_8g_audited_implementation_commit' '')
     $sourceHashes = Get-LiveGateValue $Request 'critical_source_hashes' $null
-    $recovery = [bool](Get-LiveGateValue $Request 'rollback_recovery_reviewed' $false)
-    $oneShot = [bool](Get-LiveGateValue $Request 'one_shot_attempt_understood' $false)
+    $recoveryProperty = $Request.PSObject.Properties.Item('rollback_recovery_reviewed')
+    $oneShotProperty = $Request.PSObject.Properties.Item('one_shot_attempt_understood')
+    $recoveryValue = $null
+    if ($null -ne $recoveryProperty) { $recoveryValue = $recoveryProperty.Value }
+    $oneShotValue = $null
+    if ($null -ne $oneShotProperty) { $oneShotValue = $oneShotProperty.Value }
+    $recovery = ($recoveryValue -is [System.Boolean] -and $recoveryValue -eq $true)
+    $oneShot = ($oneShotValue -is [System.Boolean] -and $oneShotValue -eq $true)
+    $callerHashValidation = Test-LiveGateCallerCriticalSourceHashes -Actual $sourceHashes
+    $currentHashValidation = Test-LiveGateCurrentCriticalSourceHashes
 
     if (-not [string]::Equals($operation, $c.operation, [StringComparison]::Ordinal)) { $defects.Add('operation') }
     if (-not (Test-LiveGateExactArray -Actual $targetChain -Expected $c.accepted_ordered_target_chain)) { $defects.Add('target_chain') }
@@ -133,9 +248,10 @@ function Test-LiveExecutionAuthorizationGateRequest {
     if (-not [string]::Equals($task8f, $c.task_8f_evidence_sha256, [StringComparison]::Ordinal)) { $defects.Add('task_8f_evidence_sha256') }
     if (-not [string]::Equals($task8g, $c.task_8g_evidence_sha256, [StringComparison]::Ordinal)) { $defects.Add('task_8g_evidence_sha256') }
     if (-not [string]::Equals($auditedCommit, $c.task_8g_audited_implementation_commit, [StringComparison]::Ordinal)) { $defects.Add('task_8g_audited_implementation_commit') }
-    if (-not (Test-LiveGateCriticalSourceHashes -Actual $sourceHashes)) { $defects.Add('critical_source_hashes') }
-    if (-not $recovery) { $defects.Add('rollback_recovery_reviewed') }
-    if (-not $oneShot) { $defects.Add('one_shot_attempt_understood') }
+    if (-not $callerHashValidation.valid) { $defects.Add('critical_source_hashes') }
+    if (-not $currentHashValidation.valid) { $defects.Add('current_critical_source_hashes') }
+    if (-not $recovery) { $defects.Add('ROLLBACK_RECOVERY_REVIEWED_MUST_BE_LITERAL_BOOLEAN_TRUE') }
+    if (-not $oneShot) { $defects.Add('ONE_SHOT_ATTEMPT_UNDERSTOOD_MUST_BE_LITERAL_BOOLEAN_TRUE') }
 
     [pscustomobject][ordered]@{
         operation = $operation
@@ -147,10 +263,29 @@ function Test-LiveExecutionAuthorizationGateRequest {
         task_8f_evidence_identity = $task8f
         task_8g_evidence_identity = $task8g
         audited_implementation_commit = $auditedCommit
+        fixed_expected_critical_source_inventory = @($c.critical_source_hashes)
         critical_source_hashes = @($sourceHashes)
+        caller_supplied_critical_source_hashes = @($callerHashValidation.caller_hashes)
+        caller_supplied_hash_map_valid = $callerHashValidation.valid
+        caller_supplied_hash_map_defects = @($callerHashValidation.defects)
+        current_file_hashes = @($currentHashValidation.current_hashes)
+        current_file_hashes_valid = $currentHashValidation.valid
+        current_file_hash_defects = @($currentHashValidation.defects)
+        runtime_current_file_hashing_enabled = $true
+        hash_algorithm = 'SHA256'
+        caller_map_compared_to_accepted_map = $true
+        current_file_map_compared_to_accepted_map = $true
+        caller_map_compared_to_current_file_map = $true
+        fixed_externally_validated_root_of_trust_inventory = @($c.externally_validated_root_of_trust_paths)
+        root_of_trust_classification = 'DEPENDENT_SOURCE_FILES_RUNTIME_VALIDATED_GATE_SOURCE_EXTERNALLY_VALIDATED'
+        path_resolution_semantics = $currentHashValidation.path_resolution_semantics
         one_shot_semantics = 'PROCESS_BOUND_REFERENCE_IDENTITY_BOUND_ONE_ATTEMPT_ONLY'
+        rollback_recovery_reviewed_runtime_type = Get-LiveGateRuntimeTypeName $recoveryValue
+        one_shot_attempt_understood_runtime_type = Get-LiveGateRuntimeTypeName $oneShotValue
         rollback_recovery_reviewed = $recovery
         one_shot_attempt_understood = $oneShot
+        rollback_recovery_reviewed_exact_true = $recovery
+        one_shot_attempt_understood_exact_true = $oneShot
         production_provider_registered = $false
         production_provider_selected = $false
         production_provider_constructed = $false

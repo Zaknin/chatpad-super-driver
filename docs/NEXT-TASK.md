@@ -1,13 +1,14 @@
-# TASK 8H-2 — Independent read-only audit of the explicit one-shot live-execution authorization gate
+# TASK 8H-2 — Independent read-only audit of the remediated one-shot live-execution authorization gate
 
 ## Current state
 
 - **Required branch:** `feature/native-adapter-live-execution-authorization-gate`.
-- **Required starting commit:** the TASK 8H-1 commit with subject
-  `feat: implement explicit live execution authorization gate`; derive its exact hash
-  from Git.
-- **Required parent:** `79ec174dabd7e73f2d01021168921021bc118702`.
+- **Required starting commit:** the TASK 8H-1R1 remediation commit with subject
+  `fix: harden live authorization gate preconditions`; derive its exact hash
+  from Git after commit creation.
+- **Required parent:** `09711c59f272dfaf275b7f7442c607c9c148d34a`.
 - **Evidence:** `docs/evidence/live-execution-authorization-gate-task-8h-1.json`.
+- **Evidence SHA-256:** `2EAC8D3C707C53F77859620DC9D7D43903DC61F334774898BBFD56944977DBF2`.
 - **Manifest section:** `live_execution_authorization_gate`.
 - **Current blocker:**
   `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
@@ -27,7 +28,11 @@
   sign, build, or open compile outputs.
 - Verify the live gate requires every explicit input, including the exact phrase
   `AUTHORIZE_ONE_LIVE_NATIVE_APPLY_ATTEMPT`, exact ordered target chain, accepted evidence
-  identities, current critical source hashes, and both acknowledgements.
+  identities, caller-supplied critical source hashes matching the fixed accepted inventory,
+  runtime current-file hashing of the fixed source inventory, and literal Boolean `true`
+  for both acknowledgements.
+- Verify single-item arrays, string booleans, stale current files, missing current files,
+  directory substitutions, and path traversal are rejected fail-closed.
 - Verify recording authorization and live authorization are separate types and cannot be
   converted, wrapped, copied, serialized, or transferred into each other.
 - Verify the one-shot live authorization is process/reference/fingerprint bound and consumed
@@ -40,8 +45,9 @@
 ## Acceptance criteria
 
 - Report `PASS` only if evidence/source/test hashes, exact public/private/managed surfaces,
-  manifest/evidence equality, concurrency, replay, type-confusion rejection, validator, and
-  both-runtime results match exactly with zero defects.
+  manifest/evidence equality, source-integrity rejection, literal-acknowledgement rejection,
+  concurrency, replay, type-confusion rejection, validator, and both-runtime results match
+  exactly with zero defects.
 - Confirm no live authority was exercised and no production/native/device/Windows mutation
   path was invoked.
 - A passing audit closes this authorization-gate source lane only. It must not authorize or

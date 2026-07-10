@@ -1,6 +1,6 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8H-1 added the explicit one-shot live-authorization gate source; live execution remains blocked pending independent audit)*
+|*Last updated: 2026-07-10 (TASK 8H-1R1 remediated live gate source-integrity and literal-acknowledgement preconditions; live execution remains blocked pending independent audit)*
 
 ## Current State
 
@@ -63,23 +63,29 @@
   `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
 - **Runtime blocker:**
   `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
+- **TASK 8H-1R1 live-authorization gate remediation:** this commit is expected
+  to remediate the TASK 8H-1 source-integrity and literal-acknowledgement
+  preconditions; derive its exact hash from Git after commit creation.
 - **TASK 8H live-authorization gate:** `tools/ExactInstance/ChatpadLiveExecutionAuthorizationGate.psm1`
   exports only `New-ChatpadOneShotLiveNativeApplyAuthorization`. It requires the exact
   `APPLY` operation, ordered three-node target chain, shared ContainerId, operator
   confirmation identity, explicit phrase
   `AUTHORIZE_ONE_LIVE_NATIVE_APPLY_ATTEMPT`, accepted TASK 8E/8F/8G evidence identities,
   audited TASK 8G implementation commit `79ec174dabd7e73f2d01021168921021bc118702`,
-  current critical source hashes, rollback/recovery acknowledgement, and one-shot
-  acknowledgement. It does not construct, register, select, load, or invoke the production
+  caller-supplied critical source hashes matching the fixed inventory, runtime current-file
+  hashing of that same fixed inventory, literal Boolean `true` rollback/recovery
+  acknowledgement, and literal Boolean `true` one-shot acknowledgement. It does not
+  construct, register, select, load, or invoke the production
   provider.
 - **TASK 8H evidence:** `docs/evidence/live-execution-authorization-gate-task-8h-1.json`,
   schema `chatpad-live-execution-authorization-gate-evidence-v1`, status
   `EXPLICIT_ONE_SHOT_LIVE_AUTHORIZATION_GATE_SOURCE_PRESENT_RECORDING_ONLY_TESTED_PRODUCTION_PROVIDER_NOT_CONSTRUCTED_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_LIVE_EXECUTION_STILL_UNAUTHORIZED_PENDING_INDEPENDENT_AUDIT`,
-  SHA-256 `A4D889E8E60707978E23A8CA958BBCC765F98CAFDC8392D299716A3476093AC2`.
+  SHA-256 `2EAC8D3C707C53F77859620DC9D7D43903DC61F334774898BBFD56944977DBF2`.
 - **TASK 8H tests:** PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655 both pass
-  28 tests / 860 assertions. The bounded actual-registry race runs 16 iterations with
+  75 tests / 2146 assertions. The bounded actual-registry race runs 16 iterations with
   two contenders, one successful consumption, one replay rejection, zero production
-  constructions, and zero native invocations.
+  constructions, and zero native invocations. TASK 8H manifest tampering regression passes
+  286 / 286 cases in both runtimes.
 - **TASK 8H safety:** production-provider registered/selected/constructed/loaded/invoked
   flags are all false; device query, native invocation, SetupAPI/Newdev invocation,
   binding, Windows mutation, driver action, rollback, restore, and artifact/compile-output
