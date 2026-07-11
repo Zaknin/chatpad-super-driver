@@ -1,6 +1,6 @@
 {
   "schema": "chatpad-live-apply-package-source-plan-v1",
-  "status": "CANONICAL_WINDOWS_11_DRIVER_PACKAGE_SOURCE_DEFINED_NOT_BUILT_NOT_CATALOGED_NOT_SIGNED_NOT_STAGED_NOT_INSTALLABLE",
+  "status": "CANONICAL_WINDOWS_11_DRIVER_PACKAGE_SOURCE_DEFINED_FOR_LOCAL_DEVELOPMENT_NOT_STAGED_NOT_INSTALLED_NOT_LOADED",
   "production_driver_project": {
     "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj",
     "sha256": "5641815C63FBB0C2A7442E555A1B70F3BE4C22014DF2BA29A29E987A2D903112",
@@ -98,15 +98,18 @@
     "generation_performed": false,
     "p1b2_requirement": "generate from the exact frozen two-file package and verify every member identity"
   },
-  "signing_policy": {
-    "production_route": "Microsoft attestation signing or WHCP signing; exact route remains a P1B-2 release-security decision",
-    "production_route_selected": false,
-    "test_signing_permitted_for_live_attempt": false,
-    "test_mode_permitted": false,
-    "boot_policy_changes_permitted": false,
-    "secure_boot_changes_permitted": false,
-    "temporary_certificate_trust_permitted": false,
-    "current_installability": "NOT_INSTALLABLE_UNSIGNED_SOURCE_ONLY"
+  "deployment_policy": {
+    "deployment_scope": "LOCAL_DEVELOPMENT_ONLY",
+    "current_required_route": "CONTROLLED_LOCAL_DEVELOPMENT_INSTALLATION",
+    "production_distribution_signing_required": false,
+    "production_distribution_signing": "OUT_OF_SCOPE_OPTIONAL_FUTURE_WORK",
+    "production_distribution_objective_classification": "OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE",
+    "local_installation_method": "NOT_YET_OBSERVED",
+    "local_signature_enforcement_state": "NOT_YET_OBSERVED",
+    "package_currently_staged": false,
+    "package_currently_installed": false,
+    "driver_currently_loaded": false,
+    "ordinary_production_signature_enforcement_loadability_claimed": false
   },
   "prototype_exclusion": {
     "path": "prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf",
@@ -122,7 +125,7 @@
     "first_or_best_driver_fallback_permitted": false
   },
   "candidate_rule": {
-    "state": "DESIGN_ONLY_NOT_EXECUTABLE_UNTIL_P1B2_FREEZES_ACTUAL_PACKAGE_VALUES",
+    "state": "LOCAL_DEVELOPMENT_CANDIDATE_DESIGN_ONLY_PENDING_HOST_OBSERVATION_AND_INSTALLATION_CONTRACT",
     "zero_exact_matches": "REJECT",
     "one_exact_match": "ELIGIBLE",
     "multiple_exact_matches": "REJECT_AMBIGUOUS",
@@ -138,13 +141,16 @@
       "caller-selected INF", "wildcard provider", "wildcard description", "fallback candidate"
     ]
   },
-  "future_p1b2_fields": [
-    "built_sys_byte_size", "built_sys_sha256", "final_inf_byte_size", "final_inf_sha256",
-    "catalog_byte_size", "catalog_sha256", "published_staged_inf_name", "package_signer_subject",
-    "signature_chain_identity", "signature_verification_result", "driver_package_date", "driver_package_version",
-    "driver_node_provider", "driver_node_description", "driver_rank", "driver_node_identity",
-    "setupapi_package_identity", "exact_candidate_match_result", "restart_required_result",
-    "reboot_required_result", "build_provenance", "build_tool_versions", "reproducibility_result"
+  "future_local_deployment_fields": [
+    "windows_edition", "windows_version", "windows_build", "secure_boot_state", "test_signing_state",
+    "code_integrity_signature_enforcement_state", "known_working_local_installation_mechanism",
+    "local_installation_mechanism_persistence", "reboot_required_for_mechanism",
+    "signature_enforcement_changes_required", "package_source_directory", "published_inf_name_after_staging",
+    "driver_store_package_identity_after_staging", "driver_node_provider", "driver_node_description",
+    "driver_date", "driver_version", "driver_rank", "driver_node_identity", "exact_matching_candidate_count",
+    "target_physical_usb_node", "target_container_id", "restart_required_result", "reboot_required_result",
+    "installed_service_identity", "installed_filter_identity", "rollback_package_identity",
+    "restoration_verification_fields"
   ],
   "material_directive_bases": [
     { "directive": "Class and ClassGuid", "basis": "WDK 10.0.26100.0 shared/devguid.h GUID_DEVCLASS_EXTENSION" },
@@ -158,6 +164,6 @@
     { "directive": "DriverVer", "basis": "reviewed committed source literal governed by version_policy" },
     { "directive": "CatalogFile", "basis": "accepted catalog identity; generation and signing deferred to P1B-2" }
   ],
-  "blocker": "BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_BUILT_CATALOGED_SIGNED_AND_INDEPENDENTLY_AUDITED",
-  "next_task": "TASK 8I-P1B-2 — Build, catalog, sign, validate, and freeze the canonical Windows 11 driver package and immutable APPLY candidate contract"
+  "blocker": "BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED",
+  "next_task": "TASK 8I-P1B-LD-R2 — Independent read-only audit of the unsigned canonical package and local-development deployment contract"
 }

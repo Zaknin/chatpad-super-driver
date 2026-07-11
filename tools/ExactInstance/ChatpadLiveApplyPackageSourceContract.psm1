@@ -5,9 +5,9 @@ $script:RepoRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSSc
 $script:PlanPath = Join-Path $PSScriptRoot 'contracts\chatpad-live-apply-package-source-plan.json'
 $script:InfRelativePath = 'src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf'
 $script:PrototypeRelativePath = 'prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf'
-$script:Status = 'CANONICAL_WINDOWS_11_DRIVER_PACKAGE_SOURCE_DEFINED_NOT_BUILT_NOT_CATALOGED_NOT_SIGNED_NOT_STAGED_NOT_INSTALLABLE'
-$script:Blocker = 'BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_BUILT_CATALOGED_SIGNED_AND_INDEPENDENTLY_AUDITED'
-$script:NextTask = 'TASK 8I-P1B-2 ' + [char]0x2014 + ' Build, catalog, sign, validate, and freeze the canonical Windows 11 driver package and immutable APPLY candidate contract'
+$script:Status = 'CANONICAL_WINDOWS_11_DRIVER_PACKAGE_SOURCE_DEFINED_FOR_LOCAL_DEVELOPMENT_NOT_STAGED_NOT_INSTALLED_NOT_LOADED'
+$script:Blocker = 'BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED'
+$script:NextTask = 'TASK 8I-P1B-LD-R2 ' + [char]0x2014 + ' Independent read-only audit of the unsigned canonical package and local-development deployment contract'
 
 function Get-Sha256([string]$Path) {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToUpperInvariant()
@@ -85,7 +85,7 @@ function Assert-Inf([string]$Text) {
 }
 
 function Assert-Plan([object]$Plan, [string]$InfText) {
-    $top = @('schema','status','production_driver_project','driver_binary_filename','canonical_inf','catalog_filename','architecture','driver_framework','driver_type','service_name','filter_name','filter_attachment','device_setup_class','provider','manufacturer_section','model_section','install_section','extension_id','stable_hardware_ids','compatible_ids','target_node','driver_source_inventory','package_source_inventory','package_file_inventory','version_policy','catalog_policy','signing_policy','prototype_exclusion','caller_controls','candidate_rule','future_p1b2_fields','material_directive_bases','blocker','next_task')
+    $top = @('schema','status','production_driver_project','driver_binary_filename','canonical_inf','catalog_filename','architecture','driver_framework','driver_type','service_name','filter_name','filter_attachment','device_setup_class','provider','manufacturer_section','model_section','install_section','extension_id','stable_hardware_ids','compatible_ids','target_node','driver_source_inventory','package_source_inventory','package_file_inventory','version_policy','catalog_policy','deployment_policy','prototype_exclusion','caller_controls','candidate_rule','future_local_deployment_fields','material_directive_bases','blocker','next_task')
     Assert-ExactProperties $Plan $top 'plan'
     Assert-String $Plan.schema 'chatpad-live-apply-package-source-plan-v1' 'schema'
     Assert-String $Plan.status $script:Status 'status'
@@ -153,10 +153,15 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     Assert-String $Plan.catalog_policy.filename 'ChatpadFilterExtension.cat' 'catalog policy filename'
     Assert-StringArray @($Plan.catalog_policy.covered_files) @('ChatpadFilterExtension.inf','ChatpadFilter.sys') 'catalog members'
     Assert-Bool $Plan.catalog_policy.generation_performed $false 'catalog generation'
-    Assert-ExactProperties $Plan.signing_policy @('production_route','production_route_selected','test_signing_permitted_for_live_attempt','test_mode_permitted','boot_policy_changes_permitted','secure_boot_changes_permitted','temporary_certificate_trust_permitted','current_installability') 'signing_policy'
-    Assert-String $Plan.signing_policy.production_route 'Microsoft attestation signing or WHCP signing; exact route remains a P1B-2 release-security decision' 'production signing route'
-    foreach ($name in @('production_route_selected','test_signing_permitted_for_live_attempt','test_mode_permitted','boot_policy_changes_permitted','secure_boot_changes_permitted','temporary_certificate_trust_permitted')) { Assert-Bool $Plan.signing_policy.$name $false "signing policy $name" }
-    Assert-String $Plan.signing_policy.current_installability 'NOT_INSTALLABLE_UNSIGNED_SOURCE_ONLY' 'installability'
+    Assert-ExactProperties $Plan.deployment_policy @('deployment_scope','current_required_route','production_distribution_signing_required','production_distribution_signing','production_distribution_objective_classification','local_installation_method','local_signature_enforcement_state','package_currently_staged','package_currently_installed','driver_currently_loaded','ordinary_production_signature_enforcement_loadability_claimed') 'deployment_policy'
+    Assert-String $Plan.deployment_policy.deployment_scope 'LOCAL_DEVELOPMENT_ONLY' 'deployment scope'
+    Assert-String $Plan.deployment_policy.current_required_route 'CONTROLLED_LOCAL_DEVELOPMENT_INSTALLATION' 'current required route'
+    Assert-Bool $Plan.deployment_policy.production_distribution_signing_required $false 'production distribution signing requirement'
+    Assert-String $Plan.deployment_policy.production_distribution_signing 'OUT_OF_SCOPE_OPTIONAL_FUTURE_WORK' 'optional production distribution signing'
+    Assert-String $Plan.deployment_policy.production_distribution_objective_classification 'OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE' 'production distribution objective classification'
+    Assert-String $Plan.deployment_policy.local_installation_method 'NOT_YET_OBSERVED' 'local installation method'
+    Assert-String $Plan.deployment_policy.local_signature_enforcement_state 'NOT_YET_OBSERVED' 'local signature enforcement state'
+    foreach ($name in @('package_currently_staged','package_currently_installed','driver_currently_loaded','ordinary_production_signature_enforcement_loadability_claimed')) { Assert-Bool $Plan.deployment_policy.$name $false "deployment policy $name" }
     Assert-ExactProperties $Plan.prototype_exclusion @('path','byte_size','sha256','excluded_from_production','classification') 'prototype_exclusion'
     Assert-String $Plan.prototype_exclusion.path $script:PrototypeRelativePath 'prototype path'
     if ($Plan.prototype_exclusion.byte_size -isnot [long] -and $Plan.prototype_exclusion.byte_size -isnot [int]) { throw 'Prototype byte size must be an integer.' }
@@ -167,14 +172,14 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     Assert-ExactProperties $Plan.caller_controls @('caller_selected_package_path_permitted','caller_selected_inf_path_permitted','caller_selected_candidate_permitted','first_or_best_driver_fallback_permitted') 'caller_controls'
     foreach ($name in @($Plan.caller_controls.PSObject.Properties.Name)) { Assert-Bool $Plan.caller_controls.$name $false "caller control $name" }
     Assert-ExactProperties $Plan.candidate_rule @('state','zero_exact_matches','one_exact_match','multiple_exact_matches','required_discriminators','prohibited_strategies') 'candidate_rule'
-    Assert-String $Plan.candidate_rule.state 'DESIGN_ONLY_NOT_EXECUTABLE_UNTIL_P1B2_FREEZES_ACTUAL_PACKAGE_VALUES' 'candidate state'
+    Assert-String $Plan.candidate_rule.state 'LOCAL_DEVELOPMENT_CANDIDATE_DESIGN_ONLY_PENDING_HOST_OBSERVATION_AND_INSTALLATION_CONTRACT' 'candidate state'
     Assert-String $Plan.candidate_rule.zero_exact_matches 'REJECT' 'zero match rule'
     Assert-String $Plan.candidate_rule.one_exact_match 'ELIGIBLE' 'one match rule'
     Assert-String $Plan.candidate_rule.multiple_exact_matches 'REJECT_AMBIGUOUS' 'multiple match rule'
     Assert-StringArray @($Plan.candidate_rule.required_discriminators) @('published INF identity','provider','description','date','version','stable hardware ID','model and install-section relationship','catalog and package identity','driver rank constraints','service and filter identity','target-node role','exact live instance chain','ContainerId') 'candidate discriminators'
     Assert-StringArray @($Plan.candidate_rule.prohibited_strategies) @('first enumerated candidate','lowest enumerated index','highest-ranked candidate without identity matching','hardware-ID-only matching','INF-basename-only matching','caller-selected candidate','caller-selected INF','wildcard provider','wildcard description','fallback candidate') 'prohibited candidate strategies'
-    $future=@('built_sys_byte_size','built_sys_sha256','final_inf_byte_size','final_inf_sha256','catalog_byte_size','catalog_sha256','published_staged_inf_name','package_signer_subject','signature_chain_identity','signature_verification_result','driver_package_date','driver_package_version','driver_node_provider','driver_node_description','driver_rank','driver_node_identity','setupapi_package_identity','exact_candidate_match_result','restart_required_result','reboot_required_result','build_provenance','build_tool_versions','reproducibility_result')
-    Assert-StringArray @($Plan.future_p1b2_fields) $future 'future P1B-2 fields'
+    $future=@('windows_edition','windows_version','windows_build','secure_boot_state','test_signing_state','code_integrity_signature_enforcement_state','known_working_local_installation_mechanism','local_installation_mechanism_persistence','reboot_required_for_mechanism','signature_enforcement_changes_required','package_source_directory','published_inf_name_after_staging','driver_store_package_identity_after_staging','driver_node_provider','driver_node_description','driver_date','driver_version','driver_rank','driver_node_identity','exact_matching_candidate_count','target_physical_usb_node','target_container_id','restart_required_result','reboot_required_result','installed_service_identity','installed_filter_identity','rollback_package_identity','restoration_verification_fields')
+    Assert-StringArray @($Plan.future_local_deployment_fields) $future 'future local deployment fields'
     if (@($Plan.material_directive_bases).Count -ne 10) { throw 'Material directive basis inventory changed.' }
     foreach ($entry in @($Plan.material_directive_bases)) { Assert-ExactProperties $entry @('directive','basis') 'material directive basis'; if ([string]::IsNullOrWhiteSpace($entry.directive) -or [string]::IsNullOrWhiteSpace($entry.basis)) { throw 'Material directive basis is empty.' } }
     Assert-String $Plan.blocker $script:Blocker 'blocker'

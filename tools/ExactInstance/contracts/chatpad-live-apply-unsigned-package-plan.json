@@ -1,7 +1,7 @@
 {
   "schema": "chatpad-live-apply-unsigned-package-plan-v1",
-  "status": "CANONICAL_WINDOWS_11_DRIVER_PACKAGE_BUILT_AND_CATALOGED_UNSIGNED_NOT_PRODUCTION_SIGNED_NOT_STAGED_NOT_INSTALLABLE_NOT_INDEPENDENTLY_AUDITED",
-  "readiness": "READY_FOR_EXTERNAL_PRODUCTION_SIGNING_PREPARATION_ONLY",
+  "status": "CANONICAL_WINDOWS_11_DRIVER_PACKAGE_BUILT_AND_CATALOGED_UNSIGNED_FOR_LOCAL_DEVELOPMENT_NOT_STAGED_NOT_INSTALLED_NOT_LOADED_NOT_INDEPENDENTLY_AUDITED",
+  "readiness": "READY_FOR_LOCAL_DEVELOPMENT_PACKAGE_AND_DEPLOYMENT_CONTRACT_AUDIT_ONLY",
   "source_commit": "4510e1f2f8a4b4e31ac40672261cf4ad94ec27c5",
   "driver_project": {"path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "5641815C63FBB0C2A7442E555A1B70F3BE4C22014DF2BA29A29E987A2D903112"},
   "canonical_inf": {"path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "byte_size": 1581, "sha256": "0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC"},
@@ -24,25 +24,39 @@
   "driver_ver": "07/11/2026,1.0.0.0",
   "catalog_filename": "ChatpadFilterExtension.cat",
   "unsigned_signature_states": {"sys": "unsigned", "catalog": "unsigned", "test_certificate_present": false, "signer_present": false},
-  "production_signing": {
-    "route": "WHCP_HLK_PRODUCTION_SIGNING",
-    "external_handoff_inventory": [
-      {"filename": "ChatpadFilterExtension.inf", "byte_size": 1581, "sha256": "0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC", "role": "driver folder"},
-      {"filename": "ChatpadFilter.sys", "byte_size": 40960, "sha256": "E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB", "role": "driver folder"},
-      {"filename": "ChatpadFilterExtension.cat", "byte_size": 1202, "sha256": "6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD", "role": "driver folder unsigned catalog"},
-      {"filename": "ChatpadFilter.pdb", "byte_size": 946176, "sha256": "6759516C2B70396A8B248B4013CE852DF55144A83B2D6DE6DCCD1D9400FDB648", "role": "build A symbol resource outside installable package"}
-    ],
-    "portal_submission_format": ".hlkx",
-    "portal_submission_created": false,
-    "external_hlk_testing_required": true,
-    "ev_submission_signature_required": true,
-    "returned_sys_expected_to_change": false,
-    "returned_catalog_expected_to_change": true,
-    "test_signed_substitution_permitted": false,
-    "final_identity_freeze_task": "TASK 8I-P1B-2B"
+  "deployment_policy": {
+    "deployment_scope": "LOCAL_DEVELOPMENT_ONLY",
+    "current_required_route": "CONTROLLED_LOCAL_DEVELOPMENT_INSTALLATION",
+    "package_signed": false,
+    "package_staged": false,
+    "package_installed": false,
+    "driver_loaded": false,
+    "local_installation_method": "NOT_YET_OBSERVED",
+    "local_signature_enforcement_state": "NOT_YET_OBSERVED",
+    "local_candidate_identity": "NOT_YET_OBSERVED",
+    "local_published_inf_name": "NOT_YET_OBSERVED",
+    "ordinary_production_signature_enforcement_loadability_claimed": false,
+    "diagnostic_symbol_input": {"filename": "ChatpadFilter.pdb", "source_build": "A", "byte_size": 946176, "sha256": "6759516C2B70396A8B248B4013CE852DF55144A83B2D6DE6DCCD1D9400FDB648", "installable_package_member": false},
+    "optional_future_production_distribution": {
+      "classification": "OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE",
+      "signing_route": "OUT_OF_SCOPE_OPTIONAL_FUTURE_WORK",
+      "whcp_hlk_required_for_current_objective": false,
+      "partner_center_submission_required_for_current_objective": false,
+      "windows_update_publication_required_for_current_objective": false,
+      "microsoft_production_signing_required_for_current_objective": false
+    }
   },
-  "current_installability": "NOT_INSTALLABLE_UNSIGNED_PACKAGE",
-  "future_fields_unpopulated": ["published_inf_name", "final_signed_catalog_hash", "final_signed_sys_hash_if_changed", "signer_subject", "signature_chain", "driver_rank", "driver_store_identity", "setupapi_candidate_identity", "live_candidate_count"],
-  "blocker": "BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_PRODUCTION_SIGNED_AND_INDEPENDENTLY_AUDITED",
-  "next_task": "TASK 8I-P1B-2B — Obtain and validate the externally production-signed canonical Windows 11 driver package"
+  "candidate_selection": {
+    "scope": "LOCAL_DEVELOPMENT_PACKAGE",
+    "state": "NOT_YET_OBSERVED",
+    "zero_exact_matches": "REJECT",
+    "one_exact_match": "ELIGIBLE",
+    "multiple_exact_matches": "REJECT_AMBIGUOUS",
+    "required_stable_discriminators": ["provider", "description", "date", "version", "stable hardware ID", "model and install-section relationship", "catalog and package identity", "service and filter identity", "target-node role", "exact live instance chain", "ContainerId"],
+    "prohibited_strategies": ["first enumerated candidate", "lowest enumerated index", "highest-ranked candidate without identity matching", "hardware-ID-only matching", "INF-basename-only matching", "caller-selected candidate", "caller-selected INF", "wildcard provider", "wildcard description", "fallback candidate"]
+  },
+  "current_installability": "NOT_CURRENTLY_INSTALLABLE_LOCAL_METHOD_AND_ENFORCEMENT_STATE_NOT_OBSERVED",
+  "future_local_deployment_fields": ["windows_edition", "windows_version", "windows_build", "secure_boot_state", "test_signing_state", "code_integrity_signature_enforcement_state", "known_working_local_installation_mechanism", "local_installation_mechanism_persistence", "reboot_required_for_mechanism", "signature_enforcement_changes_required", "package_source_directory", "published_inf_name_after_staging", "driver_store_package_identity_after_staging", "driver_node_provider", "driver_node_description", "driver_date", "driver_version", "driver_rank", "driver_node_identity", "exact_matching_candidate_count", "target_physical_usb_node", "target_container_id", "restart_required_result", "reboot_required_result", "installed_service_identity", "installed_filter_identity", "rollback_package_identity", "restoration_verification_fields"],
+  "blocker": "BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED",
+  "next_task": "TASK 8I-P1B-LD-R2 — Independent read-only audit of the unsigned canonical package and local-development deployment contract"
 }

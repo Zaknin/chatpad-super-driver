@@ -1,5 +1,41 @@
 # Decisions
 
+## 2026-07-11 - Make controlled local development the current deployment objective
+
+**Decision:** The current package objective is `LOCAL_DEVELOPMENT_ONLY` on the
+operator's own Windows 11 development machine. The canonical unsigned INF,
+SYS, and CAT remain frozen and reproducible. Controlled local installation is
+the current required route, while WHCP/HLK, Partner Center, Windows Update,
+retail/commercial distribution, and Microsoft production signing are
+`OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE` and optional future
+distribution work. The exact local installation method and relevant signature-
+enforcement state must remain `NOT_YET_OBSERVED` until a separately authorized
+read-only host observation records them.
+
+**Rationale:** Production certification is not required to define and audit a
+package intended only for controlled development on the operator's machine.
+Keeping the production-distribution route as the blocker prevented progress
+toward the actual objective. The unsigned package must nevertheless remain
+fail-closed: it is not claimed installable or ordinarily loadable under
+production signature enforcement without observed host facts and a later
+authorized deployment lane.
+
+**Alternatives rejected:** Continuing to require WHCP/HLK or Partner Center
+before local testing; treating prior experience with unsigned drivers as proof
+of this host's current configuration; assuming test mode or a signature-
+enforcement bypass; fabricating a published INF, driver-store identity, rank,
+or candidate; rebuilding or signing the frozen package; or staging/installing
+it during this contract-only task.
+
+**Consequences:** The earlier WHCP/HLK decision remains historical evidence of
+an optional future production-distribution path but is superseded for the
+current objective. The package remains unsigned, unstaged, uninstalled, and
+unloaded. TASK 8I remains blocked by
+`BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED`.
+Next is TASK 8I-P1B-LD-R2, an independent read-only audit; only after it passes
+may a separate read-only host-readiness observation determine the exact known-
+working local installation path. No live authorization phrase is active.
+
 ## 2026-07-11 - Use reproducible unsigned output and WHCP/HLK for production signing
 
 **Decision:** Freeze the canonical pre-sign package as the byte-identical

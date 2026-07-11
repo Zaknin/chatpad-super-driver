@@ -1,5 +1,16 @@
 # Controlled Windows 11 Runtime Bring-Up Readiness
 
+## TASK 8I-P1B-LD-R1 - Local-development package-route contract (2026-07-11)
+
+- **Objective:** `LOCAL_DEVELOPMENT_ONLY` controlled installation and use on the operator's own Windows 11 development machine. WHCP/HLK, Partner Center, Windows Update, retail/commercial distribution, and Microsoft production signing are optional future distribution work and `OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE`.
+- **Canonical package:** the reproducible package is unchanged: INF 1,581 bytes / `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`; SYS 40,960 bytes / `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`; CAT 1,202 bytes / `6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`. SYS and CAT remain unsigned.
+- **Current state:** `CANONICAL_WINDOWS_11_DRIVER_PACKAGE_BUILT_AND_CATALOGED_UNSIGNED_FOR_LOCAL_DEVELOPMENT_NOT_STAGED_NOT_INSTALLED_NOT_LOADED_NOT_INDEPENDENTLY_AUDITED`; readiness is `READY_FOR_LOCAL_DEVELOPMENT_PACKAGE_AND_DEPLOYMENT_CONTRACT_AUDIT_ONLY`.
+- **Unknown host facts:** local installation method, relevant signature-enforcement state, test-signing state, published INF, driver-store identity, rank, and candidate are all `NOT_YET_OBSERVED`. This contract does not claim that the unsigned driver can load under ordinary production signature enforcement.
+- **Candidate rule:** zero exact matches reject; one exact match is eligible; multiple exact matches reject as ambiguous. Stable package and live-instance identity are mandatory; caller/first/lowest/best-ranked/hardware-ID-only/INF-basename-only/wildcard/fallback selection remains prohibited.
+- **Safety:** this lane modifies static contracts, evidence, validators, readiness, and continuity only. It does not build, regenerate a catalog, sign, access credentials, change boot/security configuration, stage, install, query host/device state, load, invoke native code, bind, authorize, restart, or mutate Windows. No live authorization phrase is active.
+- **Blocker:** `BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED`; TASK 8I remains blocked.
+- **Next task:** TASK 8I-P1B-LD-R2 — Independent read-only audit of the unsigned canonical package and local-development deployment contract. After audit, a separate read-only host-readiness observation must determine the exact known-working local installation path.
+
 ## TASK 8I-P1B-2A - Unsigned canonical package (2026-07-11)
 
 - **Status:** `CANONICAL_WINDOWS_11_DRIVER_PACKAGE_BUILT_AND_CATALOGED_UNSIGNED_NOT_PRODUCTION_SIGNED_NOT_STAGED_NOT_INSTALLABLE_NOT_INDEPENDENTLY_AUDITED`.

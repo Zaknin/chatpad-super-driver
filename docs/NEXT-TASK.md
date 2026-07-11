@@ -2,44 +2,44 @@
 
 ## Exact current state
 
-- Branch: `feature/native-adapter-live-apply-package-build`.
-- Starting package-source commit: `4510e1f2f8a4b4e31ac40672261cf4ad94ec27c5`.
-- Expected single build commit subject: `build: freeze unsigned canonical live apply package`; use the exact committed hash from Git after finalization.
-- Unsigned SYS: `ChatpadFilter.sys`, 40,960 bytes, SHA-256 `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`.
+- Branch: `feature/native-adapter-local-development-package-route`.
+- Starting commit: `11d1053db4fd35f9515c6884953057f2687385fb` (`build: freeze unsigned canonical live apply package`).
+- Expected single remediation commit subject: `fix: define local development package route`; use the exact committed hash after finalization.
+- Deployment scope: `LOCAL_DEVELOPMENT_ONLY`; production distribution signing is optional future work and `OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE`.
+- Canonical SYS: `ChatpadFilter.sys`, 40,960 bytes, SHA-256 `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`, unsigned.
 - Canonical INF: 1,581 bytes, SHA-256 `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`.
-- Unsigned CAT: `ChatpadFilterExtension.cat`, 1,202 bytes, SHA-256 `6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`.
-- Package status: built and cataloged, unsigned, not production-signed, not staged, not installable, not independently audited.
-- Blocker: `BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_PRODUCTION_SIGNED_AND_INDEPENDENTLY_AUDITED`.
+- Canonical CAT: `ChatpadFilterExtension.cat`, 1,202 bytes, SHA-256 `6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`, unsigned.
+- Package state: unstaged, uninstalled, unloaded, and not independently audited. Local installation method and signature-enforcement state are `NOT_YET_OBSERVED`; no published INF, driver-store identity, rank, or candidate has been observed.
+- Blocker: `BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED`.
 - No live authorization phrase is active or carried forward.
 
 ## Next recommended objective
 
-TASK 8I-P1B-2B — Obtain and validate the externally production-signed canonical Windows 11 driver package.
+TASK 8I-P1B-LD-R2 — Independent read-only audit of the unsigned canonical package and local-development deployment contract.
 
 ## Required branch and starting commit
 
-- Start from the pushed `feature/native-adapter-live-apply-package-build` commit whose parent is `4510e1f2f8a4b4e31ac40672261cf4ad94ec27c5` and subject is `build: freeze unsigned canonical live apply package`.
-- Require a clean worktree, upstream `0/0`, and exact remote identity before changes.
+- Start from the pushed `feature/native-adapter-local-development-package-route` commit whose parent is `11d1053db4fd35f9515c6884953057f2687385fb` and subject is `fix: define local development package route`.
+- Require a clean worktree, upstream `0/0`, and exact remote identity before audit work.
 
-## Preconditions
+## Preconditions and audit scope
 
-- Read `AGENTS.md`, the four continuity documents, and the latest worklog entry.
-- Validate `docs/evidence/canonical-live-apply-package-build-task-8i-p1b-2a.json` and `tools/ExactInstance/contracts/chatpad-live-apply-unsigned-package-plan.json` in both PowerShell runtimes.
-- Match the external lab handoff to the frozen INF, SYS, CAT, and build-A PDB identities.
-- Require an externally created and EV-signed WHCP/HLK `.hlkx` submission from an authorized lab; do not substitute attestation or test signing.
+- Re-derive the result from Git and file contents; do not trust the completion report.
+- Verify the exact SYS/INF/CAT identities, package membership, unsigned states, frozen source/build provenance, local-only deployment policy, 28-field future observation inventory, candidate-selection fail-closed rules, focused validator coverage, readiness entry count, and zero operational counters.
+- Keep the repository immutable during the independent audit unless a separate remediation task is explicitly authorized.
 
 ## Safety restrictions
 
-- Do not stage, install, bind, load, query devices or the driver store, invoke SetupAPI/Newdev, execute the TASK 8I native path, issue/consume authorization, restart, re-enumerate, roll back, restore, or mutate Windows.
-- Do not create/install certificates, access private keys, enable test mode, change boot configuration or Secure Boot, or accept a test-signed package.
-- Portal access and external coordination require explicit authorization and credentials outside this repository task.
+- Read repository files and the exact canonical artifact root only. Do not build, regenerate the catalog, sign, create/install certificates, access private keys, change BCD or Secure Boot, stage/install the INF, invoke `pnputil`, `devcon`, SetupAPI, or Newdev, query devices/driver store/registry/services, load, bind, restart, issue/consume authorization, execute the native bridge, or mutate Windows.
+- Do not infer a local installation method, test-signing state, signature-enforcement state, published INF, driver-store package, driver rank, or matching candidate from prior operator experience.
 
 ## Acceptance criteria
 
-- Returned INF and SYS match the frozen pre-sign identities unless authoritative WHCP evidence explicitly proves and explains an allowed transformation.
-- Returned catalog replaces the unsigned catalog, covers exactly the frozen INF and SYS member identities, and passes Microsoft production signer, chain, EKU, and kernel-policy verification.
-- Freeze the returned signed hashes, signer/chain evidence, WHCP submission identity, and independent audit boundary without claiming staging or live candidate readiness.
-- Keep every staging, installation, native, device, binding, authorization, and Windows-mutation counter at zero.
+- The package and build provenance remain unchanged and the local-development contract is internally consistent across source plan, evidence, unsigned plan, readiness manifest, validators, and continuity documents.
+- WHCP/HLK and Partner Center are optional future distribution work, not current blockers or next steps.
+- The package remains explicitly unsigned, unstaged, uninstalled, unloaded, and not claimed ordinarily production-loadable.
+- The exact blocker and next task are present, validators pass in PowerShell 7 and Windows PowerShell 5.1, readiness reports 57 entries and zero defects, and all prohibited counters remain zero.
+- Only after LD-R2 passes, recommend a separate read-only host-readiness observation to determine the exact known-working local installation path; do not stage or install in the audit.
 
 ## Inspect first
 
@@ -47,7 +47,7 @@ TASK 8I-P1B-2B — Obtain and validate the externally production-signed canonica
 git branch --show-current
 git rev-parse HEAD
 git status --short --branch
-git ls-remote origin refs/heads/feature/native-adapter-live-apply-package-build
+git ls-remote origin refs/heads/feature/native-adapter-local-development-package-route
 pwsh -NoProfile -File tools/Test-ChatpadLiveApplyPackageSourceContract.ps1 -UnsignedPackage
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/Test-ChatpadLiveApplyPackageSourceContract.ps1 -UnsignedPackage
 ```
