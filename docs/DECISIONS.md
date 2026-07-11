@@ -3931,3 +3931,33 @@ exception, and cleanup failure. The coordinator remains private and
 recording-provider-only; production provider registration, selection,
 construction, loading, and invocation remain false. Live readiness remains
 `BLOCKED` pending independent audit.
+
+## 2026-07-11 - Fix one canonical Windows 11 live-apply package source
+
+**Decision:** Use `src/driver/ChatpadFilter/ChatpadFilter.vcxproj` as the only
+production driver project and
+`src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf` as the canonical
+production INF. The package is an AMD64 KMDF 1.15 non-associated Extension
+lower filter named `ChatpadFilter`, matching only `USB\VID_045E&PID_028E`
+through `DDInstall.Filters` / `AddFilter` with `FilterPosition=Lower`, while
+preserving Microsoft `xusb22.inf` and service `xusb22`.
+
+**Rationale:** The project is the only tracked `ConfigurationType=Driver`
+project and directly calls `WdfFdoInitSetFilter`. Accepted architecture fixes
+the physical controller node, exact stable ID, lower position, non-associated
+service, AMD64 target, and Microsoft function-driver preservation. The local
+WDK confirms the Extension class GUID and validates the resulting INF.
+
+**Alternatives rejected:** The offline prototype path; the KMDF request-owner
+static-library project; class-wide, compatible-ID, HID, IG_00, wildcard, or
+machine-instance matching; direct `LowerFilters` registry writes; base-driver
+replacement; named filter levels not exposed by `xusb22`; caller-selected INF
+or candidate paths; first/best-driver fallback; and test-signing or security
+weakening for the intended live attempt.
+
+**Consequences:** The source-level `DriverVer` is a reviewed committed literal,
+the source and future package inventories are closed, and P1B-2 must freeze all
+real built/signing/candidate identities. No signing route has yet been selected
+or executed; Microsoft attestation or WHCP selection remains a P1B-2 release
+security decision. The package remains non-installable and TASK 8I remains
+blocked pending build, catalog, signing, validation, and independent audit.

@@ -1,0 +1,163 @@
+{
+  "schema": "chatpad-live-apply-package-source-plan-v1",
+  "status": "CANONICAL_WINDOWS_11_DRIVER_PACKAGE_SOURCE_DEFINED_NOT_BUILT_NOT_CATALOGED_NOT_SIGNED_NOT_STAGED_NOT_INSTALLABLE",
+  "production_driver_project": {
+    "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj",
+    "sha256": "5641815C63FBB0C2A7442E555A1B70F3BE4C22014DF2BA29A29E987A2D903112",
+    "source_identity_schema": "ordered-path-sha256-v1"
+  },
+  "driver_binary_filename": "ChatpadFilter.sys",
+  "canonical_inf": {
+    "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf",
+    "sha256": "0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC"
+  },
+  "catalog_filename": "ChatpadFilterExtension.cat",
+  "architecture": "AMD64",
+  "driver_framework": "KMDF 1.15",
+  "driver_type": "device-specific non-associated extension lower filter",
+  "service_name": "ChatpadFilter",
+  "filter_name": "ChatpadFilter",
+  "filter_attachment": {
+    "method": "DDInstall.Filters AddFilter",
+    "position": "Lower",
+    "level": "none because xusb22 exposes no project-owned named level",
+    "associated_service": false,
+    "base_inf": "xusb22.inf",
+    "base_service": "xusb22",
+    "preserves_base_function_driver": true
+  },
+  "device_setup_class": {
+    "name": "Extension",
+    "guid": "{E2F84CE7-8EFA-411C-AA69-97454CA4CB57}"
+  },
+  "provider": "Chatpad Super Driver Project",
+  "manufacturer_section": "Manufacturer",
+  "model_section": "Models.NTamd64.10.0...22000",
+  "install_section": "ChatpadFilter_Install",
+  "extension_id": "{69E7CCD7-7011-4059-95D4-618974E126DD}",
+  "stable_hardware_ids": [
+    "USB\\VID_045E&PID_028E"
+  ],
+  "compatible_ids": [],
+  "target_node": {
+    "role": "physical USB XnaComposite controller devnode below preserved xusb22 function driver",
+    "stable_hardware_id": "USB\\VID_045E&PID_028E",
+    "exact_live_instance_id": "USB\\VID_045E&PID_028E\\1C21F10",
+    "function_instance_id": "USB\\VID_045E&PID_028E&IG_00\\8&2AF61D70&1&00",
+    "hid_descendant_instance_id": "HID\\VID_045E&PID_028E&IG_00\\9&2E72F677&0&0000",
+    "container_id": "{828F4587-006F-5AD1-B169-6AF57905DFDE}",
+    "live_validation_required_before_candidate_selection": true
+  },
+  "driver_source_inventory": [
+    { "path": "Directory.Build.props", "sha256": "5188484C2F320B1C1C5D7B394E4EEA820C78A5598E7DA856D49AC3800E183824" },
+    { "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "5641815C63FBB0C2A7442E555A1B70F3BE4C22014DF2BA29A29E987A2D903112" },
+    { "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.c", "sha256": "1C3BB4FF18D036229237EE391E205CCA168C287AD04B5ABE5E090B60022479DF" },
+    { "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.h", "sha256": "880549AA06A33EC33216F361934CD6BBDEF2CE404C05993731A596836EE1380B" },
+    { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.c", "sha256": "0579EE0368221792663E74FE67A153CE2D8FB27B38B2EDCB27867D7399326F74" },
+    { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.h", "sha256": "FCE07CF792033894C8E5229F368D321CF21C967F004FB06A2E81C54D1EE94406" },
+    { "path": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h", "sha256": "85A76126E95A0CCD655823D56C7EA04CB26EB8F5D3644054CB70AA7490A1B9BB" },
+    { "path": "src/driver/ChatpadFilter/device.c", "sha256": "95A5D1FA6C68F6F116C9A916549CCBE269CF90A5C79A5164E318B99D8EDC5B77" },
+    { "path": "src/driver/ChatpadFilter/driver.c", "sha256": "6532EBAB5E7813129F197DFD626954EB7ED70E5EE352B648C4D20DFF664D68C5" },
+    { "path": "src/driver/ChatpadFilter/driver.h", "sha256": "F1714037A645F31E3AEBF859C83993B3B4FE2CEF1F0127A609EFD50D19378A1A" },
+    { "path": "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj", "sha256": "2E77E95CA4239AD093D6DA600955122622EE7CEB4678C7B6DC60EBB65B60AF07" },
+    { "path": "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c", "sha256": "DB2093C989B6D74C5A151FD3493D67852A124827714CD8E223E446D49F565E14" },
+    { "path": "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h", "sha256": "FACAD99868253F5B990626C9A241942F535C2B5BC9A79130556FC745C956B4D2" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h", "sha256": "1E8BC5C7AA09A7A62AFCD06799E9581A2983C6BCB42BF02B41139182BE4B4253" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadActivationRequests.c", "sha256": "C6A63542B95E64BD0B7CC4D58B54A02C3E54B92DCBEB6D6E7BCD683469FF00B2" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadActivationRequests.h", "sha256": "6633C682B9C34813381D449BF680E6A55237AE695E763F2BBCFF50E49B26BEBB" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadActivationSequence.c", "sha256": "455224D003418672CDBF0D7D55042C2990D44279484C1680343C9466A36DCA90" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadActivationSequence.h", "sha256": "0A442E97D5134EFEFA08B07FEB4F9AB4F048FF8C2FD72DCCDED9C201DC1FB7BD" },
+    { "path": "src/transport/ChatpadControlSetup/ChatpadControlSetup.c", "sha256": "B74C136AB4578A160CA4C6A87B816ABFE65D7A12177AD540DA42635475D71252" },
+    { "path": "src/transport/ChatpadControlSetup/ChatpadControlSetup.h", "sha256": "08AF36E179ECECE3404D64875E91539801ADFF37200C4E3E5B7047F993E0DB9E" },
+    { "path": "src/transport/ChatpadRequestOwnerModel/ChatpadRequestOwnerModel.c", "sha256": "381AAD1673C635C9259048377D650EF396BA37B196F208416398C7522692CB8A" },
+    { "path": "src/transport/ChatpadRequestOwnerModel/ChatpadRequestOwnerModel.h", "sha256": "83731F51F9088D89D97EDFA3414937187C8928F62585C4B8335A490F408C7F17" },
+    { "path": "src/transport/ChatpadTransport/ChatpadTransportAdapter.h", "sha256": "37DF974B30FE422F41B088A091CF3E5979D0D8688307AEAB538B9729630CEFA5" },
+    { "path": "src/transport/ChatpadWdfControlSetup/ChatpadWdfControlSetupFormatter.c", "sha256": "52B6111E7DDB5AB7371F5D42A26C9EEF133BA10EF0973B5F1AC93E7110A816E6" },
+    { "path": "src/transport/ChatpadWdfControlSetup/ChatpadWdfControlSetupFormatter.h", "sha256": "B37019CBEB1BD1BC0919248DB1FB9E2DC65E9514C84A990DA41E59DBFC27D535" }
+  ],
+  "package_source_inventory": [
+    { "role": "production driver project", "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "5641815C63FBB0C2A7442E555A1B70F3BE4C22014DF2BA29A29E987A2D903112" },
+    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC" }
+  ],
+  "package_file_inventory": [
+    { "filename": "ChatpadFilterExtension.inf", "role": "device-specific extension INF", "catalog_covered": true },
+    { "filename": "ChatpadFilter.sys", "role": "KMDF lower-filter binary produced by the production project", "catalog_covered": true }
+  ],
+  "version_policy": {
+    "source_driver_ver": "07/11/2026,1.0.0.0",
+    "date_source": "reviewed source-controlled DriverVer literal in the canonical INF",
+    "version_source": "reviewed source-controlled DriverVer literal in the canonical INF",
+    "generated_from_clock": false,
+    "identical_source_rebuild_policy": "retain the identical committed DriverVer literal",
+    "new_version_policy": "intentionally review and commit a canonical INF DriverVer change before rebuilding",
+    "p1b2_freeze_policy": "freeze the produced package date and version exactly and require both for candidate matching"
+  },
+  "catalog_policy": {
+    "filename": "ChatpadFilterExtension.cat",
+    "covered_files": [ "ChatpadFilterExtension.inf", "ChatpadFilter.sys" ],
+    "generation_performed": false,
+    "p1b2_requirement": "generate from the exact frozen two-file package and verify every member identity"
+  },
+  "signing_policy": {
+    "production_route": "Microsoft attestation signing or WHCP signing; exact route remains a P1B-2 release-security decision",
+    "production_route_selected": false,
+    "test_signing_permitted_for_live_attempt": false,
+    "test_mode_permitted": false,
+    "boot_policy_changes_permitted": false,
+    "secure_boot_changes_permitted": false,
+    "temporary_certificate_trust_permitted": false,
+    "current_installability": "NOT_INSTALLABLE_UNSIGNED_SOURCE_ONLY"
+  },
+  "prototype_exclusion": {
+    "path": "prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf",
+    "byte_size": 1701,
+    "sha256": "821368368000A706BD2EAC0CB659090915C34E363F59F3F19F23D6DE0C4A05F4",
+    "excluded_from_production": true,
+    "classification": "OFFLINE_PROTOTYPE_ONLY_UNSIGNED_UNCATALOGED_UNSTAGED_NON_INSTALLABLE"
+  },
+  "caller_controls": {
+    "caller_selected_package_path_permitted": false,
+    "caller_selected_inf_path_permitted": false,
+    "caller_selected_candidate_permitted": false,
+    "first_or_best_driver_fallback_permitted": false
+  },
+  "candidate_rule": {
+    "state": "DESIGN_ONLY_NOT_EXECUTABLE_UNTIL_P1B2_FREEZES_ACTUAL_PACKAGE_VALUES",
+    "zero_exact_matches": "REJECT",
+    "one_exact_match": "ELIGIBLE",
+    "multiple_exact_matches": "REJECT_AMBIGUOUS",
+    "required_discriminators": [
+      "published INF identity", "provider", "description", "date", "version",
+      "stable hardware ID", "model and install-section relationship", "catalog and package identity",
+      "driver rank constraints", "service and filter identity", "target-node role",
+      "exact live instance chain", "ContainerId"
+    ],
+    "prohibited_strategies": [
+      "first enumerated candidate", "lowest enumerated index", "highest-ranked candidate without identity matching",
+      "hardware-ID-only matching", "INF-basename-only matching", "caller-selected candidate",
+      "caller-selected INF", "wildcard provider", "wildcard description", "fallback candidate"
+    ]
+  },
+  "future_p1b2_fields": [
+    "built_sys_byte_size", "built_sys_sha256", "final_inf_byte_size", "final_inf_sha256",
+    "catalog_byte_size", "catalog_sha256", "published_staged_inf_name", "package_signer_subject",
+    "signature_chain_identity", "signature_verification_result", "driver_package_date", "driver_package_version",
+    "driver_node_provider", "driver_node_description", "driver_rank", "driver_node_identity",
+    "setupapi_package_identity", "exact_candidate_match_result", "restart_required_result",
+    "reboot_required_result", "build_provenance", "build_tool_versions", "reproducibility_result"
+  ],
+  "material_directive_bases": [
+    { "directive": "Class and ClassGuid", "basis": "WDK 10.0.26100.0 shared/devguid.h GUID_DEVCLASS_EXTENSION" },
+    { "directive": "ExtensionId", "basis": "accepted project-owned extension identity in WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md" },
+    { "directive": "NTamd64.10.0...22000", "basis": "accepted AMD64 Windows 11 build 22000 minimum package model" },
+    { "directive": "USB\\VID_045E&PID_028E", "basis": "accepted exact physical controller target; revision, interface, HID, class and wildcard matches prohibited" },
+    { "directive": "AddFilter and FilterPosition=Lower", "basis": "accepted declarative device-specific lower-filter model beneath preserved xusb22" },
+    { "directive": "ChatpadFilter service and binary", "basis": "production Driver project name plus accepted non-associated demand-start service identity" },
+    { "directive": "KMDF 1.15 and DIRID 13", "basis": "accepted package model and KMDF Driver project metadata" },
+    { "directive": "Provider strings", "basis": "project-owned canonical source identity defined by this package-source contract" },
+    { "directive": "DriverVer", "basis": "reviewed committed source literal governed by version_policy" },
+    { "directive": "CatalogFile", "basis": "accepted catalog identity; generation and signing deferred to P1B-2" }
+  ],
+  "blocker": "BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_BUILT_CATALOGED_SIGNED_AND_INDEPENDENTLY_AUDITED",
+  "next_task": "TASK 8I-P1B-2 — Build, catalog, sign, validate, and freeze the canonical Windows 11 driver package and immutable APPLY candidate contract"
+}

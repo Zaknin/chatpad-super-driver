@@ -40,6 +40,18 @@
 - **Next task:** TASK 8H-2 — Repeated independent read-only audit of the
   remediated explicit one-shot live-execution authorization gate.
 
+## TASK 8I-P1B-1-C1 - Canonical Windows 11 package source (2026-07-11)
+
+- **Accepted closures:** TASK 8F-R2 and TASK 8I-P1A-R2R1 passed as read-only external audits and closed their respective source lanes without closure commits.
+- **Source status:** `CANONICAL_WINDOWS_11_DRIVER_PACKAGE_SOURCE_DEFINED_NOT_BUILT_NOT_CATALOGED_NOT_SIGNED_NOT_STAGED_NOT_INSTALLABLE`.
+- **Production inputs:** `src/driver/ChatpadFilter/ChatpadFilter.vcxproj` -> `ChatpadFilter.sys`; canonical INF `src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf`; strict source plan and validator under `tools/ExactInstance`.
+- **Attachment contract:** AMD64 KMDF 1.15 Extension package; exact physical `USB\VID_045E&PID_028E` model; non-associated `ChatpadFilter` demand-start service; declarative lower `AddFilter`; Microsoft `xusb22` base driver preserved.
+- **Validation:** focused 29/29 in both PowerShell runtimes; WDK InfVerif valid; all required compatibility counts exact; regressions 297/297, 286/286, and 34/34; canonical readiness 57 entries / 0 defects.
+- **Signing:** no certificate, catalog, or signature exists. Microsoft attestation or WHCP route selection remains required; test signing and security-policy weakening are prohibited for the intended live attempt.
+- **Safety:** all build/package/catalog/signing/staging/native/device/authorization/binding/mutation counters remain zero. No authorization phrase is active.
+- **Blocker:** `BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_BUILT_CATALOGED_SIGNED_AND_INDEPENDENTLY_AUDITED`.
+- **Next task:** TASK 8I-P1B-2 — Build, catalog, sign, validate, and freeze the canonical Windows 11 driver package and immutable APPLY candidate contract.
+
 This document is the authoritative preparation plan for the first controlled
 Windows 11 runtime bring-up of the rewritten Chatpad driver. This commit is
 preparation only: it does not sign, package, stage, install, load, trace, query
