@@ -25,7 +25,9 @@ function Test-Case {
 
 function Assert-ZeroProhibitedCounters {
     param([object]$Result, [string]$Context)
+    Assert-8I ($Result.backend_load_count -eq 0) "$Context backend load changed"
     Assert-8I ($Result.provider_construction_count -eq 0) "$Context production provider construction changed"
+    Assert-8I ($Result.production_provider_construction_count -eq 0) "$Context production provider construction alias changed"
     Assert-8I (-not $Result.production_provider_constructed) "$Context production provider constructed flag changed"
     Assert-8I ($Result.native_invocation_count -eq 0) "$Context native invocation changed"
     Assert-8I ($Result.apply_attempt_count -eq 0) "$Context apply attempt changed"
@@ -66,6 +68,13 @@ function Set-ContractValue {
     $Contract | Add-Member -NotePropertyName $Name -NotePropertyValue $Value
 }
 
+function Get-TextIndex {
+    param([Parameter(Mandatory)][string]$Text, [Parameter(Mandatory)][string]$Needle)
+    $index = $Text.IndexOf($Needle, [StringComparison]::Ordinal)
+    Assert-8I ($index -ge 0) "source token missing: $Needle"
+    $index
+}
+
 Import-Module $gatePath -Force
 Import-Module $coordinatorPath -Force
 $gateModule = Get-Module ChatpadLiveExecutionAuthorizationGate | Select-Object -First 1
@@ -98,16 +107,51 @@ Test-Case 'ordinary operator surface is minimal' {
     }
 }
 
-Test-Case 'public execute path is blocked without consumption or production construction in task 8I-1A' {
-    $auth = New-TestAuthorization
-    $result = & $executorPath -ExecuteLiveApply -Authorization $auth
-    Assert-8I ($result.final_status -eq 'PRECONDITION_REJECTED') 'public execute path was not blocked'
-    Assert-8I ($result.error_category -eq 'TASK_8I_1A_PRODUCTION_PROVIDER_CONSTRUCTION_DISABLED') 'public execute block category changed'
-    Assert-8I (-not $result.authorization_consumed) 'public execute consumed authorization'
-    Assert-ZeroProhibitedCounters $result 'public execute path'
-    $fake = Invoke-Fake $auth
-    Assert-8I $fake.authorization_consumed 'authorization was unavailable after public blocked path'
-    Assert-8I ($fake.final_status -eq 'NATIVE_APPLY_COMPLETED') 'authorization was consumed by public blocked path'
+Test-Case 'structured result contract exposes production counters without sensitive state' {
+    $result = & $executorPath
+    foreach ($name in @('backend_load_count','production_provider_construction_count','provider_construction_count','native_invocation_count','apply_attempt_count','retry_count','cleanup_attempted','cleanup_result','source_validation_result','exception_type','backend_result_summary','contract_validation')) {
+        Assert-8I ($null -ne $result.PSObject.Properties[$name]) "result contract missing $name"
+    }
+    foreach ($forbidden in @('Authorization','BackendModule','Provider','ProductionProvider','NativeHandle','Delegate','ScriptBlock','FunctionReference','Callback','ReusableExecutionState')) {
+        Assert-8I ($null -eq $result.PSObject.Properties[$forbidden]) "result exposed forbidden property $forbidden"
+    }
+    Assert-8I ($result.backend_load_count -eq 0) 'missing-switch result loaded backend'
+    Assert-8I ($result.production_provider_construction_count -eq 0) 'missing-switch result constructed provider'
+    Assert-8I ($result.native_invocation_count -eq 0) 'missing-switch result invoked native path'
+}
+
+Test-Case 'production branch is source complete but not executed by focused tests' {
+    $source = Get-Content -Raw $executorPath
+    $obsoleteMode = 'Production' + 'Disabled'
+    $obsoleteCategory = 'TASK_8I_1A_PRODUCTION_PROVIDER_' + 'CONSTRUCTION_DISABLED'
+    $obsoleteFlag = 'production_provider_' + 'construction_enabled'
+    Assert-8I ($source -notmatch $obsoleteMode) 'obsolete production mode remained in source'
+    Assert-8I ($source -notmatch $obsoleteCategory) 'obsolete production category remained in source'
+    Assert-8I ($source -notmatch $obsoleteFlag) 'obsolete production flag remained in source'
+    Assert-8I ($source -match 'Invoke-ChatpadOneShotLiveApplyExecutorCore -ExecutionMode Production -Authorization') 'public entrypoint does not select production mode'
+    Assert-8I (([regex]::Matches($source, [regex]::Escape("task_8f_backend_path = 'tools/ExactInstance/ChatpadGatedProductionNativeAdapterBackend.psm1'"))).Count -eq 1) 'fixed backend path occurrence changed'
+    Assert-8I ($source -match "task_8f_private_provider_constructor = 'New-GatedProductionNativeProviderDescriptor'") 'fixed private constructor name missing'
+    Assert-8I ($source -match "task_8f_private_apply_invoker = 'Invoke-GatedProductionBackendRecordingPlan'") 'fixed private apply invoker name missing'
+    $contractIndex = Get-TextIndex $source 'Test-ChatpadOneShotLiveApplyExecutorContract -Contract $Contract'
+    $authTypeIndex = Get-TextIndex $source 'Authorization -isnot [Chatpad.LiveAuthorization.LiveNativeApplyAuthorization]'
+    $consumeIndex = Get-TextIndex $source 'TryConsumeOneShotLiveNativeApplyAuthorization($Authorization, $fingerprint)'
+    $backendIndex = Get-TextIndex $source '$backendModule = Import-ChatpadOneShotLiveApplyProductionBackend'
+    $constructionIndex = Get-TextIndex $source '$productionProvider = New-ChatpadOneShotLiveApplyProductionProvider -BackendModule $backendModule'
+    $invocationIndex = Get-TextIndex $source '$backendResult = Invoke-ChatpadOneShotLiveApplyNativeApply -BackendModule $backendModule -BackendRequest $backendRequest -ProductionProvider $productionProvider'
+    $cleanupIndex = Get-TextIndex $source 'finally {'
+    Assert-8I ($contractIndex -lt $authTypeIndex) 'contract validation does not precede authorization validation'
+    Assert-8I ($authTypeIndex -lt $consumeIndex) 'authorization validation does not precede consumption'
+    Assert-8I ($consumeIndex -lt $backendIndex) 'authorization consumption does not precede backend load'
+    Assert-8I ($backendIndex -lt $constructionIndex) 'backend load does not precede provider construction'
+    Assert-8I ($constructionIndex -lt $invocationIndex) 'provider construction does not precede apply invocation'
+    Assert-8I ($invocationIndex -lt $cleanupIndex) 'apply invocation does not precede guaranteed cleanup'
+    Assert-8I (([regex]::Matches($source, [regex]::Escape('$productionProvider = New-ChatpadOneShotLiveApplyProductionProvider -BackendModule $backendModule'))).Count -eq 1) 'production construction call count changed'
+    Assert-8I (([regex]::Matches($source, [regex]::Escape('$backendResult = Invoke-ChatpadOneShotLiveApplyNativeApply -BackendModule $backendModule -BackendRequest $backendRequest -ProductionProvider $productionProvider'))).Count -eq 1) 'native apply invocation call count changed'
+    $productionBlock = $source.Substring($consumeIndex, (Get-TextIndex $source '$fakeConstruction = 0') - $consumeIndex)
+    Assert-8I ($productionBlock -notmatch '\b(for|foreach|while|do)\b') 'production construction or invocation is enclosed by a loop'
+    foreach ($status in @('PRECONDITION_REJECTED','AUTHORIZATION_REJECTED','AUTHORIZATION_CONSUMED','BACKEND_LOAD_FAILED','PROVIDER_CONSTRUCTION_FAILED','NATIVE_APPLY_FAILED','NATIVE_APPLY_COMPLETED','RESULT_CAPTURE_FAILED','CLEANUP_FAILED')) {
+        Assert-8I ($source.Contains($status)) "required result status missing: $status"
+    }
 }
 
 Test-Case 'authorization rejection cases stay before construction' {
@@ -143,7 +187,7 @@ Test-Case 'authorization rejection cases stay before construction' {
         [pscustomobject]@{ name = 'consumed authorization'; value = $consumed }
     )
     foreach ($candidate in $candidates) {
-        $result = Invoke-Fake $candidate.value
+        $result = & $executorPath -ExecuteLiveApply -Authorization $candidate.value
         Assert-RejectionBeforeConstruction $result "authorization rejection $($candidate.name)"
         Assert-8I ($result.final_status -eq 'AUTHORIZATION_REJECTED') "authorization rejection $($candidate.name) wrong status"
     }
