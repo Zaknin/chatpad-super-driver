@@ -136,8 +136,8 @@ $declarationPath = Join-Path $root 'tools\ExactInstance\NativeInterop\Chatpad.Na
 $boundaryPath = Join-Path $root 'tools\ExactInstance\NativeInterop\ChatpadNativeInteropSourceBoundary.psm1'
 $contractPath = Join-Path $root 'tools\ExactInstance\CompileOnlyValidation\CompileOnlyContracts.cs'
 $propsPath = Join-Path $root 'tools\ExactInstance\CompileOnlyValidation\Directory.Build.props'
-$expectedDeclarationHash = '127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA'
-$expectedBoundaryHash = '3E7E3119A467330A413280658503B294C0FFB38271A9CA847056BAF6B2E778D3'
+$expectedDeclarationHash = 'B4D24BF374B391A36B4A3513B117A2FF50F8BC3D8795248808086AC984E874D9'
+$expectedBoundaryHash = '663FB2CAB1259D301B4679100F407A56145BFD120C3882C5CF5F09F24221AA5E'
 $actualDeclarationHash = (Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $declarationPath -HashPolicy canonical_lf_text -CommitRepresented $head -State tracked).canonical_sha256
 $actualBoundaryHash = (Get-ChatpadEvidenceFileIdentity -RepositoryRoot $root -Path $boundaryPath -HashPolicy canonical_lf_text -CommitRepresented $head -State tracked).canonical_sha256
 if ($actualDeclarationHash -cne $expectedDeclarationHash -or $actualBoundaryHash -cne $expectedBoundaryHash) {
@@ -317,6 +317,15 @@ $evidence = [pscustomobject][ordered]@{
         marshal_metadata_compile_only = $true
         runtime_structure_sizes_measured = $false
         runtime_metadata_reflection_used = $false
+        native_api_inventory = @('SetupDiCreateDeviceInfoList','SetupDiDestroyDeviceInfoList','SetupDiOpenDeviceInfoW','SetupDiGetDeviceInstanceIdW','SetupDiGetDevicePropertyW','SetupDiGetDeviceRegistryPropertyW','SetupDiBuildDriverInfoList','SetupDiDestroyDriverInfoList','SetupDiEnumDriverInfoW','SetupDiGetDriverInfoDetailW','SetupDiGetDriverInstallParamsW','SetupDiSetSelectedDriverW','DiInstallDevice')
+        structure_inventory = @('ChatpadDeviceInfoSetHandleToken','SP_DEVINFO_DATA','SP_DEVINSTALL_PARAMS_W','SP_DRVINSTALL_PARAMS','SP_DRVINFO_DATA_W','SP_DRVINFO_DETAIL_DATA_W','DEVPROPKEY')
+        corrected_method_signature = 'bool SetupDiGetDriverInstallParamsW(IntPtr DeviceInfoSet, ref SP_DEVINFO_DATA DeviceInfoData, ref SP_DRVINFO_DATA_W DriverInfoData, ref SP_DRVINSTALL_PARAMS DriverInstallParams)'
+        driver_install_params_fields = @('uint cbSize','uint Rank','uint Flags','UIntPtr PrivateData','uint Reserved')
+        driver_install_params_x86_byte_size = 20
+        driver_install_params_x64_byte_size = 32
+        old_device_install_params_binding_absent = $true
+        sdk_version = '10.0.26100.0'
+        sdk_headers = @('um/setupapi.h','um/newdev.h','shared/devpropdef.h','shared/devpkey.h')
     }
     prohibited_actions = [pscustomobject][ordered]@{
         assemblyLoaded = $false
@@ -341,7 +350,19 @@ $evidence = [pscustomobject][ordered]@{
         remaining_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         transition_allowed = [bool]$buildSucceeded
     }
+    persistent_output_cleanup = [pscustomobject][ordered]@{
+        required = $true
+        cleanup_root = (Get-RelativePath -Root $root -Path $artifactRoot).Replace('\','/')
+        cleanup_performed = $false
+        persistent_assembly_or_binary_present = $true
+    }
 }
+
+if (Test-Path -LiteralPath $artifactRoot) {
+    Remove-Item -LiteralPath $artifactRoot -Recurse -Force
+}
+$evidence.persistent_output_cleanup.cleanup_performed = -not (Test-Path -LiteralPath $artifactRoot)
+$evidence.persistent_output_cleanup.persistent_assembly_or_binary_present = Test-Path -LiteralPath $artifactRoot
 
 [IO.File]::WriteAllText($evidenceFull, ($evidence | ConvertTo-Json -Depth 20) + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
 $summary = [pscustomobject][ordered]@{

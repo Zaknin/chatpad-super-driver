@@ -1,5 +1,32 @@
 # Controlled Windows 11 Runtime Bring-Up Readiness
 
+## TASK 8F-R1B - Corrected native declaration identity propagation (2026-07-11)
+
+- **Remediation:** TASK 8F is reopened because the accepted
+  `SetupDiGetDriverInstallParamsW` ABI used the wrong final parameter type.
+  R1A commit `bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57` corrected it to
+  `SP_DRVINSTALL_PARAMS`; R1B propagates the exact corrected raw and
+  canonical-LF identities through all dependent static contracts and evidence.
+- **ABI:** sequential fields are `uint cbSize`, `uint Rank`, `uint Flags`,
+  `UIntPtr PrivateData`, and `uint Reserved`; expected sizes are 20 bytes on
+  x86 and 32 bytes on x64. Provenance is Windows SDK 10.0.26100.0
+  `um/setupapi.h`, `um/newdev.h`, `shared/devpropdef.h`, and
+  `shared/devpkey.h`.
+- **Evidence:** `docs/evidence/native-interop-declaration-remediation-task-8f-r1.json`
+  records the superseded identity as history, the single accepted corrected
+  identity, propagated source/evidence identities, dual-runtime ABI results,
+  compile-only cleanup, and integer-zero safety counters.
+- **Safety:** compile-only managed validation is isolated and non-invoking. No
+  SetupAPI/Newdev declaration, production provider, live authorization, device
+  query, binding, driver action, or Windows mutation is invoked. No persistent
+  assembly or binary remains.
+- **Blocker:**
+  `BLOCKED_NATIVE_ADAPTER_TASK_8F_NATIVE_DECLARATION_REMEDIATION_NOT_INDEPENDENTLY_AUDITED`.
+  TASK 8F remains open; TASK 8I remains blocked; production execution remains
+  unavailable; no operator authorization phrase is active.
+- **Next task:** TASK 8F-R2 — Independent read-only audit of the corrected
+  SetupAPI/Newdev declaration ABI and propagated identities.
+
 ## TASK 8G-1R4A2B - Atomic one-shot coordinator evidence restoration (2026-07-10)
 
 - **Status:** `ATOMIC_ONE_SHOT_EXECUTION_COORDINATOR_SOURCE_PRESENT_GENUINE_RECORDING_PROVIDER_ONLY_PRODUCTION_PROVIDER_NOT_SELECTED_OR_CONSTRUCTED_NO_NATIVE_EXECUTION_NO_BINDING_NO_MUTATION_LIVE_EXECUTION_UNAUTHORIZED`.

@@ -21,7 +21,7 @@ namespace Chatpad.ExactInstance.NativeInterop
         private delegate bool SetupDiDestroyDriverInfoListDelegate(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, uint driverType);
         private delegate bool SetupDiEnumDriverInfoDelegate(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, uint driverType, uint memberIndex, ref SP_DRVINFO_DATA_W driverInfoData);
         private delegate bool SetupDiGetDriverInfoDetailDelegate(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, ref SP_DRVINFO_DATA_W driverInfoData, IntPtr driverInfoDetailData, uint driverInfoDetailDataSize, out uint requiredSize);
-        private delegate bool SetupDiGetDriverInstallParamsDelegate(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, ref SP_DRVINFO_DATA_W driverInfoData, ref SP_DEVINSTALL_PARAMS_W driverInstallParams);
+        private delegate bool SetupDiGetDriverInstallParamsDelegate(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, ref SP_DRVINFO_DATA_W driverInfoData, ref SP_DRVINSTALL_PARAMS driverInstallParams);
         private delegate bool SetupDiSetSelectedDriverDelegate(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, ref SP_DRVINFO_DATA_W driverInfoData);
         private delegate bool DiInstallDeviceDelegate(IntPtr hwndParent, IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData, ref SP_DRVINFO_DATA_W driverInfoData, uint flags, out bool needReboot);
 
@@ -51,6 +51,10 @@ namespace Chatpad.ExactInstance.NativeInterop
             var installParams = default(SP_DEVINSTALL_PARAMS_W);
             installParams.cbSize = unchecked((uint)Marshal.SizeOf<SP_DEVINSTALL_PARAMS_W>());
             sink.Accept(installParams);
+
+            var driverInstallParams = default(SP_DRVINSTALL_PARAMS);
+            driverInstallParams.cbSize = unchecked((uint)Marshal.SizeOf<SP_DRVINSTALL_PARAMS>());
+            sink.Accept(driverInstallParams);
 
             var driverInfo = default(SP_DRVINFO_DATA_W);
             driverInfo.cbSize = unchecked((uint)Marshal.SizeOf<SP_DRVINFO_DATA_W>());

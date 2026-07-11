@@ -1,10 +1,25 @@
 # Project State
 
-|*Last updated: 2026-07-10 (TASK 8G-2 audit closure recorded; TASK 8H-1R1 remediated live gate source-integrity and literal-acknowledgement preconditions; live execution remains blocked pending repeated independent audit)*
+|*Last updated: 2026-07-11 (TASK 8F reopened; R1A corrected the SetupDiGetDriverInstallParamsW ABI and R1B propagated the corrected identity; TASK 8F-R2 independent audit is required)*
 
 ## Current State
 
-- **Branch:** `feature/native-adapter-live-execution-authorization-gate`.
+- **Branch:** `feature/task-8f-native-declaration-remediation`.
+- **TASK 8F remediation state:** TASK 8F was reopened because the accepted
+  `SetupDiGetDriverInstallParamsW` declaration used `SP_DEVINSTALL_PARAMS_W`
+  instead of the SDK-defined `SP_DRVINSTALL_PARAMS`. R1A corrected the source
+  at `bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57`; R1B propagates that exact
+  source identity through compile-only validation, source-boundary checks,
+  design gates, evidence, the readiness manifest, and its strict validator.
+- **TASK 8F status:** open pending TASK 8F-R2 independent read-only audit.
+- **R1B commit identity:** this continuity update is part of the single expected
+  commit with parent `bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57` and subject
+  `fix: propagate corrected native declaration identity`; derive its exact hash
+  from Git after commit creation.
+- **TASK 8I status:** blocked until TASK 8F remediation closes.
+- **Production execution:** unavailable. No declaration was invoked, no
+  device or Windows state was queried or changed, and no operator
+  authorization phrase is active or carried forward.
 - **Live Git identity:** verify the active repository HEAD, parent, subject,
   upstream sync, and status with Git during audit/finalization. Do not infer
   live HEAD from this document.
@@ -60,9 +75,9 @@
 - **Previous gate:**
   `BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED`.
 - **Current gate:**
-  `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_TASK_8F_NATIVE_DECLARATION_REMEDIATION_NOT_INDEPENDENTLY_AUDITED`.
 - **Runtime blocker:**
-  `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
+  `BLOCKED_NATIVE_ADAPTER_TASK_8F_NATIVE_DECLARATION_REMEDIATION_NOT_INDEPENDENTLY_AUDITED`.
 - **TASK 8H-1R1 live-authorization gate remediation:** this commit is expected
   to remediate the TASK 8H-1 source-integrity and literal-acknowledgement
   preconditions; derive its exact hash from Git after commit creation.

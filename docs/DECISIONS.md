@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-07-11 - Reopen TASK 8F and require one exact corrected declaration identity
+
+**Decision:** Reopen TASK 8F because `SetupDiGetDriverInstallParamsW` was
+accepted with the wrong final structure type. The only current accepted ABI is
+the Windows SDK 10.0.26100.0 contract using sequential
+`SP_DRVINSTALL_PARAMS` with fields `uint cbSize`, `uint Rank`, `uint Flags`,
+`UIntPtr PrivateData`, and `uint Reserved`, sized 20 bytes on x86 and 32 bytes
+on x64. R1A corrected the declaration source at
+`bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57`; R1B propagates its exact raw and
+canonical identities without accepting the superseded declaration as an
+alternative.
+
+**Rationale:** `SP_DEVINSTALL_PARAMS_W` and `SP_DRVINSTALL_PARAMS` are distinct
+SDK structures. Allowing the old binding or either identity would make the
+compile-only and readiness gates claim an ABI contract they do not enforce.
+
+**Alternatives rejected:** Treating both declarations as accepted; changing
+only the P/Invoke source while leaving stale mirrors/evidence; weakening exact
+hash checks; or resuming TASK 8I before an independent remediation audit.
+
+**Consequences:** TASK 8F remains open under
+`BLOCKED_NATIVE_ADAPTER_TASK_8F_NATIVE_DECLARATION_REMEDIATION_NOT_INDEPENDENTLY_AUDITED`
+until TASK 8F-R2 passes. TASK 8I remains blocked. No declaration is invoked,
+production execution remains unavailable, and no operator authorization phrase
+is active or carried forward.
+
 ## 2026-07-10 - Record TASK 8G-2 audit pass as coordinator source-lane closure
 
 **Decision:** Treat the independent `TASK 8G-2 PASS` result for audited commit

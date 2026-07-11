@@ -13536,3 +13536,62 @@ mutation/driver/artifact action performed or authorized.
 - **Identity refresh:** runtime-readiness manifest tracked-file identities are refreshed only for changed continuity documents and the validator. TASK 8E, TASK 8F, and TASK 8G evidence content and accepted source/evidence identities remain unchanged.
 - **Safety:** no live/device/PnP/USB/HID/registry/service/driver query, native invocation, SetupAPI/Newdev invocation, production-provider registration/selection/construction/loading/invocation, binding, mutation, rollback, restore, driver build/sign/package/install/load/restart, artifact access, compile-output access, or production live-authorization issuance/consumption was performed. Offline fake-only validation remains allowed.
 - **Blocker and next task:** live readiness remains `BLOCKED`; blocker remains `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`. Next: TASK 8H-2 — Repeated independent read-only audit of the remediated explicit one-shot live-execution authorization gate. Commit hash and push result are reported by Git after final validation.
+## 2026-07-11T17:34:49+04:00 - TASK 8F-R1B corrected native declaration identity propagation
+
+- **Objective:** Propagate the R1A correction of the
+  `SetupDiGetDriverInstallParamsW` final parameter from
+  `SP_DEVINSTALL_PARAMS_W` to `SP_DRVINSTALL_PARAMS` through every current
+  compile-only contract, source-boundary assertion, design gate, evidence
+  record, readiness-manifest rule, validator, regression, and continuity
+  document without resuming TASK 8I.
+- **Starting branch and commit:**
+  `feature/task-8f-native-declaration-remediation` at
+  `bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57`, parent
+  `6186b37c6b1cacc3fb91c38011bc45525bcc1a54`, subject
+  `fix: correct SetupDiGetDriverInstallParams declaration`; upstream and remote
+  matched at `0/0`, with a clean index/worktree and no untracked files.
+- **R1A verification:** the preserved R1A commit changes exactly the declaration
+  source and dedicated ABI test as regular text files. It contains no rename,
+  copy, mode, symlink, binary, evidence, documentation, driver, INF,
+  packaging, or deployment delta; `git diff --check` passed.
+- **Implementation:** corrected the compile-only delegate and added the exact
+  sequential five-field structure; expanded the source boundary to the exact
+  seven-structure inventory; replaced fixed declaration identities in the
+  design gate and canonical producer; updated G78, G83, G85, G140, and G146 in
+  the offline suite; regenerated canonical compile-only evidence; added strict
+  TASK 8F-R1 manifest/evidence validation and a 34-case tampering regression.
+- **Evidence:** regenerated
+  `docs/evidence/native-interop-compile-only-validation.json` with 13 methods,
+  seven structures, corrected raw/canonical declaration identities, SDK
+  provenance, compiler exit 0, zero warnings/errors, and verified cleanup of
+  the isolated compile directory. Created
+  `docs/evidence/native-interop-declaration-remediation-task-8f-r1.json`, schema
+  `chatpad-native-interop-declaration-remediation-evidence-v1`, for independent
+  TASK 8F remediation audit only.
+- **Validation completed so far:** the dedicated ABI suite passed 8 tests / 116
+  assertions in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655. The
+  canonical compile-only producer passed with 18 transient produced files and
+  no persistent assembly/binary. Its evidence validator passed in both
+  runtimes. The TASK 8F-R1 regression passed 34 / 34 in both runtimes.
+- **Final dual-runtime validation:** PowerShell 7.6.3 and Windows PowerShell
+  5.1.26100.8655 both passed: ABI 8 tests / 116 assertions; TASK 8E 12 / 81;
+  TASK 8F 7 / 62; TASK 8G 25 / 259; TASK 8H 75 / 2146; TASK 8I executor 11 /
+  1175. The compile-only evidence validator passed with zero defects in both
+  runtimes. TASK 8G regression passed 297 / 297, TASK 8H regression passed 286
+  / 286, and TASK 8F-R1 regression passed 34 / 34 in both runtimes. Canonical
+  readiness validation passed with zero defects and 57 manifest entries in
+  both runtimes.
+- **Finalization state:** tracked manifest identities and inventory are
+  refreshed. Diff, safety, status, the single requested commit, push, and exact
+  final remote identity are recorded by Git and the final task report.
+- **Safety:** no SetupAPI/Newdev declaration, device/PnP/USB/HID/registry/service
+  query, production-provider construction or invocation, live-authorization
+  issuance or consumption, binding, Windows mutation, driver action, build,
+  signing, packaging, staging, installation, loading, restart, rollback,
+  restore, artifact access, or existing compile-output access occurred. All
+  production/native/device/binding/mutation counters remain integer zero; no
+  operator authorization phrase is active.
+- **Blocker and continuation:** TASK 8F remains open under
+  `BLOCKED_NATIVE_ADAPTER_TASK_8F_NATIVE_DECLARATION_REMEDIATION_NOT_INDEPENDENTLY_AUDITED`.
+  TASK 8I remains blocked. Next: TASK 8F-R2 — Independent read-only audit of
+  the corrected SetupAPI/Newdev declaration ABI and propagated identities.

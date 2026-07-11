@@ -1,0 +1,126 @@
+{
+  "schema": "chatpad-native-interop-declaration-remediation-evidence-v1",
+  "status": "TASK_8F_NATIVE_DECLARATION_ABI_CORRECTED_IDENTITY_PROPAGATED_NOT_INDEPENDENTLY_AUDITED_NO_NATIVE_EXECUTION_NO_DEVICE_QUERY_NO_BINDING_NO_MUTATION",
+  "readiness": "READY_FOR_INDEPENDENT_TASK_8F_DECLARATION_REMEDIATION_AUDIT_ONLY",
+  "created_from_task": "TASK 8F-R1B",
+  "starting_branch": "feature/task-8f-native-declaration-remediation",
+  "starting_commit": "bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57",
+  "r1a_remediation_commit": "bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57",
+  "r1a_parent_commit": "6186b37c6b1cacc3fb91c38011bc45525bcc1a54",
+  "implementation_commit_source": "exact commit created after validation with subject fix: propagate corrected native declaration identity",
+  "declaration_path": "tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs",
+  "old_identity": {
+    "raw_byte_size": 9997,
+    "raw_sha256": "EEE30064DEF4817ABD43E9BEFF6A6726AC125E62F96CE4F1B71C6A5FBA498703",
+    "canonical_lf_byte_size": 9783,
+    "canonical_lf_sha256": "127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA",
+    "classification": "SUPERSEDED_HISTORY_NOT_CURRENT"
+  },
+  "corrected_identity": {
+    "raw_byte_size": 10238,
+    "raw_sha256": "E55E6E34BBB4DB40904F065292F23A76D48BE809D18E7EB76E0C3A7ECCA786F2",
+    "canonical_lf_byte_size": 10034,
+    "canonical_lf_sha256": "B4D24BF374B391A36B4A3513B117A2FF50F8BC3D8795248808086AC984E874D9",
+    "hash_policy": "canonical_lf_text"
+  },
+  "corrected_method_signature": "bool SetupDiGetDriverInstallParamsW(IntPtr DeviceInfoSet, ref SP_DEVINFO_DATA DeviceInfoData, ref SP_DRVINFO_DATA_W DriverInfoData, ref SP_DRVINSTALL_PARAMS DriverInstallParams)",
+  "driver_install_params_contract": {
+    "native_name": "SP_DRVINSTALL_PARAMS",
+    "managed_name": "SP_DRVINSTALL_PARAMS",
+    "layout": "LayoutKind.Sequential",
+    "fields": [
+      "uint cbSize",
+      "uint Rank",
+      "uint Flags",
+      "UIntPtr PrivateData",
+      "uint Reserved"
+    ],
+    "x86_byte_size": 20,
+    "x64_byte_size": 32,
+    "old_sp_devinstall_params_binding_absent": true
+  },
+  "sdk_provenance": {
+    "sdk_version": "10.0.26100.0",
+    "headers": [
+      "um/setupapi.h",
+      "um/newdev.h",
+      "shared/devpropdef.h",
+      "shared/devpkey.h"
+    ]
+  },
+  "native_api_inventory": [
+    "SetupDiCreateDeviceInfoList",
+    "SetupDiDestroyDeviceInfoList",
+    "SetupDiOpenDeviceInfoW",
+    "SetupDiGetDeviceInstanceIdW",
+    "SetupDiGetDevicePropertyW",
+    "SetupDiGetDeviceRegistryPropertyW",
+    "SetupDiBuildDriverInfoList",
+    "SetupDiDestroyDriverInfoList",
+    "SetupDiEnumDriverInfoW",
+    "SetupDiGetDriverInfoDetailW",
+    "SetupDiGetDriverInstallParamsW",
+    "SetupDiSetSelectedDriverW",
+    "DiInstallDevice"
+  ],
+  "structure_inventory": [
+    "ChatpadDeviceInfoSetHandleToken",
+    "SP_DEVINFO_DATA",
+    "SP_DEVINSTALL_PARAMS_W",
+    "SP_DRVINSTALL_PARAMS",
+    "SP_DRVINFO_DATA_W",
+    "SP_DRVINFO_DETAIL_DATA_W",
+    "DEVPROPKEY"
+  ],
+  "abi_test": {
+    "path": "tools/Test-ChatpadNativeInteropSetupApiDeclarations.ps1",
+    "raw_byte_size": 23344,
+    "raw_sha256": "0C708A93980264D96B7CE755512F4EEEB93D80B3CE65F07A4F6B1F583A9C654D",
+    "powershell_7_result": "PASS",
+    "powershell_7_test_count": 8,
+    "powershell_7_assertion_count": 116,
+    "windows_powershell_result": "PASS",
+    "windows_powershell_test_count": 8,
+    "windows_powershell_assertion_count": 116
+  },
+  "propagated_source_identities": {
+    "compile_only_contract": { "path": "tools/ExactInstance/CompileOnlyValidation/CompileOnlyContracts.cs", "raw_byte_size": 5574, "raw_sha256": "1643035FEEFC806BC57C440F266A5037FAFE4F38A628347683DA65572B478C4C", "canonical_lf_byte_size": 5511, "canonical_lf_sha256": "22E6BA4F4C3B91305A557A537E598EF51B17192960048D0F425B21DCCC66D029" },
+    "source_boundary": { "path": "tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1", "raw_byte_size": 22414, "raw_sha256": "B12A33483141C82C4FC0F4E6DEDE590A8961DD1E75D7C8FB6659F0D74E1D3080", "canonical_lf_byte_size": 22175, "canonical_lf_sha256": "663FB2CAB1259D301B4679100F407A56145BFD120C3882C5CF5F09F24221AA5E" },
+    "design_gate": { "path": "tools/ExactInstance/ChatpadNativeAdapterDesignGate.psm1", "raw_byte_size": 112222, "raw_sha256": "6D8CDE8464E9EC63E725D0C59A113373DC0720DBB4780559A945C2635C0757D4", "canonical_lf_byte_size": 111338, "canonical_lf_sha256": "E967AFCD5D80983B6BCBC917BF7C20F0D6DA0241FB4C1A3253B0AAFEF1B1CE7F" },
+    "compile_only_producer": { "path": "tools/Invoke-ChatpadNativeInteropCompileOnlyValidation.ps1", "raw_byte_size": 22212, "raw_sha256": "0E90AC601BB89777AB7F16D94A3E137E379CBAABF491ACBBA76CFE96119E7028", "canonical_lf_byte_size": 22012, "canonical_lf_sha256": "9843A7C5FFB48E3FD6704A6663754B445EB380B279B1B403F712BE77F4FDDA19" },
+    "offline_suite": { "path": "tools/ExactInstance/ChatpadExactInstance.OfflineSuite.psm1", "raw_byte_size": 187102, "raw_sha256": "B4A7353CE88F417A6340E972C187C2A3DFED9E50EA726D1C15E1E953856B619E", "canonical_lf_byte_size": 185850, "canonical_lf_sha256": "07C54A6F735F612387D5C3CE763A6BC080317943D17C028A220F9C924B053B60" },
+    "compile_only_evidence": { "path": "docs/evidence/native-interop-compile-only-validation.json", "raw_byte_size": 32587, "raw_sha256": "00EA4A97E497949481E1228E136466D7D684189283C1EF8E39561EA0319E5E88", "canonical_lf_byte_size": 31903, "canonical_lf_sha256": "B8F88DCD4AE05982D14009E4BC998EB2693C87463BCB5F1D091F6621AC84E019" }
+  },
+  "compile_only_validation": {
+    "result": "PASS",
+    "compiler_exit_code": 0,
+    "warning_count": 0,
+    "error_count": 0,
+    "produced_file_count": 18,
+    "persistent_output_cleanup_performed": true,
+    "persistent_assembly_or_binary_present": false,
+    "assembly_loaded": false,
+    "managed_code_executed": false,
+    "native_api_invoked": false
+  },
+  "safety_counters": {
+    "production_provider_construction_count": 0,
+    "production_provider_invocation_count": 0,
+    "native_invocation_count": 0,
+    "setupapi_newdev_invocation_count": 0,
+    "device_query_count": 0,
+    "registry_query_count": 0,
+    "service_query_count": 0,
+    "binding_count": 0,
+    "windows_mutation_count": 0,
+    "driver_action_count": 0,
+    "live_authorization_issue_count": 0,
+    "live_authorization_consumption_count": 0
+  },
+  "live_authorization_active": false,
+  "operator_authorization_phrase_active": false,
+  "task_8f_closed": false,
+  "task_8i_blocked": true,
+  "blocker": "BLOCKED_NATIVE_ADAPTER_TASK_8F_NATIVE_DECLARATION_REMEDIATION_NOT_INDEPENDENTLY_AUDITED",
+  "next_task": "TASK 8F-R2 — Independent read-only audit of the corrected SetupAPI/Newdev declaration ABI and propagated identities"
+}

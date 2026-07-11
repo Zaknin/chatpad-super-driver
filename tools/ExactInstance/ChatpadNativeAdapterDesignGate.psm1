@@ -56,6 +56,9 @@ function ConvertTo-AuthorizedNativeSourceBoundaryResult {
         result_code = if ($defects.Count) { 'NATIVE_INTEROP_SOURCE_BOUNDARY_INVALID' } else { 'NATIVE_INTEROP_SOURCE_BOUNDARY_VALID' }
         declaration_relative_path = $SourceBoundary.declaration_relative_path
         declaration_sha256 = $SourceBoundary.declaration_sha256
+        declaration_raw_byte_size = $SourceBoundary.declaration_raw_byte_size
+        declaration_canonical_sha256 = $SourceBoundary.declaration_canonical_sha256
+        declaration_canonical_byte_size = $SourceBoundary.declaration_canonical_byte_size
         declared_api_count = $SourceBoundary.declared_api_count
         declared_structure_count = $SourceBoundary.declared_structure_count
         dllimport_count = $SourceBoundary.dllimport_count
@@ -171,8 +174,8 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
     }
 
     $requiredInputHashes = @{
-        'tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs' = '127EA58993862CCE865E3D73B0F1A99513932ABDF1BEA615812966EB5C14BEAA'
-        'tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1' = '3E7E3119A467330A413280658503B294C0FFB38271A9CA847056BAF6B2E778D3'
+        'tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs' = 'B4D24BF374B391A36B4A3513B117A2FF50F8BC3D8795248808086AC984E874D9'
+        'tools/ExactInstance/NativeInterop/ChatpadNativeInteropSourceBoundary.psm1' = '663FB2CAB1259D301B4679100F407A56145BFD120C3882C5CF5F09F24221AA5E'
         'tools/ExactInstance/CompileOnlyValidation/Chatpad.NativeInterop.CompileOnlyValidation.csproj' = ''
         'tools/ExactInstance/CompileOnlyValidation/CompileOnlyContracts.cs' = ''
         'tools/ExactInstance/CompileOnlyValidation/Directory.Build.props' = ''
@@ -246,10 +249,32 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
     if ([int]$evidence.build_result.produced_file_count -ne $producedFiles.Count -or $producedFiles.Count -lt 1) {
         $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-count-invalid'; value = $evidence.build_result.produced_file_count })
     }
+    if ([string]$evidence.expected_native_source_hashes.declaration_sha256 -cne 'B4D24BF374B391A36B4A3513B117A2FF50F8BC3D8795248808086AC984E874D9' -or
+        [string]$evidence.expected_native_source_hashes.source_boundary_record_sha256 -cne '663FB2CAB1259D301B4679100F407A56145BFD120C3882C5CF5F09F24221AA5E') {
+        $defects.Add([pscustomobject][ordered]@{ id = 'audited-source-hash-value-invalid'; value = $evidence.expected_native_source_hashes })
+    }
+    $static = $evidence.static_contract_validation
+    $expectedApis = @('SetupDiCreateDeviceInfoList','SetupDiDestroyDeviceInfoList','SetupDiOpenDeviceInfoW','SetupDiGetDeviceInstanceIdW','SetupDiGetDevicePropertyW','SetupDiGetDeviceRegistryPropertyW','SetupDiBuildDriverInfoList','SetupDiDestroyDriverInfoList','SetupDiEnumDriverInfoW','SetupDiGetDriverInfoDetailW','SetupDiGetDriverInstallParamsW','SetupDiSetSelectedDriverW','DiInstallDevice')
+    $expectedStructures = @('ChatpadDeviceInfoSetHandleToken','SP_DEVINFO_DATA','SP_DEVINSTALL_PARAMS_W','SP_DRVINSTALL_PARAMS','SP_DRVINFO_DATA_W','SP_DRVINFO_DETAIL_DATA_W','DEVPROPKEY')
+    $expectedFields = @('uint cbSize','uint Rank','uint Flags','UIntPtr PrivateData','uint Reserved')
+    $expectedHeaders = @('um/setupapi.h','um/newdev.h','shared/devpropdef.h','shared/devpkey.h')
+    if ((@($static.native_api_inventory) -join '|') -cne ($expectedApis -join '|') -or
+        (@($static.structure_inventory) -join '|') -cne ($expectedStructures -join '|') -or
+        [string]$static.corrected_method_signature -cne 'bool SetupDiGetDriverInstallParamsW(IntPtr DeviceInfoSet, ref SP_DEVINFO_DATA DeviceInfoData, ref SP_DRVINFO_DATA_W DriverInfoData, ref SP_DRVINSTALL_PARAMS DriverInstallParams)' -or
+        (@($static.driver_install_params_fields) -join '|') -cne ($expectedFields -join '|') -or
+        [int]$static.driver_install_params_x86_byte_size -ne 20 -or [int]$static.driver_install_params_x64_byte_size -ne 32 -or
+        [bool]$static.old_device_install_params_binding_absent -ne $true -or [string]$static.sdk_version -cne '10.0.26100.0' -or
+        (@($static.sdk_headers) -join '|') -cne ($expectedHeaders -join '|')) {
+        $defects.Add([pscustomobject][ordered]@{ id = 'corrected-static-contract-invalid'; value = $static })
+    }
     $declaredOutputRoot=[IO.Path]::GetFullPath((Join-Path $root ([string]$evidence.scope.output_artifact_root)))
     $allowedArtifactRoot=[IO.Path]::GetFullPath((Join-Path $root 'artifacts'))
     if(-not$declaredOutputRoot.StartsWith($allowedArtifactRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)-or-not @(&git -C $root check-ignore -- $declaredOutputRoot 2>$null).Count){
         $defects.Add([pscustomobject][ordered]@{id='output-root-invalid';value=$evidence.scope.output_artifact_root})
+    }
+    $cleanup = $evidence.persistent_output_cleanup
+    if ($null -eq $cleanup -or [bool]$cleanup.required -ne $true -or [bool]$cleanup.cleanup_performed -ne $true -or [bool]$cleanup.persistent_assembly_or_binary_present -ne $false) {
+        $defects.Add([pscustomobject][ordered]@{ id='persistent-output-cleanup-invalid'; value=$cleanup })
     }
     foreach ($file in $producedFiles) {
         $relative = [string]$file.relative_path
@@ -258,17 +283,14 @@ function Test-ChatpadNativeInteropCompileOnlyValidationEvidence {
             $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-outside-isolated-artifacts'; value = $relative })
             continue
         }
-        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) {
-            $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-missing'; value = $relative })
-            continue
+        if (Test-Path -LiteralPath $full -PathType Leaf) {
+            $defects.Add([pscustomobject][ordered]@{ id = 'persistent-produced-file-present'; value = $relative })
         }
-        $item = Get-Item -LiteralPath $full
-        $rawHash=(Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash
         if($null-eq$file.PSObject.Properties['hash_policy']-or$null-eq$file.PSObject.Properties['content_classification']-or$null-eq$file.PSObject.Properties['ignored']-or[string]$file.hash_policy-ne'raw_file_bytes'-or[string]$file.content_classification-ne'compile-output-artifact'-or[bool]$file.ignored-ne$true){
             $defects.Add([pscustomobject][ordered]@{id='produced-file-policy-invalid';value=$relative})
         }
-        if($null-eq$file.PSObject.Properties['byte_size']-or$null-eq$file.PSObject.Properties['sha256']-or$null-eq$file.PSObject.Properties['raw_file_byte_size']-or$null-eq$file.PSObject.Properties['raw_file_sha256']-or[long]$file.byte_size -ne [long]$item.Length -or [string]$file.sha256 -cne $rawHash -or [long]$file.raw_file_byte_size-ne[long]$item.Length-or[string]$file.raw_file_sha256-cne$rawHash) {
-            $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-identity-mismatch'; value = $relative })
+        if($null-eq$file.PSObject.Properties['byte_size']-or$null-eq$file.PSObject.Properties['sha256']-or$null-eq$file.PSObject.Properties['raw_file_byte_size']-or$null-eq$file.PSObject.Properties['raw_file_sha256']-or[long]$file.byte_size-lt1-or[string]$file.sha256-notmatch'^[A-F0-9]{64}$'-or[long]$file.raw_file_byte_size-ne[long]$file.byte_size-or[string]$file.raw_file_sha256-cne[string]$file.sha256) {
+            $defects.Add([pscustomobject][ordered]@{ id = 'produced-file-recorded-identity-invalid'; value = $relative })
         }
         foreach($flag in @('assembly_loaded','reflection_inspection_used','managed_code_executed','native_api_invoked')){
             if($null-eq$file.PSObject.Properties[$flag]-or[bool]$file.$flag-ne$false){$defects.Add([pscustomobject][ordered]@{id='produced-file-prohibited-action-invalid';value="$relative::$flag"})}
@@ -1750,7 +1772,8 @@ function Get-ChatpadNativeAdapterDesignContract {
     $structures = @(
         @{ name='HDEVINFO'; ownership='single transaction owner'; size_rule='opaque handle'; lifetime='destroy once through SetupDiDestroyDeviceInfoList' },
         @{ name='SP_DEVINFO_DATA'; ownership='paired with HDEVINFO'; size_rule='cbSize must be initialized to runtime marshaled structure size'; lifetime='valid while device information set is alive' },
-        @{ name='SP_DEVINSTALL_PARAMS_W'; ownership='caller stack or pinned buffer'; size_rule='cbSize initialized before get or set'; lifetime='copied by SetupAPI according to API contract' },
+        @{ name='SP_DEVINSTALL_PARAMS_W'; ownership='caller stack or pinned buffer'; size_rule='cbSize initialized before device-install get or set'; lifetime='copied by SetupAPI according to API contract' },
+        @{ name='SP_DRVINSTALL_PARAMS'; ownership='caller stack or pinned buffer'; size_rule='sequential layout; x86 20 bytes; x64 32 bytes; cbSize initialized before driver-node query'; lifetime='driver-node rank and flags copied by SetupAPI' },
         @{ name='SP_DRVINFO_DATA_W'; ownership='driver-list owner'; size_rule='cbSize initialized before enumeration and selected-driver association'; lifetime='valid until driver list destruction' },
         @{ name='SP_DRVINFO_DETAIL_DATA_W'; ownership='caller allocated variable-length buffer'; size_rule='two-call insufficient-buffer pattern; do not guess architecture-sensitive size'; lifetime='caller frees after identity capture' },
         @{ name='DEVPROPKEY/DEVPROPTYPE buffers'; ownership='caller allocated typed buffers'; size_rule='insufficient-buffer result controls allocation length'; lifetime='caller frees after typed conversion' },

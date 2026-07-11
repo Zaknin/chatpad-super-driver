@@ -10,6 +10,10 @@ function Get-ChatpadNativeInteropConstants {
         current_gate = 'BLOCKED_PENDING_INDEPENDENT_NATIVE_INTEROP_SOURCE_AUDIT'
         execution_blocker = 'BLOCKED_NATIVE_ADAPTER_EXECUTION_NOT_IMPLEMENTED'
         declaration_relative_path = 'tools/ExactInstance/NativeInterop/Chatpad.NativeInterop.SetupApiNewdev.Declarations.cs'
+        declaration_raw_byte_size = 10238
+        declaration_raw_sha256 = 'E55E6E34BBB4DB40904F065292F23A76D48BE809D18E7EB76E0C3A7ECCA786F2'
+        declaration_canonical_byte_size = 10034
+        declaration_canonical_sha256 = 'B4D24BF374B391A36B4A3513B117A2FF50F8BC3D8795248808086AC984E874D9'
         allowed_dlls = @('setupapi.dll','newdev.dll')
         prohibited_native_dlls = @('cfgmgr32.dll','difxapi.dll')
         prohibited_tools = @('pnputil','devcon','dpinst','dism')
@@ -29,17 +33,18 @@ function Get-ChatpadNativeInteropDeclarationInventory {
         @{ id='driver-list-destroy'; dll='setupapi.dll'; entry_point='SetupDiDestroyDriverInfoList'; read_only=$true; mutating=$false; cleanup='driver-list owner'; phase='cleanup' },
         @{ id='driver-node-enumeration'; dll='setupapi.dll'; entry_point='SetupDiEnumDriverInfoW'; read_only=$true; mutating=$false; cleanup='driver-list owner'; phase='driver-node-enumeration' },
         @{ id='driver-node-detail-query'; dll='setupapi.dll'; entry_point='SetupDiGetDriverInfoDetailW'; read_only=$true; mutating=$false; cleanup='caller-owned variable buffer'; phase='driver-node-enumeration' },
-        @{ id='driver-install-params-query'; dll='setupapi.dll'; entry_point='SetupDiGetDriverInstallParamsW'; read_only=$true; mutating=$false; cleanup='caller-owned structure'; phase='driver-node-verification' },
+        @{ id='driver-install-params-query'; dll='setupapi.dll'; entry_point='SetupDiGetDriverInstallParamsW'; read_only=$true; mutating=$false; cleanup='caller-owned structure'; phase='driver-node-verification'; native_structure='SP_DRVINSTALL_PARAMS'; managed_signature='ref SP_DRVINSTALL_PARAMS DriverInstallParams' },
         @{ id='selected-driver-association'; dll='setupapi.dll'; entry_point='SetupDiSetSelectedDriverW'; read_only=$false; mutating=$true; cleanup='driver-list owner'; phase='bind-selected-node' },
         @{ id='exact-device-install'; dll='newdev.dll'; entry_point='DiInstallDevice'; read_only=$false; mutating=$true; cleanup='preserve NeedReboot and last-error'; phase='bind-selected-node' }
     )
     $structures = @(
-        @{ name='ChatpadDeviceInfoSetHandleToken'; purpose='typed HDEVINFO ownership token without native cleanup invocation in this phase'; cb_size_required=$false },
-        @{ name='SP_DEVINFO_DATA'; purpose='exact retained device element'; cb_size_required=$true },
-        @{ name='SP_DEVINSTALL_PARAMS_W'; purpose='driver install parameter capture'; cb_size_required=$true },
-        @{ name='SP_DRVINFO_DATA_W'; purpose='candidate driver node identity'; cb_size_required=$true },
-        @{ name='SP_DRVINFO_DETAIL_DATA_W'; purpose='variable-length candidate driver detail buffer contract'; cb_size_required=$true },
-        @{ name='DEVPROPKEY'; purpose='SetupDiGetDevicePropertyW key contract'; cb_size_required=$false }
+        @{ name='ChatpadDeviceInfoSetHandleToken'; purpose='typed HDEVINFO ownership token without native cleanup invocation in this phase'; cb_size_required=$false; fields=@('IntPtr Value') },
+        @{ name='SP_DEVINFO_DATA'; purpose='exact retained device element'; cb_size_required=$true; fields=@('uint cbSize','Guid ClassGuid','uint DevInst','UIntPtr Reserved') },
+        @{ name='SP_DEVINSTALL_PARAMS_W'; purpose='device installation parameter contract distinct from driver-node parameters'; cb_size_required=$true; fields=@('uint cbSize','uint Flags','uint FlagsEx','IntPtr hwndParent','IntPtr InstallMsgHandler','IntPtr InstallMsgHandlerContext','IntPtr FileQueue','UIntPtr ClassInstallReserved','uint Reserved','string DriverPath') },
+        @{ name='SP_DRVINSTALL_PARAMS'; purpose='SetupDiGetDriverInstallParamsW driver-node rank and flags contract'; cb_size_required=$true; fields=@('uint cbSize','uint Rank','uint Flags','UIntPtr PrivateData','uint Reserved'); x86_byte_size=20; x64_byte_size=32 },
+        @{ name='SP_DRVINFO_DATA_W'; purpose='candidate driver node identity'; cb_size_required=$true; fields=@('uint cbSize','uint DriverType','UIntPtr Reserved','string Description','string MfgName','string ProviderName','FILETIME DriverDate','ulong DriverVersion') },
+        @{ name='SP_DRVINFO_DETAIL_DATA_W'; purpose='variable-length candidate driver detail buffer contract'; cb_size_required=$true; fields=@('uint cbSize','FILETIME InfDate','uint CompatIDsOffset','uint CompatIDsLength','UIntPtr Reserved','string SectionName','string InfFileName','string DrvDescription','string HardwareID') },
+        @{ name='DEVPROPKEY'; purpose='SetupDiGetDevicePropertyW key contract'; cb_size_required=$false; fields=@('Guid fmtid','uint pid') }
     )
     $constantsDeclared = @(
         'SPDIT_COMPATDRIVER',
@@ -199,6 +204,22 @@ function Test-ChatpadNativeInteropSourceBoundary {
     } else {
         $text = [IO.File]::ReadAllText($declarationPath)
     }
+    if ($text) {
+        $rawItem = Get-Item -LiteralPath $declarationPath
+        $rawHash = (Get-FileHash -LiteralPath $declarationPath -Algorithm SHA256).Hash
+        $rawBytes = [IO.File]::ReadAllBytes($declarationPath)
+        $decoded = [Text.UTF8Encoding]::new($false,$true).GetString($rawBytes)
+        if ($decoded.Length -and $decoded[0] -eq [char]0xFEFF) { $decoded = $decoded.Substring(1) }
+        $canonicalBytes = [Text.UTF8Encoding]::new($false).GetBytes($decoded.Replace("`r`n","`n").Replace("`r","`n"))
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try { $canonicalHash = (($sha.ComputeHash($canonicalBytes) | ForEach-Object { $_.ToString('X2') }) -join '') } finally { $sha.Dispose() }
+        if ([long]$rawItem.Length -ne [long]$constants.declaration_raw_byte_size -or $rawHash -cne $constants.declaration_raw_sha256) {
+            $defects.Add([pscustomobject][ordered]@{ id='declaration-raw-identity-mismatch'; expected_size=$constants.declaration_raw_byte_size; actual_size=$rawItem.Length; expected_sha256=$constants.declaration_raw_sha256; actual_sha256=$rawHash })
+        }
+        if ([long]$canonicalBytes.Length -ne [long]$constants.declaration_canonical_byte_size -or $canonicalHash -cne $constants.declaration_canonical_sha256) {
+            $defects.Add([pscustomobject][ordered]@{ id='declaration-canonical-identity-mismatch'; expected_size=$constants.declaration_canonical_byte_size; actual_size=$canonicalBytes.Length; expected_sha256=$constants.declaration_canonical_sha256; actual_sha256=$canonicalHash })
+        }
+    }
     foreach ($api in @($inventory.apis)) {
         if ($text -notmatch ([regex]::Escape([string]$api.entry_point))) {
             $defects.Add([pscustomobject][ordered]@{ id='declared-api-missing'; entry_point=[string]$api.entry_point })
@@ -208,6 +229,18 @@ function Test-ChatpadNativeInteropSourceBoundary {
         if ($text -notmatch ([regex]::Escape([string]$structure.name))) {
             $defects.Add([pscustomobject][ordered]@{ id='declared-structure-missing'; structure=[string]$structure.name })
         }
+    }
+    $declaredStructureNames = @([regex]::Matches($text, '(?m)^\s*internal\s+(?:readonly\s+)?struct\s+(?<name>[A-Za-z0-9_]+)') | ForEach-Object { $_.Groups['name'].Value })
+    $expectedStructureNames = @($inventory.structures | ForEach-Object { [string]$_.name })
+    if (($declaredStructureNames -join '|') -cne ($expectedStructureNames -join '|') -or @($declaredStructureNames | Group-Object | Where-Object Count -gt 1).Count) {
+        $defects.Add([pscustomobject][ordered]@{ id='declared-structure-inventory-mismatch'; expected=$expectedStructureNames; actual=$declaredStructureNames })
+    }
+    if ($text -notmatch '(?s)SetupDiGetDriverInstallParamsW\s*\(\s*IntPtr DeviceInfoSet,\s*ref SP_DEVINFO_DATA DeviceInfoData,\s*ref SP_DRVINFO_DATA_W DriverInfoData,\s*ref SP_DRVINSTALL_PARAMS DriverInstallParams\s*\);' -or
+        $text -match '(?s)SetupDiGetDriverInstallParamsW\s*\(.*?SP_DEVINSTALL_PARAMS_W\s+DriverInstallParams') {
+        $defects.Add([pscustomobject][ordered]@{ id='driver-install-params-signature-mismatch'; expected='ref SP_DRVINSTALL_PARAMS DriverInstallParams' })
+    }
+    if ($text -notmatch '(?s)internal struct SP_DRVINSTALL_PARAMS\s*\{\s*internal uint cbSize;\s*internal uint Rank;\s*internal uint Flags;\s*internal UIntPtr PrivateData;\s*internal uint Reserved;\s*\}') {
+        $defects.Add([pscustomobject][ordered]@{ id='driver-install-params-structure-mismatch'; expected='uint cbSize|uint Rank|uint Flags|UIntPtr PrivateData|uint Reserved' })
     }
     $dllImportCount = ([regex]::Matches($text, '\[DllImport\s*\(')).Count
     if ($dllImportCount -ne $inventory.api_count) {
@@ -242,6 +275,9 @@ function Test-ChatpadNativeInteropSourceBoundary {
         result_code = if ($defects.Count) { 'NATIVE_INTEROP_SOURCE_BOUNDARY_INVALID' } else { 'NATIVE_INTEROP_SOURCE_BOUNDARY_VALID' }
         declaration_relative_path = $constants.declaration_relative_path
         declaration_sha256 = if ($text) { (Get-FileHash -LiteralPath $declarationPath -Algorithm SHA256).Hash } else { '' }
+        declaration_raw_byte_size = if ($text) { (Get-Item -LiteralPath $declarationPath).Length } else { 0 }
+        declaration_canonical_sha256 = if ($text) { $canonicalHash } else { '' }
+        declaration_canonical_byte_size = if ($text) { $canonicalBytes.Length } else { 0 }
         declared_api_count = $inventory.api_count
         declared_structure_count = $inventory.structure_count
         dllimport_count = $dllImportCount

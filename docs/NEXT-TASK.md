@@ -1,66 +1,72 @@
-# TASK 8H-2 — Repeated independent read-only audit of the remediated explicit one-shot live-execution authorization gate
+# TASK 8F-R2 — Independent read-only audit of the corrected SetupAPI/Newdev declaration ABI and propagated identities
 
 ## Current state
 
-- **Required branch:** `feature/native-adapter-live-execution-authorization-gate`.
-- **Required starting commit:** the documentation-consistency commit with subject
-  `docs: record task 8g audit closure`; derive its exact hash from Git after
-  commit creation.
-- **Required parent:** `badb3fc3c29e6e7bc3ae3bb6a4ae86af49027865`.
-- **TASK 8H-1R1 remediation commit:** `badb3fc3c29e6e7bc3ae3bb6a4ae86af49027865`
-  (`fix: harden live authorization gate preconditions`), parent
-  `09711c59f272dfaf275b7f7442c607c9c148d34a`.
-- **TASK 8G closure basis:** TASK 8G-2 passed and directly closed the
-  execution-coordinator source lane for audited commit
-  `79ec174dabd7e73f2d01021168921021bc118702`; no separate TASK 8G acceptance
-  or lane-close commit is required.
-- **First TASK 8H-2 audit result:** failed because of acknowledgement coercion,
-  incomplete runtime source hashing, and stale TASK 8G continuity documentation.
-- **Evidence:** `docs/evidence/live-execution-authorization-gate-task-8h-1.json`.
-- **Evidence SHA-256:** `2EAC8D3C707C53F77859620DC9D7D43903DC61F334774898BBFD56944977DBF2`.
-- **Manifest section:** `live_execution_authorization_gate`.
+- **Required branch:** `feature/task-8f-native-declaration-remediation`.
+- **Required starting commit:** the TASK 8F-R1B commit with subject
+  `fix: propagate corrected native declaration identity`; derive and verify its
+  exact hash from Git after R1B finalization.
+- **Required parent:** `bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57`.
+- **R1A source correction:** `bd56cbaed47a9a5f9ba23ea8fab075b5a6c32c57`
+  (`fix: correct SetupDiGetDriverInstallParams declaration`), parent
+  `6186b37c6b1cacc3fb91c38011bc45525bcc1a54`.
+- **Corrected declaration:** `SetupDiGetDriverInstallParamsW` uses
+  `ref SP_DRVINSTALL_PARAMS DriverInstallParams`.
+- **Corrected declaration raw identity:** 10238 bytes,
+  `E55E6E34BBB4DB40904F065292F23A76D48BE809D18E7EB76E0C3A7ECCA786F2`.
+- **Corrected declaration canonical-LF identity:** 10034 bytes,
+  `B4D24BF374B391A36B4A3513B117A2FF50F8BC3D8795248808086AC984E874D9`.
+- **Remediation evidence:**
+  `docs/evidence/native-interop-declaration-remediation-task-8f-r1.json`.
+- **Manifest section:** `native_interop_declaration_remediation`.
 - **Current blocker:**
-  `BLOCKED_NATIVE_ADAPTER_LIVE_EXECUTION_AUTHORIZATION_GATE_NOT_INDEPENDENTLY_AUDITED`.
-- **Live readiness:** `BLOCKED`.
+  `BLOCKED_NATIVE_ADAPTER_TASK_8F_NATIVE_DECLARATION_REMEDIATION_NOT_INDEPENDENTLY_AUDITED`.
+- **TASK 8F:** open pending this audit. **TASK 8I:** blocked until TASK 8F
+  remediation closes. Production execution remains unavailable.
 
 ## Preconditions
 
-- Verify branch, HEAD, parent, clean worktree/index, upstream sync, and matching remote branch.
-- Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md` entries.
-- Confirm TASK 8E, TASK 8F, and TASK 8G source/evidence identities remain unchanged and the TASK 8G evidence identity is
-  `BB2016A9CFD85BFCA06862E7B3D386EE611355AA2416778BFDCB49C7A6C0BD12`.
-- Confirm TASK 8G closure grants no live execution authority and production-provider
-  execution remains unavailable.
+- Verify exact branch, HEAD, parent, subject, clean worktree/index, no untracked
+  files, upstream `0/0`, and matching remote branch before auditing.
+- Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and
+  the latest `docs/WORKLOG.md` entries.
+- Re-derive R1A and R1B facts from Git and file contents. Do not trust the
+  implementation report as audit evidence.
+- Confirm R1A remains an exact two-file regular-text change and R1B remains
+  within its authorized source/evidence/validator/documentation scope.
 
-## Audit scope
+## Audit scope and safety restrictions
 
-- Strict read-only inspection only: do not edit, stage, commit, push, execute native APIs,
-  query devices, bind, mutate Windows, install, load, restart, rollback, restore, package,
-  sign, build, or open compile outputs.
-- Verify the live gate requires every explicit input, including the exact phrase
-  `AUTHORIZE_ONE_LIVE_NATIVE_APPLY_ATTEMPT`, exact ordered target chain, accepted evidence
-  identities, caller-supplied critical source hashes matching the fixed accepted inventory,
-  runtime current-file hashing of the fixed source inventory, and literal Boolean `true`
-  for both acknowledgements.
-- Verify single-item arrays, string booleans, stale current files, missing current files,
-  directory substitutions, and path traversal are rejected fail-closed.
-- Verify recording authorization and live authorization are separate types and cannot be
-  converted, wrapped, copied, serialized, or transferred into each other.
-- Verify the one-shot live authorization is process/reference/fingerprint bound and consumed
-  once before any fake consumer path.
-- Verify production provider registration, selection, construction, loading, and invocation
-  remain unavailable and all prohibited counters remain zero.
-- Run TASK 8E, TASK 8F, TASK 8G, and TASK 8H focused tests under both runtimes, the canonical
-  validator, `-RunTask8GRegression`, and `-RunTask8HRegression`.
+- Strict read-only repository audit only. Do not edit, stage, commit, push,
+  execute native APIs, query devices/PnP/USB/HID/registry/services/drivers,
+  issue or consume live authorization, construct or invoke a production
+  provider, bind, mutate Windows, build the driver, sign, package, stage,
+  install, load, restart, re-enumerate, rollback, restore, or access existing
+  driver artifacts/compile outputs.
+- Verify the Windows SDK 10.0.26100.0 provenance from `um/setupapi.h`,
+  `um/newdev.h`, `shared/devpropdef.h`, and `shared/devpkey.h`.
+- Verify the exact sequential `SP_DRVINSTALL_PARAMS` fields and managed types:
+  `uint cbSize`, `uint Rank`, `uint Flags`, `UIntPtr PrivateData`, and
+  `uint Reserved`; sizes must be 20 bytes on x86 and 32 bytes on x64.
+- Verify the old `SP_DEVINSTALL_PARAMS_W` method binding is absent, the exact
+  13-method and seven-structure inventories are preserved, and old/new
+  declaration identities are not accepted as alternatives.
+- Verify compile-only output is isolated, non-invoking, and removed after
+  validation; no persistent assembly or binary may remain.
+- Verify remediation evidence, manifest entries, source identities, strict
+  scalar typing, ordinal arrays, evidence equality, blocker, next task, and
+  every integer-zero safety counter independently.
 
 ## Acceptance criteria
 
-- Report `PASS` only if evidence/source/test hashes, exact public/private/managed surfaces,
-  manifest/evidence equality, source-integrity rejection, literal-acknowledgement rejection,
-  concurrency, replay, type-confusion rejection, validator, and both-runtime results match
-  exactly with zero defects.
-- Confirm no live authority was exercised and no production/native/device/Windows mutation
-  path was invoked.
-- A passing audit closes this authorization-gate source lane only. It must not authorize or
-  perform live execution; a later live execution task requires a separate explicit operator
-  instruction.
+- Report PASS only if the corrected ABI, raw/canonical identities, all
+  propagated contracts, regenerated compile evidence, remediation evidence,
+  manifest, validator, and dual-runtime results independently match.
+- Run the dedicated ABI suite, canonical compile-only evidence validator,
+  TASK 8E-8I focused suites, TASK 8G/TASK 8H/TASK 8F-R1 regressions, and the
+  canonical readiness validator under PowerShell 7 and Windows PowerShell 5.1.
+- Confirm no declaration was invoked, no device or Windows state changed, no
+  production provider was constructed/invoked, no live authorization is
+  active, and no operator authorization phrase is carried forward.
+- A passing audit closes only the TASK 8F declaration-remediation lane. It does
+  not resume TASK 8I or authorize live execution.
