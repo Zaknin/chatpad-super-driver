@@ -109,7 +109,7 @@ namespace Chatpad.ExactInstance.NativeInterop
             IntPtr DeviceInfoSet,
             ref SP_DEVINFO_DATA DeviceInfoData,
             ref SP_DRVINFO_DATA_W DriverInfoData,
-            ref SP_DEVINSTALL_PARAMS_W DriverInstallParams);
+            ref SP_DRVINSTALL_PARAMS DriverInstallParams);
 
         [DllImport("setupapi.dll", EntryPoint = "SetupDiSetSelectedDriverW", ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true, CallingConvention = CallingConvention.Winapi)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -161,6 +161,16 @@ namespace Chatpad.ExactInstance.NativeInterop
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = SetupApiNewdevDeclarations.MaxPath)]
         internal string DriverPath;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SP_DRVINSTALL_PARAMS
+    {
+        internal uint cbSize;
+        internal uint Rank;
+        internal uint Flags;
+        internal UIntPtr PrivateData;
+        internal uint Reserved;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
