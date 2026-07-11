@@ -82,10 +82,6 @@ $script:ExpectedStructureFields = [ordered]@{
     'Chatpad.ExactInstance.NativeInterop.DEVPROPKEY' = @('fmtid','pid')
 }
 
-# This process-local record is provenance after a successful load, not an
-# inaccessible sentinel or reusable capability. It stores strings only.
-$script:DeclarationLoadRecord = $null
-
 function Get-ChatpadSha256Hex {
     param([Parameter(Mandatory = $true)][byte[]] $Bytes)
 
@@ -257,6 +253,7 @@ function Invoke-ChatpadNativeInteropDeclarationLoad {
     [CmdletBinding()]
     param()
 
+    $compilationAttempted = $false
     try {
         $originalCandidate = Join-Path $PSScriptRoot $script:OriginalRelativeName
         $supplementalCandidate = Join-Path $PSScriptRoot $script:SupplementalRelativeName
@@ -266,31 +263,27 @@ function Invoke-ChatpadNativeInteropDeclarationLoad {
 
         $before = Find-ChatpadExpectedDeclarationTypes
         if ($before.Count -gt 0) {
-            $trustedReuse = $null -ne $script:DeclarationLoadRecord -and
-                $script:DeclarationLoadRecord.OriginalRawSha256 -ceq $script:OriginalRawSha256 -and
-                $script:DeclarationLoadRecord.SupplementalRawSha256 -ceq $script:SupplementalRawSha256 -and
-                @($before.Values | Where-Object { $_.Assembly.FullName -cne $script:DeclarationLoadRecord.AssemblyFullName }).Count -eq 0
-            if (-not $trustedReuse) { throw 'PREEXISTING_UNTRUSTED_DECLARATION_TYPE_STATE' }
-            Assert-ChatpadLoadedDeclarationInventory -Found $before
-            return [pscustomobject]@{ Status = 'ALREADY_LOADED'; Reason = 'EXACT_PROCESS_LOCAL_LOAD_RECORD'; OriginalRawSha256 = $script:OriginalRawSha256; SupplementalRawSha256 = $script:SupplementalRawSha256 }
+            return [pscustomobject]@{
+                Status = 'FAILED'
+                Reason = 'PREEXISTING_DECLARATION_TYPE_REJECTED'
+                ExpectedTypeNames = @($script:ExpectedTypeNames)
+                PresentTypeNames = @($before.Keys | Sort-Object)
+                CompilationAttempted = $false
+            }
         }
 
         # Future-only dormant compilation. No output assembly path is supplied.
+        $compilationAttempted = $true
         $null = Add-Type -TypeDefinition ($original.Text + "`n" + $supplemental.Text) -Language CSharp -ErrorAction Stop
         $after = Find-ChatpadExpectedDeclarationTypes
         Assert-ChatpadLoadedDeclarationInventory -Found $after
         $assemblyNames = @($after.Values | ForEach-Object { $_.Assembly.FullName } | Select-Object -Unique)
         if ($assemblyNames.Count -ne 1) { throw 'LOADED_ASSEMBLY_INVENTORY_MISMATCH' }
 
-        $script:DeclarationLoadRecord = [pscustomobject]@{
-            OriginalRawSha256 = $script:OriginalRawSha256
-            SupplementalRawSha256 = $script:SupplementalRawSha256
-            AssemblyFullName = $assemblyNames[0]
-        }
-        return [pscustomobject]@{ Status = 'LOADED'; Reason = 'EXACT_FIXED_SOURCES_VALIDATED'; OriginalRawSha256 = $script:OriginalRawSha256; SupplementalRawSha256 = $script:SupplementalRawSha256 }
+        return [pscustomobject]@{ Status = 'LOADED'; Reason = 'EXACT_FIXED_SOURCES_VALIDATED'; OriginalRawSha256 = $script:OriginalRawSha256; SupplementalRawSha256 = $script:SupplementalRawSha256; CompilationAttempted = $true }
     }
     catch {
-        return [pscustomobject]@{ Status = 'FAILED'; Reason = 'DECLARATION_LOAD_CONTRACT_REJECTED'; OriginalRawSha256 = $script:OriginalRawSha256; SupplementalRawSha256 = $script:SupplementalRawSha256 }
+        return [pscustomobject]@{ Status = 'FAILED'; Reason = 'DECLARATION_LOAD_CONTRACT_REJECTED'; OriginalRawSha256 = $script:OriginalRawSha256; SupplementalRawSha256 = $script:SupplementalRawSha256; CompilationAttempted = $compilationAttempted }
     }
 }
 

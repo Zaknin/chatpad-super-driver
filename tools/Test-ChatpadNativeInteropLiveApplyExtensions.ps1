@@ -116,14 +116,13 @@ function Test-LiveApplyLoaderText {
         "NativeInterop\Chatpad.NativeInterop.SetupApiNewdev.LiveApplyExtensions.cs"
         'E55E6E34BBB4DB40904F065292F23A76D48BE809D18E7EB76E0C3A7ECCA786F2'
         'B4D24BF374B391A36B4A3513B117A2FF50F8BC3D8795248808086AC984E874D9'
-        'PREEXISTING_UNTRUSTED_DECLARATION_TYPE_STATE'
+        'PREEXISTING_DECLARATION_TYPE_REJECTED'
         'TASK 8H authorization validation'
         'atomic TASK 8H authorization consumption'
         'GetFullPath'
         'ReparsePoint'
         'Add-Type -TypeDefinition'
         'Export-ModuleMember -Function @()'
-        'EXACT_PROCESS_LOCAL_LOAD_RECORD'
     )
     foreach ($token in $required) { if (-not $Text.Contains($token)) { $defects.Add("required:$token") } }
     foreach ($forbidden in @('Get-ChildItem','-Recurse','-OutputAssembly','-ReferencedAssemblies','Assembly.LoadFrom','ScriptBlock','Delegate','Callback','Get-PnpDevice','Get-CimInstance','Get-WmiObject','pnputil','devcon','Start-Process')) {
@@ -135,6 +134,18 @@ function Test-LiveApplyLoaderText {
     if ([regex]::Matches($Text, '\bAdd-Type\b').Count -ne 1) { $defects.Add('add-type-site-count') }
     if ($Text -notmatch '(?s)function Invoke-ChatpadNativeInteropDeclarationLoad\s*\{\s*\[CmdletBinding\(\)\]\s*param\(\)') { $defects.Add('loading-operation-parameters') }
     if ($Text -notmatch '(?s)function Invoke-ChatpadNativeInteropDeclarationLoad.*?Get-ChatpadDeclarationFileState.*?Find-ChatpadExpectedDeclarationTypes.*?Add-Type.*?Assert-ChatpadLoadedDeclarationInventory') { $defects.Add('load-order') }
+    foreach ($forbiddenTrustToken in @('DeclarationLoadRecord','TrustedDeclarationLoadRecord','NativeInteropLoadRecord','ALREADY_LOADED','EXACT_PROCESS_LOCAL_LOAD_RECORD')) {
+        if ($Text.Contains($forbiddenTrustToken)) { $defects.Add("trusted-reuse-token:$forbiddenTrustToken") }
+    }
+    if ($Text -match '(?im)^\s*\$(?:script:)?\w*(?:trusted|provenance|reuse|loadrecord)\w*\s*=') { $defects.Add('mutable-trusted-state') }
+    if ($Text -match '(?i)\$script:\w*(?:trusted|sentinel|capability|provenance|reuse|loadrecord)\w*') { $defects.Add('script-scope-trust-read') }
+    if ($Text -match '(?s)if\s*\(\$before\.Count -gt 0\).*?(?:OriginalRawSha256|SupplementalRawSha256|AssemblyFullName).*?(?:ALREADY_LOADED|Status\s*=\s*''LOADED'')') { $defects.Add('preexisting-hash-or-assembly-reuse') }
+    $rejectionPattern = '(?s)\$before = Find-ChatpadExpectedDeclarationTypes\s*if \(\$before\.Count -gt 0\) \{\s*return \[pscustomobject\]@\{\s*Status = ''FAILED''\s*Reason = ''PREEXISTING_DECLARATION_TYPE_REJECTED''\s*ExpectedTypeNames = @\(\$script:ExpectedTypeNames\)\s*PresentTypeNames = @\(\$before\.Keys \| Sort-Object\)\s*CompilationAttempted = \$false\s*\}\s*\}'
+    if ([regex]::Matches($Text, $rejectionPattern).Count -ne 1) { $defects.Add('unconditional-preexisting-rejection') }
+    $rejectionIndex = $Text.IndexOf("Reason = 'PREEXISTING_DECLARATION_TYPE_REJECTED'", [StringComparison]::Ordinal)
+    $addTypeIndex = $Text.IndexOf('$null = Add-Type -TypeDefinition', [StringComparison]::Ordinal)
+    if ($rejectionIndex -lt 0 -or $addTypeIndex -lt 0 -or $rejectionIndex -ge $addTypeIndex) { $defects.Add('preexisting-rejection-order') }
+    if ($Text -notmatch '(?s)\$compilationAttempted = \$true\s*\$null = Add-Type.*?catch \{.*?CompilationAttempted = \$compilationAttempted') { $defects.Add('partial-load-failure-poisoning') }
     @($defects)
 }
 
@@ -218,6 +229,7 @@ Invoke-LiveApplyTestCase 'loader import performs zero compilation loading invoca
     Assert-LiveApplyCondition ($beforeTypes.Count -eq 0) 'declaration type was already loaded before import'
     $global:ChatpadLiveApplyAddTypeCalls = 0
     function global:Add-Type { $global:ChatpadLiveApplyAddTypeCalls++; throw 'TEST_BLOCKED_ADD_TYPE_INVOCATION' }
+    $module = $null
     try {
         Import-Module $loaderPath -Force -ErrorAction Stop
         $module = Get-Module ChatpadNativeInteropDeclarationLoader
@@ -226,10 +238,42 @@ Invoke-LiveApplyTestCase 'loader import performs zero compilation loading invoca
         Assert-LiveApplyCondition ($global:ChatpadLiveApplyAddTypeCalls -eq 0) 'import executed Add-Type'
         $afterTypes = @([AppDomain]::CurrentDomain.GetAssemblies() | ForEach-Object { foreach ($name in $expectedTypes) { if ($_.GetType($name, $false, $false)) { $name } } })
         Assert-LiveApplyCondition ($afterTypes.Count -eq 0) 'import loaded declaration types'
-        $loadRecord = & $module { Get-Variable DeclarationLoadRecord -ValueOnly }
-        Assert-LiveApplyCondition ($null -eq $loadRecord) 'import created a load record'
+        $forgedStates = @(
+            [pscustomobject]@{ name='DeclarationLoadRecord'; value=$true; kind='Boolean' }
+            [pscustomobject]@{ name='TrustedDeclarationLoadRecord'; value=@{ trusted=$true }; kind='Hashtable' }
+            [pscustomobject]@{ name='NativeInteropLoadRecord'; value=[pscustomobject]@{ OriginalRawSha256=$originalIdentity.raw_sha256; SupplementalRawSha256=$supplementalIdentity.raw_sha256; AssemblyFullName='CALLER_SELECTED_ASSEMBLY' }; kind='PSCustomObject' }
+            [pscustomobject]@{ name='DeclarationLoadRecord'; value=[pscustomobject]@{ wrapped=[pscustomobject]@{ trusted=$true } }; kind='Wrapper' }
+            [pscustomobject]@{ name='TrustedDeclarationLoadRecord'; value=[pscustomobject]@{ OriginalRawSha256=$originalIdentity.raw_sha256; SupplementalRawSha256=$supplementalIdentity.raw_sha256 }; kind='AcceptedHashes' }
+            [pscustomobject]@{ name='NativeInteropLoadRecord'; value=[pscustomobject]@{ AssemblyFullName='CALLER_SELECTED_ASSEMBLY' }; kind='AssemblyName' }
+        )
+        foreach ($forged in $forgedStates) {
+            $module.SessionState.PSVariable.Set($forged.name, $forged.value)
+            $retrieved = $module.SessionState.PSVariable.GetValue($forged.name, $null)
+            Assert-LiveApplyCondition ($null -ne $retrieved) "SessionState did not retain forged $($forged.kind) state"
+            if ($retrieved -is [bool]) {
+                $module.SessionState.PSVariable.Set($forged.name, (-not $retrieved))
+                $mutated = $module.SessionState.PSVariable.GetValue($forged.name, $null) -eq $false
+            } elseif ($retrieved -is [Collections.IDictionary]) {
+                $retrieved['caller_mutated'] = $true
+                $mutated = [bool]$retrieved['caller_mutated']
+            } else {
+                $retrieved | Add-Member -NotePropertyName caller_mutated -NotePropertyValue $true -Force
+                $mutated = [bool]$retrieved.caller_mutated
+            }
+            Assert-LiveApplyCondition $mutated "SessionState forged $($forged.kind) state was not mutable"
+            Assert-LiveApplyCondition (-not $loaderText.Contains($forged.name)) "loader source reads forged state name: $($forged.name)"
+        }
+        $finalTypes = @([AppDomain]::CurrentDomain.GetAssemblies() | ForEach-Object { foreach ($name in $expectedTypes) { if ($_.GetType($name, $false, $false)) { $name } } })
+        Assert-LiveApplyCondition ($global:ChatpadLiveApplyAddTypeCalls -eq 0) 'SessionState adversary executed Add-Type'
+        Assert-LiveApplyCondition ($finalTypes.Count -eq 0) 'SessionState adversary loaded declaration types'
+        Assert-LiveApplyCondition ($loaderText -notmatch '(?i)DeclarationLoadRecord|TrustedDeclarationLoadRecord|NativeInteropLoadRecord') 'loader retained a caller-installable load record name'
     }
     finally {
+        if ($null -ne $module) {
+            foreach ($name in @('DeclarationLoadRecord','TrustedDeclarationLoadRecord','NativeInteropLoadRecord')) {
+                $module.SessionState.PSVariable.Remove($name)
+            }
+        }
         Remove-Item Function:\global:Add-Type -Force -ErrorAction SilentlyContinue
         Remove-Variable ChatpadLiveApplyAddTypeCalls -Scope Global -Force -ErrorAction SilentlyContinue
         Remove-Module ChatpadNativeInteropDeclarationLoader -Force -ErrorAction SilentlyContinue
@@ -278,7 +322,16 @@ Invoke-LiveApplyTestCase 'temporary loader tampering rejects inventory identity 
             'extra-source'=$loaderText.Replace('$script:SupplementalRelativeName =', "`$script:ExtraRelativeName = 'NativeInterop\Extra.cs'`n`$script:SupplementalRelativeName =")
             'wrong-original-hash'=$loaderText.Replace('E55E6E34BBB4DB40904F065292F23A76D48BE809D18E7EB76E0C3A7ECCA786F2','0' * 64)
             'wrong-supplemental-hash'=$loaderText.Replace($supplementalIdentity.raw_sha256,'F' * 64)
-            'preexisting-trust-removed'=$loaderText.Replace("if (-not `$trustedReuse) { throw 'PREEXISTING_UNTRUSTED_DECLARATION_TYPE_STATE' }",'')
+            'script-load-record'=$loaderText.Replace('function Get-ChatpadSha256Hex', "`$script:DeclarationLoadRecord = `$null`nfunction Get-ChatpadSha256Hex")
+            'module-trusted-boolean'=$loaderText.Replace('function Get-ChatpadSha256Hex', "`$TrustedDeclarationLoaded = `$true`nfunction Get-ChatpadSha256Hex")
+            'trusted-hashtable'=$loaderText.Replace('function Get-ChatpadSha256Hex', "`$script:TrustedDeclarationState = @{ trusted = `$true }`nfunction Get-ChatpadSha256Hex")
+            'trusted-pscustomobject'=$loaderText.Replace('function Get-ChatpadSha256Hex', "`$script:TrustedDeclarationState = [pscustomobject]@{ trusted = `$true }`nfunction Get-ChatpadSha256Hex")
+            'sessionstate-sentinel'=$loaderText.Replace('function Get-ChatpadSha256Hex', "if (`$script:TrustedSentinel) { return `$true }`nfunction Get-ChatpadSha256Hex")
+            'assembly-name-reuse'=$loaderText.Replace("Reason = 'PREEXISTING_DECLARATION_TYPE_REJECTED'", "Reason = if (`$before.Values.AssemblyFullName) { 'ALREADY_LOADED' } else { 'PREEXISTING_DECLARATION_TYPE_REJECTED' }")
+            'accepted-hash-reuse'=$loaderText.Replace("Reason = 'PREEXISTING_DECLARATION_TYPE_REJECTED'", "Reason = if (`$script:OriginalRawSha256) { 'ALREADY_LOADED' } else { 'PREEXISTING_DECLARATION_TYPE_REJECTED' }")
+            'already-loaded-category'=$loaderText.Replace("Reason = 'PREEXISTING_DECLARATION_TYPE_REJECTED'", "Reason = 'ALREADY_LOADED'")
+            'existing-type-success'=$loaderText.Replace("Status = 'FAILED'`n                Reason = 'PREEXISTING_DECLARATION_TYPE_REJECTED'", "Status = 'LOADED'`n                Reason = 'EXISTING_TYPES_ACCEPTED'")
+            'non-atomic-trust-update'=$loaderText.Replace('function Get-ChatpadSha256Hex', "`$script:TrustedDeclarationState = `$null`n`$script:TrustedDeclarationState = [pscustomobject]@{ ready = `$true }`nfunction Get-ChatpadSha256Hex")
         }
         foreach ($case in $cases.GetEnumerator()) {
             $fixture = Join-Path $tempRoot ($case.Key + '.psm1')
@@ -293,8 +346,11 @@ Invoke-LiveApplyTestCase 'temporary loader tampering rejects inventory identity 
 
 Invoke-LiveApplyTestCase 'loader exposes no reusable native capability or secret sentinel pattern' {
     Assert-LiveApplyCondition ($loaderText -notmatch '(?i)\$script:\w*(?:secret|sentinel|capability)\w*\s*=') 'secret sentinel or capability variable present'
+    Assert-LiveApplyCondition ($loaderText -notmatch '(?i)DeclarationLoadRecord|TrustedDeclarationLoadRecord|NativeInteropLoadRecord') 'trusted declaration load record remains'
+    Assert-LiveApplyCondition ($loaderText -notmatch '(?i)ALREADY_LOADED|EXACT_PROCESS_LOCAL_LOAD_RECORD|TRUSTED_EXISTING_TYPES|PREVIOUSLY_VALIDATED') 'pre-existing type reuse success remains'
+    Assert-LiveApplyCondition ($loaderText -notmatch '(?im)^\s*\$(?:script:)?\w*(?:trusted|provenance|reuse|loadrecord)\w*\s*=') 'mutable PowerShell provenance state remains'
     Assert-LiveApplyCondition ($loaderText -notmatch 'MethodInfo|GetDelegateForFunctionPointer|NativeLibrary|LoadLibrary|GetProcAddress') 'reusable native capability surface present'
-    Assert-LiveApplyCondition ($loaderText -match 'stores strings only') 'process-local record limitation missing'
+    Assert-LiveApplyCondition ($loaderText -match "Reason = 'PREEXISTING_DECLARATION_TYPE_REJECTED'") 'unconditional pre-existing type rejection missing'
     Assert-LiveApplyCondition ($loaderText -match "Status = 'FAILED'; Reason = 'DECLARATION_LOAD_CONTRACT_REJECTED'") 'fixed failure metadata missing'
 }
 
