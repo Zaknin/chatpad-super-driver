@@ -1,5 +1,16 @@
 # Controlled Windows 11 Runtime Bring-Up Readiness
 
+## TASK 8I-P1B-2A - Unsigned canonical package (2026-07-11)
+
+- **Status:** `CANONICAL_WINDOWS_11_DRIVER_PACKAGE_BUILT_AND_CATALOGED_UNSIGNED_NOT_PRODUCTION_SIGNED_NOT_STAGED_NOT_INSTALLABLE_NOT_INDEPENDENTLY_AUDITED`.
+- **Reproducibility:** two clean Release x64 builds produced byte-identical 40,960-byte `ChatpadFilter.sys` files at SHA-256 `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`. PDBs differ and are classified separately; build-A PDB is the frozen external symbol resource.
+- **Package:** canonical INF remains 1,581 bytes / `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`; unsigned catalog is 1,202 bytes / `6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`; catalog membership is exactly INF plus SYS.
+- **Signing:** SYS and CAT are explicitly unsigned. WHCP/HLK is selected as the production route. No `.hlkx`, portal submission, signer subject, chain, signed catalog, staged INF, driver-store identity, or live candidate identity exists.
+- **Validation:** `InfVerif` valid and `Inf2Cat` zero warnings/errors; focused unsigned suite 20/20 in both runtimes; compatibility and regressions remain exact; readiness retains 57 entries and records this package as non-installable.
+- **Safety:** no signing/certificate/private-key access, staging, installation, load, native declaration load, device/driver-store/registry/service query, SetupAPI/Newdev invocation, authorization, binding, restart, rollback, restoration, or Windows mutation occurred. No authorization phrase is active.
+- **Blocker:** `BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_PRODUCTION_SIGNED_AND_INDEPENDENTLY_AUDITED`.
+- **Next task:** TASK 8I-P1B-2B — Obtain and validate the externally production-signed canonical Windows 11 driver package.
+
 ## TASK 8F-R1B - Corrected native declaration identity propagation (2026-07-11)
 
 - **Remediation:** TASK 8F is reopened because the accepted

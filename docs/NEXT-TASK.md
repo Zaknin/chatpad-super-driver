@@ -1,48 +1,53 @@
-# TASK 8I-P1B-2 — Build, catalog, sign, validate, and freeze the canonical Windows 11 driver package and immutable APPLY candidate contract
+# Next Task
 
 ## Exact current state
 
-TASK 8F-R2 and TASK 8I-P1A-R2R1 passed as accepted read-only external audits; neither has a closure commit. TASK 8I-P1B-1-C1 defines and statically validates the canonical source package, but it is not built, cataloged, signed, staged, installable, or independently audited.
+- Branch: `feature/native-adapter-live-apply-package-build`.
+- Starting package-source commit: `4510e1f2f8a4b4e31ac40672261cf4ad94ec27c5`.
+- Expected single build commit subject: `build: freeze unsigned canonical live apply package`; use the exact committed hash from Git after finalization.
+- Unsigned SYS: `ChatpadFilter.sys`, 40,960 bytes, SHA-256 `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`.
+- Canonical INF: 1,581 bytes, SHA-256 `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`.
+- Unsigned CAT: `ChatpadFilterExtension.cat`, 1,202 bytes, SHA-256 `6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`.
+- Package status: built and cataloged, unsigned, not production-signed, not staged, not installable, not independently audited.
+- Blocker: `BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_PRODUCTION_SIGNED_AND_INDEPENDENTLY_AUDITED`.
+- No live authorization phrase is active or carried forward.
 
-The canonical inputs are:
+## Next recommended objective
 
-- production project `src/driver/ChatpadFilter/ChatpadFilter.vcxproj`;
-- output name `ChatpadFilter.sys`;
-- production INF `src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf`;
-- source plan `tools/ExactInstance/contracts/chatpad-live-apply-package-source-plan.json`;
-- strict validator `tools/ExactInstance/ChatpadLiveApplyPackageSourceContract.psm1`;
-- focused test `tools/Test-ChatpadLiveApplyPackageSourceContract.ps1`.
+TASK 8I-P1B-2B — Obtain and validate the externally production-signed canonical Windows 11 driver package.
 
 ## Required branch and starting commit
 
-- Branch: `feature/native-adapter-live-apply-package-source`.
-- Starting commit: the commit with parent `e5c456efdf5d34863084be5558859a4884bd6a83` and subject `feat: define canonical live apply package source`; derive and verify the exact hash from Git.
-- Require clean index/worktree, no untracked files, upstream `0/0`, and the remote branch resolving to the same commit.
+- Start from the pushed `feature/native-adapter-live-apply-package-build` commit whose parent is `4510e1f2f8a4b4e31ac40672261cf4ad94ec27c5` and subject is `build: freeze unsigned canonical live apply package`.
+- Require a clean worktree, upstream `0/0`, and exact remote identity before changes.
 
 ## Preconditions
 
-1. Independently audit the P1B-1-C1 source contract before treating it as an accepted build input.
-2. Revalidate the canonical INF and every driver-source identity from the plan.
-3. Select and document the Microsoft attestation or WHCP production signing route and required release authority.
-4. Keep the accepted exact physical-node, lower-filter, `xusb22`-preservation, and candidate-selection rules unchanged.
+- Read `AGENTS.md`, the four continuity documents, and the latest worklog entry.
+- Validate `docs/evidence/canonical-live-apply-package-build-task-8i-p1b-2a.json` and `tools/ExactInstance/contracts/chatpad-live-apply-unsigned-package-plan.json` in both PowerShell runtimes.
+- Match the external lab handoff to the frozen INF, SYS, CAT, and build-A PDB identities.
+- Require an externally created and EV-signed WHCP/HLK `.hlkx` submission from an authorized lab; do not substitute attestation or test signing.
 
 ## Safety restrictions
 
-Do not stage, install, bind, load, restart, query the live device, invoke SetupAPI/Newdev, issue or consume live authorization, or mutate Windows. Do not enable test mode, change boot policy or Secure Boot, install temporary trust, or read private signing material outside a separately authorized signing boundary.
+- Do not stage, install, bind, load, query devices or the driver store, invoke SetupAPI/Newdev, execute the TASK 8I native path, issue/consume authorization, restart, re-enumerate, roll back, restore, or mutate Windows.
+- Do not create/install certificates, access private keys, enable test mode, change boot configuration or Secure Boot, or accept a test-signed package.
+- Portal access and external coordination require explicit authorization and credentials outside this repository task.
 
 ## Acceptance criteria
 
-Produce and freeze the exact SYS, INF, and CAT byte identities; signer and signature-chain results; package date/version; provider/description/rank/node identity; SetupAPI package identity; exact one-match candidate result; restart/reboot policy; build provenance and tool versions; and reproducibility result. Keep zero- and multiple-match outcomes fail-closed. Preserve the prototype and P1A source identities.
+- Returned INF and SYS match the frozen pre-sign identities unless authoritative WHCP evidence explicitly proves and explains an allowed transformation.
+- Returned catalog replaces the unsigned catalog, covers exactly the frozen INF and SYS member identities, and passes Microsoft production signer, chain, EKU, and kernel-policy verification.
+- Freeze the returned signed hashes, signer/chain evidence, WHCP submission identity, and independent audit boundary without claiming staging or live candidate readiness.
+- Keep every staging, installation, native, device, binding, authorization, and Windows-mutation counter at zero.
 
 ## Inspect first
 
-1. `AGENTS.md`
-2. `docs/PROJECT-STATE.md`
-3. `docs/DECISIONS.md`
-4. this file
-5. the latest `docs/WORKLOG.md` entry
-6. `tools/ExactInstance/contracts/chatpad-live-apply-package-source-plan.json`
-7. `tools/ExactInstance/ChatpadLiveApplyPackageSourceContract.psm1`
-8. `src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf`
-
-TASK 8I remains blocked by `BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_BUILT_CATALOGED_SIGNED_AND_INDEPENDENTLY_AUDITED`. Do not proceed to executor integration or live execution.
+```powershell
+git branch --show-current
+git rev-parse HEAD
+git status --short --branch
+git ls-remote origin refs/heads/feature/native-adapter-live-apply-package-build
+pwsh -NoProfile -File tools/Test-ChatpadLiveApplyPackageSourceContract.ps1 -UnsignedPackage
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/Test-ChatpadLiveApplyPackageSourceContract.ps1 -UnsignedPackage
+```

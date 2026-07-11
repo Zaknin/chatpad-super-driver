@@ -1,5 +1,37 @@
 # Decisions
 
+## 2026-07-11 - Use reproducible unsigned output and WHCP/HLK for production signing
+
+**Decision:** Freeze the canonical pre-sign package as the byte-identical
+Release x64 output produced with the installed WindowsKernelModeDriver10.0
+toolchain plus linker controls `/Brepro` and
+`/PDBALTPATH:ChatpadFilter.pdb`. Select the Windows Hardware Compatibility
+Program / Windows Hardware Lab Kit route for external production signing.
+Keep the unsigned INF, SYS, and CAT as the exact driver-folder handoff and the
+build-A PDB as a separate symbol resource; a future authorized lab must create,
+EV-sign, and submit the `.hlkx` package.
+
+**Rationale:** The project-level `Deterministic=true` property did not reach
+the WDK linker. Without explicit linker controls, two otherwise clean builds
+differed only in timestamp, checksum, RSDS GUID, and embedded PDB path. The
+supported linker controls produced identical 40,960-byte SYS files with
+SHA-256 `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`.
+Current Microsoft guidance classifies attestation as testing-only and not
+Windows Certified; WHCP/HLK is the production route.
+
+**Alternatives rejected:** Accepting an arbitrary first build; patching or
+normalizing the SYS after link; changing the accepted project or INF; treating
+the nonreproducible PDB as a SYS defect; test signing; attestation as a
+production substitute; creating a placeholder signer; or accessing a signing
+portal, certificate, or private key in this task.
+
+**Consequences:** The unsigned catalog is frozen at 1,202 bytes and SHA-256
+`6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`.
+The package remains non-installable and TASK 8I remains blocked by
+`BLOCKED_NATIVE_ADAPTER_CANONICAL_DRIVER_PACKAGE_NOT_PRODUCTION_SIGNED_AND_INDEPENDENTLY_AUDITED`.
+TASK 8I-P1B-2B must obtain and validate the externally WHCP/HLK-signed package;
+no authorization phrase is active or carried forward.
+
 ## 2026-07-11 - Reopen TASK 8F and require one exact corrected declaration identity
 
 **Decision:** Reopen TASK 8F because `SetupDiGetDriverInstallParamsW` was
