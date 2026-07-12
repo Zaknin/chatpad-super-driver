@@ -27,7 +27,6 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     ChatpadHidReportState HidState;
     ChatpadFailOpenState FailOpenState;
     ChatpadHidKeyboardReport KeyboardQueue[CHATPAD_KEYBOARD_QUEUE_CAPACITY];
-    USBD_PIPE_HANDLE ControlPipeHandle;
     USBD_PIPE_HANDLE InputPipeHandle;
     volatile LONG StopRequested;
     volatile LONG InD0;
@@ -45,7 +44,6 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     volatile LONG ChatpadFeatureDisabled;
     volatile LONG VirtualKeyboardAvailable;
     volatile LONG FirstOptionalFailureStage;
-    volatile LONG ControlPipeFound;
     volatile LONG Interface2Found;
     volatile LONG Pipe0Found;
     volatile LONG ConfigurationCompletionCount;

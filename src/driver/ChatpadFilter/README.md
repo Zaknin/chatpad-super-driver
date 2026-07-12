@@ -34,9 +34,9 @@ has established interface 2, D0 entry queues one passive-level activation work
 item. An interlocked per-D0 consumption gate prevents duplicate activation.
 The worker sends the six authoritative vendor control transfers as generic
 raw-setup control URBs, matching the retained working driver's transfer form.
-The filter observes xusb22's existing generic control traffic and reuses its
-non-null configured default-control pipe handle without selecting or claiming
-the xusb22-owned configuration. Each transfer has a one-second timeout and the
+Endpoint zero uses a null pipe handle plus the mandatory
+`USBD_DEFAULT_PIPE_TRANSFER` flag; the filter does not select or claim the
+xusb22-owned configuration. Each transfer has a one-second timeout and the
 protocol's 12 ms post-transfer delay. The first
 three legacy `40/A9` preamble requests are
 required even though the controller is documented and live-observed to stall

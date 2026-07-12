@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-07-13 - Address endpoint zero with the default-pipe transfer flag
+
+**Decision:** Submit generic activation control URBs to endpoint zero with
+`UrbControlTransfer.PipeHandle = NULL` and include the mandatory
+`USBD_DEFAULT_PIPE_TRANSFER` bit in `TransferFlags`. Do not capture or wait for
+a non-null endpoint-zero pipe handle. Continue observing only xusb22's completed
+configuration URBs to obtain interface-2 input pipe 0.
+
+**Rationale:** Live 1.0.9 proved xusb22 never exposes the non-null control handle
+that version 1.0.9 required (`ControlPipeFound=0` and no current activation
+attempt). The WDK contract states that the default control endpoint uses a null
+pipe handle and requires `USBD_DEFAULT_PIPE_TRANSFER`. Version 1.0.8 omitted
+that flag, which directly explains its `USBD_STATUS_INVALID_PIPE_HANDLE` result.
+
+**Alternatives rejected:** Waiting for or fabricating a non-null endpoint-zero
+handle; selecting or claiming xusb22's USB configuration; reverting to the
+specialized vendor URBs that stalled the activation write; retrying; changing
+the six request bytes; or weakening Xbox fail-open behavior.
+
+**Consequences:** This supersedes the immediately following 1.0.9 control-handle
+decision. Diagnostic transport architecture becomes 5 and records
+`DefaultPipeTransferFlag=1`. Activation can begin once D0, VHF, and the observed
+interface-2 input pipe are ready. Live hardware must still prove activation,
+input packets, decoding, VHF submission, and real keyboard behavior.
+
 ## 2026-07-13 - Reuse xusb22's observed default-control pipe handle
 
 **Decision:** Observe non-null default-control pipe handles from xusb22's

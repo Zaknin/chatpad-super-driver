@@ -1,34 +1,34 @@
 # Next Task
 
-## TASK 8J-R6-T1 — Upgrade once to 1.0.9 and test captured control-pipe activation
+## TASK 8J-R7-T1 — Upgrade once to 1.0.10 and test endpoint-zero activation
 
 ### Starting state
 
-- Use pushed branch `feature/chatpad-kmdf-live-activation-runtime` at the commit with parent `f9bb8b7a920c62af2ab5063ddb35de367d97ed44` and subject `fix: reuse xusb22 control pipe`.
-- Installed `oem99.inf` is version 1.0.8.0. Its step-0 generic control URB fails with `USBD_STATUS_INVALID_PIPE_HANDLE` because the pipe handle is null.
-- The ignored signed 1.0.9 package identities are recorded in `docs/PROJECT-STATE.md`.
+- Use pushed branch `feature/chatpad-kmdf-live-activation-runtime` at the commit with parent `83339991b27a2e86696132e81e09bf774e4ee0ef` and subject `fix: use endpoint-zero default pipe flag`.
+- Installed `oem99.inf` is version 1.0.9.0. The Xbox controller is healthy, but `ControlPipeFound=0` proves its impossible non-null endpoint-zero handle gate prevented a current activation attempt.
+- The exact signed 1.0.10 package identities are recorded in `docs/PROJECT-STATE.md`.
 
-### Exact operator commands
+### Exact single operator command
 
-Run each successful command once from elevated PowerShell:
+Run once from elevated PowerShell:
 
 ```powershell
-pnputil /delete-driver oem99.inf /uninstall /force
-pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-r6-control-pipe-reuse-package\final\ChatpadFilterExtension.inf" /install
+pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-r7-default-pipe-flag-package\final\ChatpadFilterExtension.inf" /install
 ```
 
-Do not repeat either successful command. If PnPUtil returns `3010` or requests reboot, reboot once before verification.
+Do not repeat a successful command. If PnPUtil returns `3010` or requests a reboot, reboot once before verification.
 
 ### Verification
 
-- Confirm selected version 1.0.9.0 and exact Driver Store SYS identity.
-- Confirm controller health, stack order, transport architecture 4, and `ControlPipeFound=1`.
-- Use `ActivationAttemptGeneration` and `ActivationLastAttemptedStep` to distinguish current results from stale registry values.
-- Inspect all current six activation outcomes, `ActivationCompleted`, reader start, first packet/decode, and first VHF submission.
-- Test ordinary, Shift, and two-key Chatpad input while confirming normal Xbox operation.
+- Confirm the newly published INF is selected at version 1.0.10.0 and the Driver Store SYS has the exact signed identity from `docs/PROJECT-STATE.md`.
+- Confirm the Xbox controller remains healthy and the physical stack still contains `xusb22`, `ChatpadFilter`, and `vhf`.
+- Confirm transport architecture 5 and `DefaultPipeTransferFlag=1`.
+- Use `ActivationAttemptGeneration` and `ActivationLastAttemptedStep` to distinguish the current attempt from stale persisted values.
+- Inspect all current activation NTSTATUS/USBD/byte results, `ActivationCompleted`, reader start, first input/raw packet/decode, and first VHF submission.
+- Test ordinary, Shift, and two-key Chatpad input in Notepad while confirming normal Xbox operation.
 - Claim functional success only from the real key test with a healthy controller.
 
 ### Restrictions
 
-- No repeated cleanup/install, automatic retry, certificate/trust change, BCD change, rebuild, or resign.
-- Do not infer functional success from pipe capture or activation return codes alone.
+- No repeated install, automatic retry, certificate/trust change, BCD change, rebuild, or resign.
+- Do not infer functional success from activation return codes alone.
