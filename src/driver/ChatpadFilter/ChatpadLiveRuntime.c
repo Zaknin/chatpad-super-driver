@@ -94,14 +94,13 @@ static void ChatpadLiveOpenDiagnostics(PCHATPAD_LIVE_RUNTIME runtime)
     diagnosticKey = NULL;
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = runtime->Device;
-    status = WdfDeviceOpenRegistryKey(
-        runtime->Device,
-        PLUGPLAY_REGKEY_DEVICE,
+    status = WdfDriverOpenParametersRegistryKey(
+        WdfDeviceGetDriver(runtime->Device),
         KEY_READ | KEY_WRITE,
         &attributes,
         &deviceKey);
     if (!NT_SUCCESS(status)) {
-        ChatpadLiveTrace("DiagnosticDeviceKeyOpenFailed", status, 0u, 0u);
+        ChatpadLiveTrace("DiagnosticParametersKeyOpenFailed", status, 0u, 0u);
         return;
     }
 
@@ -779,7 +778,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x0102;
+        vhfConfig.VersionNumber = 0x0103;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {

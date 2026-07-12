@@ -62,24 +62,25 @@ function Get-InfSections([string]$Text) {
 }
 
 function Assert-Inf([string]$Text) {
-    $required = @('Version','DestinationDirs','SourceDisksNames','SourceDisksFiles','Manufacturer','Models.NTamd64.10.0...22000','ChatpadFilter_Install.NT','ChatpadFilter_CopyFiles','ChatpadFilter_Install.NT.Services','ChatpadFilter_Service_Install','ChatpadFilter_Install.NT.Wdf','ChatpadFilter_Wdf','ChatpadFilter_Install.NT.Filters','ChatpadFilter_LowerFilter','Strings')
+    $required = @('Version','DestinationDirs','SourceDisksNames','SourceDisksFiles','Manufacturer','Models.NTamd64.10.0...22000','ChatpadFilter_Install.NT','ChatpadFilter_Install.NT.HW','ChatpadFilter_LowerFilters','ChatpadFilter_CopyFiles','ChatpadFilter_Install.NT.Services','ChatpadFilter_Service_Install','ChatpadFilter_Install.NT.Wdf','ChatpadFilter_Wdf','Strings')
     $sections = Get-InfSections $Text
     Assert-StringArray @($sections.Keys) $required 'INF sections'
     $active = (($sections.Values | ForEach-Object { $_ }) -join "`n")
     $requiredLines = @(
         'Signature   = "$WINDOWS NT$"','Class       = Extension','ClassGuid   = {E2F84CE7-8EFA-411C-AA69-97454CA4CB57}',
         'Provider    = %ProviderName%','ExtensionId = {69E7CCD7-7011-4059-95D4-618974E126DD}','CatalogFile = ChatpadFilterExtension.cat',
-        'DriverVer   = 07/12/2026,1.0.2.0','PnpLockdown = 1','ChatpadFilter_CopyFiles = 13','ChatpadFilter.sys = 1,,',
+        'DriverVer   = 07/12/2026,1.0.3.0','PnpLockdown = 1','ChatpadFilter_CopyFiles = 13','ChatpadFilter.sys = 1,,',
         '%ProviderName% = Models,NTamd64.10.0...22000','%DeviceDescription% = ChatpadFilter_Install, USB\VID_045E&PID_028E',
         'AddService = ChatpadFilter,,ChatpadFilter_Service_Install','ServiceBinary = %13%\ChatpadFilter.sys',
         'KmdfService = ChatpadFilter,ChatpadFilter_Wdf','KmdfLibraryVersion = 1.15',
-        'AddFilter = ChatpadFilter,,ChatpadFilter_LowerFilter','FilterPosition = Lower','ProviderName       = "Chatpad Super Driver Project"')
+        'AddReg = ChatpadFilter_LowerFilters','HKR,,"LowerFilters",0x00010008,"ChatpadFilter","vhf"','ProviderName       = "Chatpad Super Driver Project"')
     foreach ($line in $requiredLines) {
         if (-not $Text.Contains($line)) { throw "Required INF material is missing or changed: $line" }
     }
     $modelLines = @($sections['Models.NTamd64.10.0...22000'] | Where-Object { $_ -match '=' })
     if ($modelLines.Count -ne 1 -or $modelLines[0] -ne '%DeviceDescription% = ChatpadFilter_Install, USB\VID_045E&PID_028E') { throw 'INF model inventory is not exact.' }
-    if ($Text -match '(?i)\b(?:UpperFilters|LowerFilters|CoInstallers|ClassInstall32|DefaultInstall|SPSVCINST_ASSOCSERVICE)\b') { throw 'INF contains a prohibited installer/filter directive.' }
+    if ($Text -match '(?i)\b(?:UpperFilters|CoInstallers|ClassInstall32|DefaultInstall|SPSVCINST_ASSOCSERVICE)\b') { throw 'INF contains a prohibited installer/filter directive.' }
+    if ([regex]::Matches($Text, '(?im)^HKR,,"LowerFilters",0x00010008,"ChatpadFilter","vhf"$').Count -ne 1) { throw 'INF must contain exactly one ordered non-destructive ChatpadFilter/vhf lower-filter registration.' }
     if ($Text -match '(?i)(?:[A-Z]:\\|\\\\|TODO|PLACEHOLDER|TESTSIGN|TEST SIGN|\*|USB\\VID_045E&PID_028E\\|828F4587|IG_00|HID\\|XnaComposite)') { throw 'INF contains a broad, machine-specific, placeholder, test-only, or prohibited match.' }
     if ([regex]::Matches($Text, '(?i)USB\\VID_045E&PID_028E').Count -ne 1) { throw 'INF hardware ID occurrence count is not exactly one.' }
 }
@@ -102,9 +103,9 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     Assert-String $Plan.service_name 'ChatpadFilter' 'service name'
     Assert-String $Plan.filter_name 'ChatpadFilter' 'filter name'
     Assert-ExactProperties $Plan.filter_attachment @('method','position','level','associated_service','base_inf','base_service','preserves_base_function_driver') 'filter_attachment'
-    Assert-String $Plan.filter_attachment.method 'DDInstall.Filters AddFilter' 'filter method'
-    Assert-String $Plan.filter_attachment.position 'Lower' 'filter position'
-    Assert-String $Plan.filter_attachment.level 'none because xusb22 exposes no project-owned named level' 'filter level'
+    Assert-String $Plan.filter_attachment.method 'DDInstall.HW ordered LowerFilters append' 'filter method'
+    Assert-String $Plan.filter_attachment.position 'Lower: ChatpadFilter immediately before vhf' 'filter position'
+    Assert-String $Plan.filter_attachment.level 'ordered legacy list required because xusb22 exposes no filter levels and VHF order is mandatory' 'filter level'
     Assert-Bool $Plan.filter_attachment.associated_service $false 'associated service'
     Assert-String $Plan.filter_attachment.base_inf 'xusb22.inf' 'base INF'
     Assert-String $Plan.filter_attachment.base_service 'xusb22' 'base service'
@@ -147,7 +148,7 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     foreach ($entry in @($Plan.package_file_inventory)) { Assert-ExactProperties $entry @('filename','role','catalog_covered') 'package file entry'; Assert-Bool $entry.catalog_covered $true 'catalog coverage' }
 
     Assert-ExactProperties $Plan.version_policy @('source_driver_ver','date_source','version_source','generated_from_clock','identical_source_rebuild_policy','new_version_policy','p1b2_freeze_policy') 'version_policy'
-    Assert-String $Plan.version_policy.source_driver_ver '07/12/2026,1.0.2.0' 'source DriverVer'
+    Assert-String $Plan.version_policy.source_driver_ver '07/12/2026,1.0.3.0' 'source DriverVer'
     Assert-Bool $Plan.version_policy.generated_from_clock $false 'clock generation'
     Assert-ExactProperties $Plan.catalog_policy @('filename','covered_files','generation_performed','p1b2_requirement') 'catalog_policy'
     Assert-String $Plan.catalog_policy.filename 'ChatpadFilterExtension.cat' 'catalog policy filename'

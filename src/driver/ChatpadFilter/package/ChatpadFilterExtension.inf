@@ -10,7 +10,7 @@ ClassGuid   = {E2F84CE7-8EFA-411C-AA69-97454CA4CB57}
 Provider    = %ProviderName%
 ExtensionId = {69E7CCD7-7011-4059-95D4-618974E126DD}
 CatalogFile = ChatpadFilterExtension.cat
-DriverVer   = 07/12/2026,1.0.2.0
+DriverVer   = 07/12/2026,1.0.3.0
 PnpLockdown = 1
 
 [DestinationDirs]
@@ -31,6 +31,12 @@ ChatpadFilter.sys = 1,,
 [ChatpadFilter_Install.NT]
 CopyFiles = ChatpadFilter_CopyFiles
 
+[ChatpadFilter_Install.NT.HW]
+AddReg = ChatpadFilter_LowerFilters
+
+[ChatpadFilter_LowerFilters]
+HKR,,"LowerFilters",0x00010008,"ChatpadFilter","vhf"
+
 [ChatpadFilter_CopyFiles]
 ChatpadFilter.sys
 
@@ -49,12 +55,6 @@ KmdfService = ChatpadFilter,ChatpadFilter_Wdf
 
 [ChatpadFilter_Wdf]
 KmdfLibraryVersion = 1.15
-
-[ChatpadFilter_Install.NT.Filters]
-AddFilter = ChatpadFilter,,ChatpadFilter_LowerFilter
-
-[ChatpadFilter_LowerFilter]
-FilterPosition = Lower
 
 [Strings]
 ProviderName       = "Chatpad Super Driver Project"

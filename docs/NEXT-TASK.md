@@ -1,33 +1,34 @@
 # Next Task
 
-## TASK 8J-T2 — Install and live-test the 1.0.2 transport correction
+## TASK 8J-T3 — Install and live-test the 1.0.3 VHF-stack correction
 
 ### Starting state
 
-- Branch `feature/chatpad-kmdf-live-activation-runtime` contains the pushed correction commit with parent `f085d8642d4b4820970019d56f3d512a4a2783f9`.
-- Installed `oem97.inf` version `1.0.1.0` is selected, but `ChatpadFilter` is stopped and absent from the exact controller stack.
-- The ignored correction package contains the exact signed 1.0.2.0 INF/SYS/CAT identities recorded in `docs/PROJECT-STATE.md`.
+- Start from the pushed `feature/chatpad-kmdf-live-activation-runtime` VHF correction commit whose parent is `6d63deb907be5150baedc96fff3832a45f457b2b`.
+- Installed `oem98.inf` version `1.0.2.0` is selected, but both `ChatpadFilter` and `vhf` are stopped and absent from the exact physical stack.
+- The ignored 1.0.3 package contains the exact signed INF/SYS/CAT identities recorded in `docs/PROJECT-STATE.md`.
 
 ### Exact operator action
 
 From one elevated PowerShell or Command Prompt, run exactly once:
 
 ```powershell
-pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-live-transport-correction-package\final\ChatpadFilterExtension.inf" /install
+pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-vhf-stack-correction-package\final\ChatpadFilterExtension.inf" /install
 ```
 
-Do not repeat the command after a successful add/install. A reboot is required if PnPUtil returns `3010` or says that a reboot is needed; reboot once before verification.
+Do not repeat the command after success. If PnPUtil returns `3010` or requests a reboot, reboot once before verification.
 
 ### Verification
 
-- Confirm the selected published INF is version `1.0.2.0`, the loaded SYS matches the package, `ChatpadFilter` is running, and the exact controller stack contains both `xusb22` and `ChatpadFilter` with problem code 0.
-- Read `HKLM\SYSTEM\CurrentControlSet\Enum\USB\VID_045E&PID_028E\1C21F10\ChatpadRuntimeDiagnostics`. Identify the first absent or failing stage from DeviceAdd through configuration/interface 2/pipe 0, VHF, six activation results, reader, first packet, decode, and HID submission.
-- Confirm no relevant Code Integrity rejection and that the Xbox controller still works normally.
-- In Notepad, test base letters, digits, Space, Enter, Backspace, Left/Right, Shift make/break, simultaneous two-key behavior, and key release.
-- Classify functional success only from real keyboard input while the Xbox controller remains healthy. Green/Orange/People symbol layers remain outside this package.
+- Confirm the new selected extension is version `1.0.3.0` and its Driver Store SYS matches the package.
+- Confirm both `ChatpadFilter` and `vhf` are loaded and the exact physical stack places `ChatpadFilter` above `vhf`, beneath `xusb22`; all exact device-chain problem codes must remain 0.
+- Read `HKLM\SYSTEM\CurrentControlSet\Services\ChatpadFilter\Parameters\ChatpadRuntimeDiagnostics` and report the first absent or failing stage through configuration, interface 2/pipe 0, six activation transfers, reader, raw packet, decode, and VHF submission.
+- Confirm no relevant Code Integrity rejection and verify the Xbox controller still operates normally.
+- In Notepad, test ordinary keys, digits, Space, Enter, Backspace, arrows, Shift make/break, simultaneous two-key behavior, and release behavior.
+- Claim functional success only if real keyboard input appears and the Xbox controller remains healthy.
 
 ### Restrictions
 
 - Do not repeat certificate imports, create a certificate, modify BCD, rebuild, resign, or automatically retry installation.
-- Do not claim functional success from package selection, driver load, activation status, input byte counts, or VHF submission alone.
-- If keys remain inactive, use the persisted diagnostics to report the first concrete failing stage before changing code.
+- Do not claim functional success from stack loading, activation results, raw packets, or VHF submission alone.
+- If the Chatpad remains inactive, report the first persisted failing stage before another code change.

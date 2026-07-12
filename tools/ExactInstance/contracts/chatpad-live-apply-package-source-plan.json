@@ -9,7 +9,7 @@
   "driver_binary_filename": "ChatpadFilter.sys",
   "canonical_inf": {
     "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf",
-    "sha256": "2EE7FB3E68CAA55B6218DF86FF8726DEE0F59F6D220B38F5074070D09EAEB977"
+    "sha256": "62FBE1F25D1C36E867E26E26CE7B0DCDA890E8E4D53F1E62C0C646678596CCD7"
   },
   "catalog_filename": "ChatpadFilterExtension.cat",
   "architecture": "AMD64",
@@ -18,9 +18,9 @@
   "service_name": "ChatpadFilter",
   "filter_name": "ChatpadFilter",
   "filter_attachment": {
-    "method": "DDInstall.Filters AddFilter",
-    "position": "Lower",
-    "level": "none because xusb22 exposes no project-owned named level",
+    "method": "DDInstall.HW ordered LowerFilters append",
+    "position": "Lower: ChatpadFilter immediately before vhf",
+    "level": "ordered legacy list required because xusb22 exposes no filter levels and VHF order is mandatory",
     "associated_service": false,
     "base_inf": "xusb22.inf",
     "base_service": "xusb22",
@@ -55,7 +55,7 @@
     { "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.h", "sha256": "880549AA06A33EC33216F361934CD6BBDEF2CE404C05993731A596836EE1380B" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.c", "sha256": "0579EE0368221792663E74FE67A153CE2D8FB27B38B2EDCB27867D7399326F74" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.h", "sha256": "FCE07CF792033894C8E5229F368D321CF21C967F004FB06A2E81C54D1EE94406" },
-    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "DB219AB30F14A9CD1225F36CAF016898D4475601B8DD3839F07BEE7903B2E1F8" },
+    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "3CB2BE0FDE6DD2FD9E3C787D116693C44BCF0D926F7F486CA0403D6CDE5EA94C" },
     { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.h", "sha256": "C2C7CE8FAD540FE169FE010A5F72060B8B3EA7400C054A5549BBACBAF4EC664B" },
     { "path": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h", "sha256": "85A76126E95A0CCD655823D56C7EA04CB26EB8F5D3644054CB70AA7490A1B9BB" },
     { "path": "src/driver/ChatpadFilter/device.c", "sha256": "77B76963E2B6BCA32D2DA0AA84BC190392C2A5AF44F58AA163B7CBC41CC5B361" },
@@ -85,14 +85,14 @@
   ],
   "package_source_inventory": [
     { "role": "production driver project", "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "5295D7911DAD5D95A2B11DD7A9964A20641F9D2BDD5B5317230DE73F9E6B0344" },
-    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "2EE7FB3E68CAA55B6218DF86FF8726DEE0F59F6D220B38F5074070D09EAEB977" }
+    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "62FBE1F25D1C36E867E26E26CE7B0DCDA890E8E4D53F1E62C0C646678596CCD7" }
   ],
   "package_file_inventory": [
     { "filename": "ChatpadFilterExtension.inf", "role": "device-specific extension INF", "catalog_covered": true },
     { "filename": "ChatpadFilter.sys", "role": "KMDF lower-filter binary produced by the production project", "catalog_covered": true }
   ],
   "version_policy": {
-    "source_driver_ver": "07/12/2026,1.0.2.0",
+    "source_driver_ver": "07/12/2026,1.0.3.0",
     "date_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "version_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "generated_from_clock": false,
@@ -165,7 +165,7 @@
     { "directive": "ExtensionId", "basis": "accepted project-owned extension identity in WINDOWS11-DEVICE-FILTER-INSTALL-RECOVERY.md" },
     { "directive": "NTamd64.10.0...22000", "basis": "accepted AMD64 Windows 11 build 22000 minimum package model" },
     { "directive": "USB\\VID_045E&PID_028E", "basis": "accepted exact physical controller target; revision, interface, HID, class and wildcard matches prohibited" },
-    { "directive": "AddFilter and FilterPosition=Lower", "basis": "accepted declarative device-specific lower-filter model beneath preserved xusb22" },
+    { "directive": "LowerFilters ordered append", "basis": "VHF requires vhf.sys below the Chatpad HID source filter and xusb22 exposes no named filter levels" },
     { "directive": "ChatpadFilter service and binary", "basis": "production Driver project name plus accepted non-associated demand-start service identity" },
     { "directive": "KMDF 1.15 and DIRID 13", "basis": "accepted package model and KMDF Driver project metadata" },
     { "directive": "Provider strings", "basis": "project-owned canonical source identity defined by this package-source contract" },

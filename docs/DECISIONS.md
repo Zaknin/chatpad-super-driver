@@ -4142,3 +4142,31 @@ or select-interface completion that exposes interface 2 pipe 0. If that handle
 is not exposed, activation does not run and diagnostics identify that exact
 boundary. Interface 0/controller traffic remains unchanged; D0/removal rundown
 stays bounded; real functionality remains unclaimed until an operator test.
+
+## 2026-07-12 - Install VHF beneath the Chatpad HID source filter in fixed order
+
+**Decision:** Register the physical-device lower-filter list as an ordered,
+non-destructive append containing `ChatpadFilter` followed by Microsoft `vhf`.
+Do not use position-only declarative filter registration for this pair. Persist
+early runtime diagnostics beneath the ChatpadFilter service Parameters key.
+
+**Rationale:** Live 1.0.2 evidence showed the exact selected and signed driver
+was removed from the stack before its device diagnostics existed. Microsoft
+requires `vhf.sys` as a lower filter beneath every VHF HID source driver, but
+the INF installed only `ChatpadFilter`. The `xusb22` base INF defines no named
+filter levels; Microsoft documents ordering among position-only filters as
+effectively arbitrary. An ordered legacy multi-string is therefore required to
+guarantee `ChatpadFilter` immediately above `vhf`, and service Parameters are
+available before device start for failure evidence.
+
+**Alternatives rejected:** Calling `VhfCreate` without `vhf.sys`; declaring both
+services with position-only `AddFilter`; relying on arbitrary same-level order;
+placing `vhf` above the source driver; making VHF failure silently nonfatal;
+overwriting unrelated lower filters; or using a second root-enumerated package
+when the in-box VHF stack can be correctly attached to the existing device.
+
+**Consequences:** InfVerif warning 1384 is accepted and documented because an
+Extension INF uses legacy filter registration for mandatory ordering. The
+append flag preserves existing legacy lower filters. A device restart or reboot
+is required to assemble the new `xusb22 -> ChatpadFilter -> vhf` stack. Real
+keyboard functionality remains unclaimed until manual testing.

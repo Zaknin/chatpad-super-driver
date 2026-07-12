@@ -26,7 +26,8 @@ function Check([bool]$Condition, [string]$Name) {
 }
 
 Check ($runtime.Contains('L"USB\\VID_045E&PID_028E"') -and $runtime.Contains('DevicePropertyHardwareID') -and $runtime.Contains('RtlEqualUnicodeString')) 'exact supported device is independently matched'
-Check ($inf.Contains('USB\VID_045E&PID_028E') -and $inf.Contains('DriverVer   = 07/12/2026,1.0.2.0')) 'INF targets exact device at version 1.0.2.0'
+Check ($inf.Contains('USB\VID_045E&PID_028E') -and $inf.Contains('DriverVer   = 07/12/2026,1.0.3.0')) 'INF targets exact device at version 1.0.3.0'
+Check ($inf.Contains('HKR,,"LowerFilters",0x00010008,"ChatpadFilter","vhf"') -and -not $inf.Contains('AddFilter = ChatpadFilter')) 'INF orders ChatpadFilter above required VHF while preserving existing lower filters'
 Check ($device.Contains('WdfDeviceInitAssignWdmIrpPreprocessCallback') -and $device.Contains('IRP_MJ_INTERNAL_DEVICE_CONTROL')) 'internal USB IRP preprocess callback is registered'
 Check ($runtime.Contains('IoSkipCurrentIrpStackLocation(irp)') -and $runtime.Contains('IoCallDriver(WdfDeviceWdmGetAttachedDevice(device), irp)')) 'unowned controller IRPs pass directly to xusb22 lower stack'
 Check ($header.Contains('CHATPAD_INPUT_INTERFACE_INDEX ((UCHAR)2u)') -and $header.Contains('CHATPAD_INPUT_PIPE_INDEX ((UCHAR)0u)')) 'only historical Chatpad interface 2 pipe 0 is selected'
@@ -46,7 +47,8 @@ Check ($runtime.Contains('VhfReadReportSubmit') -and $project.Contains('VhfKm.li
 Check ($runtime.Contains('ChatpadLiveReleaseKeysIfNeeded') -and $runtime.Contains('ChatpadLiveReleaseAllKeys')) 'invalid data, timeout, and removal prevent stuck keys'
 Check (-not $runtime.Contains('WdfIoQueueCreate(')) 'controller traffic is not diverted through a passive KMDF queue'
 Check ($runtime.Contains('ChatpadRuntimeDiagnostics') -and $runtime.Contains('ConfigurationCompletionCount') -and $runtime.Contains('ActivationStep5UsbdStatus') -and $runtime.Contains('FirstRawPacket0') -and $runtime.Contains('FirstKeyboardReportNtStatus')) 'bounded persistent diagnostics cover configuration through first HID submission'
-Check ($runtime.Contains('vhfConfig.VersionNumber = 0x0102')) 'VHF child version matches package version 1.0.2.0'
+Check ($runtime.Contains('WdfDriverOpenParametersRegistryKey') -and $runtime.Contains('WdfDeviceGetDriver(runtime->Device)')) 'diagnostics use the service Parameters key before device start'
+Check ($runtime.Contains('vhfConfig.VersionNumber = 0x0103')) 'VHF child version matches package version 1.0.3.0'
 
 "Total: $total"
 "Passed: $passed"
