@@ -143,10 +143,10 @@ if ($requestOwnerContextIncludeCount -notin @(1, 2) -or
 }
 Assert-NoMatch $driverSource 'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare|Classify)' 'Production source must not call direct creation, rollback, attribute, or classification APIs.'
 $requiredLiveApis = @(
-    'WdfUsbTargetDeviceCreate',
-    'WdfUsbTargetDeviceSelectConfig',
-    'WdfUsbTargetDeviceSendControlTransferSynchronously',
-    'WdfUsbTargetPipeReadSynchronously',
+    'IoSetCompletionRoutine',
+    'WdfIoTargetSendInternalIoctlOthersSynchronously',
+    'UsbBuildVendorRequest',
+    'UsbBuildInterruptOrBulkTransferRequest',
     'VhfReadReportSubmit',
     'IoCallDriver')
 foreach ($requiredLiveApi in $requiredLiveApis) {
@@ -154,6 +154,7 @@ foreach ($requiredLiveApi in $requiredLiveApis) {
         throw "Production source is missing required live-runtime API: $requiredLiveApi"
     }
 }
+Assert-NoMatch $driverSource 'WdfUsbTargetDevice(?:Create|SelectConfig|SendControlTransferSynchronously)|WdfUsbTargetPipeReadSynchronously' 'Production filter must not claim or reconfigure the xusb22-owned USB device.'
 if ($projectText -notmatch '(?i)VhfKm\.lib') {
     throw 'ChatpadFilter project must link the VHF kernel client library.'
 }
@@ -214,6 +215,6 @@ if ($BuildLogPath) {
     }
 }
 
-Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; request-owner linkage retained; live WDF USB/VHF runtime present; direct lower-stack forwarding present; obsolete reusable-request bridge absent; diagnostic-only request-owner includes={2})." -f $Configuration, $Platform, $requestOwnerContextIncludeCount)
+Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; request-owner linkage retained; lower-stack URB/VHF runtime present; direct lower-stack forwarding present; obsolete reusable-request bridge absent; diagnostic-only request-owner includes={2})." -f $Configuration, $Platform, $requestOwnerContextIncludeCount)
 Write-Output 'Semantic guard limitation: targeted XML/text/binary string checks cannot prove full C macro expansion or all linker extraction internals; paired MSBuild logs, tlogs, dumpbin output, and diff review provide the binary evidence for this checkpoint.'
 exit 0

@@ -1,32 +1,33 @@
 # Next Task
 
-## TASK 8J-T1 — Manual package upgrade and live functional verification
+## TASK 8J-T2 — Install and live-test the 1.0.2 transport correction
 
 ### Starting state
 
-- Start from the published `feature/chatpad-kmdf-live-activation-runtime` implementation commit whose parent is `6ab488a970eb0e1817959bd752ce60b046064692`.
-- The existing installed package is `oem96.inf`; the TASK 8J package is not staged or installed.
-- The ignored final package directory contains exactly the signed 1.0.1.0 INF/SYS/CAT identities recorded in `docs/PROJECT-STATE.md`.
+- Branch `feature/chatpad-kmdf-live-activation-runtime` contains the pushed correction commit with parent `f085d8642d4b4820970019d56f3d512a4a2783f9`.
+- Installed `oem97.inf` version `1.0.1.0` is selected, but `ChatpadFilter` is stopped and absent from the exact controller stack.
+- The ignored correction package contains the exact signed 1.0.2.0 INF/SYS/CAT identities recorded in `docs/PROJECT-STATE.md`.
 
-### Operator action
+### Exact operator action
 
 From one elevated PowerShell or Command Prompt, run exactly once:
 
 ```powershell
-pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-chatpad-live-activation-package\final\ChatpadFilterExtension.inf" /install
+pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-live-transport-correction-package\final\ChatpadFilterExtension.inf" /install
 ```
 
-Do not repeat the command if PnPUtil reports success with exit code `3010`. A device restart or full reboot is expected because the old lower-filter binary can remain loaded until the controller stack is rebuilt; if Windows requests a reboot, reboot once.
+Do not repeat the command after a successful add/install. A reboot is required if PnPUtil returns `3010` or says that a reboot is needed; reboot once before verification.
 
 ### Verification
 
-- Confirm the newly published INF is version `1.0.1.0`, the `ChatpadFilter` service uses the new signed SYS, the exact controller node has `CM_PROB_NONE`, and the physical stack still contains both `xusb22` and `ChatpadFilter`.
-- Confirm no Code Integrity rejection and inspect bounded `ChatpadLive` diagnostics for device match, configuration, six successful activation steps, activation completion, and first valid input.
-- Verify the Xbox controller still functions normally.
-- In Notepad, test multiple base letters, digits, Space, Enter, Backspace, Left/Right, Shift make/break, simultaneous two-key behavior, and release behavior.
-- Classify functional success only from the operator's real key test. Green/Orange/People symbol layers are not implemented in this package.
+- Confirm the selected published INF is version `1.0.2.0`, the loaded SYS matches the package, `ChatpadFilter` is running, and the exact controller stack contains both `xusb22` and `ChatpadFilter` with problem code 0.
+- Read `HKLM\SYSTEM\CurrentControlSet\Enum\USB\VID_045E&PID_028E\1C21F10\ChatpadRuntimeDiagnostics`. Identify the first absent or failing stage from DeviceAdd through configuration/interface 2/pipe 0, VHF, six activation results, reader, first packet, decode, and HID submission.
+- Confirm no relevant Code Integrity rejection and that the Xbox controller still works normally.
+- In Notepad, test base letters, digits, Space, Enter, Backspace, Left/Right, Shift make/break, simultaneous two-key behavior, and key release.
+- Classify functional success only from real keyboard input while the Xbox controller remains healthy. Green/Orange/People symbol layers remain outside this package.
 
 ### Restrictions
 
-- Do not reinstall automatically, create a certificate, repeat trust imports, modify BCD, resign, rebuild, or claim functional success from signatures, driver load, or activation return codes alone.
-- If activation fails, report the first failing step, NTSTATUS, transferred bytes, and relevant bounded diagnostics before changing code.
+- Do not repeat certificate imports, create a certificate, modify BCD, rebuild, resign, or automatically retry installation.
+- Do not claim functional success from package selection, driver load, activation status, input byte counts, or VHF submission alone.
+- If keys remain inactive, use the persisted diagnostics to report the first concrete failing stage before changing code.

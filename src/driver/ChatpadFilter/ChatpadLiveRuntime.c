@@ -4,8 +4,8 @@
 #include "ChatpadLiveTransferPolicy.h"
 #include "ChatpadLiveRuntime.h"
 
-#include <usb.h>
 #include <usbioctl.h>
+#include <usbdlib.h>
 
 static const UCHAR ChatpadKeyboardReportDescriptor[] = {
     0x05, 0x01, 0x09, 0x06, 0xA1, 0x01, 0x05, 0x07,
@@ -18,6 +18,32 @@ static const UCHAR ChatpadKeyboardReportDescriptor[] = {
 
 static const WCHAR ChatpadSupportedHardwareId[] = L"USB\\VID_045E&PID_028E";
 
+static const WCHAR *const ChatpadActivationNtStatusNames[] = {
+    L"ActivationStep0NtStatus", L"ActivationStep1NtStatus",
+    L"ActivationStep2NtStatus", L"ActivationStep3NtStatus",
+    L"ActivationStep4NtStatus", L"ActivationStep5NtStatus"
+};
+static const WCHAR *const ChatpadActivationUsbdStatusNames[] = {
+    L"ActivationStep0UsbdStatus", L"ActivationStep1UsbdStatus",
+    L"ActivationStep2UsbdStatus", L"ActivationStep3UsbdStatus",
+    L"ActivationStep4UsbdStatus", L"ActivationStep5UsbdStatus"
+};
+static const WCHAR *const ChatpadActivationBytesNames[] = {
+    L"ActivationStep0Bytes", L"ActivationStep1Bytes",
+    L"ActivationStep2Bytes", L"ActivationStep3Bytes",
+    L"ActivationStep4Bytes", L"ActivationStep5Bytes"
+};
+static const WCHAR *const ChatpadActivationSetup0Names[] = {
+    L"ActivationStep0Setup0", L"ActivationStep1Setup0",
+    L"ActivationStep2Setup0", L"ActivationStep3Setup0",
+    L"ActivationStep4Setup0", L"ActivationStep5Setup0"
+};
+static const WCHAR *const ChatpadActivationSetup1Names[] = {
+    L"ActivationStep0Setup1", L"ActivationStep1Setup1",
+    L"ActivationStep2Setup1", L"ActivationStep3Setup1",
+    L"ActivationStep4Setup1", L"ActivationStep5Setup1"
+};
+
 static void ChatpadLiveTrace(
     _In_z_ const char *eventName,
     NTSTATUS status,
@@ -28,9 +54,112 @@ static void ChatpadLiveTrace(
     UNREFERENCED_PARAMETER(status);
     UNREFERENCED_PARAMETER(data0);
     UNREFERENCED_PARAMETER(data1);
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, NT_SUCCESS(status) ? DPFLTR_INFO_LEVEL : DPFLTR_ERROR_LEVEL,
+    KdPrintEx((DPFLTR_IHVDRIVER_ID,
+        NT_SUCCESS(status) ? DPFLTR_INFO_LEVEL : DPFLTR_ERROR_LEVEL,
         "ChatpadLive: Event=%s Status=0x%08X Data0=%lu Data1=%lu\n",
         eventName, (ULONG)status, data0, data1));
+}
+
+static void ChatpadLiveDiagnosticUlong(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    _In_z_ const WCHAR *name,
+    ULONG value)
+{
+    UNICODE_STRING valueName;
+
+    if (runtime->DiagnosticKey == NULL || KeGetCurrentIrql() != PASSIVE_LEVEL) {
+        return;
+    }
+    RtlInitUnicodeString(&valueName, name);
+    (void)WdfRegistryAssignULong(runtime->DiagnosticKey, &valueName, value);
+}
+
+static void ChatpadLiveDiagnosticStatus(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    _In_z_ const WCHAR *name,
+    NTSTATUS status)
+{
+    ChatpadLiveDiagnosticUlong(runtime, name, (ULONG)status);
+}
+
+static void ChatpadLiveOpenDiagnostics(PCHATPAD_LIVE_RUNTIME runtime)
+{
+    WDFKEY deviceKey;
+    WDFKEY diagnosticKey;
+    WDF_OBJECT_ATTRIBUTES attributes;
+    UNICODE_STRING subkeyName;
+    NTSTATUS status;
+
+    deviceKey = NULL;
+    diagnosticKey = NULL;
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = runtime->Device;
+    status = WdfDeviceOpenRegistryKey(
+        runtime->Device,
+        PLUGPLAY_REGKEY_DEVICE,
+        KEY_READ | KEY_WRITE,
+        &attributes,
+        &deviceKey);
+    if (!NT_SUCCESS(status)) {
+        ChatpadLiveTrace("DiagnosticDeviceKeyOpenFailed", status, 0u, 0u);
+        return;
+    }
+
+    RtlInitUnicodeString(&subkeyName, L"ChatpadRuntimeDiagnostics");
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = runtime->Device;
+    status = WdfRegistryCreateKey(
+        deviceKey,
+        &subkeyName,
+        KEY_READ | KEY_WRITE,
+        REG_OPTION_NON_VOLATILE,
+        NULL,
+        &attributes,
+        &diagnosticKey);
+    WdfRegistryClose(deviceKey);
+    if (!NT_SUCCESS(status)) {
+        ChatpadLiveTrace("DiagnosticSubkeyCreateFailed", status, 0u, 0u);
+        return;
+    }
+    runtime->DiagnosticKey = diagnosticKey;
+    ChatpadLiveDiagnosticUlong(runtime, L"SchemaVersion", CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA);
+    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 2u);
+    ChatpadLiveDiagnosticUlong(runtime, L"DeviceAddEntered", 1u);
+}
+
+static void ChatpadLiveRecordSetup(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ULONG stepIndex,
+    const ChatpadActivationSequenceStep *step)
+{
+    ULONG setup0;
+    ULONG setup1;
+
+    if (stepIndex >= RTL_NUMBER_OF(ChatpadActivationSetup0Names)) {
+        return;
+    }
+    setup0 = ((ULONG)step->Request.RawRequest) |
+        ((ULONG)step->Request.RawValue << 8);
+    setup1 = ((ULONG)step->Request.RawIndex) |
+        ((ULONG)step->Request.RawLength << 16) |
+        ((ULONG)step->Request.Direction << 31);
+    ChatpadLiveDiagnosticUlong(runtime, ChatpadActivationSetup0Names[stepIndex], setup0);
+    ChatpadLiveDiagnosticUlong(runtime, ChatpadActivationSetup1Names[stepIndex], setup1);
+}
+
+static void ChatpadLiveRecordActivationResult(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ULONG stepIndex,
+    NTSTATUS status,
+    USBD_STATUS usbdStatus,
+    ULONG bytesTransferred)
+{
+    if (stepIndex >= RTL_NUMBER_OF(ChatpadActivationNtStatusNames)) {
+        return;
+    }
+    ChatpadLiveDiagnosticStatus(runtime, ChatpadActivationNtStatusNames[stepIndex], status);
+    ChatpadLiveDiagnosticUlong(runtime, ChatpadActivationUsbdStatusNames[stepIndex], usbdStatus);
+    ChatpadLiveDiagnosticUlong(runtime, ChatpadActivationBytesNames[stepIndex], bytesTransferred);
 }
 
 static void ChatpadLiveSubmitReport(
@@ -45,7 +174,6 @@ static void ChatpadLiveSubmitReport(
     if (runtime->VhfHandle == NULL) {
         return;
     }
-
     WdfSpinLockAcquire(runtime->StateLock);
     changed = ChatpadHidReportStateUpdate(&runtime->HidState, report);
     WdfSpinLockRelease(runtime->StateLock);
@@ -57,12 +185,13 @@ static void ChatpadLiveSubmitReport(
     packet.reportBufferLen = (ULONG)CHATPAD_HID_BOOT_REPORT_LENGTH;
     packet.reportId = 0;
     status = VhfReadReportSubmit(runtime->VhfHandle, &packet);
+    if (InterlockedCompareExchange(&runtime->FirstVhfSubmissionRecorded, 1, 0) == 0) {
+        ChatpadLiveDiagnosticStatus(runtime, L"FirstKeyboardReportNtStatus", status);
+    }
     if (NT_SUCCESS(status)) {
         InterlockedIncrement((volatile LONG *)&runtime->InputReportCount);
-    } else {
-        if (InterlockedIncrement((volatile LONG *)&runtime->InputEmissionFailureCount) <= 8) {
-            ChatpadLiveTrace("VhfReportRejected", status, runtime->InputPacketCount, 0u);
-        }
+    } else if (InterlockedIncrement((volatile LONG *)&runtime->InputEmissionFailureCount) <= 8) {
+        ChatpadLiveTrace("VhfReportRejected", status, runtime->InputPacketCount, 0u);
     }
 }
 
@@ -97,33 +226,129 @@ static void ChatpadLiveQueueActivationIfReady(PCHATPAD_LIVE_RUNTIME runtime)
     }
 }
 
-static NTSTATUS ChatpadLiveConfigureInputPipe(PCHATPAD_LIVE_RUNTIME runtime)
+static BOOLEAN ChatpadLiveCaptureConfiguredPipe(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    PURB urb)
 {
-    WDFUSBINTERFACE usbInterface;
-    WDF_USB_PIPE_INFORMATION pipeInformation;
-    UCHAR interfaceCount;
+    PUCHAR cursor;
+    PUCHAR end;
+    PUSBD_INTERFACE_INFORMATION interfaceInformation;
+    USBD_PIPE_INFORMATION pipeInformation;
 
-    interfaceCount = WdfUsbTargetDeviceGetNumInterfaces(runtime->UsbDevice);
-    if (interfaceCount <= CHATPAD_INPUT_INTERFACE_INDEX) {
-        return STATUS_DEVICE_CONFIGURATION_ERROR;
+    if (urb == NULL || !USBD_SUCCESS(urb->UrbHeader.Status)) {
+        return FALSE;
     }
-
-    usbInterface = WdfUsbTargetDeviceGetInterface(
-        runtime->UsbDevice,
-        CHATPAD_INPUT_INTERFACE_INDEX);
-    WDF_USB_PIPE_INFORMATION_INIT(&pipeInformation);
-    runtime->InputPipe = WdfUsbInterfaceGetConfiguredPipe(
-        usbInterface,
-        CHATPAD_INPUT_PIPE_INDEX,
-        &pipeInformation);
-    if (runtime->InputPipe == NULL || !WdfUsbTargetPipeIsInEndpoint(runtime->InputPipe)) {
-        runtime->InputPipe = NULL;
-        return STATUS_DEVICE_CONFIGURATION_ERROR;
+    if (urb->UrbHeader.Function == URB_FUNCTION_SELECT_CONFIGURATION &&
+        urb->UrbHeader.Length >= FIELD_OFFSET(struct _URB_SELECT_CONFIGURATION, Interface)) {
+        cursor = (PUCHAR)&urb->UrbSelectConfiguration.Interface;
+    } else if (urb->UrbHeader.Function == URB_FUNCTION_SELECT_INTERFACE &&
+        urb->UrbHeader.Length >= FIELD_OFFSET(struct _URB_SELECT_INTERFACE, Interface)) {
+        cursor = (PUCHAR)&urb->UrbSelectInterface.Interface;
+    } else {
+        return FALSE;
     }
+    end = (PUCHAR)urb + urb->UrbHeader.Length;
+    while (cursor + FIELD_OFFSET(USBD_INTERFACE_INFORMATION, Pipes) <= end) {
+        interfaceInformation = (PUSBD_INTERFACE_INFORMATION)cursor;
+        if (interfaceInformation->Length < FIELD_OFFSET(USBD_INTERFACE_INFORMATION, Pipes) ||
+            cursor + interfaceInformation->Length > end) {
+            break;
+        }
+        if (interfaceInformation->InterfaceNumber == CHATPAD_INPUT_INTERFACE_INDEX &&
+            interfaceInformation->NumberOfPipes > CHATPAD_INPUT_PIPE_INDEX &&
+            interfaceInformation->Length >=
+                FIELD_OFFSET(USBD_INTERFACE_INFORMATION, Pipes) + sizeof(USBD_PIPE_INFORMATION)) {
+            InterlockedExchange(&runtime->Interface2Found, 1);
+            pipeInformation = interfaceInformation->Pipes[CHATPAD_INPUT_PIPE_INDEX];
+            if (pipeInformation.PipeHandle != NULL &&
+                (pipeInformation.PipeType == UsbdPipeTypeInterrupt ||
+                 pipeInformation.PipeType == UsbdPipeTypeBulk) &&
+                (pipeInformation.EndpointAddress & USB_ENDPOINT_DIRECTION_MASK) != 0) {
+                runtime->InputEndpointAddress = pipeInformation.EndpointAddress;
+                runtime->InputMaximumPacketSize = pipeInformation.MaximumPacketSize;
+                runtime->InputPipeType = (ULONG)pipeInformation.PipeType;
+                InterlockedExchange(&runtime->Pipe0Found, 1);
+                InterlockedExchangePointer(
+                    (PVOID volatile *)&runtime->InputPipeHandle,
+                    pipeInformation.PipeHandle);
+                InterlockedExchange(&runtime->ConfigurationReady, 1);
+                return TRUE;
+            }
+        }
+        cursor += interfaceInformation->Length;
+    }
+    return FALSE;
+}
 
-    InterlockedExchange(&runtime->ConfigurationReady, 1);
-    ChatpadLiveTrace("InputPipeReady", STATUS_SUCCESS, pipeInformation.EndpointAddress, pipeInformation.MaximumPacketSize);
-    return STATUS_SUCCESS;
+_Use_decl_annotations_
+void ChatpadLiveEvtDiagnosticWorkItem(WDFWORKITEM workItem)
+{
+    WDFDEVICE device;
+    PCHATPAD_FILTER_DEVICE_CONTEXT context;
+    PCHATPAD_LIVE_RUNTIME runtime;
+
+    device = (WDFDEVICE)WdfWorkItemGetParentObject(workItem);
+    context = ChatpadFilterGetDeviceContext(device);
+    runtime = &context->LiveRuntime;
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"ConfigurationCompletionCount",
+        (ULONG)InterlockedCompareExchange(&runtime->ConfigurationCompletionCount, 0, 0));
+    ChatpadLiveDiagnosticStatus(
+        runtime,
+        L"ConfigurationNtStatus",
+        runtime->LastConfigurationNtStatus);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"ConfigurationUsbdStatus",
+        runtime->LastConfigurationUsbdStatus);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"Interface2Found",
+        (ULONG)InterlockedCompareExchange(&runtime->Interface2Found, 0, 0));
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"Pipe0Found",
+        (ULONG)InterlockedCompareExchange(&runtime->Pipe0Found, 0, 0));
+    ChatpadLiveDiagnosticUlong(runtime, L"InputEndpointAddress", runtime->InputEndpointAddress);
+    ChatpadLiveDiagnosticUlong(runtime, L"InputMaximumPacketSize", runtime->InputMaximumPacketSize);
+    ChatpadLiveDiagnosticUlong(runtime, L"InputPipeType", runtime->InputPipeType);
+    InterlockedExchange(&runtime->DiagnosticQueued, 0);
+}
+
+static NTSTATUS ChatpadLiveSelectConfigurationCompletion(
+    PDEVICE_OBJECT deviceObject,
+    PIRP irp,
+    PVOID completionContext)
+{
+    PCHATPAD_LIVE_RUNTIME runtime;
+    PURB urb;
+    BOOLEAN captured;
+
+    UNREFERENCED_PARAMETER(deviceObject);
+    runtime = (PCHATPAD_LIVE_RUNTIME)completionContext;
+    urb = URB_FROM_IRP(irp);
+    captured = NT_SUCCESS(irp->IoStatus.Status) &&
+        ChatpadLiveCaptureConfiguredPipe(runtime, urb);
+    runtime->LastConfigurationNtStatus = irp->IoStatus.Status;
+    runtime->LastConfigurationUsbdStatus =
+        urb != NULL ? urb->UrbHeader.Status : USBD_STATUS_INVALID_PARAMETER;
+    InterlockedIncrement(&runtime->ConfigurationCompletionCount);
+    ChatpadLiveTrace(
+        "ConfigurationCompletion",
+        captured ? STATUS_SUCCESS : STATUS_DEVICE_CONFIGURATION_ERROR,
+        urb != NULL ? urb->UrbHeader.Status : USBD_STATUS_INVALID_PARAMETER,
+        runtime->InputEndpointAddress);
+    if (InterlockedCompareExchange(&runtime->DiagnosticQueued, 1, 0) == 0) {
+        WdfWorkItemEnqueue(runtime->DiagnosticWorkItem);
+    }
+    if (captured) {
+        ChatpadLiveQueueActivationIfReady(runtime);
+    }
+    if (irp->PendingReturned) {
+        IoMarkIrpPending(irp);
+    }
+    return STATUS_CONTINUE_COMPLETION;
 }
 
 _Use_decl_annotations_
@@ -134,91 +359,96 @@ NTSTATUS ChatpadLiveEvtWdmIrpPreprocess(
     PCHATPAD_FILTER_DEVICE_CONTEXT context;
     PIO_STACK_LOCATION stack;
     PURB urb;
-    WDF_USB_DEVICE_SELECT_CONFIG_PARAMS selectParams;
-    NTSTATUS status;
 
     context = ChatpadFilterGetDeviceContext(device);
     stack = IoGetCurrentIrpStackLocation(irp);
-
-    /*
-     * xusb22 owns interface 0 and the ordinary controller path.  Reusing its
-     * select-configuration URB gives KMDF the same configuration/pipe handles;
-     * every other IRP is sent directly to the next-lower driver without a KMDF
-     * queue transition, preserving the latency and contents of controller I/O.
-     */
-    if (stack->Parameters.DeviceIoControl.IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB &&
-        context->LiveRuntime.UsbDevice != NULL) {
+    urb = NULL;
+    if (stack->Parameters.DeviceIoControl.IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB) {
         urb = URB_FROM_IRP(irp);
-        if (urb != NULL &&
-            urb->UrbHeader.Function == URB_FUNCTION_SELECT_CONFIGURATION &&
-            KeGetCurrentIrql() == PASSIVE_LEVEL) {
-            WDF_USB_DEVICE_SELECT_CONFIG_PARAMS_INIT_URB(&selectParams, urb);
-            status = WdfUsbTargetDeviceSelectConfig(
-                context->LiveRuntime.UsbDevice,
-                WDF_NO_OBJECT_ATTRIBUTES,
-                &selectParams);
-            if (NT_SUCCESS(status)) {
-                status = ChatpadLiveConfigureInputPipe(&context->LiveRuntime);
-            }
-            ChatpadLiveTrace("ConfigurationObserved", status, urb->UrbHeader.Function, 0u);
-            irp->IoStatus.Status = status;
-            irp->IoStatus.Information = 0;
-            IoCompleteRequest(irp, IO_NO_INCREMENT);
-            if (NT_SUCCESS(status)) {
-                ChatpadLiveQueueActivationIfReady(&context->LiveRuntime);
-            }
-            return status;
-        }
+    }
+    if (urb != NULL &&
+        (urb->UrbHeader.Function == URB_FUNCTION_SELECT_CONFIGURATION ||
+         urb->UrbHeader.Function == URB_FUNCTION_SELECT_INTERFACE)) {
+        IoCopyCurrentIrpStackLocationToNext(irp);
+        IoSetCompletionRoutine(
+            irp,
+            ChatpadLiveSelectConfigurationCompletion,
+            &context->LiveRuntime,
+            TRUE,
+            TRUE,
+            TRUE);
+        return IoCallDriver(WdfDeviceWdmGetAttachedDevice(device), irp);
     }
 
     IoSkipCurrentIrpStackLocation(irp);
     return IoCallDriver(WdfDeviceWdmGetAttachedDevice(device), irp);
 }
 
+static NTSTATUS ChatpadLiveSubmitUrbSynchronously(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    PURB urb,
+    ULONG timeoutMilliseconds)
+{
+    WDF_MEMORY_DESCRIPTOR urbDescriptor;
+    WDF_REQUEST_SEND_OPTIONS options;
+
+    WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(&urbDescriptor, urb, urb->UrbHeader.Length);
+    WDF_REQUEST_SEND_OPTIONS_INIT(&options, WDF_REQUEST_SEND_OPTION_TIMEOUT);
+    WDF_REQUEST_SEND_OPTIONS_SET_TIMEOUT(
+        &options,
+        WDF_REL_TIMEOUT_IN_MS(timeoutMilliseconds));
+    return WdfIoTargetSendInternalIoctlOthersSynchronously(
+        WdfDeviceGetIoTarget(runtime->Device),
+        NULL,
+        IOCTL_INTERNAL_USB_SUBMIT_URB,
+        &urbDescriptor,
+        NULL,
+        NULL,
+        &options,
+        NULL);
+}
+
 static NTSTATUS ChatpadLiveSendActivationStep(
     PCHATPAD_LIVE_RUNTIME runtime,
     const ChatpadActivationSequenceStep *step,
-    PULONG bytesTransferred)
+    PULONG bytesTransferred,
+    USBD_STATUS *usbdStatus)
 {
-    WDF_USB_CONTROL_SETUP_PACKET setupPacket;
-    WDF_REQUEST_SEND_OPTIONS options;
-    WDF_MEMORY_DESCRIPTOR descriptor;
-    WDF_MEMORY_DESCRIPTOR *descriptorPointer;
+    URB urb;
     UCHAR buffer[CHATPAD_ACTIVATION_MAX_PAYLOAD_LENGTH] = { 0 };
-    WDF_USB_BMREQUEST_DIRECTION direction;
+    ULONG transferFlags;
     NTSTATUS status;
     ChatpadLiveTransferResult transferResult;
 
-    direction = step->Request.Direction == CHATPAD_CONTROL_DIRECTION_DEVICE_TO_HOST
-        ? BmRequestDeviceToHost
-        : BmRequestHostToDevice;
-    WDF_USB_CONTROL_SETUP_PACKET_INIT_VENDOR(
-        &setupPacket,
-        direction,
-        BmRequestToDevice,
+    RtlZeroMemory(&urb, sizeof(urb));
+    transferFlags = 0u;
+    if (step->Request.Direction == CHATPAD_CONTROL_DIRECTION_DEVICE_TO_HOST) {
+        transferFlags = USBD_TRANSFER_DIRECTION_IN | USBD_SHORT_TRANSFER_OK;
+    } else if (step->Request.RawLength != 0u) {
+        RtlCopyMemory(
+            buffer,
+            step->Request.OutboundPayload,
+            step->Request.OutboundPayloadLength);
+    }
+    UsbBuildVendorRequest(
+        &urb,
+        URB_FUNCTION_VENDOR_DEVICE,
+        sizeof(struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST),
+        transferFlags,
+        0u,
         step->Request.RawRequest,
         step->Request.RawValue,
-        step->Request.RawIndex);
-
-    descriptorPointer = NULL;
-    if (step->Request.RawLength != 0) {
-        if (step->Request.Direction == CHATPAD_CONTROL_DIRECTION_HOST_TO_DEVICE) {
-            RtlCopyMemory(buffer, step->Request.OutboundPayload, step->Request.OutboundPayloadLength);
-        }
-        WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(&descriptor, buffer, step->Request.RawLength);
-        descriptorPointer = &descriptor;
-    }
-
-    WDF_REQUEST_SEND_OPTIONS_INIT(&options, WDF_REQUEST_SEND_OPTION_TIMEOUT);
-    WDF_REQUEST_SEND_OPTIONS_SET_TIMEOUT(&options, WDF_REL_TIMEOUT_IN_MS(CHATPAD_CONTROL_TIMEOUT_MS));
-    *bytesTransferred = 0;
-    status = WdfUsbTargetDeviceSendControlTransferSynchronously(
-        runtime->UsbDevice,
+        step->Request.RawIndex,
+        step->Request.RawLength != 0u ? buffer : NULL,
         NULL,
-        &options,
-        &setupPacket,
-        descriptorPointer,
-        bytesTransferred);
+        step->Request.RawLength,
+        NULL);
+    status = ChatpadLiveSubmitUrbSynchronously(runtime, &urb, CHATPAD_CONTROL_TIMEOUT_MS);
+    *usbdStatus = urb.UrbHeader.Status;
+    *bytesTransferred = urb.UrbControlVendorClassRequest.TransferBufferLength;
+    if (NT_SUCCESS(status) && !USBD_SUCCESS(*usbdStatus)) {
+        status = STATUS_UNSUCCESSFUL;
+    }
     transferResult = ChatpadValidateLiveTransferOutcome(
         NT_SUCCESS(status),
         status == STATUS_IO_TIMEOUT || status == STATUS_TIMEOUT,
@@ -248,6 +478,7 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
     ChatpadActivationSequenceStep step;
     size_t stepIndex;
     ULONG bytesTransferred;
+    USBD_STATUS usbdStatus;
     LARGE_INTEGER delay;
     NTSTATUS status;
 
@@ -255,6 +486,7 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
     context = ChatpadFilterGetDeviceContext(device);
     runtime = &context->LiveRuntime;
     status = STATUS_SUCCESS;
+    ChatpadLiveDiagnosticUlong(runtime, L"ActivationWorkerEntered", 1u);
     InterlockedIncrement((volatile LONG *)&runtime->ActivationAttemptCount);
 
     for (stepIndex = 0; stepIndex < ChatpadGetActivationSequenceStepCount(); ++stepIndex) {
@@ -267,26 +499,44 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
             status = STATUS_INVALID_DEVICE_STATE;
             break;
         }
-        status = ChatpadLiveSendActivationStep(runtime, &step, &bytesTransferred);
+        ChatpadLiveRecordSetup(runtime, (ULONG)stepIndex, &step);
+        bytesTransferred = 0u;
+        usbdStatus = USBD_STATUS_INVALID_PARAMETER;
+        status = ChatpadLiveSendActivationStep(
+            runtime,
+            &step,
+            &bytesTransferred,
+            &usbdStatus);
         runtime->LastActivationStep = (ULONG)stepIndex;
         runtime->LastBytesTransferred = bytesTransferred;
+        runtime->LastUsbdStatus = usbdStatus;
+        ChatpadLiveRecordActivationResult(
+            runtime,
+            (ULONG)stepIndex,
+            status,
+            usbdStatus,
+            bytesTransferred);
         ChatpadLiveTrace("ActivationStep", status, (ULONG)stepIndex, bytesTransferred);
         if (!NT_SUCCESS(status)) {
             break;
         }
-        if (step.DelayAfterMilliseconds != 0) {
+        if (step.DelayAfterMilliseconds != 0u) {
             delay.QuadPart = -((LONGLONG)step.DelayAfterMilliseconds * 10 * 1000);
             KeDelayExecutionThread(KernelMode, FALSE, &delay);
         }
     }
 
     runtime->LastActivationStatus = status;
+    ChatpadLiveDiagnosticStatus(runtime, L"ActivationFinalNtStatus", status);
+    ChatpadLiveDiagnosticUlong(runtime, L"ActivationFinalUsbdStatus", runtime->LastUsbdStatus);
     if (NT_SUCCESS(status) &&
         InterlockedCompareExchange(&runtime->StopRequested, 0, 0) == 0) {
         InterlockedExchange(&runtime->ActivationSucceeded, 1);
         InterlockedIncrement((volatile LONG *)&runtime->ActivationSuccessCount);
+        ChatpadLiveDiagnosticUlong(runtime, L"ActivationCompleted", 1u);
         ChatpadLiveTrace("ActivationCompleted", status, runtime->ActivationAttemptCount, runtime->D0Generation);
         if (InterlockedCompareExchange(&runtime->ReaderStarted, 1, 0) == 0) {
+            ChatpadLiveDiagnosticUlong(runtime, L"ReaderStarted", 1u);
             WdfWorkItemEnqueue(runtime->InputWorkItem);
         }
     } else {
@@ -296,6 +546,45 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
     InterlockedExchange(&runtime->ActivationQueued, 0);
 }
 
+static NTSTATUS ChatpadLiveReadInput(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    PUCHAR bytes,
+    ULONG capacity,
+    PULONG bytesTransferred,
+    USBD_STATUS *usbdStatus)
+{
+    URB urb;
+    USBD_PIPE_HANDLE pipeHandle;
+    NTSTATUS status;
+
+    pipeHandle = (USBD_PIPE_HANDLE)InterlockedCompareExchangePointer(
+        (PVOID volatile *)&runtime->InputPipeHandle,
+        NULL,
+        NULL);
+    if (pipeHandle == NULL) {
+        *bytesTransferred = 0u;
+        *usbdStatus = USBD_STATUS_INVALID_PIPE_HANDLE;
+        return STATUS_DEVICE_NOT_READY;
+    }
+    RtlZeroMemory(&urb, sizeof(urb));
+    UsbBuildInterruptOrBulkTransferRequest(
+        &urb,
+        sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER),
+        pipeHandle,
+        bytes,
+        NULL,
+        capacity,
+        USBD_TRANSFER_DIRECTION_IN | USBD_SHORT_TRANSFER_OK,
+        NULL);
+    status = ChatpadLiveSubmitUrbSynchronously(runtime, &urb, CHATPAD_INPUT_TIMEOUT_MS);
+    *usbdStatus = urb.UrbHeader.Status;
+    *bytesTransferred = urb.UrbBulkOrInterruptTransfer.TransferBufferLength;
+    if (NT_SUCCESS(status) && !USBD_SUCCESS(*usbdStatus)) {
+        status = STATUS_UNSUCCESSFUL;
+    }
+    return status;
+}
+
 _Use_decl_annotations_
 void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
 {
@@ -303,9 +592,8 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
     PCHATPAD_FILTER_DEVICE_CONTEXT context;
     PCHATPAD_LIVE_RUNTIME runtime;
     UCHAR bytes[32];
-    WDF_MEMORY_DESCRIPTOR descriptor;
-    WDF_REQUEST_SEND_OPTIONS options;
     ULONG bytesTransferred;
+    USBD_STATUS usbdStatus;
     ChatpadKeyboardPacket keyboardPacket;
     ChatpadHidKeyboardReport report;
     ChatpadParseResult parseResult;
@@ -321,39 +609,50 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
            InterlockedCompareExchange(&runtime->InD0, 0, 0) != 0 &&
            InterlockedCompareExchange(&runtime->ActivationSucceeded, 0, 0) != 0) {
         RtlZeroMemory(bytes, sizeof(bytes));
-        WDF_MEMORY_DESCRIPTOR_INIT_BUFFER(&descriptor, bytes, sizeof(bytes));
-        WDF_REQUEST_SEND_OPTIONS_INIT(&options, WDF_REQUEST_SEND_OPTION_TIMEOUT);
-        WDF_REQUEST_SEND_OPTIONS_SET_TIMEOUT(&options, WDF_REL_TIMEOUT_IN_MS(250));
-        bytesTransferred = 0;
-        status = WdfUsbTargetPipeReadSynchronously(
-            runtime->InputPipe,
-            NULL,
-            &options,
-            &descriptor,
-            &bytesTransferred);
+        bytesTransferred = 0u;
+        usbdStatus = USBD_STATUS_INVALID_PARAMETER;
+        status = ChatpadLiveReadInput(
+            runtime,
+            bytes,
+            sizeof(bytes),
+            &bytesTransferred,
+            &usbdStatus);
+        if (InterlockedCompareExchange(&runtime->FirstInputCompletionRecorded, 1, 0) == 0) {
+            ChatpadLiveDiagnosticStatus(runtime, L"FirstInputNtStatus", status);
+            ChatpadLiveDiagnosticUlong(runtime, L"FirstInputUsbdStatus", usbdStatus);
+            ChatpadLiveDiagnosticUlong(runtime, L"FirstInputBytes", bytesTransferred);
+        }
         if (status == STATUS_IO_TIMEOUT || status == STATUS_TIMEOUT) {
             ChatpadLiveReleaseKeysIfNeeded(runtime);
             continue;
         }
         if (!NT_SUCCESS(status)) {
-            ChatpadLiveTrace("InputReadFailed", status, bytesTransferred, 0u);
+            ChatpadLiveTrace("InputReadFailed", status, bytesTransferred, usbdStatus);
             break;
         }
         if (bytesTransferred < CHATPAD_KEYBOARD_PACKET_LENGTH) {
             InterlockedIncrement((volatile LONG *)&runtime->ParseFailureCount);
             continue;
         }
+        if (InterlockedCompareExchange(&runtime->FirstRawPacketRecorded, 1, 0) == 0) {
+            ChatpadLiveDiagnosticUlong(
+                runtime,
+                L"FirstRawPacket0",
+                ((ULONG)bytes[0]) | ((ULONG)bytes[1] << 8) |
+                ((ULONG)bytes[2] << 16) | ((ULONG)bytes[3] << 24));
+            ChatpadLiveDiagnosticUlong(runtime, L"FirstRawPacket1", bytes[4]);
+        }
         InterlockedIncrement((volatile LONG *)&runtime->InputPacketCount);
         parseResult = ChatpadParseKeyboardPacket(bytes, CHATPAD_KEYBOARD_PACKET_LENGTH, &keyboardPacket);
+        if (InterlockedCompareExchange(&runtime->FirstDecodeRecorded, 1, 0) == 0) {
+            ChatpadLiveDiagnosticUlong(runtime, L"FirstDecodeResult", (ULONG)parseResult);
+        }
         if (parseResult != CHATPAD_PARSE_OK) {
             if (InterlockedIncrement((volatile LONG *)&runtime->ParseFailureCount) <= 8) {
                 ChatpadLiveTrace("DecodeRejected", STATUS_DEVICE_DATA_ERROR, (ULONG)parseResult, bytesTransferred);
             }
             ChatpadLiveReleaseKeysIfNeeded(runtime);
             continue;
-        }
-        if (InterlockedCompareExchange(&runtime->FirstValidInputLogged, 1, 0) == 0) {
-            ChatpadLiveTrace("FirstValidInput", STATUS_SUCCESS, bytes[1], ((ULONG)bytes[2] << 8) | bytes[3]);
         }
         mapResult = ChatpadMapKeyboardPacketToHid(&keyboardPacket, &report);
         if (mapResult != CHATPAD_HID_MAP_OK) {
@@ -376,7 +675,6 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
 {
     WDF_OBJECT_ATTRIBUTES attributes;
     WDF_WORKITEM_CONFIG workItemConfig;
-    VHF_CONFIG vhfConfig;
     NTSTATUS status;
     WDFMEMORY hardwareIdsMemory;
     PWSTR hardwareId;
@@ -389,7 +687,11 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     runtime->Signature = CHATPAD_LIVE_RUNTIME_SIGNATURE;
     runtime->Device = device;
     runtime->LastActivationStatus = STATUS_DEVICE_NOT_READY;
+    runtime->LastUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
+    runtime->LastConfigurationNtStatus = STATUS_DEVICE_NOT_READY;
+    runtime->LastConfigurationUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
     ChatpadInitializeHidReportState(&runtime->HidState);
+    ChatpadLiveOpenDiagnostics(runtime);
 
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = device;
@@ -399,6 +701,7 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
         PagedPool,
         &attributes,
         &hardwareIdsMemory);
+    ChatpadLiveDiagnosticStatus(runtime, L"HardwareIdQueryNtStatus", status);
     if (!NT_SUCCESS(status)) {
         ChatpadLiveTrace("DeviceMatchQueryFailed", status, 0u, 0u);
         return status;
@@ -414,15 +717,16 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
         }
         hardwareId += candidateId.Length / sizeof(WCHAR) + 1;
     }
+    ChatpadLiveDiagnosticUlong(runtime, L"ExactDeviceMatched", matched ? 1u : 0u);
     if (!matched) {
         ChatpadLiveTrace("DeviceRejected", STATUS_NOT_SUPPORTED, (ULONG)hardwareIdsLength, 0u);
         return STATUS_NOT_SUPPORTED;
     }
-    ChatpadLiveTrace("DeviceMatched", STATUS_SUCCESS, 0x045Eu, 0x028Eu);
 
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = device;
     status = WdfSpinLockCreate(&attributes, &runtime->StateLock);
+    ChatpadLiveDiagnosticStatus(runtime, L"SpinLockCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
         return status;
     }
@@ -432,6 +736,7 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     attributes.ParentObject = device;
     attributes.ExecutionLevel = WdfExecutionLevelPassive;
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->ActivationWorkItem);
+    ChatpadLiveDiagnosticStatus(runtime, L"ActivationWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
         return status;
     }
@@ -441,40 +746,56 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     attributes.ParentObject = device;
     attributes.ExecutionLevel = WdfExecutionLevelPassive;
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->InputWorkItem);
+    ChatpadLiveDiagnosticStatus(runtime, L"InputWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
         return status;
     }
 
-    VHF_CONFIG_INIT(
-        &vhfConfig,
-        WdfDeviceWdmGetDeviceObject(device),
-        (USHORT)sizeof(ChatpadKeyboardReportDescriptor),
-        (PUCHAR)ChatpadKeyboardReportDescriptor);
-    vhfConfig.VendorID = 0x045E;
-    vhfConfig.ProductID = 0x028E;
-    vhfConfig.VersionNumber = 0x0101;
-    status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
+    WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtDiagnosticWorkItem);
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = device;
+    attributes.ExecutionLevel = WdfExecutionLevelPassive;
+    status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->DiagnosticWorkItem);
+    ChatpadLiveDiagnosticStatus(runtime, L"DiagnosticWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
         return status;
     }
-    status = VhfStart(runtime->VhfHandle);
-    ChatpadLiveTrace("RuntimeInitialized", status, 0u, 0u);
-    return status;
+    ChatpadLiveDiagnosticStatus(runtime, L"RuntimeInitializeNtStatus", STATUS_SUCCESS);
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
 {
+    VHF_CONFIG vhfConfig;
     NTSTATUS status;
+
     InterlockedExchange(&runtime->StopRequested, 0);
-    ChatpadLiveTrace("PrepareHardware", STATUS_SUCCESS, runtime->D0Generation, 0u);
-    if (runtime->UsbDevice == NULL) {
-        status = WdfUsbTargetDeviceCreate(
-            runtime->Device,
-            WDF_NO_OBJECT_ATTRIBUTES,
-            &runtime->UsbDevice);
-        ChatpadLiveTrace("UsbTargetCreated", status, 0u, 0u);
-        return status;
+    ChatpadLiveDiagnosticUlong(runtime, L"PrepareHardwareEntered", 1u);
+    if (runtime->VhfHandle == NULL) {
+        VHF_CONFIG_INIT(
+            &vhfConfig,
+            WdfDeviceWdmGetDeviceObject(runtime->Device),
+            (USHORT)sizeof(ChatpadKeyboardReportDescriptor),
+            (PUCHAR)ChatpadKeyboardReportDescriptor);
+        vhfConfig.VendorID = 0x045E;
+        vhfConfig.ProductID = 0x028E;
+        vhfConfig.VersionNumber = 0x0102;
+        status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
+        ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
+        if (NT_SUCCESS(status)) {
+            status = VhfStart(runtime->VhfHandle);
+            ChatpadLiveDiagnosticStatus(runtime, L"VhfStartNtStatus", status);
+        }
+        if (!NT_SUCCESS(status)) {
+            if (runtime->VhfHandle != NULL) {
+                VhfDelete(runtime->VhfHandle, TRUE);
+                runtime->VhfHandle = NULL;
+            }
+            ChatpadLiveTrace("VhfInitializationFailed", status, 0u, 0u);
+            return status;
+        }
     }
+    ChatpadLiveDiagnosticStatus(runtime, L"PrepareHardwareNtStatus", STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
@@ -486,6 +807,7 @@ void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime)
     InterlockedExchange(&runtime->ActivationQueued, 0);
     InterlockedExchange(&runtime->ActivationAttemptConsumed, 0);
     ++runtime->D0Generation;
+    ChatpadLiveDiagnosticUlong(runtime, L"D0EntryCount", runtime->D0Generation);
     ChatpadLiveTrace("D0Entry", STATUS_SUCCESS, runtime->D0Generation, runtime->ConfigurationReady);
     ChatpadLiveQueueActivationIfReady(runtime);
 }
@@ -494,12 +816,16 @@ void ChatpadLiveRuntimeExitD0(PCHATPAD_LIVE_RUNTIME runtime)
 {
     InterlockedExchange(&runtime->StopRequested, 1);
     InterlockedExchange(&runtime->InD0, 0);
+    ChatpadLiveDiagnosticUlong(runtime, L"CancellationRequested", 1u);
     ChatpadLiveTrace("D0ExitCancellation", STATUS_CANCELLED, runtime->D0Generation, runtime->ActivationQueued);
     if (runtime->ActivationWorkItem != NULL) {
         WdfWorkItemFlush(runtime->ActivationWorkItem);
     }
     if (runtime->InputWorkItem != NULL) {
         WdfWorkItemFlush(runtime->InputWorkItem);
+    }
+    if (runtime->DiagnosticWorkItem != NULL) {
+        WdfWorkItemFlush(runtime->DiagnosticWorkItem);
     }
     ChatpadLiveReleaseAllKeys(runtime);
     InterlockedExchange(&runtime->ActivationQueued, 0);
@@ -511,7 +837,7 @@ void ChatpadLiveRuntimeReleaseHardware(PCHATPAD_LIVE_RUNTIME runtime)
     ChatpadLiveRuntimeExitD0(runtime);
     ChatpadLiveTrace("ReleaseHardware", STATUS_SUCCESS, runtime->D0Generation, runtime->InputPacketCount);
     InterlockedExchange(&runtime->ConfigurationReady, 0);
-    runtime->InputPipe = NULL;
+    InterlockedExchangePointer((PVOID volatile *)&runtime->InputPipeHandle, NULL);
 }
 
 void ChatpadLiveRuntimeCleanup(PCHATPAD_LIVE_RUNTIME runtime)

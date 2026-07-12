@@ -4111,3 +4111,34 @@ Green/Orange/People layer mappings.
 waits at most the bounded transfer/read timeout before work-item rundown; all
 stop/error paths emit all-keys-up. Base keys and Shift are implemented, while
 the three symbol layers remain an explicit post-functional-validation extension.
+
+## 2026-07-12 - Preserve xusb22 configuration ownership and submit raw URBs downward
+
+**Decision:** A lower filter under `xusb22` must not create a specialized WDF
+USB target or call `WdfUsbTargetDeviceSelectConfig`. The filter forwards the
+parent select-configuration and select-interface URBs unchanged, observes their
+successful completion to capture the existing interface 2 pipe 0 handle, and
+submits its bounded vendor-control and interrupt/bulk URBs through the
+next-lower WDF I/O target. Bounded stage results are persisted in the exact
+device's registry key.
+
+**Rationale:** Live TASK 8J evidence showed the selected and correctly signed
+package did not remain attached: the service was stopped and the physical stack
+contained only `xusb22`, ACPI, and USBHUB3. The original implementation made
+USB-target creation/reconfiguration fatal even though `xusb22` is the USB
+function owner. Its debug-only traces could not distinguish DeviceAdd from
+PrepareHardware failure after reboot. Preserving the lower driver's completed
+configuration avoids competing ownership and persistent diagnostics make every
+subsequent runtime boundary observable without continuous logging.
+
+**Alternatives rejected:** Retrying `WdfUsbTargetDeviceSelectConfig`; selecting
+a second configuration; replacing `xusb22`; claiming interface 0; routing
+ordinary controller traffic through a filter queue; relying on debugger output
+that was not captured before reboot; or inferring activation/input success from
+initialization return values.
+
+**Consequences:** The filter depends on a successful parent select-configuration
+or select-interface completion that exposes interface 2 pipe 0. If that handle
+is not exposed, activation does not run and diagnostics identify that exact
+boundary. Interface 0/controller traffic remains unchanged; D0/removal rundown
+stays bounded; real functionality remains unclaimed until an operator test.
