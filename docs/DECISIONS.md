@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-07-13 - Sustain the activated Chatpad with its alternating interface keep-alives
+
+**Decision:** After the six-step activation succeeds, immediately send the
+zero-length interface control request with `wValue=0x001F`, then alternate
+`0x001E` and `0x001F` every second for the current D0 lifetime. Use the same
+endpoint-zero raw-control transport and the existing passive input worker;
+continue bounded interface-2 reads between scheduled sends.
+
+**Rationale:** Live 1.0.11 proves controller readiness, all six activation
+transfers, final activation completion, and reader start, but the Chatpad
+endpoint remains silent and the first read times out. The retained working
+runtime enters this exact alternating keep-alive loop immediately after
+activation. Version 1.0.11 omitted that required post-activation protocol
+phase entirely.
+
+**Alternatives rejected:** Treating activation completion as sufficient;
+changing the confirmed revision-1.14 payload; relaxing packet decoding;
+retrying activation; reselecting the xusb22 configuration; reading or replacing
+normal controller traffic; or allowing Chatpad maintenance failure to affect
+physical Xbox startup.
+
+**Consequences:** Transport architecture becomes 7 and diagnostic schema 3
+records the bounded first keep-alive result. A failed keep-alive disables only
+the optional Chatpad path. D0 exit still stops and flushes the input worker, so
+no keep-alive survives power-down or removal. Live hardware must still prove
+that 1.0.12 produces packets and real keyboard input.
+
 ## 2026-07-13 - Gate activation on completed normal controller input
 
 **Decision:** Retain the configured interface-0 controller input pipe handle

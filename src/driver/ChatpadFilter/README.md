@@ -6,8 +6,8 @@ driver independently rejects any device whose hardware-ID multi-string does
 not contain the same exact ID.
 
 The physical Xbox filter lifecycle is authoritative and always fail-open with
-respect to Chatpad functionality. VHF, activation, endpoint discovery, reads,
-decoding, and keyboard submission are optional feature stages. Failure in any
+respect to Chatpad functionality. VHF, activation, endpoint discovery,
+keep-alive, reads, decoding, and keyboard submission are optional feature stages. Failure in any
 of them disables or degrades only Chatpad output, records the first failing
 stage, and still returns success from the physical PrepareHardware/D0 path.
 Only inability to attach or forward the physical filter safely may fail Xbox
@@ -53,8 +53,12 @@ and every final-probe failure is fatal to the optional activation attempt. The
 worker validates byte counts and the final `09 00` response and never retries
 automatically.
 
-On successful activation, a separate passive work item performs bounded
-250 ms synchronous reads from only the Chatpad pipe. The existing five-byte
+On successful activation, a separate passive work item immediately sends the
+retained working runtime's zero-length interface keep-alive and alternates
+`41 00 1F 00 02 00 00 00` with `41 00 1E 00 02 00 00 00` every second using
+the same endpoint-zero default-pipe transport. A failed keep-alive disables
+only the optional Chatpad path. Between scheduled keep-alives, the worker
+performs bounded 250 ms synchronous reads from only the Chatpad pipe. The existing five-byte
 parser validates each packet. `ChatpadKeyboardHid` maps the known raw keys and
 Shift modifier to standard boot-keyboard usages, suppresses duplicate reports,
 and preserves two-key make/break state.
@@ -79,6 +83,7 @@ teardown so removal cannot leave a stuck key. There is no retry loop.
 
 Diagnostics are deliberately bounded: device match, USB target/configuration,
 D0 activation queue/start, every activation step, activation completion/failure,
+the first keep-alive result and the first eight keep-alive attempt-count updates,
 the first valid input packet, the first eight decode/map failures, VHF emission
 failures, input-loop stop, and cleanup.
 

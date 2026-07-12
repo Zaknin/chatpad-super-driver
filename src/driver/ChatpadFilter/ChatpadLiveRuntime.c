@@ -129,7 +129,7 @@ static void ChatpadLiveOpenDiagnostics(PCHATPAD_LIVE_RUNTIME runtime)
     }
     runtime->DiagnosticKey = diagnosticKey;
     ChatpadLiveDiagnosticUlong(runtime, L"SchemaVersion", CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA);
-    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 6u);
+    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 7u);
     ChatpadLiveDiagnosticUlong(runtime, L"DefaultPipeTransferFlag", 1u);
     ChatpadLiveDiagnosticUlong(runtime, L"ControllerInputReadinessGate", 1u);
     ChatpadLiveDiagnosticUlong(runtime, L"DeviceAddEntered", 1u);
@@ -933,6 +933,52 @@ static NTSTATUS ChatpadLiveReadInput(
     return status;
 }
 
+static NTSTATUS ChatpadLiveSendKeepAlive(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    USHORT value,
+    PULONG bytesTransferred,
+    USBD_STATUS *usbdStatus)
+{
+    URB urb;
+    UCHAR setupPacket[8];
+    NTSTATUS status;
+
+    RtlZeroMemory(&urb, sizeof(urb));
+    RtlZeroMemory(setupPacket, sizeof(setupPacket));
+    setupPacket[0] = 0x41u;
+    setupPacket[1] = 0x00u;
+    setupPacket[2] = (UCHAR)(value & 0x00FFu);
+    setupPacket[3] = (UCHAR)((value >> 8) & 0x00FFu);
+    setupPacket[4] = 0x02u;
+    setupPacket[5] = 0x00u;
+    setupPacket[6] = 0x00u;
+    setupPacket[7] = 0x00u;
+    urb.UrbControlTransfer.Hdr.Length =
+        (USHORT)sizeof(struct _URB_CONTROL_TRANSFER);
+    urb.UrbControlTransfer.Hdr.Function = URB_FUNCTION_CONTROL_TRANSFER;
+    urb.UrbControlTransfer.PipeHandle = NULL;
+    urb.UrbControlTransfer.TransferFlags = USBD_DEFAULT_PIPE_TRANSFER;
+    urb.UrbControlTransfer.TransferBufferLength = 0u;
+    urb.UrbControlTransfer.TransferBuffer = NULL;
+    urb.UrbControlTransfer.TransferBufferMDL = NULL;
+    urb.UrbControlTransfer.UrbLink = NULL;
+    RtlCopyMemory(urb.UrbControlTransfer.SetupPacket, setupPacket, sizeof(setupPacket));
+
+    status = ChatpadLiveSubmitUrbSynchronously(
+        runtime,
+        &urb,
+        CHATPAD_CONTROL_TIMEOUT_MS);
+    *usbdStatus = urb.UrbHeader.Status;
+    *bytesTransferred = urb.UrbControlTransfer.TransferBufferLength;
+    if (NT_SUCCESS(status) && !USBD_SUCCESS(*usbdStatus)) {
+        status = STATUS_UNSUCCESSFUL;
+    }
+    if (NT_SUCCESS(status) && *bytesTransferred != 0u) {
+        status = STATUS_DEVICE_DATA_ERROR;
+    }
+    return status;
+}
+
 _Use_decl_annotations_
 void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
 {
@@ -947,6 +993,11 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
     ChatpadParseResult parseResult;
     ChatpadHidMapResult mapResult;
     NTSTATUS status;
+    NTSTATUS keepAliveStatus;
+    USBD_STATUS keepAliveUsbdStatus;
+    ULONG keepAliveBytes;
+    USHORT keepAliveValue;
+    ULONGLONG now;
 
     device = (WDFDEVICE)WdfWorkItemGetParentObject(workItem);
     context = ChatpadFilterGetDeviceContext(device);
@@ -956,6 +1007,54 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
     while (InterlockedCompareExchange(&runtime->StopRequested, 0, 0) == 0 &&
            InterlockedCompareExchange(&runtime->InD0, 0, 0) != 0 &&
            InterlockedCompareExchange(&runtime->ActivationSucceeded, 0, 0) != 0) {
+        now = KeQueryInterruptTime();
+        if (runtime->NextKeepAliveDue == 0u || now >= runtime->NextKeepAliveDue) {
+            keepAliveValue = runtime->NextKeepAliveValue;
+            keepAliveBytes = 0u;
+            keepAliveUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
+            keepAliveStatus = ChatpadLiveSendKeepAlive(
+                runtime,
+                keepAliveValue,
+                &keepAliveBytes,
+                &keepAliveUsbdStatus);
+            runtime->KeepAliveAttemptCount++;
+            if (runtime->KeepAliveAttemptCount <= 8u) {
+                ChatpadLiveDiagnosticUlong(
+                    runtime,
+                    L"KeepAliveAttemptCount",
+                    runtime->KeepAliveAttemptCount);
+            }
+            if (InterlockedCompareExchange(&runtime->FirstKeepAliveRecorded, 1, 0) == 0) {
+                ChatpadLiveDiagnosticStatus(
+                    runtime,
+                    L"FirstKeepAliveNtStatus",
+                    keepAliveStatus);
+                ChatpadLiveDiagnosticUlong(
+                    runtime,
+                    L"FirstKeepAliveUsbdStatus",
+                    keepAliveUsbdStatus);
+                ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveBytes", keepAliveBytes);
+                ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveValue", keepAliveValue);
+            }
+            ChatpadLiveTrace(
+                "KeepAlive",
+                keepAliveStatus,
+                keepAliveValue,
+                runtime->KeepAliveAttemptCount);
+            if (!NT_SUCCESS(keepAliveStatus)) {
+                ChatpadLiveDisableOptionalFeature(
+                    runtime,
+                    CHATPAD_OPTIONAL_STAGE_KEEPALIVE,
+                    keepAliveStatus,
+                    FALSE);
+                break;
+            }
+            runtime->NextKeepAliveValue =
+                runtime->NextKeepAliveValue == CHATPAD_KEEPALIVE_VALUE_A ?
+                CHATPAD_KEEPALIVE_VALUE_B : CHATPAD_KEEPALIVE_VALUE_A;
+            runtime->NextKeepAliveDue = now +
+                ((ULONGLONG)CHATPAD_KEEPALIVE_INTERVAL_MS * 10u * 1000u);
+        }
         RtlZeroMemory(bytes, sizeof(bytes));
         bytesTransferred = 0u;
         usbdStatus = USBD_STATUS_INVALID_PARAMETER;
@@ -1160,7 +1259,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x010B;
+        vhfConfig.VersionNumber = 0x010C;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {
@@ -1216,9 +1315,21 @@ void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime)
     InterlockedExchange(&runtime->ActivationQueued, 0);
     InterlockedExchange(&runtime->ActivationAttemptConsumed, 0);
     InterlockedExchange(&runtime->ControllerInputReady, 0);
+    InterlockedExchange(&runtime->FirstInputCompletionRecorded, 0);
+    InterlockedExchange(&runtime->FirstRawPacketRecorded, 0);
+    InterlockedExchange(&runtime->FirstDecodeRecorded, 0);
+    InterlockedExchange(&runtime->FirstKeepAliveRecorded, 0);
+    runtime->KeepAliveAttemptCount = 0u;
+    runtime->NextKeepAliveDue = 0u;
+    runtime->NextKeepAliveValue = CHATPAD_KEEPALIVE_VALUE_A;
     ++runtime->D0Generation;
     ChatpadLiveDiagnosticUlong(runtime, L"D0EntryCount", runtime->D0Generation);
     ChatpadLiveDiagnosticUlong(runtime, L"ControllerInputReady", 0u);
+    ChatpadLiveDiagnosticUlong(runtime, L"KeepAliveAttemptCount", 0u);
+    ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveNtStatus", MAXULONG);
+    ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveUsbdStatus", MAXULONG);
+    ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveBytes", MAXULONG);
+    ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveValue", MAXULONG);
     ChatpadLiveTrace("D0Entry", STATUS_SUCCESS, runtime->D0Generation, runtime->ConfigurationReady);
     ChatpadLiveQueueActivationIfReady(runtime);
 }

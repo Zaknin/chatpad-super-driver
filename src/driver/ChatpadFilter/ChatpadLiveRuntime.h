@@ -14,7 +14,10 @@
 #define CHATPAD_INPUT_PIPE_INDEX ((UCHAR)0u)
 #define CHATPAD_CONTROL_TIMEOUT_MS ((ULONG)1000u)
 #define CHATPAD_INPUT_TIMEOUT_MS ((ULONG)250u)
-#define CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA ((ULONG)2u)
+#define CHATPAD_KEEPALIVE_INTERVAL_MS ((ULONG)1000u)
+#define CHATPAD_KEEPALIVE_VALUE_A ((USHORT)0x001Fu)
+#define CHATPAD_KEEPALIVE_VALUE_B ((USHORT)0x001Eu)
+#define CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA ((ULONG)3u)
 
 typedef struct _CHATPAD_LIVE_RUNTIME {
     ULONG Signature;
@@ -39,6 +42,7 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     volatile LONG ActivationSucceeded;
     volatile LONG ReaderStarted;
     volatile LONG FirstInputCompletionRecorded;
+    volatile LONG FirstKeepAliveRecorded;
     volatile LONG FirstRawPacketRecorded;
     volatile LONG FirstDecodeRecorded;
     volatile LONG FirstVhfSubmissionRecorded;
@@ -60,11 +64,14 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     ULONG ActivationSuccessCount;
     ULONG InputPacketCount;
     ULONG InputReportCount;
+    ULONG KeepAliveAttemptCount;
     ULONG InputEmissionFailureCount;
     ULONG KeyboardQueueHead;
     ULONG KeyboardQueueTail;
     ULONG KeyboardQueueCount;
     ULONG ParseFailureCount;
+    ULONGLONG NextKeepAliveDue;
+    USHORT NextKeepAliveValue;
     NTSTATUS LastActivationStatus;
     ULONG LastActivationStep;
     ULONG LastBytesTransferred;
