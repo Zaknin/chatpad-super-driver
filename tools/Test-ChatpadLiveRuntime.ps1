@@ -28,7 +28,7 @@ function Check([bool]$Condition, [string]$Name) {
 }
 
 Check ($runtime.Contains('L"USB\\VID_045E&PID_028E"') -and $runtime.Contains('DevicePropertyHardwareID') -and $runtime.Contains('RtlEqualUnicodeString')) 'exact supported device is independently matched'
-Check ($inf.Contains('USB\VID_045E&PID_028E') -and $inf.Contains('DriverVer   = 07/12/2026,1.0.6.0')) 'INF targets exact device at version 1.0.6.0'
+Check ($inf.Contains('USB\VID_045E&PID_028E') -and $inf.Contains('DriverVer   = 07/12/2026,1.0.7.0')) 'INF targets exact device at version 1.0.7.0'
 Check ($inf.Contains('HKR,,"LowerFilters",0x00010008,"vhf","ChatpadFilter"') -and -not $inf.Contains('AddFilter = ChatpadFilter')) 'INF places VHF below its Chatpad HID source while preserving existing lower filters'
 Check ($device.Contains('WdfDeviceInitAssignWdmIrpPreprocessCallback') -and $device.Contains('IRP_MJ_INTERNAL_DEVICE_CONTROL')) 'internal USB IRP preprocess callback is registered'
 Check ($runtime.Contains('IoSkipCurrentIrpStackLocation(irp)') -and $runtime.Contains('IoCallDriver(WdfDeviceWdmGetAttachedDevice(device), irp)')) 'unowned controller IRPs pass directly to xusb22 lower stack'
@@ -50,8 +50,8 @@ Check ($runtime.Contains('ChatpadLiveReleaseKeysIfNeeded') -and $runtime.Contain
 Check (-not $runtime.Contains('WdfIoQueueCreate(')) 'controller traffic is not diverted through a passive KMDF queue'
 Check ($runtime.Contains('ChatpadRuntimeDiagnostics') -and $runtime.Contains('ConfigurationCompletionCount') -and $runtime.Contains('ActivationStep5UsbdStatus') -and $runtime.Contains('FirstRawPacket0') -and $runtime.Contains('FirstKeyboardReportNtStatus')) 'bounded persistent diagnostics cover configuration through first HID submission'
 Check ($runtime.Contains('WdfDriverOpenParametersRegistryKey') -and $runtime.Contains('WdfDeviceGetDriver(runtime->Device)')) 'diagnostics use the service Parameters key before device start'
-Check ($runtime.Contains('vhfConfig.VersionNumber = 0x0106')) 'VHF child version matches package version 1.0.6.0'
-Check ($runtime.Contains('USBD_STATUS_STALL_PID') -and $runtime.Contains('ChatpadIsExpectedActivationPreambleStall') -and $runtime.Contains('ActivationExpectedPreambleStall')) 'only expected preamble stalls advance into the strict activation tail'
+Check ($runtime.Contains('vhfConfig.VersionNumber = 0x0107')) 'VHF child version matches package version 1.0.7.0'
+Check ($runtime.Contains('USBD_STATUS_STALL_PID') -and $runtime.Contains('ChatpadIsAcceptedActivationStall') -and $runtime.Contains('ActivationAcceptedStall')) 'only exact pre-write stalls advance to the strict activation write and final probe'
 Check ($device.Contains('UNREFERENCED_PARAMETER(runtimeStatus)') -and -not $device.Contains('context->LiveRuntime.LastActivationStatus = runtimeStatus')) 'optional runtime status cannot propagate through physical PrepareHardware'
 Check ($runtime.Contains('ChatpadLiveDisableOptionalFeature') -and $runtime.Contains('PhysicalStartResult') -and $runtime.Contains('ControllerForwardingEnabled') -and $runtime.Contains('CHATPAD_VIRTUAL_KEYBOARD_UNAVAILABLE')) 'optional failure records bounded fail-open diagnostics'
 Check ($header.Contains('KeyboardQueue[CHATPAD_KEYBOARD_QUEUE_CAPACITY]') -and $runtime.Contains('ChatpadLiveEvtKeyboardWorkItem') -and $runtime.Contains('WdfWorkItemFlush(runtime->KeyboardWorkItem)')) 'virtual keyboard uses a bounded independent queue and teardown worker'

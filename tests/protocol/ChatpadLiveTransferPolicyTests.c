@@ -37,7 +37,7 @@ static unsigned int ExecuteMockTransfers(
     return completed;
 }
 
-static unsigned int ExecuteExpectedStallPreamble(void)
+static unsigned int ExecuteAcceptedStallSequence(void)
 {
     unsigned int completed = 0;
     size_t index;
@@ -45,8 +45,8 @@ static unsigned int ExecuteExpectedStallPreamble(void)
         ChatpadActivationSequenceStep step;
         int accepted;
         ChatpadGetActivationSequenceStep(index, &step);
-        accepted = index < 3u
-            ? ChatpadIsExpectedActivationPreambleStall(index, 0, 0, 0, 1, 0, step.Request.RawLength)
+        accepted = index < 4u
+            ? ChatpadIsAcceptedActivationStall(index, 0, 0, 0, 1, 0, step.Request.RawLength)
             : ChatpadValidateLiveTransferOutcome(
                 1,
                 0,
@@ -81,26 +81,32 @@ ChatpadLiveTransferPolicyTestSummary RunChatpadLiveTransferPolicyTests(void)
     Check(&summary, "timeout terminates without retry",
         ExecuteMockTransfers(1, CHATPAD_LIVE_TRANSFER_TIMED_OUT) == 1);
     Check(&summary, "preamble step 0 stall is expected",
-        ChatpadIsExpectedActivationPreambleStall(0, 0, 0, 0, 1, 0, 0));
+        ChatpadIsAcceptedActivationStall(0, 0, 0, 0, 1, 0, 0));
     Check(&summary, "preamble step 1 stall is expected",
-        ChatpadIsExpectedActivationPreambleStall(1, 0, 0, 0, 1, 0, 0));
+        ChatpadIsAcceptedActivationStall(1, 0, 0, 0, 1, 0, 0));
     Check(&summary, "preamble step 2 stall is expected",
-        ChatpadIsExpectedActivationPreambleStall(2, 0, 0, 0, 1, 0, 0));
-    Check(&summary, "step 3 stall remains fatal",
-        !ChatpadIsExpectedActivationPreambleStall(3, 0, 0, 0, 1, 0, 0));
+        ChatpadIsAcceptedActivationStall(2, 0, 0, 0, 1, 0, 0));
+    Check(&summary, "initial two-byte read probe stall is accepted",
+        ChatpadIsAcceptedActivationStall(3, 0, 0, 0, 1, 0, 2));
+    Check(&summary, "activation write stall remains fatal",
+        !ChatpadIsAcceptedActivationStall(4, 0, 0, 0, 1, 0, 2));
+    Check(&summary, "final read probe stall remains fatal",
+        !ChatpadIsAcceptedActivationStall(5, 0, 0, 0, 1, 0, 2));
     Check(&summary, "successful preamble is not mislabeled as a stall",
-        !ChatpadIsExpectedActivationPreambleStall(0, 1, 0, 0, 1, 0, 0));
+        !ChatpadIsAcceptedActivationStall(0, 1, 0, 0, 1, 0, 0));
     Check(&summary, "non-stall preamble failure remains fatal",
-        !ChatpadIsExpectedActivationPreambleStall(0, 0, 0, 0, 0, 0, 0));
+        !ChatpadIsAcceptedActivationStall(0, 0, 0, 0, 0, 0, 0));
     Check(&summary, "preamble timeout remains fatal",
-        !ChatpadIsExpectedActivationPreambleStall(0, 0, 1, 0, 1, 0, 0));
+        !ChatpadIsAcceptedActivationStall(0, 0, 1, 0, 1, 0, 0));
     Check(&summary, "preamble cancellation remains fatal",
-        !ChatpadIsExpectedActivationPreambleStall(0, 0, 0, 1, 1, 0, 0));
+        !ChatpadIsAcceptedActivationStall(0, 0, 0, 1, 1, 0, 0));
     Check(&summary, "preamble stall with bytes remains fatal",
-        !ChatpadIsExpectedActivationPreambleStall(0, 0, 0, 0, 1, 1, 0));
-    Check(&summary, "data-stage stall remains fatal",
-        !ChatpadIsExpectedActivationPreambleStall(0, 0, 0, 0, 1, 0, 2));
-    Check(&summary, "three expected stalls permit the strict activation tail",
-        ExecuteExpectedStallPreamble() == 6);
+        !ChatpadIsAcceptedActivationStall(0, 0, 0, 0, 1, 1, 0));
+    Check(&summary, "preamble stall with data-stage length remains fatal",
+        !ChatpadIsAcceptedActivationStall(0, 0, 0, 0, 1, 0, 2));
+    Check(&summary, "initial probe stall with zero expected length remains fatal",
+        !ChatpadIsAcceptedActivationStall(3, 0, 0, 0, 1, 0, 0));
+    Check(&summary, "accepted stalls reach the activation write and final probe",
+        ExecuteAcceptedStallSequence() == 6);
     return summary;
 }

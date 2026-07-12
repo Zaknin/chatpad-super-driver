@@ -1,5 +1,28 @@
 # Decisions
 
+## 2026-07-12 - Treat the initial activation read probe stall as non-fatal
+
+**Decision:** In addition to the three legacy zero-length preamble stalls,
+activation step 3 may advance only when its immutable two-byte read request
+fails with `USBD_STATUS_STALL_PID`, zero transferred bytes, no timeout, and no
+cancellation. The step-4 `09 00` write and step-5 final probe remain strict.
+
+**Rationale:** Live 1.0.6 diagnostics prove steps 0-2 were accepted and the
+exact legacy step-3 setup `C0 A1 0000 E416 0002` then produced the same
+zero-byte stall before the activation write could run. The read is a
+non-mutating pre-write probe; stopping there prevents the only command intended
+to activate Chatpad traffic from ever being attempted.
+
+**Alternatives rejected:** Accepting stalls on every activation step; weakening
+the `09 00` write or final verification probe; changing the request bytes;
+retrying automatically; resetting or reselecting the xusb22-owned USB
+configuration; or allowing Chatpad failure to affect Xbox startup.
+
+**Consequences:** Version 1.0.7 reaches the activation write after the exact
+observed probe outcome while preserving raw diagnostics and all fail-open
+boundaries. Hardware must still prove the write, final probe, input reader,
+decoder, VHF submission, and real keyboard behavior.
+
 ## 2026-07-12 - Treat only the first three zero-byte USB stalls as accepted activation preamble outcomes
 
 **Decision:** Activation steps 0-2 may advance when their zero-length legacy

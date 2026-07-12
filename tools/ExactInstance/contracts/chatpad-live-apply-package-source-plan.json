@@ -9,7 +9,7 @@
   "driver_binary_filename": "ChatpadFilter.sys",
   "canonical_inf": {
     "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf",
-    "sha256": "BB6819BE3CC7140E7161683C7A5E105A7AC8E4E90A2D4E3B634FEE4D0C69A0A8"
+    "sha256": "3D63E4A86351D89D4FF16E302A026FCB01787298AE0659E105ED4521134869C0"
   },
   "catalog_filename": "ChatpadFilterExtension.cat",
   "architecture": "AMD64",
@@ -55,7 +55,7 @@
     { "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.h", "sha256": "880549AA06A33EC33216F361934CD6BBDEF2CE404C05993731A596836EE1380B" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.c", "sha256": "0579EE0368221792663E74FE67A153CE2D8FB27B38B2EDCB27867D7399326F74" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.h", "sha256": "FCE07CF792033894C8E5229F368D321CF21C967F004FB06A2E81C54D1EE94406" },
-    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "AD24CA3918FC660CF174B87CCD99E5EF822865845C874401CBCAB54CFEA498EA" },
+    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "E546A975F19080CAD46EC9EFB6B72C19E0865B5034030733BFC5215F975A6FD9" },
     { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.h", "sha256": "580F85B79442D39B1D4C0798AE09E8FC28294C31620FCC822F734504B73DCD1C" },
     { "path": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h", "sha256": "85A76126E95A0CCD655823D56C7EA04CB26EB8F5D3644054CB70AA7490A1B9BB" },
     { "path": "src/driver/ChatpadFilter/device.c", "sha256": "151E90104450FC9A0840A12186F6F0B60D456F9DFB918B1071209129EF3CB683" },
@@ -75,8 +75,8 @@
     { "path": "src/protocol/ChatpadProtocol/ChatpadKeyboardHid.h", "sha256": "C83DCD0BCAF3B6BD016BD1CB4D16CF7DC27443CCF9FC8D0516FF789FB951B8A9" },
     { "path": "src/protocol/ChatpadProtocol/ChatpadKeyboardParser.c", "sha256": "6980326DFDBFDBE36D169A5A4C95E57E902DF47A1DF31EF867EA72BCBCF840B4" },
     { "path": "src/protocol/ChatpadProtocol/ChatpadKeyboardParser.h", "sha256": "93378CBE8D667A6B8ADDB256FDA6B4EBA71A1337EF1335B9A38F7DEE5FA266C3" },
-    { "path": "src/protocol/ChatpadProtocol/ChatpadLiveTransferPolicy.c", "sha256": "18500BDAA64872A1EB45D2C6B720E572C1F8072B2AFF88FB644C8A95481259AD" },
-    { "path": "src/protocol/ChatpadProtocol/ChatpadLiveTransferPolicy.h", "sha256": "BF5FBC968C362B7382FA009609B0B2AF9E149FFFC60FE5F52226B36852323C3B" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadLiveTransferPolicy.c", "sha256": "9A207167BCFB9032EDE94FA151C1E3AA20A953A9C00149CF5230F7610A819667" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadLiveTransferPolicy.h", "sha256": "A78C70CF5A08860F52719A45B33E156A28028A06B1CAB3C3A6AD6EFC89706CEF" },
     { "path": "src/transport/ChatpadControlSetup/ChatpadControlSetup.c", "sha256": "B74C136AB4578A160CA4C6A87B816ABFE65D7A12177AD540DA42635475D71252" },
     { "path": "src/transport/ChatpadControlSetup/ChatpadControlSetup.h", "sha256": "08AF36E179ECECE3404D64875E91539801ADFF37200C4E3E5B7047F993E0DB9E" },
     { "path": "src/transport/ChatpadRequestOwnerModel/ChatpadRequestOwnerModel.c", "sha256": "381AAD1673C635C9259048377D650EF396BA37B196F208416398C7522692CB8A" },
@@ -87,14 +87,14 @@
   ],
   "package_source_inventory": [
     { "role": "production driver project", "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "FB790116F9F37935D7AF575024C5CC732ABA4682BD1E68F6467C9DAAB85D8AE6" },
-    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "BB6819BE3CC7140E7161683C7A5E105A7AC8E4E90A2D4E3B634FEE4D0C69A0A8" }
+    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "3D63E4A86351D89D4FF16E302A026FCB01787298AE0659E105ED4521134869C0" }
   ],
   "package_file_inventory": [
     { "filename": "ChatpadFilterExtension.inf", "role": "device-specific extension INF", "catalog_covered": true },
     { "filename": "ChatpadFilter.sys", "role": "KMDF lower-filter binary produced by the production project", "catalog_covered": true }
   ],
   "version_policy": {
-    "source_driver_ver": "07/12/2026,1.0.6.0",
+    "source_driver_ver": "07/12/2026,1.0.7.0",
     "date_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "version_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "generated_from_clock": false,

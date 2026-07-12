@@ -632,7 +632,7 @@ static NTSTATUS ChatpadLiveSendActivationStep(
         status = STATUS_UNSUCCESSFUL;
     }
     *rawNtStatus = status;
-    *expectedStall = ChatpadIsExpectedActivationPreambleStall(
+    *expectedStall = ChatpadIsAcceptedActivationStall(
         step->SequenceIndex,
         NT_SUCCESS(status),
         status == STATUS_IO_TIMEOUT || status == STATUS_TIMEOUT,
@@ -718,7 +718,7 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
             bytesTransferred,
             expectedStall);
         ChatpadLiveTrace(
-            expectedStall ? "ActivationExpectedPreambleStall" : "ActivationStep",
+            expectedStall ? "ActivationAcceptedStall" : "ActivationStep",
             expectedStall ? STATUS_SUCCESS : status,
             (ULONG)stepIndex,
             bytesTransferred);
@@ -1024,7 +1024,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x0106;
+        vhfConfig.VersionNumber = 0x0107;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {

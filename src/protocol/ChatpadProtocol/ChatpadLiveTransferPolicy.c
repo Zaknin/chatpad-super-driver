@@ -22,7 +22,7 @@ ChatpadLiveTransferResult ChatpadValidateLiveTransferOutcome(
     return CHATPAD_LIVE_TRANSFER_ACCEPTED;
 }
 
-int ChatpadIsExpectedActivationPreambleStall(
+int ChatpadIsAcceptedActivationStall(
     ChatpadSize stepIndex,
     int statusSucceeded,
     int timedOut,
@@ -31,11 +31,15 @@ int ChatpadIsExpectedActivationPreambleStall(
     ChatpadSize bytesTransferred,
     ChatpadSize expectedBytes)
 {
-    return stepIndex < (ChatpadSize)3u &&
-        !statusSucceeded &&
-        !timedOut &&
-        !cancelled &&
-        usbdStatusIsStall &&
-        bytesTransferred == (ChatpadSize)0u &&
-        expectedBytes == (ChatpadSize)0u;
+    if (statusSucceeded ||
+        timedOut ||
+        cancelled ||
+        !usbdStatusIsStall ||
+        bytesTransferred != (ChatpadSize)0u) {
+        return 0;
+    }
+    return (stepIndex < (ChatpadSize)3u &&
+            expectedBytes == (ChatpadSize)0u) ||
+        (stepIndex == (ChatpadSize)3u &&
+            expectedBytes == (ChatpadSize)2u);
 }
