@@ -862,7 +862,7 @@ ChatpadEvtDeviceAdd(
     attemptDiagnostics.Initialized = 1u;
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "ChatpadFilter: lifecycle scaffold EvtDeviceAdd\n"));
+        "ChatpadFilter: live activation runtime EvtDeviceAdd\n"));
 
     attemptId = ChatpadAllocateDeviceAddAttemptId(&attemptWrapped);
     attemptDiagnostics.AttemptId = attemptId;
@@ -891,6 +891,17 @@ ChatpadEvtDeviceAdd(
         0u, 0u, 0u);
 
     WdfFdoInitSetFilter(DeviceInit);
+
+    status = WdfDeviceInitAssignWdmIrpPreprocessCallback(
+        DeviceInit,
+        ChatpadLiveEvtWdmIrpPreprocess,
+        IRP_MJ_INTERNAL_DEVICE_CONTROL,
+        NULL,
+        0);
+    if (!NT_SUCCESS(status)) {
+        ChatpadTracePreContextTerminal(&attemptDiagnostics, status);
+        return status;
+    }
 
     WDF_PNPPOWER_EVENT_CALLBACKS_INIT(&pnpPowerCallbacks);
     pnpPowerCallbacks.EvtDevicePrepareHardware = ChatpadEvtDevicePrepareHardware;
@@ -1278,6 +1289,9 @@ ChatpadEvtDeviceAdd(
 
     ChatpadLogLifecycle("EvtDeviceAdd", device, lifecycleResult);
     status = ChatpadLifecycleResultToStatus(lifecycleResult);
+    if (NT_SUCCESS(status)) {
+        status = ChatpadLiveRuntimeInitialize(device, &context->LiveRuntime);
+    }
     ChatpadTraceDeviceTerminal(context, status);
     return status;
 }
@@ -1296,6 +1310,7 @@ ChatpadEvtDeviceContextCleanup(
     uint64_t sequence;
 
     context = ChatpadFilterGetDeviceContext((WDFDEVICE)DeviceObject);
+    ChatpadLiveRuntimeCleanup(&context->LiveRuntime);
     duplicateCleanup = context->RuntimeDiagnostics.CleanupEntered;
     ChatpadValidateDiagnosticTransition(
         context,
@@ -1437,11 +1452,17 @@ ChatpadEvtDevicePrepareHardware(
 {
     PCHATPAD_FILTER_DEVICE_CONTEXT context;
     ChatpadFilterLifecycleResult lifecycleResult;
+    NTSTATUS runtimeStatus;
 
     UNREFERENCED_PARAMETER(ResourcesRaw);
     UNREFERENCED_PARAMETER(ResourcesTranslated);
 
     context = ChatpadFilterGetDeviceContext(Device);
+    runtimeStatus = ChatpadLiveRuntimePrepareHardware(&context->LiveRuntime);
+    if (!NT_SUCCESS(runtimeStatus)) {
+        context->LiveRuntime.LastActivationStatus = runtimeStatus;
+        return runtimeStatus;
+    }
     lifecycleResult = ChatpadFilterLifecyclePrepareHardware(&context->Lifecycle);
     ChatpadLogLifecycle("EvtDevicePrepareHardware", Device, lifecycleResult);
     return ChatpadLifecycleResultToStatus(lifecycleResult);
@@ -1460,6 +1481,7 @@ ChatpadEvtDeviceReleaseHardware(
     UNREFERENCED_PARAMETER(ResourcesTranslated);
 
     context = ChatpadFilterGetDeviceContext(Device);
+    ChatpadLiveRuntimeReleaseHardware(&context->LiveRuntime);
     lifecycleResult = ChatpadFilterLifecycleReleaseHardware(&context->Lifecycle);
     ChatpadLogLifecycle("EvtDeviceReleaseHardware", Device, lifecycleResult);
     return ChatpadLifecycleResultToStatus(lifecycleResult);
@@ -1480,6 +1502,9 @@ ChatpadEvtDeviceD0Entry(
 
     context = ChatpadFilterGetDeviceContext(Device);
     lifecycleResult = ChatpadFilterLifecycleEnterD0(&context->Lifecycle, &generation);
+    if (lifecycleResult == CHATPAD_FILTER_LIFECYCLE_OK) {
+        ChatpadLiveRuntimeEnterD0(&context->LiveRuntime);
+    }
     ChatpadLogLifecycle("EvtDeviceD0Entry", Device, lifecycleResult);
     return ChatpadLifecycleResultToStatus(lifecycleResult);
 }
@@ -1499,6 +1524,7 @@ ChatpadEvtDeviceD0Exit(
     UNREFERENCED_PARAMETER(TargetState);
 
     context = ChatpadFilterGetDeviceContext(Device);
+    ChatpadLiveRuntimeExitD0(&context->LiveRuntime);
     lifecycleResult = ChatpadFilterLifecycleGetSnapshot(&context->Lifecycle, &snapshot);
     if (lifecycleResult == CHATPAD_FILTER_LIFECYCLE_OK) {
         generation = snapshot.CurrentGeneration;

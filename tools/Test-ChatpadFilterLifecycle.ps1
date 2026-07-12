@@ -180,13 +180,17 @@ function Test-SourceAndProjectGuards {
         }
     }
 
+    $approvedInf = [IO.Path]::GetFullPath((Join-Path $RepositoryRoot 'src\driver\ChatpadFilter\package\ChatpadFilterExtension.inf'))
     $modernDriverProhibited = @(
         Get-ChildItem -LiteralPath (Join-Path $RepositoryRoot 'src\driver') -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Extension -match '(?i)^\.(inf|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$' -or $_.Name -match '(?i)(package|install|deploy)' } |
+            Where-Object {
+                $_.FullName -cne $approvedInf -and
+                ($_.Extension -match '(?i)^\.(inf|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$' -or $_.Name -match '(?i)(package|install|deploy)')
+            } |
             ForEach-Object { $_.FullName }
     )
     if ($modernDriverProhibited.Count -ne 0) {
-        throw "Prohibited driver package/sign/install/deploy file exists: $($modernDriverProhibited -join ', ')"
+        throw "Unexpected driver package/sign/install/deploy file exists: $($modernDriverProhibited -join ', ')"
     }
 
     Write-Output 'Source/project guard: PASS'

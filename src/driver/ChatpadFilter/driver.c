@@ -24,7 +24,7 @@ DriverEntry(
     NTSTATUS status;
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "ChatpadFilter: compile-only skeleton DriverEntry\n"));
+        "ChatpadFilter: live activation runtime DriverEntry\n"));
 
     WPP_INIT_TRACING(DriverObject, RegistryPath);
     ChatpadTrace(TRACE_LEVEL_INFORMATION, CHATPAD_TRACE_DRIVER_ENTRY,

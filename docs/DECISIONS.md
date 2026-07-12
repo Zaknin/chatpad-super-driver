@@ -4084,3 +4084,30 @@ real built/signing/candidate identities. No signing route has yet been selected
 or executed; Microsoft attestation or WHCP selection remains a P1B-2 release
 security decision. The package remains non-installable and TASK 8I remains
 blocked pending build, catalog, signing, validation, and independent audit.
+
+## 2026-07-12 - Reuse the parent USB configuration and isolate Chatpad I/O
+
+**Decision:** The live lower filter reuses the exact parent
+`URB_FUNCTION_SELECT_CONFIGURATION` with `WdfUsbTargetDeviceSelectConfig`,
+then owns only interface 2 pipe 0 for Chatpad activation/input. All other
+internal IRPs are forwarded directly to the next-lower driver without a
+passive KMDF queue transition. Activation and input run in separate bounded
+passive work items, and keyboard output uses VHF.
+
+**Rationale:** `xusb22` must retain the normal Xbox controller path, while the
+historical implementation establishes that interface 2 pipe 0 carries Chatpad
+input. Reusing the parent's configuration avoids a competing configuration;
+direct pass-through avoids adding passive-worker latency to controller reports.
+Synchronous control/read operations and protocol delays require PASSIVE_LEVEL,
+and VHF is the supported kernel virtual-keyboard path.
+
+**Alternatives rejected:** Independently selecting a second USB configuration;
+capturing or replacing interface 0 controller reports; routing every controller
+IRP through a passive default queue; reviving the user-mode recording provider;
+ad hoc user-mode input injection; indefinite retries; and emitting guessed
+Green/Orange/People layer mappings.
+
+**Consequences:** One activation attempt is consumed per D0 generation; removal
+waits at most the bounded transfer/read timeout before work-item rundown; all
+stop/error paths emit all-keys-up. Base keys and Shift are implemented, while
+the three symbol layers remain an explicit post-functional-validation extension.

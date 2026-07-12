@@ -27,10 +27,22 @@ try {
     $trackedFiles = Invoke-GitLines -Arguments @('ls-files')
     $approvedPrototypeInf = 'prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf'
     $approvedPrototypeReadme = 'prototypes/inf/ChatpadFilterExtension/README.md'
+    $approvedCanonicalInf = 'src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf'
+    $approvedPublicCertificate = 'tools/ExactInstance/certificates/ChatpadLocalDevelopmentTestSigning.cer'
     $generatedPattern = '(?i)\.(sys|exe|dll|cat|cab|msi|pdb|lib|obj|ilk|idb|tlog|lastbuildstate|exp|iobj|ipdb|pch|res|recipe|log|bin|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$'
-    $trackedGenerated = @($trackedFiles | Where-Object { $_ -match $generatedPattern })
+    $trackedGenerated = @($trackedFiles | Where-Object { $_ -match $generatedPattern -and $_ -cne $approvedPublicCertificate })
     if ($trackedGenerated.Count -gt 0) {
         $failures.Add("Generated outputs, logs, certificates, or private keys are tracked: $($trackedGenerated -join ', ')")
+    }
+    $publicCertificatePath = Join-Path $repoRoot $approvedPublicCertificate
+    if (-not (Test-Path -LiteralPath $publicCertificatePath -PathType Leaf)) {
+        $failures.Add("Approved public signing certificate is missing: $approvedPublicCertificate")
+    }
+    else {
+        $publicCertificate = [Security.Cryptography.X509Certificates.X509Certificate2]::new($publicCertificatePath)
+        if ($publicCertificate.HasPrivateKey -or $publicCertificate.Thumbprint -cne '885ADDC8018AC58E19B14668ACDAC9072BB6AE15') {
+            $failures.Add("Approved CER is not the expected public-only test certificate: $approvedPublicCertificate")
+        }
     }
 
     $legacyDiff = Invoke-GitLines -Arguments @('diff', '--name-only', 'origin/win11-port', '--', 'legacy')
@@ -58,9 +70,9 @@ try {
                 $firstSegment -notin @('.git', '.vs', 'artifacts', 'legacy', 'legacy-source', 'audit-output', 'Downloads', 'stage2-source-review')
             }
     )
-    $unexpectedModernInfFiles = @($modernInfFiles | Where-Object { $_ -ne $approvedPrototypeInf })
+    $unexpectedModernInfFiles = @($modernInfFiles | Where-Object { $_ -notin @($approvedPrototypeInf, $approvedCanonicalInf) })
     if ($unexpectedModernInfFiles.Count -gt 0) {
-        $failures.Add("INF files exist outside the single approved prototype path: $($unexpectedModernInfFiles -join ', ')")
+        $failures.Add("INF files exist outside the approved prototype and canonical package-source paths: $($unexpectedModernInfFiles -join ', ')")
     }
 
     $prototypeInfPath = Join-Path $repoRoot $approvedPrototypeInf
@@ -86,6 +98,8 @@ try {
 
         $allowedPrototypeReferences = @(
             (Join-Path $repoRoot 'tools\Test-ChatpadFilterInfPrototype.ps1'),
+            (Join-Path $repoRoot 'tools\Test-ChatpadLiveApplyPackageSourceContract.ps1'),
+            (Join-Path $repoRoot 'tools\ExactInstance\ChatpadLiveApplyPackageSourceContract.psm1'),
             (Join-Path $repoRoot 'tools\Test-RepositorySafety.ps1'))
         $unexpectedPrototypeReferences = [System.Collections.Generic.List[string]]::new()
         $referenceExtensions = @('.ps1', '.psm1', '.cmd', '.bat', '.sln', '.vcxproj', '.props', '.targets', '.proj', '.csproj')
@@ -96,7 +110,7 @@ try {
                 $allowedPrototypeReferences -notcontains $_.FullName
             } |
             ForEach-Object {
-                if ([System.IO.File]::ReadAllText($_.FullName) -match '(?i)ChatpadFilterExtension\.inf|prototypes[\\/]inf[\\/]ChatpadFilterExtension') {
+                if ([System.IO.File]::ReadAllText($_.FullName) -match '(?i)prototypes[\\/]inf[\\/]ChatpadFilterExtension') {
                     $unexpectedPrototypeReferences.Add($_.FullName)
                 }
             }
@@ -110,7 +124,7 @@ try {
     $modernProhibited = @(
         Get-ChildItem -LiteralPath $modernSourceRoot -Recurse -File -ErrorAction SilentlyContinue |
             ForEach-Object { $_.FullName.Substring($repoRoot.Length).TrimStart('\', '/').Replace('\', '/') } |
-            Where-Object { $_ -match $modernProhibitedPattern }
+            Where-Object { $_ -match $modernProhibitedPattern -and $_ -cne $approvedCanonicalInf }
     )
     if ($modernProhibited.Count -gt 0) {
         $failures.Add("Packaging, certificate, or deployment files exist in the modern source tree: $($modernProhibited -join ', ')")
@@ -152,7 +166,8 @@ try {
         ForEach-Object {
             $relativePath = $_.FullName.Substring($repoRoot.Length).TrimStart('\', '/')
             $firstSegment = ($relativePath -split '[\\/]', 2)[0]
-            if ($firstSegment -notin (@('.git', '.vs', 'artifacts') + $referenceInputRoots)) {
+            if ($relativePath.Replace('\', '/') -cne $approvedPublicCertificate -and
+                $firstSegment -notin (@('.git', '.vs', 'artifacts') + $referenceInputRoots)) {
                 $generatedOutsideOutput.Add($relativePath.Replace('\', '/'))
             }
         }
@@ -189,11 +204,11 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Output 'REPOSITORY SAFETY: PASS'
-Write-Output 'PASS: no generated outputs, logs, certificates, or private keys are tracked'
+Write-Output 'PASS: no generated outputs, logs, or private keys are tracked; the exact public-only development CER is approved'
 Write-Output 'PASS: legacy/ matches origin/win11-port'
 Write-Output 'PASS: no forbidden legacy binaries are indexed'
-Write-Output 'PASS: only the exact offline prototype INF path is permitted outside legacy/ and it has required isolation guards'
-Write-Output 'PASS: modern source contains no packaging, certificate, or deployment files'
+Write-Output 'PASS: only the exact offline prototype and canonical package-source INF paths are permitted outside legacy/'
+Write-Output 'PASS: modern source contains only the approved canonical INF and no generated package, certificate, or deployment output'
 Write-Output 'PASS: no generated build outputs exist beneath forbidden output roots'
 Write-Output 'PASS: modern generated build outputs exist only beneath artifacts/ or ignored .vs/ paths'
 Write-Output 'PASS: artifacts/ and .vs/ are ignored by Git'

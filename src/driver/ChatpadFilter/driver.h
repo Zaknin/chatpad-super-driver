@@ -6,6 +6,7 @@
 #include "ChatpadFilterLifecycle.h"
 #include "ChatpadKmdfRequestOwnerContext.h"
 #include "ChatpadRuntimeDiagnostics.h"
+#include "ChatpadLiveRuntime.h"
 
 #define CHATPAD_FILTER_DEVICE_CONTEXT_SIGNATURE ((ULONG)0x46444350u)
 #define CHATPAD_FILTER_DEVICE_CONTEXT_VERSION ((ULONG)1u)
@@ -18,6 +19,7 @@ typedef struct _CHATPAD_FILTER_DEVICE_CONTEXT {
     ChatpadRuntimeAttemptState RuntimeDiagnostics;
     ChatpadFilterLifecycleState Lifecycle;
     ChatpadKmdfActivationRequestOwner ActivationRequestOwner;
+    CHATPAD_LIVE_RUNTIME LiveRuntime;
 } CHATPAD_FILTER_DEVICE_CONTEXT, *PCHATPAD_FILTER_DEVICE_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(CHATPAD_FILTER_DEVICE_CONTEXT, ChatpadFilterGetDeviceContext)

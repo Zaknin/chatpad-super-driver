@@ -1,18 +1,20 @@
 # Project State
 
-*Last updated: 2026-07-12 (TASK 8I-P1B-LD-S1R2 package finalization)*
+*Last updated: 2026-07-12 (TASK 8J live KMDF activation runtime)*
 
-## Current state
+## Current truth
 
-- **Branch / starting HEAD:** `feature/native-adapter-self-test-signed-package` from `f0ca3a0e2c73aa1309812f94721f190fa7af835d`, parent `c70d1b94c9fdc14de598df8326b6e0e912dc811d`. The final task commit has that exact parent.
-- **Status:** `SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_FINALIZED_FROM_CONTROLLED_POST_CAT_RECOVERY_CERTIFICATE_NOT_TRUSTED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_PACKAGE_NOT_STAGED_NOT_INSTALLED_NOT_LOADED`.
-- **Certificate/CER:** exactly one matching untrusted certificate remains only in `Cert:\CurrentUser\My`, thumbprint `885ADDC8018AC58E19B14668ACDAC9072BB6AE15`; the tracked public DER CER is 1,104 bytes / SHA-256 `300238DB21F1ECD2F2C2E9F3A03EFF0147CBC419D474B1B3B89433569D5E6C96` and has no private key.
-- **Final package:** `ChatpadFilter.sys` is 42,856 bytes / SHA-256 `B1FCF99F0B7631E83397396024E91213A4FCF9B145CCC97E01E6684562DC7190`; `ChatpadFilterExtension.cat` is 2,961 bytes / SHA-256 `B34C084E60020B401518A9259E476AFC22980DC2B51311EE053F1FF410DDCFF4`, Authenticode SHA-256 `672EA53BEC871D2948C4C5D81BB0473450897CCA0070DE1D3D017A554857DFE1`; INF remains 1,581 bytes / SHA-256 `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`. The CAT has one expected signer, no timestamp, and exactly INF/SYS members.
-- **Recovery result:** the signed lowercase CAT directory entry was renamed through a temporary path to exact required casing. CAT bytes, signature, signer, timestamp state, and membership remained unchanged. S1R2 invoked Inf2Cat/signing/private-key access zero times.
-- **Evidence limitation:** the generated CAT ordinary pre-sign identity is `NOT_RETAINED_BEFORE_IN_PLACE_SIGNING` / `NOT_AVAILABLE`; reconstruction was not attempted and the value must not be fabricated.
-- **Evidence/contracts:** final signed-package evidence and immutable local APPLY package plan are tracked; readiness records 64 entries and the signed derivative without replacing the canonical reproducible unsigned package.
-- **Validation:** focused recovery suite passes 24 tests / 94 assertions in PowerShell 7.6.3 and Windows PowerShell 5.1.26100.8655. Final complete dual-runtime matrix and readiness results are recorded in the task worklog.
-- **Safety:** certificate trust was not installed; TESTSIGNING remains configured but ineffective until the already-pending reboot; no package staging, installation, driver load, device/driver-store query, SetupAPI/Newdev call, native execution, or live APPLY occurred.
-- **Readiness:** `READY_FOR_SELF_TEST_SIGNED_PACKAGE_INDEPENDENT_AUDIT_ONLY`.
-- **Blocker:** `BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_INDEPENDENTLY_AUDITED_CERTIFICATE_NOT_TRUSTED_AND_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT`.
-- **Next action:** TASK 8I-P1B-LD-S2 — independently audit the tracked self-test-signed package, evidence, contract, certificate, and explicit provenance limitation without mutation.
+- **Branch / parent:** `feature/chatpad-kmdf-live-activation-runtime`; the current implementation is the single commit containing this state update, with parent `6ab488a970eb0e1817959bd752ce60b046064692` and subject `feat: connect chatpad protocol to KMDF runtime`.
+- **Runtime:** the exact `USB\VID_045E&PID_028E` lower filter now reuses the parent `URB_FUNCTION_SELECT_CONFIGURATION` through `WdfUsbTargetDeviceSelectConfig`, directly forwards every other internal IRP to the next-lower driver, and uses only interface 2 pipe 0 for Chatpad traffic. Interface 0/controller reports remain owned by `xusb22`.
+- **Activation:** one interlocked attempt is allowed per D0 generation. A passive work item sends the six authoritative vendor transfers in order with 1,000 ms per-step timeouts, exact byte-count validation, 12 ms post-step delays, final response validation, immediate failed-step termination, and no automatic retry.
+- **Input:** a second passive worker performs bounded 250 ms reads, uses the existing five-byte parser, maps known base keys and Shift to boot-keyboard usages, and submits through VHF. Duplicate reports are suppressed; invalid/timeout/removal paths release all keys. Green, Orange, and People layers are deliberately rejected rather than mis-mapped and remain a known limitation.
+- **Version:** canonical INF `DriverVer=07/12/2026,1.0.1.0`.
+- **Final ignored package:** `artifacts/task-8j-chatpad-live-activation-package/final` contains exactly three files: INF 1,581 bytes / `FEB56DB8B19899E561CF671E90F8259B6278493A09B0D834ACEB7F36ED935AA1`; SYS 55,656 bytes / `2CCA4168ABC11F81B9A92B993AE038D3584E16178F42AB7AFE6BE64CD7E079C6`; CAT 2,961 bytes / `5FD9025AEC91150E91FF014E698F4CCE6C010C6930276796856BFA99DDD66D6E`.
+- **Signing:** SYS and CAT are SHA-256 signed by existing thumbprint `885ADDC8018AC58E19B14668ACDAC9072BB6AE15`; both report Authenticode `Valid`. CAT membership verification passes for exact INF and SYS. No certificate was created or trust/BCD state changed.
+- **Validation:** Release x64 WDK build passes; protocol/HID/live-transfer tests pass 630/630; lifecycle passes 109/109; live-runtime source guard passes 16/16; kernel compatibility, WDF setup, request-owner ABI, production linkage, canonical source contract, InfVerif, Inf2Cat, repository safety, signature, and catalog-member checks pass.
+- **Safety:** the new package was not staged, installed, loaded, or executed. No reboot or live device mutation occurred in TASK 8J. The installed `oem96.inf` remains the prior package until the operator explicitly upgrades it.
+- **Functional status:** implementation/package validation is complete, but real Chatpad functionality is unproven until manual installation and key testing.
+
+## Next action
+
+TASK 8J-T1 — manually install the TASK 8J package from an elevated terminal, accept a required restart/reboot, then verify normal controller operation and real Chatpad make/break input.

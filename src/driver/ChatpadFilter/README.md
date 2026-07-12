@@ -1,99 +1,54 @@
-# ChatpadFilter offline integration scaffold
+# ChatpadFilter live activation runtime
 
-`ChatpadFilter` is a compile-only, non-installable x64 KMDF filter-capable
-skeleton for the Windows 11 port. `EvtDeviceAdd` calls
-`WdfFdoInitSetFilter(DeviceInit)`, creates a per-device context, and registers
-only the PnP/power lifecycle callbacks needed for offline lifetime
-bookkeeping.
+`ChatpadFilter` is an x64 KMDF device-specific lower filter for
+`USB\VID_045E&PID_028E`. The INF limits attachment to that hardware ID and the
+driver independently rejects any device whose hardware-ID multi-string does
+not contain the same exact ID.
 
-The project also compiles the dormant `ChatpadActivationPreparation` module.
-That module selects one authoritative activation step, translates its portable
-request into explicit setup metadata, and formats the setup bytes into a
-caller-owned `WDF_USB_CONTROL_SETUP_PACKET`. It is not called by DriverEntry,
-device-add, PnP/power, cleanup, or any other runtime callback.
+## USB transport
 
-The per-device context contains:
+The Microsoft `xusb22` function driver owns the normal Xbox controller path.
+The filter therefore does not select a second configuration and does not
+replace or intercept controller reports. It observes the parent's
+`URB_FUNCTION_SELECT_CONFIGURATION` request, passes that same URB to
+`WdfUsbTargetDeviceSelectConfig`, and completes the original request with the
+result. This lets KMDF cache the configuration and pipe handles which the
+parent selected. Every other internal request is forwarded unchanged to the
+next-lower I/O target.
 
-- a fixed context signature/version;
-- a deterministic diagnostic sequence counter;
-- the caller-owned portable lifecycle state from `ChatpadFilterLifecycle`;
-- one directly embedded `ChatpadKmdfActivationRequestOwner`.
+Only interface index 2, pipe index 0 (the Chatpad IN endpoint established by
+the historical implementation) is opened for the driver's own reads.
+Interface 0 and all normal controller traffic remain owned by `xusb22`.
 
-`EvtDeviceAdd` ordinarily initializes that owner exactly once after scalar
-context setup, validates the clean pre-object baseline exactly once, and only
-then initializes lifecycle state. This creates no WDF object and leaves only
-`MODEL_READY` set: all framework handles remain null, `OWNER_READY` remains
-clear, and the owner remains targetless, non-admitting, and request-inactive.
-Dormant creation, rollback, and orchestration helpers are not called.
+## Activation and input
 
-The lifecycle core is portable C and is compiled into both the driver and the
-native lifecycle test executable. It has no WDF, WDM, Windows, USB, HID, IOCTL,
-endpoint, pipe, queue, request, timer, work-item, protocol, transport,
-keyboard, allocation, I/O, global mutable state, or retained caller pointer.
-The core is externally serialized by its caller; it makes no locking, waiting,
-threading, retry, cancellation-wait, or scheduler claim.
+After PrepareHardware creates the USB target and the parent configuration URB
+has established interface 2, D0 entry queues one passive-level activation work
+item. An interlocked per-D0 consumption gate prevents duplicate activation.
+The worker sends the six authoritative vendor control transfers in exact
+sequence, with a one-second timeout for each transfer and the protocol's 12 ms
+post-transfer delay. It validates NTSTATUS, byte counts, and the final `09 00`
+response, stops on the first failure, and never retries automatically.
 
-Lifecycle phases are neutral:
+On successful activation, a separate passive work item performs bounded
+250 ms synchronous reads from only the Chatpad pipe. The existing five-byte
+parser validates each packet. `ChatpadKeyboardHid` maps the known raw keys and
+Shift modifier to standard boot-keyboard usages, suppresses duplicate reports,
+and preserves two-key make/break state.
 
-1. unset;
-2. created;
-3. prepared;
-4. D0 active;
-5. rundown requested;
-6. D0 stopped;
-7. released.
+VHF exposes those reports as a virtual keyboard. D0 exit, release, cancellation,
+read failure, and cleanup all force an all-keys-up report so removal cannot
+leave a stuck key. Work items are flushed before the hardware epoch is released.
 
-Generation zero is invalid. The first active D0 epoch is generation `1`; each
-later D0 entry after a completed D0 exit increments the generation. D0 entry
-opens operation admission. D0 exit closes admission, begins rundown, and
-completes only when outstanding operation count is zero. Stale-generation
-acquire/release/rundown/completion attempts are rejected without mutating
-current state.
+Diagnostics are deliberately bounded: device match, USB target/configuration,
+D0 activation queue/start, every activation step, activation completion/failure,
+the first valid input packet, the first eight decode/map failures, VHF emission
+failures, input-loop stop, and cleanup.
 
-The KMDF layer registers only `EvtDevicePrepareHardware`,
-`EvtDeviceReleaseHardware`, `EvtDeviceD0Entry`, and `EvtDeviceD0Exit`.
-Prepare/release callbacks maintain the conceptual prepared resource epoch but
-do not inspect resource lists or create hardware resources. D0 callbacks
-delegate state changes to the core. `EvtDeviceD0Exit` does not wait; a nonzero
-outstanding count returns a deterministic busy status.
+## Build and package boundary
 
-`WdfFdoInitSetFilter(DeviceInit)` makes this binary filter-capable only. This
-repository still has no INF, hardware-ID targeting, install package, service,
-catalog, certificate, signing, deployment, or load path. It does not prove this
-`.sys` is attached to any device stack, positioned beneath `xusb22`, or
-targeted at `USB\VID_045E&PID_028E`; those remain future installation
-responsibilities.
-
-The project compiles the portable request-owner model directly as a WDK
-object so the context initializer's WDF-free model dependencies resolve
-without linking the user-mode model library. The existing request-owner
-context static-library project remains the authoritative KMDF implementation.
-
-The preparation module compiles the authoritative activation-request,
-activation-sequence, pure control-setup, and WDF formatter sources directly
-under the WDK toolchain. No constants or payloads are duplicated, no user-mode
-library is linked, and `ChatpadTransport` remains disconnected.
-
-The project sets WDK `SignMode` to `Off` for Debug x64 and Release x64. Builds
-are intentionally unsigned: no certificate is created and no SignTool
-operation runs. Project defaults and `tools/Build-Driver.ps1` route all outputs
-and intermediates beneath repository-root `artifacts/`.
-
-The generated `.sys` must not be installed or loaded on any Windows system.
-
-## Offline INF prototype reference
-
-`prototypes/inf/ChatpadFilterExtension/` contains an isolated source-only
-extension-INF prototype and its prominent installation warning. The prototype
-is not referenced by this project, the solution build, or
-`tools/Build-Driver.ps1`. Its static `InfVerif` result does not make this
-unsigned driver installable and does not prove placement beneath `xusb22`.
-
-## Future bridge design reference
-
-`docs/WINDOWS11-KMDF-TRANSPORT-BRIDGE-DESIGN.md` documents the future
-documentation-only bridge from the portable activation executor and neutral
-transport adapter into a per-device KMDF request owner. It does not change this
-driver's runtime behavior: `ChatpadFilter` still owns no transport target, WDF
-request, queue, timer, work item, endpoint, pipe, INF, package, signing,
-install, load, or hardware behavior.
+The project itself keeps WDK `SignMode` off. `tools/Build-Driver.ps1` produces
+an unsigned SYS beneath `artifacts/`; packaging signs copied deliverables with
+the already-authorized local development certificate. The driver must not be
+installed by build or test scripts. Functional success requires a later manual
+package upgrade and real controller/Chatpad test by the operator.

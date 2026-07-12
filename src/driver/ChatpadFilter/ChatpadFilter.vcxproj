@@ -109,6 +109,10 @@
     <ClInclude Include="ChatpadActivationPreparation.h" />
     <ClInclude Include="ChatpadFilterLifecycle.h" />
     <ClInclude Include="ChatpadRuntimeDiagnostics.h" />
+    <ClInclude Include="ChatpadLiveRuntime.h" />
+    <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardHid.h" />
+    <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardParser.h" />
+    <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadLiveTransferPolicy.h" />
     <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.h" />
     <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadActivationSequence.h" />
     <ClInclude Include="..\..\transport\ChatpadControlSetup\ChatpadControlSetup.h" />
@@ -118,6 +122,10 @@
   <ItemGroup>
     <ClCompile Include="ChatpadActivationPreparation.c" />
     <ClCompile Include="ChatpadFilterLifecycle.c" />
+    <ClCompile Include="ChatpadLiveRuntime.c" />
+    <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardHid.c" />
+    <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardParser.c" />
+    <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadLiveTransferPolicy.c" />
     <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c" />
     <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadActivationSequence.c" />
     <ClCompile Include="..\..\transport\ChatpadControlSetup\ChatpadControlSetup.c" />
@@ -133,6 +141,12 @@
       <AdditionalProperties>OutDir=$(RepoRoot)\artifacts\bin\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\;IntDir=$(RepoRoot)\artifacts\obj\$(Platform)\$(Configuration)\ChatpadKmdfRequestOwnerContext\</AdditionalProperties>
     </ProjectReference>
   </ItemGroup>
+
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>VhfKm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

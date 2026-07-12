@@ -7,6 +7,8 @@
 #include "ChatpadActivationExecutorTests.h"
 #include "ChatpadActivationSequenceTests.h"
 #include "ChatpadProtocolStateMachineTests.h"
+#include "ChatpadKeyboardHidTests.h"
+#include "ChatpadLiveTransferPolicyTests.h"
 
 static unsigned int AssertionsTotal = 0;
 static unsigned int AssertionsPassed = 0;
@@ -373,6 +375,8 @@ int main(void)
     ChatpadActivationRequestTestSummary activationRequestSummary;
     ChatpadActivationSequenceTestSummary activationSequenceSummary;
     ChatpadActivationExecutorTestSummary activationExecutorSummary;
+    ChatpadKeyboardHidTestSummary keyboardHidSummary;
+    ChatpadLiveTransferPolicyTestSummary liveTransferSummary;
 
     TestArgumentAndLengthValidation();
     TestValidPackets();
@@ -400,6 +404,16 @@ int main(void)
     AssertionsTotal += activationExecutorSummary.Total;
     AssertionsPassed += activationExecutorSummary.Passed;
     AssertionsFailed += activationExecutorSummary.Failed;
+
+    keyboardHidSummary = RunChatpadKeyboardHidTests();
+    AssertionsTotal += keyboardHidSummary.Total;
+    AssertionsPassed += keyboardHidSummary.Passed;
+    AssertionsFailed += keyboardHidSummary.Failed;
+
+    liveTransferSummary = RunChatpadLiveTransferPolicyTests();
+    AssertionsTotal += liveTransferSummary.Total;
+    AssertionsPassed += liveTransferSummary.Passed;
+    AssertionsFailed += liveTransferSummary.Failed;
 
     printf("Total: %u\n", AssertionsTotal);
     printf("Passed: %u\n", AssertionsPassed);

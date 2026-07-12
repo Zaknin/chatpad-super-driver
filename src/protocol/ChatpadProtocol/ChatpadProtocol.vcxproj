@@ -88,6 +88,8 @@
     <ClInclude Include="ChatpadActivationSequence.h" />
     <ClInclude Include="ChatpadActivationRequests.h" />
     <ClInclude Include="ChatpadKeyboardParser.h" />
+    <ClInclude Include="ChatpadKeyboardHid.h" />
+    <ClInclude Include="ChatpadLiveTransferPolicy.h" />
     <ClInclude Include="ChatpadProtocolStateMachine.h" />
     <ClInclude Include="ChatpadProtocolTypes.h" />
   </ItemGroup>
@@ -96,6 +98,8 @@
     <ClCompile Include="ChatpadActivationSequence.c" />
     <ClCompile Include="ChatpadActivationRequests.c" />
     <ClCompile Include="ChatpadKeyboardParser.c" />
+    <ClCompile Include="ChatpadKeyboardHid.c" />
+    <ClCompile Include="ChatpadLiveTransferPolicy.c" />
     <ClCompile Include="ChatpadProtocolStateMachine.c" />
   </ItemGroup>
 

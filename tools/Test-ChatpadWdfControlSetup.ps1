@@ -182,6 +182,10 @@ function Test-FormatterSourceAndProjects {
     $expectedFilterCompileItems = @(
         'ChatpadActivationPreparation.c',
         'ChatpadFilterLifecycle.c',
+        'ChatpadLiveRuntime.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadKeyboardHid.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadKeyboardParser.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadLiveTransferPolicy.c',
         '..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c',
         '..\..\protocol\ChatpadProtocol\ChatpadActivationSequence.c',
         '..\..\transport\ChatpadControlSetup\ChatpadControlSetup.c',
@@ -191,7 +195,7 @@ function Test-FormatterSourceAndProjects {
         'device.c')
     if ($filterCompileItems.Count -ne $expectedFilterCompileItems.Count -or
         @($expectedFilterCompileItems | Where-Object { $filterCompileItems -notcontains $_ }).Count -ne 0) {
-        throw 'ChatpadFilter must compile only its original sources, exact shared activation-preparation sources, and the portable request-owner model.'
+        throw 'ChatpadFilter must compile only the authorized lifecycle, live-runtime, protocol, setup, and request-owner sources.'
     }
     if ($filterReferences.Count -ne 1 -or
         $filterReferences[0].Include -cne '..\ChatpadKmdfRequestOwnerContext\ChatpadKmdfRequestOwnerContext.vcxproj') {

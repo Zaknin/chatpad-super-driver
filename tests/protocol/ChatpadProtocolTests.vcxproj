@@ -82,12 +82,16 @@
     <ClInclude Include="fixtures\ChatpadKeyboardFixtures.h" />
     <ClInclude Include="fixtures\ChatpadProtocolStateMachineFixtures.h" />
     <ClInclude Include="ChatpadActivationExecutorTests.h" />
+    <ClInclude Include="ChatpadKeyboardHidTests.h" />
+    <ClInclude Include="ChatpadLiveTransferPolicyTests.h" />
     <ClInclude Include="ChatpadActivationRequestsTests.h" />
     <ClInclude Include="ChatpadActivationSequenceTests.h" />
     <ClInclude Include="ChatpadProtocolStateMachineTests.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadActivationExecutorTests.c" />
+    <ClCompile Include="ChatpadKeyboardHidTests.c" />
+    <ClCompile Include="ChatpadLiveTransferPolicyTests.c" />
     <ClCompile Include="ChatpadActivationRequestsTests.c" />
     <ClCompile Include="ChatpadActivationSequenceTests.c" />
     <ClCompile Include="ChatpadProtocolParserTests.c" />

@@ -142,16 +142,30 @@ if ($requestOwnerContextIncludeCount -notin @(1, 2) -or
     throw 'Production source must contain the exact authorized owner initialization and orchestration invocation integration plus diagnostic-only runtime instrumentation.'
 }
 Assert-NoMatch $driverSource 'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLock|CreateReusableRequest|CreateOutboundMemory|CreateInboundMemory|RollbackPartialCreation|Prepare|Classify)' 'Production source must not call direct creation, rollback, attribute, or classification APIs.'
-Assert-NoMatch $driverSource 'Wdf(?:IoTarget|UsbTarget|RequestFormat|RequestReuse|RequestSend|RequestComplete|RequestCancel|RequestSetCompletionRoutine)' 'Target discovery or request operation code is prohibited.'
-Assert-NoMatch $driverSource 'Wdf(?:SpinLockCreate|RequestCreate|MemoryCreatePreallocated|ObjectDelete)\s*\(' 'Production source must not create or delete dormant WDF objects.'
+$requiredLiveApis = @(
+    'WdfUsbTargetDeviceCreate',
+    'WdfUsbTargetDeviceSelectConfig',
+    'WdfUsbTargetDeviceSendControlTransferSynchronously',
+    'WdfUsbTargetPipeReadSynchronously',
+    'VhfReadReportSubmit',
+    'IoCallDriver')
+foreach ($requiredLiveApi in $requiredLiveApis) {
+    if ($driverSource -notmatch [regex]::Escape($requiredLiveApi)) {
+        throw "Production source is missing required live-runtime API: $requiredLiveApi"
+    }
+}
+if ($projectText -notmatch '(?i)VhfKm\.lib') {
+    throw 'ChatpadFilter project must link the VHF kernel client library.'
+}
+Assert-NoMatch $driverSource 'WdfRequest(?:Reuse|Send|CancelSentRequest|SetCompletionRoutine)' 'Reusable-request user-mode bridge operations remain prohibited in the kernel runtime.'
 
 $prohibitedChanged = @(@(
     & git -C $repoRoot diff --name-only HEAD --
     & git -C $repoRoot ls-files --others --exclude-standard
 ) | Where-Object {
     $_ -match '(^|/)legacy/' -or
-    $_ -match '\.(inf|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$' -or
-    $_ -match '(^|/)(package|deploy|installer)' -or
+    (($_ -match '\.(inf|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$' -or $_ -match '(^|/)(package|deploy|installer)') -and
+        $_ -cne 'src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf') -or
     ($_ -match '^src/driver/ChatpadFilter/.*\.(cpp|hpp)$')
 })
 if ($prohibitedChanged.Count -ne 0) {
@@ -171,7 +185,7 @@ $imports = Invoke-ToolText -FilePath $dumpbinPath -Arguments @('/imports', $driv
 $symbols = Invoke-ToolText -FilePath $dumpbinPath -Arguments @('/symbols', $driverPath)
 $contextSymbols = Invoke-ToolText -FilePath $dumpbinPath -Arguments @('/symbols', $contextObjectPath)
 $imageText = $imports + [Environment]::NewLine + $symbols
-Assert-NoMatch $imageText 'WdfRequest(?:Reuse|Send|CancelSentRequest|SetCompletionRoutine)|WdfUsbTarget|WdfIoTarget' 'Final driver image must not retain target discovery or request-operation symbols.'
+Assert-NoMatch $imageText 'WdfRequest(?:Reuse|Send|CancelSentRequest|SetCompletionRoutine)' 'Final driver image must not retain obsolete reusable-request bridge operations.'
 $objectImportPattern = '(?<![A-Za-z0-9_])(?:WdfSpinLockCreate|WdfRequestCreate|WdfMemoryCreatePreallocated|WdfObjectDelete)(?![A-Za-z0-9_])'
 if ($Configuration -eq 'Debug' -and (
     $contextSymbols -notmatch $objectImportPattern -or
@@ -200,6 +214,6 @@ if ($BuildLogPath) {
     }
 }
 
-Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; one native ProjectReference to ChatpadKmdfRequestOwnerContext; exact owner initialization plus orchestration invocation integration; diagnostic-only request-owner includes={2}; no request-owner forced retention; dormant orchestration/WDF evidence is configuration-appropriate; final driver has no target/request-operation symbols)." -f $Configuration, $Platform, $requestOwnerContextIncludeCount)
+Write-Output ("Production linkage semantic guard: PASS ({0}|{1}; request-owner linkage retained; live WDF USB/VHF runtime present; direct lower-stack forwarding present; obsolete reusable-request bridge absent; diagnostic-only request-owner includes={2})." -f $Configuration, $Platform, $requestOwnerContextIncludeCount)
 Write-Output 'Semantic guard limitation: targeted XML/text/binary string checks cannot prove full C macro expansion or all linker extraction internals; paired MSBuild logs, tlogs, dumpbin output, and diff review provide the binary evidence for this checkpoint.'
 exit 0
