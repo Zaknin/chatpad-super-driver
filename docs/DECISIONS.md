@@ -4170,3 +4170,26 @@ Extension INF uses legacy filter registration for mandatory ordering. The
 append flag preserves existing legacy lower filters. A device restart or reboot
 is required to assemble the new `xusb22 -> ChatpadFilter -> vhf` stack. Real
 keyboard functionality remains unclaimed until manual testing.
+
+## 2026-07-12 - Use inherited attributes for KMDF framework work items
+
+**Decision:** Create activation, input, and diagnostic `WDFWORKITEM` objects
+with a device parent and default/inherited object execution attributes. Do not
+set `WDF_OBJECT_ATTRIBUTES.ExecutionLevel` on a work-item object.
+
+**Rationale:** Persisted live 1.0.3 diagnostics returned `0xC0200211`
+(`STATUS_WDF_EXECUTION_LEVEL_INVALID`) from the first `WdfWorkItemCreate`.
+KMDF rejects execution-level attributes that are invalid for a framework object
+type; the documented work-item creation pattern assigns the parent without an
+explicit object execution level.
+
+**Alternatives rejected:** Retrying the same invalid attributes; treating the
+status as a USB/VHF failure; replacing work items with unbounded system threads;
+making creation failure nonfatal; or forcing the parent device's global
+execution level to passive and thereby changing unrelated controller callback
+semantics.
+
+**Consequences:** Work-item creation can proceed without changing the device's
+execution contract. Activation/input remain off the controller fast path and
+bounded by their existing stop/timeout logic. The next live install will expose
+the first later runtime stage through persistent diagnostics.

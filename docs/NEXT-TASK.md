@@ -1,34 +1,32 @@
 # Next Task
 
-## TASK 8J-T3 — Install and live-test the 1.0.3 VHF-stack correction
+## TASK 8J-T4 — Install and live-test the 1.0.4 KMDF work-item correction
 
 ### Starting state
 
-- Start from the pushed `feature/chatpad-kmdf-live-activation-runtime` VHF correction commit whose parent is `6d63deb907be5150baedc96fff3832a45f457b2b`.
-- Installed `oem98.inf` version `1.0.2.0` is selected, but both `ChatpadFilter` and `vhf` are stopped and absent from the exact physical stack.
-- The ignored 1.0.3 package contains the exact signed INF/SYS/CAT identities recorded in `docs/PROJECT-STATE.md`.
+- Start from the pushed correction commit on `feature/chatpad-kmdf-live-activation-runtime` whose parent is `6b61111c3c30a03596c3d4ec67f082e4d5a5d097`.
+- Installed `oem99.inf` version 1.0.3.0 correctly loads `vhf`, but `ChatpadFilter` is removed after activation-work-item creation returns `STATUS_WDF_EXECUTION_LEVEL_INVALID`.
+- The ignored signed 1.0.4 package identities are recorded in `docs/PROJECT-STATE.md`.
 
 ### Exact operator action
 
-From one elevated PowerShell or Command Prompt, run exactly once:
+Run exactly once from an elevated PowerShell or Command Prompt:
 
 ```powershell
-pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-vhf-stack-correction-package\final\ChatpadFilterExtension.inf" /install
+pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-kmdf-workitem-correction-package\final\ChatpadFilterExtension.inf" /install
 ```
 
-Do not repeat the command after success. If PnPUtil returns `3010` or requests a reboot, reboot once before verification.
+Do not repeat the command after success. If PnPUtil returns `3010` or requests reboot, reboot once before verification.
 
 ### Verification
 
-- Confirm the new selected extension is version `1.0.3.0` and its Driver Store SYS matches the package.
-- Confirm both `ChatpadFilter` and `vhf` are loaded and the exact physical stack places `ChatpadFilter` above `vhf`, beneath `xusb22`; all exact device-chain problem codes must remain 0.
-- Read `HKLM\SYSTEM\CurrentControlSet\Services\ChatpadFilter\Parameters\ChatpadRuntimeDiagnostics` and report the first absent or failing stage through configuration, interface 2/pipe 0, six activation transfers, reader, raw packet, decode, and VHF submission.
-- Confirm no relevant Code Integrity rejection and verify the Xbox controller still operates normally.
-- In Notepad, test ordinary keys, digits, Space, Enter, Backspace, arrows, Shift make/break, simultaneous two-key behavior, and release behavior.
-- Claim functional success only if real keyboard input appears and the Xbox controller remains healthy.
+- Confirm selected version 1.0.4.0 and exact Driver Store SYS identity.
+- Confirm `ChatpadFilter` and `vhf` are both running and the physical stack contains `xusb22`, `ChatpadFilter`, and `vhf` with all problem codes 0.
+- Read `HKLM\SYSTEM\CurrentControlSet\Services\ChatpadFilter\Parameters\ChatpadRuntimeDiagnostics`; report the first absent or failing value after `ActivationWorkerCreateNtStatus` through VHF, configuration/interface 2/pipe 0, six activation transfers, reader, raw packet, decode, and HID submission.
+- Verify normal Xbox controller operation and test real Chatpad keys in Notepad.
+- Claim functional success only if keyboard input appears and controller behavior remains healthy.
 
 ### Restrictions
 
-- Do not repeat certificate imports, create a certificate, modify BCD, rebuild, resign, or automatically retry installation.
-- Do not claim functional success from stack loading, activation results, raw packets, or VHF submission alone.
-- If the Chatpad remains inactive, report the first persisted failing stage before another code change.
+- No repeated install, certificate/trust change, BCD change, automatic retry, rebuild, or resign.
+- Do not infer functional success from stack loading or diagnostics alone.

@@ -733,7 +733,6 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtActivationWorkItem);
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = device;
-    attributes.ExecutionLevel = WdfExecutionLevelPassive;
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->ActivationWorkItem);
     ChatpadLiveDiagnosticStatus(runtime, L"ActivationWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
@@ -743,7 +742,6 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtInputWorkItem);
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = device;
-    attributes.ExecutionLevel = WdfExecutionLevelPassive;
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->InputWorkItem);
     ChatpadLiveDiagnosticStatus(runtime, L"InputWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
@@ -753,7 +751,6 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtDiagnosticWorkItem);
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
     attributes.ParentObject = device;
-    attributes.ExecutionLevel = WdfExecutionLevelPassive;
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->DiagnosticWorkItem);
     ChatpadLiveDiagnosticStatus(runtime, L"DiagnosticWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
@@ -778,7 +775,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x0103;
+        vhfConfig.VersionNumber = 0x0104;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {
