@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-07-13 - Gate activation on completed normal controller input
+
+**Decision:** Retain the configured interface-0 controller input pipe handle
+only as an identity token. On each D0 generation, leave activation unconsumed
+until a successful, non-empty parent xusb22 bulk/interrupt request completes on
+that exact pipe. Observe the completion without reading, replacing, delaying,
+or modifying the parent request, then queue the existing one-shot activation.
+
+**Rationale:** Live 1.0.10 proves the endpoint-zero format now reaches hardware
+but the correct revision-1.14 `09 00` write still stalls. The implementation
+consumes its attempt directly from D0/configuration readiness, while the
+retained working Windows route activates later and historically used completed
+controller input as its Microsoft-initialization signal. Successful normal
+controller input is a concrete readiness event; D0 entry alone is not.
+
+**Alternatives rejected:** Changing the confirmed revision-1.14 payload to the
+revision-1.10 `01 02` value; accepting the failed write; automatic retry; a
+fixed sleep; owning or selecting xusb22's USB configuration; reading interface
+0 independently; or weakening Xbox fail-open behavior.
+
+**Consequences:** Diagnostic transport architecture becomes 6. New bounded
+markers record interface-0 pipe discovery, readiness, and the first observed
+completion NTSTATUS/USBD/byte count. D0 exit prevents late completions from
+arming activation, and ReleaseHardware clears the observed handle. Live
+hardware must still prove whether properly timed activation succeeds.
+
 ## 2026-07-13 - Address endpoint zero with the default-pipe transfer flag
 
 **Decision:** Submit generic activation control URBs to endpoint zero with

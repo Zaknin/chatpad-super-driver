@@ -69,7 +69,7 @@ function Assert-Inf([string]$Text) {
     $requiredLines = @(
         'Signature   = "$WINDOWS NT$"','Class       = Extension','ClassGuid   = {E2F84CE7-8EFA-411C-AA69-97454CA4CB57}',
         'Provider    = %ProviderName%','ExtensionId = {69E7CCD7-7011-4059-95D4-618974E126DD}','CatalogFile = ChatpadFilterExtension.cat',
-        'DriverVer   = 07/12/2026,1.0.10.0','PnpLockdown = 1','ChatpadFilter_CopyFiles = 13','ChatpadFilter.sys = 1,,',
+        'DriverVer   = 07/12/2026,1.0.11.0','PnpLockdown = 1','ChatpadFilter_CopyFiles = 13','ChatpadFilter.sys = 1,,',
         '%ProviderName% = Models,NTamd64.10.0...22000','%DeviceDescription% = ChatpadFilter_Install, USB\VID_045E&PID_028E',
         'AddService = ChatpadFilter,,ChatpadFilter_Service_Install','ServiceBinary = %13%\ChatpadFilter.sys',
         'KmdfService = ChatpadFilter,ChatpadFilter_Wdf','KmdfLibraryVersion = 1.15',
@@ -152,7 +152,7 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     foreach ($entry in @($Plan.package_file_inventory)) { Assert-ExactProperties $entry @('filename','role','catalog_covered') 'package file entry'; Assert-Bool $entry.catalog_covered $true 'catalog coverage' }
 
     Assert-ExactProperties $Plan.version_policy @('source_driver_ver','date_source','version_source','generated_from_clock','identical_source_rebuild_policy','new_version_policy','p1b2_freeze_policy') 'version_policy'
-    Assert-String $Plan.version_policy.source_driver_ver '07/12/2026,1.0.10.0' 'source DriverVer'
+    Assert-String $Plan.version_policy.source_driver_ver '07/12/2026,1.0.11.0' 'source DriverVer'
     Assert-Bool $Plan.version_policy.generated_from_clock $false 'clock generation'
     Assert-ExactProperties $Plan.catalog_policy @('filename','covered_files','generation_performed','p1b2_requirement') 'catalog_policy'
     Assert-String $Plan.catalog_policy.filename 'ChatpadFilterExtension.cat' 'catalog policy filename'

@@ -8,6 +8,8 @@
 #include "ChatpadFailOpenPolicy.h"
 
 #define CHATPAD_LIVE_RUNTIME_SIGNATURE ((ULONG)0x52504C43u)
+#define CHATPAD_CONTROLLER_INPUT_INTERFACE_INDEX ((UCHAR)0u)
+#define CHATPAD_CONTROLLER_INPUT_PIPE_INDEX ((UCHAR)0u)
 #define CHATPAD_INPUT_INTERFACE_INDEX ((UCHAR)2u)
 #define CHATPAD_INPUT_PIPE_INDEX ((UCHAR)0u)
 #define CHATPAD_CONTROL_TIMEOUT_MS ((ULONG)1000u)
@@ -27,6 +29,7 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     ChatpadHidReportState HidState;
     ChatpadFailOpenState FailOpenState;
     ChatpadHidKeyboardReport KeyboardQueue[CHATPAD_KEYBOARD_QUEUE_CAPACITY];
+    USBD_PIPE_HANDLE ControllerInputPipeHandle;
     USBD_PIPE_HANDLE InputPipeHandle;
     volatile LONG StopRequested;
     volatile LONG InD0;
@@ -44,6 +47,8 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     volatile LONG ChatpadFeatureDisabled;
     volatile LONG VirtualKeyboardAvailable;
     volatile LONG FirstOptionalFailureStage;
+    volatile LONG ControllerInputPipeFound;
+    volatile LONG ControllerInputReady;
     volatile LONG Interface2Found;
     volatile LONG Pipe0Found;
     volatile LONG ConfigurationCompletionCount;
@@ -65,8 +70,11 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     ULONG LastBytesTransferred;
     USBD_STATUS LastUsbdStatus;
     NTSTATUS LastConfigurationNtStatus;
+    NTSTATUS LastControllerInputNtStatus;
     NTSTATUS FirstOptionalFailureNtStatus;
     USBD_STATUS LastConfigurationUsbdStatus;
+    USBD_STATUS LastControllerInputUsbdStatus;
+    ULONG LastControllerInputBytes;
 } CHATPAD_LIVE_RUNTIME, *PCHATPAD_LIVE_RUNTIME;
 
 NTSTATUS ChatpadLiveRuntimeInitialize(

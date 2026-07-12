@@ -20,18 +20,24 @@ The filter therefore does not select a second configuration and does not
 replace or intercept controller reports. It forwards the parent's
 `URB_FUNCTION_SELECT_CONFIGURATION` and select-interface requests unchanged,
 observes their completion, and retains only the already-selected interface 2
-pipe 0 handle. Every other internal request is forwarded unchanged to the
+pipe 0 handle plus the interface 0 input-pipe identity used solely as a
+readiness signal. Every other internal request is forwarded unchanged to the
 next-lower I/O target.
 
 Only interface index 2, pipe index 0 (the Chatpad IN endpoint established by
-the historical implementation) is opened for the driver's own reads.
-Interface 0 and all normal controller traffic remain owned by `xusb22`.
+the historical implementation) is used for the driver's own reads. Interface
+0 and all normal controller traffic remain owned by `xusb22`; the filter only
+observes completion of the first successful parent input request on its exact
+configured pipe.
 
 ## Activation and input
 
-After PrepareHardware creates the USB target and the parent configuration URB
-has established interface 2, D0 entry queues one passive-level activation work
-item. An interlocked per-D0 consumption gate prevents duplicate activation.
+After the parent configuration URB has established interface 2, D0 entry arms
+activation but does not consume it. The filter waits until a successful,
+non-empty xusb22 request completes on the configured interface-0 controller
+input pipe, proving that normal controller initialization and traffic are live;
+only then does it queue one passive-level activation work item. An interlocked
+per-D0 consumption gate prevents duplicate activation.
 The worker sends the six authoritative vendor control transfers as generic
 raw-setup control URBs, matching the retained working driver's transfer form.
 Endpoint zero uses a null pipe handle plus the mandatory

@@ -129,8 +129,9 @@ static void ChatpadLiveOpenDiagnostics(PCHATPAD_LIVE_RUNTIME runtime)
     }
     runtime->DiagnosticKey = diagnosticKey;
     ChatpadLiveDiagnosticUlong(runtime, L"SchemaVersion", CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA);
-    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 5u);
+    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 6u);
     ChatpadLiveDiagnosticUlong(runtime, L"DefaultPipeTransferFlag", 1u);
+    ChatpadLiveDiagnosticUlong(runtime, L"ControllerInputReadinessGate", 1u);
     ChatpadLiveDiagnosticUlong(runtime, L"DeviceAddEntered", 1u);
 }
 
@@ -370,6 +371,7 @@ static void ChatpadLiveQueueActivationIfReady(PCHATPAD_LIVE_RUNTIME runtime)
         InterlockedCompareExchange(&runtime->VirtualKeyboardAvailable, 0, 0) == 0 ||
         InterlockedCompareExchange(&runtime->InD0, 0, 0) == 0 ||
         InterlockedCompareExchange(&runtime->ConfigurationReady, 0, 0) == 0 ||
+        InterlockedCompareExchange(&runtime->ControllerInputReady, 0, 0) == 0 ||
         InterlockedCompareExchange(&runtime->StopRequested, 0, 0) != 0 ||
         InterlockedCompareExchange(&runtime->ActivationSucceeded, 0, 0) != 0 ||
         InterlockedCompareExchange(&runtime->ActivationAttemptConsumed, 0, 0) != 0) {
@@ -398,6 +400,7 @@ static BOOLEAN ChatpadLiveCaptureConfiguredPipe(
     PUCHAR end;
     PUSBD_INTERFACE_INFORMATION interfaceInformation;
     USBD_PIPE_INFORMATION pipeInformation;
+    BOOLEAN chatpadPipeCaptured;
 
     if (urb == NULL || !USBD_SUCCESS(urb->UrbHeader.Status)) {
         return FALSE;
@@ -412,11 +415,28 @@ static BOOLEAN ChatpadLiveCaptureConfiguredPipe(
         return FALSE;
     }
     end = (PUCHAR)urb + urb->UrbHeader.Length;
+    chatpadPipeCaptured = FALSE;
     while (cursor + FIELD_OFFSET(USBD_INTERFACE_INFORMATION, Pipes) <= end) {
         interfaceInformation = (PUSBD_INTERFACE_INFORMATION)cursor;
         if (interfaceInformation->Length < FIELD_OFFSET(USBD_INTERFACE_INFORMATION, Pipes) ||
             cursor + interfaceInformation->Length > end) {
             break;
+        }
+        if (interfaceInformation->InterfaceNumber == CHATPAD_CONTROLLER_INPUT_INTERFACE_INDEX &&
+            interfaceInformation->NumberOfPipes > CHATPAD_CONTROLLER_INPUT_PIPE_INDEX &&
+            interfaceInformation->Length >=
+                FIELD_OFFSET(USBD_INTERFACE_INFORMATION, Pipes) + sizeof(USBD_PIPE_INFORMATION)) {
+            pipeInformation =
+                interfaceInformation->Pipes[CHATPAD_CONTROLLER_INPUT_PIPE_INDEX];
+            if (pipeInformation.PipeHandle != NULL &&
+                (pipeInformation.PipeType == UsbdPipeTypeInterrupt ||
+                 pipeInformation.PipeType == UsbdPipeTypeBulk) &&
+                (pipeInformation.EndpointAddress & USB_ENDPOINT_DIRECTION_MASK) != 0) {
+                InterlockedExchangePointer(
+                    (PVOID volatile *)&runtime->ControllerInputPipeHandle,
+                    pipeInformation.PipeHandle);
+                InterlockedExchange(&runtime->ControllerInputPipeFound, 1);
+            }
         }
         if (interfaceInformation->InterfaceNumber == CHATPAD_INPUT_INTERFACE_INDEX &&
             interfaceInformation->NumberOfPipes > CHATPAD_INPUT_PIPE_INDEX &&
@@ -436,12 +456,12 @@ static BOOLEAN ChatpadLiveCaptureConfiguredPipe(
                     (PVOID volatile *)&runtime->InputPipeHandle,
                     pipeInformation.PipeHandle);
                 InterlockedExchange(&runtime->ConfigurationReady, 1);
-                return TRUE;
+                chatpadPipeCaptured = TRUE;
             }
         }
         cursor += interfaceInformation->Length;
     }
-    return FALSE;
+    return chatpadPipeCaptured;
 }
 
 _Use_decl_annotations_
@@ -466,6 +486,26 @@ void ChatpadLiveEvtDiagnosticWorkItem(WDFWORKITEM workItem)
         runtime,
         L"ConfigurationUsbdStatus",
         runtime->LastConfigurationUsbdStatus);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"ControllerInputPipeFound",
+        (ULONG)InterlockedCompareExchange(&runtime->ControllerInputPipeFound, 0, 0));
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"ControllerInputReady",
+        (ULONG)InterlockedCompareExchange(&runtime->ControllerInputReady, 0, 0));
+    ChatpadLiveDiagnosticStatus(
+        runtime,
+        L"ControllerInputCompletionNtStatus",
+        runtime->LastControllerInputNtStatus);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"ControllerInputCompletionUsbdStatus",
+        runtime->LastControllerInputUsbdStatus);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"ControllerInputCompletionBytes",
+        runtime->LastControllerInputBytes);
     ChatpadLiveDiagnosticUlong(
         runtime,
         L"Interface2Found",
@@ -532,6 +572,69 @@ static NTSTATUS ChatpadLiveSelectConfigurationCompletion(
     return STATUS_CONTINUE_COMPLETION;
 }
 
+static BOOLEAN ChatpadLiveIsControllerInputUrb(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    PURB urb)
+{
+    USBD_PIPE_HANDLE controllerInputPipeHandle;
+
+    if (urb == NULL ||
+        urb->UrbHeader.Function != URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER ||
+        urb->UrbHeader.Length < sizeof(struct _URB_BULK_OR_INTERRUPT_TRANSFER) ||
+        InterlockedCompareExchange(&runtime->InD0, 0, 0) == 0 ||
+        InterlockedCompareExchange(&runtime->ControllerInputReady, 0, 0) != 0) {
+        return FALSE;
+    }
+    controllerInputPipeHandle =
+        (USBD_PIPE_HANDLE)InterlockedCompareExchangePointer(
+            (PVOID volatile *)&runtime->ControllerInputPipeHandle,
+            NULL,
+            NULL);
+    return controllerInputPipeHandle != NULL &&
+        urb->UrbBulkOrInterruptTransfer.PipeHandle == controllerInputPipeHandle;
+}
+
+static NTSTATUS ChatpadLiveControllerInputCompletion(
+    PDEVICE_OBJECT deviceObject,
+    PIRP irp,
+    PVOID completionContext)
+{
+    PCHATPAD_LIVE_RUNTIME runtime;
+    PURB urb;
+    BOOLEAN ready;
+
+    UNREFERENCED_PARAMETER(deviceObject);
+    runtime = (PCHATPAD_LIVE_RUNTIME)completionContext;
+    urb = URB_FROM_IRP(irp);
+    runtime->LastControllerInputNtStatus = irp->IoStatus.Status;
+    runtime->LastControllerInputUsbdStatus =
+        urb != NULL ? urb->UrbHeader.Status : USBD_STATUS_INVALID_PARAMETER;
+    runtime->LastControllerInputBytes =
+        urb != NULL ? urb->UrbBulkOrInterruptTransfer.TransferBufferLength : 0u;
+    ready = NT_SUCCESS(irp->IoStatus.Status) &&
+        urb != NULL &&
+        USBD_SUCCESS(urb->UrbHeader.Status) &&
+        urb->UrbBulkOrInterruptTransfer.TransferBufferLength != 0u &&
+        InterlockedCompareExchange(&runtime->InD0, 0, 0) != 0;
+    if (ready &&
+        InterlockedCompareExchange(&runtime->ControllerInputReady, 1, 0) == 0) {
+        ChatpadLiveTrace(
+            "ControllerInputReady",
+            STATUS_SUCCESS,
+            urb->UrbBulkOrInterruptTransfer.TransferBufferLength,
+            runtime->D0Generation);
+        ChatpadLiveQueueActivationIfReady(runtime);
+    }
+    if (runtime->DiagnosticWorkItem != NULL &&
+        InterlockedCompareExchange(&runtime->DiagnosticQueued, 1, 0) == 0) {
+        WdfWorkItemEnqueue(runtime->DiagnosticWorkItem);
+    }
+    if (irp->PendingReturned) {
+        IoMarkIrpPending(irp);
+    }
+    return STATUS_CONTINUE_COMPLETION;
+}
+
 _Use_decl_annotations_
 NTSTATUS ChatpadLiveEvtWdmIrpPreprocess(
     WDFDEVICE device,
@@ -546,6 +649,17 @@ NTSTATUS ChatpadLiveEvtWdmIrpPreprocess(
     urb = NULL;
     if (stack->Parameters.DeviceIoControl.IoControlCode == IOCTL_INTERNAL_USB_SUBMIT_URB) {
         urb = URB_FROM_IRP(irp);
+    }
+    if (ChatpadLiveIsControllerInputUrb(&context->LiveRuntime, urb)) {
+        IoCopyCurrentIrpStackLocationToNext(irp);
+        IoSetCompletionRoutine(
+            irp,
+            ChatpadLiveControllerInputCompletion,
+            &context->LiveRuntime,
+            TRUE,
+            TRUE,
+            TRUE);
+        return IoCallDriver(WdfDeviceWdmGetAttachedDevice(device), irp);
     }
     if (urb != NULL &&
         (urb->UrbHeader.Function == URB_FUNCTION_SELECT_CONFIGURATION ||
@@ -928,7 +1042,9 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     runtime->LastActivationStatus = STATUS_DEVICE_NOT_READY;
     runtime->LastUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
     runtime->LastConfigurationNtStatus = STATUS_DEVICE_NOT_READY;
+    runtime->LastControllerInputNtStatus = STATUS_DEVICE_NOT_READY;
     runtime->LastConfigurationUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
+    runtime->LastControllerInputUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
     ChatpadInitializeHidReportState(&runtime->HidState);
     ChatpadFailOpenInitialize(&runtime->FailOpenState);
     ChatpadLiveOpenDiagnostics(runtime);
@@ -1044,7 +1160,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x010A;
+        vhfConfig.VersionNumber = 0x010B;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {
@@ -1099,8 +1215,10 @@ void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime)
     InterlockedExchange(&runtime->ActivationSucceeded, 0);
     InterlockedExchange(&runtime->ActivationQueued, 0);
     InterlockedExchange(&runtime->ActivationAttemptConsumed, 0);
+    InterlockedExchange(&runtime->ControllerInputReady, 0);
     ++runtime->D0Generation;
     ChatpadLiveDiagnosticUlong(runtime, L"D0EntryCount", runtime->D0Generation);
+    ChatpadLiveDiagnosticUlong(runtime, L"ControllerInputReady", 0u);
     ChatpadLiveTrace("D0Entry", STATUS_SUCCESS, runtime->D0Generation, runtime->ConfigurationReady);
     ChatpadLiveQueueActivationIfReady(runtime);
 }
@@ -1142,6 +1260,11 @@ void ChatpadLiveRuntimeReleaseHardware(PCHATPAD_LIVE_RUNTIME runtime)
     ChatpadLiveRuntimeExitD0(runtime);
     ChatpadLiveTrace("ReleaseHardware", STATUS_SUCCESS, runtime->D0Generation, runtime->InputPacketCount);
     InterlockedExchange(&runtime->ConfigurationReady, 0);
+    InterlockedExchange(&runtime->ControllerInputPipeFound, 0);
+    InterlockedExchange(&runtime->ControllerInputReady, 0);
+    InterlockedExchangePointer(
+        (PVOID volatile *)&runtime->ControllerInputPipeHandle,
+        NULL);
     InterlockedExchangePointer((PVOID volatile *)&runtime->InputPipeHandle, NULL);
 }
 
