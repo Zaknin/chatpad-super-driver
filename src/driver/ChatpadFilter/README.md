@@ -59,7 +59,11 @@ retained working runtime's zero-length interface keep-alive and alternates
 the same endpoint-zero default-pipe transport. A failed keep-alive disables
 only the optional Chatpad path. Between scheduled keep-alives, the worker
 performs bounded 250 ms synchronous reads from only the Chatpad pipe. The existing five-byte
-parser validates each packet. `ChatpadKeyboardHid` maps the known raw keys and
+parser deliberately rejects `0xF0` status packets. After the first complete
+Chatpad packet, the worker sends the retained runtime's one-shot zero-length
+`41 00 1B 00 02 00 00 00` command, which enables the backlight/key-data mode.
+A failure disables only the optional Chatpad path and is never retried.
+`ChatpadKeyboardHid` maps the known raw keys and
 Shift modifier to standard boot-keyboard usages, suppresses duplicate reports,
 and preserves two-key make/break state.
 
@@ -84,6 +88,7 @@ teardown so removal cannot leave a stuck key. There is no retry loop.
 Diagnostics are deliberately bounded: device match, USB target/configuration,
 D0 activation queue/start, every activation step, activation completion/failure,
 the first keep-alive result and the first eight keep-alive attempt-count updates,
+the one-shot post-first-packet command result,
 the first valid input packet, the first eight decode/map failures, VHF emission
 failures, input-loop stop, and cleanup.
 

@@ -129,7 +129,7 @@ static void ChatpadLiveOpenDiagnostics(PCHATPAD_LIVE_RUNTIME runtime)
     }
     runtime->DiagnosticKey = diagnosticKey;
     ChatpadLiveDiagnosticUlong(runtime, L"SchemaVersion", CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA);
-    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 7u);
+    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 8u);
     ChatpadLiveDiagnosticUlong(runtime, L"DefaultPipeTransferFlag", 1u);
     ChatpadLiveDiagnosticUlong(runtime, L"ControllerInputReadinessGate", 1u);
     ChatpadLiveDiagnosticUlong(runtime, L"DeviceAddEntered", 1u);
@@ -933,7 +933,7 @@ static NTSTATUS ChatpadLiveReadInput(
     return status;
 }
 
-static NTSTATUS ChatpadLiveSendKeepAlive(
+static NTSTATUS ChatpadLiveSendInterfaceCommand(
     PCHATPAD_LIVE_RUNTIME runtime,
     USHORT value,
     PULONG bytesTransferred,
@@ -1012,7 +1012,7 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
             keepAliveValue = runtime->NextKeepAliveValue;
             keepAliveBytes = 0u;
             keepAliveUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
-            keepAliveStatus = ChatpadLiveSendKeepAlive(
+            keepAliveStatus = ChatpadLiveSendInterfaceCommand(
                 runtime,
                 keepAliveValue,
                 &keepAliveBytes,
@@ -1085,6 +1085,41 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
         if (bytesTransferred < CHATPAD_KEYBOARD_PACKET_LENGTH) {
             InterlockedIncrement((volatile LONG *)&runtime->ParseFailureCount);
             continue;
+        }
+        if (InterlockedCompareExchange(&runtime->BacklightCommandSent, 1, 0) == 0) {
+            keepAliveBytes = 0u;
+            keepAliveUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
+            keepAliveStatus = ChatpadLiveSendInterfaceCommand(
+                runtime,
+                CHATPAD_BACKLIGHT_ENABLE_VALUE,
+                &keepAliveBytes,
+                &keepAliveUsbdStatus);
+            ChatpadLiveDiagnosticUlong(runtime, L"BacklightCommandSent", 1u);
+            ChatpadLiveDiagnosticStatus(
+                runtime,
+                L"BacklightCommandNtStatus",
+                keepAliveStatus);
+            ChatpadLiveDiagnosticUlong(
+                runtime,
+                L"BacklightCommandUsbdStatus",
+                keepAliveUsbdStatus);
+            ChatpadLiveDiagnosticUlong(
+                runtime,
+                L"BacklightCommandBytes",
+                keepAliveBytes);
+            ChatpadLiveTrace(
+                "BacklightCommand",
+                keepAliveStatus,
+                CHATPAD_BACKLIGHT_ENABLE_VALUE,
+                keepAliveBytes);
+            if (!NT_SUCCESS(keepAliveStatus)) {
+                ChatpadLiveDisableOptionalFeature(
+                    runtime,
+                    CHATPAD_OPTIONAL_STAGE_BACKLIGHT_COMMAND,
+                    keepAliveStatus,
+                    FALSE);
+                break;
+            }
         }
         if (InterlockedCompareExchange(&runtime->FirstRawPacketRecorded, 1, 0) == 0) {
             ChatpadLiveDiagnosticUlong(
@@ -1259,7 +1294,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x010C;
+        vhfConfig.VersionNumber = 0x010D;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {
@@ -1315,6 +1350,7 @@ void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime)
     InterlockedExchange(&runtime->ActivationQueued, 0);
     InterlockedExchange(&runtime->ActivationAttemptConsumed, 0);
     InterlockedExchange(&runtime->ControllerInputReady, 0);
+    InterlockedExchange(&runtime->BacklightCommandSent, 0);
     InterlockedExchange(&runtime->FirstInputCompletionRecorded, 0);
     InterlockedExchange(&runtime->FirstRawPacketRecorded, 0);
     InterlockedExchange(&runtime->FirstDecodeRecorded, 0);
@@ -1325,6 +1361,10 @@ void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime)
     ++runtime->D0Generation;
     ChatpadLiveDiagnosticUlong(runtime, L"D0EntryCount", runtime->D0Generation);
     ChatpadLiveDiagnosticUlong(runtime, L"ControllerInputReady", 0u);
+    ChatpadLiveDiagnosticUlong(runtime, L"BacklightCommandSent", 0u);
+    ChatpadLiveDiagnosticUlong(runtime, L"BacklightCommandNtStatus", MAXULONG);
+    ChatpadLiveDiagnosticUlong(runtime, L"BacklightCommandUsbdStatus", MAXULONG);
+    ChatpadLiveDiagnosticUlong(runtime, L"BacklightCommandBytes", MAXULONG);
     ChatpadLiveDiagnosticUlong(runtime, L"KeepAliveAttemptCount", 0u);
     ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveNtStatus", MAXULONG);
     ChatpadLiveDiagnosticUlong(runtime, L"FirstKeepAliveUsbdStatus", MAXULONG);

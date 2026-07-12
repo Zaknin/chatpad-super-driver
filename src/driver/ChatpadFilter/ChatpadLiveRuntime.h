@@ -17,7 +17,8 @@
 #define CHATPAD_KEEPALIVE_INTERVAL_MS ((ULONG)1000u)
 #define CHATPAD_KEEPALIVE_VALUE_A ((USHORT)0x001Fu)
 #define CHATPAD_KEEPALIVE_VALUE_B ((USHORT)0x001Eu)
-#define CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA ((ULONG)3u)
+#define CHATPAD_BACKLIGHT_ENABLE_VALUE ((USHORT)0x001Bu)
+#define CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA ((ULONG)4u)
 
 typedef struct _CHATPAD_LIVE_RUNTIME {
     ULONG Signature;
@@ -41,6 +42,7 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     volatile LONG ActivationAttemptConsumed;
     volatile LONG ActivationSucceeded;
     volatile LONG ReaderStarted;
+    volatile LONG BacklightCommandSent;
     volatile LONG FirstInputCompletionRecorded;
     volatile LONG FirstKeepAliveRecorded;
     volatile LONG FirstRawPacketRecorded;

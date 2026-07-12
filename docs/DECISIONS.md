@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-07-13 - Enable key-data mode once after the first Chatpad packet
+
+**Decision:** Preserve `0xF0` as a rejected non-key status type. After the first
+complete Chatpad endpoint packet, send one zero-length interface control
+request with `wValue=0x001B` and `wIndex=0x0002`, then parse the packet and
+continue normal reads. Consume the command once per D0 generation and never
+retry it automatically.
+
+**Rationale:** Live 1.0.12 proves activation, alternating keep-alives, and a
+real five-byte `F0 03 00 01 01` endpoint packet, but no key input. The retained
+working runtime explicitly sends `0x001B` after its first successful Chatpad
+message and states that the command is required before key data is received.
+The modern runtime omitted that transition.
+
+**Alternatives rejected:** Accepting `0xF0` as a keyboard packet; changing the
+five-byte parser or key map; sending `0x001B` before any Chatpad presence
+evidence; repeating the command; changing activation; claiming USB
+configuration ownership; or allowing command failure to affect Xbox startup.
+
+**Consequences:** Transport architecture becomes 8 and diagnostic schema 4
+records the one-shot result. Failure disables only the optional Chatpad path.
+Live hardware must still prove a later type-`0x00` key packet, accepted decode,
+VHF report, and real Notepad input.
+
 ## 2026-07-13 - Sustain the activated Chatpad with its alternating interface keep-alives
 
 **Decision:** After the six-step activation succeeds, immediately send the
