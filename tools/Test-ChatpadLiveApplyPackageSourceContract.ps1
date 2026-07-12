@@ -227,7 +227,7 @@ try {
     Invoke-RejectedFixture 'wrong hardware ID' { param($p) $p.stable_hardware_ids=@('USB\VID_045E&PID_FFFF') } $null
     Invoke-RejectedFixture 'added broad model' $null { param($s) $s -replace '(\[Models\.NTamd64\.10\.0\.\.\.22000\]\r?\n)',"`$1%Broad% = ChatpadFilter_Install, USB\Class_00`r`n" }
     Invoke-RejectedFixture 'missing architecture decoration' $null { param($s) $s.Replace('Models,NTamd64.10.0...22000','Models').Replace('[Models.NTamd64.10.0...22000]','[Models]') }
-    Invoke-RejectedFixture 'changed filter order' $null { param($s) $s.Replace('"ChatpadFilter","vhf"','"vhf","ChatpadFilter"') }
+    Invoke-RejectedFixture 'changed filter order' $null { param($s) $s.Replace('"vhf","ChatpadFilter"','"ChatpadFilter","vhf"') }
     Invoke-RejectedFixture 'missing catalog filename' $null { param($s) $s -replace '(?m)^CatalogFile.*\r?\n','' }
     Invoke-RejectedFixture 'production signing made mandatory for local development' { param($p) $p.deployment_policy.production_distribution_signing_required=$true } $null
     Invoke-RejectedFixture 'placeholder catalog hash' { param($p) $p | Add-Member -NotePropertyName catalog_sha256 -NotePropertyValue ('0'*64) } $null

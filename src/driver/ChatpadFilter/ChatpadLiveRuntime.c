@@ -44,6 +44,8 @@ static const WCHAR *const ChatpadActivationSetup1Names[] = {
     L"ActivationStep4Setup1", L"ActivationStep5Setup1"
 };
 
+static void ChatpadLiveReleaseAllKeys(PCHATPAD_LIVE_RUNTIME runtime);
+
 static void ChatpadLiveTrace(
     _In_z_ const char *eventName,
     NTSTATUS status,
@@ -161,36 +163,114 @@ static void ChatpadLiveRecordActivationResult(
     ChatpadLiveDiagnosticUlong(runtime, ChatpadActivationBytesNames[stepIndex], bytesTransferred);
 }
 
-static void ChatpadLiveSubmitReport(
+/*
+ * The physical filter is the VHF source device supported by Microsoft's VHF
+ * contract.  The virtual keyboard is nevertheless an optional sub-lifecycle:
+ * decoded reports cross this bounded queue, and no VHF/queue failure is ever
+ * returned through the physical device's PnP or power callbacks.
+ */
+static void ChatpadLiveDisableOptionalFeature(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ChatpadOptionalFailureStage stage,
+    NTSTATUS status,
+    BOOLEAN permanentFailure)
+{
+    ChatpadHidKeyboardReport releaseReport;
+    HID_XFER_PACKET releasePacket;
+    NTSTATUS releaseStatus;
+    LONG firstStage;
+
+    if (stage != CHATPAD_OPTIONAL_STAGE_KEYBOARD_SUBMISSION &&
+        runtime->VhfHandle != NULL &&
+        InterlockedCompareExchange(&runtime->VirtualKeyboardAvailable, 0, 0) != 0 &&
+        KeGetCurrentIrql() == PASSIVE_LEVEL) {
+        ChatpadBuildAllKeysReleasedReport(&releaseReport);
+        releasePacket.reportBuffer = (PUCHAR)releaseReport.Bytes;
+        releasePacket.reportBufferLen = (ULONG)CHATPAD_HID_BOOT_REPORT_LENGTH;
+        releasePacket.reportId = 0;
+        releaseStatus = VhfReadReportSubmit(runtime->VhfHandle, &releasePacket);
+        ChatpadLiveDiagnosticStatus(runtime, L"ForcedReleaseNtStatus", releaseStatus);
+    }
+    if (runtime->StateLock != NULL) {
+        WdfSpinLockAcquire(runtime->StateLock);
+        ChatpadFailOpenRecordFailure(
+            &runtime->FailOpenState,
+            stage,
+            (ChatpadFailOpenInt32)status,
+            permanentFailure ? 1 : 0);
+        runtime->KeyboardQueueHead = 0u;
+        runtime->KeyboardQueueTail = 0u;
+        runtime->KeyboardQueueCount = 0u;
+        ChatpadInitializeHidReportState(&runtime->HidState);
+        WdfSpinLockRelease(runtime->StateLock);
+    }
+    InterlockedExchange(&runtime->ChatpadFeatureDisabled, 1);
+    InterlockedExchange(&runtime->VirtualKeyboardAvailable, 0);
+    firstStage = InterlockedCompareExchange(
+        &runtime->FirstOptionalFailureStage,
+        (LONG)stage,
+        (LONG)CHATPAD_OPTIONAL_STAGE_NONE);
+    if (firstStage == (LONG)CHATPAD_OPTIONAL_STAGE_NONE) {
+        runtime->FirstOptionalFailureNtStatus = status;
+    }
+    ChatpadLiveDiagnosticUlong(runtime, L"PhysicalStartResult", 0u);
+    ChatpadLiveDiagnosticUlong(runtime, L"ControllerForwardingEnabled", 1u);
+    ChatpadLiveDiagnosticUlong(runtime, L"ChatpadFeatureState", 2u);
+    ChatpadLiveDiagnosticUlong(runtime, L"CHATPAD_VIRTUAL_KEYBOARD_UNAVAILABLE", 1u);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"FirstOptionalFailureStage",
+        (ULONG)InterlockedCompareExchange(&runtime->FirstOptionalFailureStage, 0, 0));
+    ChatpadLiveDiagnosticStatus(
+        runtime,
+        L"FirstOptionalFailureNtStatus",
+        runtime->FirstOptionalFailureNtStatus);
+    if (KeGetCurrentIrql() != PASSIVE_LEVEL && runtime->DiagnosticWorkItem != NULL &&
+        InterlockedCompareExchange(&runtime->DiagnosticQueued, 1, 0) == 0) {
+        WdfWorkItemEnqueue(runtime->DiagnosticWorkItem);
+    }
+    ChatpadLiveTrace("OptionalFeatureDisabled", status, (ULONG)stage, permanentFailure ? 1u : 0u);
+}
+
+static void ChatpadLiveQueueReport(
     PCHATPAD_LIVE_RUNTIME runtime,
     const ChatpadHidKeyboardReport *report,
     BOOLEAN force)
 {
-    HID_XFER_PACKET packet;
-    NTSTATUS status;
     int changed;
+    BOOLEAN enqueueWorker;
 
-    if (runtime->VhfHandle == NULL) {
+    if (runtime->StateLock == NULL || runtime->KeyboardWorkItem == NULL ||
+        runtime->VhfHandle == NULL ||
+        InterlockedCompareExchange(&runtime->VirtualKeyboardAvailable, 0, 0) == 0 ||
+        InterlockedCompareExchange(&runtime->ChatpadFeatureDisabled, 0, 0) != 0) {
         return;
     }
+    enqueueWorker = FALSE;
     WdfSpinLockAcquire(runtime->StateLock);
     changed = ChatpadHidReportStateUpdate(&runtime->HidState, report);
-    WdfSpinLockRelease(runtime->StateLock);
     if (!force && changed == 0) {
+        WdfSpinLockRelease(runtime->StateLock);
         return;
     }
-
-    packet.reportBuffer = (PUCHAR)report->Bytes;
-    packet.reportBufferLen = (ULONG)CHATPAD_HID_BOOT_REPORT_LENGTH;
-    packet.reportId = 0;
-    status = VhfReadReportSubmit(runtime->VhfHandle, &packet);
-    if (InterlockedCompareExchange(&runtime->FirstVhfSubmissionRecorded, 1, 0) == 0) {
-        ChatpadLiveDiagnosticStatus(runtime, L"FirstKeyboardReportNtStatus", status);
+    if (runtime->KeyboardQueueCount >= CHATPAD_KEYBOARD_QUEUE_CAPACITY) {
+        WdfSpinLockRelease(runtime->StateLock);
+        ChatpadLiveDisableOptionalFeature(
+            runtime,
+            CHATPAD_OPTIONAL_STAGE_KEYBOARD_QUEUE_OVERFLOW,
+            STATUS_INSUFFICIENT_RESOURCES,
+            FALSE);
+        return;
     }
-    if (NT_SUCCESS(status)) {
-        InterlockedIncrement((volatile LONG *)&runtime->InputReportCount);
-    } else if (InterlockedIncrement((volatile LONG *)&runtime->InputEmissionFailureCount) <= 8) {
-        ChatpadLiveTrace("VhfReportRejected", status, runtime->InputPacketCount, 0u);
+    runtime->KeyboardQueue[runtime->KeyboardQueueTail] = *report;
+    runtime->KeyboardQueueTail =
+        (runtime->KeyboardQueueTail + 1u) % (ULONG)CHATPAD_KEYBOARD_QUEUE_CAPACITY;
+    ++runtime->KeyboardQueueCount;
+    (void)ChatpadFailOpenQueueKeyboardReport(&runtime->FailOpenState);
+    enqueueWorker = InterlockedCompareExchange(&runtime->KeyboardWorkQueued, 1, 0) == 0;
+    WdfSpinLockRelease(runtime->StateLock);
+    if (enqueueWorker) {
+        WdfWorkItemEnqueue(runtime->KeyboardWorkItem);
     }
 }
 
@@ -198,23 +278,97 @@ static void ChatpadLiveReleaseAllKeys(PCHATPAD_LIVE_RUNTIME runtime)
 {
     ChatpadHidKeyboardReport report;
     ChatpadBuildAllKeysReleasedReport(&report);
-    ChatpadLiveSubmitReport(runtime, &report, TRUE);
+    ChatpadLiveQueueReport(runtime, &report, TRUE);
 }
 
 static void ChatpadLiveReleaseKeysIfNeeded(PCHATPAD_LIVE_RUNTIME runtime)
 {
     ChatpadHidKeyboardReport report;
     ChatpadBuildAllKeysReleasedReport(&report);
-    ChatpadLiveSubmitReport(runtime, &report, FALSE);
+    ChatpadLiveQueueReport(runtime, &report, FALSE);
+}
+
+_Use_decl_annotations_
+void ChatpadLiveEvtKeyboardWorkItem(WDFWORKITEM workItem)
+{
+    WDFDEVICE device;
+    PCHATPAD_FILTER_DEVICE_CONTEXT context;
+    PCHATPAD_LIVE_RUNTIME runtime;
+    ChatpadHidKeyboardReport report;
+    ChatpadHidKeyboardReport releaseReport;
+    HID_XFER_PACKET packet;
+    NTSTATUS status;
+    NTSTATUS releaseStatus;
+    BOOLEAN haveReport;
+
+    device = (WDFDEVICE)WdfWorkItemGetParentObject(workItem);
+    context = ChatpadFilterGetDeviceContext(device);
+    runtime = &context->LiveRuntime;
+    for (;;) {
+        haveReport = FALSE;
+        WdfSpinLockAcquire(runtime->StateLock);
+        if (runtime->KeyboardQueueCount != 0u) {
+            report = runtime->KeyboardQueue[runtime->KeyboardQueueHead];
+            runtime->KeyboardQueueHead =
+                (runtime->KeyboardQueueHead + 1u) % (ULONG)CHATPAD_KEYBOARD_QUEUE_CAPACITY;
+            --runtime->KeyboardQueueCount;
+            ChatpadFailOpenCompleteKeyboardReport(&runtime->FailOpenState);
+            haveReport = TRUE;
+        } else {
+            InterlockedExchange(&runtime->KeyboardWorkQueued, 0);
+        }
+        WdfSpinLockRelease(runtime->StateLock);
+        if (!haveReport) {
+            break;
+        }
+        if (runtime->VhfHandle == NULL ||
+            InterlockedCompareExchange(&runtime->VirtualKeyboardAvailable, 0, 0) == 0) {
+            continue;
+        }
+        packet.reportBuffer = (PUCHAR)report.Bytes;
+        packet.reportBufferLen = (ULONG)CHATPAD_HID_BOOT_REPORT_LENGTH;
+        packet.reportId = 0;
+        status = VhfReadReportSubmit(runtime->VhfHandle, &packet);
+        if (InterlockedCompareExchange(&runtime->FirstVhfSubmissionRecorded, 1, 0) == 0) {
+            ChatpadLiveDiagnosticStatus(runtime, L"FirstKeyboardReportNtStatus", status);
+        }
+        if (NT_SUCCESS(status)) {
+            InterlockedIncrement((volatile LONG *)&runtime->InputReportCount);
+        } else {
+            InterlockedIncrement((volatile LONG *)&runtime->InputEmissionFailureCount);
+            ChatpadBuildAllKeysReleasedReport(&releaseReport);
+            packet.reportBuffer = (PUCHAR)releaseReport.Bytes;
+            releaseStatus = VhfReadReportSubmit(runtime->VhfHandle, &packet);
+            ChatpadLiveDiagnosticStatus(runtime, L"ForcedReleaseNtStatus", releaseStatus);
+            ChatpadLiveDisableOptionalFeature(
+                runtime,
+                CHATPAD_OPTIONAL_STAGE_KEYBOARD_SUBMISSION,
+                status,
+                FALSE);
+            break;
+        }
+    }
 }
 
 static void ChatpadLiveQueueActivationIfReady(PCHATPAD_LIVE_RUNTIME runtime)
 {
-    if (InterlockedCompareExchange(&runtime->InD0, 0, 0) == 0 ||
+    int policyAllowed;
+
+    if (runtime->ActivationWorkItem == NULL ||
+        InterlockedCompareExchange(&runtime->ChatpadFeatureDisabled, 0, 0) != 0 ||
+        InterlockedCompareExchange(&runtime->VirtualKeyboardAvailable, 0, 0) == 0 ||
+        InterlockedCompareExchange(&runtime->InD0, 0, 0) == 0 ||
         InterlockedCompareExchange(&runtime->ConfigurationReady, 0, 0) == 0 ||
         InterlockedCompareExchange(&runtime->StopRequested, 0, 0) != 0 ||
         InterlockedCompareExchange(&runtime->ActivationSucceeded, 0, 0) != 0 ||
         InterlockedCompareExchange(&runtime->ActivationAttemptConsumed, 0, 0) != 0) {
+        return;
+    }
+
+    WdfSpinLockAcquire(runtime->StateLock);
+    policyAllowed = ChatpadFailOpenTryBeginActivation(&runtime->FailOpenState);
+    WdfSpinLockRelease(runtime->StateLock);
+    if (!policyAllowed) {
         return;
     }
 
@@ -312,6 +466,14 @@ void ChatpadLiveEvtDiagnosticWorkItem(WDFWORKITEM workItem)
     ChatpadLiveDiagnosticUlong(runtime, L"InputEndpointAddress", runtime->InputEndpointAddress);
     ChatpadLiveDiagnosticUlong(runtime, L"InputMaximumPacketSize", runtime->InputMaximumPacketSize);
     ChatpadLiveDiagnosticUlong(runtime, L"InputPipeType", runtime->InputPipeType);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        L"FirstOptionalFailureStage",
+        (ULONG)InterlockedCompareExchange(&runtime->FirstOptionalFailureStage, 0, 0));
+    ChatpadLiveDiagnosticStatus(
+        runtime,
+        L"FirstOptionalFailureNtStatus",
+        runtime->FirstOptionalFailureNtStatus);
     InterlockedExchange(&runtime->DiagnosticQueued, 0);
 }
 
@@ -338,11 +500,20 @@ static NTSTATUS ChatpadLiveSelectConfigurationCompletion(
         captured ? STATUS_SUCCESS : STATUS_DEVICE_CONFIGURATION_ERROR,
         urb != NULL ? urb->UrbHeader.Status : USBD_STATUS_INVALID_PARAMETER,
         runtime->InputEndpointAddress);
-    if (InterlockedCompareExchange(&runtime->DiagnosticQueued, 1, 0) == 0) {
-        WdfWorkItemEnqueue(runtime->DiagnosticWorkItem);
-    }
     if (captured) {
         ChatpadLiveQueueActivationIfReady(runtime);
+    } else if (urb != NULL &&
+        urb->UrbHeader.Function == URB_FUNCTION_SELECT_CONFIGURATION &&
+        NT_SUCCESS(irp->IoStatus.Status)) {
+        ChatpadLiveDisableOptionalFeature(
+            runtime,
+            CHATPAD_OPTIONAL_STAGE_INTERFACE_PIPE_DISCOVERY,
+            STATUS_DEVICE_CONFIGURATION_ERROR,
+            FALSE);
+    }
+    if (runtime->DiagnosticWorkItem != NULL &&
+        InterlockedCompareExchange(&runtime->DiagnosticQueued, 1, 0) == 0) {
+        WdfWorkItemEnqueue(runtime->DiagnosticWorkItem);
     }
     if (irp->PendingReturned) {
         IoMarkIrpPending(irp);
@@ -517,6 +688,11 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
             bytesTransferred);
         ChatpadLiveTrace("ActivationStep", status, (ULONG)stepIndex, bytesTransferred);
         if (!NT_SUCCESS(status)) {
+            ChatpadLiveDisableOptionalFeature(
+                runtime,
+                (ChatpadOptionalFailureStage)(CHATPAD_OPTIONAL_STAGE_ACTIVATION_STEP_1 + stepIndex),
+                status,
+                FALSE);
             break;
         }
         if (step.DelayAfterMilliseconds != 0u) {
@@ -534,7 +710,8 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
         InterlockedIncrement((volatile LONG *)&runtime->ActivationSuccessCount);
         ChatpadLiveDiagnosticUlong(runtime, L"ActivationCompleted", 1u);
         ChatpadLiveTrace("ActivationCompleted", status, runtime->ActivationAttemptCount, runtime->D0Generation);
-        if (InterlockedCompareExchange(&runtime->ReaderStarted, 1, 0) == 0) {
+        if (runtime->InputWorkItem != NULL &&
+            InterlockedCompareExchange(&runtime->ReaderStarted, 1, 0) == 0) {
             ChatpadLiveDiagnosticUlong(runtime, L"ReaderStarted", 1u);
             WdfWorkItemEnqueue(runtime->InputWorkItem);
         }
@@ -543,6 +720,9 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
         ChatpadLiveTrace("ActivationFailed", status, runtime->LastActivationStep, runtime->LastBytesTransferred);
     }
     InterlockedExchange(&runtime->ActivationQueued, 0);
+    WdfSpinLockAcquire(runtime->StateLock);
+    ChatpadFailOpenCompleteActivation(&runtime->FailOpenState);
+    WdfSpinLockRelease(runtime->StateLock);
 }
 
 static NTSTATUS ChatpadLiveReadInput(
@@ -627,6 +807,11 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
         }
         if (!NT_SUCCESS(status)) {
             ChatpadLiveTrace("InputReadFailed", status, bytesTransferred, usbdStatus);
+            ChatpadLiveDisableOptionalFeature(
+                runtime,
+                CHATPAD_OPTIONAL_STAGE_INPUT_READ,
+                status,
+                FALSE);
             break;
         }
         if (bytesTransferred < CHATPAD_KEYBOARD_PACKET_LENGTH) {
@@ -661,7 +846,7 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
             ChatpadLiveReleaseKeysIfNeeded(runtime);
             continue;
         }
-        ChatpadLiveSubmitReport(runtime, &report, FALSE);
+        ChatpadLiveQueueReport(runtime, &report, FALSE);
     }
     InterlockedExchange(&runtime->ReaderStarted, 0);
     ChatpadLiveReleaseAllKeys(runtime);
@@ -690,6 +875,7 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     runtime->LastConfigurationNtStatus = STATUS_DEVICE_NOT_READY;
     runtime->LastConfigurationUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
     ChatpadInitializeHidReportState(&runtime->HidState);
+    ChatpadFailOpenInitialize(&runtime->FailOpenState);
     ChatpadLiveOpenDiagnostics(runtime);
 
     WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
@@ -727,7 +913,11 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     status = WdfSpinLockCreate(&attributes, &runtime->StateLock);
     ChatpadLiveDiagnosticStatus(runtime, L"SpinLockCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
-        return status;
+        InterlockedExchange(&runtime->ChatpadFeatureDisabled, 1);
+        ChatpadLiveDiagnosticUlong(runtime, L"ControllerForwardingEnabled", 1u);
+        ChatpadLiveDiagnosticUlong(runtime, L"ChatpadFeatureState", 2u);
+        ChatpadLiveDiagnosticStatus(runtime, L"RuntimeInitializeNtStatus", STATUS_SUCCESS);
+        return STATUS_SUCCESS;
     }
 
     WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtActivationWorkItem);
@@ -736,7 +926,11 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->ActivationWorkItem);
     ChatpadLiveDiagnosticStatus(runtime, L"ActivationWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
-        return status;
+        ChatpadLiveDisableOptionalFeature(
+            runtime,
+            CHATPAD_OPTIONAL_STAGE_ACTIVATION_WORKER_CREATE,
+            status,
+            TRUE);
     }
 
     WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtInputWorkItem);
@@ -745,7 +939,24 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->InputWorkItem);
     ChatpadLiveDiagnosticStatus(runtime, L"InputWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
-        return status;
+        ChatpadLiveDisableOptionalFeature(
+            runtime,
+            CHATPAD_OPTIONAL_STAGE_CONTINUOUS_READER_SETUP,
+            status,
+            TRUE);
+    }
+
+    WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtKeyboardWorkItem);
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = device;
+    status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->KeyboardWorkItem);
+    ChatpadLiveDiagnosticStatus(runtime, L"KeyboardWorkerCreateNtStatus", status);
+    if (!NT_SUCCESS(status)) {
+        ChatpadLiveDisableOptionalFeature(
+            runtime,
+            CHATPAD_OPTIONAL_STAGE_VIRTUAL_CHILD_CREATE,
+            status,
+            TRUE);
     }
 
     WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtDiagnosticWorkItem);
@@ -754,7 +965,7 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     status = WdfWorkItemCreate(&workItemConfig, &attributes, &runtime->DiagnosticWorkItem);
     ChatpadLiveDiagnosticStatus(runtime, L"DiagnosticWorkerCreateNtStatus", status);
     if (!NT_SUCCESS(status)) {
-        return status;
+        ChatpadLiveTrace("DiagnosticWorkerUnavailable", status, 0u, 0u);
     }
     ChatpadLiveDiagnosticStatus(runtime, L"RuntimeInitializeNtStatus", STATUS_SUCCESS);
     return STATUS_SUCCESS;
@@ -764,10 +975,13 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
 {
     VHF_CONFIG vhfConfig;
     NTSTATUS status;
+    BOOLEAN vhfCreated;
 
     InterlockedExchange(&runtime->StopRequested, 0);
+    vhfCreated = FALSE;
     ChatpadLiveDiagnosticUlong(runtime, L"PrepareHardwareEntered", 1u);
-    if (runtime->VhfHandle == NULL) {
+    if (InterlockedCompareExchange(&runtime->ChatpadFeatureDisabled, 0, 0) == 0 &&
+        runtime->VhfHandle == NULL) {
         VHF_CONFIG_INIT(
             &vhfConfig,
             WdfDeviceWdmGetDeviceObject(runtime->Device),
@@ -775,12 +989,20 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x0104;
+        vhfConfig.VersionNumber = 0x0105;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {
+            vhfCreated = TRUE;
             status = VhfStart(runtime->VhfHandle);
             ChatpadLiveDiagnosticStatus(runtime, L"VhfStartNtStatus", status);
+            if (NT_SUCCESS(status)) {
+                InterlockedExchange(&runtime->VirtualKeyboardAvailable, 1);
+                WdfSpinLockAcquire(runtime->StateLock);
+                ChatpadFailOpenSetVirtualKeyboardAvailable(&runtime->FailOpenState, 1);
+                WdfSpinLockRelease(runtime->StateLock);
+                ChatpadLiveDiagnosticUlong(runtime, L"ChatpadFeatureState", 1u);
+            }
         }
         if (!NT_SUCCESS(status)) {
             if (runtime->VhfHandle != NULL) {
@@ -788,15 +1010,35 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
                 runtime->VhfHandle = NULL;
             }
             ChatpadLiveTrace("VhfInitializationFailed", status, 0u, 0u);
-            return status;
+            ChatpadLiveDisableOptionalFeature(
+                runtime,
+                vhfCreated
+                    ? CHATPAD_OPTIONAL_STAGE_VHF_START
+                    : CHATPAD_OPTIONAL_STAGE_VHF_CREATE,
+                status,
+                TRUE);
         }
     }
     ChatpadLiveDiagnosticStatus(runtime, L"PrepareHardwareNtStatus", STATUS_SUCCESS);
+    ChatpadLiveDiagnosticUlong(runtime, L"PhysicalStartResult", 0u);
+    ChatpadLiveDiagnosticUlong(runtime, L"ControllerForwardingEnabled", 1u);
     return STATUS_SUCCESS;
 }
 
 void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime)
 {
+    if (runtime->StateLock != NULL) {
+        WdfSpinLockAcquire(runtime->StateLock);
+        ChatpadFailOpenBeginD0(&runtime->FailOpenState);
+        InterlockedExchange(
+            &runtime->ChatpadFeatureDisabled,
+            runtime->FailOpenState.ChatpadFeatureEnabled ? 0 : 1);
+        ChatpadFailOpenSetVirtualKeyboardAvailable(
+            &runtime->FailOpenState,
+            runtime->VhfHandle != NULL ? 1 : 0);
+        WdfSpinLockRelease(runtime->StateLock);
+    }
+    InterlockedExchange(&runtime->VirtualKeyboardAvailable, runtime->VhfHandle != NULL ? 1 : 0);
     InterlockedExchange(&runtime->StopRequested, 0);
     InterlockedExchange(&runtime->InD0, 1);
     InterlockedExchange(&runtime->ActivationSucceeded, 0);
@@ -820,10 +1062,22 @@ void ChatpadLiveRuntimeExitD0(PCHATPAD_LIVE_RUNTIME runtime)
     if (runtime->InputWorkItem != NULL) {
         WdfWorkItemFlush(runtime->InputWorkItem);
     }
+    ChatpadLiveReleaseAllKeys(runtime);
+    if (runtime->KeyboardWorkItem != NULL) {
+        WdfWorkItemFlush(runtime->KeyboardWorkItem);
+    }
     if (runtime->DiagnosticWorkItem != NULL) {
         WdfWorkItemFlush(runtime->DiagnosticWorkItem);
     }
-    ChatpadLiveReleaseAllKeys(runtime);
+    if (runtime->StateLock != NULL) {
+        WdfSpinLockAcquire(runtime->StateLock);
+        ChatpadFailOpenEndD0(&runtime->FailOpenState);
+        runtime->KeyboardQueueHead = 0u;
+        runtime->KeyboardQueueTail = 0u;
+        runtime->KeyboardQueueCount = 0u;
+        WdfSpinLockRelease(runtime->StateLock);
+    }
+    InterlockedExchange(&runtime->VirtualKeyboardAvailable, 0);
     InterlockedExchange(&runtime->ActivationQueued, 0);
     InterlockedExchange(&runtime->ActivationSucceeded, 0);
 }
@@ -839,6 +1093,11 @@ void ChatpadLiveRuntimeReleaseHardware(PCHATPAD_LIVE_RUNTIME runtime)
 void ChatpadLiveRuntimeCleanup(PCHATPAD_LIVE_RUNTIME runtime)
 {
     ChatpadLiveRuntimeExitD0(runtime);
+    if (runtime->StateLock != NULL) {
+        WdfSpinLockAcquire(runtime->StateLock);
+        ChatpadFailOpenBeginRemoval(&runtime->FailOpenState);
+        WdfSpinLockRelease(runtime->StateLock);
+    }
     if (runtime->VhfHandle != NULL) {
         VhfDelete(runtime->VhfHandle, TRUE);
         runtime->VhfHandle = NULL;

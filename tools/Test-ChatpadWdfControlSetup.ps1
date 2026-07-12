@@ -184,6 +184,7 @@ function Test-FormatterSourceAndProjects {
         'ChatpadFilterLifecycle.c',
         'ChatpadLiveRuntime.c',
         '..\..\protocol\ChatpadProtocol\ChatpadKeyboardHid.c',
+        '..\..\protocol\ChatpadProtocol\ChatpadFailOpenPolicy.c',
         '..\..\protocol\ChatpadProtocol\ChatpadKeyboardParser.c',
         '..\..\protocol\ChatpadProtocol\ChatpadLiveTransferPolicy.c',
         '..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c',

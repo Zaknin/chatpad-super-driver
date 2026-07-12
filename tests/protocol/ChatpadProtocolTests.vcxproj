@@ -82,6 +82,7 @@
     <ClInclude Include="fixtures\ChatpadKeyboardFixtures.h" />
     <ClInclude Include="fixtures\ChatpadProtocolStateMachineFixtures.h" />
     <ClInclude Include="ChatpadActivationExecutorTests.h" />
+    <ClInclude Include="ChatpadFailOpenPolicyTests.h" />
     <ClInclude Include="ChatpadKeyboardHidTests.h" />
     <ClInclude Include="ChatpadLiveTransferPolicyTests.h" />
     <ClInclude Include="ChatpadActivationRequestsTests.h" />
@@ -90,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatpadActivationExecutorTests.c" />
+    <ClCompile Include="ChatpadFailOpenPolicyTests.c" />
     <ClCompile Include="ChatpadKeyboardHidTests.c" />
     <ClCompile Include="ChatpadLiveTransferPolicyTests.c" />
     <ClCompile Include="ChatpadActivationRequestsTests.c" />

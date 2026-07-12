@@ -5,15 +5,22 @@
 driver independently rejects any device whose hardware-ID multi-string does
 not contain the same exact ID.
 
+The physical Xbox filter lifecycle is authoritative and always fail-open with
+respect to Chatpad functionality. VHF, activation, endpoint discovery, reads,
+decoding, and keyboard submission are optional feature stages. Failure in any
+of them disables or degrades only Chatpad output, records the first failing
+stage, and still returns success from the physical PrepareHardware/D0 path.
+Only inability to attach or forward the physical filter safely may fail Xbox
+startup.
+
 ## USB transport
 
 The Microsoft `xusb22` function driver owns the normal Xbox controller path.
 The filter therefore does not select a second configuration and does not
-replace or intercept controller reports. It observes the parent's
-`URB_FUNCTION_SELECT_CONFIGURATION` request, passes that same URB to
-`WdfUsbTargetDeviceSelectConfig`, and completes the original request with the
-result. This lets KMDF cache the configuration and pipe handles which the
-parent selected. Every other internal request is forwarded unchanged to the
+replace or intercept controller reports. It forwards the parent's
+`URB_FUNCTION_SELECT_CONFIGURATION` and select-interface requests unchanged,
+observes their completion, and retains only the already-selected interface 2
+pipe 0 handle. Every other internal request is forwarded unchanged to the
 next-lower I/O target.
 
 Only interface index 2, pipe index 0 (the Chatpad IN endpoint established by
@@ -36,9 +43,23 @@ parser validates each packet. `ChatpadKeyboardHid` maps the known raw keys and
 Shift modifier to standard boot-keyboard usages, suppresses duplicate reports,
 and preserves two-key make/break state.
 
-VHF exposes those reports as a virtual keyboard. D0 exit, release, cancellation,
-read failure, and cleanup all force an all-keys-up report so removal cannot
-leave a stuck key. Work items are flushed before the hardware epoch is released.
+## Supported VHF source and isolated keyboard lifecycle
+
+Microsoft supports a KMDF filter device as a VHF HID source. `ChatpadFilter`
+uses its physical filter `WDFDEVICE` as that source, while the INF orders the
+in-box `vhf.sys` below it as required by VHF. The previous `ChatpadFilter, vhf`
+legacy list produced the opposite live relationship and `VhfCreate` returned
+`STATUS_NOT_SUPPORTED`; version 1.0.5 uses `vhf, ChatpadFilter`.
+
+The VHF keyboard remains a logically independent optional sub-lifecycle even
+though the supported source context is the filter WDFDEVICE. Decoded reports
+cross a fixed eight-report queue to a dedicated passive keyboard worker. The
+queue never blocks the input or Xbox path: unavailable VHF drops output,
+overflow disables the optional feature, and teardown flushes pending reports.
+VHF is started only after creation, and is deleted only after activation,
+input, keyboard, and diagnostic workers are flushed. D0 exit, release,
+cancellation, read failure, and cleanup force an all-keys-up report before VHF
+teardown so removal cannot leave a stuck key. There is no retry loop.
 
 Diagnostics are deliberately bounded: device match, USB target/configuration,
 D0 activation queue/start, every activation step, activation completion/failure,

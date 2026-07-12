@@ -1459,10 +1459,9 @@ ChatpadEvtDevicePrepareHardware(
 
     context = ChatpadFilterGetDeviceContext(Device);
     runtimeStatus = ChatpadLiveRuntimePrepareHardware(&context->LiveRuntime);
-    if (!NT_SUCCESS(runtimeStatus)) {
-        context->LiveRuntime.LastActivationStatus = runtimeStatus;
-        return runtimeStatus;
-    }
+    /* Chatpad/VHF is optional. Its degradation is diagnostic-only; only the
+     * physical filter lifecycle may determine the Xbox start result. */
+    UNREFERENCED_PARAMETER(runtimeStatus);
     lifecycleResult = ChatpadFilterLifecyclePrepareHardware(&context->Lifecycle);
     ChatpadLogLifecycle("EvtDevicePrepareHardware", Device, lifecycleResult);
     return ChatpadLifecycleResultToStatus(lifecycleResult);

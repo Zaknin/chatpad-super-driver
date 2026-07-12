@@ -1,5 +1,39 @@
 # Decisions
 
+## 2026-07-12 - Make the VHF keyboard optional to physical Xbox startup
+
+**Decision:** Keep the exact physical KMDF lower-filter WDFDEVICE as the
+Microsoft-supported VHF HID source, place `vhf.sys` below that source with the
+legacy ordered list `vhf, ChatpadFilter`, and isolate virtual-keyboard output
+behind a fixed eight-report passive-worker queue. Treat every Chatpad/VHF stage
+as optional: it may disable or degrade Chatpad output and persist its first
+failure, but it may not determine the physical Xbox PrepareHardware, D0, PnP,
+or power result.
+
+**Rationale:** Microsoft documents that a WDM or KMDF filter can be a VHF HID
+source and that `vhf.sys` must be a lower filter beneath it. Live 1.0.4 evidence
+showed `VhfCreate=STATUS_NOT_SUPPORTED` with the prior `ChatpadFilter, vhf`
+ordering, and the status propagated into Code 10. The existing physical filter
+already has the required xusb22 pass-through and raw lower-stack transport; a
+second PDO/control/software device would add another enumeration and ownership
+surface without being required by the VHF contract. Lifecycle isolation and a
+bounded queue provide the needed fault containment while retaining the proven
+transport boundary.
+
+**Alternatives rejected:** Retaining the failed legacy order; returning VHF or
+Chatpad statuses from physical start; retrying VHF/activation indefinitely;
+claiming a separate virtual PDO is mandatory despite the documented supported
+filter-source context; reselecting the xusb22-owned USB configuration; or
+disabling HVCI/controller protections.
+
+**Consequences:** Version 1.0.5 records `CHATPAD_VIRTUAL_KEYBOARD_UNAVAILABLE`
+and leaves the Xbox path operational if VHF or any later optional stage fails.
+Reports are bounded, dropped/flushed when output is unavailable, and teardown
+attempts all-keys-up before deleting VHF. The legacy AddReg ordering retains
+InfVerif warning 1384 because the xusb22 base INF exposes no named filter levels.
+Real hardware must still prove the corrected relative order and Chatpad
+functionality after residual experimental packages are removed.
+
 ## 2026-07-12 - Preserve the unavailable generated-catalog pre-sign identity
 
 **Decision:** Finalize the self-test-signed local-development package from the

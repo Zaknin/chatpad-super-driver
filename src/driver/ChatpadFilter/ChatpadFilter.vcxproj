@@ -111,6 +111,7 @@
     <ClInclude Include="ChatpadRuntimeDiagnostics.h" />
     <ClInclude Include="ChatpadLiveRuntime.h" />
     <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardHid.h" />
+    <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadFailOpenPolicy.h" />
     <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardParser.h" />
     <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadLiveTransferPolicy.h" />
     <ClInclude Include="..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.h" />
@@ -124,6 +125,7 @@
     <ClCompile Include="ChatpadFilterLifecycle.c" />
     <ClCompile Include="ChatpadLiveRuntime.c" />
     <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardHid.c" />
+    <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadFailOpenPolicy.c" />
     <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadKeyboardParser.c" />
     <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadLiveTransferPolicy.c" />
     <ClCompile Include="..\..\protocol\ChatpadProtocol\ChatpadActivationRequests.c" />

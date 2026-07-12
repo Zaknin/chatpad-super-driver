@@ -5,6 +5,7 @@
 #include <vhf.h>
 
 #include "ChatpadKeyboardHid.h"
+#include "ChatpadFailOpenPolicy.h"
 
 #define CHATPAD_LIVE_RUNTIME_SIGNATURE ((ULONG)0x52504C43u)
 #define CHATPAD_INPUT_INTERFACE_INDEX ((UCHAR)2u)
@@ -19,10 +20,13 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     WDFKEY DiagnosticKey;
     WDFWORKITEM ActivationWorkItem;
     WDFWORKITEM InputWorkItem;
+    WDFWORKITEM KeyboardWorkItem;
     WDFWORKITEM DiagnosticWorkItem;
     WDFSPINLOCK StateLock;
     VHFHANDLE VhfHandle;
     ChatpadHidReportState HidState;
+    ChatpadFailOpenState FailOpenState;
+    ChatpadHidKeyboardReport KeyboardQueue[CHATPAD_KEYBOARD_QUEUE_CAPACITY];
     USBD_PIPE_HANDLE InputPipeHandle;
     volatile LONG StopRequested;
     volatile LONG InD0;
@@ -36,6 +40,10 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     volatile LONG FirstDecodeRecorded;
     volatile LONG FirstVhfSubmissionRecorded;
     volatile LONG DiagnosticQueued;
+    volatile LONG KeyboardWorkQueued;
+    volatile LONG ChatpadFeatureDisabled;
+    volatile LONG VirtualKeyboardAvailable;
+    volatile LONG FirstOptionalFailureStage;
     volatile LONG Interface2Found;
     volatile LONG Pipe0Found;
     volatile LONG ConfigurationCompletionCount;
@@ -48,12 +56,16 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     ULONG InputPacketCount;
     ULONG InputReportCount;
     ULONG InputEmissionFailureCount;
+    ULONG KeyboardQueueHead;
+    ULONG KeyboardQueueTail;
+    ULONG KeyboardQueueCount;
     ULONG ParseFailureCount;
     NTSTATUS LastActivationStatus;
     ULONG LastActivationStep;
     ULONG LastBytesTransferred;
     USBD_STATUS LastUsbdStatus;
     NTSTATUS LastConfigurationNtStatus;
+    NTSTATUS FirstOptionalFailureNtStatus;
     USBD_STATUS LastConfigurationUsbdStatus;
 } CHATPAD_LIVE_RUNTIME, *PCHATPAD_LIVE_RUNTIME;
 
@@ -70,4 +82,5 @@ void ChatpadLiveRuntimeCleanup(PCHATPAD_LIVE_RUNTIME runtime);
 EVT_WDFDEVICE_WDM_IRP_PREPROCESS ChatpadLiveEvtWdmIrpPreprocess;
 EVT_WDF_WORKITEM ChatpadLiveEvtActivationWorkItem;
 EVT_WDF_WORKITEM ChatpadLiveEvtInputWorkItem;
+EVT_WDF_WORKITEM ChatpadLiveEvtKeyboardWorkItem;
 EVT_WDF_WORKITEM ChatpadLiveEvtDiagnosticWorkItem;

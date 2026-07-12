@@ -69,18 +69,18 @@ function Assert-Inf([string]$Text) {
     $requiredLines = @(
         'Signature   = "$WINDOWS NT$"','Class       = Extension','ClassGuid   = {E2F84CE7-8EFA-411C-AA69-97454CA4CB57}',
         'Provider    = %ProviderName%','ExtensionId = {69E7CCD7-7011-4059-95D4-618974E126DD}','CatalogFile = ChatpadFilterExtension.cat',
-        'DriverVer   = 07/12/2026,1.0.4.0','PnpLockdown = 1','ChatpadFilter_CopyFiles = 13','ChatpadFilter.sys = 1,,',
+        'DriverVer   = 07/12/2026,1.0.5.0','PnpLockdown = 1','ChatpadFilter_CopyFiles = 13','ChatpadFilter.sys = 1,,',
         '%ProviderName% = Models,NTamd64.10.0...22000','%DeviceDescription% = ChatpadFilter_Install, USB\VID_045E&PID_028E',
         'AddService = ChatpadFilter,,ChatpadFilter_Service_Install','ServiceBinary = %13%\ChatpadFilter.sys',
         'KmdfService = ChatpadFilter,ChatpadFilter_Wdf','KmdfLibraryVersion = 1.15',
-        'AddReg = ChatpadFilter_LowerFilters','HKR,,"LowerFilters",0x00010008,"ChatpadFilter","vhf"','ProviderName       = "Chatpad Super Driver Project"')
+        'AddReg = ChatpadFilter_LowerFilters','HKR,,"LowerFilters",0x00010008,"vhf","ChatpadFilter"','ProviderName       = "Chatpad Super Driver Project"')
     foreach ($line in $requiredLines) {
         if (-not $Text.Contains($line)) { throw "Required INF material is missing or changed: $line" }
     }
     $modelLines = @($sections['Models.NTamd64.10.0...22000'] | Where-Object { $_ -match '=' })
     if ($modelLines.Count -ne 1 -or $modelLines[0] -ne '%DeviceDescription% = ChatpadFilter_Install, USB\VID_045E&PID_028E') { throw 'INF model inventory is not exact.' }
     if ($Text -match '(?i)\b(?:UpperFilters|CoInstallers|ClassInstall32|DefaultInstall|SPSVCINST_ASSOCSERVICE)\b') { throw 'INF contains a prohibited installer/filter directive.' }
-    if ([regex]::Matches($Text, '(?im)^HKR,,"LowerFilters",0x00010008,"ChatpadFilter","vhf"$').Count -ne 1) { throw 'INF must contain exactly one ordered non-destructive ChatpadFilter/vhf lower-filter registration.' }
+    if ([regex]::Matches($Text, '(?im)^HKR,,"LowerFilters",0x00010008,"vhf","ChatpadFilter"$').Count -ne 1) { throw 'INF must contain exactly one ordered non-destructive vhf/ChatpadFilter lower-filter registration.' }
     if ($Text -match '(?i)(?:[A-Z]:\\|\\\\|TODO|PLACEHOLDER|TESTSIGN|TEST SIGN|\*|USB\\VID_045E&PID_028E\\|828F4587|IG_00|HID\\|XnaComposite)') { throw 'INF contains a broad, machine-specific, placeholder, test-only, or prohibited match.' }
     if ([regex]::Matches($Text, '(?i)USB\\VID_045E&PID_028E').Count -ne 1) { throw 'INF hardware ID occurrence count is not exactly one.' }
 }
@@ -104,7 +104,7 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     Assert-String $Plan.filter_name 'ChatpadFilter' 'filter name'
     Assert-ExactProperties $Plan.filter_attachment @('method','position','level','associated_service','base_inf','base_service','preserves_base_function_driver') 'filter_attachment'
     Assert-String $Plan.filter_attachment.method 'DDInstall.HW ordered LowerFilters append' 'filter method'
-    Assert-String $Plan.filter_attachment.position 'Lower: ChatpadFilter immediately before vhf' 'filter position'
+    Assert-String $Plan.filter_attachment.position 'Lower: vhf below ChatpadFilter HID source' 'filter position'
     Assert-String $Plan.filter_attachment.level 'ordered legacy list required because xusb22 exposes no filter levels and VHF order is mandatory' 'filter level'
     Assert-Bool $Plan.filter_attachment.associated_service $false 'associated service'
     Assert-String $Plan.filter_attachment.base_inf 'xusb22.inf' 'base INF'
@@ -130,6 +130,10 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     Assert-Bool $Plan.target_node.live_validation_required_before_candidate_selection $true 'live target validation'
 
     $expectedSourcePaths = @('Directory.Build.props','src/driver/ChatpadFilter/ChatpadFilter.vcxproj','src/driver/ChatpadFilter/ChatpadActivationPreparation.c','src/driver/ChatpadFilter/ChatpadActivationPreparation.h','src/driver/ChatpadFilter/ChatpadFilterLifecycle.c','src/driver/ChatpadFilter/ChatpadFilterLifecycle.h','src/driver/ChatpadFilter/ChatpadLiveRuntime.c','src/driver/ChatpadFilter/ChatpadLiveRuntime.h','src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h','src/driver/ChatpadFilter/device.c','src/driver/ChatpadFilter/driver.c','src/driver/ChatpadFilter/driver.h','src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj','src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c','src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h','src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h','src/protocol/ChatpadProtocol/ChatpadActivationRequests.c','src/protocol/ChatpadProtocol/ChatpadActivationRequests.h','src/protocol/ChatpadProtocol/ChatpadActivationSequence.c','src/protocol/ChatpadProtocol/ChatpadActivationSequence.h','src/protocol/ChatpadProtocol/ChatpadKeyboardHid.c','src/protocol/ChatpadProtocol/ChatpadKeyboardHid.h','src/protocol/ChatpadProtocol/ChatpadKeyboardParser.c','src/protocol/ChatpadProtocol/ChatpadKeyboardParser.h','src/protocol/ChatpadProtocol/ChatpadLiveTransferPolicy.c','src/protocol/ChatpadProtocol/ChatpadLiveTransferPolicy.h','src/transport/ChatpadControlSetup/ChatpadControlSetup.c','src/transport/ChatpadControlSetup/ChatpadControlSetup.h','src/transport/ChatpadRequestOwnerModel/ChatpadRequestOwnerModel.c','src/transport/ChatpadRequestOwnerModel/ChatpadRequestOwnerModel.h','src/transport/ChatpadTransport/ChatpadTransportAdapter.h','src/transport/ChatpadWdfControlSetup/ChatpadWdfControlSetupFormatter.c','src/transport/ChatpadWdfControlSetup/ChatpadWdfControlSetupFormatter.h')
+    $expectedSourcePaths = @(
+        $expectedSourcePaths[0..15] +
+        @('src/protocol/ChatpadProtocol/ChatpadFailOpenPolicy.c','src/protocol/ChatpadProtocol/ChatpadFailOpenPolicy.h') +
+        $expectedSourcePaths[16..($expectedSourcePaths.Count - 1)])
     if (@($Plan.driver_source_inventory).Count -ne $expectedSourcePaths.Count) { throw 'Driver source inventory count changed.' }
     for ($i=0; $i -lt $expectedSourcePaths.Count; $i++) {
         $entry=$Plan.driver_source_inventory[$i]
@@ -148,7 +152,7 @@ function Assert-Plan([object]$Plan, [string]$InfText) {
     foreach ($entry in @($Plan.package_file_inventory)) { Assert-ExactProperties $entry @('filename','role','catalog_covered') 'package file entry'; Assert-Bool $entry.catalog_covered $true 'catalog coverage' }
 
     Assert-ExactProperties $Plan.version_policy @('source_driver_ver','date_source','version_source','generated_from_clock','identical_source_rebuild_policy','new_version_policy','p1b2_freeze_policy') 'version_policy'
-    Assert-String $Plan.version_policy.source_driver_ver '07/12/2026,1.0.4.0' 'source DriverVer'
+    Assert-String $Plan.version_policy.source_driver_ver '07/12/2026,1.0.5.0' 'source DriverVer'
     Assert-Bool $Plan.version_policy.generated_from_clock $false 'clock generation'
     Assert-ExactProperties $Plan.catalog_policy @('filename','covered_files','generation_performed','p1b2_requirement') 'catalog_policy'
     Assert-String $Plan.catalog_policy.filename 'ChatpadFilterExtension.cat' 'catalog policy filename'

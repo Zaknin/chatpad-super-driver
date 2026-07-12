@@ -10,7 +10,7 @@ ClassGuid   = {E2F84CE7-8EFA-411C-AA69-97454CA4CB57}
 Provider    = %ProviderName%
 ExtensionId = {69E7CCD7-7011-4059-95D4-618974E126DD}
 CatalogFile = ChatpadFilterExtension.cat
-DriverVer   = 07/12/2026,1.0.4.0
+DriverVer   = 07/12/2026,1.0.5.0
 PnpLockdown = 1
 
 [DestinationDirs]
@@ -35,7 +35,7 @@ CopyFiles = ChatpadFilter_CopyFiles
 AddReg = ChatpadFilter_LowerFilters
 
 [ChatpadFilter_LowerFilters]
-HKR,,"LowerFilters",0x00010008,"ChatpadFilter","vhf"
+HKR,,"LowerFilters",0x00010008,"vhf","ChatpadFilter"
 
 [ChatpadFilter_CopyFiles]
 ChatpadFilter.sys
