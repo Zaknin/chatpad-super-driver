@@ -18,4 +18,13 @@ ChatpadLiveTransferResult ChatpadValidateLiveTransferOutcome(
     ChatpadSize bytesTransferred,
     ChatpadSize expectedBytes);
 
+int ChatpadIsExpectedActivationPreambleStall(
+    ChatpadSize stepIndex,
+    int statusSucceeded,
+    int timedOut,
+    int cancelled,
+    int usbdStatusIsStall,
+    ChatpadSize bytesTransferred,
+    ChatpadSize expectedBytes);
+
 #endif

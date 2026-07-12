@@ -33,6 +33,11 @@ static const WCHAR *const ChatpadActivationBytesNames[] = {
     L"ActivationStep2Bytes", L"ActivationStep3Bytes",
     L"ActivationStep4Bytes", L"ActivationStep5Bytes"
 };
+static const WCHAR *const ChatpadActivationExpectedStallNames[] = {
+    L"ActivationStep0ExpectedStall", L"ActivationStep1ExpectedStall",
+    L"ActivationStep2ExpectedStall", L"ActivationStep3ExpectedStall",
+    L"ActivationStep4ExpectedStall", L"ActivationStep5ExpectedStall"
+};
 static const WCHAR *const ChatpadActivationSetup0Names[] = {
     L"ActivationStep0Setup0", L"ActivationStep1Setup0",
     L"ActivationStep2Setup0", L"ActivationStep3Setup0",
@@ -153,7 +158,8 @@ static void ChatpadLiveRecordActivationResult(
     ULONG stepIndex,
     NTSTATUS status,
     USBD_STATUS usbdStatus,
-    ULONG bytesTransferred)
+    ULONG bytesTransferred,
+    BOOLEAN expectedStall)
 {
     if (stepIndex >= RTL_NUMBER_OF(ChatpadActivationNtStatusNames)) {
         return;
@@ -161,6 +167,10 @@ static void ChatpadLiveRecordActivationResult(
     ChatpadLiveDiagnosticStatus(runtime, ChatpadActivationNtStatusNames[stepIndex], status);
     ChatpadLiveDiagnosticUlong(runtime, ChatpadActivationUsbdStatusNames[stepIndex], usbdStatus);
     ChatpadLiveDiagnosticUlong(runtime, ChatpadActivationBytesNames[stepIndex], bytesTransferred);
+    ChatpadLiveDiagnosticUlong(
+        runtime,
+        ChatpadActivationExpectedStallNames[stepIndex],
+        expectedStall ? 1u : 0u);
 }
 
 /*
@@ -582,7 +592,9 @@ static NTSTATUS ChatpadLiveSendActivationStep(
     PCHATPAD_LIVE_RUNTIME runtime,
     const ChatpadActivationSequenceStep *step,
     PULONG bytesTransferred,
-    USBD_STATUS *usbdStatus)
+    USBD_STATUS *usbdStatus,
+    PNTSTATUS rawNtStatus,
+    PBOOLEAN expectedStall)
 {
     URB urb;
     UCHAR buffer[CHATPAD_ACTIVATION_MAX_PAYLOAD_LENGTH] = { 0 };
@@ -619,6 +631,18 @@ static NTSTATUS ChatpadLiveSendActivationStep(
     if (NT_SUCCESS(status) && !USBD_SUCCESS(*usbdStatus)) {
         status = STATUS_UNSUCCESSFUL;
     }
+    *rawNtStatus = status;
+    *expectedStall = ChatpadIsExpectedActivationPreambleStall(
+        step->SequenceIndex,
+        NT_SUCCESS(status),
+        status == STATUS_IO_TIMEOUT || status == STATUS_TIMEOUT,
+        status == STATUS_CANCELLED,
+        *usbdStatus == USBD_STATUS_STALL_PID,
+        *bytesTransferred,
+        step->Request.RawLength) ? TRUE : FALSE;
+    if (*expectedStall) {
+        return STATUS_SUCCESS;
+    }
     transferResult = ChatpadValidateLiveTransferOutcome(
         NT_SUCCESS(status),
         status == STATUS_IO_TIMEOUT || status == STATUS_TIMEOUT,
@@ -651,6 +675,8 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
     USBD_STATUS usbdStatus;
     LARGE_INTEGER delay;
     NTSTATUS status;
+    NTSTATUS rawNtStatus;
+    BOOLEAN expectedStall;
 
     device = (WDFDEVICE)WdfWorkItemGetParentObject(workItem);
     context = ChatpadFilterGetDeviceContext(device);
@@ -672,21 +698,30 @@ void ChatpadLiveEvtActivationWorkItem(WDFWORKITEM workItem)
         ChatpadLiveRecordSetup(runtime, (ULONG)stepIndex, &step);
         bytesTransferred = 0u;
         usbdStatus = USBD_STATUS_INVALID_PARAMETER;
+        rawNtStatus = STATUS_UNSUCCESSFUL;
+        expectedStall = FALSE;
         status = ChatpadLiveSendActivationStep(
             runtime,
             &step,
             &bytesTransferred,
-            &usbdStatus);
+            &usbdStatus,
+            &rawNtStatus,
+            &expectedStall);
         runtime->LastActivationStep = (ULONG)stepIndex;
         runtime->LastBytesTransferred = bytesTransferred;
         runtime->LastUsbdStatus = usbdStatus;
         ChatpadLiveRecordActivationResult(
             runtime,
             (ULONG)stepIndex,
-            status,
+            rawNtStatus,
             usbdStatus,
+            bytesTransferred,
+            expectedStall);
+        ChatpadLiveTrace(
+            expectedStall ? "ActivationExpectedPreambleStall" : "ActivationStep",
+            expectedStall ? STATUS_SUCCESS : status,
+            (ULONG)stepIndex,
             bytesTransferred);
-        ChatpadLiveTrace("ActivationStep", status, (ULONG)stepIndex, bytesTransferred);
         if (!NT_SUCCESS(status)) {
             ChatpadLiveDisableOptionalFeature(
                 runtime,
@@ -989,7 +1024,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x0105;
+        vhfConfig.VersionNumber = 0x0106;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {

@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-07-12 - Treat only the first three zero-byte USB stalls as accepted activation preamble outcomes
+
+**Decision:** Activation steps 0-2 may advance when their zero-length legacy
+`40/A9` requests return a failed NTSTATUS, `USBD_STATUS_STALL_PID`, and zero
+transferred bytes. They may also advance on ordinary success. No other failure
+is accepted; steps 3-5 remain strictly successful, and no retry is added.
+
+**Rationale:** Live 1.0.5 diagnostics prove the exact first request stalls with
+NTSTATUS `0xC0000001`, USBD `0xC0000004`, and zero bytes. The retained legacy
+source explicitly says all three mystery requests produce stalls/failures yet
+must be sent or the following Chatpad activation commands fail. The prior
+offline rule that every failed transfer terminates contradicted this source and
+the first real hardware outcome.
+
+**Alternatives rejected:** Removing the three requests; treating every stall
+anywhere in the sequence as success; ignoring timeout/cancellation/non-stall
+errors; retrying automatically; jumping directly to the `09 00` write; or
+weakening physical fail-open behavior.
+
+**Consequences:** Diagnostics retain the raw NTSTATUS/USBD/byte result and add
+`ActivationStepNExpectedStall`. Only the exact legacy preamble exception reaches
+the strict probe/write/probe tail. Real hardware must still prove steps 1-5,
+input packets, decoding, and keyboard submission after version 1.0.6 is
+installed.
+
 ## 2026-07-12 - Make the VHF keyboard optional to physical Xbox startup
 
 **Decision:** Keep the exact physical KMDF lower-filter WDFDEVICE as the

@@ -34,8 +34,12 @@ has established interface 2, D0 entry queues one passive-level activation work
 item. An interlocked per-D0 consumption gate prevents duplicate activation.
 The worker sends the six authoritative vendor control transfers in exact
 sequence, with a one-second timeout for each transfer and the protocol's 12 ms
-post-transfer delay. It validates NTSTATUS, byte counts, and the final `09 00`
-response, stops on the first failure, and never retries automatically.
+post-transfer delay. The first three legacy `40/A9` preamble requests are
+required even though the controller is documented and live-observed to stall
+them; only `USBD_STATUS_STALL_PID` with zero bytes on those zero-length steps is
+accepted. Any other preamble failure and every failure in steps 3-5 is fatal to
+the optional activation attempt. The worker validates byte counts and the final
+`09 00` response and never retries automatically.
 
 On successful activation, a separate passive work item performs bounded
 250 ms synchronous reads from only the Chatpad pipe. The existing five-byte
