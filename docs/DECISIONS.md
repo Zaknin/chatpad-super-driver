@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-07-13 - Reuse xusb22's observed default-control pipe handle
+
+**Decision:** Observe non-null default-control pipe handles from xusb22's
+forwarded `URB_FUNCTION_CONTROL_TRANSFER` or `_EX` requests, retain the first
+handle for the current hardware lifetime, and gate Chatpad activation until
+both that handle and interface-2 input pipe 0 are available. Use the retained
+handle in every raw activation control URB. Queue activation only after the
+parent control request that exposed the handle has completed.
+
+**Rationale:** Live 1.0.8 changed to the generic raw control-transfer form but
+step 0 was rejected before hardware access with NTSTATUS `0xC000000D` and
+`USBD_STATUS_INVALID_PIPE_HANDLE` (`0x80000600`). The raw URB supplied a null
+pipe handle, whereas the retained WDF USB helper supplied its configured
+default-control pipe internally. Observing xusb22's existing handle preserves
+its ownership and satisfies the generic URB contract.
+
+**Alternatives rejected:** Sending a null handle; fabricating a pipe handle;
+creating or selecting a WDF USB configuration; reverting to the specialized
+vendor URB that stalled the activation write; retrying; or weakening the Xbox
+fail-open boundary.
+
+**Consequences:** Diagnostic transport architecture becomes 4 and records
+`ControlPipeFound`, current D0 generation, and last attempted activation step.
+The handle is cleared during ReleaseHardware. If no control handle is observed,
+activation remains unconsumed and safely inactive rather than submitting an
+invalid URB.
+
 ## 2026-07-12 - Send activation as exact raw setup-packet control URBs
 
 **Decision:** Submit each activation request as
