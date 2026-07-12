@@ -1,19 +1,18 @@
 # Project State
 
-*Last updated: 2026-07-11 (TASK 8I-P1B-LD-R1 local-development package route)*
+*Last updated: 2026-07-12 (TASK 8I-P1B-LD-O1B host-readiness finalization)*
 
 ## Current state
 
-- **Branch:** `feature/native-adapter-local-development-package-route`.
-- **Starting commit:** `11d1053db4fd35f9515c6884953057f2687385fb` (`build: freeze unsigned canonical live apply package`).
-- **Expected commit:** one commit with parent `11d1053db4fd35f9515c6884953057f2687385fb` and subject `fix: define local development package route`; derive its exact hash from Git after commit creation.
-- **Deployment objective:** `LOCAL_DEVELOPMENT_ONLY` on the operator's own Windows 11 development machine. WHCP/HLK, Partner Center, Windows Update, retail/commercial distribution, and Microsoft production signing are `OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE` and optional future distribution work.
-- **Package status:** `CANONICAL_WINDOWS_11_DRIVER_PACKAGE_BUILT_AND_CATALOGED_UNSIGNED_FOR_LOCAL_DEVELOPMENT_NOT_STAGED_NOT_INSTALLED_NOT_LOADED_NOT_INDEPENDENTLY_AUDITED`.
-- **Canonical INF:** 1,581 bytes, SHA-256 `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`; the previously recorded `InfVerif` result remains valid with zero warnings/errors.
-- **Canonical SYS:** `ChatpadFilter.sys`, 40,960 bytes, SHA-256 `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`; the two accepted Release x64 builds remain byte-identical. It is AMD64, KMDF 1.15, and unsigned.
-- **Canonical CAT:** `ChatpadFilterExtension.cat`, 1,202 bytes, SHA-256 `6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`; unsigned and covering exactly the INF and SYS. SYS Authenticode member hash: `7CC0E1F59375E0C34DAAE9543385AE1FBD6CFC04E5A8B0885167D704C9515F8F`.
-- **Current deployment state:** package signed/staged/installed and driver loaded are all false. Local installation method, signature-enforcement state, local candidate identity, published INF, driver-store identity, and driver rank are `NOT_YET_OBSERVED`. The unsigned package is not claimed ordinarily loadable under production signature enforcement.
-- **Readiness:** `READY_FOR_LOCAL_DEVELOPMENT_PACKAGE_AND_DEPLOYMENT_CONTRACT_AUDIT_ONLY`.
-- **Current blocker:** `BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED`. TASK 8I remains blocked and no live authorization phrase is active.
-- **Safety:** this lane changes contracts, validators, evidence, readiness, and continuity only. It performs no build, catalog generation, signing, certificate/private-key access, BCD/Secure Boot change, staging, installation, device/driver-store/registry/service query, load, native execution, binding, restart, authorization, or Windows mutation.
-- **Next task:** TASK 8I-P1B-LD-R2 — Independent read-only audit of the unsigned canonical package and local-development deployment contract. After that audit passes, a separately authorized read-only host-readiness observation should determine and freeze the exact known-working local installation path.
+- **Branch:** `feature/native-adapter-local-host-readiness-observation`.
+- **Starting commit:** `c70d1b94c9fdc14de598df8326b6e0e912dc811d` (`fix: define local development package route`).
+- **Expected commit:** one commit with subject `docs: record local driver signing host readiness`; derive its exact hash from Git after commit creation.
+- **Status:** `LOCAL_DEVELOPMENT_HOST_READINESS_OBSERVED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_HVCI_ACTIVE_PACKAGE_UNSIGNED_UNSTAGED_UNINSTALLED_UNLOADED`.
+- **Readiness:** `READY_FOR_SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_PREPARATION_ONLY`.
+- **Host observation:** Secure Boot is disabled; BitLocker protection is off and `C:` is unlocked; HVCI/Memory Integrity is active. BCD conclusively records TESTSIGNING enabled, but no reboot has occurred since the operator's change, so effective Test Mode for the current boot remains `NOT_CONCLUSIVELY_OBSERVED`.
+- **Signing requirement:** a future self-test-signed `ChatpadFilter.sys` must carry its own embedded test signature. Certificate creation and LocalMachine trust installation have not occurred.
+- **Package state:** the canonical INF/SYS/CAT remain unsigned, unstaged, uninstalled, and unloaded. No published INF, driver-store identity, candidate, device, service/filter, binding, or native APPLY observation occurred.
+- **Deployment objective:** `LOCAL_DEVELOPMENT_ONLY`; production certification remains optional future distribution work and is not required for the current objective.
+- **Current blocker:** `BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_CREATED_AND_CONFIGURED_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT`.
+- **Safety:** observer-performed mutations are zero. The lane records exactly one operator-performed mutation, `bcdedit /set testsigning on`. No live authorization phrase is active. Reboot is deliberately deferred until package signing and the later trust/reboot plan are ready.
+- **Next task:** TASK 8I-P1B-LD-S1 — Create and freeze the self-test-signed local-development package.

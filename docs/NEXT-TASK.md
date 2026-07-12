@@ -2,44 +2,37 @@
 
 ## Exact current state
 
-- Branch: `feature/native-adapter-local-development-package-route`.
-- Starting commit: `11d1053db4fd35f9515c6884953057f2687385fb` (`build: freeze unsigned canonical live apply package`).
-- Expected single remediation commit subject: `fix: define local development package route`; use the exact committed hash after finalization.
-- Deployment scope: `LOCAL_DEVELOPMENT_ONLY`; production distribution signing is optional future work and `OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE`.
-- Canonical SYS: `ChatpadFilter.sys`, 40,960 bytes, SHA-256 `E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB`, unsigned.
-- Canonical INF: 1,581 bytes, SHA-256 `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`.
-- Canonical CAT: `ChatpadFilterExtension.cat`, 1,202 bytes, SHA-256 `6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD`, unsigned.
-- Package state: unstaged, uninstalled, unloaded, and not independently audited. Local installation method and signature-enforcement state are `NOT_YET_OBSERVED`; no published INF, driver-store identity, rank, or candidate has been observed.
-- Blocker: `BLOCKED_NATIVE_ADAPTER_LOCAL_DEVELOPMENT_PACKAGE_NOT_INDEPENDENTLY_AUDITED_AND_LOCAL_INSTALLATION_PATH_NOT_OBSERVED`.
-- No live authorization phrase is active or carried forward.
+- Branch: `feature/native-adapter-local-host-readiness-observation`.
+- Starting commit for continuation: the pushed commit with parent `c70d1b94c9fdc14de598df8326b6e0e912dc811d` and subject `docs: record local driver signing host readiness`; derive its exact hash from Git.
+- Status: `LOCAL_DEVELOPMENT_HOST_READINESS_OBSERVED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_HVCI_ACTIVE_PACKAGE_UNSIGNED_UNSTAGED_UNINSTALLED_UNLOADED`.
+- Readiness: `READY_FOR_SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_PREPARATION_ONLY`.
+- Host evidence: `docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json`, 8,467 bytes, SHA-256 `019D59504588384DDD48B90B2315A261AE891030113C7953DF6EA2778F3E651C`.
+- Secure Boot is disabled; BitLocker protection is off; HVCI is active. TESTSIGNING is configured in BCD, but no reboot occurred after configuration and effective current-boot Test Mode remains `NOT_CONCLUSIVELY_OBSERVED`.
+- Canonical package remains unsigned, unstaged, uninstalled, and unloaded. No test certificate or trust installation exists.
+- Blocker: `BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_CREATED_AND_CONFIGURED_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT`.
 
 ## Next recommended objective
 
-TASK 8I-P1B-LD-R2 — Independent read-only audit of the unsigned canonical package and local-development deployment contract.
+TASK 8I-P1B-LD-S1 — Create and freeze the self-test-signed local-development package.
 
-## Required branch and starting commit
+## Preconditions
 
-- Start from the pushed `feature/native-adapter-local-development-package-route` commit whose parent is `11d1053db4fd35f9515c6884953057f2687385fb` and subject is `fix: define local development package route`.
-- Require a clean worktree, upstream `0/0`, and exact remote identity before audit work.
-
-## Preconditions and audit scope
-
-- Re-derive the result from Git and file contents; do not trust the completion report.
-- Verify the exact SYS/INF/CAT identities, package membership, unsigned states, frozen source/build provenance, local-only deployment policy, 28-field future observation inventory, candidate-selection fail-closed rules, focused validator coverage, readiness entry count, and zero operational counters.
-- Keep the repository immutable during the independent audit unless a separate remediation task is explicitly authorized.
+- Require the exact pushed O1B commit, clean worktree, upstream `0/0`, and matching remote identity.
+- Preserve the canonical unsigned INF/SYS/CAT inputs and their recorded hashes.
+- Use the accepted host-readiness evidence as the only host-fact source; do not repeat host observation.
+- Define fixed certificate identity, bounded creation/trust scope, embedded SYS signing, catalog regeneration/signing, and deterministic package evidence before any reboot or installation.
 
 ## Safety restrictions
 
-- Read repository files and the exact canonical artifact root only. Do not build, regenerate the catalog, sign, create/install certificates, access private keys, change BCD or Secure Boot, stage/install the INF, invoke `pnputil`, `devcon`, SetupAPI, or Newdev, query devices/driver store/registry/services, load, bind, restart, issue/consume authorization, execute the native bridge, or mutate Windows.
-- Do not infer a local installation method, test-signing state, signature-enforcement state, published INF, driver-store package, driver rank, or matching candidate from prior operator experience.
+- Do not reboot during package preparation. Do not change or repeat BCD configuration, disable HVCI, stage/install the INF, query devices or driver store, load/bind the driver, or execute native APPLY.
+- Certificate creation, private-key handling, trust installation, SYS/CAT signing, or other host mutation requires exact separate authorization if not explicitly included in the S1 task.
+- Keep local installation method, published INF, driver-store package, candidate fields, target device, service/filter result, rollback identity, and restoration verification unobserved.
 
 ## Acceptance criteria
 
-- The package and build provenance remain unchanged and the local-development contract is internally consistent across source plan, evidence, unsigned plan, readiness manifest, validators, and continuity documents.
-- WHCP/HLK and Partner Center are optional future distribution work, not current blockers or next steps.
-- The package remains explicitly unsigned, unstaged, uninstalled, unloaded, and not claimed ordinarily production-loadable.
-- The exact blocker and next task are present, validators pass in PowerShell 7 and Windows PowerShell 5.1, readiness reports 57 entries and zero defects, and all prohibited counters remain zero.
-- Only after LD-R2 passes, recommend a separate read-only host-readiness observation to determine the exact known-working local installation path; do not stage or install in the audit.
+- Freeze an internally consistent self-test-signed local-development package plan and exact package identities while retaining HVCI compatibility and the embedded SYS signature requirement.
+- Preserve the current-boot/next-boot distinction: configured TESTSIGNING is not yet effective until a later controlled reboot and verification.
+- Do not claim readiness for trust installation, reboot verification, staging, installation, loading, binding, or native APPLY.
 
 ## Inspect first
 
@@ -47,7 +40,6 @@ TASK 8I-P1B-LD-R2 — Independent read-only audit of the unsigned canonical pack
 git branch --show-current
 git rev-parse HEAD
 git status --short --branch
-git ls-remote origin refs/heads/feature/native-adapter-local-development-package-route
-pwsh -NoProfile -File tools/Test-ChatpadLiveApplyPackageSourceContract.ps1 -UnsignedPackage
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/Test-ChatpadLiveApplyPackageSourceContract.ps1 -UnsignedPackage
+git ls-remote origin refs/heads/feature/native-adapter-local-host-readiness-observation
+Get-FileHash docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json -Algorithm SHA256
 ```

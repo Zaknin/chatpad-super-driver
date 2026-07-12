@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-07-12 - Prepare the self-test-signed package before the deferred reboot
+
+**Decision:** Accept the conclusive read-only host observation as
+`LOCAL_TEST_SIGNING_CONFIGURED_REBOOT_PENDING`. Keep HVCI/Memory Integrity
+active, require the future SYS to carry its own embedded test signature, and
+prepare and freeze the self-test-signed local-development package before a
+later separately controlled trust/reboot/verification transition.
+
+**Rationale:** BCD conclusively records TESTSIGNING enabled, Secure Boot is
+disabled, BitLocker protection is off, and the system volume is unlocked.
+However, the operator has not rebooted since setting TESTSIGNING, so BCD
+configuration describes the next boot and does not prove effective Test Mode
+for the current session. Package preparation can proceed without falsely
+claiming installation or load readiness.
+
+**Alternatives rejected:** Inferring active Test Mode from BCD alone;
+disabling HVCI; rebooting before the signed package and recovery plan are
+ready; treating production certification as required for the local objective;
+or proceeding directly to certificate trust installation, INF staging, driver
+installation, device/candidate discovery, loading, binding, or native APPLY.
+
+**Consequences:** The canonical package remains unsigned, unstaged,
+uninstalled, and unloaded. Observer-performed mutations remain zero; the lane
+records one operator-performed BCD mutation. The current blocker is
+`BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_CREATED_AND_CONFIGURED_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT`.
+Next is TASK 8I-P1B-LD-S1 — Create and freeze the self-test-signed
+local-development package. A later task must control trust installation,
+reboot, and verification of effective Test Mode before installation.
+
 ## 2026-07-11 - Make controlled local development the current deployment objective
 
 **Decision:** The current package objective is `LOCAL_DEVELOPMENT_ONLY` on the

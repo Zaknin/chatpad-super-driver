@@ -1,0 +1,244 @@
+{
+  "schema": "chatpad-local-development-host-readiness-observation-v1",
+  "observation_utc": "2026-07-12T00:41:01.0286240Z",
+  "windows": {
+    "product_name": "Windows 10 Pro",
+    "edition_id": "Professional",
+    "display_version": "25H2",
+    "current_build": "26200",
+    "ubr": 8655,
+    "full_version": "26200.8655",
+    "installation_type": "Client",
+    "os_architecture": "X64",
+    "environment_os_version": "10.0.26200.0",
+    "powershell_version": "7.6.3",
+    "process_architecture": "X64"
+  },
+  "elevation": {
+    "administrator_group_membership": true,
+    "fully_elevated": true,
+    "integrity_level": "HIGH",
+    "integrity_rid": 12288,
+    "command_exit_code": 0,
+    "state": "FULLY_ELEVATED"
+  },
+  "pre_observation_context": {
+    "known_external_bcd_testsigning_change": true,
+    "pre_observation_external_mutation_count": 1,
+    "pre_observation_external_mutation": {
+      "command": "bcdedit /set testsigning on",
+      "reported_result": "SUCCESS",
+      "source": "OPERATOR_CONSOLE_TRANSCRIPT",
+      "performed_by_observer": false
+    },
+    "reboot_since_testsigning_change": "OPERATOR_REPORTED_FALSE",
+    "testsigning_configured_for_next_boot_initial_state": "TO_BE_CONFIRMED_BY_READ_ONLY_BCD_OBSERVATION",
+    "testsigning_configured_for_next_boot": "CONFIRMED_ENABLED_BY_READ_ONLY_BCD_OBSERVATION",
+    "effective_test_mode_current_boot": "NOT_CONCLUSIVELY_OBSERVED"
+  },
+  "secure_boot": {
+    "state": "DISABLED",
+    "detail": null
+  },
+  "bcd": {
+    "current_exit_code": 0,
+    "bootmgr_exit_code": 0,
+    "fields": {
+      "testsigning": {
+        "presence": "PRESENT",
+        "value": "Yes"
+      },
+      "nointegritychecks": {
+        "presence": "ABSENT",
+        "value": null
+      },
+      "debug": {
+        "presence": "ABSENT",
+        "value": null
+      },
+      "flightsigning": {
+        "presence": "ABSENT",
+        "value": null
+      },
+      "bootmenupolicy": {
+        "presence": "PRESENT",
+        "value": "Standard"
+      }
+    },
+    "bootmgr_bootmenupolicy": {
+      "presence": "ABSENT",
+      "value": null
+    },
+    "observation_state": "AVAILABLE"
+  },
+  "testsigning_state": "ENABLED",
+  "device_guard": {
+    "state": "AVAILABLE",
+    "virtualization_based_security_status": 2,
+    "security_services_configured": [
+      2
+    ],
+    "security_services_running": [
+      2
+    ],
+    "code_integrity_policy_enforcement_status": 2,
+    "usermode_code_integrity_policy_enforcement_status": 0
+  },
+  "hvci": {
+    "state": "AVAILABLE",
+    "device_guard_enable_virtualization_based_security": 1,
+    "configured_enabled_value": 1,
+    "configured_state": "ENABLED",
+    "running": true,
+    "appears_active": "YES",
+    "future_sys_embedded_test_signature_required": true
+  },
+  "bitlocker": {
+    "state": "AVAILABLE",
+    "mount_point": "C:",
+    "protection_status": "Off",
+    "lock_status": "Unlocked",
+    "encryption_percentage": 0.0,
+    "encryption_method": "None",
+    "key_protector_types": [],
+    "recovery_protector_present": false
+  },
+  "certificates": {
+    "state": "AVAILABLE",
+    "store_results": [
+      {
+        "store": "Root",
+        "state": "AVAILABLE",
+        "enumerated_count": 77,
+        "relevant_count": 2,
+        "error_type": null
+      },
+      {
+        "store": "TrustedPublisher",
+        "state": "AVAILABLE",
+        "enumerated_count": 3,
+        "relevant_count": 2,
+        "error_type": null
+      },
+      {
+        "store": "My",
+        "state": "AVAILABLE",
+        "enumerated_count": 0,
+        "relevant_count": 0,
+        "error_type": null
+      }
+    ],
+    "normalization_error_count": 0,
+    "normalization_errors": [],
+    "record_limit": 100,
+    "records": [
+      {
+        "store": "Root",
+        "subject": "CN=Empire Earth Community, O=Empire Earth Community, L=Paris, S=Île-de-France, C=FR",
+        "issuer": "CN=Empire Earth Community, O=Empire Earth Community, L=Paris, S=Île-de-France, C=FR",
+        "thumbprint": "F8738C3549EF138F6F3B1777D4CC1ACF233DCD47",
+        "serial_number": "4B36BE10890C38D4",
+        "not_before": "2021-03-03T00:00:00.0000000Z",
+        "not_after": "2121-03-02T23:59:59.0000000Z",
+        "code_signing_eku_present": true,
+        "basic_constraints": {
+          "certificate_authority": false,
+          "has_path_length_constraint": false,
+          "path_length_constraint": null,
+          "critical": true
+        },
+        "self_signed": true,
+        "has_private_key": false
+      },
+      {
+        "store": "Root",
+        "subject": "CN=UTN-USERFirst-Object, OU=http://www.usertrust.com, O=The USERTRUST Network, L=Salt Lake City, S=UT, C=US",
+        "issuer": "CN=UTN-USERFirst-Object, OU=http://www.usertrust.com, O=The USERTRUST Network, L=Salt Lake City, S=UT, C=US",
+        "thumbprint": "E12DFB4B41D7D9C32B30514BAC1D81D8385E2D46",
+        "serial_number": "44BE0C8B500024B411D3362DE0B35F1B",
+        "not_before": "1999-07-09T18:31:20.0000000Z",
+        "not_after": "2019-07-09T18:40:36.0000000Z",
+        "code_signing_eku_present": true,
+        "basic_constraints": {
+          "certificate_authority": true,
+          "has_path_length_constraint": false,
+          "path_length_constraint": null,
+          "critical": true
+        },
+        "self_signed": true,
+        "has_private_key": false
+      },
+      {
+        "store": "TrustedPublisher",
+        "subject": "CN=\"OpenVPN Technologies, Inc.\", O=\"OpenVPN Technologies, Inc.\", L=Pleasanton, S=California, C=US",
+        "issuer": "CN=DigiCert Assured ID Code Signing CA-1, OU=www.digicert.com, O=DigiCert Inc, C=US",
+        "thumbprint": "5E66E0CA2367757E800E65B770629026E131A7DC",
+        "serial_number": "04D54DC0A2016B263EEEB255D321056E",
+        "not_before": "2013-08-13T00:00:00.0000000Z",
+        "not_after": "2016-09-02T12:00:00.0000000Z",
+        "code_signing_eku_present": true,
+        "basic_constraints": {
+          "certificate_authority": false,
+          "has_path_length_constraint": false,
+          "path_length_constraint": null,
+          "critical": true
+        },
+        "self_signed": false,
+        "has_private_key": false
+      },
+      {
+        "store": "TrustedPublisher",
+        "subject": "CN=Raspberry Pi Limited, O=Raspberry Pi Limited, S=Cambridgeshire, C=GB",
+        "issuer": "CN=Sectigo Public Code Signing CA R36, O=Sectigo Limited, C=GB",
+        "thumbprint": "58E5D577E99C1F0BD7580BB2E2887FD336D2E612",
+        "serial_number": "00C3A29A2F086621012983B4AFEDF1B501",
+        "not_before": "2024-09-03T00:00:00.0000000Z",
+        "not_after": "2027-09-03T23:59:59.0000000Z",
+        "code_signing_eku_present": true,
+        "basic_constraints": {
+          "certificate_authority": false,
+          "has_path_length_constraint": false,
+          "path_length_constraint": null,
+          "critical": true
+        },
+        "self_signed": false,
+        "has_private_key": false
+      }
+    ]
+  },
+  "signature_enforcement_conclusion": "TEST_SIGNING_CONFIGURED_FOR_NEXT_BOOT_EFFECTIVE_CURRENT_BOOT_STATE_INCONCLUSIVE_NOT_YET_LOADABLE",
+  "selected_outcome": "LOCAL_TEST_SIGNING_CONFIGURED_REBOOT_PENDING",
+  "next_task": "TASK 8I-P1B-LD-S1 — Create and freeze the self-test-signed local-development package",
+  "observer_mutation_count": 0,
+  "overall_lane_mutation_count": 1,
+  "query_counters": {
+    "elevation": 1,
+    "windows_identity": 1,
+    "secure_boot": 1,
+    "bcd_current": 1,
+    "bcd_bootmgr": 1,
+    "device_guard": 1,
+    "hvci_registry": 1,
+    "bitlocker": 1,
+    "certificate_store_root": 1,
+    "certificate_store_trusted_publisher": 1,
+    "certificate_store_my": 1,
+    "total": 11
+  },
+  "mutation_counters": {
+    "registry_write": 0,
+    "bcd_mutation": 0,
+    "secure_boot_mutation": 0,
+    "bitlocker_mutation": 0,
+    "certificate_mutation": 0,
+    "package_stage_or_install": 0,
+    "device_or_driver_query": 0,
+    "driver_load": 0,
+    "reboot_or_shutdown": 0,
+    "windows_mutation": 0,
+    "total": 0
+  },
+  "supersedes_observation_sha256": "255C874A774CF6492B4A70A99214988824351E738B9AC8D10443F59B441E31C3",
+  "superseded_outcome": "LOCAL_DEVELOPMENT_SIGNING_ROUTE_NOT_YET_DETERMINABLE",
+  "supersession_reason": "TARGETED_HOST_READINESS_OBSERVATION_REMEDIATION"
+}

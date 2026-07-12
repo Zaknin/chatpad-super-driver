@@ -1812,3 +1812,13 @@ TASK 4D independent strict read-only audit identified critical integrity failure
   incomplete runtime source hashing, and stale TASK 8G continuity documentation.
 - **Next task:** TASK 8H-2 — Repeated independent read-only audit of the
   remediated explicit one-shot live-execution authorization gate.
+## 2026-07-12 - Local-development signing host readiness
+
+- **Status:** `LOCAL_DEVELOPMENT_HOST_READINESS_OBSERVED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_HVCI_ACTIVE_PACKAGE_UNSIGNED_UNSTAGED_UNINSTALLED_UNLOADED`.
+- **Readiness:** `READY_FOR_SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_PREPARATION_ONLY`.
+- **Evidence:** `docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json`, 8,467 bytes, SHA-256 `019D59504588384DDD48B90B2315A261AE891030113C7953DF6EA2778F3E651C`.
+- **Host conclusions:** Secure Boot `DISABLED`; BitLocker protection `Off`; system volume `Unlocked`; HVCI/Memory Integrity active; BCD TESTSIGNING enabled. No reboot occurred after the operator's TESTSIGNING change, so current-boot effective Test Mode remains `NOT_CONCLUSIVELY_OBSERVED`.
+- **Package boundary:** the future SYS requires an embedded test signature. The canonical package remains unsigned, unstaged, uninstalled, and unloaded. Certificate creation and LocalMachine trust installation have not occurred.
+- **Operational boundary:** no device, driver-store, published-INF, candidate, service/filter, target ContainerId, binding, or native APPLY observation occurred. Observer mutations are zero; the overall lane records one operator-attributed BCD mutation. No live authorization phrase is active.
+- **Blocker:** `BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_CREATED_AND_CONFIGURED_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT`.
+- **Next:** TASK 8I-P1B-LD-S1 — Create and freeze the self-test-signed local-development package. Reboot is deliberately deferred until signing and the later trust/reboot plan are ready; do not disable HVCI.
