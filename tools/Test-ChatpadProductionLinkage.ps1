@@ -145,7 +145,7 @@ Assert-NoMatch $driverSource 'ChatpadKmdfRequestOwner(?:CreateBookkeepingSpinLoc
 $requiredLiveApis = @(
     'IoSetCompletionRoutine',
     'WdfIoTargetSendInternalIoctlOthersSynchronously',
-    'UsbBuildVendorRequest',
+    'URB_FUNCTION_CONTROL_TRANSFER',
     'UsbBuildInterruptOrBulkTransferRequest',
     'VhfReadReportSubmit',
     'IoCallDriver')

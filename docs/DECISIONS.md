@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-07-12 - Send activation as exact raw setup-packet control URBs
+
+**Decision:** Submit each activation request as
+`URB_FUNCTION_CONTROL_TRANSFER` with the authoritative eight setup bytes copied
+verbatim into `UrbControlTransfer.SetupPacket`. Continue sending through the
+next-lower WDF I/O target without creating a WDF USB target or selecting a USB
+configuration.
+
+**Rationale:** Live versions 1.0.5-1.0.7 used the specialized
+`URB_FUNCTION_VENDOR_DEVICE` representation and every attempted request,
+including the step-4 `09 00` activation write, returned zero-byte
+`USBD_STATUS_STALL_PID`. The retained working driver instead copied the raw
+eight-byte setup packet into a generic control transfer. Version 1.0.7 proves
+that relaxing probe policy cannot correct the write transport.
+
+**Alternatives rejected:** Accepting a failed activation write; ignoring all
+stalls; reselecting xusb22's configuration; using `WdfUsbTargetDevice`; retrying
+automatically; replacing xusb22; or changing the authoritative setup bytes.
+
+**Consequences:** Diagnostic transport architecture becomes 3. Request bytes,
+timeouts, accepted pre-write stall policy, strict write/final-probe policy,
+fail-open Xbox behavior, and interface-2 input handling remain unchanged. Real
+hardware must prove whether the raw control-transfer representation is accepted.
+
 ## 2026-07-12 - Treat the initial activation read probe stall as non-fatal
 
 **Decision:** In addition to the three legacy zero-length preamble stalls,

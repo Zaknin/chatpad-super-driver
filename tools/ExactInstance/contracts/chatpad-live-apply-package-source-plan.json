@@ -9,7 +9,7 @@
   "driver_binary_filename": "ChatpadFilter.sys",
   "canonical_inf": {
     "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf",
-    "sha256": "3D63E4A86351D89D4FF16E302A026FCB01787298AE0659E105ED4521134869C0"
+    "sha256": "96222409A84EC76BC4EE9C447F181676D1147EA4062DA824DB7B8AB37F8BA642"
   },
   "catalog_filename": "ChatpadFilterExtension.cat",
   "architecture": "AMD64",
@@ -55,7 +55,7 @@
     { "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.h", "sha256": "880549AA06A33EC33216F361934CD6BBDEF2CE404C05993731A596836EE1380B" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.c", "sha256": "0579EE0368221792663E74FE67A153CE2D8FB27B38B2EDCB27867D7399326F74" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.h", "sha256": "FCE07CF792033894C8E5229F368D321CF21C967F004FB06A2E81C54D1EE94406" },
-    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "E546A975F19080CAD46EC9EFB6B72C19E0865B5034030733BFC5215F975A6FD9" },
+    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "005C5379B9F8205E9D6721CA5AA35F474AD27DDF6A91198376C18C1F1B8F5306" },
     { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.h", "sha256": "580F85B79442D39B1D4C0798AE09E8FC28294C31620FCC822F734504B73DCD1C" },
     { "path": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h", "sha256": "85A76126E95A0CCD655823D56C7EA04CB26EB8F5D3644054CB70AA7490A1B9BB" },
     { "path": "src/driver/ChatpadFilter/device.c", "sha256": "151E90104450FC9A0840A12186F6F0B60D456F9DFB918B1071209129EF3CB683" },
@@ -87,14 +87,14 @@
   ],
   "package_source_inventory": [
     { "role": "production driver project", "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "FB790116F9F37935D7AF575024C5CC732ABA4682BD1E68F6467C9DAAB85D8AE6" },
-    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "3D63E4A86351D89D4FF16E302A026FCB01787298AE0659E105ED4521134869C0" }
+    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "96222409A84EC76BC4EE9C447F181676D1147EA4062DA824DB7B8AB37F8BA642" }
   ],
   "package_file_inventory": [
     { "filename": "ChatpadFilterExtension.inf", "role": "device-specific extension INF", "catalog_covered": true },
     { "filename": "ChatpadFilter.sys", "role": "KMDF lower-filter binary produced by the production project", "catalog_covered": true }
   ],
   "version_policy": {
-    "source_driver_ver": "07/12/2026,1.0.7.0",
+    "source_driver_ver": "07/12/2026,1.0.8.0",
     "date_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "version_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "generated_from_clock": false,

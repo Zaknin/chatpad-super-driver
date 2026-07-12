@@ -129,7 +129,7 @@ static void ChatpadLiveOpenDiagnostics(PCHATPAD_LIVE_RUNTIME runtime)
     }
     runtime->DiagnosticKey = diagnosticKey;
     ChatpadLiveDiagnosticUlong(runtime, L"SchemaVersion", CHATPAD_RUNTIME_DIAGNOSTIC_SCHEMA);
-    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 2u);
+    ChatpadLiveDiagnosticUlong(runtime, L"TransportArchitecture", 3u);
     ChatpadLiveDiagnosticUlong(runtime, L"DeviceAddEntered", 1u);
 }
 
@@ -612,22 +612,33 @@ static NTSTATUS ChatpadLiveSendActivationStep(
             step->Request.OutboundPayload,
             step->Request.OutboundPayloadLength);
     }
-    UsbBuildVendorRequest(
-        &urb,
-        URB_FUNCTION_VENDOR_DEVICE,
-        sizeof(struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST),
-        transferFlags,
-        0u,
-        step->Request.RawRequest,
-        step->Request.RawValue,
-        step->Request.RawIndex,
-        step->Request.RawLength != 0u ? buffer : NULL,
-        NULL,
-        step->Request.RawLength,
-        NULL);
+    urb.UrbControlTransfer.Hdr.Length =
+        (USHORT)sizeof(struct _URB_CONTROL_TRANSFER);
+    urb.UrbControlTransfer.Hdr.Function = URB_FUNCTION_CONTROL_TRANSFER;
+    urb.UrbControlTransfer.PipeHandle = NULL;
+    urb.UrbControlTransfer.TransferFlags = transferFlags;
+    urb.UrbControlTransfer.TransferBufferLength = step->Request.RawLength;
+    urb.UrbControlTransfer.TransferBuffer =
+        step->Request.RawLength != 0u ? buffer : NULL;
+    urb.UrbControlTransfer.TransferBufferMDL = NULL;
+    urb.UrbControlTransfer.UrbLink = NULL;
+    urb.UrbControlTransfer.SetupPacket[0] = step->Request.RawBmRequestType;
+    urb.UrbControlTransfer.SetupPacket[1] = step->Request.RawRequest;
+    urb.UrbControlTransfer.SetupPacket[2] =
+        (UCHAR)(step->Request.RawValue & 0x00FFu);
+    urb.UrbControlTransfer.SetupPacket[3] =
+        (UCHAR)((step->Request.RawValue >> 8) & 0x00FFu);
+    urb.UrbControlTransfer.SetupPacket[4] =
+        (UCHAR)(step->Request.RawIndex & 0x00FFu);
+    urb.UrbControlTransfer.SetupPacket[5] =
+        (UCHAR)((step->Request.RawIndex >> 8) & 0x00FFu);
+    urb.UrbControlTransfer.SetupPacket[6] =
+        (UCHAR)(step->Request.RawLength & 0x00FFu);
+    urb.UrbControlTransfer.SetupPacket[7] =
+        (UCHAR)((step->Request.RawLength >> 8) & 0x00FFu);
     status = ChatpadLiveSubmitUrbSynchronously(runtime, &urb, CHATPAD_CONTROL_TIMEOUT_MS);
     *usbdStatus = urb.UrbHeader.Status;
-    *bytesTransferred = urb.UrbControlVendorClassRequest.TransferBufferLength;
+    *bytesTransferred = urb.UrbControlTransfer.TransferBufferLength;
     if (NT_SUCCESS(status) && !USBD_SUCCESS(*usbdStatus)) {
         status = STATUS_UNSUCCESSFUL;
     }
@@ -1024,7 +1035,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x0107;
+        vhfConfig.VersionNumber = 0x0108;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {

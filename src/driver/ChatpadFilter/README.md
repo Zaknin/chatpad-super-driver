@@ -32,9 +32,11 @@ Interface 0 and all normal controller traffic remain owned by `xusb22`.
 After PrepareHardware creates the USB target and the parent configuration URB
 has established interface 2, D0 entry queues one passive-level activation work
 item. An interlocked per-D0 consumption gate prevents duplicate activation.
-The worker sends the six authoritative vendor control transfers in exact
-sequence, with a one-second timeout for each transfer and the protocol's 12 ms
-post-transfer delay. The first three legacy `40/A9` preamble requests are
+The worker sends the six authoritative vendor control transfers as generic
+raw-setup control URBs, matching the retained working driver's transfer form
+without selecting or claiming the xusb22-owned configuration. Each transfer has
+a one-second timeout and the protocol's 12 ms post-transfer delay. The first
+three legacy `40/A9` preamble requests are
 required even though the controller is documented and live-observed to stall
 them. The first two-byte read probe is also live-observed to stall before the
 activation write. Only a zero-byte `USBD_STATUS_STALL_PID` on those exact four
