@@ -1,45 +1,45 @@
 # Next Task
 
-## Exact current state
+## TASK 8I-P1B-LD-S2 — Independent signed-package audit
 
-- Branch: `feature/native-adapter-local-host-readiness-observation`.
-- Starting commit for continuation: the pushed commit with parent `c70d1b94c9fdc14de598df8326b6e0e912dc811d` and subject `docs: record local driver signing host readiness`; derive its exact hash from Git.
-- Status: `LOCAL_DEVELOPMENT_HOST_READINESS_OBSERVED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_HVCI_ACTIVE_PACKAGE_UNSIGNED_UNSTAGED_UNINSTALLED_UNLOADED`.
-- Readiness: `READY_FOR_SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_PREPARATION_ONLY`.
-- Host evidence: `docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json`, 8,467 bytes, SHA-256 `019D59504588384DDD48B90B2315A261AE891030113C7953DF6EA2778F3E651C`.
-- Secure Boot is disabled; BitLocker protection is off; HVCI is active. TESTSIGNING is configured in BCD, but no reboot occurred after configuration and effective current-boot Test Mode remains `NOT_CONCLUSIVELY_OBSERVED`.
-- Canonical package remains unsigned, unstaged, uninstalled, and unloaded. No test certificate or trust installation exists.
-- Blocker: `BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_CREATED_AND_CONFIGURED_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT`.
+### Exact current state
 
-## Next recommended objective
+- Branch `feature/native-adapter-self-test-signed-package`; required starting commit is the single `build: finalize recovered self-test-signed package` child of `f0ca3a0e2c73aa1309812f94721f190fa7af835d` published on that branch.
+- The ignored final package contains exact `ChatpadFilter.sys`, `ChatpadFilterExtension.cat`, and `ChatpadFilterExtension.inf`. The signed catalog has exact required casing, one signer, no timestamp, and exact INF/SYS membership.
+- The public certificate is tracked; the private key remains only in the untrusted CurrentUser Personal certificate store and was not exported.
+- Final evidence and contract record the unavailable generated-CAT pre-sign ordinary hash as `NOT_AVAILABLE` with reconstruction false.
+- Readiness is `READY_FOR_SELF_TEST_SIGNED_PACKAGE_INDEPENDENT_AUDIT_ONLY`; staging, installation, loading, reboot, trust installation, device access, and native execution remain prohibited.
 
-TASK 8I-P1B-LD-S1 — Create and freeze the self-test-signed local-development package.
+### Objective
 
-## Preconditions
+Independently re-derive and audit the final signed-package identities, CAT CMS/Authenticode state and membership, public-CER metadata, evidence/contract agreement, exact cumulative counters, recovery-only source boundary, manifest binding, and the explicit pre-sign-identity limitation.
 
-- Require the exact pushed O1B commit, clean worktree, upstream `0/0`, and matching remote identity.
-- Preserve the canonical unsigned INF/SYS/CAT inputs and their recorded hashes.
-- Use the accepted host-readiness evidence as the only host-fact source; do not repeat host observation.
-- Define fixed certificate identity, bounded creation/trust scope, embedded SYS signing, catalog regeneration/signing, and deterministic package evidence before any reboot or installation.
+### Preconditions
 
-## Safety restrictions
+- Verify exact branch, commit subject, parent `f0ca3a0e2c73aa1309812f94721f190fa7af835d`, changed-path inventory, and clean tracked state.
+- Treat the final commit and filesystem contents as source of truth; do not trust this completion report without re-derivation.
+- Require exactly one matching CurrentUser Personal certificate and no trusted-store copy before making any current certificate-state claim.
 
-- Do not reboot during package preparation. Do not change or repeat BCD configuration, disable HVCI, stage/install the INF, query devices or driver store, load/bind the driver, or execute native APPLY.
-- Certificate creation, private-key handling, trust installation, SYS/CAT signing, or other host mutation requires exact separate authorization if not explicitly included in the S1 task.
-- Keep local installation method, published INF, driver-store package, candidate fields, target device, service/filter result, rollback identity, and restoration verification unobserved.
+### Safety restrictions
 
-## Acceptance criteria
+- Audit only: no file edits, staging, commit, push, catalog regeneration, Inf2Cat, signing, certificate/private-key mutation or export, trust installation, BCD/security change, reboot, package staging/install/load, device/driver-store/candidate/service query, SetupAPI/Newdev invocation, native execution, binding, or live APPLY.
+- Do not reconstruct or fabricate the unavailable raw pre-sign CAT hash.
+- Do not treat TESTSIGNING configuration as effective current-boot Test Mode before the separately controlled reboot and verification task.
 
-- Freeze an internally consistent self-test-signed local-development package plan and exact package identities while retaining HVCI compatibility and the embedded SYS signature requirement.
-- Preserve the current-boot/next-boot distinction: configured TESTSIGNING is not yet effective until a later controlled reboot and verification.
-- Do not claim readiness for trust installation, reboot verification, staging, installation, loading, binding, or native APPLY.
+### Acceptance criteria
 
-## Inspect first
+- Independently confirm every final file identity, signature/signer/timestamp fact, catalog member, public certificate field, evidence/contract/manifest binding, and recovery counter.
+- Confirm CAT bytes and signature were unchanged by the two-step case-only rename.
+- Confirm the limitation `RAW_PRE_SIGN_CATALOG_BYTE_IDENTITY_CANNOT_BE_INDEPENDENTLY_REPRODUCED_FROM_RETAINED_STATE` is explicit and no unsupported pre-sign hash exists.
+- Report PASS/FAIL without modifying the repository. A later separately authorized task may design certificate trust, reboot, and post-boot verification only after S2 passes.
+
+### Inspect first
 
 ```powershell
 git branch --show-current
-git rev-parse HEAD
-git status --short --branch
-git ls-remote origin refs/heads/feature/native-adapter-local-host-readiness-observation
-Get-FileHash docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json -Algorithm SHA256
+git rev-parse HEAD HEAD^
+git show -s --format='%H%n%P%n%s' HEAD
+git diff-tree --no-commit-id --name-status -r HEAD
+git status --porcelain=v1 --untracked-files=all
+pwsh -NoProfile -File .\tools\Test-ChatpadLocalDevelopmentTestSigning.ps1
 ```

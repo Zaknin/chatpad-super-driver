@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-07-12 - Preserve the unavailable generated-catalog pre-sign identity
+
+**Decision:** Finalize the self-test-signed local-development package from the
+retained signed catalog by a byte-preserving, two-step case-only rename. Record
+the generated catalog's ordinary pre-sign identity as
+`NOT_RETAINED_BEFORE_IN_PLACE_SIGNING` / `NOT_AVAILABLE`, with reconstruction
+false, while binding the conclusively retained Inf2Cat result, signed CAT
+ordinary and Authenticode identities, signer, timestamp state, and members.
+
+**Rationale:** S1R1 signed the newly generated catalog in place before its raw
+pre-sign ordinary hash was persisted. Regeneration would create a different
+artifact and exceed the one-generation/one-signing authorization; guessing or
+back-solving a hash would be unsupported. The retained signed CAT and logs are
+sufficient to prove the final artifact, but not the missing prior byte identity.
+
+**Alternatives rejected:** Re-running Inf2Cat, re-signing either binary,
+fabricating or reconstructing the pre-sign hash, silently omitting the
+limitation, creating another certificate, or treating a filename case repair
+as permission for package installation or live execution.
+
+**Consequences:** Independent audit must accept the explicit provenance gap as
+a bounded limitation or fail the package; it must not claim the raw pre-sign CAT
+identity is known. The final signed derivative is audit-ready only. The
+certificate remains untrusted, TESTSIGNING is not effective until reboot, and
+staging, installation, loading, device access, and native APPLY remain blocked.
+
 ## 2026-07-12 - Prepare the self-test-signed package before the deferred reboot
 
 **Decision:** Accept the conclusive read-only host observation as

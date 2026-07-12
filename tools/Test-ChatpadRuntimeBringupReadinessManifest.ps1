@@ -1303,7 +1303,7 @@ $entries=@($manifest.entries)
 $repoRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $defects=[ordered]@{missing=0;duplicate_id=@($entries|Group-Object id|Where-Object Count -gt 1).Count;duplicate_path=@($entries|Group-Object relative_path|Where-Object Count -gt 1).Count;hash=0;size=0;hash_policy=0;state=0;containment=0;declared_result=0;top_level=0;task_8e=0;task_8f=0;task_8f_r1=0;task_8h=0;task_8i_package=0;host_readiness=0;compile_validation=0;metadata_review_gate=0;fixture_totals=0;accounting=0;observer_provenance=0;evidence_binding=0;psscriptanalyzer=0;identity=0;unsupported_pass=0;powershell_inventory=0;sample_validation=0;lifecycle=0;malformed_totality=0;stop_linkage=0}
 $hostEntry=@($entries|Where-Object{$_.id-ceq'tracked-docs-evidence-local-development-host-readiness-observation-task-8i-p1b-ld-o1-json'})
-if($entries.Count-ne58-or$hostEntry.Count-ne1-or$hostEntry[0].relative_path-cne'docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json'-or[long]$hostEntry[0].raw_working_tree_byte_size-ne8467-or$hostEntry[0].raw_working_tree_sha256-cne'019D59504588384DDD48B90B2315A261AE891030113C7953DF6EA2778F3E651C'){$defects.host_readiness++}
+if($entries.Count-ne64-or$hostEntry.Count-ne1-or$hostEntry[0].relative_path-cne'docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json'-or[long]$hostEntry[0].raw_working_tree_byte_size-ne8467-or$hostEntry[0].raw_working_tree_sha256-cne'019D59504588384DDD48B90B2315A261AE891030113C7953DF6EA2778F3E651C'){$defects.host_readiness++}
 $hostSection=Get-ChatpadTask8EValue $manifest 'local_development_host_readiness'
 $hostEvidencePath=Join-Path $repoRoot 'docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json'
 if($null-eq$hostSection-or-not(Test-Path -LiteralPath $hostEvidencePath -PathType Leaf)){$defects.host_readiness++}else{
@@ -1390,7 +1390,7 @@ foreach($entry in $entries){
 }
 $manifestPolicy=if($null-ne$manifest.PSObject.Properties['identity_policy']){$manifest.identity_policy}else{$null}
 if($null-eq$manifestPolicy-or[string]$manifestPolicy.schema_version-ne'chatpad-evidence-file-identity-policy-v1'-or[string]$manifestPolicy.tracked_text_input_policy-ne'canonical_lf_text'-or[string]$manifestPolicy.binary_output_policy-ne'raw_file_bytes'){$defects.hash_policy++}
-if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.real_artifact_static_metadata_review_completed-ne$true-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_CREATED_AND_CONFIGURED_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_CREATED_AND_CONFIGURED_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
+if($manifest.schema_version-ne'chatpad-runtime-bringup-readiness-manifest-v4'-or$manifest.real_artifact_static_metadata_review_completed-ne$true-or$manifest.framework_status-ne'PASS'-or$manifest.live_installation_readiness-ne'BLOCKED'-or$manifest.current_gate-ne'BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_INDEPENDENTLY_AUDITED_CERTIFICATE_NOT_TRUSTED_AND_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT'-or$manifest.capability_blocker-ne'BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_INDEPENDENTLY_AUDITED_CERTIFICATE_NOT_TRUSTED_AND_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT'-or$manifest.live_adapter_status-ne'SCAFFOLD_NON_EXECUTING'-or$manifest.live_binding_authorized-ne$false-or$manifest.manifest_generation_mode-notin@('NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT','STANDARD_READINESS_RESULT')){$defects.top_level++}
 if($NoArtifactOpenDesignGateAudit-and$manifest.manifest_generation_mode-ne'NO_ARTIFACT_OPEN_DESIGN_GATE_AUDIT'){$defects.top_level++}
 $task8EValidation=Test-ChatpadTask8EManifestEvidence -RepositoryRoot $root -Manifest $manifest
 $defects.task_8e=[int]$task8EValidation.defect_count
@@ -1404,6 +1404,25 @@ $task8HValidation=Test-ChatpadTask8HManifestEvidence -RepositoryRoot $root -Mani
 $defects.task_8h=[int]$task8HValidation.defect_count
 $task8IPackageValidation=Test-ChatpadUnsignedPackageManifestEvidence -RepositoryRoot $root -Manifest $manifest
 $defects.task_8i_package=[int]$task8IPackageValidation.defect_count
+$signedPackageProperty=$manifest.PSObject.Properties['self_test_signed_local_development_package']
+if($null-eq$signedPackageProperty-or$null-eq$signedPackageProperty.Value-or$signedPackageProperty.Value-is[array]){$defects.task_8i_package++}
+else{
+    $signedPackage=$signedPackageProperty.Value
+    try{
+        $evidencePath=Join-Path $root ([string]$signedPackage.evidence_path)
+        $contractPath=Join-Path $root ([string]$signedPackage.contract_path)
+        $evidence=Get-Content -LiteralPath $evidencePath -Raw|ConvertFrom-Json
+        $contract=Get-Content -LiteralPath $contractPath -Raw|ConvertFrom-Json
+        if((Get-Item -LiteralPath $evidencePath).Length-ne[long]$signedPackage.evidence_byte_size-or(Get-FileHash -LiteralPath $evidencePath -Algorithm SHA256).Hash-cne[string]$signedPackage.evidence_sha256){$defects.task_8i_package++}
+        if((Get-Item -LiteralPath $contractPath).Length-ne[long]$signedPackage.contract_byte_size-or(Get-FileHash -LiteralPath $contractPath -Algorithm SHA256).Hash-cne[string]$signedPackage.contract_sha256){$defects.task_8i_package++}
+        foreach($binding in @(@('module_path','module_sha256'),@('invocation_path','invocation_sha256'),@('validator_path','validator_sha256'))){if((Get-FileHash -LiteralPath (Join-Path $root ([string]$signedPackage.($binding[0]))) -Algorithm SHA256).Hash-cne[string]$signedPackage.($binding[1])){$defects.task_8i_package++}}
+        $cerPath=Join-Path $root ([string]$signedPackage.public_cer_path)
+        if((Get-Item -LiteralPath $cerPath).Length-ne[long]$signedPackage.public_cer_byte_size-or(Get-FileHash -LiteralPath $cerPath -Algorithm SHA256).Hash-cne[string]$signedPackage.public_cer_sha256){$defects.task_8i_package++}
+        $schemas=@('chatpad-self-test-signed-local-development-package-v1','chatpad-live-apply-self-test-signed-package-plan-v1');$schemaIndex=0
+        foreach($record in @($evidence,$contract)){if($record.schema-cne$schemas[$schemaIndex++]-or$record.status-cne$signedPackage.status-or$record.readiness-cne$signedPackage.readiness-or$record.blocker-cne$signedPackage.blocker-or$record.next_task-cne$signedPackage.next_task-or$record.generated_unsigned_catalog_pre_sign_identity.state-cne'NOT_RETAINED_BEFORE_IN_PLACE_SIGNING'-or$record.generated_unsigned_catalog_pre_sign_identity.ordinary_sha256-cne'NOT_AVAILABLE'-or$record.generated_unsigned_catalog_pre_sign_identity.reconstruction_attempted-ne$false-or$record.cumulative_mutation_counters.sys_signing-ne1-or$record.cumulative_mutation_counters.valid_three_argument_inf2cat_invocation-ne1-or$record.cumulative_mutation_counters.cat_signing-ne1-or$record.certificate_not_trusted-ne$true-or$record.not_staged-ne$true-or$record.not_installed-ne$true-or$record.not_loaded-ne$true){$defects.task_8i_package++}}
+        if($signedPackage.schema-cne'chatpad-self-test-signed-local-development-package-v1'-or$signedPackage.status-cne'SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_FINALIZED_FROM_CONTROLLED_POST_CAT_RECOVERY_CERTIFICATE_NOT_TRUSTED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_PACKAGE_NOT_STAGED_NOT_INSTALLED_NOT_LOADED'-or$signedPackage.readiness-cne'READY_FOR_SELF_TEST_SIGNED_PACKAGE_INDEPENDENT_AUDIT_ONLY'-or$signedPackage.generated_unsigned_catalog_pre_sign_identity_state-cne'NOT_RETAINED_BEFORE_IN_PLACE_SIGNING'-or$signedPackage.generated_unsigned_catalog_pre_sign_ordinary_sha256-cne'NOT_AVAILABLE'-or$signedPackage.pre_sign_identity_reconstruction_attempted-ne$false-or$signedPackage.sys_signing_count-ne1-or$signedPackage.valid_three_argument_inf2cat_invocation_count-ne1-or$signedPackage.catalog_signing_count-ne1-or$signedPackage.certificate_trusted-ne$false-or$signedPackage.package_staged-ne$false-or$signedPackage.package_installed-ne$false-or$signedPackage.driver_loaded-ne$false){$defects.task_8i_package++}
+    }catch{$defects.task_8i_package++}
+}
 $executionDesignProperty=$manifest.PSObject.Properties['native_adapter_execution_design_gate']
 if($null-eq$executionDesignProperty-or$null-eq$executionDesignProperty.Value-or$executionDesignProperty.Value-is[array]){
     $defects.top_level++

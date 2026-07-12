@@ -1,5 +1,16 @@
 # Controlled Windows 11 Runtime Bring-Up Readiness
 
+## TASK 8I-P1B-LD-S1R2 - Finalized self-test-signed package (2026-07-12)
+
+- **Status:** `SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_FINALIZED_FROM_CONTROLLED_POST_CAT_RECOVERY_CERTIFICATE_NOT_TRUSTED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_PACKAGE_NOT_STAGED_NOT_INSTALLED_NOT_LOADED`; readiness is `READY_FOR_SELF_TEST_SIGNED_PACKAGE_INDEPENDENT_AUDIT_ONLY`.
+- **Package:** exact INF 1,581 bytes / `0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC`; embedded-signed SYS 42,856 bytes / `B1FCF99F0B7631E83397396024E91213A4FCF9B145CCC97E01E6684562DC7190`; signed `ChatpadFilterExtension.cat` 2,961 bytes / `B34C084E60020B401518A9259E476AFC22980DC2B51311EE053F1FF410DDCFF4`, Authenticode SHA-256 `672EA53BEC871D2948C4C5D81BB0473450897CCA0070DE1D3D017A554857DFE1`.
+- **Signer:** one untrusted local-development certificate, thumbprint `885ADDC8018AC58E19B14668ACDAC9072BB6AE15`; no timestamp. The tracked 1,104-byte public CER has SHA-256 `300238DB21F1ECD2F2C2E9F3A03EFF0147CBC419D474B1B3B89433569D5E6C96` and no private key.
+- **Recovery:** the retained signed lowercase catalog entry was renamed through `ChatpadFilterExtension.cat.casefix.tmp` to exact casing. Bytes, CMS signature, signer, timestamp state, and exact INF/SYS membership were unchanged. S1R2 performed zero Inf2Cat, signing, and private-key operations.
+- **Limitation:** generated unsigned CAT pre-sign identity is `NOT_RETAINED_BEFORE_IN_PLACE_SIGNING` / `NOT_AVAILABLE`; reconstruction was not attempted. `RAW_PRE_SIGN_CATALOG_BYTE_IDENTITY_CANNOT_BE_INDEPENDENTLY_REPRODUCED_FROM_RETAINED_STATE` is mandatory audit context.
+- **Safety:** certificate trust was not installed; the configured TESTSIGNING change is still reboot-pending; no reboot, package staging/install/load, device/driver-store/candidate/service query, SetupAPI/Newdev invocation, native execution, binding, or live APPLY occurred.
+- **Blocker:** `BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_INDEPENDENTLY_AUDITED_CERTIFICATE_NOT_TRUSTED_AND_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT`.
+- **Next task:** TASK 8I-P1B-LD-S2 — independent read-only audit of the finalized self-test-signed package and its explicit provenance limitation.
+
 ## TASK 8I-P1B-LD-R1 - Local-development package-route contract (2026-07-11)
 
 - **Objective:** `LOCAL_DEVELOPMENT_ONLY` controlled installation and use on the operator's own Windows 11 development machine. WHCP/HLK, Partner Center, Windows Update, retail/commercial distribution, and Microsoft production signing are optional future distribution work and `OUT_OF_SCOPE_FOR_CURRENT_LOCAL_DEVELOPMENT_OBJECTIVE`.

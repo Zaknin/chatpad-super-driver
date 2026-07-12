@@ -1,0 +1,278 @@
+{
+  "schema": "chatpad-live-apply-self-test-signed-package-plan-v1",
+  "status": "SELF_TEST_SIGNED_LOCAL_DEVELOPMENT_PACKAGE_FINALIZED_FROM_CONTROLLED_POST_CAT_RECOVERY_CERTIFICATE_NOT_TRUSTED_TESTSIGNING_CONFIGURED_REBOOT_PENDING_PACKAGE_NOT_STAGED_NOT_INSTALLED_NOT_LOADED",
+  "readiness": "READY_FOR_SELF_TEST_SIGNED_PACKAGE_INDEPENDENT_AUDIT_ONLY",
+  "starting_commit": "f0ca3a0e2c73aa1309812f94721f190fa7af835d",
+  "o1_audit_closure": {
+    "result": "TASK 8I-P1B-LD-O1C PASS",
+    "lane": "TASK 8I-P1B-LD-O1 host-readiness observation lane is closed."
+  },
+  "o1_evidence": {
+    "path": "docs/evidence/local-development-host-readiness-observation-task-8i-p1b-ld-o1.json",
+    "byte_size": 8467,
+    "sha256": "019D59504588384DDD48B90B2315A261AE891030113C7953DF6EA2778F3E651C"
+  },
+  "authorizations": [
+    {
+      "task": "S1",
+      "state": "CONSUMED"
+    },
+    {
+      "task": "S1R1",
+      "state": "CONSUMED"
+    },
+    {
+      "task": "S1R2",
+      "state": "CONSUMED"
+    }
+  ],
+  "certificate": {
+    "subject": "CN=Chatpad Super Driver Local Development Test Signing",
+    "issuer": "CN=Chatpad Super Driver Local Development Test Signing",
+    "serial_number": "555B00DC46D24680444994B5A16E6E7C",
+    "thumbprint": "885ADDC8018AC58E19B14668ACDAC9072BB6AE15",
+    "not_before_utc": "2026-07-12T01:27:44.0000000Z",
+    "not_after_utc": "2029-07-12T01:37:44.0000000Z",
+    "key_algorithm": "RSA",
+    "key_length": 3072,
+    "signature_hash": "SHA-256",
+    "eku": "1.3.6.1.5.5.7.3.3",
+    "store": "Cert:\\CurrentUser\\My",
+    "has_private_key": true,
+    "private_key_exportable": false,
+    "non_exportable_verification_basis": "S1_FIXED_WORKFLOW_VALIDATED_BEFORE_RECORDED_FAILURE_AND_NO_SUBSEQUENT_KEY_POLICY_MUTATION",
+    "trusted": false
+  },
+  "public_cer": {
+    "identity": {
+      "path": "tools/ExactInstance/certificates/ChatpadLocalDevelopmentTestSigning.cer",
+      "byte_size": 1104,
+      "sha256": "300238DB21F1ECD2F2C2E9F3A03EFF0147CBC419D474B1B3B89433569D5E6C96"
+    },
+    "subject": "CN=Chatpad Super Driver Local Development Test Signing",
+    "issuer": "CN=Chatpad Super Driver Local Development Test Signing",
+    "serial_number": "555B00DC46D24680444994B5A16E6E7C",
+    "thumbprint": "885ADDC8018AC58E19B14668ACDAC9072BB6AE15",
+    "not_before_utc": "2026-07-12T01:27:44.0000000Z",
+    "not_after_utc": "2029-07-12T01:37:44.0000000Z",
+    "key_algorithm": "RSA",
+    "key_length": 3072,
+    "eku": "1.3.6.1.5.5.7.3.3",
+    "has_private_key": false
+  },
+  "canonical_unsigned": {
+    "inf": {
+      "byte_size": 1581,
+      "sha256": "0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC"
+    },
+    "sys": {
+      "byte_size": 40960,
+      "sha256": "E4E7BCA837F6B0C662A24CFDDC260D781FDA85E0B37CAE470D65A9716DB174BB"
+    },
+    "cat": {
+      "byte_size": 1202,
+      "sha256": "6F0ABF84AE68010008A0360D4DDF716E644DD8D63E669F3AA96F27047EF613FD"
+    }
+  },
+  "partial_states": [
+    {
+      "task": "S1",
+      "path": "artifacts/task-8i-p1b-ld-s1-self-test-signed-package/logs/partial-state.json",
+      "byte_size": 1134,
+      "sha256": "1ECA020209770FA84EF9EDB2FD5B17318304A93134F382654F5A71A9A3C49C61",
+      "failure": "MALFORMED_SINGLE_ARGUMENT_INF2CAT_EXIT_MINUS_ONE"
+    },
+    {
+      "task": "S1R1",
+      "path": "artifacts/task-8i-p1b-ld-s1-self-test-signed-package/logs/remediation-partial-state.json",
+      "byte_size": 3366,
+      "sha256": "A8262051FE1248E2E027EF1CE73FD6397849CA46921F7116190EF6D11CF234D9",
+      "failure": "LOWERCASE_CAT_FINAL_INVENTORY_MISMATCH"
+    }
+  ],
+  "corrected_inf2cat_record": {
+    "argument_count": 3,
+    "argument_classifications": [
+      "driver-directory",
+      "target-os",
+      "verbose-mode"
+    ],
+    "exit_code": 0,
+    "warning_count": 0,
+    "error_count": 0,
+    "valid_invocation_count": 1
+  },
+  "signed_sys": {
+    "identity": {
+      "path": "artifacts/task-8i-p1b-ld-s1-self-test-signed-package/final/ChatpadFilter.sys",
+      "byte_size": 42856,
+      "sha256": "B1FCF99F0B7631E83397396024E91213A4FCF9B145CCC97E01E6684562DC7190"
+    },
+    "authenticode_sha256": "7CC0E1F59375E0C34DAAE9543385AE1FBD6CFC04E5A8B0885167D704C9515F8F",
+    "signer_thumbprint": "885ADDC8018AC58E19B14668ACDAC9072BB6AE15",
+    "signer_count": 1,
+    "timestamp_count": 0,
+    "total_signing_count": 1,
+    "resigned_in_s1r2": false
+  },
+  "signed_catalog": {
+    "identity": {
+      "path": "artifacts/task-8i-p1b-ld-s1-self-test-signed-package/final/ChatpadFilterExtension.cat",
+      "byte_size": 2961,
+      "sha256": "B34C084E60020B401518A9259E476AFC22980DC2B51311EE053F1FF410DDCFF4"
+    },
+    "authenticode_sha256": "672EA53BEC871D2948C4C5D81BB0473450897CCA0070DE1D3D017A554857DFE1",
+    "signer_thumbprint": "885ADDC8018AC58E19B14668ACDAC9072BB6AE15",
+    "signer_count": 1,
+    "timestamp_attribute_count": 0,
+    "total_signing_count": 1,
+    "resigned_in_s1r2": false,
+    "members": [
+      {
+        "filename": "ChatpadFilterExtension.inf",
+        "ordinary_sha256": "0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC",
+        "catalog_sha1": "42D5B56D27ECCF7CA867AB85492EEC95CE104033"
+      },
+      {
+        "filename": "ChatpadFilter.sys",
+        "ordinary_sha256": "B1FCF99F0B7631E83397396024E91213A4FCF9B145CCC97E01E6684562DC7190",
+        "authenticode_sha256": "7CC0E1F59375E0C34DAAE9543385AE1FBD6CFC04E5A8B0885167D704C9515F8F",
+        "catalog_sha1": "0B227E9A0F83C61FEBE3645E9D1284D097362826"
+      }
+    ]
+  },
+  "case_correction": {
+    "before_name": "chatpadfilterextension.cat",
+    "temporary_name": "ChatpadFilterExtension.cat.casefix.tmp",
+    "after_name": "ChatpadFilterExtension.cat",
+    "rename_steps": 2,
+    "ordinary_sha256_before": "B34C084E60020B401518A9259E476AFC22980DC2B51311EE053F1FF410DDCFF4",
+    "ordinary_sha256_after": "B34C084E60020B401518A9259E476AFC22980DC2B51311EE053F1FF410DDCFF4",
+    "authenticode_sha256_before": "672EA53BEC871D2948C4C5D81BB0473450897CCA0070DE1D3D017A554857DFE1",
+    "authenticode_sha256_after": "672EA53BEC871D2948C4C5D81BB0473450897CCA0070DE1D3D017A554857DFE1",
+    "bytes_unchanged": true,
+    "signature_unchanged": true,
+    "temporary_path_retained": false,
+    "lowercase_entry_retained": false
+  },
+  "generated_unsigned_catalog_pre_sign_identity": {
+    "state": "NOT_RETAINED_BEFORE_IN_PLACE_SIGNING",
+    "ordinary_sha256": "NOT_AVAILABLE",
+    "reconstruction_attempted": false,
+    "reason": "S1R1_SIGNED_GENERATED_CATALOG_BEFORE_RAW_PRE_SIGN_IDENTITY_WAS_PERSISTED",
+    "limitation": "RAW_PRE_SIGN_CATALOG_BYTE_IDENTITY_CANNOT_BE_INDEPENDENTLY_REPRODUCED_FROM_RETAINED_STATE"
+  },
+  "conclusively_known_catalog_facts": {
+    "valid_inf2cat_invocation_count": 1,
+    "inf2cat_exit_code": 0,
+    "catalog_generation_count": 1,
+    "cat_signing_count": 1,
+    "final_signed_cat_ordinary_sha256": "B34C084E60020B401518A9259E476AFC22980DC2B51311EE053F1FF410DDCFF4",
+    "final_signed_cat_authenticode_sha256": "672EA53BEC871D2948C4C5D81BB0473450897CCA0070DE1D3D017A554857DFE1",
+    "final_catalog_members": [
+      "ChatpadFilterExtension.inf",
+      "ChatpadFilter.sys"
+    ],
+    "final_signer_thumbprint": "885ADDC8018AC58E19B14668ACDAC9072BB6AE15"
+  },
+  "final_package_inventory": [
+    {
+      "path": "artifacts/task-8i-p1b-ld-s1-self-test-signed-package/final/ChatpadFilter.sys",
+      "byte_size": 42856,
+      "sha256": "B1FCF99F0B7631E83397396024E91213A4FCF9B145CCC97E01E6684562DC7190"
+    },
+    {
+      "path": "artifacts/task-8i-p1b-ld-s1-self-test-signed-package/final/ChatpadFilterExtension.cat",
+      "byte_size": 2961,
+      "sha256": "B34C084E60020B401518A9259E476AFC22980DC2B51311EE053F1FF410DDCFF4"
+    },
+    {
+      "path": "artifacts/task-8i-p1b-ld-s1-self-test-signed-package/final/ChatpadFilterExtension.inf",
+      "byte_size": 1581,
+      "sha256": "0200FCF5E1B26F4A594ECEF936DAAEC4B8F2BC5743A9DDAE212AD8F99D05E2FC"
+    }
+  ],
+  "original_mutation_counters": {
+    "certificate_creation": 1,
+    "public_cer_export": 1,
+    "artifact_root_creation": 1,
+    "unsigned_baseline_copies": 3,
+    "working_copies": 2,
+    "sys_signing": 1,
+    "malformed_inf2cat_attempt": 1,
+    "catalog_generation": 0,
+    "cat_signing": 0
+  },
+  "s1r1_mutation_counters": {
+    "final_directory_prepare": 1,
+    "final_inf_copy": 1,
+    "final_signed_sys_copy": 1,
+    "valid_three_argument_inf2cat_invocation": 1,
+    "catalog_generation": 1,
+    "cat_signing": 1,
+    "sys_signing": 0,
+    "public_cer_force_add": 0,
+    "evidence_write": 0,
+    "contract_write": 0
+  },
+  "s1r2_mutation_counters": {
+    "case_rename_first_step": 1,
+    "case_rename_second_step": 1,
+    "evidence_write": 1,
+    "contract_write": 1,
+    "public_cer_force_add": 1,
+    "inf2cat_invocation": 0,
+    "catalog_generation": 0,
+    "cat_signing": 0,
+    "sys_signing": 0,
+    "certificate_creation": 0,
+    "certificate_deletion": 0,
+    "certificate_export": 0,
+    "certificate_trust_installation": 0,
+    "private_key_access": 0,
+    "timestamp_request": 0,
+    "network_signing_request": 0,
+    "bcd_change": 0,
+    "secure_boot_change": 0,
+    "hvci_change": 0,
+    "bitlocker_change": 0,
+    "reboot": 0,
+    "inf_staging": 0,
+    "driver_installation": 0,
+    "driver_loading": 0,
+    "device_query": 0,
+    "driver_store_query": 0,
+    "candidate_rank_query": 0,
+    "service_filter_query": 0,
+    "setupapi_newdev": 0,
+    "native_bridge_execution": 0,
+    "live_apply_authorization": 0
+  },
+  "cumulative_mutation_counters": {
+    "certificate_creation": 1,
+    "public_cer_export": 1,
+    "sys_signing": 1,
+    "valid_three_argument_inf2cat_invocation": 1,
+    "catalog_generation": 1,
+    "cat_signing": 1,
+    "case_only_catalog_rename_steps": 2,
+    "certificate_deletion": 0,
+    "trust_installation": 0,
+    "private_key_export": 0,
+    "timestamp": 0,
+    "staging": 0,
+    "installation": 0,
+    "driver_loading": 0,
+    "device_query": 0,
+    "native_execution": 0
+  },
+  "certificate_not_trusted": true,
+  "testsigning_configured_reboot_pending": true,
+  "not_staged": true,
+  "not_installed": true,
+  "not_loaded": true,
+  "no_device_query": true,
+  "no_native_execution": true,
+  "blocker": "BLOCKED_NATIVE_ADAPTER_SELF_TEST_SIGNED_PACKAGE_NOT_INDEPENDENTLY_AUDITED_CERTIFICATE_NOT_TRUSTED_AND_TESTSIGNING_NOT_EFFECTIVE_UNTIL_REBOOT",
+  "next_task": "TASK 8I-P1B-LD-S2 — Independent read-only audit of the self-test-signed local-development package"
+}
