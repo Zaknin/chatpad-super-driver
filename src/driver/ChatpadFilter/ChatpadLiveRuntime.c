@@ -1141,7 +1141,17 @@ void ChatpadLiveEvtInputWorkItem(WDFWORKITEM workItem)
             ChatpadLiveReleaseKeysIfNeeded(runtime);
             continue;
         }
-        mapResult = ChatpadMapKeyboardPacketToHid(&keyboardPacket, &report);
+        if (runtime->ConfigurationLock != NULL) {
+            WdfSpinLockAcquire(runtime->ConfigurationLock);
+            mapResult = ChatpadMapKeyboardPacketWithConfiguration(
+                &keyboardPacket,
+                &runtime->ConfigurationStore.Active,
+                &runtime->LayeredMappingState,
+                &report);
+            WdfSpinLockRelease(runtime->ConfigurationLock);
+        } else {
+            mapResult = ChatpadMapKeyboardPacketToHid(&keyboardPacket, &report);
+        }
         if (mapResult != CHATPAD_HID_MAP_OK) {
             if (InterlockedIncrement((volatile LONG *)&runtime->ParseFailureCount) <= 8) {
                 ChatpadLiveTrace("KeyMapRejected", STATUS_NOT_SUPPORTED, (ULONG)mapResult, bytes[2]);
@@ -1180,6 +1190,8 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
     runtime->LastConfigurationUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
     runtime->LastControllerInputUsbdStatus = USBD_STATUS_INVALID_PARAMETER;
     ChatpadInitializeHidReportState(&runtime->HidState);
+    ChatpadInitializeConfigurationStore(&runtime->ConfigurationStore);
+    ChatpadInitializeLayeredMappingState(&runtime->LayeredMappingState);
     ChatpadFailOpenInitialize(&runtime->FailOpenState);
     ChatpadLiveOpenDiagnostics(runtime);
 
@@ -1223,6 +1235,15 @@ NTSTATUS ChatpadLiveRuntimeInitialize(
         ChatpadLiveDiagnosticUlong(runtime, L"ChatpadFeatureState", 2u);
         ChatpadLiveDiagnosticStatus(runtime, L"RuntimeInitializeNtStatus", STATUS_SUCCESS);
         return STATUS_SUCCESS;
+    }
+
+    WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+    attributes.ParentObject = device;
+    status = WdfSpinLockCreate(&attributes, &runtime->ConfigurationLock);
+    ChatpadLiveDiagnosticStatus(runtime, L"ConfigurationLockCreateNtStatus", status);
+    if (!NT_SUCCESS(status)) {
+        runtime->ConfigurationLock = NULL;
+        ChatpadLiveTrace("ConfigurationLockUnavailable", status, 0u, 0u);
     }
 
     WDF_WORKITEM_CONFIG_INIT(&workItemConfig, ChatpadLiveEvtActivationWorkItem);
@@ -1294,7 +1315,7 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
             (PUCHAR)ChatpadKeyboardReportDescriptor);
         vhfConfig.VendorID = 0x045E;
         vhfConfig.ProductID = 0x028E;
-        vhfConfig.VersionNumber = 0x010D;
+        vhfConfig.VersionNumber = 0x010E;
         status = VhfCreate(&vhfConfig, &runtime->VhfHandle);
         ChatpadLiveDiagnosticStatus(runtime, L"VhfCreateNtStatus", status);
         if (NT_SUCCESS(status)) {
@@ -1332,6 +1353,11 @@ NTSTATUS ChatpadLiveRuntimePrepareHardware(PCHATPAD_LIVE_RUNTIME runtime)
 
 void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime)
 {
+    if (runtime->ConfigurationLock != NULL) {
+        WdfSpinLockAcquire(runtime->ConfigurationLock);
+        ChatpadInitializeLayeredMappingState(&runtime->LayeredMappingState);
+        WdfSpinLockRelease(runtime->ConfigurationLock);
+    }
     if (runtime->StateLock != NULL) {
         WdfSpinLockAcquire(runtime->StateLock);
         ChatpadFailOpenBeginD0(&runtime->FailOpenState);
@@ -1404,6 +1430,11 @@ void ChatpadLiveRuntimeExitD0(PCHATPAD_LIVE_RUNTIME runtime)
     InterlockedExchange(&runtime->VirtualKeyboardAvailable, 0);
     InterlockedExchange(&runtime->ActivationQueued, 0);
     InterlockedExchange(&runtime->ActivationSucceeded, 0);
+    if (runtime->ConfigurationLock != NULL) {
+        WdfSpinLockAcquire(runtime->ConfigurationLock);
+        ChatpadInitializeLayeredMappingState(&runtime->LayeredMappingState);
+        WdfSpinLockRelease(runtime->ConfigurationLock);
+    }
 }
 
 void ChatpadLiveRuntimeReleaseHardware(PCHATPAD_LIVE_RUNTIME runtime)
@@ -1432,4 +1463,96 @@ void ChatpadLiveRuntimeCleanup(PCHATPAD_LIVE_RUNTIME runtime)
         runtime->VhfHandle = NULL;
     }
     ChatpadLiveTrace("RuntimeCleanup", STATUS_SUCCESS, runtime->ActivationAttemptCount, runtime->InputReportCount);
+}
+
+void ChatpadLiveGetControlStatus(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ChatpadControlStatus *status)
+{
+    size_t index;
+    if (status == NULL) return;
+    RtlZeroMemory(status, sizeof(*status));
+    status->StructureSize = sizeof(*status);
+    status->InterfaceVersion = CHATPAD_CONTROL_INTERFACE_VERSION;
+    status->DriverVersionMajor = CHATPAD_CONTROL_DRIVER_VERSION_MAJOR;
+    status->DriverVersionMinor = CHATPAD_CONTROL_DRIVER_VERSION_MINOR;
+    status->DriverVersionPatch = CHATPAD_CONTROL_DRIVER_VERSION_PATCH;
+    status->DriverVersionBuild = CHATPAD_CONTROL_DRIVER_VERSION_BUILD;
+    if (runtime->ConfigurationLock != NULL) {
+        WdfSpinLockAcquire(runtime->ConfigurationLock);
+        status->ConfigurationGeneration = (ULONG)runtime->ConfigurationStore.Generation;
+        status->ConfigurationSchemaVersion = runtime->ConfigurationStore.Active.SchemaVersion;
+        status->ConfigurationAbiVersion = runtime->ConfigurationStore.Active.AbiVersion;
+        status->Layout = runtime->ConfigurationStore.Active.Layout;
+        status->PeopleAction = runtime->ConfigurationStore.Active.PeopleAction;
+        for (index = 0; index < CHATPAD_CONFIGURATION_PROFILE_NAME_LENGTH; ++index) {
+            status->ActiveProfile[index] = runtime->ConfigurationStore.Active.ProfileName[index];
+        }
+        WdfSpinLockRelease(runtime->ConfigurationLock);
+    }
+    status->ChatpadFeatureAvailable =
+        InterlockedCompareExchange(&runtime->ChatpadFeatureDisabled, 0, 0) == 0 ? 1u : 0u;
+}
+
+void ChatpadLiveGetConfiguration(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ChatpadConfiguration *configuration)
+{
+    if (configuration == NULL) return;
+    if (runtime->ConfigurationLock == NULL) {
+        ChatpadBuildDefaultConfiguration(configuration);
+        return;
+    }
+    WdfSpinLockAcquire(runtime->ConfigurationLock);
+    *configuration = runtime->ConfigurationStore.Active;
+    WdfSpinLockRelease(runtime->ConfigurationLock);
+}
+
+ChatpadConfigurationValidationResult ChatpadLiveApplyConfiguration(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    const ChatpadConfiguration *configuration)
+{
+    ChatpadConfigurationValidationResult result;
+    if (runtime->ConfigurationLock == NULL) {
+        InterlockedIncrement((volatile LONG *)&runtime->ConfigurationRejectCount);
+        return CHATPAD_CONFIGURATION_NULL;
+    }
+    WdfSpinLockAcquire(runtime->ConfigurationLock);
+    result = ChatpadApplyConfiguration(&runtime->ConfigurationStore, configuration);
+    if (result == CHATPAD_CONFIGURATION_VALID) {
+        ChatpadInitializeLayeredMappingState(&runtime->LayeredMappingState);
+    }
+    WdfSpinLockRelease(runtime->ConfigurationLock);
+    if (result == CHATPAD_CONFIGURATION_VALID) {
+        InterlockedIncrement((volatile LONG *)&runtime->ConfigurationApplyCount);
+        ChatpadLiveReleaseAllKeys(runtime);
+    } else {
+        InterlockedIncrement((volatile LONG *)&runtime->ConfigurationRejectCount);
+    }
+    return result;
+}
+
+void ChatpadLiveResetConfiguration(PCHATPAD_LIVE_RUNTIME runtime)
+{
+    if (runtime->ConfigurationLock == NULL) return;
+    WdfSpinLockAcquire(runtime->ConfigurationLock);
+    ChatpadResetConfigurationStore(&runtime->ConfigurationStore);
+    ChatpadInitializeLayeredMappingState(&runtime->LayeredMappingState);
+    WdfSpinLockRelease(runtime->ConfigurationLock);
+    InterlockedIncrement((volatile LONG *)&runtime->ConfigurationApplyCount);
+    ChatpadLiveReleaseAllKeys(runtime);
+}
+
+void ChatpadLiveGetDiagnostics(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ChatpadControlDiagnostics *diagnostics)
+{
+    if (diagnostics == NULL) return;
+    RtlZeroMemory(diagnostics, sizeof(*diagnostics));
+    ChatpadLiveGetControlStatus(runtime, &diagnostics->Status);
+    diagnostics->InputPacketCount = runtime->InputPacketCount;
+    diagnostics->InputReportCount = runtime->InputReportCount;
+    diagnostics->ParseFailureCount = runtime->ParseFailureCount;
+    diagnostics->ConfigurationApplyCount = runtime->ConfigurationApplyCount;
+    diagnostics->ConfigurationRejectCount = runtime->ConfigurationRejectCount;
 }

@@ -1,34 +1,39 @@
 # Next Task
 
-## TASK 8J-R10-T1 — Upgrade once to 1.0.13 and test key-data enable after the first Chatpad packet
+## TASK 8K-T1 — Physical 1.0.14 layer/configuration validation and idle-failure capture
 
 ### Starting state
 
-- Use pushed branch `feature/chatpad-kmdf-live-activation-runtime` at the commit with parent `8cd5547468347d2a8a7348080069917dbb559774` and subject `fix: enable chatpad key data after first packet`.
-- Installed selected extension is `oem102.inf` version 1.0.12.0. The controller is healthy. Activation and keep-alives succeed and a five-byte `F0 03 00 01 01` status packet is received, but the required post-first-packet `0x001B` key-data enable command is absent.
-- Exact signed 1.0.13 package identities are recorded in `docs/PROJECT-STATE.md`.
+- Use pushed branch `feature/chatpad-legacy-layers-configuration` at the TASK 8K commit recorded in Git and `docs/PROJECT-STATE.md`.
+- The proven recovery baseline is installed `oem103.inf` version 1.0.13.0 with loaded SYS SHA-256 `45A727CE2658A8A9B5F1CC0B8654DF0C7A929244C929200DF66BD97EBABA5ACD`.
+- The exact signed 1.0.14 package and companion identities are recorded in `docs/PROJECT-STATE.md`. Do not rebuild or resign before testing.
 
-### Exact single operator command
+### Preconditions
 
-Run once from elevated PowerShell:
+1. Be physically present with a keyboard, mouse, controller, Chatpad, and a text editor available.
+2. Record the current `oem103.inf` package, loaded SYS identity, device status, stack, and rollback command before mutation.
+3. Verify the three 1.0.14 package file hashes and both signatures/catalog memberships against `docs/PROJECT-STATE.md`.
+4. Install the exact package once with:
 
 ```powershell
-pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8j-r10-first-packet-backlight-package\final\ChatpadFilterExtension.inf" /install
+pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8k-legacy-layers-configuration-package\final\ChatpadFilterExtension.inf" /install
 ```
 
-Do not repeat a successful command. If PnPUtil returns `3010` or requests a reboot, reboot once before verification.
+Do not repeat a successful install. Reboot only if Windows explicitly requires it.
 
-### Verification
+### Acceptance procedure
 
-- Confirm the newly published INF is selected at version 1.0.13.0 and the Driver Store SYS has the exact signed identity from `docs/PROJECT-STATE.md`.
-- Confirm the Xbox controller remains healthy and the stack still contains `xusb22`, `ChatpadFilter`, and `vhf`.
-- Confirm transport architecture 8, readiness, activation, keep-alive, and reader stages remain successful.
-- Confirm `BacklightCommandSent=1` and its NTSTATUS/USBD/byte result is successful/successful/zero.
-- Inspect the first packet after the command, the first accepted decoder result, and first key-bearing VHF submission.
-- Test ordinary, Shift, and two-key Chatpad input in Notepad while confirming normal Xbox operation.
-- Claim functional success only from the real key test with a healthy controller.
+1. Confirm the selected extension is 1.0.14.0, the loaded SYS matches the signed package, and controller, IG_00, HID, `xusb22`, `ChatpadFilter`, and `vhf` remain healthy.
+2. Confirm normal Xbox input and every existing Base key class: ordinary letters/numbers, Shift, Space, Backspace, Enter, arrows, comma, period, and simultaneous keys.
+3. Test every documented deterministic Green mapping, every deterministic Orange mapping, and Orange+Shift Caps Lock against `docs/LEGACY-FEATURE-INVENTORY.md` and built-in profile output.
+4. Test both release orders, two simultaneous mapped keys, repeated reports, held-key typematic, hot unplug/reconnect, three USB-port moves, and unplug while holding a layered key. No virtual key or modifier may remain stuck.
+5. Run `ChatpadControl.exe status`, `config show`, and `diagnostics`; export the built-in profile; import/apply a valid modified profile; prove the change; reset to defaults; and prove the original mapping returns.
+6. Attempt unsupported schema, duplicate property/mapping, partial, oversized, unknown-action, and invalid-HID profiles. Every attempt must fail without changing the prior active profile or Xbox behavior.
+7. Reproduce the prolonged-idle/sleep loss only after the core matrix passes. If typing stops, preserve the failed state and collect read-only diagnostics before unplugging, restarting, rebooting, or applying another profile.
+8. If controller health, base input, release safety, or configuration recovery fails, stop and roll back to the preserved `oem103.inf` 1.0.13 baseline.
 
 ### Restrictions
 
-- No repeated install, automatic activation or command retry, decoder relaxation for `0xF0`, alternate revision-1.10 payload, certificate/trust change, BCD change, rebuild, or resign.
-- Do not infer functional success from command, packet, decoder, or VHF return codes alone.
+- Do not remove `oem103.inf` before 1.0.14 validation and rollback proof are complete.
+- Do not change activation, keep-alive, USB transfer ownership, power/resume behavior, selective suspend, trust, BCD, Secure Boot, HVCI, Memory Integrity, or VBS while diagnosing.
+- Do not claim Green/Orange physical success or an idle/sleep fix until the corresponding real-hardware evidence exists.

@@ -7,6 +7,7 @@
 #include "ChatpadKmdfRequestOwnerContext.h"
 #include "ChatpadRuntimeDiagnostics.h"
 #include "ChatpadLiveRuntime.h"
+#include "ChatpadControlDevice.h"
 
 #define CHATPAD_FILTER_DEVICE_CONTEXT_SIGNATURE ((ULONG)0x46444350u)
 #define CHATPAD_FILTER_DEVICE_CONTEXT_VERSION ((ULONG)1u)

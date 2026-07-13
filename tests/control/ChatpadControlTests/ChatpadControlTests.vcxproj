@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><ProjectGuid>{71366E40-F67A-4E11-9DE0-26E41B7BC4B6}</ProjectGuid><RootNamespace>ChatpadControlTests</RootNamespace><ProjectName>ChatpadControlTests</ProjectName></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v143</PlatformToolset><UseDebugLibraries>true</UseDebugLibraries><CharacterSet>Unicode</CharacterSet><SpectreMitigation>false</SpectreMitigation></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration"><ConfigurationType>Application</ConfigurationType><PlatformToolset>v143</PlatformToolset><UseDebugLibraries>false</UseDebugLibraries><CharacterSet>Unicode</CharacterSet><SpectreMitigation>false</SpectreMitigation></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"><OutDir>$(RepoRoot)\artifacts\bin\x64\Debug\ChatpadControlTests\</OutDir><IntDir>$(RepoRoot)\artifacts\obj\x64\Debug\ChatpadControlTests\</IntDir></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'"><OutDir>$(RepoRoot)\artifacts\bin\x64\Release\ChatpadControlTests\</OutDir><IntDir>$(RepoRoot)\artifacts\obj\x64\Release\ChatpadControlTests\</IntDir></PropertyGroup>
+  <ItemDefinitionGroup><ClCompile><LanguageStandard>stdcpp17</LanguageStandard><AdditionalIncludeDirectories>$(RepoRoot)\src\control\ChatpadControl;$(RepoRoot)\src\protocol\ChatpadProtocol;$(RepoRoot)\src\driver\ChatpadFilter;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories></ClCompile></ItemDefinitionGroup>
+  <ItemGroup><ClCompile Include="ChatpadControlTests.cpp" /><ClCompile Include="..\..\..\src\control\ChatpadControl\ChatpadControlCore.cpp" /><ClCompile Include="..\..\..\src\control\ChatpadControl\ProfileJson.cpp" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocol.vcxproj"><Project>{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}</Project><GlobalPropertiesToRemove>OutDir;IntDir</GlobalPropertiesToRemove></ProjectReference></ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

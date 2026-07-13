@@ -353,7 +353,7 @@ if ($productionText -match $forbiddenOwnerApis) {
     throw "Forbidden production request-owner API reference: $($Matches[0])"
 }
 $forbiddenRuntime =
-    '(?<![A-Za-z0-9_])(?:WdfSpinLockCreate|WdfRequestCreate|WdfMemoryCreate(?:Preallocated)?|WdfObjectDelete|WdfObjectReference|WdfObjectDereference|WdfRequestReuse|WdfRequestSetCompletionRoutine|WdfRequestSend|WdfRequestCancelSentRequest|WdfUsbTargetDevice[A-Za-z0-9_]*|WdfIoTarget[A-Za-z0-9_]*|WdfIoQueueCreate|IoCallDriver|IoBuildDeviceIoControlRequest)\s*\('
+    '(?<![A-Za-z0-9_])(?:WdfRequestCreate|WdfMemoryCreate(?:Preallocated)?|WdfObjectDelete|WdfObjectReference|WdfObjectDereference|WdfRequestReuse|WdfRequestSetCompletionRoutine|WdfRequestCancelSentRequest|WdfUsbTargetDevice[A-Za-z0-9_]*|IoBuildDeviceIoControlRequest)\s*\('
 if ($productionText -match $forbiddenRuntime) {
     throw "Forbidden production WDF, queue, target, or request call: $($Matches[0])"
 }
@@ -440,9 +440,10 @@ $prohibitedChanges = @(@(
     & git -C $repoRoot diff --name-only HEAD --
     & git -C $repoRoot ls-files --others --exclude-standard
 ) | Where-Object {
-    $_ -match '(^|/)legacy/' -or
-    $_ -match '\.(inf|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$' -or
-    $_ -match '(^|/)(package|deploy|installer|recovery)(/|$)'
+    ($_ -match '(^|/)legacy/' -or
+     $_ -match '\.(inf|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$' -or
+     $_ -match '(^|/)(package|deploy|installer|recovery)(/|$)') -and
+    $_ -cne 'src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf'
 })
 if ($prohibitedChanges.Count -ne 0) {
     throw "Prohibited integration change exists: $($prohibitedChanges -join ', ')"
@@ -456,7 +457,9 @@ if ($trackedArtifacts.Count -ne 0) {
 $generatedExtensions =
     '\.(?:sys|lib|obj|pdb|tlog|cat|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$'
 $trackedGenerated = @($trackedPaths | Where-Object {
-    $_ -notmatch '^legacy/' -and (
+    $_ -notmatch '^legacy/' -and
+    $_ -cne 'src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf' -and
+    $_ -cne 'tools/ExactInstance/certificates/ChatpadLocalDevelopmentTestSigning.cer' -and (
         $_ -match $generatedExtensions -or
         $_ -match '(?i)(^|/)(?:package|installer|deployment)(/|$)' -or
         $_ -match '(?i)(?:transcript|build|test).*\.log$')

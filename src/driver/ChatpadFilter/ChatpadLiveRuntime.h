@@ -5,6 +5,8 @@
 #include <vhf.h>
 
 #include "ChatpadKeyboardHid.h"
+#include "ChatpadConfiguration.h"
+#include "ChatpadControlInterface.h"
 #include "ChatpadFailOpenPolicy.h"
 
 #define CHATPAD_LIVE_RUNTIME_SIGNATURE ((ULONG)0x52504C43u)
@@ -29,8 +31,11 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     WDFWORKITEM KeyboardWorkItem;
     WDFWORKITEM DiagnosticWorkItem;
     WDFSPINLOCK StateLock;
+    WDFSPINLOCK ConfigurationLock;
     VHFHANDLE VhfHandle;
     ChatpadHidReportState HidState;
+    ChatpadConfigurationStore ConfigurationStore;
+    ChatpadLayeredMappingState LayeredMappingState;
     ChatpadFailOpenState FailOpenState;
     ChatpadHidKeyboardReport KeyboardQueue[CHATPAD_KEYBOARD_QUEUE_CAPACITY];
     USBD_PIPE_HANDLE ControllerInputPipeHandle;
@@ -72,6 +77,8 @@ typedef struct _CHATPAD_LIVE_RUNTIME {
     ULONG KeyboardQueueTail;
     ULONG KeyboardQueueCount;
     ULONG ParseFailureCount;
+    ULONG ConfigurationApplyCount;
+    ULONG ConfigurationRejectCount;
     ULONGLONG NextKeepAliveDue;
     USHORT NextKeepAliveValue;
     NTSTATUS LastActivationStatus;
@@ -95,6 +102,20 @@ void ChatpadLiveRuntimeReleaseHardware(PCHATPAD_LIVE_RUNTIME runtime);
 void ChatpadLiveRuntimeEnterD0(PCHATPAD_LIVE_RUNTIME runtime);
 void ChatpadLiveRuntimeExitD0(PCHATPAD_LIVE_RUNTIME runtime);
 void ChatpadLiveRuntimeCleanup(PCHATPAD_LIVE_RUNTIME runtime);
+
+void ChatpadLiveGetControlStatus(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ChatpadControlStatus *status);
+void ChatpadLiveGetConfiguration(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ChatpadConfiguration *configuration);
+ChatpadConfigurationValidationResult ChatpadLiveApplyConfiguration(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    const ChatpadConfiguration *configuration);
+void ChatpadLiveResetConfiguration(PCHATPAD_LIVE_RUNTIME runtime);
+void ChatpadLiveGetDiagnostics(
+    PCHATPAD_LIVE_RUNTIME runtime,
+    ChatpadControlDiagnostics *diagnostics);
 
 EVT_WDFDEVICE_WDM_IRP_PREPROCESS ChatpadLiveEvtWdmIrpPreprocess;
 EVT_WDF_WORKITEM ChatpadLiveEvtActivationWorkItem;

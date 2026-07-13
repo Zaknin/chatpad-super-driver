@@ -1,5 +1,10 @@
 # ChatpadFilter live activation runtime
 
+Driver version 1.0.14.0 adds built-in Green/Orange layer mapping and a bounded,
+versioned configuration interface. See `docs/CHATPAD-CONTROL.md` and
+`docs/LEGACY-FEATURE-INVENTORY.md`. Transport architecture 8, activation,
+keep-alive, USB ownership, and the five-byte acquisition path remain unchanged.
+
 `ChatpadFilter` is an x64 KMDF device-specific lower filter for
 `USB\VID_045E&PID_028E`. The INF limits attachment to that hardware ID and the
 driver independently rejects any device whose hardware-ID multi-string does

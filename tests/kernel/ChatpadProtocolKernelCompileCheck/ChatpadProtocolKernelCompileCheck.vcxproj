@@ -88,6 +88,7 @@
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationRequests.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationSequence.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.h" />
+    <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadConfiguration.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.h" />
     <ClInclude Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolTypes.h" />
     <ClInclude Include="..\..\..\src\transport\ChatpadTransport\ChatpadTransportAdapter.h" />
@@ -99,6 +100,7 @@
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationRequests.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadActivationSequence.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadKeyboardParser.c" />
+    <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadConfiguration.c" />
     <ClCompile Include="..\..\..\src\protocol\ChatpadProtocol\ChatpadProtocolStateMachine.c" />
     <ClCompile Include="..\..\..\src\transport\ChatpadTransport\ChatpadTransportAdapter.c" />
     <ClCompile Include="..\..\..\src\transport\ChatpadControlSetup\ChatpadControlSetup.c" />

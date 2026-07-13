@@ -3,13 +3,13 @@
   "status": "CANONICAL_WINDOWS_11_DRIVER_PACKAGE_SOURCE_DEFINED_FOR_LOCAL_DEVELOPMENT_NOT_STAGED_NOT_INSTALLED_NOT_LOADED",
   "production_driver_project": {
     "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj",
-    "sha256": "FB790116F9F37935D7AF575024C5CC732ABA4682BD1E68F6467C9DAAB85D8AE6",
+    "sha256": "8C766F39A318EDD49D61940A5E2F0AD217BE1B23DDA2931DC0629AF3A4A19292",
     "source_identity_schema": "ordered-path-sha256-v1"
   },
   "driver_binary_filename": "ChatpadFilter.sys",
   "canonical_inf": {
     "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf",
-    "sha256": "7B0B8831572EA9F0426F5CF7399049DC2EC286252C4B5BEF31898D5EA957F1BB"
+    "sha256": "FE35416537D432CDB37B0B9C967298F86B2EE636F02937DE3AAB0F1E91FFB274"
   },
   "catalog_filename": "ChatpadFilterExtension.cat",
   "architecture": "AMD64",
@@ -50,21 +50,26 @@
   },
   "driver_source_inventory": [
     { "path": "Directory.Build.props", "sha256": "5188484C2F320B1C1C5D7B394E4EEA820C78A5598E7DA856D49AC3800E183824" },
-    { "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "FB790116F9F37935D7AF575024C5CC732ABA4682BD1E68F6467C9DAAB85D8AE6" },
+    { "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "8C766F39A318EDD49D61940A5E2F0AD217BE1B23DDA2931DC0629AF3A4A19292" },
     { "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.c", "sha256": "1C3BB4FF18D036229237EE391E205CCA168C287AD04B5ABE5E090B60022479DF" },
     { "path": "src/driver/ChatpadFilter/ChatpadActivationPreparation.h", "sha256": "880549AA06A33EC33216F361934CD6BBDEF2CE404C05993731A596836EE1380B" },
+    { "path": "src/driver/ChatpadFilter/ChatpadControlDevice.c", "sha256": "03C80D33241418A621BCA95BF71A173FC77345E501DD2430D796983E9101DE59" },
+    { "path": "src/driver/ChatpadFilter/ChatpadControlDevice.h", "sha256": "E2F39F87691B01DD8565A572ED1AACBF3FCDB1A578CEC5EBE7AA0035730DA193" },
+    { "path": "src/driver/ChatpadFilter/ChatpadControlInterface.h", "sha256": "10EC2DFDC4F09732C39366477410B01CA5A60CC503DD42574A2E93C1451178B5" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.c", "sha256": "0579EE0368221792663E74FE67A153CE2D8FB27B38B2EDCB27867D7399326F74" },
     { "path": "src/driver/ChatpadFilter/ChatpadFilterLifecycle.h", "sha256": "FCE07CF792033894C8E5229F368D321CF21C967F004FB06A2E81C54D1EE94406" },
-    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "6E942964DB9EB9437AB249E43A009546E981A0321F9402E4589D6AD3B129EA7C" },
-    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.h", "sha256": "AD8FBD3C68FA61888A2820A5ECC4CD6D7FE70CE78DA4FF567D79E3D0594EFDCA" },
+    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.c", "sha256": "5F37D552E69A8C812E665F378DC20881A9848AFC0CDFC3B1F3001AF6EBCB14AB" },
+    { "path": "src/driver/ChatpadFilter/ChatpadLiveRuntime.h", "sha256": "59B8B83EAAE67FCC6937E3BBA18EADC891DFECF878DE7A677297CD23B234ABAA" },
     { "path": "src/driver/ChatpadFilter/ChatpadRuntimeDiagnostics.h", "sha256": "85A76126E95A0CCD655823D56C7EA04CB26EB8F5D3644054CB70AA7490A1B9BB" },
-    { "path": "src/driver/ChatpadFilter/device.c", "sha256": "151E90104450FC9A0840A12186F6F0B60D456F9DFB918B1071209129EF3CB683" },
+    { "path": "src/driver/ChatpadFilter/device.c", "sha256": "7A6C32B329BD2C13A4C25D2BBB2303422573769EC227670A273713066A71219F" },
     { "path": "src/driver/ChatpadFilter/driver.c", "sha256": "107D985185DB03CB4A88C163D67AB50794FCA0F872799EE7F5BE37E431E92664" },
-    { "path": "src/driver/ChatpadFilter/driver.h", "sha256": "A79F0942A66A6CF507A2D91A484E1C096535E140BD2BC8ECBFFD7B0B2F3082B3" },
+    { "path": "src/driver/ChatpadFilter/driver.h", "sha256": "E3AF1AEDAD91242F70F0996BD4DB1BC7315431924FFCB604F2E99EC9204210F4" },
     { "path": "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.vcxproj", "sha256": "2E77E95CA4239AD093D6DA600955122622EE7CEB4678C7B6DC60EBB65B60AF07" },
     { "path": "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.c", "sha256": "DB2093C989B6D74C5A151FD3493D67852A124827714CD8E223E446D49F565E14" },
     { "path": "src/driver/ChatpadKmdfRequestOwnerContext/ChatpadKmdfRequestOwnerContext.h", "sha256": "FACAD99868253F5B990626C9A241942F535C2B5BC9A79130556FC745C956B4D2" },
     { "path": "src/protocol/ChatpadProtocol/ChatpadActivationExecutor.h", "sha256": "1E8BC5C7AA09A7A62AFCD06799E9581A2983C6BCB42BF02B41139182BE4B4253" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadConfiguration.c", "sha256": "3D2E8829068DD4D30DFC7B3B6B45867B48A808747D735FA017420A85C58BD027" },
+    { "path": "src/protocol/ChatpadProtocol/ChatpadConfiguration.h", "sha256": "AD4A69B933300C756ECA7705B2C7F202F99139E3DD611228BA021CDD9C30FF29" },
     { "path": "src/protocol/ChatpadProtocol/ChatpadFailOpenPolicy.c", "sha256": "BB473931E239626139A983F4C9F5E0358F745DA38560D5FC65F75024976F15D1" },
     { "path": "src/protocol/ChatpadProtocol/ChatpadFailOpenPolicy.h", "sha256": "DA6C24A2902DD58163F2389EE4AD4DA02127CA2284E064B5A4733637E038C6DE" },
     { "path": "src/protocol/ChatpadProtocol/ChatpadActivationRequests.c", "sha256": "C6A63542B95E64BD0B7CC4D58B54A02C3E54B92DCBEB6D6E7BCD683469FF00B2" },
@@ -86,15 +91,15 @@
     { "path": "src/transport/ChatpadWdfControlSetup/ChatpadWdfControlSetupFormatter.h", "sha256": "B37019CBEB1BD1BC0919248DB1FB9E2DC65E9514C84A990DA41E59DBFC27D535" }
   ],
   "package_source_inventory": [
-    { "role": "production driver project", "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "FB790116F9F37935D7AF575024C5CC732ABA4682BD1E68F6467C9DAAB85D8AE6" },
-    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "7B0B8831572EA9F0426F5CF7399049DC2EC286252C4B5BEF31898D5EA957F1BB" }
+    { "role": "production driver project", "path": "src/driver/ChatpadFilter/ChatpadFilter.vcxproj", "sha256": "8C766F39A318EDD49D61940A5E2F0AD217BE1B23DDA2931DC0629AF3A4A19292" },
+    { "role": "canonical production INF", "path": "src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf", "sha256": "FE35416537D432CDB37B0B9C967298F86B2EE636F02937DE3AAB0F1E91FFB274" }
   ],
   "package_file_inventory": [
     { "filename": "ChatpadFilterExtension.inf", "role": "device-specific extension INF", "catalog_covered": true },
     { "filename": "ChatpadFilter.sys", "role": "KMDF lower-filter binary produced by the production project", "catalog_covered": true }
   ],
   "version_policy": {
-    "source_driver_ver": "07/12/2026,1.0.13.0",
+    "source_driver_ver": "07/13/2026,1.0.14.0",
     "date_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "version_source": "reviewed source-controlled DriverVer literal in the canonical INF",
     "generated_from_clock": false,

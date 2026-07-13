@@ -1292,6 +1292,14 @@ ChatpadEvtDeviceAdd(
     if (NT_SUCCESS(status)) {
         status = ChatpadLiveRuntimeInitialize(device, &context->LiveRuntime);
     }
+    if (NT_SUCCESS(status)) {
+        NTSTATUS controlStatus = ChatpadControlCreate(device);
+        if (!NT_SUCCESS(controlStatus)) {
+            KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
+                "ChatpadFilter: optional control surface unavailable (0x%08X)\n",
+                (unsigned int)controlStatus));
+        }
+    }
     ChatpadTraceDeviceTerminal(context, status);
     return status;
 }

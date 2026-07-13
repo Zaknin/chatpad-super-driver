@@ -159,7 +159,14 @@ Assert-NoMatch $driverSource 'WdfUsbTargetDevice(?:Create|SelectConfig|SendContr
 if ($projectText -notmatch '(?i)VhfKm\.lib') {
     throw 'ChatpadFilter project must link the VHF kernel client library.'
 }
-Assert-NoMatch $driverSource 'WdfRequest(?:Reuse|Send|CancelSentRequest|SetCompletionRoutine)' 'Reusable-request user-mode bridge operations remain prohibited in the kernel runtime.'
+Assert-NoMatch $driverSource 'WdfRequest(?:Reuse|CancelSentRequest|SetCompletionRoutine)' 'Reusable-request user-mode bridge operations remain prohibited in the kernel runtime.'
+$requestSendCount = [regex]::Matches($driverSource, 'WdfRequestSend\s*\(').Count
+$controlDeviceSource = Remove-CComments ([System.IO.File]::ReadAllText((Join-Path $driverRoot 'ChatpadControlDevice.c')))
+if ($requestSendCount -ne 1 -or
+    $controlDeviceSource -notmatch 'WdfRequestFormatRequestUsingCurrentType\s*\(\s*Request\s*\)' -or
+    $controlDeviceSource -notmatch 'WdfRequestSend\s*\(\s*Request\s*,\s*WdfDeviceGetIoTarget\s*\(\s*Device\s*\)') {
+    throw 'The only permitted WdfRequestSend must forward one unknown device-control request unchanged to the lower xusb22 target.'
+}
 
 $prohibitedChanged = @(@(
     & git -C $repoRoot diff --name-only HEAD --

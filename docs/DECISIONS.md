@@ -4428,3 +4428,58 @@ semantics.
 execution contract. Activation/input remain off the controller fast path and
 bounded by their existing stop/timeout logic. The next live install will expose
 the first later runtime stage through persistent diagnostics.
+
+## 2026-07-13 - Use fixed-size atomic configuration over a narrow device interface
+
+**Decision:** Keep complete built-in mappings in the driver and expose only five
+versioned, fixed-size, METHOD_BUFFERED configuration/status IOCTLs. Validate an
+entire candidate before replacing the active configuration under a dedicated
+lock; reset always restores compiled defaults. Forward every non-Chatpad
+device-control request unchanged to the lower xusb22 target.
+
+**Rationale:** Mapping configuration must not introduce arbitrary kernel memory,
+commands, variable-size allocation, USB reconfiguration, or partial updates.
+The Xbox controller path must remain independent when configuration is absent or
+invalid.
+
+**Alternatives rejected:** Registry polling, an always-running service, arbitrary
+command/action strings, variable-sized kernel JSON parsing, per-entry mutation,
+controller restart on apply, and consuming unrelated xusb22 IOCTLs.
+
+**Consequences:** Profiles use a fixed ABI and full maps; invalid candidates are
+rejected atomically. A future ABI requires an explicit interface version. The
+optional native CLI can be absent without affecting built-in behavior.
+
+## 2026-07-13 - Re-express only deterministic licensed legacy layer behavior
+
+**Decision:** Re-express the wired project's MIT-licensed standard-HID
+Green/Orange subset with attribution. Do not copy the wireless project's code or
+tables because its repository contains no affirmative redistribution grant.
+Keep layout-dependent Unicode legends disabled rather than guessing injection.
+
+**Rationale:** Standard HID chords are deterministic and fit the existing VHF
+keyboard path. SendKeys strings and layout-dependent glyphs are unreliable in
+kernel mode and create avoidable licensing and behavior ambiguity.
+
+**Alternatives rejected:** Copying old parsers/tables wholesale, importing
+wireless SendKeys mappings, emitting guessed Unicode, reviving old filter or
+virtual-device architectures, and changing the proven base map.
+
+**Consequences:** Built-in Green/Orange coverage is intentionally a documented
+subset. QWERTY/QWERTZ/AZERTY are profile labels for future mappings, not a claim
+that one HID chord yields the same glyph under every Windows layout.
+
+## 2026-07-13 - Defer People actions and mouse mode beyond a safe schema placeholder
+
+**Decision:** Define People action in schema version 1 but permit only
+`Disabled`. Defer controller-to-mouse behavior; any future design should observe
+XInput in user mode without suppressing or remapping the normal controller path.
+
+**Rationale:** Legacy People and mouse modes altered controller behavior. TASK 8K
+must preserve proven Xbox coexistence and has no physical operator available.
+
+**Alternatives rejected:** Kernel mouse injection, controller report capture,
+legacy Windows-mode toggles, vJoy, SendKeys, and an always-running helper.
+
+**Consequences:** People is non-disruptive by default and mouse mode remains an
+explicit later enhancement, not a partial feature hidden in the driver.
