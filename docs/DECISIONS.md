@@ -4514,3 +4514,10 @@ Decision: Start one finite session with outputs disabled and require ordered ack
 Rationale: Native readers can precede readiness events and produce data faster than operator loops consume it. Active hot unplug cannot prove physical zero-rumble after the device is absent.
 Alternatives rejected: scanning only consumed readiness events, blocking stdout during exit, relabeling expected removal fatal as successful cleanup, automatic retries/re-activation or selecting the first connected controller.
 Consequences: Graceful reconnect is prepared; unexpected hot unplug/crash/Ctrl+C acceptance remains a later physical qualification. Cleanup failure never becomes test success because Microsoft restoration succeeds.
+
+## 2026-10-04 — Separate unsigned payload provenance from signed runtime identity
+
+Decision: Preserve the adapter's existing strict guard; do not run pinned HIDMaestro's self-signing/trust installer under C2R2. A future runtime contract must pin signed INF/CAT/DLL identities with catalog membership and independently qualified trust, separate from raw embedded payload provenance.
+Rationale: Pinned v1.10.1 contains unsigned DLLs/no CAT, while its installer creates/trusts HIDMaestroTestCert and changes DLL bytes. Current user scope prohibits trust-store changes, and signed bytes cannot equal the unsigned embedded hashes.
+Alternatives rejected: weakening DLL hashes; treating source/SDK presence as load qualification; silently installing a new release/alternate backend; auto-signing/trusting at context initialization; redistributing an SDK containing Microsoft tools under MIT without their own terms.
+Consequences: C2R2 remains BLOCKED with no installation/live virtual acceptance. Use external pinned SDK consumption; public evidence includes our adapter and notices, not upstream SDK/runtime/tools. Resolve exact trust/package contract before separately authorized runtime qualification; no automatic C3.
