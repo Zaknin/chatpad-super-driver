@@ -27,6 +27,11 @@ std::vector<uint8_t> BuildPlayerLed(uint8_t pattern) {
     if(pattern>13) return {};
     return {1,3,pattern};
 }
+const char* ActivationDisposition(const ActivationEvent& event) {
+    if(event.probeRejected)return "PROBE_REJECTED";
+    if(event.expectedStall)return "PROVEN_STALL_ACCEPTED";
+    return event.accepted?"SUCCESS":"FATAL";
+}
 ActivationResult ActivationRunner::Run(IPhysicalTransport& transport,
     const std::function<void(uint32_t)>& delay,const std::function<void(const ActivationEvent&)>& observe) {
     ActivationResult output;
@@ -44,9 +49,16 @@ ActivationResult ActivationRunner::Run(IPhysicalTransport& transport,
         bool stall=ChatpadIsAcceptedActivationStall(index,result.status==TransferStatus::Ok,
             result.status==TransferStatus::Timeout,result.status==TransferStatus::Cancelled,
             result.status==TransferStatus::Stall,result.transferred,r.RawLength)!=0;
-        bool accepted=stall || (result.status==TransferStatus::Ok && result.transferred==r.RawLength &&
+        // Source semantics: immutable ChatpadLiveTransferPolicy.c permits bounded
+        // zero-byte rejection only for preambles0..2 and initial read probe3.
+        // Native Error31 is not STALL evidence. Never extend this to strict4/5,
+        // timeout/cancellation/device loss/access denial or partial transfers.
+        const bool optionalProbe=(index<3 && r.RawLength==0) || (index==3 && r.RawLength==2);
+        const bool probeRejected=policy_==ActivationPolicy::NativeProbeRejection && optionalProbe &&
+            result.status==TransferStatus::Error && result.win32Error==31 && result.transferred==0 && inbound.empty();
+        bool accepted=stall || probeRejected || (result.status==TransferStatus::Ok && result.transferred==r.RawLength &&
             (!(r.RawBmRequestType&0x80) || inbound.size()==r.ExpectedInboundDataLength));
-        ActivationEvent event{index,setup,result,accepted,stall};output.events.push_back(event);
+        ActivationEvent event{index,setup,result,accepted,stall,optionalProbe,probeRejected};output.events.push_back(event);
         if(observe) observe(event);
         if(!accepted) return output;
         ++output.completedSteps;

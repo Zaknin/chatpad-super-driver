@@ -1,16 +1,17 @@
 [CmdletBinding()]
-param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Release')
+param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
+    [string]$DotnetPath = 'dotnet', [string]$ArtifactsDirectory)
 $ErrorActionPreference = 'Stop'
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
 $env:DOTNET_GENERATE_ASPNET_CERTIFICATE = 'false'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$destination = Join-Path $root 'artifacts/task-8lc2/virtual'
+$destination = if ($ArtifactsDirectory) { [IO.Path]::GetFullPath($ArtifactsDirectory) } else { Join-Path $root 'artifacts/task-8lc2/virtual' }
 $assembly = Join-Path $destination "bin/ChatpadVirtualXbox/$($Configuration.ToLowerInvariant())/ChatpadVirtualXbox.dll"
 if (-not (Test-Path -LiteralPath $assembly -PathType Leaf)) { throw 'Build the offline helper first.' }
 $results = [Collections.Generic.List[object]]::new()
 function Invoke-Fixture([string]$Name, [string]$Backend, [byte[]]$Bytes, [bool]$CloseInput, [int]$ExpectedExit, [string]$ExpectedText) {
-    $start = [Diagnostics.ProcessStartInfo]::new('dotnet')
+    $start = [Diagnostics.ProcessStartInfo]::new($DotnetPath)
     $start.UseShellExecute = $false
     $start.CreateNoWindow = $true
     $start.RedirectStandardInput = $true
@@ -35,7 +36,7 @@ function Invoke-Fixture([string]$Name, [string]$Backend, [byte[]]$Bytes, [bool]$
 $utf8 = [Text.UTF8Encoding]::new($false)
 Invoke-Fixture 'mock create submit disconnect reconnect quit' 'mock' ($utf8.GetBytes("{`"id`":1,`"op`":`"create`"}`n{`"id`":2,`"op`":`"submit`",`"buttons`":4096,`"leftTrigger`":255,`"rightTrigger`":0,`"lx`":0,`"ly`":0,`"rx`":0,`"ry`":0}`n{`"id`":3,`"op`":`"disconnect`"}`n{`"id`":4,`"op`":`"create`"}`n{`"id`":5,`"op`":`"quit`"}`n")) $true 0 '"id":5,"ok":true'
 Invoke-Fixture 'explicit unavailable' 'unavailable' ($utf8.GetBytes("{`"id`":1,`"op`":`"create`"}`n")) $true 0 'backend_unavailable'
-Invoke-Fixture 'not compiled hidmaestro remains unavailable' 'hidmaestro' ($utf8.GetBytes("{`"id`":1,`"op`":`"create`"}`n")) $true 0 'backend_unavailable'
+Invoke-Fixture 'hidmaestro rejects create without live permission or runtime' 'hidmaestro' ($utf8.GetBytes("{`"id`":1,`"op`":`"create`"}`n")) $true 0 '"ok":false'
 Invoke-Fixture 'finite idle with open pipe' 'mock' ([byte[]]@()) $false 4 'deadline_or_cancellation'
 Invoke-Fixture 'finite partial line with open pipe' 'mock' ($utf8.GetBytes('{"id":1')) $false 4 'deadline_or_cancellation'
 Invoke-Fixture 'unterminated EOF' 'mock' ($utf8.GetBytes('{"id":1')) $true 4 'unterminated_request'

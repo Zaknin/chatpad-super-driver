@@ -38,6 +38,23 @@ namespace Chatpad.Binding {
   [DllImport("setupapi.dll", CharSet=CharSet.Unicode, ExactSpelling=true, SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)] static extern bool SetupDiGetDriverInfoDetailW(IntPtr set,ref Device dev,ref Driver driver,IntPtr detail,uint size,out uint required);
   [DllImport("setupapi.dll", CharSet=CharSet.Unicode, ExactSpelling=true, SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)] static extern bool SetupDiSetSelectedDriverW(IntPtr set,ref Device dev,ref Driver driver);
   [DllImport("newdev.dll", SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)] static extern bool DiInstallDevice(IntPtr parent,IntPtr set,ref Device dev,ref Driver driver,uint flags,[MarshalAs(UnmanagedType.Bool)]out bool reboot);
+  [DllImport("setupapi.dll", CharSet=CharSet.Unicode, ExactSpelling=true, SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)] static extern bool SetupDiGetDeviceRegistryPropertyW(IntPtr set,ref Device dev,uint property,out uint type,byte[] data,uint size,out uint required);
+  [DllImport("setupapi.dll", CharSet=CharSet.Unicode, ExactSpelling=true, SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)] static extern bool SetupDiSetDeviceRegistryPropertyW(IntPtr set,ref Device dev,uint property,IntPtr data,uint size);
+  // Future C3 only: delete the exact instance LowerFilters property after all
+  // identified extensions are excluded. Never touch class or unrelated filters.
+  public static void ClearKnownLowerFilters(string id) {
+   if(!System.Text.RegularExpressions.Regex.IsMatch(id,@"^USB\\VID_045E&PID_028E\\[^\\]+$",System.Text.RegularExpressions.RegexOptions.IgnoreCase))throw new ArgumentException("Exact physical instance required");
+   IntPtr set=SetupDiCreateDeviceInfoList(IntPtr.Zero,IntPtr.Zero);if(set==new IntPtr(-1))throw new Win32Exception(Marshal.GetLastWin32Error());
+   try {
+    Device dev=new Device();dev.Size=(uint)Marshal.SizeOf(typeof(Device));Check(SetupDiOpenDeviceInfoW(set,id,IntPtr.Zero,0,ref dev));
+    byte[] data=new byte[4096];uint type,used;
+    if(!SetupDiGetDeviceRegistryPropertyW(set,ref dev,0x12,out type,data,(uint)data.Length,out used)) {int e=Marshal.GetLastWin32Error();if(e==13)return;throw new Win32Exception(e);}
+    if(type!=7 || used>data.Length || (used&1)!=0)throw new InvalidOperationException("Invalid LowerFilters property");
+    string[] values=Encoding.Unicode.GetString(data,0,(int)used).Split(new char[]{'\0'},StringSplitOptions.RemoveEmptyEntries);
+    foreach(string v in values)if(!String.Equals(v,"vhf",StringComparison.OrdinalIgnoreCase) && !String.Equals(v,"ChatpadFilter",StringComparison.OrdinalIgnoreCase))throw new InvalidOperationException("Unknown lower filter; no mutation");
+    Check(SetupDiSetDeviceRegistryPropertyW(set,ref dev,0x12,IntPtr.Zero,0));
+   }finally{Check(SetupDiDestroyDeviceInfoList(set));}
+  }
   static void Check(bool ok) { if(!ok) throw new Win32Exception(Marshal.GetLastWin32Error()); }
   static string Version(ulong v) { return String.Format("{0}.{1}.{2}.{3}",v>>48,(v>>32)&65535,(v>>16)&65535,v&65535); }
   public static bool InspectCandidate(string id,string inf,string section,string provider,string version) { return Run(id,inf,section,provider,version,false); }

@@ -53,16 +53,22 @@ struct ActivationEvent {
     ControlRequest setup;
     TransferResult result;
     bool accepted{}, expectedStall{};
+    bool optionalProbe{}, probeRejected{};
 };
+enum class ActivationPolicy { ProvenStallOnly, NativeProbeRejection };
+// A rejection is protocol-stage evidence, never inferred USB STALL evidence.
+const char* ActivationDisposition(const ActivationEvent&);
 struct ActivationResult { bool success{}; size_t completedSteps{}; std::vector<ActivationEvent> events; };
 class ActivationRunner {
 public:
+    explicit ActivationRunner(ActivationPolicy policy = ActivationPolicy::ProvenStallOnly) : policy_(policy) {}
     // Caller must first observe a successful non-empty controller report in this open lifetime.
     // One instance permits one attempt only. Construct anew only after a genuine reconnect.
     ActivationResult Run(IPhysicalTransport&, const std::function<void(uint32_t)>& delay,
                          const std::function<void(const ActivationEvent&)>& observe = {});
 private:
     bool consumed_{};
+    ActivationPolicy policy_{};
 };
 class ChatpadMaintenance {
 public:

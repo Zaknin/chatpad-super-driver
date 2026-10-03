@@ -15,6 +15,15 @@ internal static class Program
             var options = ParseOptions(args.Skip(1).ToArray());
             switch (args[0])
             {
+                case "backend-status":
+                    RequireKeys(options);
+#if HIDMAESTRO
+                    var availability = HidMaestroRuntime.Probe();
+#else
+                    var availability = new BackendAvailability(false, false, "HIDMaestro SDK is not compiled in.");
+#endif
+                    Console.WriteLine(JsonSerializer.Serialize(new { availability, contextConstructed = false, liveDeviceCreated = false, readOnly = true }, JsonOptions));
+                    return availability.RuntimeReady ? 0 : 3;
                 case "helper":
                     RequireKeys(options, "backend", "duration-ms", "idle-ms", "allow-live-virtual");
                     return await Helper(options);

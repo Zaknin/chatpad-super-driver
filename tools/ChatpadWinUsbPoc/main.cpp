@@ -5,6 +5,7 @@
 #include "Topology.h"
 #include "KeyboardOutput.h"
 #include "VirtualHelper.h"
+#include "C3Session.h"
 #include <atomic>
 #include <chrono>
 #include <fstream>
@@ -78,7 +79,16 @@ void ActivationLine(const ActivationEvent& event) {
     text<<"activation stage="<<event.step<<" setup=("<<std::hex<<static_cast<unsigned>(setup.requestType)<<','
         <<static_cast<unsigned>(setup.request)<<','<<setup.value<<','<<setup.index<<','<<setup.length<<std::dec
         <<") payload="<<Hex(setup.payload)<<" Win32="<<event.result.win32Error<<" transferred="<<event.result.transferred
-        <<" status="<<static_cast<unsigned>(event.result.status)<<" accepted="<<event.accepted;
+        <<" status="<<static_cast<unsigned>(event.result.status)<<" accepted="<<event.accepted
+        <<" stagePolicy="<<(event.optionalProbe?"OPTIONAL_PROBE":"STRICT")
+        <<" disposition="<<ActivationDisposition(event)<<" provenStall="<<event.expectedStall;
+    Print(text.str());
+}
+void MaintenanceLine(const char* stage,const ChatpadMaintenance& maintenance,bool success) {
+    const auto result=maintenance.LastResult();std::ostringstream text;
+    text<<stage<<" stagePolicy=STRICT status="<<static_cast<unsigned>(result.status)
+        <<" Win32="<<result.win32Error<<" transferred="<<result.transferred
+        <<" expectedLength=0 disposition="<<(success?"SUCCESS":"FATAL")<<" noRetry=true";
     Print(text.str());
 }
 bool Ready(WinUsbTransport& usb,uint64_t deadline,XboxState& initial) {
@@ -96,7 +106,7 @@ int main(int argc,char** argv) {
     try {
         if(argc<2)throw std::runtime_error("command required: enumerate|descriptors|monitor-controller|monitor-chatpad|activate-chatpad|monitor-all|bridge; --seconds 1..120 --instance exact-id --activate --json-only --json-out file; descriptors --fixture binary-config (offline); bridge requires --allow-live-bridge --backend-helper absolute-exe --backend hidmaestro|mock");
         std::string command=argv[1],instance,jsonFile,fixture,helperPath,backend="hidmaestro";
-        bool bridge=command=="bridge",allowBridge=false;
+        bool bridge=command=="bridge",session=command=="c3-session",allowBridge=false;
         unsigned seconds=15;bool activate=command=="activate-chatpad" || bridge,jsonOnly=false;
         for(int index=2;index<argc;++index) {
             std::string option=argv[index];
@@ -117,9 +127,11 @@ int main(int argc,char** argv) {
         bool readChatpad=command=="monitor-chatpad" || command=="monitor-all" || command=="activate-chatpad" || bridge;
         if(bridge && (!allowBridge || helperPath.empty() || !std::filesystem::path(helperPath).is_absolute()))
             throw std::runtime_error("bridge requires explicit --allow-live-bridge and absolute --backend-helper; no implicit virtual creation/input injection");
-        if(!bridge && (allowBridge || !helperPath.empty()))throw std::runtime_error("bridge options require bridge command");
+        if(session&&(helperPath.empty()||!std::filesystem::path(helperPath).is_absolute()||activate||allowBridge))
+            throw std::runtime_error("c3-session requires absolute backend-helper and staged stdin commands; no upfront activation/bridge option");
+        if(!bridge && !session && (allowBridge || !helperPath.empty()))throw std::runtime_error("backend options require bridge or c3-session command");
         if(backend!="hidmaestro" && backend!="mock" && backend!="unavailable")throw std::runtime_error("unknown virtual backend");
-        if(!descriptor && !readController && !readChatpad)throw std::runtime_error("unknown command "+command);
+        if(!descriptor && !readController && !readChatpad && !session)throw std::runtime_error("unknown command "+command);
         if(activate && (descriptor || command=="monitor-controller"))throw std::runtime_error("--activate requires Chatpad monitor mode");
         if(!fixture.empty()) {
             if(command!="descriptors" || activate)throw std::runtime_error("--fixture only for offline descriptors");
@@ -143,14 +155,20 @@ int main(int argc,char** argv) {
             if(!jsonFile.empty()){std::ofstream out(jsonFile);out<<json<<'\n';if(!out)throw std::runtime_error("JSON write failed");}return 0;
         }
         if(!SetConsoleCtrlHandler(ConsoleHandler,TRUE))throw std::runtime_error("console handler unavailable");
+        if(session){
+            HelperOptions options;options.executable=std::filesystem::path(helperPath).wstring();options.backend=backend;
+            options.allowLiveVirtual=true;options.durationMs=seconds*1000;
+            return RunC3Session(usb,options,seconds,stopped);
+        }
         auto deadline=Now()+static_cast<uint64_t>(seconds)*1000;
         XboxState initialState;
         // Independent controller read completes before exact activation; no speculative payloads/retries.
         if(activate) {
             if(!Ready(usb,(std::min)(deadline,Now()+3000),initialState))return 5;
-            ActivationRunner runner;
+            ActivationRunner runner{ActivationPolicy::NativeProbeRejection};
             auto result=runner.Run(usb,[](uint32_t delay){std::this_thread::sleep_for(std::chrono::milliseconds(delay));},ActivationLine);
-            if(!result.success){Print("activation stopped; generic Win32 failure is not evidence of USB STALL; no retry");return 6;}
+            if(!result.success){Print("activation stopped at fatal stage; Error31 is permitted only for zero-byte optional probes0..3, never USB STALL evidence; no retry");return 6;}
+            Print("activation complete: strict write4 and final read5 succeeded with exact lengths; rejected optional probes are not hardware acceptance evidence");
         }
         std::atomic<int> failure{0};std::atomic<unsigned> controllerReports{0},chatpadReports{0};
         std::mutex motorMutex;
@@ -182,12 +200,17 @@ int main(int argc,char** argv) {
                 if(motorStop.status!=TransferStatus::Ok || motorStop.transferred!=8){Print("zero-rumble cleanup failed");failure=13;}
             }
         }};
-        if(activate && !maintenance.Start(Now())) {Print("initial keepalive failed");return 7;}
+        if(activate){
+            const bool started=maintenance.Start(Now());MaintenanceLine("initial keepalive001F",maintenance,started);
+            if(!started)return 7;
+        }
         auto worker=[&](bool controller) {
             try {
                 XboxState lastState=initialState;uint64_t submittedAt=Now();
                 while(!stopped && Now()<deadline && failure==0) {
-                    if(!controller && activate && !maintenance.Tick(Now())) {failure=7;break;}
+                    if(!controller && activate && !maintenance.Tick(Now())) {
+                        MaintenanceLine("alternating keepalive001E/001F",maintenance,false);failure=7;break;
+                    }
                     std::vector<uint8_t> data;
                     auto result=usb.Read(controller?0:2,controller?0x81:0x84,data,200);
                     if(result.status==TransferStatus::Timeout){
@@ -211,7 +234,12 @@ int main(int argc,char** argv) {
                     }
                     else {
                         ++chatpadReports;
-                        if(activate && !maintenance.OnCompletePacket(data.size())){Print("001B/packet maintenance failed");failure=7;break;}
+                        if(activate){
+                            const bool previous=maintenance.KeyDataAttempted();
+                            const bool accepted=maintenance.OnCompletePacket(data.size());
+                            if(!previous&&maintenance.KeyDataAttempted())MaintenanceLine("key-data enable001B",maintenance,accepted);
+                            if(!accepted){failure=7;break;}
+                        }
                         if(!ChatpadLine(data,mapper) && bridge && data.size()==5 && data[0]==0){failure=11;}
                     }
                 }

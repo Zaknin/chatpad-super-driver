@@ -19,6 +19,47 @@ internal static class OfflineTests
             catch (BackendException) { return true; }
         });
         var neutral = new XboxState(0, 0, 0, 0, 0, 0, 0);
+        int contextFactories = 0;
+        var runtimeMock = new MockBackend();
+        IVirtualXboxController Factory() { contextFactories++; return runtimeMock; }
+        using var missingRuntime = new GuardedBackend(true, () => new(true, false, "missing runtime"), Factory);
+        Check("compiled SDK missing runtime refuses before context", () =>
+        {
+            try { missingRuntime.Create(); return false; }
+            catch (BackendException e) { return e.Code == "backend_unavailable" && contextFactories == 0; }
+        });
+        using var presentUnauthorized = new GuardedBackend(false, () => new(true, true, "mock present"), Factory);
+        Check("present runtime without permission refuses before context", () =>
+        {
+            try { presentUnauthorized.Create(); return false; }
+            catch (BackendException e) { return e.Code == "live_virtual_not_authorized" && contextFactories == 0; }
+        });
+        using var presentRuntime = new GuardedBackend(true, () => new(true, true, "mock present"), Factory);
+        Check("present runtime probe is read only", () => presentRuntime.Availability().RuntimeReady && contextFactories == 0);
+        Check("present runtime mock creates through factory", () => { presentRuntime.Create(); return contextFactories == 1 && runtimeMock.Connected; });
+        Check("present runtime mock submit", () => { presentRuntime.SubmitState(neutral); return runtimeMock.LastState == neutral; });
+        Check("present runtime mock cleanup", () => { presentRuntime.Disconnect(); return !runtimeMock.Connected; });
+#if HIDMAESTRO
+        Check("actual SDK availability probe does not construct context", () =>
+        {
+            var availability = HidMaestroRuntime.Probe();
+            return availability.SdkCompiled && !string.IsNullOrWhiteSpace(availability.Reason);
+        });
+        Check("real adapter absent runtime mock avoids SDK factory", () =>
+        {
+            int calls = 0;
+            using var adapter = new HidMaestroBackend(true, () => new(true, false, "mock missing"), () => { calls++; return new MockBackend(); });
+            try { adapter.Create(); return false; }
+            catch (BackendException e) { return e.Code == "backend_unavailable" && calls == 0; }
+        });
+        Check("real adapter present runtime mock creates mock only", () =>
+        {
+            using var backend = new MockBackend();
+            using var adapter = new HidMaestroBackend(true, () => new(true, true, "mock present"), () => backend);
+            adapter.Create(); adapter.SubmitState(neutral); adapter.Disconnect();
+            return !backend.Connected;
+        });
+#endif
         var mock = new MockBackend();
         Throws("submit before create", () => mock.SubmitState(neutral));
         Check("create", () => { mock.Create(); return mock.Connected; });

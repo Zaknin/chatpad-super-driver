@@ -1,27 +1,27 @@
 # Next Task
 
-## Close C3 prerequisites before any live WinUSB experiment
+## Qualify external normal-Windows prerequisites; do not start C3 automatically
 
-### Exact state and starting point
+Branch feature/chatpad-winusb-bridge-poc. Start from C2R1 commit "feat: finish normal-Windows C3 prerequisites", the direct child of63902d912468f7a6819fe4f434bddd504d2bf5da. Resolve exact SHA from Git and canonical TASK-8L-C2R1/20261003T190206Z/result-manifest.json, require equality and remote0/0. Preserve research and working fallback branches.
 
-Branch `feature/chatpad-winusb-bridge-poc`; start from the coherent C2 commit `feat: prepare bounded WinUSB bridge experiment`, direct child of `672869d8e6138b80c1bcbe24cf2c22680066efcf`. Obtain exact SHA with `git log -1 --format=%H` and confirm pushed feature branch and canonical result-manifest agree. Preserve `research/chatpad-usermode-transport` and known fallback branches.
+C2R1 is PARTIAL. Offline exclusion, snapshot recovery, signed inbox-only WinUSB package, real HIDMaestro compilation, stage-specific error31 policy and bounded staged runner exist. Comprehensive offline regression passed2029checks; later focused integration regressions add11newdistinct checks for2040final passes and are in test-summary/worklog. No live mutation or physical acceptance occurred.
 
-C2 verdict PARTIAL. Native POC/protocol/SendInput/helper IPC and mock backend build; unsigned WinUSB package and guarded binding-only selector prepared. Current physical controller remains healthy xusb22 with retained extension/filters. No live mutation occurred. Offline native 578, managed 85+7, binding 38, publisher 8, existing protocol 904/control 15 checks pass; actual SDK compile blocked NETSDK1045 and entire physical bridge untested.
+Current read-only evidence: normal TESTSIGNING=false, HVCI=true, SecureBoot unknown/inaccessible; physical045E:028E absent and ChatpadFilter stopped. Exact Microsoft recovery sources verify, but a compatible current candidate cannot be proved without the target. Pinned HIDMaestro SDK is compiled; main/XUSB runtime packages are absent. The retained development-signed optional Chatpad filter cannot be claimed loadable with TESTSIGNING off.
 
-### Next recommended objective
+Next objective:
+1. With explicit authorization for runtime installation in a separate task, inspect and qualify the exact pinned HIDMaestro main/XUSB packages under unchanged normal Windows security. Record their signatures, version/source hashes, load status and rollback. Do not install based solely on embedded resources or SDK presence.
+2. Have the human physically connect the intended controller. Perform one read-only PnP status/stack/extension/service/candidate capture; do not repair its stack automatically.
+3. Refresh readiness records, verify Microsoft recovery sources/candidate and canonical publication access, then rerun PreflightC3. Preserve precise BLOCKED reasons. Do not label C3_READY until prerequisites truly pass.
+4. Only a later physically present human explicitly starting Invoke-ChatpadC3.ps1 -Execute may begin the bounded experiment. No token or automatic next-task creation is required.
 
-Resolve an exact reviewed extension exclusion **and complete restoration path** without assuming property clearing prevents PnP extension reapplication. Current binding tool cannot switch this installed filtered baseline or repair filter drift; no global cleanup/package removal is implicitly authorized. Review package signing/trust policy, real .NET10/external pinned SDK compilation, and upstream runtime side effects. Produce inspectable prerequisites and rollback before asking for live authorization. Do not reopen C1 architecture absent contradicting implementation evidence.
+First inspect AGENTS.md, PROJECT-STATE.md, DECISIONS.md, WORKLOG.md, CHATPAD-WINUSB-BINDING.md, CHATPAD-WINUSB-TRUST.md, CHATPAD-VIRTUAL-XBOX.md and CHATPAD-WINUSB-C3-PROCEDURE.md. Verify archive/sidecar/readback receipts and current Git. Inspect tools/New-ChatpadC3Readiness.ps1, ChatpadBinding.ps1, ChatpadBinding/C3Planning.psm1/C3Execution.psm1 and Invoke-ChatpadC3.ps1.
 
-### Preconditions and restrictions
+Read-only commands:
 
-Read AGENTS, PROJECT-STATE, DECISIONS, latest WORKLOG; C2 plan, POC README, binding/backend docs and C3 procedure. Reconcile clean/synchronized Git, actual PnP/service/image state and private immutable baseline hashes. Inspect canonical manifest/receipt and all SHA sidecars. No live binding/install/package removal/restart/reboot/input injection/security/trust/power mutation without a later explicit exact task. Never edit legacy or gratuitously change the working driver. Generated/private outputs remain under ignored artifacts; preserve all C1/C2 failure evidence.
+    pwsh -NoProfile -File tools/ChatpadBinding.ps1 -VerifyRestorable
+    pwsh -NoProfile -File tools/ChatpadBinding.ps1 -PlanWinUsbTransition
+    pwsh -NoProfile -File tools/ChatpadBinding.ps1 -PlanRestoreXbox
+    pwsh -NoProfile -File tools/ChatpadBinding.ps1 -PreflightC3 -JsonPath artifacts/task-8lc2r1/preflight-c3.json
+    pwsh -NoProfile -File tools/Invoke-ChatpadC3.ps1
 
-### Acceptance criteria
-
-1. A narrowly scoped exclusion/restoration design and executor can restore the exact extension/filter/base binding after clean WinUSB, independently of a working POC; tests cannot claim physical rollback.
-2. Exact WinUSB INF/catalog trust requirement and authorized future signer/install policy are recorded; no "driverless" claim.
-3. Public HIDMaestro SDK source compiles against verified pinned external dependency, with its constructor/create/install side effects bounded and reviewed; no implicit installation during tests/startup.
-4. Ambiguous Win3231 stops strict activation unless authoritative USBSTALL evidence becomes available; no guessed bytes or broad failure acceptance.
-5. Only then propose the finite sixteen-stage C3 sequence, with independently identified virtual slot, real packets/keyboard/rumble, unplug/Ctrl+C and exact restoration acceptance. Actual C3/normal-boot functionality remains untested until that later authorized execution.
-
-First inspect `git status --short --branch`, `git log -3 --oneline`, `tools/ChatpadBinding.ps1 -Status`, `tools/ChatpadBinding/ChatpadBinding.psm1`, `ExactDevice.cs`, `tools/ChatpadWinUsbPoc/`, `tools/ChatpadVirtualXbox/HidMaestroBackend.cs` and `artifacts/task-8lc2/binding/baseline-verified/`. No new chat/task is created by C2.
+Acceptance: independently qualified ordinary-mode runtime, one exact physical target/current candidate, known package hashes and trusted WinUSB INF/CAT, copied recovery sources, rendered exact mutation/recovery plans, read-only preflight PASS, and fresh canonical publication access evidence. Actual bridge acceptance is a separate C3 result. No security/BCD/trust/power/reboot mutation, unrelated OEM removal or stable/legacy source edit is authorized by this continuation document.

@@ -1,0 +1,18 @@
+# TASK 8L-C2R1 implementation plan
+
+> For agentic workers: apply test-driven development, focused verification and a final independent review. User-provided C2R1 request is the authoritative specification; implement now on the existing branch.
+
+Goal: prepare a normal-Windows C3 transition and complete recovery with verifiable package trust and compiled backend, without live mutation.
+Architecture: retain native WinUSB plus managed HIDMaestro helper; render exact package/identity-based plans, verify local prerequisites, and run the future experiment through an explicit state machine. C2R1 invokes only inspection/planning/offline builds/tests.
+Tech stack: C++17/MSVC, PowerShell 5.1/7, local .NET10, pinned HIDMaestro SDK.
+Starting commit: 63902d912468f7a6819fe4f434bddd504d2bf5da.
+
+Global constraints: immutable legacy/stable driver; no device creation/USB commands/injection/package staging/removal/security/trust/reboot mutation; GPU idle; builds at most2 workers; one final comprehensive Release regression. Commit/push only feature/chatpad-winusb-bridge-poc. Human future command execution is authorization; no token ceremony.
+
+Review focus: unknown extension identity must stop; reconnect identity must be unique; package tampering must stop before mutation; absent backend must never construct side-effectful SDK context; every post-mutation failure must reach verified Microsoft restoration.
+
+- [ ] Binding plans/preflight/state machine: own tools/ChatpadBinding* and focused tests, new C3 runner and operator docs. Parse authoritative extension INF properties and history; list all exact matching known packages, unknown rejection. Validate original Microsoft source/package hashes; optional extension only after healthy base. Render bounded mutation/recovery plan for unique hardware+stable container/serial identity, no global/wildcard deletion. Add read-only PreflightC3 machine/human PASS/BLOCKED and future C3 state transitions. Test missing sources, drift, identity changes and rollback from every mutating state before implementing.
+- [ ] Managed dependency: own tools/ChatpadVirtualXbox and backend doc. Recheck pinned MIT license; install local official .NET10 SDK with first-run side effects disabled; build only isolated SDK sources/API contract (no upstream driver/installer targets), compile adapter, dependency hashes. Refactor availability check ahead of HMContext construction. Mock runtime-present/not-present tests, no real context/device creation. Coordinate build slots.
+- [ ] Native error31: own native BridgeCore/transport/CLI/tests only. Read immutable proven activation stages; add native-specific optional probe policy retaining strict typed transport semantics. Name PROBE_REJECTED, never STALL; fail removed/access denied/strict31/timeouts and001B failure. Focused red/green tests and max2-worker builds.
+- [ ] Trust/packages/publication (root): current Microsoft source citations for10 signing questions; existing certificate read-only trust inventory; unsigned deterministic package plus signedCAT using exact existing cert only, offline SignTool package/catalog validation. No store changes. Root creates task publisher using existing atomic module; preserves failures, hashes, compiled outputs and redacted host/preflight.
+- [ ] Final integration: review complete diff, focused changed-component tests then one Release regression covering all C2 and added suites, syntax/safety/privacy and package/member checks. Update continuity/durable decisions based only on verified results. Commit/push, clean0/0; publish deterministic archive/manifest exact commit with .part/readback/final verification and sidecars last. Stop without C3.

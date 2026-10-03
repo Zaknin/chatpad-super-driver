@@ -1,17 +1,71 @@
 #if HIDMAESTRO
 using HIDMaestro;
+using System.Security.Cryptography;
 
 namespace ChatpadVirtualXbox;
 
-// Source-only in the C2 build. Public SDK calls only; no copied private ABI.
-public sealed class HidMaestroBackend(bool allowLive) : IVirtualXboxController
+public static class HidMaestroRuntime
+{
+    // Reflection/resource reads and filesystem hashes only. In particular,
+    // never instantiate HMContext or call any upstream installer/presence API.
+    public static BackendAvailability Probe()
+    {
+        try
+        {
+            var sdk = typeof(HMContext).Assembly;
+            if (!Environment.Is64BitOperatingSystem || System.Runtime.InteropServices.RuntimeInformation.OSArchitecture != System.Runtime.InteropServices.Architecture.X64)
+                return new(true, false, "C3 package requires Windows x64.");
+            var repository = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "DriverStore", "FileRepository");
+            foreach (var requirement in new[] {
+                (Inf: "hidmaestro.inf", Binary: "HIDMaestro.dll"),
+                (Inf: "hidmaestro_xusb.inf", Binary: "HMXInput.dll") })
+            {
+                string ResourceHash(string file)
+                {
+                    using var stream = sdk.GetManifestResourceStream("HIDMaestro.Native.x64." + file)
+                        ?? throw new BackendException("backend_unavailable", "SDK driver payload missing: " + file);
+                    return Convert.ToHexString(SHA256.HashData(stream));
+                }
+                var infHash = ResourceHash(requirement.Inf);
+                var binaryHash = ResourceHash(requirement.Binary);
+                bool matching = Directory.Exists(repository) && Directory.EnumerateDirectories(repository, requirement.Inf + "_amd64_*").Any(directory =>
+                {
+                    var inf = Path.Combine(directory, requirement.Inf);
+                    var binary = Path.Combine(directory, requirement.Binary);
+                    if (!File.Exists(inf) || !File.Exists(binary)) return false;
+                    using var infStream = File.OpenRead(inf);
+                    using var binaryStream = File.OpenRead(binary);
+                    return Convert.ToHexString(SHA256.HashData(infStream)) == infHash && Convert.ToHexString(SHA256.HashData(binaryStream)) == binaryHash;
+                });
+                if (!matching) return new(true, false, "Pinned HIDMaestro runtime not installed or package bytes mismatch: " + requirement.Inf + ". No installation/context/device creation attempted.");
+            }
+            return new(true, true, "Pinned driver INF/DLL bytes found in Driver Store. This does not prove Windows load/trust acceptance; independently preflight that before C3.");
+        }
+        catch (Exception e) { return new(true, false, "Read-only runtime probe failed: " + e.Message); }
+    }
+}
+
+public sealed class HidMaestroBackend : IVirtualXboxController
+{
+    private readonly GuardedBackend guard;
+    public HidMaestroBackend(bool allowLive) : this(allowLive, HidMaestroRuntime.Probe, () => new SdkXboxController()) { }
+    internal HidMaestroBackend(bool allowLive, Func<BackendAvailability> probe, Func<IVirtualXboxController> factory) => guard = new(allowLive, probe, factory);
+    public BackendAvailability Availability() => guard.Availability();
+    public void Create() => guard.Create();
+    public void SubmitState(XboxState state) => guard.SubmitState(state);
+    public void SetRumbleCallback(Action<Rumble> callback) => guard.SetRumbleCallback(callback);
+    public void Disconnect() => guard.Disconnect();
+    public void Dispose() => guard.Dispose();
+}
+
+// Public SDK calls only; context construction occurs strictly after the guard.
+internal sealed class SdkXboxController : IVirtualXboxController
 {
     private HMContext? context;
     private HMController? controller;
     private Action<Rumble>? callback;
     public void Create()
     {
-        if (!allowLive) throw new BackendException("live_virtual_not_authorized", "--allow-live-virtual required before ANY HMContext construction (its constructor has service/resource side effects).");
         if (controller != null) throw new BackendException("already_connected", "Disconnect first.");
         try
         {

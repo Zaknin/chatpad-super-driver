@@ -4493,3 +4493,24 @@ explicit later enhancement, not a partial feature hidden in the driver.
 **Alternatives rejected:** Driver refactor for code sharing; speculative activation bytes; accepting Win3231 as proven USBSTALL; installing retired ViGEm or dependencies implicitly; treating mocks/descriptor presence as real XInput/keyboard acceptance.
 
 **Consequences:** Real generic-control failures stop; actual HIDMaestro SDK compilation remains bounded by .NET10/externalSDK prerequisites. New WinUSB INF uses only exact045E:028E and deterministic GUID/inbox service. UnsignedCAT and persistent extension/filter exclusion remain live blockers. Binding-only restore assumes retained original extension/filters and cannot certify full WinUSB rollback. Later C3 must resolve those prerequisites before mutation and qualify physical behavior independently.
+
+## 2026-10-04 — C2R1 exact exclusion and snapshot recovery
+
+Decision: Exclude every known matching Chatpad Extension package by rediscovered OEM identity, clear only known instance filters, and restore Microsoft Xbox first using private hash-verified package snapshots. Optional extension restoration is separately qualified and verifies exact association/image/stack.
+Rationale: Function INF selection does not prevent an independent Extension INF from applying. Original source paths can drift; a copied package with preserved topology must be the executable recovery source.
+Alternatives rejected: selecting WinUSB alone; wildcard OEM deletion; broad/class-filter cleanup; relying on the original source directories or running bridge/backend during recovery.
+Consequences: Unknown matching packages and identity drift stop the experiment. Changed instance paths are accepted only in the same captured container. Normal-mode default recovery excludes the development-signed custom kernel filter.
+
+## 2026-10-04 — Stage semantics and ordinary-mode trust
+
+Decision: Native Win3231 is named PROBE_REJECTED and tolerated only with zero bytes in historical optional activation stages. Strict control/001B remains fatal. Validate inbox-only INF/CAT PnP trust separately from executable kernel policy.
+Rationale: Win32 does not expose proof of USBD STALL; local CAT /pa trust and Microsoft inbox SYS /kp answer different questions.
+Alternatives rejected: equating31 with STALL, globally suppressing failures, treating local CAT /kp failure as a failed Microsoft inbox image or changing TESTSIGNING to proceed.
+Consequences: Local existing-cert package installation is expected but remains UNTESTED until separate C3. Frozen unsigned bytes/archive reproducibility does not imply fresh Inf2Cat determinism.
+
+## 2026-10-04 — Staged session, finite evidence and reconnect scope
+
+Decision: Start one finite session with outputs disabled and require ordered acknowledged readiness/activation/real-packet/virtual/mapping/rumble/keyboard stages. Drain both pipes independently; retain bounded telemetry and explicit drop counts while preserving control/terminal evidence. Gracefully stop before a bounded same-container reconnect and reopen with outputs disabled.
+Rationale: Native readers can precede readiness events and produce data faster than operator loops consume it. Active hot unplug cannot prove physical zero-rumble after the device is absent.
+Alternatives rejected: scanning only consumed readiness events, blocking stdout during exit, relabeling expected removal fatal as successful cleanup, automatic retries/re-activation or selecting the first connected controller.
+Consequences: Graceful reconnect is prepared; unexpected hot unplug/crash/Ctrl+C acceptance remains a later physical qualification. Cleanup failure never becomes test success because Microsoft restoration succeeds.

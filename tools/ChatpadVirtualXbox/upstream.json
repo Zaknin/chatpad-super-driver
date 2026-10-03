@@ -7,5 +7,8 @@
   "sdkTarget": "net10.0-windows10.0.26100.0",
   "sdkReferenceMode": "external-prebuilt-assembly-only",
   "sdkRedistributedInC2": false,
-  "profile": "xbox-360-wired"
+  "profile": "xbox-360-wired",
+  "c2r1ReleaseUrl": "https://github.com/hifihedgehog/HIDMaestro/releases/download/v1.10.1/HIDMaestro-v1.10.1.zip",
+  "c2r1ReleaseAssetSha256": "DE5D0569F94229935523FA34F00136F597809F2E7760B783EDBCDD0258E145DC",
+  "c2r1ReleaseSdkSha256": "CA45EFE79C2406EB766C972F9DFEBC4BA80E33E95923D2DF4B49B8F470434E75"
 }
