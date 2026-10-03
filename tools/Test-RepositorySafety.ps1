@@ -28,6 +28,7 @@ try {
     $approvedPrototypeInf = 'prototypes/inf/ChatpadFilterExtension/ChatpadFilterExtension.inf'
     $approvedPrototypeReadme = 'prototypes/inf/ChatpadFilterExtension/README.md'
     $approvedCanonicalInf = 'src/driver/ChatpadFilter/package/ChatpadFilterExtension.inf'
+    $approvedWinUsbExperimentInf = 'tools/ChatpadBinding/ChatpadWholeDeviceWinUSB.inf'
     $approvedPublicCertificate = 'tools/ExactInstance/certificates/ChatpadLocalDevelopmentTestSigning.cer'
     $generatedPattern = '(?i)\.(sys|exe|dll|cat|cab|msi|pdb|lib|obj|ilk|idb|tlog|lastbuildstate|exp|iobj|ipdb|pch|res|recipe|log|bin|cer|crt|der|pem|pfx|p12|pvk|spc|key|snk)$'
     $trackedGenerated = @($trackedFiles | Where-Object { $_ -match $generatedPattern -and $_ -cne $approvedPublicCertificate })
@@ -70,9 +71,23 @@ try {
                 $firstSegment -notin @('.git', '.vs', 'artifacts', 'legacy', 'legacy-source', 'audit-output', 'Downloads', 'stage2-source-review')
             }
     )
-    $unexpectedModernInfFiles = @($modernInfFiles | Where-Object { $_ -notin @($approvedPrototypeInf, $approvedCanonicalInf) })
+    $unexpectedModernInfFiles = @($modernInfFiles | Where-Object { $_ -notin @($approvedPrototypeInf, $approvedCanonicalInf, $approvedWinUsbExperimentInf) })
     if ($unexpectedModernInfFiles.Count -gt 0) {
         $failures.Add("INF files exist outside the approved prototype and canonical package-source paths: $($unexpectedModernInfFiles -join ', ')")
+    }
+
+    # C2 explicitly authorizes only this exact inbox-WinUSB package source.
+    $winUsbInfPath = Join-Path $repoRoot $approvedWinUsbExperimentInf
+    if (Test-Path -LiteralPath $winUsbInfPath -PathType Leaf) {
+        $winUsbInf = [IO.File]::ReadAllText($winUsbInfPath)
+        $hardwareIds = @([regex]::Matches($winUsbInf, '(?im)^%Description%=WholeDevice,(.+)$') | ForEach-Object { $_.Groups[1].Value.Trim() })
+        if ($hardwareIds.Count -ne 1 -or $hardwareIds[0] -cne 'USB\VID_045E&PID_028E' -or
+            $winUsbInf -notmatch '(?im)^Include=winusb\.inf$' -or
+            $winUsbInf -notmatch '(?im)^Needs=WINUSB\.NT\.Services$' -or
+            $winUsbInf -notmatch '\{B6A5D05E-7E18-4DF1-8E47-12F072DE2C36\}' -or
+            $winUsbInf -match '(?im)(\.sys|CoInstallers|AddService|AddFilter|UpperFilters|LowerFilters|CopyFiles)') {
+            $failures.Add('WinUSB experiment INF exceeds exact-target inbox-only source contract.')
+        }
     }
 
     $prototypeInfPath = Join-Path $repoRoot $approvedPrototypeInf

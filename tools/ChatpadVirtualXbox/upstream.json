@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/hifihedgehog/HIDMaestro",
+  "revision": "1c126ed4780322454391b7be782230b35b0810f6",
+  "tagInspected": "v1.10.1",
+  "license": "MIT",
+  "licenseSha256": "FBA8DB4FFF568AC6A91E4C3100D1BE32D83DAE713D924EECB291182FFC11D885",
+  "sdkTarget": "net10.0-windows10.0.26100.0",
+  "sdkReferenceMode": "external-prebuilt-assembly-only",
+  "sdkRedistributedInC2": false,
+  "profile": "xbox-360-wired"
+}

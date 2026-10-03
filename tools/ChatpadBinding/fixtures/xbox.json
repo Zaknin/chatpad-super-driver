@@ -1,0 +1,6 @@
+{
+ "Schema":1,
+ "Target":{"InstanceId":"USB\\VID_045E&PID_028E\\SYNTHETIC-A","HardwareIds":["USB\\VID_045E&PID_028E&REV_0114","USB\\VID_045E&PID_028E"],"ContainerId":"{11111111-1111-1111-1111-111111111111}","Inf":"xusb22.inf","Section":"CC_Install","Provider":"Microsoft","Version":"10.0.26100.9278","Service":"xusb22","Problem":0,"LowerFilters":["vhf","ChatpadFilter"],"UpperFilters":[]},
+ "ClassLowerFilters":[],"ClassUpperFilters":[],"Stack":["xusb22","ChatpadFilter","vhf","USBHUB3"],"Interfaces":[],
+ "Extensions":[{"PublishedInf":"oem-fixture.inf","Known":true,"SHA256":"FE35416537D432CDB37B0B9C967298F86B2EE636F02937DE3AAB0F1E91FFB274"}]
+}

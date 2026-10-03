@@ -1,0 +1,8 @@
+<Project>
+  <!-- C2 builds only user-mode executables, as the existing protocol test projects do. -->
+  <PropertyGroup>
+    <SpectreMitigation>false</SpectreMitigation>
+    <Deterministic>true</Deterministic>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+</Project>

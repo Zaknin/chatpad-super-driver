@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework Condition="'$(EnableHidMaestro)' != 'true'">net9.0</TargetFramework>
+    <TargetFramework Condition="'$(EnableHidMaestro)' == 'true'">net10.0-windows10.0.26100.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefineConstants Condition="'$(EnableHidMaestro)' == 'true'">$(DefineConstants);HIDMAESTRO</DefineConstants>
+  </PropertyGroup>
+  <!-- External assembled SDK only. Never build upstream's payload-producing project. -->
+  <ItemGroup Condition="'$(EnableHidMaestro)' == 'true'">
+    <Reference Include="HIDMaestro.Core"><HintPath>$(HidMaestroSdkPath)</HintPath><Private>true</Private></Reference>
+  </ItemGroup>
+  <Target Name="ValidateExternalSdk" BeforeTargets="ResolveReferences" Condition="'$(EnableHidMaestro)' == 'true'">
+    <Error Condition="!Exists('$(HidMaestroSdkPath)')" Text="Provide HidMaestroSdkPath to the prebuilt pinned external SDK; upstream builds/installers are never invoked here." />
+  </Target>
+</Project>

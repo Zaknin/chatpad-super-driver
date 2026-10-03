@@ -1,0 +1,5 @@
+{
+ "Schema":1,
+ "Target":{"InstanceId":"USB\\VID_045E&PID_028E\\SYNTHETIC-A","HardwareIds":["USB\\VID_045E&PID_028E"],"ContainerId":"{11111111-1111-1111-1111-111111111111}","Inf":"oem-experiment.inf","Section":"WholeDevice","Provider":"Chatpad Super Driver Project","Version":"0.0.1.0","Service":"WinUSB","Problem":0,"LowerFilters":[],"UpperFilters":[]},
+ "ClassLowerFilters":[],"ClassUpperFilters":[],"Stack":["WinUSB","USBHUB3"],"Interfaces":["{B6A5D05E-7E18-4DF1-8E47-12F072DE2C36}"],"Extensions":[]
+}

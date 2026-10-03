@@ -1,0 +1,32 @@
+[Version]
+Signature="$Windows NT$"
+Class=USBDevice
+ClassGuid={88BAE032-5A81-49F0-BC3D-A4FF138216D6}
+Provider=%Provider%
+CatalogFile=ChatpadWholeDeviceWinUSB.cat
+DriverVer=10/03/2026,0.0.1.0
+PnpLockdown=1
+
+[Manufacturer]
+%Provider%=Models,NTamd64.10.0...22000
+
+[Models.NTamd64.10.0...22000]
+%Description%=WholeDevice,USB\VID_045E&PID_028E
+
+[WholeDevice.NT]
+Include=winusb.inf
+Needs=WINUSB.NT
+
+[WholeDevice.NT.Services]
+Include=winusb.inf
+Needs=WINUSB.NT.Services
+
+[WholeDevice.NT.HW]
+AddReg=ApplicationInterface
+
+[ApplicationInterface]
+HKR,,DeviceInterfaceGUIDs,0x00010000,"{B6A5D05E-7E18-4DF1-8E47-12F072DE2C36}"
+
+[Strings]
+Provider="Chatpad Super Driver Project"
+Description="Xbox 360 whole-device WinUSB experiment"

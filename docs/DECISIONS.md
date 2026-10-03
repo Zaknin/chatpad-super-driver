@@ -4483,3 +4483,13 @@ legacy Windows-mode toggles, vJoy, SendKeys, and an always-running helper.
 
 **Consequences:** People is non-disruptive by default and mouse mode remains an
 explicit later enhancement, not a partial feature hidden in the driver.
+
+## 2026-10-03 - Prepare independent user-mode transport without changing the fallback
+
+**Decision:** Reuse immutable portable protocol sources in a bounded native WinUSB monitor/bridge, with platform-neutral physical/virtual/keyboard contracts and an external managed public-SDK helper. Preserve the working KMDF/VHF implementation and legacy unchanged. Monitor modes never inject; bridge and later binding execution have separate explicit gates.
+
+**Rationale:** C1 established the physical whole-device/interface model; C2 source/test preparation does not require refactoring the proven fallback or copying GPL implementation/private virtual-backend ABI.
+
+**Alternatives rejected:** Driver refactor for code sharing; speculative activation bytes; accepting Win3231 as proven USBSTALL; installing retired ViGEm or dependencies implicitly; treating mocks/descriptor presence as real XInput/keyboard acceptance.
+
+**Consequences:** Real generic-control failures stop; actual HIDMaestro SDK compilation remains bounded by .NET10/externalSDK prerequisites. New WinUSB INF uses only exact045E:028E and deterministic GUID/inbox service. UnsignedCAT and persistent extension/filter exclusion remain live blockers. Binding-only restore assumes retained original extension/filters and cannot certify full WinUSB rollback. Later C3 must resolve those prerequisites before mutation and qualify physical behavior independently.

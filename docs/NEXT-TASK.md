@@ -1,40 +1,27 @@
 # Next Task
 
-## TASK 8L-C2 — Offline preparation of a bounded WinUSB/UMDF experiment
+## Close C3 prerequisites before any live WinUSB experiment
 
-### Exact current state
+### Exact state and starting point
 
-- Required branch: `research/chatpad-usermode-transport`.
-- Required starting checkpoint: `docs: assess whole-device WinUSB and UMDF bridge`, direct child of `51dbe52d0f926afbcac714fbef7d2cc76dde102a`. Resolve exact SHA with `git log -1 --format=%H` and verify it matches the pushed research branch before work. Do not change feature branches.
-- Read AGENTS, PROJECT-STATE, DECISIONS, this file, latest WORKLOG, `CHATPAD-WHOLE-DEVICE-WINUSB-RESEARCH.md` and `CHATPAD-WHOLE-DEVICE-EXPERIMENT.md`.
-- C1 final sample: TESTSIGNING/HVCI flags on, problem 0, xusb22/ChatpadFilter/vhf running, exact 1.0.14 installed image, physical XInput slot 0 works. Actual state must be refreshed, not assumed. Seven active interfaces; WinUSB initialization fails 87 under current xusb22. No new raw Chatpad user-mode monitor/bridge exists.
-- Existing ChatpadControl status/diagnostics fail 87. Keep this separate from hardware/virtual-backend research; do not silently fix it or claim configuration acceptance.
-- Whole-device WinUSB plus standard HIDMaestro UMDF2 is technically supported as a candidate, not locally validated. All ordinary-boot/virtual-backend/physical bridge acceptance remains untested.
+Branch `feature/chatpad-winusb-bridge-poc`; start from the coherent C2 commit `feat: prepare bounded WinUSB bridge experiment`, direct child of `672869d8e6138b80c1bcbe24cf2c22680066efcf`. Obtain exact SHA with `git log -1 --format=%H` and confirm pushed feature branch and canonical result-manifest agree. Preserve `research/chatpad-usermode-transport` and known fallback branches.
 
-### Next objective
+C2 verdict PARTIAL. Native POC/protocol/SendInput/helper IPC and mock backend build; unsigned WinUSB package and guarded binding-only selector prepared. Current physical controller remains healthy xusb22 with retained extension/filters. No live mutation occurred. Offline native 578, managed 85+7, binding 38, publisher 8, existing protocol 904/control 15 checks pass; actual SDK compile blocked NETSDK1045 and entire physical bridge untested.
 
-Prepare the concrete code/package draft/dry-run needed to make a later live authorization reviewable. Follow experiment section 0 and its exact binding/rollback contract. Use the existing portable protocol implementation; no GPL source copying. Keep native USB transport independent from a small managed HIDMaestro adapter. Do not make installer calls an implicit consequence of normal startup or tests.
+### Next recommended objective
 
-### Preconditions and scope
+Resolve an exact reviewed extension exclusion **and complete restoration path** without assuming property clearing prevents PnP extension reapplication. Current binding tool cannot switch this installed filtered baseline or repair filter drift; no global cleanup/package removal is implicitly authorized. Review package signing/trust policy, real .NET10/external pinned SDK compilation, and upstream runtime side effects. Produce inspectable prerequisites and rollback before asking for live authorization. Do not reopen C1 architecture absent contradicting implementation evidence.
 
-1. Confirm clean/synchronized Git and applicable instructions, existing build tools, exact rollback INF/SYS/CAT hashes, and unchanged reference feature branch.
-2. Preserve `artifacts/task-8l/` and `artifacts/task-8lc1/`; generate new outputs only in ignored `artifacts/task-8lc2/`.
-3. Pin HIDMaestro v1.10.1 / `1c126ed4780322454391b7be782230b35b0810f6`; only standard `xbox-360-wired`. Confirm managed SDK requirements. Do not install SDKs or driver packages merely to make a build pass; report a missing prerequisite.
-4. Treat the old exact-instance restoration entrypoint as non-executing until audited/implemented for this plan. No claimed rollback capability based on a dry-run returning PASS.
+### Preconditions and restrictions
 
-### Safety restrictions
-
-No live USB rebind, Chatpad INF removal, virtual backend install/creation, trust-store change, BCD/security/power change, driver build/sign/package/deploy, raw activation/pipe access, SendInput, device restart or reboot. User-mode offline compilation and tests require the next task's implementation scope; this handoff is a recommendation, not permission to execute live phases. No legacy edits, per-game DLL hooks, global filter cleanup or automatic installer invocation. Do not overwrite dirty work.
+Read AGENTS, PROJECT-STATE, DECISIONS, latest WORKLOG; C2 plan, POC README, binding/backend docs and C3 procedure. Reconcile clean/synchronized Git, actual PnP/service/image state and private immutable baseline hashes. Inspect canonical manifest/receipt and all SHA sidecars. No live binding/install/package removal/restart/reboot/input injection/security/trust/power mutation without a later explicit exact task. Never edit legacy or gratuitously change the working driver. Generated/private outputs remain under ignored artifacts; preserve all C1/C2 failure evidence.
 
 ### Acceptance criteria
 
-- Bounded native monitor supports descriptor/pipe checks, controller packet validation, existing Chatpad activation/keepalive/001B semantics and logging; independently selectable monitor/bridge modes; no hardware access during offline tests.
-- Managed helper uses supported SDK with explicit install/create boundaries; native app does not depend on private shared-memory layout. Source/length validation and copying of output callback data, independent trigger handling, neutral/release/cancel and motor-stop behavior covered by focused offline tests.
-- Independent system-XInput observer records return codes, identifies the intended virtual slot and fails on timeout/disconnection; no first-connected-slot shortcut or exit-zero-only benchmark assertion.
-- Installation/rollback dry-run names exact hardware target and package/certificate/property deltas and enforces single-device/dependency checks. New binding INF remains a draft until signing/package preparation is explicitly authorized; update safety allowlist deliberately if adding a tracked new INF source.
-- Full physical-to-XInput/keyboard execution and ordinary-boot qualification remain explicitly untested. Produce a concrete final live action list with rollback artifacts, expected physical XInput loss and finite acceptance windows, then seek the exact missing live authorization only after preparation is complete.
-- Inspect full diff, validate repository safety, update continuity, commit together and push only research branch. No production architecture commitment solely from offline tests.
+1. A narrowly scoped exclusion/restoration design and executor can restore the exact extension/filter/base binding after clean WinUSB, independently of a working POC; tests cannot claim physical rollback.
+2. Exact WinUSB INF/catalog trust requirement and authorized future signer/install policy are recorded; no "driverless" claim.
+3. Public HIDMaestro SDK source compiles against verified pinned external dependency, with its constructor/create/install side effects bounded and reviewed; no implicit installation during tests/startup.
+4. Ambiguous Win3231 stops strict activation unless authoritative USBSTALL evidence becomes available; no guessed bytes or broad failure acceptance.
+5. Only then propose the finite sixteen-stage C3 sequence, with independently identified virtual slot, real packets/keyboard/rumble, unplug/Ctrl+C and exact restoration acceptance. Actual C3/normal-boot functionality remains untested until that later authorized execution.
 
-### First commands/files
-
-`git status --short --branch`, `git log -3 --oneline`, read-only fresh PnP/XInput state, the two C1 research documents, `src/protocol/ChatpadProtocol/`, `src/driver/ChatpadFilter/ChatpadLiveRuntime.c`, and ignored `artifacts/task-8lc1/hidmaestro-audit.md` / pinned reference sources. C1 `final-state.json`, `final-stack.txt`, `evidence-check.json` and `repository-safety.txt` describe the last verified sample.
+First inspect `git status --short --branch`, `git log -3 --oneline`, `tools/ChatpadBinding.ps1 -Status`, `tools/ChatpadBinding/ChatpadBinding.psm1`, `ExactDevice.cs`, `tools/ChatpadWinUsbPoc/`, `tools/ChatpadVirtualXbox/HidMaestroBackend.cs` and `artifacts/task-8lc2/binding/baseline-verified/`. No new chat/task is created by C2.
