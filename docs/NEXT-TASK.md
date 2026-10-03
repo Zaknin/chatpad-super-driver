@@ -1,39 +1,42 @@
 # Next Task
 
-## TASK 8K-T1 — Physical 1.0.14 layer/configuration validation and idle-failure capture
+## TASK 8L-C1 - Comparative interface census on a healthy Xbox stack
 
-### Starting state
+### Exact starting state
 
-- Use pushed branch `feature/chatpad-legacy-layers-configuration` at the TASK 8K commit recorded in Git and `docs/PROJECT-STATE.md`.
-- The proven recovery baseline is installed `oem103.inf` version 1.0.13.0 with loaded SYS SHA-256 `45A727CE2658A8A9B5F1CC0B8654DF0C7A929244C929200DF66BD97EBABA5ACD`.
-- The exact signed 1.0.14 package and companion identities are recorded in `docs/PROJECT-STATE.md`. Do not rebuild or resign before testing.
+- Required branch: `research/chatpad-usermode-transport`.
+- Required starting commit: the pushed checkpoint `docs: record user-mode Chatpad transport research`, direct child of `4759f7f01fe03edd96b66bb75f5c14d732b36016`. Resolve exact SHA with `git log -1 --format=%H` and compare upstream before work. Do not alter feature branches.
+- Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md`, and `docs/CHATPAD-USERMODE-TRANSPORT-RESEARCH.md`.
+- Current normal boot: oem104.inf 1.0.14 selected, Code 52 / 0xC0000428, xusb22/ChatpadFilter/vhf stopped, USBHUB3-only actual stack. User confirmed this and offered a comparative reboot if necessary; no reboot was performed or scheduled.
+- Native hub queries already proved four interfaces and Chatpad interface 2 / endpoint 84. No MI child PDO or accessible Chatpad stream exists in this failed boot. No functional user-mode POC exists.
 
-### Preconditions
+### Objective and preconditions
 
-1. Be physically present with a keyboard, mouse, controller, Chatpad, and a text editor available.
-2. Record the current `oem103.inf` package, loaded SYS identity, device status, stack, and rollback command before mutation.
-3. Verify the three 1.0.14 package file hashes and both signatures/catalog memberships against `docs/PROJECT-STATE.md`.
-4. Install the exact package once with:
+Compare registered interfaces, shared handle access, HID capabilities and known read-only queries once the controller stack is healthy. Close the healthy-stack evidence gap without mistaking our filter's services for a driverless transport.
 
-```powershell
-pnputil /add-driver "C:\Dev\chatpad-super-driver\artifacts\task-8k-legacy-layers-configuration-package\final\ChatpadFilterExtension.inf" /install
-```
+1. Preserve the ignored `artifacts/task-8l/` normal-boot baseline before reusing its probe, which overwrites output files. Re-resolve physical parent and connection index after any port/boot change; the original script uses port 6.
+2. Inspect current PnP service, actual stack, extension/filter bindings, problem status and XInput connection state before any API conclusion.
+3. An operator-controlled return to the previously working development boot can provide a useful interface comparison. If our filter loads there, classify it as a custom-driver baseline, never pure user mode.
+4. The decisive driverless sample requires healthy Microsoft xusb22 with no custom filter in the actual stack. If this requires extension removal, present the exact technical reason, package/device scope, expected Xbox effect, verified rollback command/package and reboot requirements before requesting/performing that mutation. Current TASK 8L does not authorize removing oem104.inf, changing filters, or installing anything.
 
-Do not repeat a successful install. Reboot only if Windows explicitly requires it.
+### Safety restrictions
 
-### Acceptance procedure
+- Keep ordinary controller operation intact if healthy. No arbitrary IOCTL scan, concurrent raw controller endpoint reader, device reset, package deletion, new installation, WinUSB/Zadig/libusbK/UsbDk binding or registry changes.
+- Do not change test signing, Secure Boot, HVCI, VBS, selective suspend or power policy. An offered reboot does not authorize changing those settings.
+- Do not execute the superseded TASK 8K-T1 installation instructions. Do not load/build/sign/package a driver as part of interface research.
+- No legacy/source refactor, VHF experiment or fake SendInput demonstration.
 
-1. Confirm the selected extension is 1.0.14.0, the loaded SYS matches the signed package, and controller, IG_00, HID, `xusb22`, `ChatpadFilter`, and `vhf` remain healthy.
-2. Confirm normal Xbox input and every existing Base key class: ordinary letters/numbers, Shift, Space, Backspace, Enter, arrows, comma, period, and simultaneous keys.
-3. Test every documented deterministic Green mapping, every deterministic Orange mapping, and Orange+Shift Caps Lock against `docs/LEGACY-FEATURE-INVENTORY.md` and built-in profile output.
-4. Test both release orders, two simultaneous mapped keys, repeated reports, held-key typematic, hot unplug/reconnect, three USB-port moves, and unplug while holding a layered key. No virtual key or modifier may remain stuck.
-5. Run `ChatpadControl.exe status`, `config show`, and `diagnostics`; export the built-in profile; import/apply a valid modified profile; prove the change; reset to defaults; and prove the original mapping returns.
-6. Attempt unsupported schema, duplicate property/mapping, partial, oversized, unknown-action, and invalid-HID profiles. Every attempt must fail without changing the prior active profile or Xbox behavior.
-7. Reproduce the prolonged-idle/sleep loss only after the core matrix passes. If typing stops, preserve the failed state and collect read-only diagnostics before unplugging, restarting, rebooting, or applying another profile.
-8. If controller health, base input, release safety, or configuration recovery fails, stop and roll back to the preserved `oem103.inf` 1.0.13 baseline.
+### Acceptance criteria
 
-### Restrictions
+- Precisely label every sample's actual stack and normal Xbox/XInput health.
+- Enumerate every associated published interface with Configuration Manager/SetupAPI; record GUID, exact local symbolic link, access/share flags and measured errors. Keep machine-specific raw identities in ignored artifacts.
+- On openable HID handles query capabilities using documented non-mutating APIs; on XUSB use only source-identified non-mutating operations. Record unavailable operations as untested, not denied.
+- Distinguish physical interface 2 / endpoint 84 from a bindable PnP child and an accessible user handle.
+- Only if a real legitimate transport without the custom filter exists: implement minimal monitor, acquire genuine five-byte reports, then consider mapper + SendInput. Otherwise document the supported-path limit and qualified architecture verdict.
+- Commit research/continuity updates together on this branch, push only this branch, leave clean/synchronized.
 
-- Do not remove `oem103.inf` before 1.0.14 validation and rollback proof are complete.
-- Do not change activation, keep-alive, USB transfer ownership, power/resume behavior, selective suspend, trust, BCD, Secure Boot, HVCI, Memory Integrity, or VBS while diagnosing.
-- Do not claim Green/Orange physical success or an idle/sleep fix until the corresponding real-hardware evidence exists.
+### First commands/files
+
+`git status --short --branch`, `git log -2 --oneline`, read-only `Get-PnpDevice` and `pnputil /enum-devices /instanceid <fresh-target-id> /relations /services /stack /drivers /interfaces /properties`.
+
+Local ignored scripts: `artifacts/task-8l/Inspect.ps1`, `UsbResearch.cs`, `UsbResearchExactString.cs`, `Additional.ps1`. They are diagnostic probes, not product code or a functional POC. Exact prior outputs are in `pnp-stack.txt`, `interface-opens.json`, `hub-descriptors.json`, `known-interface-counts.json` and `xinput.json`.
