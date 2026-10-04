@@ -143,10 +143,10 @@ function Set-ChatpadBrokerAuthorizationHash($Plan) {
  if((Get-ItemProperty -LiteralPath $key -Name AuthorizationSha256).AuthorizationSha256 -cne $Plan.AuthorizationHash){throw 'Service Parameters authorization hash readback mismatch.'}
 }
 function Configure-ChatpadBrokerService($Plan,[bool]$Create) {
- if($Create){Invoke-ChatpadBrokerSc @('create',$Plan.ServiceName,"binPath= $($Plan.BinaryPathName)",'start= auto','obj= LocalSystem','DisplayName= Chatpad HIDMaestro Broker')}
- else{Invoke-ChatpadBrokerSc @('config',$Plan.ServiceName,"binPath= $($Plan.BinaryPathName)",'start= auto','obj= LocalSystem')}
- Invoke-ChatpadBrokerSc @('failure',$Plan.ServiceName,'reset= 86400','actions= restart/5000/restart/15000/restart/30000')
- Invoke-ChatpadBrokerSc @('failureflag',$Plan.ServiceName,'1')
+ if($Create){Invoke-ChatpadBrokerSc -Arguments (New-ChatpadBrokerScArguments -Operation Create -Plan $Plan)}
+ else{Invoke-ChatpadBrokerSc -Arguments (New-ChatpadBrokerScArguments -Operation Config -Plan $Plan)}
+ Invoke-ChatpadBrokerSc -Arguments (New-ChatpadBrokerScArguments -Operation Failure -Plan $Plan)
+ Invoke-ChatpadBrokerSc -Arguments (New-ChatpadBrokerScArguments -Operation FailureFlag -Plan $Plan)
  $service=Get-ChatpadBrokerServiceRecord
  Assert-ChatpadBrokerInstalledServiceIdentity $service|Out-Null
  Set-ChatpadBrokerAuthorizationHash $Plan

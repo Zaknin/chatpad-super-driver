@@ -164,6 +164,20 @@ function New-ChatpadBrokerServicePlan {
  }
 }
 
+function New-ChatpadBrokerScArguments {
+ [CmdletBinding()]
+ param(
+  [Parameter(Mandatory)][ValidateSet('Create','Config','Failure','FailureFlag')][string]$Operation,
+  [Parameter(Mandatory)][object]$Plan
+ )
+ switch($Operation){
+  'Create' { return @('create',[string]$Plan.ServiceName,'binPath=',[string]$Plan.BinaryPathName,'start=','auto','obj=','LocalSystem','DisplayName=','Chatpad HIDMaestro Broker') }
+  'Config' { return @('config',[string]$Plan.ServiceName,'binPath=',[string]$Plan.BinaryPathName,'start=','auto','obj=','LocalSystem') }
+  'Failure' { return @('failure',[string]$Plan.ServiceName,'reset=','86400','actions=','restart/5000/restart/15000/restart/30000') }
+  'FailureFlag' { return @('failureflag',[string]$Plan.ServiceName,'1') }
+ }
+}
+
 function Assert-ChatpadBrokerInstalledRuntimeMember {
  [CmdletBinding()]
  param([Parameter(Mandatory)][object]$Record,[Parameter(Mandatory)][string]$InstallRoot)
@@ -174,4 +188,4 @@ function Assert-ChatpadBrokerInstalledRuntimeMember {
  return $true
 }
 
-Export-ModuleMember -Function New-ChatpadC4PackageRecord,New-ChatpadC4PackagePayloadRecords,Get-ChatpadC4ReadinessPackageRoot,Assert-ChatpadC4PackageIdentity,Assert-ChatpadC4InstalledRuntimeMember,Test-ChatpadBrokerSetupIdentity,Test-ChatpadBrokerInstallRootIdentity,Resolve-ChatpadBrokerPackageRoot,Assert-ChatpadBrokerInstallRoot,New-ChatpadBrokerServicePlan,Assert-ChatpadBrokerInstalledRuntimeMember
+Export-ModuleMember -Function New-ChatpadC4PackageRecord,New-ChatpadC4PackagePayloadRecords,Get-ChatpadC4ReadinessPackageRoot,Assert-ChatpadC4PackageIdentity,Assert-ChatpadC4InstalledRuntimeMember,Test-ChatpadBrokerSetupIdentity,Test-ChatpadBrokerInstallRootIdentity,Resolve-ChatpadBrokerPackageRoot,Assert-ChatpadBrokerInstallRoot,New-ChatpadBrokerServicePlan,New-ChatpadBrokerScArguments,Assert-ChatpadBrokerInstalledRuntimeMember

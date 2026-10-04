@@ -32,6 +32,19 @@ try{
  }
  $payloads=New-ChatpadC4PackagePayloadRecords $packageRoot
  $servicePlan=New-ChatpadBrokerServicePlan -Mode InstallBroker -InstallRoot $installRoot -RuntimeRecords @($payloads|Where-Object Role -like 'VirtualFile:*') -AuthorizedUserSid $approvedSid
+ $argvCases=@(
+  [pscustomobject]@{Operation='Create';Expected=@('create',$servicePlan.ServiceName,'binPath=',$servicePlan.BinaryPathName,'start=','auto','obj=','LocalSystem','DisplayName=','Chatpad HIDMaestro Broker')},
+  [pscustomobject]@{Operation='Config';Expected=@('config',$servicePlan.ServiceName,'binPath=',$servicePlan.BinaryPathName,'start=','auto','obj=','LocalSystem')},
+  [pscustomobject]@{Operation='Failure';Expected=@('failure',$servicePlan.ServiceName,'reset=','86400','actions=','restart/5000/restart/15000/restart/30000')},
+  [pscustomobject]@{Operation='FailureFlag';Expected=@('failureflag',$servicePlan.ServiceName,'1')}
+ )
+ foreach($case in $argvCases){
+  $actual=@(New-ChatpadBrokerScArguments -Operation $case.Operation -Plan $servicePlan)
+  if($actual.Count -ne $case.Expected.Count){throw "SCM argv count mismatch for $($case.Operation): expected $($case.Expected.Count), got $($actual.Count)."}
+  for($index=0;$index -lt $case.Expected.Count;$index++){
+   if([string]$actual[$index] -cne [string]$case.Expected[$index]){throw "SCM native argv mismatch for $($case.Operation) at index ${index}: expected <$($case.Expected[$index])>, got <$($actual[$index])>."}
+  }
+ }
  if($servicePlan.ServiceName -cne 'ChatpadHidMaestroBroker' -or $servicePlan.Account -cne 'LocalSystem' -or $servicePlan.StartType -cne 'Automatic'){throw 'Broker install plan must select only the fixed LocalSystem automatic service.'}
  if($servicePlan.BinaryPathName -cne ('"'+(Join-Path $installRoot 'ChatpadVirtualXbox.exe')+'" service') -or -not([IO.Path]::IsPathRooted($servicePlan.ExecutablePath))){throw 'Service image path must be absolute, quoted and under protected Program Files.'}
  if(@($servicePlan.RecoveryActions).Count -ne 3 -or $servicePlan.MutationScope -cne 'service-only'){throw 'Broker service recovery or mutation boundary is not fixed.'}
@@ -116,3 +129,4 @@ if(-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrat
  if($message -notmatch 'requires an elevated'){throw ('Setup elevation boundary failed: '+$message)}
 }
 Write-Output "C4 setup repository identity tests: $($cases.Count)/$($cases.Count) PASS; broker setup/package regressions: PASS; package identity regressions: 8/8 PASS; baseline path regressions: 5/5 PASS; PnP restart-result regressions: 4/4 PASS"
+Write-Output "SCM native argv shape regressions: $($argvCases.Count)/$($argvCases.Count) PASS"
