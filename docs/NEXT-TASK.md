@@ -4,12 +4,12 @@
 
 The restart at 2026-10-04 13:47 UTC failed before virtual-controller creation because a historical `SWD\HIDMAESTRO\HM_622C184E37F6891E` Enum key has `ControllerIndex=0` despite the devnode being absent (`CM_Locate_DevNodeW` returned `CR_NO_SUCH_DEVNODE`, and PnPUtil found no device). The guard now checks current devnode presence and still refuses a present ROOT/SWD controller at index zero. Presence-query errors fail closed. Focused HIDMaestro offline tests passed 113/113; C4 setup identity/path/reboot regressions passed 21/21.
 
-The package at `artifacts/task-8lc4/build-task-8lc4l1-stale-enum-published/package` is regenerated after the final continuity commit and its manifest/readiness identify final HEAD. Before use, verify its exact repository identity and package hashes.
+The package at `artifacts/task-8lc4/build-task-8lc4l1-stale-enum-published-final/package` is regenerated after the final continuity commit and its manifest/readiness identify final HEAD. Before use, verify its exact repository identity and package hashes.
 
 After package verification, the user runs this exact command from PowerShell:
 
 ```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4\build-task-8lc4l1-stale-enum-published\package\ChatpadBridge.exe" run
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4\build-task-8lc4l1-stale-enum-published-final\package\ChatpadBridge.exe" run
 ```
 
 Capture the full startup and shutdown output. If it reaches RUNNING, verify ordinary controller/Chatpad behavior and then stop with Ctrl+C; confirm clean shutdown and no remaining XInput slot or present task-owned ROOT/SWD nodes. Do not delete the historical Enum key, weaken the present-device check, rerun setup/install, or reboot. Do not proceed to the later long-idle, crash, unplug/reconnect, or comprehensive phases until this restart is accepted.
