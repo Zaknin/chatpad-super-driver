@@ -108,7 +108,10 @@ int RunC3Session(IPhysicalTransport& usb,const HelperOptions& options,unsigned s
                     if(valid){lastState=state;policy.ObserveController();
                         if(policy.Mapping()&&backend&&!backend->SubmitState(state)){fatal(12,"mapping submit failed");break;}}
                     emit("\"event\":\"controller\",\"valid\":"+std::string(valid?"true":"false")+
-                         ",\"bytes\":"+std::to_string(data.size())+",\"raw\":"+Quoted(RawHex(data)));
+                         ",\"bytes\":"+std::to_string(data.size())+",\"raw\":"+Quoted(RawHex(data))+
+                         (valid?",\"buttons\":"+std::to_string(state.buttons)+",\"lt\":"+std::to_string(state.leftTrigger)+
+                         ",\"rt\":"+std::to_string(state.rightTrigger)+",\"lx\":"+std::to_string(state.lx)+",\"ly\":"+std::to_string(state.ly)+
+                         ",\"rx\":"+std::to_string(state.rx)+",\"ry\":"+std::to_string(state.ry):""));
                 }else{
                     ++chatpads;
                     if(policy.Activated()&&receivedAt>=activatedAt){
@@ -120,10 +123,10 @@ int RunC3Session(IPhysicalTransport& usb,const HelperOptions& options,unsigned s
                     }
                     const bool valid=mapper.Process(data.data(),data.size());
                     if(valid&&data.size()==5&&receivedAt>=activatedAt)policy.ObserveFiveBytes(keyEnabled);
-                    if(!valid&&keyboard.enabled&&data.size()==5&&data[0]==0){fatal(11,"keyboard mapping/output failed");break;}
                     emit("\"event\":\"chatpad\",\"valid\":"+std::string(valid?"true":"false")+
                          ",\"bytes\":"+std::to_string(data.size())+",\"keyDataEnabled\":"+(keyEnabled?"true":"false")+
-                         ",\"raw\":"+Quoted(RawHex(data)));
+                         ",\"outputFailed\":"+(mapper.LastOutputFailed()?"true":"false")+",\"raw\":"+Quoted(RawHex(data)));
+                    if(keyboard.enabled&&mapper.LastOutputFailed()){fatal(11,"keyboard output or release failed");break;}
                 }
             }
         }catch(const std::exception&){fatal(9,"physical reader exception");}
@@ -163,9 +166,9 @@ int RunC3Session(IPhysicalTransport& usb,const HelperOptions& options,unsigned s
                         if(ok){backend->SetRumbleCallback([&](uint16_t left,uint16_t right){
                             emit("\"event\":\"rumble-callback\",\"left\":"+std::to_string(left)+",\"right\":"+std::to_string(right));
                             if(!rumbleEnabled)return;std::lock_guard<std::mutex> motor(motorMutex);
-                            if(!rumbleEnabled)return;const auto result=usb.Write(0,1,BuildRumble(left,right),1000);
+                            if(!rumbleEnabled)return;const auto packet=BuildRumble(left,right);const auto result=usb.Write(0,1,packet,1000);
                             if(result.status!=TransferStatus::Ok||result.transferred!=8)fatal(13,"physical rumble write failed");
-                            else emit("\"event\":\"rumble-output\",\"ok\":true,"+transferFields(result));});
+                            else emit("\"event\":\"rumble-output\",\"ok\":true,\"raw\":"+Quoted(RawHex(packet))+","+transferFields(result));});
                             ok=backend->SubmitState({});lastSubmit=GetTickCount64();}
                         emit("\"event\":\"virtual-created\",\"ok\":"+std::string(ok?"true":"false"));break;
                     case SessionCommand::EnableMapping:ok=backend&&backend->SubmitState(lastState);lastSubmit=GetTickCount64();break;

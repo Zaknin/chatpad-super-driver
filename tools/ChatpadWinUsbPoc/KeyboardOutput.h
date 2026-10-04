@@ -31,6 +31,7 @@ public:
     bool ForceRelease();
     const ChatpadHidKeyboardReport& LastReport() const { return report_; }
     const ChatpadKeyboardPacket& LastPacket() const { return packet_; }
+    bool LastOutputFailed() const { return lastOutputFailed_; }
 private:
     bool Apply(const ChatpadHidKeyboardReport&);
     IKeyboardOutput& output_;
@@ -39,5 +40,6 @@ private:
     ChatpadHidKeyboardReport report_{};
     ChatpadKeyboardPacket packet_{};
     std::array<bool,256> held_{};
+    bool lastOutputFailed_{};
 };
 }

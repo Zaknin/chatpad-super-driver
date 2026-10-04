@@ -37,7 +37,7 @@ function Get-ChatpadRecognizedState {
  $t=$State.Target
  if($t.Problem -ne 0){ return 'Problem' }
  if($t.Service -ieq 'xusb22' -and $t.Inf -ieq 'xusb22.inf' -and $t.Provider -eq 'Microsoft'){return 'Xbox'}
- if($t.Service -ieq 'WinUSB' -and $t.Provider -eq 'Chatpad Super Driver Project' -and $t.Section -ieq 'WholeDevice' -and $t.Version -eq '0.0.1.0' -and @($t.LowerFilters).Count -eq 0 -and @($t.UpperFilters).Count -eq 0 -and @($State.ClassLowerFilters).Count -eq 0 -and @($State.ClassUpperFilters).Count -eq 0 -and @($State.Stack | Where-Object { $_ -match '(?i)ChatpadFilter|\bvhf\b|\bxusb22\b' }).Count -eq 0 -and ($State.Interfaces -join '\n').IndexOf($script:InterfaceGuid,[StringComparison]::OrdinalIgnoreCase) -ge 0){return 'WinUSB'}
+ if($t.Service -ieq 'WinUSB' -and $t.Provider -eq 'Chatpad Super Driver Project' -and $t.Section -in @('WholeDevice','WholeDevice.NT') -and $t.Version -eq '0.0.1.0' -and @($t.LowerFilters).Count -eq 0 -and @($t.UpperFilters).Count -eq 0 -and @($State.ClassLowerFilters).Count -eq 0 -and @($State.ClassUpperFilters).Count -eq 0 -and @($State.Stack | Where-Object { $_ -match '(?i)ChatpadFilter|\bvhf\b|\bxusb22\b' }).Count -eq 0 -and ($State.Interfaces -join '\n').IndexOf($script:InterfaceGuid,[StringComparison]::OrdinalIgnoreCase) -ge 0){return 'WinUSB'}
  return 'Unexpected'
 }
 function Assert-ChatpadBaselineManifest {

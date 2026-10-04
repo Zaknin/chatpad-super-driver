@@ -17,6 +17,7 @@ function Baseline {
 }
 TestCase 'Xbox fixture recognized' {Require ((Get-ChatpadRecognizedState (Fixture xbox)) -eq 'Xbox')}
 TestCase 'WinUSB fixture recognized' {Require ((Get-ChatpadRecognizedState (Fixture winusb)) -eq 'WinUSB')}
+TestCase 'Live decorated WinUSB section recognized' {$s=Fixture winusb;$s.Target.Section='WholeDevice.NT';Require ((Get-ChatpadRecognizedState $s) -eq 'WinUSB')}
 TestCase 'WinUSB missing application interface rejected' {$s=Fixture winusb;$s.Interfaces=@();Require ((Get-ChatpadRecognizedState $s) -eq 'Unexpected')}
 TestCase 'Problem52 is not healthy binding' {$s=Fixture xbox;$s.Target.Problem=52;Require ((Get-ChatpadRecognizedState $s) -eq 'Problem')}
 TestCase 'NonMicrosoft xbox rejected' {$s=Fixture xbox;$s.Target.Provider='Other';Require ((Get-ChatpadRecognizedState $s) -eq 'Unexpected')}

@@ -240,7 +240,7 @@ int main(int argc,char** argv) {
                             if(!previous&&maintenance.KeyDataAttempted())MaintenanceLine("key-data enable001B",maintenance,accepted);
                             if(!accepted){failure=7;break;}
                         }
-                        if(!ChatpadLine(data,mapper) && bridge && data.size()==5 && data[0]==0){failure=11;}
+                        if(!ChatpadLine(data,mapper) && bridge && mapper.LastOutputFailed()){failure=11;}
                     }
                 }
             }catch(const std::exception& e){Print(std::string("reader error: ")+e.what());failure=9;}

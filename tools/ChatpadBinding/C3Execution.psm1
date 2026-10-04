@@ -34,13 +34,28 @@ function Get-C3ExtensionRemovalPlan {
  }
  $remove
 }
+function Get-C3PublishedRemovalDisposition {
+ param([string]$CapturedHash,[string]$ActualHash,[string]$ExperimentHash,[bool]$Recovering)
+ if($CapturedHash -notmatch '^[a-fA-F0-9]{64}$' -or $ActualHash -notmatch '^[a-fA-F0-9]{64}$'){throw 'Invalid package identity hash.'}
+ if($CapturedHash -ieq $ActualHash){return 'CapturedExtension'}
+ # Windows can reuse the removed extension's OEM filename when staging the
+ # experiment. Recovery must bind Microsoft before deleting that experiment;
+ # the old extension name is not proof of the package currently occupying it.
+ if($Recovering -and $ExperimentHash -match '^[a-fA-F0-9]{64}$' -and $ActualHash -ieq $ExperimentHash){return 'ExperimentReusedAddress'}
+ throw 'Pre-removal package identity drift.'
+}
 function Remove-C3Extensions {
  param($Captured,[object[]]$Planned,$RecoveryBaseline=$null)
  $state=Get-C3Target $Captured;$live=@(Get-ChatpadExtensionInventory)
  $removal=@(Get-C3ExtensionRemovalPlan -Planned $Planned -Live $live -RecoveryBaseline $RecoveryBaseline)
  foreach($p in $removal){
   Get-C3Target $Captured | Out-Null
-  if(Test-Path -LiteralPath $p.Path){$fresh=Read-ChatpadExtensionInf $p.Path $p.PublishedInf;if(-not $fresh.Known -or $fresh.SHA256 -ne $p.SHA256){throw 'Pre-removal package identity drift.'};Invoke-C3Process 'pnputil.exe' @('/delete-driver',$p.PublishedInf,'/uninstall')}
+  if(Test-Path -LiteralPath $p.Path){
+   $experimentHash=if($null -ne $RecoveryBaseline){@($RecoveryBaseline.Readiness.Files | Where-Object Role -eq 'WinUsbInf')[0].SHA256}else{''}
+   $disposition=Get-C3PublishedRemovalDisposition $p.SHA256 (Get-FileHash -LiteralPath $p.Path).Hash $experimentHash ($null -ne $RecoveryBaseline)
+   if($disposition -eq 'ExperimentReusedAddress'){continue}
+   $fresh=Read-ChatpadExtensionInf $p.Path $p.PublishedInf;if(-not $fresh.Known -or $fresh.SHA256 -ne $p.SHA256){throw 'Pre-removal package identity drift.'};Invoke-C3Process 'pnputil.exe' @('/delete-driver',$p.PublishedInf,'/uninstall')
+  }
   if(Test-Path -LiteralPath $p.Path){throw 'Exact extension exclusion did not remove published INF.'}
  }
  if(@(Get-ChatpadExtensionInventory).Count){throw 'A matching extension remains; no clean WinUSB transition.'}

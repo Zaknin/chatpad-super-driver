@@ -170,10 +170,13 @@ static void KeyboardTests() {
     Check(!m.Process(nullptr,5),"null Chatpad input rejected");Check(!m.Process(a.data(),4),"short Chatpad input rejected");
     malformed=a;malformed[1]=0x10;Check(!m.Process(malformed.data(),5),"unknown modifier rejected");
     auto unsupported=packet(2,0x25);Check(!m.Process(unsupported.data(),5),"deferred layout-dependent legend not emulated");
+    Check(!m.LastOutputFailed(),"unsupported mapping is rejected without output failure");
+    Check(!m.Process(malformed.data(),5)&&!m.LastOutputFailed(),"malformed packet rejection is not output failure");
     Check(m.Process(a.data(),5),"press before failed release");out.failUsage=4;out.failDown=false;out.failRelease=true;
     Check(!m.ForceRelease()&&out.held[4],"failed keyup retained for later cleanup");
     out.failUsage=-1;out.failRelease=false;Check(m.ForceRelease()&&!out.held[4],"later forced release retries retained held key");
     out.failUsage=4;out.failDown=true;Check(!m.Process(a.data(),5)&&!out.held[4],"failed keydown not recorded held");
+    Check(m.LastOutputFailed(),"failed output keydown is fatal to live session");
     out.failUsage=-1;Check(m.Process(a.data(),5)&&out.held[4],"failed keydown retried on next report");m.ForceRelease();
     ScanCode sc;Check(UsageToScanCode(0x04,sc)&&sc.code==0x1e&&!sc.extended,"A scan code");
     Check(UsageToScanCode(0x4f,sc)&&sc.code==0x4d&&sc.extended,"right arrow extended scan");

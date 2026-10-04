@@ -58,6 +58,11 @@ Check 'Authorized optional recovery refuses ambiguous multiple new OEMs' {$other
 Check 'Authorized optional recovery replaces reused OEM address with exact new identity' {$prior=$reinstalled | ConvertTo-Json -Depth 5 | ConvertFrom-Json;$prior.Version='1.0.13.0';$prior.SHA256='c'*64;$plan=@(RecoveryRemovalPlan @($reinstalled) $optional @($prior));Require ($plan.Count -eq 1);Require ($plan[0].SHA256 -eq $reinstalled.SHA256)}
 Check 'Optional recovery refuses string authorization token' {$bad=$optional | ConvertTo-Json -Depth 20 | ConvertFrom-Json;$bad.OptionalExtensionRestoreStarted='true';Reject {RecoveryRemovalPlan @($reinstalled) $bad}}
 Check 'Optional recovery refuses unqualified normal Windows extension' {$bad=$optional | ConvertTo-Json -Depth 20 | ConvertFrom-Json;$bad.Readiness.ExtensionRestore.NormalWindowsLoadExpected=$false;Reject {RecoveryRemovalPlan @($reinstalled) $bad}}
+function PublishedRemovalDisposition($planned,$actual,$experiment,[bool]$recovering){& (Get-Module C3Execution) {param($p,$a,$e,$r) Get-C3PublishedRemovalDisposition $p $a $e $r} $planned $actual $experiment $recovering}
+Check 'Captured extension hash retains exact removal' {Require ((PublishedRemovalDisposition ('A'*64) ('A'*64) ('B'*64) $false) -eq 'CapturedExtension')}
+Check 'Recovery permits OEM address reused by exact experiment bytes' {Require ((PublishedRemovalDisposition ('A'*64) ('B'*64) ('B'*64) $true) -eq 'ExperimentReusedAddress')}
+Check 'Exclusion refuses address reused by experiment' {Reject {PublishedRemovalDisposition ('A'*64) ('B'*64) ('B'*64) $false}}
+Check 'Recovery refuses unknown bytes at reused OEM address' {Reject {PublishedRemovalDisposition ('A'*64) ('C'*64) ('B'*64) $true}}
 New-Item -ItemType Directory -Path (Split-Path $OutputPath -Parent) -Force | Out-Null
 $fail=@($checks | Where-Object {-not $_.Passed});[pscustomobject]@{Total=$checks.Count;Passed=$checks.Count-$fail.Count;Failed=$fail.Count;LiveMutations=0;Results=@($checks)} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $OutputPath
 $fail | Format-Table -AutoSize

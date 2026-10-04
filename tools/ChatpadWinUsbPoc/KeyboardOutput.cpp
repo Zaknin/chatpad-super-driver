@@ -100,10 +100,11 @@ bool KeyboardMapper::Apply(const ChatpadHidKeyboardReport& report) {
     report_=report;return true;
 }
 bool KeyboardMapper::Process(const uint8_t* data,size_t size) {
-    if(ChatpadParseKeyboardPacket(data,size,&packet_)!=CHATPAD_PARSE_OK) { ForceRelease();return false; }
+    lastOutputFailed_=false;
+    if(ChatpadParseKeyboardPacket(data,size,&packet_)!=CHATPAD_PARSE_OK) { lastOutputFailed_=!ForceRelease();return false; }
     ChatpadHidKeyboardReport target{};
-    if(ChatpadMapKeyboardPacketWithConfiguration(&packet_,&configuration_,&state_,&target)!=CHATPAD_HID_MAP_OK) { ForceRelease();return false; }
-    return Apply(target);
+    if(ChatpadMapKeyboardPacketWithConfiguration(&packet_,&configuration_,&state_,&target)!=CHATPAD_HID_MAP_OK) { lastOutputFailed_=!ForceRelease();return false; }
+    const bool applied=Apply(target);lastOutputFailed_=!applied;return applied;
 }
 bool KeyboardMapper::ForceRelease() {
     ChatpadInitializeLayeredMappingState(&state_);report_={};
