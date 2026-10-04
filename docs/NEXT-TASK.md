@@ -1,22 +1,27 @@
 # Next Task
 
-## TASK 8L-C4L2 — Package scope-conflict instance diagnostics and retry
+## TASK 8L-C4L2 — Publish instance-diagnostic package, then retry live broker
 
-- Branch: `feature/chatpad-usermode-runner`; starting commit `349f2ea1777048022b9a95f29e2be91c551da83f` plus uncommitted focused diagnostic changes.
-- Two normal-user runs using `build-broker-create-failure-299569e` passed physical WinUSB and Chatpad activation, then failed virtual controller creation with `virtual_scope_conflict`. Immediately after both failures, read-only Configuration Manager queries found no present ROOT/SWD index-zero devnode; one stale HIDMaestro SWD Enum record remains non-present. Do not delete it or weaken the fail-closed guard.
-- Implemented changes: include the exact conflicting instance ID in the guard fault; isolate the pipe-squatter test with a per-test temporary pipe name, retaining `FILE_FLAG_FIRST_PIPE_INSTANCE` behavior. Managed self-test passed 158/158 on pinned .NET 10.
+- Implementation branch/commit: `feature/chatpad-usermode-runner` / `b621b2714ec133f2875d25d00c900da22866a95f`.
+- Package: `artifacts/task-8lc4l2/build-scope-conflict-id-b621b27/package`; manifest has 214 members; independent path/length/SHA-256 readback is 214/214. Runner SHA-256 `3A0190A4A35982F78A4FDF7FD61C1088B71696D78A1A9EAB1305CB0EA7C0441D`; broker SHA-256 `28D9DA564EC7799F7DAFC2E9A0815712EF7B6976A1BF32E0027248D074F96B58`.
+- Tests: managed 158/158; focused native broker/client and runner lifecycle 2/2; C4 setup and readiness checks passed; package/readiness/build identities match implementation commit.
+- Prepared deterministic archive: `artifacts/task-8lc4l2/publication/20261004T194810Z/task-8l-c4l2-release.zip`, SHA-256 `05CD44BF7CE9A7A933DE078B5DD641992575F0874D4F3E097B3B5A610EBB0222`. Canonical destination is `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261004T194810Z`.
+- Two normal-user runs with the previously installed package failed with `virtual_scope_conflict` after Chatpad activation. Immediate post-run device checks found no present ROOT/SWD index-zero device; exact transient instance remains unknown. New package includes that instance ID in the error while preserving fail-closed blocking.
 
-### Offline release gate
+### Remaining offline release steps
 
-1. Inspect the diff and append exact red/green, build, and live findings to `docs/WORKLOG.md`.
-2. Commit implementation and continuity files; push only `origin/feature/chatpad-usermode-runner`.
-3. Build a fresh package from that commit, run focused managed and native broker/client lifecycle checks, verify all package member SHA-256 values, and generate a truthful release-verification summary.
-4. Use `tools/Publish-ChatpadC4L2.ps1` Prepare/Publish and its atomic publisher for a fresh UTC destination under `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\`; independently verify payload sidecars and receipt. Never publish a failed/partial verification as PASS.
+1. Commit and push the current continuity-only changes to `origin/feature/chatpad-usermode-runner`.
+2. Run `tools/Publish-ChatpadC4L2.ps1 -Mode Publish -UtcTimestamp '20261004T194810Z' -BuildDirectory 'artifacts/task-8lc4l2/build-scope-conflict-id-b621b27' -VerificationSummaryPath 'artifacts/task-8lc4l2/build-scope-conflict-id-b621b27/release-verification.json'`.
+3. Verify publication receipts, final `.sha256` sidecar, and canonical result manifest; append final path/hash evidence to continuity docs.
 
-### User live step
+### Manual live step
 
-After the new package is published, ask the user to run the exact elevated `ChatpadSetup.ps1 -Mode RepairBroker` command for that package. Then have them launch `ChatpadBridge.exe run` from ordinary PowerShell. If `virtual_scope_conflict` repeats, the new fault detail must identify the exact node; stop before any device cleanup and investigate its presence and owner read-only.
+After publication, user runs this from elevated PowerShell:
 
-Acceptance remains broker creation and service survival, XInput/buttons/sticks/triggers, Chatpad, physical rumble callback, clean shutdown, then reconnect/crash recovery. Do not run the bridge elevated or mutate devices/PnP/registry/trust, stop the service, or reboot.
+```powershell
+& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-scope-conflict-id-b621b27\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
+```
 
-Inspect first: latest TASK 8L-C4L2 entries in `docs/WORKLOG.md`, `tools/ChatpadVirtualXbox/EnumControllerIndexGuard.cs`, `HidMaestroBackend.cs`, `BrokerPipeServer.cs`, and `OfflineTests.cs`.
+Then launch the same package's `ChatpadBridge.exe run` in ordinary PowerShell. If `virtual_scope_conflict` repeats, capture the newly reported instance ID and investigate owner/presence read-only. Do not delete records/devices, weaken the guard, stop the service, or reboot. Continue acceptance only after successful virtual creation: XInput, controls, Chatpad, rumble, clean shutdown, then reconnect/crash recovery.
+
+Inspect first: latest TASK 8L-C4L2 entries in `docs/WORKLOG.md`, the exact package build manifest, and the final publication receipt.
