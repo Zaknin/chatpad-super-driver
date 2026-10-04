@@ -49,34 +49,43 @@ internal sealed class SdkXboxController : IVirtualXboxController
     public void Create()
     {
         if (controller != null) throw new BackendException("already_connected", "Disconnect first.");
+        string phase = "construct_context";
         try
         {
             context = new HMContext();
+            phase = "verify_driver";
             if (!context.IsDriverInstalled) throw new BackendException("backend_unavailable", "Install and independently verify the pinned SDK drivers in a separately authorized task. Helper never calls InstallDriver.");
+            phase = "prepare_qualified_package";
             PrepareQualifiedPackage();
+            phase = "load_profiles";
             context.LoadDefaultProfiles();
+            phase = "validate_xbox_profile";
             var profile = context.GetProfile("xbox-360-wired") ?? throw new BackendException("profile_unavailable", "Pinned xbox-360-wired profile absent.");
             if (profile.RequiresUsbipBackend) throw new BackendException("wrong_backend", "Composite/USBIP profiles are forbidden.");
             // SDK creates shared VID/PID metadata. Refuse to overwrite existing
             // application metadata; remove only these initially absent keys at
             // teardown, including failed creation. No physical Enum/USB key touched.
+            phase = "check_shared_metadata";
             foreach (var key in MetadataKeys)
             {
                 using var existing = Registry.LocalMachine.OpenSubKey(key);
                 if (existing != null) throw new BackendException("metadata_conflict", "Shared Xbox profile metadata already exists; no device creation attempted.");
             }
+            phase = "check_present_controller_scope";
             if (EnumControllerIndexGuard.HasPresentIndexZero(Registry.LocalMachine,
                     DeviceNodePresence.IsPresent))
                 throw new BackendException("virtual_scope_conflict", "Existing present ROOT/SWD controller index zero would be touched by upstream profile sweep.");
             ownsMetadata = true;
+            phase = "create_virtual_controller";
             controller = context.CreateController(profile, "chatpad360-winusb-poc");
+            phase = "subscribe_controller_output";
             controller.OutputReceived += OnOutput;
         }
         catch (Exception e)
         {
             Disconnect();
             if (e is BackendException) throw;
-            throw new BackendException("backend_create_failed", e.Message);
+            throw new BackendException("backend_create_failed", phase + ":" + e.GetType().Name + ":" + e.Message);
         }
     }
     private static void PrepareQualifiedPackage()
