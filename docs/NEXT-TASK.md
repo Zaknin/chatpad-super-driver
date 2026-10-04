@@ -1,28 +1,18 @@
 # Next Task
 
-## TASK 8L-C4L2 — Install and qualify the broker locality fix
+## TASK 8L-C4L2 — Capture broker service failure and continue qualification
 
-- Branch: `feature/chatpad-usermode-runner`; continue from current pushed continuity HEAD, whose parent is `186f3283cb024d831760da0c10faba667a85e543`. Implementation/package source fix is `3961374159a2b095cd0810a1e16c5bb5334bfd5d`.
-- Latest user log used the previous `build-broker-read-before-impersonation-f5d5885` package. Its `broker_peer_unauthorized` result does not test the fix. Root cause from the preceding run: `GetNamedPipeClientComputerNameW` returned 229 (`ERROR_PIPE_LOCAL`) for the local pipe; prior code treated every false result as remote. The current source accepts precisely that local status, validates returned computer name on success, and rejects other query errors.
-- Package: `artifacts/task-8lc4l2/build-broker-local-pipe-229-3961374/package`; all 214 hashes and lengths matched. C4 setup/readiness checks passed; native focused tests passed 2/2. Managed suite: 153 passed, 1 pipe-squatter failure because the installed broker holds the fixed pipe.
-- User must manually repair the installed broker from the new package. Do not perform service lifecycle operations automatically. The runner command must also use the same new package, not `build-broker-read-before-impersonation-f5d5885`.
+- Branch: `feature/chatpad-usermode-runner`, starting HEAD `2daa6a4e3a23ba3e250600705f9a08323f84b4b0`; locality-fix implementation is `3961374159a2b095cd0810a1e16c5bb5334bfd5d`.
+- User repaired and ran `build-broker-local-pipe-229-3961374`. WinUSB and Chatpad activation passed, then broker create failed with `broker_pipe_closed:109`. SCM 7023 reports generic service exit code 1 and SCM 7031 scheduled recovery; the actual exception was lost because the service writes it only to `Console.Error`.
+- Source adds a bounded, single-line service-failure log at `C:\Program Files\ChatpadBridge\ChatpadBrokerService.log`, under the protected install root. The next package build and package hash verification are pending.
+- Managed self-test: 155 pass, 1 pipe-squatter test fails because the running broker owns the fixed pipe. The broker service was not stopped.
 
-After successful repair, launch bridge only from ordinary non-elevated PowerShell.
+Do not mutate or restart the service automatically. After building, committing, and pushing the logging package, provide one elevated `RepairBroker` command. After repair succeeds, launch bridge only from ordinary non-elevated PowerShell and preserve the service log if the pipe closes again.
 
-Elevated PowerShell:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-local-pipe-229-3961374\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
-```
-
-After successful repair, ordinary PowerShell:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-local-pipe-229-3961374\package\ChatpadBridge.exe" run
-```
+The package path and commands will be recorded after the build completes.
 
 Acceptance: broker create succeeds and service remains running; verify XInput/buttons/sticks/triggers, Chatpad, rumble callback, and graceful Ctrl+C cleanup. Reconnect, crash recovery, and rejected/disconnected client survival remain to qualify. Return full logs.
 
 Safety: no driver/PnP/registry/device changes, trust/security changes, reboot, elevated bridge run, or HIDMaestro global cleanup. Hard-client-crash physical rumble remains outside broker cleanup scope.
 
-Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, `tools/ChatpadVirtualXbox/WindowsClientIdentity.cs`, and final package manifest/readiness.
+Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, `tools/ChatpadVirtualXbox/WindowsServiceHost.cs`, `tools/ChatpadVirtualXbox/BrokerServiceDiagnostics.cs`, and final package manifest/readiness.

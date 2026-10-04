@@ -22,6 +22,19 @@ internal static class OfflineTests
         passed += brokerSessionTests.Passed;
         failed += brokerSessionTests.Failed;
         failures.AddRange(brokerSessionTests.Failures);
+        Check("broker service failure log records UTC time, exception type, and cause", () =>
+        {
+            var timestamp = new DateTimeOffset(2026, 10, 4, 18, 47, 0, TimeSpan.Zero);
+            string record = BrokerServiceDiagnostics.FormatFailure(new InvalidOperationException("create failed"), timestamp);
+            return record.StartsWith("2026-10-04T18:47:00.0000000+00:00 System.InvalidOperationException: create failed", StringComparison.Ordinal) &&
+                !record.Contains('\r') && !record.Contains('\n');
+        });
+        Check("broker service failure log bounds long exception details to one line", () =>
+        {
+            string record = BrokerServiceDiagnostics.FormatFailure(new InvalidOperationException(new string('x', 20000)), DateTimeOffset.UtcNow);
+            return record.Length <= BrokerServiceDiagnostics.MaximumRecordCharacters &&
+                !record.Contains('\r') && !record.Contains('\n') && record.EndsWith("[truncated]", StringComparison.Ordinal);
+        });
         Check("broker pipe uses first-instance and rejects remote clients", () =>
             (BrokerPipeServer.PipeOpenMode & BrokerPipeServer.FirstPipeInstanceFlag) != 0 &&
             (BrokerPipeServer.PipeMode & BrokerPipeServer.RejectRemoteClientsFlag) != 0);

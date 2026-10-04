@@ -41,9 +41,11 @@ internal static class WindowsServiceHost
         statusHandle = RegisterServiceCtrlHandlerEx(ServiceName, HandlerCallback, IntPtr.Zero);
         if (statusHandle == IntPtr.Zero) { serviceExitCode = (uint)Marshal.GetLastWin32Error(); return; }
         Report(ServiceStartPending, 0, 30000, 1);
+        string? diagnosticRoot = null;
         try
         {
             string root = ValidateServiceProcess();
+            diagnosticRoot = root;
             Directory.SetCurrentDirectory(root);
             string scratch = Path.Combine(root, "Temp");
             Directory.CreateDirectory(scratch);
@@ -60,6 +62,14 @@ internal static class WindowsServiceHost
         catch (Exception e)
         {
             serviceExitCode = 1;
+            try
+            {
+                if (diagnosticRoot is not null) BrokerServiceDiagnostics.AppendFailure(diagnosticRoot, e);
+            }
+            catch (Exception logError)
+            {
+                Console.Error.WriteLine("broker service diagnostic log failure: " + logError.GetType().Name + ": " + logError.Message);
+            }
             Console.Error.WriteLine("broker service failure: " + e.GetType().Name + ": " + e.Message);
         }
         finally
