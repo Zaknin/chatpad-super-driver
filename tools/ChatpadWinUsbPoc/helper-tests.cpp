@@ -1,10 +1,24 @@
 #include "VirtualHelper.h"
 #include <iostream>
 #include <filesystem>
+#include <cstdio>
+#include <thread>
+#include <chrono>
 using namespace chatpad;
 static unsigned total{},failed{};
 static void Check(bool ok,const char* name){++total;if(!ok){++failed;std::cerr<<"FAIL: "<<name<<'\n';}}
 int main(int argc,char** argv) {
+    if(argc>1&&std::string(argv[1])=="helper") {
+        std::string line;
+        while(std::getline(std::cin,line)) {
+            unsigned id{};char operation[32]{};
+            if(sscanf_s(line.c_str(),"{\"id\":%u,\"op\":\"%31[^\"]\"}",&id,operation,static_cast<unsigned>(_countof(operation)))!=2)return 20;
+            if(std::string(operation)=="create")std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+            std::cout<<"{\"id\":"<<id<<",\"ok\":true,\"operation\":\""<<operation<<"\"}\n"<<std::flush;
+            if(std::string(operation)=="quit")return 0;
+        }
+        return 0;
+    }
     HelperMessage m;
     Check(ParseHelperMessage("{\"id\":0,\"ok\":true,\"operation\":\"create\"}",m)&&m.hasId&&m.ok&&m.id==0&&m.operation=="create","create response parsed");
     Check(ParseHelperMessage(" { \"operation\":\"submit\",\"ok\":true,\"id\":2147483647 } ",m)&&m.id==2147483647,"order whitespace and maxid");
@@ -49,6 +63,10 @@ int main(int argc,char** argv) {
         Check(mock.Create(),"mock reconnect launches fresh owned child");mock.Disconnect();
         options.backend="unavailable";VirtualHelperController missing(options);Check(!missing.Create()&&missing.LastError().find("backend_unavailable")!=std::string::npos,"unavailable backend explicit bounded failure");missing.Disconnect();
         options.backend="hidmaestro";VirtualHelperController gated(options);Check(!gated.Create(),"hidmaestro refuses missing explicit live flag before child launch");
+        HelperOptions delayed;delayed.executable=std::filesystem::absolute(argv[0]).wstring();delayed.backend="mock";
+        VirtualHelperController slowCreate(delayed);
+        Check(slowCreate.Create(),"create response taking longer than state-request timeout is accepted");
+        slowCreate.Disconnect();
     } else {Check(false,"absolute mock helper executable required for integration tests");}
     std::cout<<"{\"suite\":\"NativeVirtualHelper\",\"total\":"<<total<<",\"passed\":"<<total-failed<<",\"failed\":"<<failed<<",\"backend\":\"mock/unavailable\",\"liveMutation\":false}\n";
     return failed?1:0;

@@ -11,6 +11,7 @@ public:
     bool DeviceFound();
     bool Opened();
     bool Activated();
+    bool BackendFailed();
     bool DeviceLost();
     bool BeginReconnect();
     bool Retry();

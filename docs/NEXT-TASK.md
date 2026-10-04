@@ -1,17 +1,21 @@
 # Next Task
 
-Recommended objective: complete the reboot-aware WinUSB setup and then continue live runner qualification.
+## TASK 8L-C4L1 — Resume Phase 3 after focused runner fix
 
-Current state: user's last Install passed package checks, saved the private baseline, then selected WinUSB with `NeedReboot=true`. Old code treated that as failure and immediately requested Microsoft restoration, also with `NeedReboot=true`. Read-only Status now shows Microsoft xusb22, problem0, no filters. Reboot-aware code now reports `PENDING_REBOOT`, persists the baseline/install record and avoids rollback when Bind succeeds with a restart requirement. The final package must match pushed HEAD.
+Current state: setup binding remains WinUSB/problem 0 on `USB\VID_045E&PID_028E\1C21F10` (`oem104.inf`). The runner previously timed out its HIDMaestro create request at 1 second and then retried on a disconnected phantom devnode created during that run. The focused source fix uses a 30-second create deadline and stops the run on virtual-backend creation failure instead of classifying it as physical loss. Focused `helper` and `runner-lifecycle` tests pass. A read-only PnPUtil query now confirms the stale devnode `SWD\HIDMAESTRO\HM_622C184E37F6891E` is absent; physical WinUSB/problem0 remains confirmed.
 
-Required branch and starting point: `feature/chatpad-usermode-runner`, pushed HEAD recorded in `artifacts/task-8lc4/build-task-8lc4l1-final-3673014/build-manifest.json`. Verify branch, commit, clean status and manifest/readiness hash agreement first.
+Required branch: `feature/chatpad-usermode-runner`, synchronized with `origin/feature/chatpad-usermode-runner`. Confirm `git rev-parse HEAD` matches the repository identity in the regenerated package manifest and readiness.
 
-First inspect: `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md`; then `artifacts/task-8lc4/build-task-8lc4l1-final-3673014/build-manifest.json` and `artifacts/task-8lc4/readiness-input.json`.
+Preconditions: the user confirms `pnputil /remove-device "SWD\HIDMAESTRO\HM_622C184E37F6891E"` completed and a read-only query shows that exact instance absent. Confirm the physical controller remains WinUSB/problem 0. Do not remove the `oem107.inf` driver package or touch the physical `oem104.inf` device.
 
-Preconditions: user manually restarts Windows to settle the previous Microsoft restore request, then runs `.\tools\ChatpadSetup.ps1 -Mode Status` in elevated PowerShell and confirms xusb22/problem0/no filters. Verify final package/readiness identity. User then runs `.\tools\ChatpadSetup.ps1 -Mode Install` elevated and returns complete output. If it reports `PENDING_REBOOT`, user restarts manually and returns a fresh Status result.
+Next action: from an elevated PowerShell session, launch the freshly built package runner (helper is beside it):
 
-Safety: do not run Install or reboot from this non-elevated execution context. Do not clean the partially copied Program Files directory or secured ProgramData baseline. Do not change security/trust or modify `legacy/`. Stop on any identity/hash/preflight error and reconcile before another attempt.
+```powershell
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4\build-task-8lc4l1-create-timeout-published\package\ChatpadBridge.exe" run
+```
 
-Acceptance: confirm the recovery baseline is recorded and setup either verifies WinUSB immediately or cleanly reports pending restart. After any required manual restart, verify WinUSB/problem0/no filters with Status before runner testing. Report unperformed behavior as UNTESTED; do not run the comprehensive suite during this focused setup follow-up.
+Keep the console open. Capture whether it reaches `RUNNING`, helper-create result, virtual XInput and controller forwarding, Chatpad packet/key output, rumble, and simultaneous use. If create fails, it should now stop with `VIRTUAL_BACKEND_FAILED` without a physical reconnect loop; capture the exact backend error and device state. Stop cleanly with Ctrl+C before lifecycle follow-up. Continue remaining C4L1 phases only after Phase 3 succeeds.
 
-Inspect first: `tools/ChatpadSetup.ps1`, `tools/ChatpadC4Package.psm1`, `tools/New-ChatpadC4Readiness.ps1`, `tools/Test-ChatpadC4Setup.ps1`, and exact current package/readiness manifests.
+Safety: do not rerun Install while WinUSB is active; do not uninstall, restore Microsoft, reboot, or broadly remove virtual devices during this Phase 3 retry. Do not remove the HIDMaestro package. The exact stale devnode may be removed only as above. No live input/rumble acceptance is inferred from offline tests.
+
+Inspect first: this file, `docs/PROJECT-STATE.md`, latest `docs/WORKLOG.md`, `tools/ChatpadWinUsbPoc/Runner.cpp`, `tools/ChatpadWinUsbPoc/VirtualHelper.cpp`, and `artifacts/task-8lc4/build-task-8lc4l1-create-timeout-published/build-manifest.json`.

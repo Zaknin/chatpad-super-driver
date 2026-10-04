@@ -136,7 +136,7 @@ struct VirtualHelperController::Impl {
     }
     bool Launch() {
         {std::lock_guard<std::mutex> lock(mutex);error.clear();fault=false;gotResponse=false;}
-        if(options.requestTimeoutMs<1||options.requestTimeoutMs>1000||options.durationMs<1||options.durationMs>604800000||
+        if(options.requestTimeoutMs<1||options.requestTimeoutMs>1000||options.createTimeoutMs<1||options.createTimeoutMs>30000||options.durationMs<1||options.durationMs>604800000||
             (options.backend!="mock"&&options.backend!="unavailable"&&options.backend!="hidmaestro")||
             (options.backend=="hidmaestro"&&!options.allowLiveVirtual)||options.executable.find(L'"')!=std::wstring::npos||
             options.executable.find(L'\n')!=std::wstring::npos||options.executable.find(L'\r')!=std::wstring::npos||
@@ -160,7 +160,7 @@ struct VirtualHelperController::Impl {
         if(!launched){Fail("helper_launch_failed:"+std::to_string(err));Close(input);Close(output);return false;}
         CloseHandle(child.hThread);process=child.hProcess;stop=false;nextId=0;reader=std::thread([this]{ReadLoop();});return true;
     }
-    bool Request(const std::string& operation,const std::string& fields={}) {
+    bool Request(const std::string& operation,const std::string& fields={},uint32_t timeoutMs=0) {
         std::lock_guard<std::mutex> requestLock(requestMutex);
         if(!process)return false;
         uint32_t id=nextId++;
@@ -171,7 +171,8 @@ struct VirtualHelperController::Impl {
         if(request.size()>256){Fail("helper_request_too_long");return false;}
         DWORD written{};if(!WriteFile(input,request.data(),static_cast<DWORD>(request.size()),&written,nullptr)||written!=request.size()){Fail("helper_write_failed:"+std::to_string(GetLastError()));return false;}
         std::unique_lock<std::mutex> lock(mutex);
-        if(!condition.wait_for(lock,std::chrono::milliseconds(options.requestTimeoutMs),[this]{return gotResponse||fault;})){error="helper_request_timeout";fault=true;return false;}
+        const uint32_t effectiveTimeout=timeoutMs?timeoutMs:options.requestTimeoutMs;
+        if(!condition.wait_for(lock,std::chrono::milliseconds(effectiveTimeout),[this]{return gotResponse||fault;})){error="helper_request_timeout";fault=true;return false;}
         if(fault)return false;
         if(!response.hasId||response.id!=id||(response.ok&&response.operation!=operation)){error="helper_response_correlation_failed";fault=true;return false;}
         if(!response.ok){error=response.error+(response.detail.empty()?"":":"+response.detail);return false;}
@@ -192,7 +193,7 @@ bool VirtualHelperController::Create() {
     if(impl_->connected)return false;
     if(impl_->process)impl_->DisposeProcess();
     if(!impl_->Launch())return false;
-    if(!impl_->Request("create")){impl_->DisposeProcess();return false;}
+    if(!impl_->Request("create",{},impl_->options.createTimeoutMs)){impl_->DisposeProcess();return false;}
     impl_->connected=true;return true;
 }
 bool VirtualHelperController::SubmitState(const XboxState& state) {

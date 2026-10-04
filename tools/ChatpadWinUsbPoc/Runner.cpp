@@ -113,7 +113,7 @@ bool WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState
     }
     return false;
 }
-struct SessionResult { bool lost{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
+struct SessionResult { bool lost{},backendFailure{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
 SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log) {
     const auto sessionStart=Clock::now();
     SessionResult counts;std::atomic<bool> sessionStop{false};std::atomic<int> failure{0};
@@ -137,7 +137,10 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     std::unique_ptr<VirtualHelperController> virtualController;
     if(options.virtualController){
         virtualController=std::make_unique<VirtualHelperController>(helper);
-        if(!virtualController->Create()){log.Event("HIDMaestro create failed: "+virtualController->LastError());return {true};}
+        if(!virtualController->Create()){
+            log.Event("HIDMaestro create failed: "+virtualController->LastError());
+            counts.backendFailure=true;return counts;
+        }
         if(!virtualController->SubmitState(initial)){log.Event("initial neutral/controller submission failed: "+virtualController->LastError());virtualController->Disconnect();return {true};}
         log.Event("virtual Xbox created and initial controller state submitted");
     }
@@ -283,6 +286,7 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     FILETIME startCreate{},startExit{},startKernel{},startUser{};GetProcessTimes(GetCurrentProcess(),&startCreate,&startExit,&startKernel,&startUser);
     const auto processStart=Clock::now();
     RunnerLifecycle lifecycle;unsigned backoff=250;
+    bool fatalBackendFailure=false;
     while(!stop.load()){
         WinUsbTransport transport;auto devices=transport.Enumerate();
         if(!options.instanceId.empty())devices.erase(std::remove_if(devices.begin(),devices.end(),[&](const auto& d){return d.instanceId!=options.instanceId;}),devices.end());
@@ -302,6 +306,11 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         log.Event("state=ACTIVATING_CHATPAD");
         const auto session=RunSession(transport,options,stop,lifecycle,log);
         transport.Close();
+        if(session.backendFailure){
+            lifecycle.BackendFailed();fatalBackendFailure=true;
+            log.Event("state=VIRTUAL_BACKEND_FAILED; stopping this run without reopening the physical controller");
+            break;
+        }
         if(stop.load())break;
         if(session.lost){lifecycle.DeviceLost();log.Event("state=DEVICE_LOST reconnect_count="+std::to_string(lifecycle.ReconnectCount()));}
         else {lifecycle.DeviceLost();log.Event("session ended unexpectedly; reopening physical target");}
@@ -318,6 +327,6 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     log.Event("state=STOPPING clean_shutdown=true reconnect_count="+std::to_string(lifecycle.ReconnectCount())+
         " process_cpu_percent="+std::to_string(cpuPercent)+" working_set_bytes="+std::to_string(memory.WorkingSetSize)+
         " measurement_scope=runner_process_only");
-    return 0;
+    return fatalBackendFailure?12:0;
 }
 }

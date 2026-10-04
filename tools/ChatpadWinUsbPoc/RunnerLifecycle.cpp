@@ -12,6 +12,10 @@ bool RunnerLifecycle::Activated() {
     if(state_!=RunnerState::ActivatingChatpad)return false;
     state_=RunnerState::Running;return true;
 }
+bool RunnerLifecycle::BackendFailed() {
+    if(state_!=RunnerState::ActivatingChatpad&&state_!=RunnerState::Running)return false;
+    state_=RunnerState::Stopping;return true;
+}
 bool RunnerLifecycle::DeviceLost() {
     if(state_!=RunnerState::Running&&state_!=RunnerState::ActivatingChatpad&&state_!=RunnerState::Opening)return false;
     state_=RunnerState::DeviceLost;++reconnectCount_;return true;
