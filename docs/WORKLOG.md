@@ -14557,3 +14557,14 @@ This append records the implementation commit and first publication. The documen
 - Files changed in this publication update: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. No source changes since package build commit.
 - Safety: no broker service action by the agent, no device/driver/PnP/registry mutation, no trust/security change, no reboot, no elevated bridge run, no global HIDMaestro cleanup; `legacy/` untouched.
 - Next: push continuity updates, then ask the user to manually run elevated RepairBroker against `build-present-device-list-a93a107/package`. After PASS, have them run its ChatpadBridge executable as a normal user and return the full output; only proceed to XInput/rumble/lifecycle qualification after virtual creation succeeds.
+
+## 2026-10-04 20:15 UTC — Record stale C4L2 readiness rejection
+
+- Objective: correct continuation state after the user's RepairBroker invocation rejected the published present-device package before service changes.
+- Starting state: branch `feature/chatpad-usermode-runner`, HEAD `5e4d101a7c2b289c4ed8cc53294eca7c3c97bbf9`, clean. User ran RepairBroker with package/readiness built from `a93a1070add5a539f889a2fceb8bd69c6e34fccc`.
+- Evidence: `ChatpadSetup.ps1` compares readiness repository branch/commit to current `git branch --show-current` and `git rev-parse HEAD` before loading the broker service record or making `sc.exe` calls. Current readiness says `a93a107`; current HEAD was `5e4d101`; the command correctly stopped with `Broker readiness branch/commit is stale`. This attempt made no SCM/service change.
+- Cause: continuity-only commit `5e4d101` advanced HEAD after the previous package was built. The package and its hashes are valid for `a93a107`, but stale against current checkout. Do not weaken the setup guard.
+- Files changed in this correction: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. No source or durable decision change.
+- Current branch/package state: old package remains published at `20261004T200803Z` but cannot be used by RepairBroker at current HEAD. A fresh package/readiness must be built after this continuity update is committed and pushed.
+- Safety: the failed setup stopped before service inspection/configuration; no service, PnP, device, registry, trust, or boot mutation was performed by the agent or by that failed invocation. `legacy/` untouched.
+- Next: commit/push this continuity correction, build to `artifacts/task-8lc4l2/build-readiness-current-head` from the exact resulting HEAD, verify and publish a fresh partial package, then ask the user to repair manually.
