@@ -25,6 +25,14 @@ internal static class OfflineTests
         Check("broker pipe uses first-instance and rejects remote clients", () =>
             (BrokerPipeServer.PipeOpenMode & BrokerPipeServer.FirstPipeInstanceFlag) != 0 &&
             (BrokerPipeServer.PipeMode & BrokerPipeServer.RejectRemoteClientsFlag) != 0);
+        Check("Windows local named-pipe result 229 is classified as local", () =>
+            WindowsClientIdentity.ResolveLocality(false, null, 229, "FUCKTORYVR") == true);
+        Check("Windows named-pipe locality query matches the local computer name", () =>
+            WindowsClientIdentity.ResolveLocality(true, "FUCKTORYVR", 0, "FUCKTORYVR") == true);
+        Check("Windows named-pipe locality query rejects a different computer", () =>
+            WindowsClientIdentity.ResolveLocality(true, "OTHERPC", 0, "FUCKTORYVR") == false);
+        Check("Windows named-pipe locality query fails closed on errors other than local-pipe 229", () =>
+            WindowsClientIdentity.ResolveLocality(false, null, 233, "FUCKTORYVR") is null);
         Check("broker reads the initial client frame before impersonating the named-pipe peer", () =>
         {
             bool initialFrameRead = false;

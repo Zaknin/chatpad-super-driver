@@ -14,6 +14,7 @@ internal static class WindowsClientIdentity
     private const int WtsClientProtocolType = 16;
     private const int WtsConnectState = 8;
     private const int ConsoleProtocol = 0;
+    private const int ErrorPipeLocal = 229; // GetNamedPipeClientComputerName reports ERROR_PIPE_LOCAL for a local connection.
     private static readonly string MachineName = Environment.MachineName;
 
     public static BrokerPeerSnapshot Capture(NamedPipeServerStream pipe)
@@ -31,12 +32,22 @@ internal static class WindowsClientIdentity
             throw new BackendException("broker_peer_identity_failed", "Unable to read the connected client's token session.");
         uint active = WTSGetActiveConsoleSessionId();
         var clientMachine = new StringBuilder(256);
-        bool machineMatches = GetNamedPipeClientComputerName(pipe.SafePipeHandle, clientMachine, (uint)clientMachine.Capacity) &&
-            (string.Equals(clientMachine.ToString(), MachineName, StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(clientMachine.ToString(), MachineName + ".", StringComparison.OrdinalIgnoreCase));
+        bool computerNameAvailable = GetNamedPipeClientComputerName(pipe.SafePipeHandle, clientMachine, (uint)clientMachine.Capacity);
+        int computerNameError = computerNameAvailable ? 0 : Marshal.GetLastWin32Error();
+        bool? localClient = ResolveLocality(computerNameAvailable, clientMachine.ToString(), computerNameError, MachineName);
+        if (localClient is null)
+            throw new BackendException("broker_peer_identity_failed", "Unable to verify local named-pipe client locality (Win32 " + computerNameError + ").");
         bool activeSession = active != uint.MaxValue && active == session && ReadWtsInt((int)session, WtsConnectState) == WtsActive;
         bool consoleProtocol = activeSession && ReadWtsUShort((int)session, WtsClientProtocolType) == ConsoleProtocol;
-        return new BrokerPeerSnapshot(sid ?? string.Empty, checked((int)session), active == uint.MaxValue ? -1 : checked((int)active), consoleProtocol, anonymous, !machineMatches);
+        return new BrokerPeerSnapshot(sid ?? string.Empty, checked((int)session), active == uint.MaxValue ? -1 : checked((int)active), consoleProtocol, anonymous, !localClient.Value);
+    }
+
+    internal static bool? ResolveLocality(bool querySucceeded, string? clientComputerName, int errorCode, string localMachineName)
+    {
+        if (querySucceeded)
+            return string.Equals(clientComputerName, localMachineName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(clientComputerName, localMachineName + ".", StringComparison.OrdinalIgnoreCase);
+        return errorCode == ErrorPipeLocal ? true : null;
     }
 
     private static int ReadWtsInt(int sessionId, int infoClass)
