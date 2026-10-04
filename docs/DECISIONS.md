@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-04 — Keep the normal-user bridge and move HIDMaestro into a scoped broker service
+
+- **Decision:** Preserve `ChatpadBridge.exe` as a normal-user owner of physical WinUSB, Chatpad, keyboard injection, parsing, and physical rumble. Add a `ChatpadVirtualXbox.exe` Windows Service mode as the sole owner of the pinned HIDMaestro virtual controller. Connect them through a versioned, local, authenticated named pipe limited to `ping`, `create`, `submit-state`, `destroy`, and rumble callbacks. Require the user's separate elevated setup step before any live service lifecycle operation.
+- **Rationale:** The pinned SDK requires administrator rights to create a HIDClass device, while the user's normal-user runtime requirement and same virtual backend remain in force. A fixed protocol gives the privileged process only the operations needed for virtual Xbox operation and keeps physical device authority in the interactive client.
+- **Alternatives rejected:** Elevating the bridge, broad device/registry ACL changes, hidden scheduled tasks, a general-purpose privileged helper, and switching virtual-controller backend.
+- **Consequences:** Offline design, implementation, and package verification precede explicit live service setup and physical qualification. The service must fail closed on authentication, ownership, identity, or cleanup ambiguity; it must never call HIDMaestro's global cleanup API for broker recovery. Physical keys and rumble remain client responsibilities; after a client crash, the broker can only guarantee virtual-device cleanup and the existing next-launch bridge recovery must be qualified separately.
+
 ## 2026-10-04 — HIDMaestro virtual-device creation requires an elevated broker boundary
 
 - **Decision:** The pinned HIDMaestro v1.10.1 direct `CreateController` path is not a supported standard-user operation. Do not weaken registry/device ACLs or hide an elevated task to make it appear non-elevated. If standard-user interactive operation remains a requirement, implement a separately reviewed privileged broker/service that owns virtual-device lifecycle and exposes only a narrow, authenticated, user-scoped IPC protocol. Otherwise, explicitly require an elevated runner or mark this mode unsupported.

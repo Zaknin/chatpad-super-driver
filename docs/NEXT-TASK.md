@@ -1,31 +1,15 @@
 # Next Task
 
-## TASK 8L-C4L1 — Resolve the virtual-controller privilege boundary
+## TASK 8L-C4L2 — Review the HIDMaestro broker specification
 
-Starting branch: `feature/chatpad-usermode-runner`; HEAD `89117009cc742534501ef5a3b6607fe23111504c` before this continuity update.
+- Branch: `feature/chatpad-usermode-runner`.
+- Starting HEAD for the design work: `52f5e4da57d5e031cc63ef4325d5f46803025412`. This spec checkpoint will be committed separately; implementation must start from the then-current branch HEAD after the user approves the written spec and reviews the implementation plan.
+- Approved design: `docs/superpowers/specs/2026-10-04-hidmaestro-broker-design.md`.
 
-### Verified state
+The user approved the service-in-`ChatpadVirtualXbox.exe` approach conversationally. The immediate continuation point is review of the written spec. After written approval, create and self-review a task-level implementation plan, then ask the user to approve the plan and choose its execution method before touching implementation code.
 
-The user's 2026-10-04 15:01Z normal-user run opened the physical WinUSB target, completed Chatpad activation, and reached `RUNNING`. The SDK create call then failed as:
+Implementation acceptance remains: offline protocol/authentication/ownership/lifecycle tests pass; exact package/readiness identities and hashes pass; final package/evidence is atomically published under `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\<UTC_TIMESTAMP>\` with SHA-256 sidecars. Only then does the user perform the separate elevated service install/repair step. Follow with normal-user hardware qualification for WinUSB → bridge → broker → XInput, Chatpad, rumble callback, reconnect, graceful cleanup, client crash recovery, and service crash/restart. Do not mark live acceptance from offline results.
 
-```text
-backend_create_failed:create_virtual_controller:Win32Exception:Access is denied.
-```
+Safety restrictions: do not install, start, repair, stop, or uninstall the service before the user's explicit live setup step; do not change WinUSB binding, install/load/sign drivers, mutate PnP/registry/device state, change security/trust, or reboot; do not elevate `ChatpadBridge.exe`; do not call HIDMaestro's global `RemoveAllVirtualControllers`; do not modify `legacy/`; keep generated outputs under ignored `artifacts/`.
 
-This localizes the failure to `HMContext.CreateController`. The repository pins HIDMaestro v1.10.1. Its versioned `HMContext.cs` documents that `CreateController` requires administrator privilege and that Windows has no standard-user route to create a HIDClass device. For the software-device part of device enumeration, Microsoft documents that `SwDeviceCreate` requires Administrator access. Sources: <https://raw.githubusercontent.com/hifihedgehog/HIDMaestro/v1.10.1/sdk/HIDMaestro.Core/HMContext.cs> and <https://learn.microsoft.com/en-us/windows/win32/api/swdevice/nf-swdevice-swdevicecreate>.
-
-The post-stop read-only audit found no runner/helper process, no present task-owned virtual device, and XInput slots 0-3 all disconnected (1167). The exact physical Xbox remains on WinUSB `oem104.inf`, problem 0, with no instance filters. No live changes occurred.
-
-### Required architecture choice
-
-The direct standard-user runner cannot satisfy virtual XInput creation with the pinned SDK. Before further Phase 5 or lifecycle tests, the user must select one of:
-
-1. **Keep normal-user client operation:** design and implement a small, installed privileged broker/service that owns the HIDMaestro controller and accepts only fixed, validated controller state and rumble operations over an authenticated, user-scoped IPC boundary. Setup would install/configure it with administrator rights; the interactive bridge remains non-elevated. This changes the security boundary and requires explicit authorization for service installation and live qualification.
-2. **Allow an elevated runner:** retain the current direct SDK design and require elevation for each run that creates the virtual controller. This does not meet the stated normal-user Phase 5 requirement.
-3. **Stop the normal-user path:** record Phase 5 as unsupported by the selected SDK and do not continue later lifecycle tests.
-
-Recommended if normal-user operation remains mandatory: option 1. Do not try ACL changes, a hidden scheduled task, undocumented SDK entry points, or alternate setup semantics as a shortcut. Do not rerun the normal-user package: it will deterministically fail at the same SDK boundary. Do not continue unplug/reconnect/crash/long-idle qualification before selecting and implementing a compatible architecture.
-
-After an architecture is authorized: add focused tests for its privilege/IPC boundary; preserve exact physical/runtime identity guards; rebuild and verify package/readiness identity and every member hash; then perform Phase 5 and remaining authorized live lifecycle tests. Keep the accepted 14:16Z clean-stop and core-function evidence. No reboot/sleep/long-idle test is authorized by this continuation.
-
-Inspect first: `docs/PROJECT-STATE.md`, this file, the latest `docs/WORKLOG.md` entry, pinned dependency manifest, `tools/ChatpadVirtualXbox/HidMaestroBackend.cs`, and the diagnostic run output.
+Inspect first: this spec, the pinned SDK manifest `tools/ChatpadVirtualXbox/upstream.json`, `tools/ChatpadVirtualXbox/HidMaestroBackend.cs`, `tools/ChatpadWinUsbPoc/VirtualHelper.cpp`, `tools/ChatpadWinUsbPoc/Runner.cpp`, `tools/ChatpadSetup.ps1`, and the C4 package/build/publisher scripts.
