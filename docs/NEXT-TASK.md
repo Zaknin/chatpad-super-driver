@@ -2,13 +2,13 @@
 
 ## TASK 8L-C4L1 — Capture the exact normal-user virtual-backend failure stage
 
-Current branch: `feature/chatpad-usermode-runner`. The last verified source commit before the diagnostic instrumentation was `4d339be49558a31a50332ed0fc861dac67f467f0`; continue from the pushed implementation/continuity commit produced by this checkpoint.
+Current branch: `feature/chatpad-usermode-runner`; diagnostic implementation commit `ff6dcad52aaa2da486fbe5f354d6923bc412ab39` is pushed to origin. Verified package: `artifacts/task-8lc4/build-task-8lc4l1-normal-user-phase5-final`.
 
 The user has already confirmed controller buttons, sticks, triggers, Chatpad input, and physical rumble. Their 14:16Z run also passed graceful cleanup (`keysReleased=true`, `virtualNeutral=true`, `virtualReleased=true`, `motorsStopped=true`, `clean_shutdown=true`). Phase 5 ordinary-user operation remains unqualified: an earlier non-elevated run reached `RUNNING`, then reported `backend_create_failed:Access is denied` with no SDK call-stage context. Do not rerun Phase 1 research or the previously accepted Phase 4 test.
 
 The current source adds a phase prefix to unexpected SDK creation exceptions. The user's 14:40Z foreground diagnostic launch opened WinUSB but received no complete controller report, repeated `DEVICE_LOST` 30 times, and stopped with `clean_shutdown=true`; it never reached backend creation. Their output showed `unclean_previous_session=false`. A stale marker from the separate Codex execution-profile attempt is not evidence about the user's runtime path.
 
-First regenerate a package from the exact current committed HEAD to a fresh ignored root, for example `artifacts/task-8lc4/build-task-8lc4l1-normal-user-phase5-final`. Independently verify branch, commit, package root and every package/readiness member hash. Then, in a normal non-elevated foreground PowerShell while the controller is awake, run:
+The verified package identifies branch `feature/chatpad-usermode-runner` and commit `ff6dcad52aaa2da486fbe5f354d6923bc412ab39`; independent verification passed all 27 package manifest hashes/lengths, the exact package file set, and 18 readiness hashes. In a normal non-elevated foreground PowerShell, first press Xbox or A to wake the controller, then run:
 
 ```powershell
 & "C:\Dev\chatpad-super-driver\artifacts\task-8lc4\build-task-8lc4l1-normal-user-phase5-final\package\ChatpadBridge.exe" run

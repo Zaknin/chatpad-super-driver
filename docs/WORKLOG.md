@@ -14267,3 +14267,10 @@ This append records the implementation commit and first publication. The documen
 - Package identity caveat: the diagnostic package was built before the source instrumentation was committed and its embedded Git identity therefore does not represent those bytes. It is not a release candidate. Regenerate in a fresh ignored directory after committing and independently verify branch/commit/package root plus every manifest/readiness hash before another user run.
 - Files changed: `tools/ChatpadVirtualXbox/HidMaestroBackend.cs`, `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this entry. No decision change.
 - Remaining work: obtain a foreground run after waking the physical controller, then capture the SDK stage for Access Denied. If the runner still receives no report, treat that separately as a physical input/readiness issue. No elevation, driver/PnP/registry mutation, trust/security change, reboot, virtual controller creation, or full test suite was performed here.
+
+## 2026-10-04 18:46 +04:00 — TASK 8L-C4L1 diagnostic package identity verification
+
+- Starting state: branch `feature/chatpad-usermode-runner`, diagnostic implementation commit `ff6dcad52aaa2da486fbe5f354d6923bc412ab39`, pushed to `origin/feature/chatpad-usermode-runner`.
+- Command: `tools/Build-ChatpadBridge.ps1 -OutputDirectory artifacts/task-8lc4/build-task-8lc4l1-normal-user-phase5-final -SkipNativeTests` completed. C4 regressions passed 21/21; Native CTest was `NOT_RUN_FOCUSED_PACKAGE_REGENERATION`.
+- Independent verification passed: manifest/readiness branch, commit, and package-root identity; exact package file set; 27/27 manifest member hashes and lengths; 18/18 readiness file hashes. Runner SHA-256 `CD63E4644957E4B28A2A4EE70C0C6011440BCDB37E79CD49AB36E1DF4D2D6C05`; helper SHA-256 `E996D3E369AD3B0943FA3CEE46D4B1E52AFED10977732FD85B18FCA5C1917D17`.
+- This package is the exact committed diagnostic source. The user's next foreground retry must wake the physical controller first, then run this package non-elevated and return the complete stage/error output or clean-stop result.
