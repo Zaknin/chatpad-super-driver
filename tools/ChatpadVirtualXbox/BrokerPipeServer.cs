@@ -24,6 +24,7 @@ internal sealed class BrokerPipeServer
 
     private readonly string installRoot;
     private readonly Func<IVirtualXboxController> backendFactory;
+    internal sealed record AuthorizedPeerHandshake(string InitialFrame, BrokerPeerSnapshot Peer);
 
     public BrokerPipeServer(string installRoot, Func<IVirtualXboxController> backendFactory)
     {
@@ -40,14 +41,28 @@ internal sealed class BrokerPipeServer
             try { await pipe.WaitForConnectionAsync(stopping).ConfigureAwait(false); }
             catch (OperationCanceledException) when (stopping.IsCancellationRequested) { break; }
 
-            var peer = await CaptureAuthorizedPeerAsync(
-                () => WindowsClientIdentity.Capture(pipe), authorization.Policy,
-                (line, token) => WriteFrameAsync(pipe, line, token), stopping).ConfigureAwait(false);
-            if (peer is null) continue;
+            using var handshakeDeadline = CancellationTokenSource.CreateLinkedTokenSource(stopping);
+            handshakeDeadline.CancelAfter(TimeSpan.FromSeconds(5));
+            AuthorizedPeerHandshake? handshake;
+            try
+            {
+                handshake = await ReadFirstFrameAndAuthorizeAsync(
+                    token => ReadInitialClientFrameAsync(pipe, token),
+                    () => WindowsClientIdentity.Capture(pipe), authorization.Policy,
+                    (line, token) => WriteFrameAsync(pipe, line, token), handshakeDeadline.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stopping.IsCancellationRequested) { break; }
+            catch (OperationCanceledException) { continue; }
+            catch (Exception e) when (!stopping.IsCancellationRequested)
+            {
+                await TryWriteFaultAsync((line, token) => WriteFrameAsync(pipe, line, token), CreateSessionFault(e), stopping).ConfigureAwait(false);
+                continue;
+            }
+            if (handshake is null) continue;
 
             await using var session = new BrokerSession(backendFactory, (line, token) => WriteFrameAsync(pipe, line, token));
             using var connectionStop = CancellationTokenSource.CreateLinkedTokenSource(stopping);
-            var reader = ReadClientAsync(pipe, session, connectionStop.Token);
+            var reader = ReadClientAsync(pipe, session, handshake.InitialFrame, connectionStop.Token);
             var stopWait = Task.Delay(Timeout.InfiniteTimeSpan, connectionStop.Token);
             var completed = await Task.WhenAny(reader, session.Faulted, stopWait).ConfigureAwait(false);
             Exception? connectionFailure = completed == session.Faulted ? session.Faulted.Result : null;
@@ -139,8 +154,9 @@ internal sealed class BrokerPipeServer
         }
     }
 
-    private static async Task ReadClientAsync(NamedPipeServerStream pipe, BrokerSession session, CancellationToken stopping)
+    private static async Task ReadClientAsync(NamedPipeServerStream pipe, BrokerSession session, string initialFrame, CancellationToken stopping)
     {
+        await session.HandleLineAsync(initialFrame).WaitAsync(TimeSpan.FromSeconds(30), stopping).ConfigureAwait(false);
         var bytes = new List<byte>(BrokerProtocol.MaximumFrameBytes);
         var one = new byte[1];
         var utf8 = new UTF8Encoding(false, true);
@@ -175,15 +191,19 @@ internal sealed class BrokerPipeServer
         await pipe.FlushAsync(token).ConfigureAwait(false);
     }
 
-    internal static async Task<BrokerPeerSnapshot?> CaptureAuthorizedPeerAsync(
+    internal static async Task<AuthorizedPeerHandshake?> ReadFirstFrameAndAuthorizeAsync(
+        Func<CancellationToken, Task<string?>> readInitialFrame,
         Func<BrokerPeerSnapshot> capture,
         BrokerPeerAuthorization policy,
         Func<string, CancellationToken, ValueTask> writeFrame,
         CancellationToken stopping)
     {
+        ArgumentNullException.ThrowIfNull(readInitialFrame);
         ArgumentNullException.ThrowIfNull(capture);
         ArgumentNullException.ThrowIfNull(policy);
         ArgumentNullException.ThrowIfNull(writeFrame);
+        string? initialFrame = await readInitialFrame(stopping).ConfigureAwait(false);
+        if (initialFrame is null || stopping.IsCancellationRequested) return null;
         BrokerPeerSnapshot peer;
         try { peer = capture(); }
         catch (Exception error) when (!stopping.IsCancellationRequested)
@@ -198,7 +218,34 @@ internal sealed class BrokerPipeServer
             await TryWriteFaultAsync(writeFrame, CreateFault("broker_peer_unauthorized", null), stopping).ConfigureAwait(false);
             return null;
         }
-        return peer;
+        return new AuthorizedPeerHandshake(initialFrame, peer);
+    }
+
+    private static async Task<string?> ReadInitialClientFrameAsync(NamedPipeServerStream pipe, CancellationToken stopping)
+    {
+        var bytes = new List<byte>(BrokerProtocol.MaximumFrameBytes);
+        var one = new byte[1];
+        var utf8 = new UTF8Encoding(false, true);
+        while (!stopping.IsCancellationRequested)
+        {
+            int count = await pipe.ReadAsync(one, stopping).ConfigureAwait(false);
+            if (count == 0)
+            {
+                if (bytes.Count != 0) throw new BackendException("broker_unterminated_frame", "Client disconnected mid-frame.");
+                return null;
+            }
+            if (one[0] == (byte)'\n')
+            {
+                if (bytes.Count != 0 && bytes[^1] == (byte)'\r') bytes.RemoveAt(bytes.Count - 1);
+                if (bytes.Count == 0) continue;
+                try { return utf8.GetString(bytes.ToArray()); }
+                catch (DecoderFallbackException e) { throw new BackendException("broker_invalid_utf8", e.Message); }
+            }
+            bytes.Add(one[0]);
+            if (bytes.Count > BrokerProtocol.MaximumFrameBytes)
+                throw new BackendException("broker_frame_too_large", "Client frame exceeded 4096 bytes before peer authentication.");
+        }
+        return null;
     }
 
     private static async Task TryWriteFaultAsync(Func<string, CancellationToken, ValueTask> writeFrame, string frame, CancellationToken stopping)

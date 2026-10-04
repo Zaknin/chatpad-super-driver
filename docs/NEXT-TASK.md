@@ -1,27 +1,14 @@
 # Next Task
 
-## TASK 8L-C4L2 — Repair broker package and continue normal-user live qualification
+## TASK 8L-C4L2 — Rebuild after pipe read-before-impersonate fix and resume live qualification
 
-- Branch: `feature/chatpad-usermode-runner`; implementation commit `0f2540ee2ac89d0ad90875d36fb3883021eb5ff2` plus the pushed package-handoff continuity update.
-- Current service: user-installed `ChatpadHidMaestroBroker` is read-only confirmed RUNNING as LocalSystem, with binary command line `"C:\Program Files\ChatpadBridge\ChatpadVirtualXbox.exe" service`. This task has not changed it.
-- Current runtime evidence: package `build-broker-scm-identity-f273416` opened physical WinUSB and passed Chatpad activation stages 0–5, then broker creation failed with `broker_control_write_failed:232`. Windows logged service exit code 1 and SCM restart on a pipe connection. The specific identity API failure is not yet known.
-- Source correction: `BrokerPipeServer` catches peer identity exceptions and pipe fault-write failures per connection, emits bounded v1 faults, and continues accepting clients. Session errors are cleaned up and reported to the connected client. Focused native CTest passed 2/2. Managed self-test reported 148 pass and one environment-limited pipe-squatter failure because the installed service owns the fixed pipe. Final package `artifacts/task-8lc4l2/build-broker-peer-fault-isolation-0f2540e/package` has all 214 member lengths/hashes matched, and readiness names implementation commit `0f2540ee2ac89d0ad90875d36fb3883021eb5ff2`.
-- Preconditions: no other bridge process owns the physical device. Keep ChatpadBridge in ordinary, non-elevated PowerShell. The service's executable changed, so user must manually run elevated `RepairBroker` using the final package/readiness below before retrying the runner.
+- Branch: `feature/chatpad-usermode-runner`; start from the latest pushed source/docs commit recorded in `docs/WORKLOG.md`.
+- User manually ran elevated `RepairBroker` for the peer-fault isolation package; it returned PASS and service RUNNING as LocalSystem. Physical binding was unchanged.
+- The next normal-user run opened physical WinUSB and passed Chatpad activation stages 0–5. Broker returned `broker_peer_identity_failed: Unable to impersonate using a named pipe until data has been read from that pipe.` Service fault isolation worked; the remaining bug is operation ordering.
+- Source change in progress: read a bounded initial frame with a five-second timeout, then call `RunAsClient` and validate the authorized SID/active local console session, then hand the buffered frame to the broker session. The client sends `ping` first. New regression checks that peer capture cannot occur before initial frame receipt.
+- Focused managed suite: 149 passed; the single pipe-squatter test is blocked by the already-running installed service owning the fixed pipe. Native `broker-client|runner-lifecycle` previously passed 2/2 and native sources are unchanged. Final package/readiness/hash checks are pending.
+- Do not install or repair the service automatically. After source commit and package verification, user must run the exact elevated `RepairBroker` command supplied in the handoff, then retry `ChatpadBridge.exe run` from ordinary PowerShell.
+- Acceptance after repair: prove normal-user broker create and XInput, controller and Chatpad input, rumble callback, graceful cleanup, reconnect, crash recovery, and that malformed or disconnected clients do not terminate the broker. Preserve all existing identity and IPC bounds.
+- Safety: no driver/PnP/registry/device changes, trust/security changes, reboot, elevated bridge run, or HIDMaestro global cleanup. Hard-client-crash physical rumble remains outside broker cleanup scope.
 
-Elevated setup command after final package regeneration:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-peer-fault-isolation-0f2540e\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
-```
-
-After successful repair, run the final package from ordinary PowerShell:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-peer-fault-isolation-0f2540e\package\ChatpadBridge.exe" run
-```
-
-Acceptance: broker stays running through peer identity errors and serves the normal-user lease; verify virtual XInput/button/stick/trigger state, Chatpad typing, rumble callback to the physical controller, graceful Ctrl+C neutralization/release, then separately qualify reconnect and crash recovery. Return full logs. Do not run bridge elevated.
-
-Safety: no automatic service install/repair/start/stop/uninstall, driver/PnP/registry/device changes, trust/security changes, reboot, or HIDMaestro global cleanup. After hard client crash, physical rumble remains outside broker cleanup scope.
-
-Inspect first: latest C4L2 entry in `docs/WORKLOG.md`, `tools/ChatpadVirtualXbox/BrokerPipeServer.cs`, `tools/ChatpadVirtualXbox/OfflineTests.cs`, and the final package manifest/readiness.
+Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, `tools/ChatpadVirtualXbox/BrokerPipeServer.cs`, `tools/ChatpadVirtualXbox/WindowsClientIdentity.cs`, and `tools/ChatpadVirtualXbox/OfflineTests.cs`.

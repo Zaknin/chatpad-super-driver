@@ -25,11 +25,23 @@ internal static class OfflineTests
         Check("broker pipe uses first-instance and rejects remote clients", () =>
             (BrokerPipeServer.PipeOpenMode & BrokerPipeServer.FirstPipeInstanceFlag) != 0 &&
             (BrokerPipeServer.PipeMode & BrokerPipeServer.RejectRemoteClientsFlag) != 0);
+        Check("broker reads the initial client frame before impersonating the named-pipe peer", () =>
+        {
+            bool initialFrameRead = false;
+            var expectedPeer = new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 4, 4, true, false, false);
+            var policy = new BrokerPeerAuthorization(expectedPeer.UserSid);
+            var result = BrokerPipeServer.ReadFirstFrameAndAuthorizeAsync(
+                _ => { initialFrameRead = true; return Task.FromResult<string?>("{\"version\":1,\"id\":1,\"op\":\"ping\"}"); },
+                () => initialFrameRead ? expectedPeer : throw new InvalidOperationException("RunAsClient called before pipe read"),
+                policy, (_, _) => ValueTask.CompletedTask, CancellationToken.None).GetAwaiter().GetResult();
+            return initialFrameRead && result?.InitialFrame == "{\"version\":1,\"id\":1,\"op\":\"ping\"}" && result.Peer == expectedPeer;
+        });
         Check("broker peer identity exception returns a bounded fault without escaping the connection loop", () =>
         {
             var frames = new List<string>();
             var policy = new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001");
-            var result = BrokerPipeServer.CaptureAuthorizedPeerAsync(
+            var result = BrokerPipeServer.ReadFirstFrameAndAuthorizeAsync(
+                _ => Task.FromResult<string?>("{\"version\":1,\"id\":1,\"op\":\"ping\"}"),
                 () => throw new InvalidOperationException("client session unavailable"), policy,
                 (line, _) => { frames.Add(line); return ValueTask.CompletedTask; }, CancellationToken.None).GetAwaiter().GetResult();
             if (result is not null || frames.Count != 1) return false;
@@ -43,7 +55,8 @@ internal static class OfflineTests
         Check("broker peer pipe write failure cannot escape connection handling", () =>
         {
             var policy = new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001");
-            var result = BrokerPipeServer.CaptureAuthorizedPeerAsync(
+            var result = BrokerPipeServer.ReadFirstFrameAndAuthorizeAsync(
+                _ => Task.FromResult<string?>("{\"version\":1,\"id\":1,\"op\":\"ping\"}"),
                 () => throw new InvalidOperationException("client session unavailable"), policy,
                 (_, _) => ValueTask.FromException(new IOException("client disconnected")), CancellationToken.None).GetAwaiter().GetResult();
             return result is null;
