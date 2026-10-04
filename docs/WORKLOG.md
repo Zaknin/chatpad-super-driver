@@ -14448,3 +14448,10 @@ This append records the implementation commit and first publication. The documen
 - Files changed: `tools/ChatpadVirtualXbox/BrokerServiceDiagnostics.cs`, `WindowsServiceHost.cs`, `OfflineTests.cs`, and continuity docs. No durable architecture decision changed.
 - Safety: no service repair/start/stop/restart/configuration operation, device/driver/PnP/registry mutation, trust/security change, reboot, elevated bridge run, or HIDMaestro global cleanup was performed. SCM automatic recovery was observed, not initiated by this agent. `legacy/` is untouched.
 - Next: inspect full diff, build the exact package from the committed source, verify all hashes and C4 readiness, run focused setup tests, push only `feature/chatpad-usermode-runner`, then provide one elevated manual `RepairBroker` command and wait for the user's result.
+
+## 2026-10-04 18:55 UTC — TASK 8L-C4L2 service diagnostic package handoff
+
+- Built after implementation commit `a5a082f3081d08c16e6eaececa2638c695154f5d` using `tools/Build-ChatpadBridge.ps1 -SkipNativeTests -OutputDirectory artifacts/task-8lc4l2/build-broker-service-failure-log`.
+- Build and C4 setup/readiness generation completed successfully. Build manifest binds the package to branch `feature/chatpad-usermode-runner` and source commit `a5a082f3081d08c16e6eaececa2638c695154f5d`. Independent member readback passed 214/214 paths, sizes, and SHA-256 values with no extra files. Runner SHA-256: `9709D08F35CC49457D967D9F09ECF6D2516C86D682BFCE51AD1590345D66209D`; broker SHA-256: `5C6C6BFBB34035B09C13589A35DE50FE4A214E9BA13D2B3AAB73057F7E486BAB`.
+- The packaged managed offline self-test reported 155 passed and one environment-limited pipe-squatter failure because the live service owns the fixed pipe. The two new diagnostic formatting tests passed. Native tests were not rerun because native sources were unchanged; package build explicitly used `-SkipNativeTests`.
+- Package location and hashes are recorded in `docs/PROJECT-STATE.md` and `docs/NEXT-TASK.md`. Readiness will be regenerated after continuity commit. Do not perform the user's manual `RepairBroker` operation or normal-user live run from this agent.
