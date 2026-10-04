@@ -1,5 +1,24 @@
 # Decisions
 
+## 2026-10-04 - Keep the production bridge in user mode and setup separate
+
+**Decision:** The reusable `ChatpadBridge` owns normal WinUSB/runtime behavior
+without PnP mutation. `ChatpadSetup` owns elevated install, repair, uninstall,
+and explicit Microsoft Xbox restoration. Normal exit does not rebind `xusb22`.
+
+**Rationale:** C3 proved the whole-device WinUSB plus HIDMaestro architecture
+on real hardware. C4's product requirement calls for a persistent installed
+state and ordinary runtime restarts without repeated driver changes.
+
+**Alternatives rejected:** Continuing to use the one-shot POC as the product;
+rebinding on every launch; restoring Microsoft Xbox on ordinary exit; or adding
+a new kernel/service component before runtime evidence requires one.
+
+**Consequences:** Runtime starts safely in `WAITING_FOR_DEVICE` when no WinUSB
+interface is present and reconnects with bounded backoff. Elevated live install
+and ordinary-user device access remain unqualified until the C4 live task is
+completed.
+
 ## 2026-07-13 - Enable key-data mode once after the first Chatpad packet
 
 **Decision:** Preserve `0xF0` as a rejected non-key status type. After the first

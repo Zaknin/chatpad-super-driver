@@ -73,7 +73,7 @@ internal static class Program
     }
     private static async Task<int> Helper(Dictionary<string, string> options)
     {
-        int duration = Integer(options, "duration-ms", 30000, 1, 120000);
+        int duration = Integer(options, "duration-ms", 30000, 1, 604800000);
         int idle = Integer(options, "idle-ms", 1000, 1, duration);
         IVirtualXboxController backend = options.GetValueOrDefault("backend", "unavailable") switch
         {

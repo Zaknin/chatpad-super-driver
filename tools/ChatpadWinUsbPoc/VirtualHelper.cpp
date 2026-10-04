@@ -136,7 +136,7 @@ struct VirtualHelperController::Impl {
     }
     bool Launch() {
         {std::lock_guard<std::mutex> lock(mutex);error.clear();fault=false;gotResponse=false;}
-        if(options.requestTimeoutMs<1||options.requestTimeoutMs>1000||options.durationMs<1||options.durationMs>120000||
+        if(options.requestTimeoutMs<1||options.requestTimeoutMs>1000||options.durationMs<1||options.durationMs>604800000||
             (options.backend!="mock"&&options.backend!="unavailable"&&options.backend!="hidmaestro")||
             (options.backend=="hidmaestro"&&!options.allowLiveVirtual)||options.executable.find(L'"')!=std::wstring::npos||
             options.executable.find(L'\n')!=std::wstring::npos||options.executable.find(L'\r')!=std::wstring::npos||

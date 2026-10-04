@@ -54,6 +54,11 @@ bool UsageToScanCode(uint8_t usage,ScanCode& out) {
     }
     return true;
 }
+std::vector<ScanCode> SupportedChatpadScanCodes() {
+    std::vector<ScanCode> scans;
+    for(unsigned usage=1;usage<256;++usage){ScanCode scan;if(UsageToScanCode(static_cast<uint8_t>(usage),scan))scans.push_back(scan);}
+    return scans;
+}
 SendInputKeyboardOutput::~SendInputKeyboardOutput() { ForceRelease(); }
 bool SendInputKeyboardOutput::Send(uint8_t usage,bool down) {
     ScanCode scan;if(!UsageToScanCode(usage,scan))return false;
@@ -70,6 +75,21 @@ bool SendInputKeyboardOutput::ForceRelease() {
     bool success=true;
     for(unsigned usage=1;usage<0xe0;++usage)if(held_[usage]&&!Send(static_cast<uint8_t>(usage),false))success=false;
     for(unsigned usage=0xe0;usage<256;++usage)if(held_[usage]&&!Send(static_cast<uint8_t>(usage),false))success=false;
+    return success;
+}
+bool SendInputKeyboardOutput::ReleaseAbandonedKeys() {
+    bool success=true;
+    for(unsigned usage=1;usage<256;++usage){
+        ScanCode scan;if(!UsageToScanCode(static_cast<uint8_t>(usage),scan))continue;
+#ifdef _WIN32
+        INPUT input{};input.type=INPUT_KEYBOARD;input.ki.wScan=scan.code;
+        input.ki.dwFlags=KEYEVENTF_SCANCODE|KEYEVENTF_KEYUP|(scan.extended?KEYEVENTF_EXTENDEDKEY:0);
+        if(SendInput(1,&input,sizeof(input))!=1)success=false;
+#else
+        success=false;
+#endif
+        held_[usage]=false;
+    }
     return success;
 }
 KeyboardMapper::KeyboardMapper(IKeyboardOutput& output):output_(output) {

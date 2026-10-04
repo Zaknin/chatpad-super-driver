@@ -112,6 +112,17 @@ function Get-ChatpadCanonicalReadback {
  if(-not (Test-Path -LiteralPath $sidecar -PathType Leaf) -or (Get-Content -LiteralPath $sidecar -Raw).Trim() -ine $expected){throw 'Current canonical publication probe sidecar missing/hash or name mismatch.'}
  [pscustomobject]@{CapturedUtc=[DateTime]::UtcNow.ToString('o');PriorWriteReceiptVerified=$true;CurrentReadbackVerified=$true;Path=$path;SHA256=$hash;Sidecar=$sidecar;FreshWritePermissionEstablished=$false;Limitation='Read-only preflight verifies a prior successful write and current file/sidecar readback; current create/rename permissions are not established.'}
 }
+function Test-ChatpadSourceRepositoryIdentity {
+ param($Readiness,$CurrentRepository)
+ $repository=Get-Field $Readiness 'Repository'
+ if($null -eq $repository){return $false}
+ $task=Get-Field $Readiness 'Task'
+ $allowedBranch=if($task -ceq '8L-C4'){'feature/chatpad-usermode-runner'}else{'feature/chatpad-winusb-bridge-poc'}
+ $branch=[string](Get-Field $repository 'Branch')
+ $commit=[string](Get-Field $repository 'Commit')
+ return $branch -ceq $allowedBranch -and $commit -cmatch '^[0-9a-f]{40}$' -and
+  (Get-Field $CurrentRepository 'Branch') -ceq $branch -and (Get-Field $CurrentRepository 'Commit') -ceq $commit
+}
 function New-ChatpadC3Preflight {
  param($State,[object[]]$Packages,$Readiness,$CurrentRepository,[string]$CanonicalTaskRoot='\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C2R1')
  $blocks=[Collections.Generic.List[string]]::new();$transition=$null;$restore=$null
@@ -130,8 +141,7 @@ function New-ChatpadC3Preflight {
  if(-not $Readiness.Security.QuerySucceeded -or $Readiness.Security.TestSigning -ne $false){$blocks.Add('Effective normal-Windows TESTSIGNING state not verified false.')}
  if((Get-Field $Readiness.Security 'Hvci') -ne $true){$blocks.Add('Effective HVCI state not verified enabled.')}
  $canonicalEvidence=$null;try{$canonicalEvidence=Get-ChatpadCanonicalReadback $Readiness -CanonicalTaskRoot $CanonicalTaskRoot}catch{$blocks.Add($_.Exception.Message)}
- if($Readiness.Repository.Branch -cne 'feature/chatpad-winusb-bridge-poc' -or $Readiness.Repository.Commit -notmatch '^[0-9a-f]{40}$'){$blocks.Add('Repository branch/commit identity invalid.')}
- if(-not $CurrentRepository -or (Get-Field $CurrentRepository 'Branch') -cne $Readiness.Repository.Branch -or (Get-Field $CurrentRepository 'Commit') -cne $Readiness.Repository.Commit){$blocks.Add('Readiness repository identity differs from current independently queried branch/HEAD, or the fresh query is unavailable.')}
+ if(-not (Test-ChatpadSourceRepositoryIdentity $Readiness $CurrentRepository)){$blocks.Add('Readiness repository branch/commit identity is invalid or differs from the independently queried checkout.')}
  [pscustomobject]@{Schema=2;Result=if($blocks.Count){'BLOCKED'}else{'PASS'};C3Ready=($blocks.Count -eq 0);ReadOnly=$true;LiveMutation=$false;Blockers=@($blocks | Select-Object -Unique);Security=$Readiness.Security;Target=(Get-Field $State 'Target');ExtensionInventory=$Packages;TransitionPlan=$transition;RestorePlan=$restore;Repository=$Readiness.Repository;CurrentRepository=$CurrentRepository;CanonicalDirectory=$Readiness.CanonicalDirectory;CanonicalEvidence=$canonicalEvidence;PhysicalAcceptance='UNTESTED'}
 }
 function Get-ChatpadC3States {
@@ -194,4 +204,4 @@ function Invoke-ChatpadC3StateMachine {
  foreach($s in Get-ChatpadC3States){try{if($s.AfterMutation){$dirty=$true};$r=& $Action $s;if(-not $r.Success -or [string]::IsNullOrWhiteSpace([string]$r.Evidence)){throw 'Success condition lacks positive evidence.'};$events.Add([pscustomobject]@{State=$s.Name;Success=$true;Evidence=$r.Evidence})}catch{$passed=$false;$events.Add([pscustomobject]@{State=$s.Name;Success=$false;Error=$_.Exception.Message});if($dirty){$rollback=$true;try{$recovery=@(Get-ChatpadC3States | Where-Object Name -eq 'RESTORE_MICROSOFT_XBOX')[0];$rr=& $Action $recovery;if(-not $rr.Success -or [string]::IsNullOrWhiteSpace([string]$rr.Evidence)){throw 'Rollback postcondition unverified.'};$recovered=$true;$events.Add([pscustomobject]@{State='ROLLBACK';Success=$true;Evidence=$rr.Evidence})}catch{$events.Add([pscustomobject]@{State='ROLLBACK';Success=$false;Error=$_.Exception.Message})}};break}}
  [pscustomobject]@{Passed=$passed;RollbackAttempted=$rollback;RollbackSucceeded=$recovered;Events=@($events)}
 }
-Export-ModuleMember -Function Get-ChatpadExtensionAllowlist,Read-ChatpadExtensionInf,Get-ChatpadExtensionInventory,Get-ChatpadExtensionSelection,Assert-ChatpadExtensionInventory,Resolve-ChatpadC3Target,Test-ChatpadFileRecords,Assert-ChatpadRestorable,New-ChatpadTransitionPlan,New-ChatpadRestorePlan,New-ChatpadC3Preflight,Get-ChatpadCanonicalReadback,Get-ChatpadC3States,Invoke-ChatpadC3StateMachine,Get-ChatpadCurrentSecurity,Test-ChatpadCurrentSignatures,Get-ChatpadCurrentBackend
+Export-ModuleMember -Function Get-ChatpadExtensionAllowlist,Read-ChatpadExtensionInf,Get-ChatpadExtensionInventory,Get-ChatpadExtensionSelection,Assert-ChatpadExtensionInventory,Resolve-ChatpadC3Target,Test-ChatpadFileRecords,Assert-ChatpadRestorable,New-ChatpadTransitionPlan,New-ChatpadRestorePlan,New-ChatpadC3Preflight,Get-ChatpadCanonicalReadback,Test-ChatpadSourceRepositoryIdentity,Get-ChatpadC3States,Invoke-ChatpadC3StateMachine,Get-ChatpadCurrentSecurity,Test-ChatpadCurrentSignatures,Get-ChatpadCurrentBackend

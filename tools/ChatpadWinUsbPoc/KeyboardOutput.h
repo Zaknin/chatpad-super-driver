@@ -2,6 +2,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 extern "C" {
 #include "ChatpadConfiguration.h"
 #include "ChatpadKeyboardParser.h"
@@ -9,6 +10,7 @@ extern "C" {
 namespace chatpad {
 struct ScanCode { uint16_t code{}; bool extended{}; };
 bool UsageToScanCode(uint8_t usage, ScanCode& out);
+std::vector<ScanCode> SupportedChatpadScanCodes();
 class IKeyboardOutput {
 public:
     virtual ~IKeyboardOutput() = default;
@@ -20,6 +22,7 @@ public:
     ~SendInputKeyboardOutput() override;
     bool Send(uint8_t hidUsage, bool down) override;
     bool ForceRelease() override;
+    bool ReleaseAbandonedKeys();
 private:
     std::array<bool,256> held_{};
 };

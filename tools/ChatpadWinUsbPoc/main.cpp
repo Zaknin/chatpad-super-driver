@@ -6,6 +6,7 @@
 #include "KeyboardOutput.h"
 #include "VirtualHelper.h"
 #include "C3Session.h"
+#include "Runner.h"
 #include <atomic>
 #include <chrono>
 #include <fstream>
@@ -104,9 +105,10 @@ bool Ready(WinUsbTransport& usb,uint64_t deadline,XboxState& initial) {
 }
 int main(int argc,char** argv) {
     try {
-        if(argc<2)throw std::runtime_error("command required: enumerate|descriptors|monitor-controller|monitor-chatpad|activate-chatpad|monitor-all|bridge; --seconds 1..120 --instance exact-id --activate --json-only --json-out file; descriptors --fixture binary-config (offline); bridge requires --allow-live-bridge --backend-helper absolute-exe --backend hidmaestro|mock");
+        if(argc<2)throw std::runtime_error("command required: run|status|diagnostics|probe|enumerate|descriptors|monitor-controller|monitor-chatpad|activate-chatpad|monitor-all|bridge");
         std::string command=argv[1],instance,jsonFile,fixture,helperPath,backend="hidmaestro";
         bool bridge=command=="bridge",session=command=="c3-session",allowBridge=false;
+        bool verbose=false,noKeyboard=false,noVirtualController=false;
         unsigned seconds=15;bool activate=command=="activate-chatpad" || bridge,jsonOnly=false;
         for(int index=2;index<argc;++index) {
             std::string option=argv[index];
@@ -117,10 +119,24 @@ int main(int argc,char** argv) {
             else if(option=="--fixture")fixture=argument();
             else if(option=="--backend-helper")helperPath=argument();
             else if(option=="--backend")backend=argument();
+            else if(option=="--verbose")verbose=true;
+            else if(option=="--no-keyboard")noKeyboard=true;
+            else if(option=="--no-virtual-controller")noVirtualController=true;
             else if(option=="--allow-live-bridge")allowBridge=true;
             else if(option=="--activate")activate=true;
             else if(option=="--json-only")jsonOnly=true;
             else throw std::runtime_error("unknown option "+option);
+        }
+        if(command=="run" || command=="status" || command=="diagnostics" || command=="probe") {
+            RunnerOptions options;options.executable=std::filesystem::absolute(std::filesystem::path(argv[0]));
+            options.helper=helperPath.empty()?options.executable.parent_path()/L"ChatpadVirtualXbox.exe":std::filesystem::absolute(std::filesystem::path(helperPath));
+            options.instanceId=instance;options.verbose=verbose;options.keyboard=!noKeyboard;options.virtualController=!noVirtualController;
+            if(command=="run" && backend!="hidmaestro")throw std::runtime_error("normal run requires the installed HIDMaestro backend");
+            if(command!="run" && (!helperPath.empty() || noKeyboard || noVirtualController))throw std::runtime_error("runtime options apply to run only");
+            if(command=="run" && !SetConsoleCtrlHandler(ConsoleHandler,TRUE))throw std::runtime_error("console handler unavailable");
+            const int result=RunUserModeBridge(command,options,stopped);
+            if(command=="run")SetConsoleCtrlHandler(ConsoleHandler,FALSE);
+            return result;
         }
         bool descriptor=command=="descriptors" || command=="enumerate";
         bool readController=command=="monitor-controller" || command=="monitor-all" || bridge;

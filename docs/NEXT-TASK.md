@@ -1,18 +1,17 @@
 # Next Task
 
-Recommended objective: integrate the proven C3 probe, cleanup and reconnect orchestration into the reusable runner, then qualify lifecycle behavior in a separately authorized task. Do not start automatically.
+Recommended objective: finish TASK 8L-C4 live qualification for the packaged user-mode runner. Do not start automatically.
 
-Current state: TASK8L-C3 core functional PASS. Real WinUSB controller/Chatpad, virtual XInput, SendInput, simultaneous use and physical rumble verified. Microsoft-only recovery healthy/problem0, no extension/filters. No bridge processes or virtual nodes remain. TESTSIGNING=false/HVCI=true and trust unchanged.
+Current state: C4 implementation/package PASS and repository regression PASS; live acceptance PARTIAL. The runner is built and waits safely while the device remains on Microsoft `xusb22`. This session was not elevated, so setup stopped before any mutation. No live device or virtual-controller exercise was performed.
 
-Required branch: feature/chatpad-winusb-bridge-poc. Start from coherent "fix: qualify live WinUSB Chatpad bridge and Microsoft recovery" directly after6c55e8999b5831a5ce42faabcc7075d84c420344; get exact SHA from Git/C3 canonical manifest, verify clean origin0/0.
+Required branch: `feature/chatpad-usermode-runner`, starting from its current clean, pushed C4 closeout commit. Confirm exact HEAD and remote state before work.
 
-First inspect AGENTS.md, PROJECT-STATE.md, DECISIONS.md, latest WORKLOG.md, TASK-8L-C3-RESULT.md and actual Git state; tools/Invoke-ChatpadC3.ps1, C3Session.psm1, C3Execution.psm1, C3Session.cpp and ignored C3 operational/probe/reconnect evidence. Canonical TASK-8L-C3/20261004T084034Z includes manifest/receipt and task-8l-c3-live-winusb-bridge.zip.
+First inspect: `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md`, then C4 result manifest/receipt and ignored `artifacts/task-8lc4` evidence. Reconcile Git and hardware state before acting.
 
-Preconditions: review observed failures/final evidence; refresh exact target/container, Microsoft recovery candidate, frozen runtime identity/trust/security. Ordinary target is clean Microsoft xusb22. Keep original extension bytes for later explicitly authorized test-mode work.
+Preconditions: elevated PowerShell for one-time `ChatpadSetup.ps1 -Mode Install`; confirm readiness/package hashes, current exact target, Microsoft recovery source and runtime state. Keep normal `ChatpadBridge.exe run/status` non-elevated if tests show that works.
 
-Scope: reusable foreground probe readiness/focus; manual replug continuation when binding returns pending reboot; stop/drain/dispose before exact owned phantom cleanup; real Chatpad activation/input and XInput reconnect evidence. Preserve unsupported mapping rejection and actual output/release failure distinction. The original fully automatic runner does not yet provide all this orchestration.
+Safety: preserve the exact Microsoft recovery baseline; do not reinstall obsolete `oem104`, modify `legacy/`, broadly remove HID devices, change signing/security/trust, reboot, stress-test, or change stable driver/protocol code. Stop and restore Microsoft Xbox if exact target/package identity is ambiguous or setup fails. Do not retry blind physical operations.
 
-Safety: further physical bind/injection/output/security/trust/test-mode work requires new task authorization. No stable protocol/control/driver/legacy edits, broad HID removal, upstream runtime change, certificate changes, package reinstall or stress/benchmark without specific scope. Never reinstall broken extension merely to recreate Code52. Private identities/trust inventories stay local.
+Acceptance: verify setup bind and recovery; prove normal-user startup without rebinding; controller to XInput, Chatpad to keyboard, low/moderate rumble; restart and unplugged startup; reconnect at least three times; held controller/key/modifier disconnect cleanup; killed-process recovery including virtual-controller stale cleanup; no duplicate virtual nodes; collect compact runtime telemetry and idle resource sample. Run the comprehensive suite once after fixes. Publish sanitized evidence atomically and report verified versus untested behavior.
 
-Acceptance: focused meaningful regression; source/continuity reviewed together; no identity weakening/broad deletion; authorized real lifecycle tests identify exact target; neutral/release/stop/drain and no owned present/phantom nodes; Microsoft recovery/security/trust verified. Long-idle/hot-unplug/crash/Guide/L3/R3/headset/full legacy layers remain untested until exercised. Commit/push only requested branch; publish sanitized evidence atomically when requested.
-Also add decoded Chatpad HID/layer fields to C3 JSON telemetry; current JSON retains raw bytes and output status while the separate activation monitor provides decoded fields.
+Inspect first: `tools/ChatpadSetup.ps1`, `tools/Build-ChatpadBridge.ps1`, packaged `ChatpadBridge.exe`, `tools/ChatpadWinUsbPoc/Runner.cpp`, and C4 setup/preflight/lifecycle evidence under `artifacts/task-8lc4`.
