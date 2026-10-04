@@ -17,6 +17,7 @@ struct HelperOptions {
     bool allowLiveVirtual{};
     uint32_t requestTimeoutMs{1000};
     uint32_t createTimeoutMs{30000};
+    uint32_t shutdownTimeoutMs{30000};
     uint32_t durationMs{120000};
 };
 class VirtualHelperController final : public IVirtualXboxController {

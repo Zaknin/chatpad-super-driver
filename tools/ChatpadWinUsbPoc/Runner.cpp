@@ -113,7 +113,7 @@ bool WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState
     }
     return false;
 }
-struct SessionResult { bool lost{},backendFailure{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
+struct SessionResult { bool lost{},backendFailure{},cleanupFailure{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
 SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log) {
     const auto sessionStart=Clock::now();
     SessionResult counts;std::atomic<bool> sessionStop{false};std::atomic<int> failure{0};
@@ -218,15 +218,25 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     if(virtualController)virtualController->SetRumbleCallback({});
     usb.Cancel();
     if(controllerThread.joinable())controllerThread.join();if(chatpadThread.joinable())chatpadThread.join();
-    if(!mapper.ForceRelease())log.Event("keyboard forced release failed");
+    const bool keysReleased=mapper.ForceRelease();if(!keysReleased)log.Event("keyboard forced release failed");
+    bool virtualNeutral=true,virtualReleased=true;
     if(virtualController){
-        virtualController->SubmitState({});
+        virtualNeutral=virtualController->SubmitState({});
         virtualController->Disconnect();
+        const auto helperError=virtualController->LastError();
+        virtualReleased=helperError.empty();
+        if(!virtualReleased)log.Event("virtual backend cleanup failed: "+helperError);
     }
     // WinUSB may already be gone; still send one bounded zero command while the
     // interface remains available, and never retry after a disconnect.
-    log.Event(std::string("session cleanup keysReleased=true virtualNeutral=true motorsStopped=")+
-        ((motorStop.status==TransferStatus::Ok&&motorStop.transferred==8)?"true":"unavailable"));
+    const bool motorsStopped=motorStop.status==TransferStatus::Ok&&motorStop.transferred==8;
+    counts.cleanupFailure=!keysReleased||!virtualNeutral||!virtualReleased||!motorsStopped;
+    if(!virtualNeutral)log.Event("virtual neutral cleanup failed");
+    if(!motorsStopped)log.Event("zero-rumble cleanup failed win32="+std::to_string(motorStop.win32Error));
+    log.Event(std::string("session cleanup keysReleased=")+(keysReleased?"true":"false")+
+        " virtualNeutral="+(virtualNeutral?"true":"false")+" virtualReleased="+(virtualReleased?"true":"false")+
+        " motorsStopped="+(motorsStopped?"true":"false"));
+    if(counts.cleanupFailure)counts.backendFailure=true;
     counts.lost=failure.load()!=0;
     counts.elapsedMs=static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-sessionStart).count());
     const auto seconds=(std::max)(0.001,counts.elapsedMs/1000.0);
@@ -306,6 +316,11 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         log.Event("state=ACTIVATING_CHATPAD");
         const auto session=RunSession(transport,options,stop,lifecycle,log);
         transport.Close();
+        if(session.cleanupFailure){
+            lifecycle.BackendFailed();fatalBackendFailure=true;
+            log.Event("state=CLEANUP_FAILED; stopping this run without reopening the physical controller");
+            break;
+        }
         if(session.backendFailure){
             lifecycle.BackendFailed();fatalBackendFailure=true;
             log.Event("state=VIRTUAL_BACKEND_FAILED; stopping this run without reopening the physical controller");
@@ -324,7 +339,7 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     const auto cpuMs=(FileTicks(endKernel)-FileTicks(startKernel)+FileTicks(endUser)-FileTicks(startUser))/10000;
     SYSTEM_INFO systemInfo{};GetSystemInfo(&systemInfo);const auto cores=(std::max<uint32_t>)(1,systemInfo.dwNumberOfProcessors);
     const auto cpuPercent=100.0*cpuMs/(elapsedMs*cores);
-    log.Event("state=STOPPING clean_shutdown=true reconnect_count="+std::to_string(lifecycle.ReconnectCount())+
+    log.Event("state=STOPPING clean_shutdown="+std::string(fatalBackendFailure?"false":"true")+" reconnect_count="+std::to_string(lifecycle.ReconnectCount())+
         " process_cpu_percent="+std::to_string(cpuPercent)+" working_set_bytes="+std::to_string(memory.WorkingSetSize)+
         " measurement_scope=runner_process_only");
     return fatalBackendFailure?12:0;

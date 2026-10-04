@@ -136,7 +136,7 @@ struct VirtualHelperController::Impl {
     }
     bool Launch() {
         {std::lock_guard<std::mutex> lock(mutex);error.clear();fault=false;gotResponse=false;}
-        if(options.requestTimeoutMs<1||options.requestTimeoutMs>1000||options.createTimeoutMs<1||options.createTimeoutMs>30000||options.durationMs<1||options.durationMs>604800000||
+        if(options.requestTimeoutMs<1||options.requestTimeoutMs>1000||options.createTimeoutMs<1||options.createTimeoutMs>30000||options.shutdownTimeoutMs<1||options.shutdownTimeoutMs>30000||options.durationMs<1||options.durationMs>604800000||
             (options.backend!="mock"&&options.backend!="unavailable"&&options.backend!="hidmaestro")||
             (options.backend=="hidmaestro"&&!options.allowLiveVirtual)||options.executable.find(L'"')!=std::wstring::npos||
             options.executable.find(L'\n')!=std::wstring::npos||options.executable.find(L'\r')!=std::wstring::npos||
@@ -178,13 +178,21 @@ struct VirtualHelperController::Impl {
         if(!response.ok){error=response.error+(response.detail.empty()?"":":"+response.detail);return false;}
         return true;
     }
-    void DisposeProcess() {
+    bool DisposeProcess() {
         stop=true;
         {std::lock_guard<std::mutex> lock(mutex);callback={};}
         Close(input);
-        if(process&&WaitForSingleObject(process,250)==WAIT_TIMEOUT){TerminateProcess(process,4);WaitForSingleObject(process,1000);}
+        bool exited=true;
+        if(process&&WaitForSingleObject(process,options.shutdownTimeoutMs)==WAIT_TIMEOUT){
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+                if(!error.empty())error+=";";
+                error+="helper_process_exit_timeout_forced_termination";fault=true;condition.notify_all();
+            }
+            TerminateProcess(process,4);WaitForSingleObject(process,1000);exited=false;
+        }
         if(reader.joinable())reader.join();
-        Close(output);Close(process);connected=false;
+        Close(output);Close(process);connected=false;return exited;
     }
 };
 VirtualHelperController::VirtualHelperController(HelperOptions options):impl_(std::make_unique<Impl>(std::move(options))){}
@@ -207,8 +215,8 @@ void VirtualHelperController::SetRumbleCallback(RumbleCallback callback){std::lo
 void VirtualHelperController::Disconnect() {
     if(!impl_->process)return;
     SetRumbleCallback({});
-    if(impl_->connected)impl_->Request("disconnect");
-    impl_->Request("quit");impl_->DisposeProcess();
+    if(impl_->connected)impl_->Request("disconnect",{},impl_->options.shutdownTimeoutMs);
+    impl_->Request("quit",{},impl_->options.shutdownTimeoutMs);impl_->DisposeProcess();
 }
 std::string VirtualHelperController::LastError() const {std::lock_guard<std::mutex> lock(impl_->mutex);return impl_->error;}
 }

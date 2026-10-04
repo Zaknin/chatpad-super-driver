@@ -1,21 +1,22 @@
 # Next Task
 
-## TASK 8L-C4L1 — Resume Phase 3 after focused runner fix
+## TASK 8L-C4L1 — Requalify Phase 3 shutdown after helper lifecycle fix
 
-Current state: setup binding remains WinUSB/problem 0 on `USB\VID_045E&PID_028E\1C21F10` (`oem104.inf`). The runner previously timed out its HIDMaestro create request at 1 second and then retried on a disconnected phantom devnode created during that run. The focused source fix uses a 30-second create deadline and stops the run on virtual-backend creation failure instead of classifying it as physical loss. Focused `helper` and `runner-lifecycle` tests pass. A read-only PnPUtil query now confirms the stale devnode `SWD\HIDMAESTRO\HM_622C184E37F6891E` is absent; physical WinUSB/problem0 remains confirmed.
+The shutdown correction and continuity updates are committed together on `feature/chatpad-usermode-runner`, following starting HEAD `4d7efc6b3154703ecc55ea54adc052a93680eb94`. The user's previous live session proved controller, Chatpad keyboard, and physical rumble function, but shutdown failed: after process exit, XInput slot 0 remained connected and the exact SWD and ROOT HIDMaestro nodes remained present. The source fix adds a bounded 30-second helper disconnect/exit deadline and makes cleanup failure visible.
 
-Required branch: `feature/chatpad-usermode-runner`, synchronized with `origin/feature/chatpad-usermode-runner`. Confirm `git rev-parse HEAD` matches the repository identity in the regenerated package manifest and readiness.
+First complete the source review, commit implementation and continuity updates together, push only `feature/chatpad-usermode-runner`, build a fresh C4 package from that pushed HEAD, and independently verify branch/commit/package identity plus every manifest/readiness hash. Use a fresh ignored output directory under `artifacts/task-8lc4`; the existing `build-task-8lc4l1-create-timeout-published` package predates this shutdown fix.
 
-Preconditions: the user confirms `pnputil /remove-device "SWD\HIDMAESTRO\HM_622C184E37F6891E"` completed and a read-only query shows that exact instance absent. Confirm the physical controller remains WinUSB/problem 0. Do not remove the `oem107.inf` driver package or touch the physical `oem104.inf` device.
-
-Next action: from an elevated PowerShell session, launch the freshly built package runner (helper is beside it):
+Before live retry, confirm the user removed only these two old owned instances and retained `oem107.inf`/`oem106.inf`:
 
 ```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4\build-task-8lc4l1-create-timeout-published\package\ChatpadBridge.exe" run
+pnputil /remove-device "SWD\HIDMAESTRO\HM_622C184E37F6891E"
+pnputil /remove-device "ROOT\VID_045E&PID_028E&IG_00\HM_622C184E37F6891E"
 ```
 
-Keep the console open. Capture whether it reaches `RUNNING`, helper-create result, virtual XInput and controller forwarding, Chatpad packet/key output, rumble, and simultaneous use. If create fails, it should now stop with `VIRTUAL_BACKEND_FAILED` without a physical reconnect loop; capture the exact backend error and device state. Stop cleanly with Ctrl+C before lifecycle follow-up. Continue remaining C4L1 phases only after Phase 3 succeeds.
+Then read-only verify both exact IDs are absent and physical `USB\VID_045E&PID_028E\1C21F10` remains WinUSB/problem 0. Do not remove driver packages or modify the physical node.
 
-Safety: do not rerun Install while WinUSB is active; do not uninstall, restore Microsoft, reboot, or broadly remove virtual devices during this Phase 3 retry. Do not remove the HIDMaestro package. The exact stale devnode may be removed only as above. No live input/rumble acceptance is inferred from offline tests.
+User runs the newly generated `package\ChatpadBridge.exe run` in the already used elevated PowerShell. Capture helper teardown log, `clean_shutdown`, process exit code, XInput slots 0-3, and PnP state for new virtual nodes. Acceptance requires slot 0 disconnected and no task-owned present nodes; if teardown reports forced termination or state is ambiguous, stop and inspect exact owned IDs before any cleanup. Do not add automatic/broad PnP mutation to the ordinary runtime.
 
-Inspect first: this file, `docs/PROJECT-STATE.md`, latest `docs/WORKLOG.md`, `tools/ChatpadWinUsbPoc/Runner.cpp`, `tools/ChatpadWinUsbPoc/VirtualHelper.cpp`, and `artifacts/task-8lc4/build-task-8lc4l1-create-timeout-published/build-manifest.json`.
+Safety: no Install rerun while WinUSB is active; no package removal, restore, reboot, trust/security mutation, broad device removal, or automatic physical reconnect/retry on helper cleanup failure. Keep long-idle, crash, hot-unplug, and other lifecycle phases unqualified until directly exercised.
+
+Inspect first: `AGENTS.md`, this file, `docs/PROJECT-STATE.md`, the latest `docs/WORKLOG.md`, `tools/ChatpadWinUsbPoc/VirtualHelper.cpp`, `VirtualHelper.h`, `Runner.cpp`, and the new package manifest/readiness.

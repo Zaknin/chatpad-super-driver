@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-10-04 - Wait for helper SDK release before declaring runner shutdown clean
+
+**Decision:** Treat HIDMaestro disconnect and helper process exit as bounded shutdown work with a dedicated 30-second deadline. If the helper must be forcibly terminated, preserve the reason in native diagnostics and mark runner cleanup failed.
+
+**Rationale:** Live Phase 3 logs claimed clean shutdown while XInput slot 0 and two owned HIDMaestro devnodes remained present. The helper's prior 1-second disconnect request and 250-ms process wait could kill the SDK owner before disposal completed.
+
+**Alternatives rejected:** Reusing the short state-request timeout; silently killing the helper and trusting an unconditional clean-shutdown log; adding automatic PnP removal to the ordinary user-mode runner.
+
+**Consequences:** State submissions remain on the 1-second bound; creation and shutdown retain separate bounded deadlines. A shutdown timeout is a failed acceptance that requires read-only device-state verification. Ordinary runtime still performs no PnP mutation.
+
 ## 2026-10-04 - Keep the production bridge in user mode and setup separate
 
 **Decision:** The reusable `ChatpadBridge` owns normal WinUSB/runtime behavior

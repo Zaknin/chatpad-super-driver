@@ -14,8 +14,13 @@ int main(int argc,char** argv) {
             unsigned id{};char operation[32]{};
             if(sscanf_s(line.c_str(),"{\"id\":%u,\"op\":\"%31[^\"]\"}",&id,operation,static_cast<unsigned>(_countof(operation)))!=2)return 20;
             if(std::string(operation)=="create")std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+            if(std::string(operation)=="disconnect")std::this_thread::sleep_for(std::chrono::milliseconds(1800));
             std::cout<<"{\"id\":"<<id<<",\"ok\":true,\"operation\":\""<<operation<<"\"}\n"<<std::flush;
-            if(std::string(operation)=="quit")return 0;
+            if(std::string(operation)=="disconnect")std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+            if(std::string(operation)=="quit"){
+                std::this_thread::sleep_for(std::chrono::milliseconds(400));
+                return 0;
+            }
         }
         return 0;
     }
@@ -66,7 +71,17 @@ int main(int argc,char** argv) {
         HelperOptions delayed;delayed.executable=std::filesystem::absolute(argv[0]).wstring();delayed.backend="mock";
         VirtualHelperController slowCreate(delayed);
         Check(slowCreate.Create(),"create response taking longer than state-request timeout is accepted");
+        const auto shutdownStart=std::chrono::steady_clock::now();
         slowCreate.Disconnect();
+        const auto shutdownMs=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-shutdownStart).count();
+        Check(shutdownMs>=2000,"disconnect waits for slow backend release and helper process exit");
+        Check(slowCreate.LastError().empty(),"graceful helper shutdown reports no cleanup error");
+        HelperOptions shortShutdown=delayed;shortShutdown.shutdownTimeoutMs=1000;
+        VirtualHelperController boundedShutdown(shortShutdown);
+        Check(boundedShutdown.Create(),"short-shutdown helper creates before bounded teardown test");
+        boundedShutdown.Disconnect();
+        Check(boundedShutdown.LastError().find("helper_request_timeout")!=std::string::npos,"shutdown timeout remains visible after helper eventually exits");
+        Check(boundedShutdown.LastError().find("helper_process_exit_timeout_forced_termination")!=std::string::npos,"forced helper termination is separately visible");
     } else {Check(false,"absolute mock helper executable required for integration tests");}
     std::cout<<"{\"suite\":\"NativeVirtualHelper\",\"total\":"<<total<<",\"passed\":"<<total-failed<<",\"failed\":"<<failed<<",\"backend\":\"mock/unavailable\",\"liveMutation\":false}\n";
     return failed?1:0;
