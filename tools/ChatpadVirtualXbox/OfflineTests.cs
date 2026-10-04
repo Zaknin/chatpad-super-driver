@@ -40,6 +40,20 @@ internal static class OfflineTests
         Check("present runtime mock submit", () => { presentRuntime.SubmitState(neutral); return runtimeMock.LastState == neutral; });
         Check("present runtime mock cleanup", () => { presentRuntime.Disconnect(); return !runtimeMock.Connected; });
 #if HIDMAESTRO
+        const string staleHidMaestroNode = @"SWD\HIDMAESTRO\HM_622C184E37F6891E";
+        Check("stale non-present HIDMaestro Enum index zero does not block restart", () =>
+        {
+            bool exactStaleIdChecked = false;
+            bool conflict = EnumControllerIndexGuard.HasPresentIndexZero(
+                [(staleHidMaestroNode, (object?)0)], id => { exactStaleIdChecked = id == staleHidMaestroNode; return false; });
+            return !conflict && exactStaleIdChecked;
+        });
+        Check("present HIDMaestro index zero still blocks profile sweep", () =>
+            EnumControllerIndexGuard.HasPresentIndexZero(
+                [(staleHidMaestroNode, (object?)0)], id => id == staleHidMaestroNode));
+        Check("present nonzero controller index does not conflict", () =>
+            !EnumControllerIndexGuard.HasPresentIndexZero(
+                [(staleHidMaestroNode, (object?)1)], _ => true));
         Check("actual SDK availability probe does not construct context", () =>
         {
             var availability = HidMaestroRuntime.Probe();

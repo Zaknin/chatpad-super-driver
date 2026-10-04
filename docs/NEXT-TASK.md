@@ -1,22 +1,19 @@
 # Next Task
 
-## TASK 8L-C4L1 — Requalify Phase 3 shutdown after helper lifecycle fix
+## TASK 8L-C4L1 — Retry Phase 4 after stale Enum guard correction
 
-The shutdown correction and continuity updates are committed together on `feature/chatpad-usermode-runner`, following starting HEAD `4d7efc6b3154703ecc55ea54adc052a93680eb94`. The user's previous live session proved controller, Chatpad keyboard, and physical rumble function, but shutdown failed: after process exit, XInput slot 0 remained connected and the exact SWD and ROOT HIDMaestro nodes remained present. The source fix adds a bounded 30-second helper disconnect/exit deadline and makes cleanup failure visible.
+The restart at 2026-10-04 13:47 UTC failed before virtual-controller creation because a historical `SWD\HIDMAESTRO\HM_622C184E37F6891E` Enum key has `ControllerIndex=0` despite the devnode being absent (`CM_Locate_DevNodeW` returned `CR_NO_SUCH_DEVNODE`, and PnPUtil found no device). The guard now checks current devnode presence and still refuses a present ROOT/SWD controller at index zero. Presence-query errors fail closed. Focused HIDMaestro offline tests passed 113/113.
 
-First complete the source review, commit implementation and continuity updates together, push only `feature/chatpad-usermode-runner`, build a fresh C4 package from that pushed HEAD, and independently verify branch/commit/package identity plus every manifest/readiness hash. Use a fresh ignored output directory under `artifacts/task-8lc4`; the existing `build-task-8lc4l1-create-timeout-published` package predates this shutdown fix.
+Build and independently verify a fresh package from the final pushed commit under a new ignored path in `artifacts/task-8lc4`. The previous `build-task-8lc4l1-shutdown-correction` package predates this fix and must not be used.
 
-Before live retry, confirm the user removed only these two old owned instances and retained `oem107.inf`/`oem106.inf`:
+After package verification, the user runs this exact command from PowerShell:
 
 ```powershell
-pnputil /remove-device "SWD\HIDMAESTRO\HM_622C184E37F6891E"
-pnputil /remove-device "ROOT\VID_045E&PID_028E&IG_00\HM_622C184E37F6891E"
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4\<verified-build-directory>\package\ChatpadBridge.exe" run
 ```
 
-Then read-only verify both exact IDs are absent and physical `USB\VID_045E&PID_028E\1C21F10` remains WinUSB/problem 0. Do not remove driver packages or modify the physical node.
+Capture the full startup and shutdown output. If it reaches RUNNING, verify ordinary controller/Chatpad behavior and then stop with Ctrl+C; confirm clean shutdown and no remaining XInput slot or present task-owned ROOT/SWD nodes. Do not delete the historical Enum key, weaken the present-device check, rerun setup/install, or reboot. Do not proceed to the later long-idle, crash, unplug/reconnect, or comprehensive phases until this restart is accepted.
 
-User runs the newly generated `package\ChatpadBridge.exe run` in the already used elevated PowerShell. Capture helper teardown log, `clean_shutdown`, process exit code, XInput slots 0-3, and PnP state for new virtual nodes. Acceptance requires slot 0 disconnected and no task-owned present nodes; if teardown reports forced termination or state is ambiguous, stop and inspect exact owned IDs before any cleanup. Do not add automatic/broad PnP mutation to the ordinary runtime.
+Required starting state: final package manifest and readiness both identify the pushed `feature/chatpad-usermode-runner` commit and every packaged member hash matches. Physical `USB\VID_045E&PID_028E\1C21F10` must remain WinUSB/problem 0/no filters.
 
-Safety: no Install rerun while WinUSB is active; no package removal, restore, reboot, trust/security mutation, broad device removal, or automatic physical reconnect/retry on helper cleanup failure. Keep long-idle, crash, hot-unplug, and other lifecycle phases unqualified until directly exercised.
-
-Inspect first: `AGENTS.md`, this file, `docs/PROJECT-STATE.md`, the latest `docs/WORKLOG.md`, `tools/ChatpadWinUsbPoc/VirtualHelper.cpp`, `VirtualHelper.h`, `Runner.cpp`, and the new package manifest/readiness.
+Inspect first: `tools/ChatpadVirtualXbox/EnumControllerIndexGuard.cs`, `HidMaestroBackend.cs`, the current package manifest/readiness, then user runtime output.

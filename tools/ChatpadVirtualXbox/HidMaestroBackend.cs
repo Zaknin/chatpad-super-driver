@@ -65,21 +65,9 @@ internal sealed class SdkXboxController : IVirtualXboxController
                 using var existing = Registry.LocalMachine.OpenSubKey(key);
                 if (existing != null) throw new BackendException("metadata_conflict", "Shared Xbox profile metadata already exists; no device creation attempted.");
             }
-            foreach (var enumRoot in new[] { "ROOT", "SWD" })
-            {
-                using var root = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\" + enumRoot);
-                foreach (var enumerator in root?.GetSubKeyNames() ?? [])
-                {
-                    if (!enumerator.StartsWith("VID_", StringComparison.OrdinalIgnoreCase) && !enumerator.StartsWith("HIDMAESTRO", StringComparison.OrdinalIgnoreCase)) continue;
-                    using var group = root!.OpenSubKey(enumerator);
-                    foreach (var instance in group?.GetSubKeyNames() ?? [])
-                    {
-                        using var parameters = group!.OpenSubKey(instance + @"\Device Parameters");
-                        if (parameters?.GetValue("ControllerIndex") is int index && index == 0)
-                            throw new BackendException("virtual_scope_conflict", "Existing ROOT/SWD controller index zero would be touched by upstream profile sweep.");
-                    }
-                }
-            }
+            if (EnumControllerIndexGuard.HasPresentIndexZero(Registry.LocalMachine,
+                    DeviceNodePresence.IsPresent))
+                throw new BackendException("virtual_scope_conflict", "Existing present ROOT/SWD controller index zero would be touched by upstream profile sweep.");
             ownsMetadata = true;
             controller = context.CreateController(profile, "chatpad360-winusb-poc");
             controller.OutputReceived += OnOutput;

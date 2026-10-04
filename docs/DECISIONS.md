@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-10-04 - Apply virtual controller index guard only to present devnodes
+
+**Decision:** Before HIDMaestro creates a controller, inspect the existing ROOT/SWD Enum records as before, but block index zero only when Configuration Manager confirms that exact instance ID is currently present. Treat unexpected presence-query errors as a fail-closed creation error.
+
+**Rationale:** A successful runner shutdown left a non-present SWD Enum record at index zero. PnPUtil reported no device and `CM_Locate_DevNodeW` returned `CR_NO_SUCH_DEVNODE`, yet the old registry-only guard rejected every restart. Current presence is the condition relevant to an upstream profile sweep.
+
+**Alternatives rejected:** Ignoring all index-zero records; deleting registry keys or PnP nodes during ordinary startup; removing or weakening conflict checks for present devices; requiring a reboot to clear historical Enum records.
+
+**Consequences:** Stale non-present records no longer block application restart. A present ROOT/SWD index-zero device still blocks creation, and API errors fail closed. The ordinary runtime performs no PnP or registry mutation.
+
 ## 2026-10-04 - Wait for helper SDK release before declaring runner shutdown clean
 
 **Decision:** Treat HIDMaestro disconnect and helper process exit as bounded shutdown work with a dedicated 30-second deadline. If the helper must be forcibly terminated, preserve the reason in native diagnostics and mark runner cleanup failed.
