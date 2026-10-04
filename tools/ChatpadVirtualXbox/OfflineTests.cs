@@ -117,6 +117,9 @@ internal static class OfflineTests
         }
         Check("rumble validated fixture", () => StateConversion.TryRumble(2, 0, [0, 0, 128, 255, 0], out var r) && r == new Rumble(32896, 65535));
         Check("rumble stop", () => StateConversion.TryRumble(2, 0, [0, 0, 0, 0, 0], out var r) && r == new Rumble(0, 0));
+        Check("normal Windows captured XUSB motor packet", () => StateConversion.TryRumble(2, 0, [0, 0, 128, 64, 2], out var r) && r == new Rumble(32896, 16448));
+        Check("normal Windows captured XUSB stop packet", () => StateConversion.TryRumble(2, 0, [0, 0, 0, 0, 2], out var r) && r == default);
+        Check("XUSB LED packet refused", () => !StateConversion.TryRumble(2, 0, [0, 6, 0, 0, 1], out _));
         Check("rumble source rejected", () => !StateConversion.TryRumble(0, 0, [0, 0, 1, 1, 0], out _));
         Check("rumble report rejected", () => !StateConversion.TryRumble(2, 1, [0, 0, 1, 1, 0], out _));
         for (int size = 0; size < 8; size++)
@@ -159,6 +162,23 @@ internal static class OfflineTests
         Check("observer exact expected state", () => XInputObserver.Observe(new FakeXInput(_ => new(0, 7, neutral)), 1, neutral, 10, 5, () => clock, ms => clock += (uint)ms).Matched);
         Throws("observer slot rejection", () => XInputObserver.Observe(missing, 4, neutral, 10, 5, () => 0, _ => { }));
         Throws("observer timeout rejection", () => XInputObserver.Observe(missing, 0, neutral, 0, 5, () => 0, _ => { }));
+        var package = RuntimePackageIdentity.Packages[0];
+        var hashes = new Dictionary<string, string>(package.Files, StringComparer.OrdinalIgnoreCase);
+        Check("qualified package exact manifest", () => RuntimePackageIdentity.Matches(package, hashes, RuntimePackageIdentity.Signer));
+        Check("qualified package wrong signer", () => !RuntimePackageIdentity.Matches(package, hashes, new string('0', 40)));
+        foreach (var name in package.Files.Keys)
+        {
+            var missingHash = new Dictionary<string, string>(hashes); missingHash.Remove(name);
+            Check("qualified package missing " + name, () => !RuntimePackageIdentity.Matches(package, missingHash, RuntimePackageIdentity.Signer));
+            var changedHash = new Dictionary<string, string>(hashes) { [name] = new string('0', 64) };
+            Check("qualified package altered " + name, () => !RuntimePackageIdentity.Matches(package, changedHash, RuntimePackageIdentity.Signer));
+        }
+        var extraHash = new Dictionary<string, string>(hashes) { ["foreign.dll"] = new string('0', 64) };
+        Check("qualified package extra file", () => !RuntimePackageIdentity.Matches(package, extraHash, RuntimePackageIdentity.Signer));
+        Check("isolated slot delta", () => VirtualQualification.SelectSlot([false,false,true,false], [false,true,true,false]) == 1);
+        Throws("slot ambiguity refused", () => VirtualQualification.SelectSlot([false,false,false,false], [true,true,false,false]));
+        Throws("slot absent refused", () => VirtualQualification.SelectSlot([false,false,false,false], [false,false,false,false]));
+        Throws("existing slot loss refused", () => VirtualQualification.SelectSlot([true,false,false,false], [false,true,false,false]));
         Console.WriteLine(JsonSerializer.Serialize(new { suite = "virtual-xbox-offline", passed, failed, failures, liveBackendCreated = false, xinputCalled = false }));
         return failed == 0 ? 0 : 1;
     }

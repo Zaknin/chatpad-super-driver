@@ -30,6 +30,12 @@ $files+=Record 'VirtualBackend' (Join-Path $helper 'ChatpadVirtualXbox.exe')
 foreach($file in @(Get-ChildItem -LiteralPath $helper -File | Where-Object Extension -ne '.pdb')){$files+=Record ('VirtualFile:'+ $file.Name) $file.FullName}
 $dotnet='C:/Dev/tools/dotnet10/dotnet.exe'
 $files+=Record 'Dotnet' $dotnet
+$runtimeQualification=@()
+foreach($name in @('virtual-qualification.private.json','virtual-invariants.json')){
+ $runtimeFile=Join-Path $repo ('artifacts/task-8lc2r3/'+$name)
+ if(Test-Path -LiteralPath $runtimeFile -PathType Leaf){$runtimeQualification+=Record ('RuntimeQualification:'+ $name) $runtimeFile}
+}
+$files+=@($runtimeQualification)
 $m=$baseline.State.Target
 $msInf=@($baseline.Files | Where-Object Name -eq 'xusb22.inf')[0]
 $msSys=@($baseline.Files | Where-Object { $_.Name -eq 'xusb22.sys' -and $_.SourcePath -like '*DriverStore*' })[0]
@@ -54,7 +60,7 @@ $inputManifest=[ordered]@{
  Microsoft=@{InfPath=$msInf.SourcePath;InfSHA256=$msInf.SHA256;Provider=$m.Provider;Section=$m.Section;Version=$m.Version;PackageFiles=@((Record 'MicrosoftInf' $msInf.SourcePath),(Record 'MicrosoftKernel' $msSys.SourcePath));SourceSignatureVerified=$true;CandidateVerified=$false}
  ExtensionRestore=@{InfPath=(Join-Path $recovery 'ChatpadFilterExtension.inf');Version='1.0.14.0';Files=$extensionFiles;NormalWindowsLoadExpected=$false;Reason='Optional fallback SYS remains test-signed; normal-mode healthy restoration is not authorized/proven.'}
  Trust=$trust.Trust
- Dependencies=@{Available=$integration.runtime.availability.runtimeReady;Reason=$integration.runtime.availability.reason;DotnetPath=$dotnet;VirtualAssembly=(Join-Path $helper 'ChatpadVirtualXbox.dll')}
+ Dependencies=@{Available=$integration.runtime.availability.runtimeReady;Reason=$integration.runtime.availability.reason;DotnetPath=$dotnet;VirtualAssembly=(Join-Path $helper 'ChatpadVirtualXbox.dll');RuntimeQualification=$runtimeQualification}
  Security=@{QuerySucceeded=$security.CodeIntegrity.QuerySucceeded;TestSigning=$security.CodeIntegrity.TestSigning;Hvci=$security.CodeIntegrity.Hvci;SecureBoot=$security.SecureBoot}
  CanonicalDirectory=$CanonicalDirectory;CanonicalWritable=$true;CanonicalWriteProof=$probe
  LocalOnly=$true;PrivateIdentityInSources='Retained private C2 baseline stays local; public outputs redact instance/container/profile.'

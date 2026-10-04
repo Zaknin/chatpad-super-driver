@@ -15,6 +15,13 @@ internal static class Program
             var options = ParseOptions(args.Skip(1).ToArray());
             switch (args[0])
             {
+#if HIDMAESTRO
+                case "qualify":
+                    RequireKeys(options, "allow-live-virtual", "report-file");
+                    if (!options.ContainsKey("allow-live-virtual") || !options.TryGetValue("report-file", out var reportFile))
+                        throw new BackendException("live_not_authorized", "Explicit --allow-live-virtual and --report-file required.");
+                    return VirtualQualification.Run(Path.GetFullPath(reportFile));
+#endif
                 case "backend-status":
                     RequireKeys(options);
 #if HIDMAESTRO
@@ -22,7 +29,13 @@ internal static class Program
 #else
                     var availability = new BackendAvailability(false, false, "HIDMaestro SDK is not compiled in.");
 #endif
-                    Console.WriteLine(JsonSerializer.Serialize(new { availability, contextConstructed = false, liveDeviceCreated = false, readOnly = true }, JsonOptions));
+                    Console.WriteLine(JsonSerializer.Serialize(new { availability, contextConstructed = false, liveDeviceCreated = false, readOnly = true,
+#if HIDMAESTRO
+                        runtimeQualificationRequired = true
+#else
+                        runtimeQualificationRequired = false
+#endif
+                    }, JsonOptions));
                     return availability.RuntimeReady ? 0 : 3;
                 case "helper":
                     RequireKeys(options, "backend", "duration-ms", "idle-ms", "allow-live-virtual");

@@ -1,6 +1,6 @@
 #if HIDMAESTRO
 using HIDMaestro;
-using System.Security.Cryptography;
+using Microsoft.Win32;
 
 namespace ChatpadVirtualXbox;
 
@@ -12,34 +12,11 @@ public static class HidMaestroRuntime
     {
         try
         {
-            var sdk = typeof(HMContext).Assembly;
             if (!Environment.Is64BitOperatingSystem || System.Runtime.InteropServices.RuntimeInformation.OSArchitecture != System.Runtime.InteropServices.Architecture.X64)
                 return new(true, false, "C3 package requires Windows x64.");
-            var repository = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "DriverStore", "FileRepository");
-            foreach (var requirement in new[] {
-                (Inf: "hidmaestro.inf", Binary: "HIDMaestro.dll"),
-                (Inf: "hidmaestro_xusb.inf", Binary: "HMXInput.dll") })
-            {
-                string ResourceHash(string file)
-                {
-                    using var stream = sdk.GetManifestResourceStream("HIDMaestro.Native.x64." + file)
-                        ?? throw new BackendException("backend_unavailable", "SDK driver payload missing: " + file);
-                    return Convert.ToHexString(SHA256.HashData(stream));
-                }
-                var infHash = ResourceHash(requirement.Inf);
-                var binaryHash = ResourceHash(requirement.Binary);
-                bool matching = Directory.Exists(repository) && Directory.EnumerateDirectories(repository, requirement.Inf + "_amd64_*").Any(directory =>
-                {
-                    var inf = Path.Combine(directory, requirement.Inf);
-                    var binary = Path.Combine(directory, requirement.Binary);
-                    if (!File.Exists(inf) || !File.Exists(binary)) return false;
-                    using var infStream = File.OpenRead(inf);
-                    using var binaryStream = File.OpenRead(binary);
-                    return Convert.ToHexString(SHA256.HashData(infStream)) == infHash && Convert.ToHexString(SHA256.HashData(binaryStream)) == binaryHash;
-                });
-                if (!matching) return new(true, false, "Pinned HIDMaestro runtime not installed or package bytes mismatch: " + requirement.Inf + ". No installation/context/device creation attempted.");
-            }
-            return new(true, true, "Pinned driver INF/DLL bytes found in Driver Store. This does not prove Windows load/trust acceptance; independently preflight that before C3.");
+            RuntimePackageIdentity.VerifyCurrentTrust();
+            foreach (var package in RuntimePackageIdentity.Packages) RuntimePackageIdentity.Find(package);
+            return new(true, true, "Exact C2R3 catalog-signed INF/CAT/DLL bytes and current machine trust verified. Live load qualification is recorded separately.");
         }
         catch (Exception e) { return new(true, false, "Read-only runtime probe failed: " + e.Message); }
     }
@@ -64,6 +41,11 @@ internal sealed class SdkXboxController : IVirtualXboxController
     private HMContext? context;
     private HMController? controller;
     private Action<Rumble>? callback;
+    private bool ownsMetadata;
+    private static readonly string[] MetadataKeys = [
+        @"SYSTEM\CurrentControlSet\Control\GameInput\Devices\045E028E00010005",
+        @"SOFTWARE\Microsoft\Windows\CurrentVersion\GameInput\Devices\045E028E00010005",
+        @"SYSTEM\CurrentControlSet\Control\MediaProperties\PrivateProperties\Joystick\OEM\VID_045E&PID_028E" ];
     public void Create()
     {
         if (controller != null) throw new BackendException("already_connected", "Disconnect first.");
@@ -71,9 +53,34 @@ internal sealed class SdkXboxController : IVirtualXboxController
         {
             context = new HMContext();
             if (!context.IsDriverInstalled) throw new BackendException("backend_unavailable", "Install and independently verify the pinned SDK drivers in a separately authorized task. Helper never calls InstallDriver.");
+            PrepareQualifiedPackage();
             context.LoadDefaultProfiles();
             var profile = context.GetProfile("xbox-360-wired") ?? throw new BackendException("profile_unavailable", "Pinned xbox-360-wired profile absent.");
             if (profile.RequiresUsbipBackend) throw new BackendException("wrong_backend", "Composite/USBIP profiles are forbidden.");
+            // SDK creates shared VID/PID metadata. Refuse to overwrite existing
+            // application metadata; remove only these initially absent keys at
+            // teardown, including failed creation. No physical Enum/USB key touched.
+            foreach (var key in MetadataKeys)
+            {
+                using var existing = Registry.LocalMachine.OpenSubKey(key);
+                if (existing != null) throw new BackendException("metadata_conflict", "Shared Xbox profile metadata already exists; no device creation attempted.");
+            }
+            foreach (var enumRoot in new[] { "ROOT", "SWD" })
+            {
+                using var root = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\" + enumRoot);
+                foreach (var enumerator in root?.GetSubKeyNames() ?? [])
+                {
+                    if (!enumerator.StartsWith("VID_", StringComparison.OrdinalIgnoreCase) && !enumerator.StartsWith("HIDMAESTRO", StringComparison.OrdinalIgnoreCase)) continue;
+                    using var group = root!.OpenSubKey(enumerator);
+                    foreach (var instance in group?.GetSubKeyNames() ?? [])
+                    {
+                        using var parameters = group!.OpenSubKey(instance + @"\Device Parameters");
+                        if (parameters?.GetValue("ControllerIndex") is int index && index == 0)
+                            throw new BackendException("virtual_scope_conflict", "Existing ROOT/SWD controller index zero would be touched by upstream profile sweep.");
+                    }
+                }
+            }
+            ownsMetadata = true;
             controller = context.CreateController(profile, "chatpad360-winusb-poc");
             controller.OutputReceived += OnOutput;
         }
@@ -82,6 +89,36 @@ internal sealed class SdkXboxController : IVirtualXboxController
             Disconnect();
             if (e is BackendException) throw;
             throw new BackendException("backend_create_failed", e.Message);
+        }
+    }
+    private static void PrepareQualifiedPackage()
+    {
+        // Public extraction API serializes the constructor's prewarm. The SDK
+        // subsequently binds this INF path. Supply only frozen, qualified package
+        // bytes; never call FullDeploy/InstallDriver or modify any runtime DLL.
+        var directory = HIDMaestro.Internal.DriverBuilder.EnsureExtracted();
+        var parent = Path.GetFullPath(Path.GetTempPath());
+        if (!Path.GetFullPath(directory).StartsWith(parent, StringComparison.OrdinalIgnoreCase) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(directory), "^HIDMaestro_[0-9a-fA-F]{16}$") ||
+            (File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0)
+            throw new BackendException("unsafe_staging", "Unexpected public SDK extraction directory.");
+        foreach (var package in RuntimePackageIdentity.Packages)
+        {
+            var installed = RuntimePackageIdentity.Find(package);
+            foreach (var file in package.Files)
+            {
+                var target = Path.Combine(directory, file.Key);
+                if (File.Exists(target) && (File.GetAttributes(target) & FileAttributes.ReparsePoint) != 0)
+                    throw new BackendException("unsafe_staging", "SDK payload reparse point refused.");
+                if (file.Key.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (RuntimePackageIdentity.Hash(target) != file.Value)
+                        throw new BackendException("payload_mismatch", "Extracted runtime DLL differs from exact pin.");
+                }
+                else File.Copy(Path.Combine(installed, file.Key), target, true);
+                if (RuntimePackageIdentity.Hash(target) != file.Value)
+                    throw new BackendException("payload_mismatch", "Qualified SDK package materialization failed.");
+            }
         }
     }
     public void SubmitState(XboxState state)
@@ -104,8 +141,19 @@ internal sealed class SdkXboxController : IVirtualXboxController
     public void Disconnect()
     {
         var target = controller; controller = null; callback = null;
-        if (target != null) { target.OutputReceived -= OnOutput; target.Dispose(); }
-        var owner = context; context = null; owner?.Dispose();
+        try
+        {
+            if (target != null) { target.OutputReceived -= OnOutput; target.Dispose(); }
+            var owner = context; context = null; owner?.Dispose();
+        }
+        finally
+        {
+            if (ownsMetadata)
+            {
+                foreach (var key in MetadataKeys) Registry.LocalMachine.DeleteSubKeyTree(key, false);
+                ownsMetadata = false;
+            }
+        }
     }
     public void Dispose() => Disconnect();
 }

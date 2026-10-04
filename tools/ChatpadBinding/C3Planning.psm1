@@ -1,6 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 Import-Module (Join-Path $PSScriptRoot 'ChatpadBinding.psm1')
+Import-Module (Join-Path $PSScriptRoot '../ChatpadHidMaestroPackage.psm1')
 function Get-Field($Object,[string]$Name,$Default=$null){if($null -ne $Object -and $Object.PSObject.Properties[$Name]){return $Object.$Name};return $Default}
 function Get-ChatpadExtensionAllowlist {$items=Get-Content (Join-Path $PSScriptRoot 'ExtensionAllowlist.json') -Raw | ConvertFrom-Json;foreach($item in $items){Write-Output $item}}
 function Read-ChatpadExtensionInf {
@@ -127,6 +128,7 @@ function New-ChatpadC3Preflight {
  if(-not $Readiness.Trust.NormalWindowsInstallExpected){$blocks.Add('Normal Windows package trust: '+$Readiness.Trust.Reason)}
  if(-not $Readiness.Dependencies.Available){$blocks.Add('Runtime dependencies: '+$Readiness.Dependencies.Reason)}
  if(-not $Readiness.Security.QuerySucceeded -or $Readiness.Security.TestSigning -ne $false){$blocks.Add('Effective normal-Windows TESTSIGNING state not verified false.')}
+ if((Get-Field $Readiness.Security 'Hvci') -ne $true){$blocks.Add('Effective HVCI state not verified enabled.')}
  $canonicalEvidence=$null;try{$canonicalEvidence=Get-ChatpadCanonicalReadback $Readiness -CanonicalTaskRoot $CanonicalTaskRoot}catch{$blocks.Add($_.Exception.Message)}
  if($Readiness.Repository.Branch -cne 'feature/chatpad-winusb-bridge-poc' -or $Readiness.Repository.Commit -notmatch '^[0-9a-f]{40}$'){$blocks.Add('Repository branch/commit identity invalid.')}
  if(-not $CurrentRepository -or (Get-Field $CurrentRepository 'Branch') -cne $Readiness.Repository.Branch -or (Get-Field $CurrentRepository 'Commit') -cne $Readiness.Repository.Commit){$blocks.Add('Readiness repository identity differs from current independently queried branch/HEAD, or the fresh query is unavailable.')}
@@ -177,7 +179,14 @@ function Get-ChatpadCurrentBackend {
  $p.StartInfo.FileName=$dep.DotnetPath;$p.StartInfo.Arguments='"'+$dep.VirtualAssembly+'" backend-status';$p.StartInfo.UseShellExecute=$false;$p.StartInfo.CreateNoWindow=$true;$p.StartInfo.RedirectStandardOutput=$true;$p.StartInfo.RedirectStandardError=$true
  $p.StartInfo.EnvironmentVariables['DOTNET_ROOT']=Split-Path $dep.DotnetPath -Parent
  $p.StartInfo.EnvironmentVariables['DOTNET_SKIP_FIRST_TIME_EXPERIENCE']='1';$p.StartInfo.EnvironmentVariables['DOTNET_GENERATE_ASPNET_CERTIFICATE']='false';$p.StartInfo.EnvironmentVariables['DOTNET_CLI_TELEMETRY_OPTOUT']='1'
- try{if(-not $p.Start()){throw 'Read-only backend status process failed to start.'};$stdout=$p.StandardOutput.ReadToEndAsync();$stderr=$p.StandardError.ReadToEndAsync();if(-not $p.WaitForExit(15000)){$p.Kill();$p.WaitForExit();throw 'Read-only backend status timeout.'};$r=$stdout.GetAwaiter().GetResult() | ConvertFrom-Json;if(-not $r.readOnly -or $r.contextConstructed -or $r.liveDeviceCreated){throw 'Backend status failed read-only contract.'};[pscustomobject]@{Available=($p.ExitCode -eq 0 -and $r.availability.sdkCompiled -and $r.availability.runtimeReady);Reason=$r.availability.reason;Status=$r;DotnetPath=$dep.DotnetPath;VirtualAssembly=$dep.VirtualAssembly}}finally{$p.Dispose()}
+ try{if(-not $p.Start()){throw 'Read-only backend status process failed to start.'};$stdout=$p.StandardOutput.ReadToEndAsync();$stderr=$p.StandardError.ReadToEndAsync();if(-not $p.WaitForExit(15000)){$p.Kill();$p.WaitForExit();throw 'Read-only backend status timeout.'};$r=$stdout.GetAwaiter().GetResult() | ConvertFrom-Json;if(-not $r.readOnly -or $r.contextConstructed -or $r.liveDeviceCreated){throw 'Backend status failed read-only contract.'};if(Get-Field $r 'runtimeQualificationRequired' $false){
+  $records=@(Get-Field $dep 'RuntimeQualification' @())
+  if($records.Count -ne 2){throw 'Exact isolated HIDMaestro runtime qualification evidence missing.'}
+  Test-ChatpadFileRecords $records 'Runtime qualification'
+  $q=Get-Content -LiteralPath $records[0].Path -Raw | ConvertFrom-Json
+  $invariants=Get-Content -LiteralPath $records[1].Path -Raw | ConvertFrom-Json
+  if(-not (Test-ChatpadHidMaestroRuntimeQualification $q $invariants)){throw 'Isolated HIDMaestro UMDF/XInput/cleanup/invariant evidence failed.'}
+ };[pscustomobject]@{Available=($p.ExitCode -eq 0 -and $r.availability.sdkCompiled -and $r.availability.runtimeReady);Reason=$r.availability.reason;Status=$r;DotnetPath=$dep.DotnetPath;VirtualAssembly=$dep.VirtualAssembly}}finally{$p.Dispose()}
 }
 function Invoke-ChatpadC3StateMachine {
  param([Parameter(Mandatory)][scriptblock]$Action)

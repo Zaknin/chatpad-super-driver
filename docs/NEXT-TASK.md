@@ -1,28 +1,17 @@
 # Next Task
 
-## Resolve exact signed HIDMaestro contract; repeat C2R2 before C3
+Current state: TASK8L-C2R3 isolated HIDMaestro UMDF/XInput qualification PASS; C3Ready=true on this host. Packages oem106/oem107 retained, exact local cert trust unchanged, TESTSIGNING=false/HVCI=true. Physical xusb22/oem104 remains Code52 with unchanged binding/filters; C3 not started.
 
-Continue feature/chatpad-winusb-bridge-poc from committed C2R2 qualification/tooling, direct child of d2801b5c092025b800cd7536880c4103cd5320c7. Resolve exact SHA from Git and canonical C2R2 result manifest/receipt; require equality, clean status and origin 0/0. No task/chat is created automatically.
+Next recommended objective: separately authorized TASK8L-C3 bounded physical WinUSB bridge acceptance. Do not create a task/chat or start C3 automatically.
 
-Current verdict BLOCKED. Revision 1c126ed4780322454391b7be782230b35b0810f6, release v1.10.1, stamped INF 1.10.0.142. Exact payload has unsigned UMDF DLLs/no CAT. Supported installer creates/trusts HIDMaestroTestCert and signs package; trust changes prohibited. Adapter expects unsigned embedded DLL bytes; signed bytes require independently pinned package contract, never weaker identity checks.
+Required branch: feature/chatpad-winusb-bridge-poc. Starting commit must be the exact C2R3 coherent commit recorded by Git and artifacts/task-8lc2r3/result-manifest.json (expected direct child of c989b04a5e0570726077ed188c4205201c8aef15, message "feat: qualify locally trusted HIDMaestro UMDF runtime"). Verify clean origin0/0 and canonical publication-receipt plus every sidecar/hash independently; publication is not proved merely by this pre-publication document.
 
-Physical target present with unchanged xusb22.inf/oem104.inf, expected Code 52; TESTSIGNING=false, HVCI=true. C2R1 absent-device state is historical. Release build passes; fresh comprehensive 2039/2039 and focused 20/20 pass. Runtime/live XInput/rumble/cleanup UNTESTED. Preflight has exactly one runtime blocker. After publication, independently verify the canonical receipt for actual archive/hash/readback/commit before continuation.
+Read AGENTS.md, PROJECT-STATE.md, DECISIONS.md, this file and latest WORKLOG first. Inspect tools/ChatpadVirtualXbox/RuntimePackageIdentity.cs, tools/ChatpadHidMaestroPackage.psm1, tools/ChatpadBinding/C3Planning.psm1, tools/Invoke-ChatpadC3.ps1 and docs/CHATPAD-HIDMAESTRO-LOCAL-PACKAGE.md. Re-read the actual C3 human instruction before any mutation.
 
-Next objective and preconditions:
+Preconditions: exact intended physical container/instance and Microsoft restoration candidate freshly verified; exact signed WinUSB package and recovery files; six frozen HIDMaestro package hashes/current signer trust; hash-pinned real8-state/rumble/cleanup evidence; no present or phantom HIDMaestro devices; shared045E:028E GameInput/OEM metadata absent; no ROOT/SWD controller-index0 conflict; GameInputSvc already Running with unchanged start type; fresh component/readiness hashes/HEAD and effective CI state. Run tools/ChatpadBinding.ps1 -PreflightC3 and require PASS without forcing it. C2R1 proof is intentionally scoped to TASK8L-C2R1; keep C2R3 canonical evidence separately verified.
 
-1. Find a trusted signed runtime for this exact revision without security/trust changes. Do not substitute release or fabricate catalogs/signatures. If a trust change is necessary, obtain new explicit human authorization for that exact action; current instructions forbid it.
-2. Once prerequisites are authorized, freeze INF/CAT/signed DLL/helper identities and verify signatures/membership. Update adapter expectations with mismatch/version/partial-init tests, retaining full hashes and backend-neutral bridge contracts.
-3. Install only qualified exact runtime. Qualify isolated virtual creation, selected XInput slot/state/rumble callback and clean removal; no physical input/Chatpad connection. Stop on reboot requirement without reboot.
-4. Capture physical/security invariants, run one final comprehensive regression, rerun read-only PreflightC3 and publish canonical evidence with independent readbacks/sidecar-last completion. C3_READY requires all original C2R2 acceptance criteria.
+Safety: absent explicit new authorization, no physical bind/restart, extension removal, USB activation/reads/writes, SendInput or physical rumble. No TESTSIGNING/BCD/HVCI/SecureBoot/trust changes, stock HIDMaestro installer, new cert/private-key export, runtime DLL modification, USBIP/ViGEm/OpenVR installation, reboot, stable driver/protocol or legacy edits. Catalog regeneration changes identity and requires a new qualification; do not silently refresh its pin.
 
-Restrictions: no physical Xbox/WinUSB rebinding, oem104/xusb22/Chatpad removal, physical restart/USB reads/writes, activation/keyboard output/physical rumble, security/BCD/trust changes, reboot, unrelated virtual software, stable/legacy edits, GPU or stress tests. C3 needs a later human request.
+Future acceptance: bounded ordered C3 stages and exact physical-to-virtual routing, Chatpad input and virtual/physical rumble if explicitly authorized, verified cleanup and independent Microsoft rollback. Do not call the test-signed fallback healthy in normal Windows: optional extension load qualification remains blocked. Initial physical activation, real transport/key reports, SendInput, Guide/headset/lifecycle/latency and rollback are still UNTESTED.
 
-Inspect AGENTS.md, PROJECT-STATE.md, DECISIONS.md, latest WORKLOG, CHATPAD-HIDMAESTRO-QUALIFICATION.md, tools/ChatpadVirtualXbox/{upstream.json,HidMaestroBackend.cs,BackendAvailability.cs}, new qualification tools and canonical receipt. Inspect pinned upstream DriverBuilder.cs/HMContext.cs before lifecycle calls.
-
-Read-only commands:
-
-    pwsh -NoProfile -File tools/Get-ChatpadHidMaestroQualification.ps1 -ReferenceRepository artifacts/task-8lc1/hidmaestro-reference
-    pwsh -NoProfile -File tools/Test-ChatpadHidMaestroQualification.ps1
-    pwsh -NoProfile -File tools/ChatpadBinding.ps1 -PreflightC3
-
-Current expected audit exit 2/BLOCKED and preflight C3Ready=false. Never force PASS.
+HIDMaestro removal plan is independently prepared/identity-checked, not executed: companion oem107 first then main oem106 with /uninstall, never /force or /reboot; stop on reboot-required/error and verify physical/security/trust invariants. SDK disposal leaves an owned SWD phantom; C2R3 wrapper removes only exact recorded task-owned non-present ID. Future C3 must likewise prove no stale device rather than equating slot disappearance with full cleanup.

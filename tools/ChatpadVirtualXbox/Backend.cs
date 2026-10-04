@@ -76,12 +76,13 @@ public static class StateConversion
     {
         1 => 1, 9 => 2, 8 => 3, 10 => 4, 2 => 5, 6 => 6, 4 => 7, 5 => 8, _ => 0
     };
-    // Pinned upstream test/Program.cs:873 describes [00 00 lo hi 00].
-    // This supports that exact fixture, not every raw IOCTL form the SDK may relay.
+    // Pinned upstream fixture uses [00 00 lo hi 00]. Normal Windows XInput
+    // qualification also captured [00 00 lo hi 02] for the motor command.
+    // Reject LED/other IOCTLs and any other framing; raw output remains logged.
     public static bool TryRumble(byte source, byte reportId, ReadOnlySpan<byte> data, out Rumble value)
     {
         value = default;
-        if (source != 2 || reportId != 0 || data.Length != 5 || data[0] != 0 || data[1] != 0 || data[4] != 0) return false;
+        if (source != 2 || reportId != 0 || data.Length != 5 || data[0] != 0 || data[1] != 0 || (data[4] != 0 && data[4] != 2)) return false;
         value = new((ushort)(data[2] * 257), (ushort)(data[3] * 257));
         return true;
     }
