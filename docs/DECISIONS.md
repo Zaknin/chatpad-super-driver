@@ -4564,3 +4564,10 @@ Consequences: C2R2 remains BLOCKED with no installation/live virtual acceptance.
 **Alternatives rejected:** Blocking on former Code52 recreation; relabeling Code52 healthy; forced readiness/security booleans; broad deletion; package identity based solely on reused OEM filename.
 
 **Consequences:** Healthy-stack assertions stay strict. Recovery only skips captured extension address occupied by exact frozen experiment hash until Microsoft binds, then removes exact experiment. Unknown drift rejects. Initial gate evidence remains historical/superseded. Unsupported mappings are rejected/released; failed output/release stays fatal.
+
+## 2026-10-04 — Distinguish setup tooling from installed runtime identity
+
+- Decision: readiness records `ChatpadSetup.ps1` as `SetupTool`; only files copied to `Program Files\ChatpadBridge` use `VirtualFile:*`. Default package selection follows the root recorded in readiness.
+- Rationale: the installer deliberately excludes the setup script from the runtime directory, but the previous readiness generator classified every package root file as an installed runtime member. Timestamp-based selection could also pair a different build tree with shared readiness metadata.
+- Alternatives rejected: weaken hashes, skip setup-script validation, accept a missing installed member, or select builds by directory timestamps.
+- Consequences: derive SetupTool SHA-256 from exact package bytes and compare it with the executing script. Require package root, role paths, repository identity and file hashes to agree. Keep strict post-copy runtime member hash validation; reject stale metadata explicitly.

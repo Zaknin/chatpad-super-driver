@@ -1,17 +1,17 @@
 # Next Task
 
-Recommended objective: finish TASK 8L-C4 live qualification for the packaged user-mode runner. Do not start automatically.
+Recommended objective: rerun the corrected TASK 8L-C4L1 setup from the user's elevated PowerShell and reconcile the result.
 
-Current state: C4 implementation/package PASS and repository regression PASS; live acceptance PARTIAL. The runner is built and waits safely while the device remains on Microsoft `xusb22`. This session was not elevated, so setup stopped before any mutation. No live device or virtual-controller exercise was performed.
+Current state: the false readiness classification was fixed and focused tests pass. Regenerate the package/readiness from this task's commit and verify all package hashes. The user's previous elevated Install copied runtime files to `Program Files\ChatpadBridge`, then halted before baseline capture or PnP binding. No live setup succeeded.
 
-Required branch: `feature/chatpad-usermode-runner`, starting from its current clean, pushed C4 closeout commit. Confirm exact HEAD and remote state before work.
+Required branch and starting point: `feature/chatpad-usermode-runner`, current pushed HEAD after the TASK 8L-C4L1 correction. Verify branch, commit and clean status first.
 
-First inspect: `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md`, then C4 result manifest/receipt and ignored `artifacts/task-8lc4` evidence. Reconcile Git and hardware state before acting.
+First inspect: `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md`; then `artifacts/task-8lc4/build-*/build-manifest.json` and `readiness-input.json`.
 
-Preconditions: elevated PowerShell for one-time `ChatpadSetup.ps1 -Mode Install`; confirm readiness/package hashes, current exact target, Microsoft recovery source and runtime state. Keep normal `ChatpadBridge.exe run/status` non-elevated if tests show that works.
+Preconditions: package manifest and readiness identify current branch/HEAD and the same package root; all listed SHA-256 values independently match. User runs exactly ` .\tools\ChatpadSetup.ps1 -Mode Install` from repository root in elevated PowerShell and returns complete output.
 
-Safety: preserve the exact Microsoft recovery baseline; do not reinstall obsolete `oem104`, modify `legacy/`, broadly remove HID devices, change signing/security/trust, reboot, stress-test, or change stable driver/protocol code. Stop and restore Microsoft Xbox if exact target/package identity is ambiguous or setup fails. Do not retry blind physical operations.
+Safety: do not run Install from this non-elevated execution context. Do not bind, install/remove drivers, change security/trust, replug/reboot, or clean the partially copied Program Files directory. Stop on any identity/hash/preflight error and reconcile before another attempt. Do not modify `legacy/`.
 
-Acceptance: verify setup bind and recovery; prove normal-user startup without rebinding; controller to XInput, Chatpad to keyboard, low/moderate rumble; restart and unplugged startup; reconnect at least three times; held controller/key/modifier disconnect cleanup; killed-process recovery including virtual-controller stale cleanup; no duplicate virtual nodes; collect compact runtime telemetry and idle resource sample. Run the comprehensive suite once after fixes. Publish sanitized evidence atomically and report verified versus untested behavior.
+Acceptance: confirm successful one-time setup and recovery baseline before proceeding to the separately specified live lifecycle criteria. Report unperformed behavior as UNTESTED; do not run the comprehensive suite during this focused packaging follow-up.
 
-Inspect first: `tools/ChatpadSetup.ps1`, `tools/Build-ChatpadBridge.ps1`, packaged `ChatpadBridge.exe`, `tools/ChatpadWinUsbPoc/Runner.cpp`, and C4 setup/preflight/lifecycle evidence under `artifacts/task-8lc4`.
+Inspect first: `tools/ChatpadSetup.ps1`, `tools/ChatpadC4Package.psm1`, `tools/New-ChatpadC4Readiness.ps1`, `tools/Test-ChatpadC4Setup.ps1`, and exact current package/readiness manifests.

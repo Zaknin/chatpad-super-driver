@@ -10,12 +10,13 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $toolsRoot=if(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'ChatpadBinding/C3Execution.psm1')){$PSScriptRoot}else{Join-Path $PSScriptRoot 'tools'}
 $repo=Split-Path -Parent $toolsRoot
-if(-not $PackageRoot){
- $latestBuild=Get-ChildItem -LiteralPath (Join-Path $repo 'artifacts/task-8lc4') -Directory -Filter 'build-*' -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
- if(-not $latestBuild){throw 'Build the Release package first or pass -PackageRoot.'}
- $PackageRoot=Join-Path $latestBuild.FullName 'package'
-}
 if(-not $ReadinessPath){$ReadinessPath=Join-Path $repo 'artifacts/task-8lc4/readiness-input.json'}
+Import-Module (Join-Path $toolsRoot 'ChatpadC4Package.psm1') -Force
+if(-not $PackageRoot){
+ if(-not(Test-Path -LiteralPath $ReadinessPath -PathType Leaf)){throw 'C4 readiness is missing; build the Release package first.'}
+ $identity=Get-Content -LiteralPath $ReadinessPath -Raw|ConvertFrom-Json
+ $PackageRoot=Get-ChatpadC4ReadinessPackageRoot $identity
+}
 $stateDirectory=Join-Path $env:ProgramData 'ChatpadBridge'
 $installRecord=Join-Path $stateDirectory 'install.json'
 Import-Module (Join-Path $toolsRoot 'ChatpadBinding/ChatpadBinding.psm1') -Force
@@ -58,13 +59,12 @@ function Install-Bridge {
  $readiness=Get-Content -LiteralPath $ReadinessPath -Raw|ConvertFrom-Json
  $branch=[string](& git.exe -C $repo branch --show-current);$head=[string](& git.exe -C $repo rev-parse HEAD)
  if($LASTEXITCODE -ne 0 -or $readiness.Repository.Branch -cne $branch -or $readiness.Repository.Commit -cne $head){throw 'Readiness branch/commit is stale; regenerate immediately before setup.'}
+ Assert-ChatpadC4PackageIdentity $readiness $PackageRoot (Join-Path $PSScriptRoot 'ChatpadSetup.ps1')|Out-Null
  $preflightPath=Join-Path $repo 'artifacts/task-8lc4/setup-preflight-live.json'
  & (Join-Path $toolsRoot 'ChatpadBinding.ps1') -PreflightC3 -ReadinessPath $ReadinessPath -JsonPath $preflightPath
  if($LASTEXITCODE -ne 0){throw 'Exact-target C3 preflight blocked; see setup-preflight-live.json.'}
  $preflight=Get-Content -LiteralPath $preflightPath -Raw|ConvertFrom-Json
  if(-not $preflight.C3Ready -or @($preflight.Blockers).Count){throw 'C3 preflight did not authorize the exact current machine state.'}
- $runnerRecord=@($readiness.Files|Where-Object Role -eq 'Poc');$helperRecord=@($readiness.Files|Where-Object Role -eq 'VirtualBackend')
- if($runnerRecord.Count -ne 1 -or $helperRecord.Count -ne 1 -or (Get-FileHash (Join-Path $PackageRoot 'ChatpadBridge.exe')).Hash -ine $runnerRecord[0].SHA256 -or (Get-FileHash (Join-Path $PackageRoot 'ChatpadVirtualXbox.exe')).Hash -ine $helperRecord[0].SHA256){throw 'Release package does not match current readiness hashes.'}
  $runtime=Join-Path $PackageRoot 'ChatpadVirtualXbox.exe'
  & $runtime backend-status|Out-Null
  if($LASTEXITCODE -ne 0){throw 'Pinned HIDMaestro runtime status did not pass.'}
@@ -76,8 +76,7 @@ function Install-Bridge {
  New-Item -ItemType Directory -Force -Path $programFiles|Out-Null
  Get-ChildItem -LiteralPath $PackageRoot -Force|Where-Object Name -notin @('tools','ChatpadSetup.ps1')|Copy-Item -Destination $programFiles -Recurse -Force
  foreach($record in @($readiness.Files|Where-Object Role -like 'VirtualFile:*')){
-  $name=$record.Role.Substring('VirtualFile:'.Length);$installed=Join-Path $programFiles $name
-  if(-not(Test-Path -LiteralPath $installed -PathType Leaf) -or (Get-FileHash -LiteralPath $installed).Hash -ine $record.SHA256){throw "Installed helper runtime member hash mismatch: $name"}
+  Assert-ChatpadC4InstalledRuntimeMember $record $programFiles|Out-Null
  }
  $stamp=[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')
  Initialize-PrivateStateDirectory
