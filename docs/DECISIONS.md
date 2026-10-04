@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-04 — HIDMaestro virtual-device creation requires an elevated broker boundary
+
+- **Decision:** The pinned HIDMaestro v1.10.1 direct `CreateController` path is not a supported standard-user operation. Do not weaken registry/device ACLs or hide an elevated task to make it appear non-elevated. If standard-user interactive operation remains a requirement, implement a separately reviewed privileged broker/service that owns virtual-device lifecycle and exposes only a narrow, authenticated, user-scoped IPC protocol. Otherwise, explicitly require an elevated runner or mark this mode unsupported.
+- **Rationale:** The user's non-elevated run reached `CreateController` and got `Win32Exception: Access is denied`. The pinned versioned SDK source documents that `CreateController` requires admin and no standard-user HIDClass device-creation path exists. Microsoft's `SwDeviceCreate` documentation independently requires Administrator access to enumerate software devices.
+- **Alternatives rejected:** broad ACL changes to PnP/registry state, undocumented SDK paths, and an unreviewed scheduled task or service acting as a confused deputy. These would bypass the documented Windows privilege boundary without a scoped authorization protocol.
+- **Consequences:** Phase 5 normal-user acceptance is blocked with the current in-process backend. A broker adds an explicit security boundary and must be authorized, designed, and tested before service installation or live qualification. No further lifecycle stress testing should run until one architecture is selected.
+
 ## 2026-10-04 - Accept helper pipe EOF only after expected quit
 
 **Decision:** When the parent has sent the helper's `quit` request, treat stdout pipe closure/read failure as expected teardown. If the correlated quit response does not arrive, retain the bounded request timeout and report cleanup failure.

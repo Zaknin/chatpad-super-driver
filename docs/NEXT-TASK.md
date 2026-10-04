@@ -1,30 +1,31 @@
 # Next Task
 
-## TASK 8L-C4L1 — Capture the exact normal-user virtual-backend failure stage
+## TASK 8L-C4L1 — Resolve the virtual-controller privilege boundary
 
-Current branch: `feature/chatpad-usermode-runner`; diagnostic implementation commit `ff6dcad52aaa2da486fbe5f354d6923bc412ab39` is pushed to origin. Verified package: `artifacts/task-8lc4/build-task-8lc4l1-normal-user-phase5-final`.
+Starting branch: `feature/chatpad-usermode-runner`; HEAD `89117009cc742534501ef5a3b6607fe23111504c` before this continuity update.
 
-The user has already confirmed controller buttons, sticks, triggers, Chatpad input, and physical rumble. Their 14:16Z run also passed graceful cleanup (`keysReleased=true`, `virtualNeutral=true`, `virtualReleased=true`, `motorsStopped=true`, `clean_shutdown=true`). Phase 5 ordinary-user operation remains unqualified: an earlier non-elevated run reached `RUNNING`, then reported `backend_create_failed:Access is denied` with no SDK call-stage context. Do not rerun Phase 1 research or the previously accepted Phase 4 test.
+### Verified state
 
-The current source adds a phase prefix to unexpected SDK creation exceptions. The user's 14:40Z foreground diagnostic launch opened WinUSB but received no complete controller report, repeated `DEVICE_LOST` 30 times, and stopped with `clean_shutdown=true`; it never reached backend creation. Their output showed `unclean_previous_session=false`. A stale marker from the separate Codex execution-profile attempt is not evidence about the user's runtime path.
+The user's 2026-10-04 15:01Z normal-user run opened the physical WinUSB target, completed Chatpad activation, and reached `RUNNING`. The SDK create call then failed as:
 
-The verified package identifies branch `feature/chatpad-usermode-runner` and commit `ff6dcad52aaa2da486fbe5f354d6923bc412ab39`; independent verification passed all 27 package manifest hashes/lengths, the exact package file set, and 18 readiness hashes. In a normal non-elevated foreground PowerShell, first press Xbox or A to wake the controller, then run:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4\build-task-8lc4l1-normal-user-phase5-final\package\ChatpadBridge.exe" run
+```text
+backend_create_failed:create_virtual_controller:Win32Exception:Access is denied.
 ```
 
-Wake the controller with Xbox or A before launch. If it reaches `RUNNING`, qualify buttons, both sticks, both triggers, Chatpad ordinary/Shift/Green/Orange/Space/Backspace/Enter, physical rumble, and simultaneous input; stop gracefully with Ctrl+C. If helper creation fails, preserve the complete output including the `phase:ExceptionType:message` prefix. If no full controller report arrives despite waking the controller, stop and investigate the physical read path separately; do not interpret that as a backend failure.
+This localizes the failure to `HMContext.CreateController`. The repository pins HIDMaestro v1.10.1. Its versioned `HMContext.cs` documents that `CreateController` requires administrator privilege and that Windows has no standard-user route to create a HIDClass device. For the software-device part of device enumeration, Microsoft documents that `SwDeviceCreate` requires Administrator access. Sources: <https://raw.githubusercontent.com/hifihedgehog/HIDMaestro/v1.10.1/sdk/HIDMaestro.Core/HMContext.cs> and <https://learn.microsoft.com/en-us/windows/win32/api/swdevice/nf-swdevice-swdevicecreate>.
 
-Use the exact failure phase to investigate the operation and normal-user rights. Do not weaken the metadata/index guards, alter ACLs, elevate the runner, or add a privileged broker without a source-backed root cause and separately scoped design. Continue the remaining lifecycle phases only after normal-user core runtime is qualified. Keep the completed 14:16Z graceful-stop evidence; the interrupted diagnostic run is not an accepted lifecycle result.
+The post-stop read-only audit found no runner/helper process, no present task-owned virtual device, and XInput slots 0-3 all disconnected (1167). The exact physical Xbox remains on WinUSB `oem104.inf`, problem 0, with no instance filters. No live changes occurred.
 
-Still within TASK 8L-C4L1 after Phase 5: lifecycle unplug/start and three reconnect tests, held-state disconnect, unexpected process-kill cleanup, repeated physical rumble, and resource sampling; investigate the known Xbox player LED command only after those core tests. Then perform the authorized exact Microsoft `xusb22` recovery once near the end and restore the intended WinUSB state. Publish the requested sanitized evidence atomically with sidecar last, include ZIP and useful standalone files, update continuity docs, commit/push the requested branch, and do not start reboot/sleep/long-idle testing.
+### Required architecture choice
 
-Preconditions and safety:
+The direct standard-user runner cannot satisfy virtual XInput creation with the pinned SDK. Before further Phase 5 or lifecycle tests, the user must select one of:
 
-- Use only the exact qualified package built from the committed HEAD; no installed Program Files runner fallback.
-- Preserve `TESTSIGNING=false`, `HVCI=true`, strict physical/runtime identity guards, and the original recovery material.
-- Do not remove unrelated PnP devices, change trust/security policy, or run the virtual runner elevated to bypass Phase 5.
-- No reboot/sleep/long-idle test during this continuation.
+1. **Keep normal-user client operation:** design and implement a small, installed privileged broker/service that owns the HIDMaestro controller and accepts only fixed, validated controller state and rumble operations over an authenticated, user-scoped IPC boundary. Setup would install/configure it with administrator rights; the interactive bridge remains non-elevated. This changes the security boundary and requires explicit authorization for service installation and live qualification.
+2. **Allow an elevated runner:** retain the current direct SDK design and require elevation for each run that creates the virtual controller. This does not meet the stated normal-user Phase 5 requirement.
+3. **Stop the normal-user path:** record Phase 5 as unsupported by the selected SDK and do not continue later lifecycle tests.
 
-Inspect first: `docs/PROJECT-STATE.md`, this file, the latest `docs/WORKLOG.md` entry, `tools/ChatpadVirtualXbox/HidMaestroBackend.cs`, and the exact build manifest/readiness/package hashes.
+Recommended if normal-user operation remains mandatory: option 1. Do not try ACL changes, a hidden scheduled task, undocumented SDK entry points, or alternate setup semantics as a shortcut. Do not rerun the normal-user package: it will deterministically fail at the same SDK boundary. Do not continue unplug/reconnect/crash/long-idle qualification before selecting and implementing a compatible architecture.
+
+After an architecture is authorized: add focused tests for its privilege/IPC boundary; preserve exact physical/runtime identity guards; rebuild and verify package/readiness identity and every member hash; then perform Phase 5 and remaining authorized live lifecycle tests. Keep the accepted 14:16Z clean-stop and core-function evidence. No reboot/sleep/long-idle test is authorized by this continuation.
+
+Inspect first: `docs/PROJECT-STATE.md`, this file, the latest `docs/WORKLOG.md` entry, pinned dependency manifest, `tools/ChatpadVirtualXbox/HidMaestroBackend.cs`, and the diagnostic run output.
