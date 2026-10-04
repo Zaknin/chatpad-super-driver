@@ -54,6 +54,13 @@ try{
  if(Test-ChatpadC3BaselineDirectory $approvedPrivate $approvedPrivate){throw 'Baseline path must be a child of the approved root, not the root itself.'}
  if(Test-ChatpadC3BaselineDirectory ($approvedPrivate+'-sibling') $approvedPrivate){throw 'Sibling path must not pass private-root containment.'}
  if(Test-ChatpadC3BaselineDirectory (Join-Path $packageRoot 'arbitrary-private/baseline') (Join-Path $packageRoot 'arbitrary-private')){throw 'Arbitrary caller-supplied private roots must be rejected.'}
+ $bindPending=New-ChatpadC3ActionResult Bind $true
+ if(-not $bindPending.Success -or -not $bindPending.RebootRequired -or $bindPending.Operation -cne 'Bind'){throw 'Successful Bind plus NeedReboot must remain a successful pending-restart result.'}
+ $restorePending=New-ChatpadC3ActionResult Restore $true
+ if(-not $restorePending.Success -or -not $restorePending.RebootRequired -or $restorePending.Operation -cne 'Restore'){throw 'Successful Restore plus NeedReboot must remain a successful pending-restart result.'}
+ $bindComplete=New-ChatpadC3ActionResult Bind $false
+ if(-not $bindComplete.Success -or $bindComplete.RebootRequired -or $bindComplete.Operation -cne 'Bind'){throw 'Completed Bind must not request a restart.'}
+ if(-not (Get-Command Invoke-ChatpadC3BindingAction).Parameters.ContainsKey('AllowPendingReboot')){throw 'C4 must explicitly opt in to pending-restart results.'}
 }
 finally{Remove-Item -LiteralPath $packageRoot -Recurse -Force -ErrorAction SilentlyContinue}
 $principal=[Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -62,4 +69,4 @@ if(-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrat
  try{Invoke-ChatpadC3BindingAction Bind $null -Execute|Out-Null}catch{$message=$_.Exception.Message}
  if($message -notmatch 'requires an elevated'){throw ('Setup elevation boundary failed: '+$message)}
 }
-Write-Output "C4 setup repository identity tests: $($cases.Count)/$($cases.Count) PASS; package identity regressions: 8/8 PASS; baseline path regressions: 5/5 PASS"
+Write-Output "C4 setup repository identity tests: $($cases.Count)/$($cases.Count) PASS; package identity regressions: 8/8 PASS; baseline path regressions: 5/5 PASS; PnP restart-result regressions: 4/4 PASS"

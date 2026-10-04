@@ -51,6 +51,10 @@ function Initialize-PrivateStateDirectory {
  }
  Set-Acl -LiteralPath $stateDirectory -AclObject $acl
 }
+function Write-InstallRecord($Record) {
+ $Record|Add-Member -NotePropertyName UpdatedUtc -NotePropertyValue ([DateTime]::UtcNow.ToString('o')) -Force
+ $Record|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $installRecord -Encoding utf8
+}
 function Install-Bridge {
  Require-Administrator
  Assert-RunnerStopped
@@ -83,18 +87,28 @@ function Install-Bridge {
  $baselineDirectory=Join-Path $stateDirectory ('baseline-'+$stamp)
  Import-Module (Join-Path $toolsRoot 'ChatpadBinding/C3Execution.psm1') -Force
  $baseline=Save-ChatpadC3Baseline $fresh $packages $readiness $baselineDirectory -PrivateRoot $stateDirectory
+ $record=[pscustomobject]@{Schema=2;SetupStartedUtc=[DateTime]::UtcNow.ToString('o');InstanceId=$fresh.Target.InstanceId;ContainerId=$fresh.Target.ContainerId;BaselinePath=(Join-Path $baselineDirectory 'baseline.json');PackageRoot=[IO.Path]::GetFullPath($PackageRoot);DriverState='SetupInProgress';RebootRequired=$false;SetupError=$null;RecoveryError=$null}
+ Write-InstallRecord $record
  try {
   Invoke-ChatpadC3BindingAction Exclude $baseline -Execute|Out-Null
-  Invoke-ChatpadC3BindingAction Bind $baseline -Execute|Out-Null
+  $bindResult=Invoke-ChatpadC3BindingAction Bind $baseline -Execute -AllowPendingReboot
+  if($bindResult.RebootRequired){
+   $record.DriverState='WinUSBBindPendingReboot';$record.RebootRequired=$true;Write-InstallRecord $record
+   return [pscustomobject]@{Result='PENDING_REBOOT';RebootRequired=$true;InstanceId=$fresh.Target.InstanceId;BaselinePath=$record.BaselinePath;DriverState=$record.DriverState;Message='WinUSB installation succeeded but Windows requires a restart to complete device binding. Restart manually, then run ChatpadSetup.ps1 -Mode Status to verify.'}
+  }
   $after=Get-ChatpadBindingState $fresh.Target.InstanceId
   if((Get-ChatpadRecognizedState $after) -cne 'WinUSB' -or $after.Target.Problem -ne 0 -or @($after.Target.LowerFilters).Count -or @($after.Target.UpperFilters).Count){throw 'Post-install WinUSB state did not verify.'}
+  $record.DriverState='WinUSB';$record.RebootRequired=$false;Write-InstallRecord $record
+  return [pscustomobject]@{Result='PASS';RebootRequired=$false;InstanceId=$fresh.Target.InstanceId;BaselinePath=$record.BaselinePath;DriverState=$record.DriverState}
  }catch{
-  try{Invoke-ChatpadC3BindingAction Restore $baseline -Execute|Out-Null}catch{Write-Error -ErrorAction Continue ('Microsoft recovery also failed: '+$_.Exception.Message)}
+  $setupError=$_.Exception.Message
+  try{
+   $restoreResult=Invoke-ChatpadC3BindingAction Restore $baseline -Execute -AllowPendingReboot
+   if($restoreResult.RebootRequired){$record.DriverState='MicrosoftRestorePendingReboot';$record.RebootRequired=$true;$record.SetupError=$setupError;Write-InstallRecord $record;Write-Error -ErrorAction Continue 'Microsoft driver selection was issued successfully but Windows requires a restart to complete restoration.'}
+   else{$record.DriverState='MicrosoftRestoredAfterSetupFailure';$record.RebootRequired=$false;$record.SetupError=$setupError;Write-InstallRecord $record}
+  }catch{$recoveryError=$_.Exception.Message;$record.DriverState='RecoveryFailed';$record.RebootRequired=$false;$record.SetupError=$setupError;$record.RecoveryError=$recoveryError;Write-InstallRecord $record;Write-Error -ErrorAction Continue ('Microsoft recovery also failed: '+$recoveryError)}
   throw
  }
- $record=[pscustomobject]@{Schema=1;InstalledUtc=[DateTime]::UtcNow.ToString('o');InstanceId=$fresh.Target.InstanceId;ContainerId=$fresh.Target.ContainerId;BaselinePath=(Join-Path $baselineDirectory 'baseline.json');PackageRoot=[IO.Path]::GetFullPath($PackageRoot);DriverState='WinUSB';ElevationUsed=$true}
- $record|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $installRecord -Encoding utf8
- $record|ConvertTo-Json -Depth 8
 }
 switch($Mode){
  'Status' {
@@ -121,7 +135,7 @@ switch($Mode){
   Assert-RunnerStopped
   $baseline=Get-SetupBaseline
   Import-Module (Join-Path $toolsRoot 'ChatpadBinding/C3Execution.psm1') -Force
-  $result=Invoke-ChatpadC3BindingAction Restore $baseline -Execute
+  $result=Invoke-ChatpadC3BindingAction Restore $baseline -Execute -AllowPendingReboot
   if($result.Success){$result|ConvertTo-Json -Depth 8}
  }
  'Uninstall' {

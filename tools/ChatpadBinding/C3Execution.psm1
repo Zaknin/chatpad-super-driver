@@ -128,12 +128,16 @@ function Save-ChatpadC3Baseline {
  $baseline | ConvertTo-Json -Depth 15 | Set-Content (Join-Path $dir 'baseline.json') -Encoding utf8
  return $baseline
 }
+function New-ChatpadC3ActionResult {
+ param([ValidateSet('Exclude','Bind','Restore')][string]$Operation,[bool]$RebootRequired)
+ [pscustomobject]@{Success=$true;Operation=$Operation;RebootRequired=$RebootRequired;Evidence=$(if($RebootRequired){"$Operation succeeded; a system restart is required to complete it."}else{"Exact $Operation postcondition verified without a restart."})}
+}
 function Invoke-ChatpadC3BindingAction {
- param([ValidateSet('Exclude','Bind','Restore')][string]$Operation,$Baseline,[switch]$Execute)
+ param([ValidateSet('Exclude','Bind','Restore')][string]$Operation,$Baseline,[switch]$Execute,[switch]$AllowPendingReboot)
  if(-not $Execute){return [pscustomobject]@{Execute=$false;Operation=$Operation;RestorePlan=(New-ChatpadRestorePlan $Baseline.State.Target $Baseline.Readiness)}}
  Assert-C3Elevation;Assert-ChatpadRestorable $Baseline.Readiness
  if(-not ('Chatpad.Binding.ExactDevice' -as [type])){Add-Type -Path (Join-Path $PSScriptRoot 'ExactDevice.cs')}
- $captured=$Baseline.State.Target;$r=$Baseline.Readiness
+ $captured=$Baseline.State.Target;$r=$Baseline.Readiness;$rebootRequired=$false
  switch($Operation){
   'Exclude' {Remove-C3Extensions $captured @($Baseline.Extensions);Clear-C3Filters $captured}
   'Bind' {
@@ -141,8 +145,8 @@ function Invoke-ChatpadC3BindingAction {
    $s=Get-C3Target $captured;Clear-C3Filters $captured;Test-ChatpadFileRecords @($r.Files) 'C3 source'
    $inf=@($r.Files | Where-Object Role -eq 'WinUsbInf')[0].Path
    Invoke-C3Process 'pnputil.exe' @('/add-driver',$inf)
-   $s=Get-C3Target $captured;$reboot=[Chatpad.Binding.ExactDevice]::Install($s.Target.InstanceId,$inf,'WholeDevice','Chatpad Super Driver Project','0.0.1.0')
-   if($reboot){throw 'WinUSB installation requests reboot; no restart/reboot executed.'}
+   $s=Get-C3Target $captured;$rebootRequired=[Chatpad.Binding.ExactDevice]::Install($s.Target.InstanceId,$inf,'WholeDevice','Chatpad Super Driver Project','0.0.1.0')
+   if($rebootRequired){if($AllowPendingReboot){return (New-ChatpadC3ActionResult $Operation $true)};throw 'WinUSB installation succeeded but requires restart; caller did not allow pending-restart continuation.'}
    $s=Get-C3Target $captured;if((Get-ChatpadRecognizedState $s) -ne 'WinUSB'){throw 'WinUSB exact postcondition failed.'}
   }
   'Restore' {
@@ -150,14 +154,14 @@ function Invoke-ChatpadC3BindingAction {
    # matching unknown package stops even recovery rather than broad removal.
    Remove-C3Extensions $captured @($Baseline.Extensions) $Baseline;Clear-C3Filters $captured
    $s=Get-C3Target $captured;$m=$r.Microsoft
-   $reboot=[Chatpad.Binding.ExactDevice]::Install($s.Target.InstanceId,$m.InfPath,$m.Section,$m.Provider,$m.Version)
-   if($reboot){throw 'Microsoft restoration requests reboot; no restart/reboot executed.'}
+   $rebootRequired=[Chatpad.Binding.ExactDevice]::Install($s.Target.InstanceId,$m.InfPath,$m.Section,$m.Provider,$m.Version)
+   if($rebootRequired){if($AllowPendingReboot){return (New-ChatpadC3ActionResult $Operation $true)};throw 'Microsoft restoration succeeded but requires restart; caller did not allow pending-restart continuation.'}
    $s=Get-C3Target $captured;if((Get-ChatpadRecognizedState $s) -ne 'Xbox' -or @($s.Target.LowerFilters).Count -or ($s.Stack -join '\n') -match '(?i)ChatpadFilter'){throw 'Clean Microsoft base restoration not verified.'}
    $hash=@($r.Files | Where-Object Role -eq 'WinUsbInf')[0].SHA256
    foreach($file in Get-ChildItem (Join-Path $env:SystemRoot 'INF') -Filter 'oem*.inf' -File){if((Get-FileHash $file.FullName).Hash -eq $hash){$text=Get-Content $file.FullName -Raw;if($text -notmatch 'B6A5D05E-7E18-4DF1-8E47-12F072DE2C36'){throw 'Experiment identity mismatch.'};Invoke-C3Process 'pnputil.exe' @('/delete-driver',$file.Name)}}
    $s=Get-C3Target $captured;if((Get-ChatpadRecognizedState $s) -ne 'Xbox'){throw 'Final Microsoft verification failed.'}
   }
  }
- [pscustomobject]@{Success=$true;Evidence="Exact $Operation postcondition verified; no reboot."}
+ New-ChatpadC3ActionResult $Operation $rebootRequired
 }
-Export-ModuleMember -Function Invoke-ChatpadC3BindingAction,Save-ChatpadC3Baseline,Invoke-C3Process,Test-ChatpadC3BaselineDirectory
+Export-ModuleMember -Function Invoke-ChatpadC3BindingAction,Save-ChatpadC3Baseline,Invoke-C3Process,Test-ChatpadC3BaselineDirectory,New-ChatpadC3ActionResult

@@ -4578,3 +4578,10 @@ Consequences: C2R2 remains BLOCKED with no installation/live virtual acceptance.
 - Rationale: C4 intentionally moved recovery material out of the source checkout, while the shared save guard still hard-rejected every path outside repository `artifacts`.
 - Alternatives rejected: moving the baseline back to the removable checkout, weakening the path guard to any writable directory, or creating ProgramData files before validating path containment.
 - Consequences: canonicalized child-path checks reject the root itself, sibling-prefix paths and arbitrary private roots. The existing secured state directory is prepared before capture; failure remains before any PnP action.
+
+## 2026-10-04 — Preserve successful PnP installs that require restart
+
+- Decision: treat `DiInstallDevice` success and `NeedReboot=true` as a successful pending-restart action. Persist the recovery baseline and pending setup state; do not automatically roll back the selected WinUSB driver. A restore with `NeedReboot=true` also returns pending status and defers package cleanup until after restart.
+- Rationale: Windows documents the function's return value as installation success and its separate `NeedReboot` output as restart required to complete the operation. The prior C4 code converted that output into an exception, causing an immediate second driver selection during rollback.
+- Alternatives rejected: treating restart-required as install failure, auto-rebooting from setup, or claiming the postcondition is complete before restart.
+- Consequences: setup reports `PENDING_REBOOT`, preserves baseline/install metadata, and never reboots automatically. User verifies final PnP state with Status after a manual restart. Ordinary non-reboot outcomes retain immediate strict postcondition checks.
