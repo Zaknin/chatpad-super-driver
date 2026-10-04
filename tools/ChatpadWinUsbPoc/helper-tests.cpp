@@ -18,7 +18,6 @@ int main(int argc,char** argv) {
             std::cout<<"{\"id\":"<<id<<",\"ok\":true,\"operation\":\""<<operation<<"\"}\n"<<std::flush;
             if(std::string(operation)=="disconnect")std::this_thread::sleep_for(std::chrono::milliseconds(1500));
             if(std::string(operation)=="quit"){
-                std::this_thread::sleep_for(std::chrono::milliseconds(400));
                 return 0;
             }
         }

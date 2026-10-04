@@ -1,5 +1,15 @@
 # Decisions
 
+## 2026-10-04 - Accept helper pipe EOF only after expected quit
+
+**Decision:** When the parent has sent the helper's `quit` request, treat stdout pipe closure/read failure as expected teardown. If the correlated quit response does not arrive, retain the bounded request timeout and report cleanup failure.
+
+**Rationale:** The helper writes its successful quit response and then exits immediately. The parent reader may observe `ERROR_BROKEN_PIPE` between receiving that response and the main thread setting the process stop flag. Live cleanup reported that race even though the child had exited and read-only checks confirmed the XInput slot and owned present devnodes were gone.
+
+**Alternatives rejected:** Marking every helper pipe closure as successful; suppressing pipe errors outside explicit quit; extending shutdown timeouts; or weakening cleanup reporting.
+
+**Consequences:** Normal helper process exit after a quit response is clean. Missing/invalid responses, write failures, timeouts, forced termination, or pipe closure outside the quit path remain failures.
+
 ## 2026-10-04 - Apply virtual controller index guard only to present devnodes
 
 **Decision:** Before HIDMaestro creates a controller, inspect the existing ROOT/SWD Enum records as before, but block index zero only when Configuration Manager confirms that exact instance ID is currently present. Treat unexpected presence-query errors as a fail-closed creation error.

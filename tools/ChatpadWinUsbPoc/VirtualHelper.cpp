@@ -102,7 +102,7 @@ struct VirtualHelperController::Impl {
     HelperOptions options;
     HANDLE process{},input{},output{};
     std::thread reader;
-    std::atomic<bool> stop{};
+    std::atomic<bool> stop{},quitRequested{};
     std::mutex mutex,requestMutex;
     std::condition_variable condition;
     std::string error;
@@ -115,10 +115,16 @@ struct VirtualHelperController::Impl {
         std::string line;
         while(!stop.load()) {
             DWORD available{};
-            if(!PeekNamedPipe(output,nullptr,0,nullptr,&available,nullptr)){if(!stop.load())Fail("helper_output_closed:"+std::to_string(GetLastError()));return;}
+            if(!PeekNamedPipe(output,nullptr,0,nullptr,&available,nullptr)){
+                if(!stop.load()&&!quitRequested.load())Fail("helper_output_closed:"+std::to_string(GetLastError()));
+                return;
+            }
             if(!available){std::this_thread::sleep_for(std::chrono::milliseconds(5));continue;}
             char bytes[4096];DWORD read{};
-            if(!ReadFile(output,bytes,(std::min)(available,DWORD(sizeof(bytes))),&read,nullptr)||!read){Fail("helper_read_failed:"+std::to_string(GetLastError()));return;}
+            if(!ReadFile(output,bytes,(std::min)(available,DWORD(sizeof(bytes))),&read,nullptr)||!read){
+                if(!stop.load()&&!quitRequested.load())Fail("helper_read_failed:"+std::to_string(GetLastError()));
+                return;
+            }
             for(DWORD i=0;i<read;++i) {
                 if(bytes[i]!='\n'){line.push_back(bytes[i]);if(line.size()>4096){Fail("helper_line_too_long");return;}continue;}
                 if(!line.empty()&&line.back()=='\r')line.pop_back();HelperMessage message;
@@ -158,7 +164,7 @@ struct VirtualHelperController::Impl {
         BOOL launched=CreateProcessW(options.executable.c_str(),command.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW,nullptr,nullptr,&startup,&child);
         DWORD err=GetLastError();Close(childInput);Close(childOutput);Close(childError);
         if(!launched){Fail("helper_launch_failed:"+std::to_string(err));Close(input);Close(output);return false;}
-        CloseHandle(child.hThread);process=child.hProcess;stop=false;nextId=0;reader=std::thread([this]{ReadLoop();});return true;
+        CloseHandle(child.hThread);process=child.hProcess;stop=false;quitRequested=false;nextId=0;reader=std::thread([this]{ReadLoop();});return true;
     }
     bool Request(const std::string& operation,const std::string& fields={},uint32_t timeoutMs=0) {
         std::lock_guard<std::mutex> requestLock(requestMutex);
@@ -169,6 +175,7 @@ struct VirtualHelperController::Impl {
         // One small request is outstanding. The 4096-byte pipe can always hold this
         // <=256-byte request; a failed/timed-out session accepts no further writes.
         if(request.size()>256){Fail("helper_request_too_long");return false;}
+        if(operation=="quit")quitRequested=true;
         DWORD written{};if(!WriteFile(input,request.data(),static_cast<DWORD>(request.size()),&written,nullptr)||written!=request.size()){Fail("helper_write_failed:"+std::to_string(GetLastError()));return false;}
         std::unique_lock<std::mutex> lock(mutex);
         const uint32_t effectiveTimeout=timeoutMs?timeoutMs:options.requestTimeoutMs;
