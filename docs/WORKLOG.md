@@ -14354,3 +14354,9 @@ This append records the implementation commit and first publication. The documen
 - Focused verification on the fresh build: CTest `broker-client|runner-lifecycle` passed 2/2. Broker-client executable reported 20 checks, 0 failures. Exact package readback matched all 214 manifest members by relative path, length, and SHA-256; no mismatches or extra files. `ChatpadBridge.exe` SHA-256: `04DD7C8C28AB8141266AC513AEA257A2BC26321DDD6F61B2F3E966DE48C3DA0D`. Build manifest and readiness repository identity both named code commit `f27341632fd7841ec6bbda606f446e621e596e28` at build time.
 - Continuity: updated `docs/PROJECT-STATE.md` and `docs/NEXT-TASK.md` with actual user-installed service state, new package path, hash evidence, and the exact ordinary-user next command. After this docs commit, readiness is regenerated from the same package to identify final HEAD; build manifest continues to document the package's code-source commit. No SMB archive republication was requested or performed.
 - Status: offline SCM identity fix and package verification PASS; overall live qualification remains PARTIAL pending the user rerun of the new bridge. No service lifecycle changes, physical input mutations, trust/security changes, reboot, elevated runner execution, or `legacy/` edits occurred.
+
+## 2026-10-04 17:50 UTC — TASK 8L-C4L2 post-push continuity correction
+
+- Corrected `docs/PROJECT-STATE.md` wording that still described the already pushed SCM identity/package commits as awaiting push. The pushed branch includes source fix `f27341632fd7841ec6bbda606f446e621e596e28` and package handoff `6e4d3032449b34dfffd60f6777a6a313969cab0f`.
+- `docs/NEXT-TASK.md` now points to the latest readiness-doc commit. After this documentation-only commit, readiness is regenerated against final HEAD; package files and hashes remain unchanged.
+- No code, package, service, device, security, or trust state changed.
