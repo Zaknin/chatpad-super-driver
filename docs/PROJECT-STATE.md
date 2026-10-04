@@ -2,7 +2,7 @@
 
 Updated 2026-10-04 for TASK 8L-C4L1 reboot-required setup handling.
 
-- Branch: `feature/chatpad-usermode-runner`. Package and readiness must be regenerated against the final pushed HEAD before the user retries setup.
+- Branch: `feature/chatpad-usermode-runner`. The final package manifest/readiness under `artifacts/task-8lc4/build-task-8lc4l1-pnp-reboot` are the exact source revision identity for the next elevated retry; confirm they match `git rev-parse HEAD`.
 - C4 setup/runtime implementation and package identity fixes are present. Focused setup tests pass: repository identity 4/4, package identity 8/8, baseline-path regressions 5/5, and PnP restart-result regressions 4/4. PowerShell parsing and `git diff --check` pass. The comprehensive suite and native CTest were not run for this focused fix.
 - Root cause: `DiInstallDevice` succeeded but returned `NeedReboot=true`. Previous C4 code treated that output as failure and immediately requested Microsoft restoration, which also succeeded with a restart required. The user's last elevated run passed readiness/package checks and saved the private baseline before those PnP requests. The subsequent read-only Status reported Microsoft `xusb22.inf` 10.0.26100.9278, problem 0, and no device/class filters. ProgramData contents were not independently read because this process lacks access.
 - Current implementation returns `PENDING_REBOOT` after successful pending WinUSB selection, persists baseline/install state before PnP mutation, and does not auto-rollback or reboot. Actual failures still attempt exact Microsoft recovery. C4 Restore reports pending restart; other C3 callers retain fail-closed behavior. This revised code has not run live.
