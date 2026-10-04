@@ -14536,3 +14536,11 @@ This append records the implementation commit and first publication. The documen
 - Current status: corrected source is locally verified but not yet committed, packaged, published, or installed. Live XInput, Chatpad input through virtual XInput, rumble callback, graceful cleanup, reconnect after virtual creation, and crash recovery remain unqualified.
 - Safety: no broker service action by the agent, no device/driver/PnP/registry mutation, no trust/security change, no reboot, no elevated bridge run, no global HIDMaestro cleanup; `legacy/` untouched.
 - Next: commit/push this correction, rebuild and hash-audit the exact package, run focused setup/package/publication checks, publish a new PARTIAL release atomically, then ask the user to manually `RepairBroker` and retry as a normal user.
+
+## 2026-10-04 20:06 UTC — Commit corrected C4L2 PnP presence guard
+
+- Follow-up: committed the explicit present-device-list correction and focused regression tests with continuity updates as `160d6054682d0fcadaa68c1e2b79c0d07b67a27b` (`fix: query present PnP IDs for broker guard`).
+- Scope: five files changed: `EnumControllerIndexGuard.cs`, `OfflineTests.cs`, `PROJECT-STATE.md`, `NEXT-TASK.md`, and this append-only worklog. `DECISIONS.md` was unchanged.
+- Verification before commit: `git diff --check` passed; helper build passed with 0 warnings/errors; managed self-test 162/162; focused native CTest 2/2.
+- Package and publication: not yet rebuilt, published, or installed. The old `b621b27` package remains the only package installed in the user's broker.
+- Next: push commit `160d6054682d0fcadaa68c1e2b79c0d07b67a27b`, then generate the package and release from the exact clean pushed HEAD.
