@@ -3,7 +3,7 @@
 ## TASK 8L-C4L2 — Retry user-run broker install with corrected SCM argv
 
 - Branch: `feature/chatpad-usermode-runner`.
-- Source fix commit: `2315358c06243629892e33cfe2b294483a5b7a3a`; the final documentation-only commit follows. Readiness must identify that final current HEAD and the fresh package below.
+- Source fix commit: `2315358c06243629892e33cfe2b294483a5b7a3a`; current readiness binds the final docs-only release commit to the fresh package below.
 - The previous elevated attempt failed before service creation with `sc.exe create` exit 1639. Read-only verification found no `ChatpadHidMaestroBroker` SCM/CIM/registry registration. Existing copied runtime/config bytes may remain under Program Files and are handled by the normal package hash verification/copy path.
 - Retry package: `artifacts/task-8lc4l2/build-installbroker-argv-2315358/package`. The previous canonical archive at `20261004T171319Z` contains the old setup argv bug and must not be used.
 - Preconditions: stop any running `ChatpadBridge.exe`; use elevated PowerShell as the authorized account from the active local console session (not RDP). Do not run the bridge elevated.

@@ -2,7 +2,7 @@
 
 Updated 2026-10-04 for TASK 8L-C4L2 `InstallBroker` argv correction.
 
-- Branch: `feature/chatpad-usermode-runner`. Setup fix commit `2315358c06243629892e33cfe2b294483a5b7a3a` is pushed. The final continuity commit will change docs only; readiness must be regenerated against that final HEAD before retry.
+- Branch: `feature/chatpad-usermode-runner`. Setup fix commit `2315358c06243629892e33cfe2b294483a5b7a3a` is pushed; this handoff's docs-only commit is included in the final readiness identity regenerated from exact HEAD.
 - The prior user-run elevated `InstallBroker` attempt failed at `sc.exe create` with exit 1639. Read-only checks now show the service absent: `sc.exe query` returned 1060, CIM found no service, and `HKLM\SYSTEM\CurrentControlSet\Services\ChatpadHidMaestroBroker` is absent. Package files/auth configuration may have been copied before the failure; the retry's normal install path revalidates/overwrites members.
 - Root cause fixed: `sc.exe` options and values are separate argv elements for create/config/failure; `failureflag` already used valid separate tokens and is now covered by the same exact-array regression. `Invoke-ChatpadBrokerSc` continues to splat the argument array directly.
 - Fresh local self-contained win-x64 package: `artifacts/task-8lc4l2/build-installbroker-argv-2315358/package` (214 members). Setup tests pass including native argv shapes 4/4; package/readiness identities match build commit `2315358c06243629892e33cfe2b294483a5b7a3a`. Exact setup-script SHA-256: `9227780FC664CF9A58B0369BB956E356CE23B20FB0E1B0FF07A9773F6818EA96`.
