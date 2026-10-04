@@ -4571,3 +4571,10 @@ Consequences: C2R2 remains BLOCKED with no installation/live virtual acceptance.
 - Rationale: the installer deliberately excludes the setup script from the runtime directory, but the previous readiness generator classified every package root file as an installed runtime member. Timestamp-based selection could also pair a different build tree with shared readiness metadata.
 - Alternatives rejected: weaken hashes, skip setup-script validation, accept a missing installed member, or select builds by directory timestamps.
 - Consequences: derive SetupTool SHA-256 from exact package bytes and compare it with the executing script. Require package root, role paths, repository identity and file hashes to agree. Keep strict post-copy runtime member hash validation; reject stale metadata explicitly.
+
+## 2026-10-04 — Allow C4's explicit durable baseline root
+
+- Decision: `Save-ChatpadC3Baseline` may create a baseline under `artifacts` or as a new child of the exact approved `%ProgramData%\ChatpadBridge` private root. Other caller-supplied roots are rejected.
+- Rationale: C4 intentionally moved recovery material out of the source checkout, while the shared save guard still hard-rejected every path outside repository `artifacts`.
+- Alternatives rejected: moving the baseline back to the removable checkout, weakening the path guard to any writable directory, or creating ProgramData files before validating path containment.
+- Consequences: canonicalized child-path checks reject the root itself, sibling-prefix paths and arbitrary private roots. The existing secured state directory is prepared before capture; failure remains before any PnP action.

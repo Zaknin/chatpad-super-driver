@@ -89,12 +89,29 @@ function Copy-C3RecoveryPackage {
  $Package.InfPath=Join-Path $Directory ([IO.Path]::GetFileName($inf))
  [pscustomobject]@{Files=$filesWithInf;Copies=$records}
 }
+function Test-ChatpadC3BaselineDirectory {
+ param([string]$Directory,[string]$PrivateRoot)
+ if([string]::IsNullOrWhiteSpace($Directory)){return $false}
+ $dir=[IO.Path]::GetFullPath($Directory)
+ $allowedRoots=@((Join-Path $PSScriptRoot '../../artifacts'))
+ if(-not [string]::IsNullOrWhiteSpace($PrivateRoot)){
+  $approvedPrivateRoot=[IO.Path]::GetFullPath((Join-Path $env:ProgramData 'ChatpadBridge'))
+  if(-not [IO.Path]::GetFullPath($PrivateRoot).Equals($approvedPrivateRoot,[StringComparison]::OrdinalIgnoreCase)){return $false}
+  $allowedRoots+=@($approvedPrivateRoot)
+ }
+ foreach($candidate in $allowedRoots){
+  $root=[IO.Path]::GetFullPath($candidate)
+  if(-not $root.EndsWith([string][IO.Path]::DirectorySeparatorChar)){$root+=[IO.Path]::DirectorySeparatorChar}
+  if($dir.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)){return $true}
+ }
+ return $false
+}
 function Save-ChatpadC3Baseline {
- param($State,[object[]]$Packages,$Readiness,[string]$Directory)
+ param($State,[object[]]$Packages,$Readiness,[string]$Directory,[string]$PrivateRoot)
  Assert-ChatpadRestorable $Readiness;Assert-ChatpadExtensionInventory $Packages
  if(Test-Path -LiteralPath $Directory){throw 'Private C3 baseline directory must be new.'}
- $allowed=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../artifacts'))+[IO.Path]::DirectorySeparatorChar;$dir=[IO.Path]::GetFullPath($Directory)
- if(-not $dir.StartsWith($allowed,[StringComparison]::OrdinalIgnoreCase)){throw 'Private C3 baseline must remain in artifacts.'}
+ if(-not(Test-ChatpadC3BaselineDirectory $Directory $PrivateRoot)){throw 'Private C3 baseline must be a new child of artifacts or the explicitly approved persistent private root.'}
+ $dir=[IO.Path]::GetFullPath($Directory)
  New-Item -ItemType Directory $dir | Out-Null
  # Clone before rebasing: caller readiness remains the provenance of the build,
  # while the private baseline becomes an independent recovery source.
@@ -143,4 +160,4 @@ function Invoke-ChatpadC3BindingAction {
  }
  [pscustomobject]@{Success=$true;Evidence="Exact $Operation postcondition verified; no reboot."}
 }
-Export-ModuleMember -Function Invoke-ChatpadC3BindingAction,Save-ChatpadC3Baseline,Invoke-C3Process
+Export-ModuleMember -Function Invoke-ChatpadC3BindingAction,Save-ChatpadC3Baseline,Invoke-C3Process,Test-ChatpadC3BaselineDirectory

@@ -45,6 +45,15 @@ try{
  $staleError=''
  try{Assert-ChatpadC4PackageIdentity $staleReadiness $packageRoot $repoSetup|Out-Null}catch{$staleError=$_.Exception.Message}
  if($staleError -notmatch 'SetupTool hash mismatch'){throw 'Regression: stale/current setup hash mismatch was not rejected clearly.'}
+ $repo=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+ $approvedPrivate=Join-Path $env:ProgramData 'ChatpadBridge'
+ $artifactBaseline=Join-Path (Join-Path $repo 'artifacts') 'baseline-test'
+ $privateBaseline=Join-Path $approvedPrivate 'baseline-test'
+ if(-not(Test-ChatpadC3BaselineDirectory $artifactBaseline)){throw 'Artifact-backed private baseline path must remain accepted.'}
+ if(-not(Test-ChatpadC3BaselineDirectory $privateBaseline $approvedPrivate)){throw 'Explicit persistent private baseline root must be accepted.'}
+ if(Test-ChatpadC3BaselineDirectory $approvedPrivate $approvedPrivate){throw 'Baseline path must be a child of the approved root, not the root itself.'}
+ if(Test-ChatpadC3BaselineDirectory ($approvedPrivate+'-sibling') $approvedPrivate){throw 'Sibling path must not pass private-root containment.'}
+ if(Test-ChatpadC3BaselineDirectory (Join-Path $packageRoot 'arbitrary-private/baseline') (Join-Path $packageRoot 'arbitrary-private')){throw 'Arbitrary caller-supplied private roots must be rejected.'}
 }
 finally{Remove-Item -LiteralPath $packageRoot -Recurse -Force -ErrorAction SilentlyContinue}
 $principal=[Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -53,4 +62,4 @@ if(-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrat
  try{Invoke-ChatpadC3BindingAction Bind $null -Execute|Out-Null}catch{$message=$_.Exception.Message}
  if($message -notmatch 'requires an elevated'){throw ('Setup elevation boundary failed: '+$message)}
 }
-Write-Output "C4 setup repository identity tests: $($cases.Count)/$($cases.Count) PASS; package identity regressions: 8/8 PASS"
+Write-Output "C4 setup repository identity tests: $($cases.Count)/$($cases.Count) PASS; package identity regressions: 8/8 PASS; baseline path regressions: 5/5 PASS"

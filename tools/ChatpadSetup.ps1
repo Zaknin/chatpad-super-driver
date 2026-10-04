@@ -82,7 +82,7 @@ function Install-Bridge {
  Initialize-PrivateStateDirectory
  $baselineDirectory=Join-Path $stateDirectory ('baseline-'+$stamp)
  Import-Module (Join-Path $toolsRoot 'ChatpadBinding/C3Execution.psm1') -Force
- $baseline=Save-ChatpadC3Baseline $fresh $packages $readiness $baselineDirectory
+ $baseline=Save-ChatpadC3Baseline $fresh $packages $readiness $baselineDirectory -PrivateRoot $stateDirectory
  try {
   Invoke-ChatpadC3BindingAction Exclude $baseline -Execute|Out-Null
   Invoke-ChatpadC3BindingAction Bind $baseline -Execute|Out-Null
