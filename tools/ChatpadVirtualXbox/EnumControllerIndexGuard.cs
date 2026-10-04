@@ -53,31 +53,61 @@ internal static class EnumControllerIndexGuard
 internal static class DeviceNodePresence
 {
     private const uint CrSuccess = 0x00000000;
-    private const uint CrInvalidDevnode = 0x0000000C;
-    private const uint CrNoSuchDevnode = 0x0000000D;
-    private const uint DnPresent = 0x00000002;
+    private const uint CmGetIdListFilterPresent = 0x00000100;
 
     internal static bool IsPresent(string instanceId)
     {
         if (!OperatingSystem.IsWindows())
             throw new BackendException("virtual_scope_probe_failed", "Windows device-node presence API is unavailable.");
 
-        uint result = CM_Locate_DevNodeW(out uint devInst, instanceId, 0);
-        if (result is CrInvalidDevnode or CrNoSuchDevnode) return false;
+        uint result = CM_Get_Device_ID_List_SizeW(out uint characterCount, null, CmGetIdListFilterPresent);
         if (result != CrSuccess)
-            throw new BackendException("virtual_scope_probe_failed", $"CM_Locate_DevNode failed for {instanceId} with CONFIGRET 0x{result:X8}.");
+            throw new BackendException("virtual_scope_probe_failed", $"CM_Get_Device_ID_List_Size failed with CONFIGRET 0x{result:X8}.");
+        if (characterCount == 0 || characterCount > int.MaxValue / sizeof(char))
+            throw new BackendException("virtual_scope_probe_failed", "CM_Get_Device_ID_List_Size returned an invalid character count.");
 
-        result = CM_Get_DevNode_Status(out uint status, out _, devInst, 0);
-        if (result is CrInvalidDevnode or CrNoSuchDevnode) return false;
-        if (result != CrSuccess)
-            throw new BackendException("virtual_scope_probe_failed", $"CM_Get_DevNode_Status failed for {instanceId} with CONFIGRET 0x{result:X8}.");
-        return (status & DnPresent) != 0;
+        IntPtr buffer = Marshal.AllocHGlobal(checked((int)characterCount * sizeof(char)));
+        try
+        {
+            result = CM_Get_Device_ID_ListW(IntPtr.Zero, buffer, characterCount, CmGetIdListFilterPresent);
+            if (result != CrSuccess)
+                throw new BackendException("virtual_scope_probe_failed", $"CM_Get_Device_ID_List failed with CONFIGRET 0x{result:X8}.");
+            string multiString = ReadMultiString(buffer, characterCount);
+            return ContainsInstanceId(multiString, instanceId);
+        }
+        finally { Marshal.FreeHGlobal(buffer); }
     }
 
-    [DllImport("cfgmgr32.dll", EntryPoint = "CM_Locate_DevNodeW", CharSet = CharSet.Unicode, ExactSpelling = true)]
-    private static extern uint CM_Locate_DevNodeW(out uint devInst, string deviceId, uint flags);
+    internal static string ReadMultiString(IntPtr buffer, uint characterCount)
+    {
+        var entries = new List<string>();
+        var current = new System.Text.StringBuilder();
+        for (uint i = 0; i < characterCount; i++)
+        {
+            char value = (char)Marshal.ReadInt16(buffer, checked((int)i * sizeof(char)));
+            if (value != '\0')
+            {
+                current.Append(value);
+                continue;
+            }
+            if (current.Length == 0) return string.Join('\0', entries) + "\0\0";
+            entries.Add(current.ToString());
+            current.Clear();
+        }
+        throw new BackendException("virtual_scope_probe_failed", "CM_Get_Device_ID_List returned a non-terminated multi-string.");
+    }
 
-    [DllImport("cfgmgr32.dll", EntryPoint = "CM_Get_DevNode_Status", ExactSpelling = true)]
-    private static extern uint CM_Get_DevNode_Status(out uint status, out uint problemNumber, uint devInst, uint flags);
+    internal static bool ContainsInstanceId(string multiString, string instanceId)
+    {
+        foreach (string candidate in multiString.Split('\0', StringSplitOptions.RemoveEmptyEntries))
+            if (string.Equals(candidate, instanceId, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    [DllImport("cfgmgr32.dll", EntryPoint = "CM_Get_Device_ID_List_SizeW", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern uint CM_Get_Device_ID_List_SizeW(out uint length, string? filter, uint flags);
+
+    [DllImport("cfgmgr32.dll", EntryPoint = "CM_Get_Device_ID_ListW", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern uint CM_Get_Device_ID_ListW(IntPtr filter, IntPtr buffer, uint bufferLength, uint flags);
 }
 #endif

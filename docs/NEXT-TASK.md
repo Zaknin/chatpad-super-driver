@@ -1,25 +1,23 @@
 # Next Task
 
-## TASK 8L-C4L2 — Install diagnostic broker package and identify live scope blocker
+## TASK 8L-C4L2 — Package corrected PnP presence guard and retry normal-user runtime
 
-- Branch: `feature/chatpad-usermode-runner`; diagnostic implementation commit `b621b2714ec133f2875d25d00c900da22866a95f`; canonical release result/receipt identity commit `099da4ab13a6f46912e4993dec6c38415681680a`.
-- The new diagnostic package is published under `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261004T194810Z`. Archive SHA-256: `05CD44BF7CE9A7A933DE078B5DD641992575F0874D4F3E097B3B5A610EBB0222`. Offline tests: managed 158/158, focused native 2/2, package 214/214 exact hashes, C4 setup and readiness checks PASS.
-- Two earlier normal-user runs reached `RUNNING` and passed Chatpad activation but failed closed at the present ROOT/SWD index-zero guard. Read-only checks immediately after both runs found no matching present node, so the exact transient instance is still unknown. The new package includes the conflicting instance ID in the error response; the guard remains strict.
+- Branch: `feature/chatpad-usermode-runner`; starting commit `66ae58dd7b9ef2b7e8a2a7eaa032bdb73f81b406` with the explicit-present-list correction currently uncommitted.
+- Latest user run used `build-scope-conflict-id-b621b27`, passed WinUSB and Chatpad activation after reconnect, then stopped before virtual creation at `virtual_scope_conflict` for `SWD\HIDMAESTRO\HM_622C184E37F6891E`.
+- Root defect identified in source: bit `0x2` was named `DN_PRESENT`, but Windows SDK `cfg.h` defines it as `DN_DRIVER_LOADED`. Source now queries device instance IDs using `CM_GETIDLIST_FILTER_PRESENT (0x100)` and exact case-insensitive matching. After the failed run, Get-PnpDevice/PnPUtil and direct CM queries reported that ID absent; it persists only as an Enum record with index zero.
+- Focused verification so far: pinned .NET 10 helper build succeeds with 0 warnings/errors; managed offline self-test 162/162; focused native CTest 2/2. The correction has not yet been packaged, published, or installed. Current source worktree includes edits to `EnumControllerIndexGuard.cs`, `OfflineTests.cs`, and continuity docs.
+- Existing canonical release `20261004T194810Z` and its archive hash refer to the previous package only.
 
-### Manual elevated setup
+### Required continuation
 
-In elevated PowerShell, run:
+1. Review the diff and current worktree, then commit and push only `feature/chatpad-usermode-runner`.
+2. Build a fresh package from that exact HEAD, run managed and focused setup/package/hash verification, and confirm all package members against the generated manifest.
+3. Prepare and atomically publish a new PARTIAL C4L2 release with SHA-256 sidecars under the canonical task share.
+4. Give the user the exact elevated `RepairBroker` command for that package. Do not perform service repair from the agent.
+5. After the user's manual repair, have them launch the package in ordinary PowerShell and provide the full output. Only if virtual creation succeeds, continue XInput, Chatpad, rumble, graceful cleanup, reconnect, and crash-recovery qualification.
 
-```powershell
-& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-scope-conflict-id-b621b27\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
-```
+### Safety and acceptance
 
-After it returns PASS, run in ordinary, non-elevated PowerShell:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-scope-conflict-id-b621b27\package\ChatpadBridge.exe" run
-```
-
-If creation succeeds, qualify XInput/buttons/sticks/triggers, Chatpad, rumble callback, and Ctrl+C cleanup. If `virtual_scope_conflict` repeats, send the full error including its instance ID; inspect presence and ownership read-only. Do not delete devices/registry records, weaken the guard, stop the service, or reboot. Proceed to reconnect and crash-recovery testing only after the normal runtime succeeds.
-
-Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, package `build-manifest.json`, final `result-manifest.json`, and `publication-receipt.json`.
+- Keep the index-zero guard fail-closed for IDs present in the explicit present-device list; stale registry Enum entries alone must not block.
+- No device/registry deletion, service mutation by the agent, bridge elevation, driver binding, trust change, reboot, global HIDMaestro cleanup, or `legacy/` edits.
+- Inspect first: `tools/ChatpadVirtualXbox/EnumControllerIndexGuard.cs`, its new offline tests, recent C4L2 worklog entries, and the new build/package manifests.

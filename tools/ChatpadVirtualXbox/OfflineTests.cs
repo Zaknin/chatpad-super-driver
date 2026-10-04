@@ -183,6 +183,26 @@ internal static class OfflineTests
         Check("present controller scope conflict identifies its exact instance ID", () =>
             EnumControllerIndexGuard.FindPresentIndexZero(
                 [(staleHidMaestroNode, (object?)0)], id => id == staleHidMaestroNode) == staleHidMaestroNode);
+        Check("stale HIDMaestro instance is absent from present-device ID list", () =>
+            !DeviceNodePresence.ContainsInstanceId("USB\\VID_045E&PID_028E\\1C21F10\0\0", staleHidMaestroNode));
+        Check("present-device ID matching is exact and case-insensitive", () =>
+            DeviceNodePresence.ContainsInstanceId("USB\\VID_045E&PID_028E\\1C21F10\0SWD\\HIDMAESTRO\\HM_622C184E37F6891E\0\0",
+                staleHidMaestroNode.ToLowerInvariant()));
+        Check("present-device ID matching does not accept prefixes", () =>
+            !DeviceNodePresence.ContainsInstanceId("SWD\\HIDMAESTRO\\HM_622C184E37F6891E_EXTRA\0\0", staleHidMaestroNode));
+        Check("present-device multi-string parsing stops at its double-null terminator", () =>
+        {
+            char[] chars = "SWD\\HIDMAESTRO\\HM_622C184E37F6891E\0\0SPURIOUS\0\0".ToCharArray();
+            IntPtr buffer = System.Runtime.InteropServices.Marshal.AllocHGlobal(chars.Length * sizeof(char));
+            try
+            {
+                for (int i = 0; i < chars.Length; i++) System.Runtime.InteropServices.Marshal.WriteInt16(buffer, i * sizeof(char), chars[i]);
+                string multiString = DeviceNodePresence.ReadMultiString(buffer, (uint)chars.Length);
+                return DeviceNodePresence.ContainsInstanceId(multiString, staleHidMaestroNode) &&
+                    !DeviceNodePresence.ContainsInstanceId(multiString, "SPURIOUS");
+            }
+            finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(buffer); }
+        });
         Check("present nonzero controller index does not conflict", () =>
             !EnumControllerIndexGuard.HasPresentIndexZero(
                 [(staleHidMaestroNode, (object?)1)], _ => true));
