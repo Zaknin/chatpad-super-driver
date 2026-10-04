@@ -14544,3 +14544,16 @@ This append records the implementation commit and first publication. The documen
 - Verification before commit: `git diff --check` passed; helper build passed with 0 warnings/errors; managed self-test 162/162; focused native CTest 2/2.
 - Package and publication: not yet rebuilt, published, or installed. The old `b621b27` package remains the only package installed in the user's broker.
 - Next: push commit `160d6054682d0fcadaa68c1e2b79c0d07b67a27b`, then generate the package and release from the exact clean pushed HEAD.
+
+## 2026-10-04 20:08 UTC — Build and publish corrected C4L2 broker package
+
+- Objective: package and publish the corrected present-device predicate from the exact pushed branch HEAD, then hand off a manual broker repair and normal-user runtime retry.
+- Source identity: branch `feature/chatpad-usermode-runner`; presence-guard implementation commit `160d6054682d0fcadaa68c1e2b79c0d07b67a27b`; package and readiness commit `a93a1070add5a539f889a2fceb8bd69c6e34fccc`, pushed to origin. Worktree was clean before the build.
+- Build: `tools/Build-ChatpadBridge.ps1 -SkipNativeTests -OutputDirectory artifacts/task-8lc4l2/build-present-device-list-a93a107` succeeded; C4 setup tests reported repository identity 5/5, package identity 8/8, baseline path 5/5, PnP restart result 4/4, SCM native argv 4/4, broker setup/package regressions PASS. Readiness archive/privacy tests passed 9/9.
+- Focused tests: packaged helper `self-test` passed 162/162 with `liveBackendCreated=false` and `xinputCalled=false`; focused CTest `broker-client|runner-lifecycle` passed 2/2. No broad native test suite was run.
+- Package audit: 214 expected and 214 actual files; zero missing, extra, or SHA-256/length mismatches. Runner SHA-256 `2D367359F7840245AD824F0FE7E09D215CF48C668B3351C56DCF2F3F1D1F655C`; broker SHA-256 `2EF94608449028140AD479BC3B473B28819AFD6BE068CA6E74004ED40D88B003`.
+- Publication: `tools/Publish-ChatpadC4L2.ps1 -Mode Prepare -UtcTimestamp 20261004T200803Z ...` and `-Mode Publish` passed. Canonical path: `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261004T200803Z`. Archive SHA-256 `760C1A11047A829F5D05308E724438B29901AC2FD4ABFA4FA295B2D5F8C8DDB9`. Atomic publisher verified source/.part/final hashes and wrote sidecars last. Independent remote readback verified six payloads against their SHA-256 sidecars with zero mismatch.
+- Current live state: the corrected package has not been installed. The user's broker was last observed Running as LocalSystem after manual RepairBroker; do not infer current state beyond that snapshot. Normal-user XInput/Chatpad/rumble and reconnect/crash recovery remain unqualified.
+- Files changed in this publication update: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. No source changes since package build commit.
+- Safety: no broker service action by the agent, no device/driver/PnP/registry mutation, no trust/security change, no reboot, no elevated bridge run, no global HIDMaestro cleanup; `legacy/` untouched.
+- Next: push continuity updates, then ask the user to manually run elevated RepairBroker against `build-present-device-list-a93a107/package`. After PASS, have them run its ChatpadBridge executable as a normal user and return the full output; only proceed to XInput/rumble/lifecycle qualification after virtual creation succeeds.
