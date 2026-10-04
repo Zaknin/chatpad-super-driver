@@ -26,6 +26,7 @@ if($verification.Result -cne 'PASS' -or $verification.Managed.Failed -ne 0 -or $
 Import-Module (Join-Path $PSScriptRoot 'ChatpadC4Package.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'ChatpadReadinessArtifacts.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Publish-ChatpadArtifact.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'ChatpadC4L2Publication.psm1') -Force
 
 function Git([string[]]$Arguments){$lines=@(& git.exe -C $repo @Arguments);if($LASTEXITCODE -ne 0){throw ('Git command failed: '+($Arguments -join ' '))};return $lines}
 function Get-RepositoryIdentity {
@@ -154,7 +155,7 @@ $payloads=@(
  [pscustomobject]@{Path=$publicIdentityPath;Name='readiness-identity.json'}
 )
 $receipts=@(foreach($item in $payloads){Publish-ChatpadArtifact -SourcePath $item.Path -DestinationDirectory $destination -FileName $item.Name})
-if(@($receipts|Where-Object Verified -ne $true -or SidecarCommittedLast -ne $true).Count){throw 'At least one atomic publisher payload failed source/.part/final readback.'}
+if(-not (Test-ChatpadC4L2PublicationReceipts $receipts)){throw 'At least one atomic publisher payload failed source/.part/final readback.'}
 $result.PublicationReadback='PASS'
 $result.PayloadReceipts=$receipts
 $resultPath=Join-Path (Split-Path -Parent $preparedPath) 'result-manifest.json'
