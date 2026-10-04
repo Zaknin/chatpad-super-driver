@@ -1,21 +1,28 @@
 # Next Task
 
-## TASK 8L-C4L2 — Rebuild after local-pipe locality fix and continue qualification
+## TASK 8L-C4L2 — Install and qualify the broker locality fix
 
-- Branch: `feature/chatpad-usermode-runner`; start from the latest pushed implementation/continuity commits in `docs/WORKLOG.md`.
-- The user manually repaired the read-before-impersonate package. The subsequent normal-user run opened WinUSB, passed Chatpad activation stages 0–5, then returned `broker_peer_unauthorized`.
-- Root cause: on this Windows build, `GetNamedPipeClientComputerNameW` returned Win32 229, `ERROR_PIPE_LOCAL`, for this local pipe. The code treated all API failures as remote. The fix accepts only 229 as a local pipe, compares the returned name when the API succeeds, and rejects all other query failures.
-- New managed locality regressions pass for local 229, matching/mismatched names, and fail-closed unrelated errors. Managed self-test totals: 153 pass, 1 pipe-squatter failure because the installed broker owns the fixed pipe. Final package/readiness/hash checks are pending.
-- No automatic broker service lifecycle action. After rebuilding, user must manually run elevated `RepairBroker`, then retry the runner from ordinary PowerShell.
-- Acceptance: broker create, XInput state, controller and Chatpad input, rumble callback, graceful cleanup, reconnect, crash recovery, and service survival after invalid/disconnected clients.
+- Branch: `feature/chatpad-usermode-runner`; source fix `3961374159a2b095cd0810a1e16c5bb5334bfd5d` plus the final pushed package-handoff continuity commit.
+- Latest user log used the previous `build-broker-read-before-impersonation-f5d5885` package. Its `broker_peer_unauthorized` result does not test the fix. Root cause from the preceding run: `GetNamedPipeClientComputerNameW` returned 229 (`ERROR_PIPE_LOCAL`) for the local pipe; prior code treated every false result as remote. The current source accepts precisely that local status, validates returned computer name on success, and rejects other query errors.
+- Package: `artifacts/task-8lc4l2/build-broker-local-pipe-229-3961374/package`; all 214 hashes and lengths matched. C4 setup/readiness checks passed; native focused tests passed 2/2. Managed suite: 153 passed, 1 pipe-squatter failure because the installed broker holds the fixed pipe.
+- User must manually repair the installed broker from the new package. Do not perform service lifecycle operations automatically. The runner command must also use the same new package, not `build-broker-read-before-impersonation-f5d5885`.
 
-After final package build, provide the exact commands:
+After successful repair, launch bridge only from ordinary non-elevated PowerShell.
+
+Elevated PowerShell:
 
 ```powershell
-& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\<FINAL_BUILD_DIRECTORY>\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\<FINAL_BUILD_DIRECTORY>\package\ChatpadBridge.exe" run
+& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-local-pipe-229-3961374\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
 ```
 
-Keep ChatpadBridge non-elevated. No driver/PnP/registry/device changes, trust/security changes, reboot, or HIDMaestro global cleanup. Hard-client-crash physical rumble remains outside broker cleanup scope.
+After successful repair, ordinary PowerShell:
 
-Inspect first: latest C4L2 worklog entries, `tools/ChatpadVirtualXbox/WindowsClientIdentity.cs`, `tools/ChatpadVirtualXbox/OfflineTests.cs`, final package manifest/readiness.
+```powershell
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-local-pipe-229-3961374\package\ChatpadBridge.exe" run
+```
+
+Acceptance: broker create succeeds and service remains running; verify XInput/buttons/sticks/triggers, Chatpad, rumble callback, and graceful Ctrl+C cleanup. Reconnect, crash recovery, and rejected/disconnected client survival remain to qualify. Return full logs.
+
+Safety: no driver/PnP/registry/device changes, trust/security changes, reboot, elevated bridge run, or HIDMaestro global cleanup. Hard-client-crash physical rumble remains outside broker cleanup scope.
+
+Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, `tools/ChatpadVirtualXbox/WindowsClientIdentity.cs`, and final package manifest/readiness.

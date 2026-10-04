@@ -14412,3 +14412,21 @@ This append records the implementation commit and first publication. The documen
 - Additional evidence: isolated local pipe probe returned the configured SID `S-1-5-21-561199664-4233008424-1776012680-1000`, client session 1, active console session 1, WTS active state 0, console protocol 0, and `GetNamedPipeClientComputerNameW` failure 229. No live controller or production broker pipe was touched by that probe.
 - Safety: no service lifecycle/configuration operation, driver/PnP/registry/device mutation, trust/security change, reboot, elevated bridge run, or HIDMaestro global cleanup was performed for this fix. `legacy/` is untouched.
 - Next: rebuild package from committed source, run focused managed/native checks and package hash/readiness verification, push the requested feature branch, then give the user one exact elevated `RepairBroker` command and wait for its output.
+
+## 2026-10-04 18:41 UTC — TASK 8L-C4L2 local-pipe locality package handoff
+
+- Rebuilt after source commit `3961374159a2b095cd0810a1e16c5bb5334bfd5d` using `tools/Build-ChatpadBridge.ps1 -SkipNativeTests -OutputDirectory artifacts/task-8lc4l2/build-broker-local-pipe-229-3961374`.
+- Release build and C4 readiness/setup checks passed. The build manifest identifies branch `feature/chatpad-usermode-runner` and source commit `3961374159a2b095cd0810a1e16c5bb5334bfd5d`. Exact independent package member readback passed 214/214 paths, lengths and SHA-256 values with no extra files. Runner SHA-256: `FCAFD7A30EAA3BEBD0D49CBE74FC21C0E0989C3DDEDB3EA41E4F82FACFB268FA`; broker executable SHA-256: `330C8EADBAFDE5F90BBCA08476C5BF388150603DCA86F05EE519860481DB1329`.
+- Focused native CTest `broker-client|runner-lifecycle` passed 2/2. Managed self-test reported 153 passed and one expected environment limitation: the squatter test cannot bind the fixed pipe while the installed service owns it. No service was stopped.
+- Updated `docs/PROJECT-STATE.md` and `docs/NEXT-TASK.md` with the exact root cause, package identity, test status, and one elevated RepairBroker command followed by the ordinary-user runtime command. Readiness will be regenerated after the docs commit to identify the final continuity HEAD; package bytes remain those in the build manifest.
+- No live service lifecycle change was performed. Wait for the user's manual RepairBroker output before retrying normal-user runtime.
+
+## 2026-10-04 18:44 UTC — TASK 8L-C4L2 identify stale package in live retry
+
+- Objective: interpret the user's latest `broker_peer_unauthorized` output and ensure the tested runner and installed broker both use the package containing the locality fix.
+- Starting state: branch `feature/chatpad-usermode-runner`, HEAD `3961374159a2b095cd0810a1e16c5bb5334bfd5d`, with pending continuity-document changes. The user's log invoked `artifacts/task-8lc4l2/build-broker-read-before-impersonation-f5d5885/package/ChatpadBridge.exe`, which predates `ERROR_PIPE_LOCAL` handling.
+- Finding: the error was emitted by the older runner/service exchange and is not evidence about the fixed package. Current fixed package is `artifacts/task-8lc4l2/build-broker-local-pipe-229-3961374/package`; its manifest binds the bytes to source commit `3961374159a2b095cd0810a1e16c5bb5334bfd5d`, and the readiness manifest lists the same package root and source commit. No user-confirmed `RepairBroker` or run of the fixed package has occurred yet.
+- Updated `docs/PROJECT-STATE.md` and `docs/NEXT-TASK.md` to make the stale package use explicit. No source implementation or durable architecture decision changed.
+- Verification: independently queried the build-manifest and readiness repository identity, and confirmed the runner/broker SHA-256 values match the already recorded 214-member package verification. `git diff --check` passed before this log entry.
+- Safety: no broker service lifecycle/configuration operation, device/driver/PnP/registry mutation, trust/security change, reboot, elevated bridge execution, or HIDMaestro global cleanup was performed. `legacy/` remains untouched.
+- Next: commit and push the continuity updates; provide the exact elevated `RepairBroker` command for the locality-fix package. After the user confirms repair, ask for a normal-user run using `build-broker-local-pipe-229-3961374/package/ChatpadBridge.exe`.
