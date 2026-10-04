@@ -65,6 +65,7 @@ internal static class BrokerSessionTests
             await session.HandleLineAsync(Create(3));
             await session.HandleLineAsync(State(ulong.MaxValue, 1));
             try { await session.HandleLineAsync(State(0, 2)); } catch (BackendException) { staleState = true; }
+            await SpinWaitAsync(() => backend.LastState.Buttons == 1);
             return staleControl && staleState && backend.LastState.Buttons == 1;
         }).GetAwaiter().GetResult();
         Check("broker rumble callback uses the serialized output writer", async () =>
