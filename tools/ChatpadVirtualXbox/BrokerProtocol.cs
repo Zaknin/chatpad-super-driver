@@ -13,6 +13,12 @@ internal static class BrokerProtocol
     public const int Version = 1;
     public const int MaximumFrameBytes = 4096;
 
+    public static string PeekOperation(string json)
+    {
+        using var document = Parse(json);
+        return String(document.RootElement, "op");
+    }
+
     public static BrokerControlRequest ParseControlRequest(string json)
     {
         using var document = Parse(json);

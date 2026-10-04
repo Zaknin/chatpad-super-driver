@@ -18,6 +18,14 @@ internal static class OfflineTests
             try { action(); return false; }
             catch (BackendException) { return true; }
         });
+        var brokerSessionTests = BrokerSessionTests.Run();
+        passed += brokerSessionTests.Passed;
+        failed += brokerSessionTests.Failed;
+        failures.AddRange(brokerSessionTests.Failures);
+        Check("broker pipe uses first-instance and rejects remote clients", () =>
+            (BrokerPipeServer.PipeOpenMode & BrokerPipeServer.FirstPipeInstanceFlag) != 0 &&
+            (BrokerPipeServer.PipeMode & BrokerPipeServer.RejectRemoteClientsFlag) != 0);
+        Check("broker pipe refuses a pre-created local pipe-name squatter", () => BrokerPipeServer.TestRejectPipeSquatting());
         var neutral = new XboxState(0, 0, 0, 0, 0, 0, 0);
         Check("broker ping exact v1 control frame", () =>
         {

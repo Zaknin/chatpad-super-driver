@@ -40,6 +40,13 @@ internal static class Program
                 case "helper":
                     RequireKeys(options, "backend", "duration-ms", "idle-ms", "allow-live-virtual");
                     return await Helper(options);
+                case "service":
+                    RequireKeys(options);
+#if HIDMAESTRO
+                    return WindowsServiceHost.Run();
+#else
+                    throw new BackendException("service_unavailable", "Service mode is available only in the self-contained pinned HIDMaestro build.");
+#endif
                 case "snapshot":
                     RequireKeys(options, "slot");
                     uint slot = (uint)Integer(options, "slot", -1, 0, 3);
