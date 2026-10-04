@@ -39,6 +39,18 @@ internal static class BrokerSessionTests
             await SpinWaitAsync(() => { lock (output) return output.Count == 3; });
             return factories == 1 && duplicateRejected && !backend.Connected && output.Count(line => line.Contains("\"ok\":true")) == 3;
         }).GetAwaiter().GetResult();
+        Check("failed backend create cleans up without submitting controller state", async () =>
+        {
+            var backend = new FailingCreateBackend();
+            await using var session = new BrokerSession(() => backend, (_, _) => ValueTask.CompletedTask);
+            string? code = null;
+            try { await session.HandleLineAsync(Create(1)); }
+            catch (BackendException error) { code = error.Code; }
+            try { await session.StopAsync(); }
+            catch (BackendException) { return false; }
+            return code == "test_create_failed" && backend.SubmitCalls == 0 &&
+                backend.DisconnectCalls == 1 && backend.DisposeCalls == 1;
+        }).GetAwaiter().GetResult();
         Check("broker streamed states coalesce while backend is blocked", async () =>
         {
             var backend = new BlockingBackend();
@@ -131,6 +143,18 @@ internal static class BrokerSessionTests
         public void SetRumbleCallback(Action<Rumble> callback) => inner.SetRumbleCallback(callback);
         public void Disconnect() => inner.Disconnect();
         public void Dispose() { ReleaseFirstSubmit.Set(); inner.Dispose(); }
+    }
+
+    private sealed class FailingCreateBackend : IVirtualXboxController
+    {
+        public int SubmitCalls { get; private set; }
+        public int DisconnectCalls { get; private set; }
+        public int DisposeCalls { get; private set; }
+        public void Create() => throw new BackendException("test_create_failed", "Expected create failure.");
+        public void SubmitState(XboxState state) { SubmitCalls++; throw new BackendException("not_connected", "Create first."); }
+        public void SetRumbleCallback(Action<Rumble> callback) { }
+        public void Disconnect() => DisconnectCalls++;
+        public void Dispose() => DisposeCalls++;
     }
 }
 

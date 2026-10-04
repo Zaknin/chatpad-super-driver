@@ -25,6 +25,7 @@ internal sealed class BrokerSession : IAsyncDisposable
     private BrokerSequenceTracker sequence = new();
     private int lastControlId = -1;
     private volatile bool connected;
+    private bool backendCreated;
     private bool disposed;
 
     public BrokerSession(Func<IVirtualXboxController> backendFactory, Func<string, CancellationToken, ValueTask> writeLine)
@@ -84,7 +85,12 @@ internal sealed class BrokerSession : IAsyncDisposable
         try
         {
             await backendGate.WaitAsync(stopped.Token).ConfigureAwait(false);
-            try { instance.Create(); instance.SetRumbleCallback(OnRumble); }
+            try
+            {
+                instance.Create();
+                backendCreated = true;
+                instance.SetRumbleCallback(OnRumble);
+            }
             finally { backendGate.Release(); }
             connected = true;
             sequence = new BrokerSequenceTracker();
@@ -92,8 +98,11 @@ internal sealed class BrokerSession : IAsyncDisposable
         }
         catch
         {
-            await ReleaseBackendAsync(instance).ConfigureAwait(false);
+            connected = false;
+            while (states.Reader.TryRead(out _)) { }
+            await ReleaseBackendAsync(instance, backendCreated).ConfigureAwait(false);
             if (ReferenceEquals(backend, instance)) backend = null;
+            backendCreated = false;
             throw;
         }
     }
@@ -104,18 +113,22 @@ internal sealed class BrokerSession : IAsyncDisposable
         if (instance is null) { connected = false; return; }
         connected = false;
         while (states.Reader.TryRead(out _)) { }
-        await ReleaseBackendAsync(instance).ConfigureAwait(false);
+        await ReleaseBackendAsync(instance, backendCreated).ConfigureAwait(false);
         if (ReferenceEquals(backend, instance)) backend = null;
+        backendCreated = false;
         sequence = new BrokerSequenceTracker();
     }
 
-    private async Task ReleaseBackendAsync(IVirtualXboxController instance)
+    private async Task ReleaseBackendAsync(IVirtualXboxController instance, bool neutralizeState)
     {
         await backendGate.WaitAsync().ConfigureAwait(false);
         try
         {
             var errors = new List<Exception>();
-            try { instance.SubmitState(default); } catch (Exception e) { errors.Add(e); }
+            if (neutralizeState)
+            {
+                try { instance.SubmitState(default); } catch (Exception e) { errors.Add(e); }
+            }
             try { instance.SetRumbleCallback(_ => { }); } catch (Exception e) { errors.Add(e); }
             try { instance.Disconnect(); } catch (Exception e) { errors.Add(e); }
             try { instance.Dispose(); } catch (Exception e) { errors.Add(e); }
@@ -191,7 +204,9 @@ internal sealed class BrokerSession : IAsyncDisposable
         {
             var instance = backend;
             backend = null;
-            if (instance is not null) await ReleaseBackendAsync(instance).ConfigureAwait(false);
+            bool wasCreated = backendCreated;
+            backendCreated = false;
+            if (instance is not null) await ReleaseBackendAsync(instance, wasCreated).ConfigureAwait(false);
         }
         finally { controls.Release(); }
         output.Writer.TryComplete();
