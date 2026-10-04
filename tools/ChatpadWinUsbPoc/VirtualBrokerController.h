@@ -33,11 +33,10 @@ struct BrokerServerMessage {
 bool ParseBrokerServerMessage(const std::string&, BrokerServerMessage&);
 
 struct BrokerServerIdentitySnapshot {
-    std::string userSid;
-    uint32_t pipeServerPid{}, servicePid{}, tokenSessionId{};
+    uint32_t pipeServerPid{}, servicePid{};
     std::string serviceName;
     bool serviceRunning{};
-    std::wstring imagePath, expectedImagePath;
+    std::wstring serviceStartName, serviceBinaryPathName;
 };
 bool ValidateBrokerServerIdentity(const BrokerServerIdentitySnapshot&);
 

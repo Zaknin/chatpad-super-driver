@@ -26,15 +26,17 @@ int main() {
         "{\"version\":1,\"id\":1,\"ok\":true,\"extra\":1}",
         "{\"version\":1,\"op\":\"rumble\",\"leftMotor\":65536,\"rightMotor\":0}"
     }) Check(!ParseBrokerServerMessage(bad, rumble), "unknown, duplicate, wrong-version and out-of-range server frame rejected");
-    BrokerServerIdentitySnapshot systemPeer{"S-1-5-18", 80, 80, 0, "ChatpadHidMaestroBroker", true,
-        LR"(C:\Program Files\ChatpadBridge\ChatpadVirtualXbox.exe)", LR"(C:\Program Files\ChatpadBridge\ChatpadVirtualXbox.exe)"};
-    Check(ValidateBrokerServerIdentity(systemPeer), "expected running LocalSystem service process accepted");
-    auto wrongIdentity = systemPeer; wrongIdentity.userSid = "S-1-5-21-1-2-3-1001";
-    Check(!ValidateBrokerServerIdentity(wrongIdentity), "non-LocalSystem pipe server rejected");
+    BrokerServerIdentitySnapshot systemPeer{80, 80, "ChatpadHidMaestroBroker", true, L"LocalSystem",
+        LR"("C:\Program Files\ChatpadBridge\ChatpadVirtualXbox.exe" service)"};
+    Check(ValidateBrokerServerIdentity(systemPeer), "expected running LocalSystem service identity accepted from SCM metadata");
+    auto wrongIdentity = systemPeer; wrongIdentity.serviceStartName = L"NT AUTHORITY\\NetworkService";
+    Check(!ValidateBrokerServerIdentity(wrongIdentity), "non-LocalSystem service account rejected");
     auto wrongPid = systemPeer; wrongPid.servicePid++;
     Check(!ValidateBrokerServerIdentity(wrongPid), "pipe process not owned by named service rejected");
-    auto wrongPath = systemPeer; wrongPath.imagePath = LR"(C:\Users\Public\ChatpadVirtualXbox.exe)";
+    auto wrongPath = systemPeer; wrongPath.serviceBinaryPathName = LR"("C:\Users\Public\ChatpadVirtualXbox.exe" service)";
     Check(!ValidateBrokerServerIdentity(wrongPath), "service executable outside protected expected image path rejected");
+    auto wrongArguments = systemPeer; wrongArguments.serviceBinaryPathName = LR"("C:\Program Files\ChatpadBridge\ChatpadVirtualXbox.exe" arbitrary)";
+    Check(!ValidateBrokerServerIdentity(wrongArguments), "unexpected service arguments rejected");
     auto notRunning = systemPeer; notRunning.serviceRunning = false;
     Check(!ValidateBrokerServerIdentity(notRunning), "non-running SCM service identity rejected");
     BrokerStateMailbox lastSequence(UINT64_MAX - 1);

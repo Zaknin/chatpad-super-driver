@@ -1,21 +1,21 @@
 # Next Task
 
-## TASK 8L-C4L2 — Retry user-run broker install with corrected SCM argv
+## TASK 8L-C4L2 — Retry normal-user broker connection and live qualification
 
-- Branch: `feature/chatpad-usermode-runner`.
-- Source fix commit: `2315358c06243629892e33cfe2b294483a5b7a3a`; current readiness binds the final docs-only release commit to the fresh package below.
-- The previous elevated attempt failed before service creation with `sc.exe create` exit 1639. Read-only verification found no `ChatpadHidMaestroBroker` SCM/CIM/registry registration. Existing copied runtime/config bytes may remain under Program Files and are handled by the normal package hash verification/copy path.
-- Retry package: `artifacts/task-8lc4l2/build-installbroker-argv-2315358/package`. The previous canonical archive at `20261004T171319Z` contains the old setup argv bug and must not be used.
-- Preconditions: stop any running `ChatpadBridge.exe`; use elevated PowerShell as the authorized account from the active local console session (not RDP). Do not run the bridge elevated.
+- Branch: `feature/chatpad-usermode-runner`; start from the pushed SCM identity-check fix commit recorded in the latest `docs/WORKLOG.md` entry.
+- Current state: user-installed `ChatpadHidMaestroBroker` is `RUNNING` as `LocalSystem`, configured as `"C:\Program Files\ChatpadBridge\ChatpadVirtualXbox.exe" service`. The normal-user bridge opened physical WinUSB and activated Chatpad, then failed closed because `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` returned access denied for the LocalSystem service process.
+- Fix: the client now verifies the pipe-server PID against `QueryServiceStatusEx` for the fixed service name, and validates the configured LocalSystem account and exact protected Program Files image plus `service` argument through `QueryServiceConfigW`. It does not open the service process or trust pipe events until those checks pass. It still rejects a stopped service, a mismatched PID, account, executable, or argument.
+- Read-only validation on this machine confirmed the standard interactive token can query the service DACL/config/status (`sc.exe sdshow` and `sc.exe qc`) and that the service is running. Focused native tests passed `broker-client` and `runner-lifecycle` 2/2, with 20 broker-client assertions. The replacement package/readiness must be generated after the fix commit and its code bytes verified against the build manifest.
+- Preconditions: ensure no other `ChatpadBridge.exe` run owns the physical device; start the bridge from ordinary, non-elevated PowerShell. Do not reinstall/reconfigure the broker unless the client reports SCM access denied; do not run the bridge elevated.
 
-Run this exact command after final readiness regeneration, then return its complete output:
+After the new package path is recorded in the latest worklog, run:
 
 ```powershell
-& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode InstallBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-installbroker-argv-2315358\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
+& "<new-build-directory>\package\ChatpadBridge.exe" run
 ```
 
-If setup fails or does not return `Result: PASS`, stop and provide the full output; do not retry, repair, uninstall, or clean up service files automatically. After PASS, continue normal-user qualification for pipe/server identity, WinUSB → bridge → broker → XInput, Chatpad typing, physical rumble callback, reconnect, graceful cleanup, client crash/next-launch recovery and service crash/restart.
+If it reaches `state=RUNNING` and creates the virtual Xbox, verify XInput/controller input, Chatpad typing, and rumble callback. Then stop with Ctrl+C and report the full output. Continue with reconnect, graceful cleanup, client crash/next-launch recovery, and service crash/restart only after the basic normal-user path passes.
 
-Safety: do not mutate driver/PnP/registry/device binding or trust/security, reboot, or run `ChatpadBridge.exe` elevated. Do not call HIDMaestro's global controller cleanup. The already confirmed absent service registration does not prove copied Program Files files are absent; the setup command verifies and replaces exact packaged members.
+Safety: no service lifecycle changes, driver/PnP/registry/device binding changes, trust/security changes, reboot, elevated bridge run, or HIDMaestro global cleanup. After a hard bridge crash, physical rumble is outside the broker's cleanup capability; the documented next-launch recovery is a separate qualification.
 
-Inspect first: `docs/PROJECT-STATE.md`, current `artifacts/task-8lc4l2/readiness-input.json`, `tools/ChatpadSetup.ps1`, `tools/ChatpadC4Package.psm1`, and the `build-manifest.json` in the retry build directory.
+Inspect first: latest `docs/WORKLOG.md` C4L2 continuation, `tools/ChatpadWinUsbPoc/VirtualBrokerController.cpp`, focused test results under ignored `artifacts/task-8lc4l2/`, and the latest package `build-manifest.json`.

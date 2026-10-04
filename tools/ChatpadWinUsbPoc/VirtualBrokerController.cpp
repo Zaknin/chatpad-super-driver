@@ -3,7 +3,6 @@
 #include "VirtualBrokerController.h"
 #include <Windows.h>
 #include <ShlObj.h>
-#include <sddl.h>
 #include <shellapi.h>
 #include <winsvc.h>
 #include <algorithm>
@@ -139,12 +138,6 @@ bool Bool(const std::map<std::string, JsonValue>& fields, const char* name, bool
 bool ProtocolVersion(const std::map<std::string, JsonValue>& fields) {
     uint64_t version{}; return UInt(fields, "version", 1, version) && version == 1;
 }
-bool SamePath(const std::wstring& left, const std::wstring& right) {
-    if (!std::filesystem::path(left).is_absolute() || !std::filesystem::path(right).is_absolute()) return false;
-    const auto a = std::filesystem::path(left).lexically_normal().wstring();
-    const auto b = std::filesystem::path(right).lexically_normal().wstring();
-    return CompareStringOrdinal(a.c_str(), static_cast<int>(a.size()), b.c_str(), static_cast<int>(b.size()), TRUE) == CSTR_EQUAL;
-}
 std::wstring ProgramFilesPath() {
     static const GUID folderId = {0x905e63b6, 0xc1bf, 0x494e, {0xb2, 0x9c, 0x65, 0xb7, 0x32, 0xd3, 0xd2, 0x1a}};
     PWSTR path{};
@@ -152,6 +145,7 @@ std::wstring ProgramFilesPath() {
     std::wstring result(path); CoTaskMemFree(path); return result;
 }
 std::wstring ExpectedServiceImage() { return (std::filesystem::path(ProgramFilesPath()) / L"ChatpadBridge" / L"ChatpadVirtualXbox.exe").wstring(); }
+std::wstring ExpectedServiceCommandLine() { return L"\"" + ExpectedServiceImage() + L"\" service"; }
 void CloseHandleIfValid(HANDLE& handle) { if (handle && handle != INVALID_HANDLE_VALUE) CloseHandle(handle); handle = nullptr; }
 
 bool ReadPipe(HANDLE pipe, void* buffer, DWORD capacity, DWORD& transferred, const std::atomic<bool>& stopping) {
@@ -253,13 +247,15 @@ bool ParseBrokerServerMessage(const std::string& json, BrokerServerMessage& out)
 }
 
 bool ValidateBrokerServerIdentity(const BrokerServerIdentitySnapshot& snapshot) {
-    const auto expected = std::filesystem::path(snapshot.expectedImagePath);
+    const auto expected = std::filesystem::path(ExpectedServiceImage());
     const auto root = expected.parent_path();
-    if (snapshot.userSid != "S-1-5-18" || snapshot.pipeServerPid == 0 || snapshot.pipeServerPid != snapshot.servicePid ||
-        snapshot.tokenSessionId != 0 || snapshot.serviceName != ServiceName || !snapshot.serviceRunning ||
+    if (snapshot.pipeServerPid == 0 || snapshot.pipeServerPid != snapshot.servicePid ||
+        snapshot.serviceName != ServiceName || !snapshot.serviceRunning ||
+        CompareStringOrdinal(snapshot.serviceStartName.c_str(), static_cast<int>(snapshot.serviceStartName.size()), L"LocalSystem", -1, TRUE) != CSTR_EQUAL ||
         !expected.is_absolute() || expected.filename() != L"ChatpadVirtualXbox.exe" || root.filename() != L"ChatpadBridge" ||
-        !SamePath(snapshot.expectedImagePath, ExpectedServiceImage())) return false;
-    return SamePath(snapshot.imagePath, snapshot.expectedImagePath);
+        CompareStringOrdinal(snapshot.serviceBinaryPathName.c_str(), static_cast<int>(snapshot.serviceBinaryPathName.size()),
+            ExpectedServiceCommandLine().c_str(), -1, TRUE) != CSTR_EQUAL) return false;
+    return true;
 }
 
 struct VirtualBrokerController::Impl {
@@ -289,39 +285,41 @@ struct VirtualBrokerController::Impl {
     bool VerifyServer() {
         ULONG serverPid{};
         if (!GetNamedPipeServerProcessId(pipe, &serverPid)) { Fail("pipe_server_pid_unavailable:" + std::to_string(GetLastError())); return false; }
-        HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, serverPid);
-        if (!process) { Fail("pipe_server_process_open_failed:" + std::to_string(GetLastError())); return false; }
-        HANDLE token{};
-        if (!OpenProcessToken(process, TOKEN_QUERY, &token)) { Fail("pipe_server_token_open_failed:" + std::to_string(GetLastError())); CloseHandle(process); return false; }
-        DWORD size{}; GetTokenInformation(token, TokenUser, nullptr, 0, &size);
-        std::vector<uint8_t> tokenUser(size);
-        bool gotUser = size != 0 && GetTokenInformation(token, TokenUser, tokenUser.data(), size, &size);
-        LPWSTR sidText{};
-        std::string sid;
-        if (gotUser && ConvertSidToStringSidW(reinterpret_cast<TOKEN_USER*>(tokenUser.data())->User.Sid, &sidText)) {
-            const int needed = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, sidText, -1, nullptr, 0, nullptr, nullptr);
-            if (needed > 1) { std::string converted(static_cast<size_t>(needed), '\0'); WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, sidText, -1, converted.data(), needed, nullptr, nullptr); converted.pop_back(); sid = std::move(converted); }
-            LocalFree(sidText);
-        }
-        DWORD sessionId = UINT32_MAX, sessionSize{};
-        const bool gotSession = GetTokenInformation(token, TokenSessionId, &sessionId, sizeof(sessionId), &sessionSize) != FALSE;
-        std::array<wchar_t, 32768> image{}; DWORD imageSize = static_cast<DWORD>(image.size());
-        const bool gotPath = QueryFullProcessImageNameW(process, 0, image.data(), &imageSize) != FALSE;
-        CloseHandle(token); CloseHandle(process);
-
         SC_HANDLE manager = OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
-        SC_HANDLE service = manager ? OpenServiceW(manager, L"ChatpadHidMaestroBroker", SERVICE_QUERY_STATUS) : nullptr;
+        if (!manager) { Fail("broker_scm_open_failed:" + std::to_string(GetLastError())); return false; }
+        SC_HANDLE service = OpenServiceW(manager, L"ChatpadHidMaestroBroker", SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
+        if (!service) {
+            const DWORD errorCode = GetLastError(); CloseServiceHandle(manager);
+            Fail("broker_service_open_failed:" + std::to_string(errorCode)); return false;
+        }
         SERVICE_STATUS_PROCESS status{}; DWORD statusBytes{};
-        const bool gotService = service && QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO,
-            reinterpret_cast<LPBYTE>(&status), sizeof(status), &statusBytes) && status.dwCurrentState == SERVICE_RUNNING;
-        if (service) CloseServiceHandle(service); if (manager) CloseServiceHandle(manager);
-        BrokerServerIdentitySnapshot identity{sid, serverPid, gotService ? status.dwProcessId : 0,
-            gotSession ? sessionId : UINT32_MAX, ServiceName, gotService,
-            gotPath ? std::wstring(image.data(), imageSize) : std::wstring(), ExpectedServiceImage()};
+        if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO,
+            reinterpret_cast<LPBYTE>(&status), sizeof(status), &statusBytes)) {
+            const DWORD errorCode = GetLastError(); CloseServiceHandle(service); CloseServiceHandle(manager);
+            Fail("broker_service_status_query_failed:" + std::to_string(errorCode)); return false;
+        }
+        DWORD configBytes{};
+        QueryServiceConfigW(service, nullptr, 0, &configBytes);
+        const DWORD configError = GetLastError();
+        if (configError != ERROR_INSUFFICIENT_BUFFER || configBytes < sizeof(QUERY_SERVICE_CONFIGW) || configBytes > 65536) {
+            CloseServiceHandle(service); CloseServiceHandle(manager);
+            Fail("broker_service_config_size_failed:" + std::to_string(configError)); return false;
+        }
+        std::vector<uint8_t> configBuffer(configBytes);
+        auto* config = reinterpret_cast<QUERY_SERVICE_CONFIGW*>(configBuffer.data());
+        if (!QueryServiceConfigW(service, config, configBytes, &configBytes)) {
+            const DWORD errorCode = GetLastError(); CloseServiceHandle(service); CloseServiceHandle(manager);
+            Fail("broker_service_config_query_failed:" + std::to_string(errorCode)); return false;
+        }
+        const std::wstring startName = config->lpServiceStartName ? config->lpServiceStartName : L"";
+        const std::wstring binaryPathName = config->lpBinaryPathName ? config->lpBinaryPathName : L"";
+        CloseServiceHandle(service); CloseServiceHandle(manager);
+        const bool running = status.dwCurrentState == SERVICE_RUNNING;
+        BrokerServerIdentitySnapshot identity{serverPid, running ? status.dwProcessId : 0,
+            ServiceName, running, startName, binaryPathName};
         if (!ValidateBrokerServerIdentity(identity)) { Fail("pipe_server_identity_mismatch"); return false; }
         return true;
     }
-
     bool OpenPipe() {
         const auto deadline = GetTickCount64() + 15000;
         while (!stopping.load() && GetTickCount64() < deadline) {
