@@ -14430,3 +14430,10 @@ This append records the implementation commit and first publication. The documen
 - Verification: independently queried the build-manifest and readiness repository identity, and confirmed the runner/broker SHA-256 values match the already recorded 214-member package verification. `git diff --check` passed before this log entry.
 - Safety: no broker service lifecycle/configuration operation, device/driver/PnP/registry mutation, trust/security change, reboot, elevated bridge execution, or HIDMaestro global cleanup was performed. `legacy/` remains untouched.
 - Next: commit and push the continuity updates; provide the exact elevated `RepairBroker` command for the locality-fix package. After the user confirms repair, ask for a normal-user run using `build-broker-local-pipe-229-3961374/package/ChatpadBridge.exe`.
+
+## 2026-10-04 18:44 UTC — TASK 8L-C4L2 continuity push and readiness refresh
+
+- Committed the stale-package clarification and continuity updates as `186f3283cb024d831760da0c10faba667a85e543` and pushed `feature/chatpad-usermode-runner` to `origin`; the branch is clean and synchronized.
+- Regenerated ignored `artifacts/task-8lc4l2/readiness-input.json` for HEAD `186f3283cb024d831760da0c10faba667a85e543`, using the verified locality-fix package. Output confirmed all payload hashes re-read.
+- Focused setup validation passed: repository identity 5/5, package identity 8/8, baseline path 5/5, PnP restart-result 4/4, SCM native argv 4/4, and broker setup/package regressions PASS.
+- No service repair/install/stop/restart, device or driver mutation, reboot, elevated bridge run, or HIDMaestro cleanup was performed. The exact elevated RepairBroker command is now the sole required user action before rerunning the fixed package as a normal user.
