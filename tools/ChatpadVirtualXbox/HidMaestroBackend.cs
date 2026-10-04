@@ -72,9 +72,10 @@ internal sealed class SdkXboxController : IVirtualXboxController
                 if (existing != null) throw new BackendException("metadata_conflict", "Shared Xbox profile metadata already exists; no device creation attempted.");
             }
             phase = "check_present_controller_scope";
-            if (EnumControllerIndexGuard.HasPresentIndexZero(Registry.LocalMachine,
-                    DeviceNodePresence.IsPresent))
-                throw new BackendException("virtual_scope_conflict", "Existing present ROOT/SWD controller index zero would be touched by upstream profile sweep.");
+            string? conflictingInstance = EnumControllerIndexGuard.FindPresentIndexZero(Registry.LocalMachine,
+                DeviceNodePresence.IsPresent);
+            if (conflictingInstance is not null)
+                throw new BackendException("virtual_scope_conflict", "Existing present ROOT/SWD controller index zero would be touched by upstream profile sweep: " + conflictingInstance + ".");
             ownsMetadata = true;
             phase = "create_virtual_controller";
             controller = context.CreateController(profile, "chatpad360-winusb-poc");

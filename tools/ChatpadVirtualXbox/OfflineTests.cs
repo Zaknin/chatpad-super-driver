@@ -180,6 +180,9 @@ internal static class OfflineTests
         Check("present HIDMaestro index zero still blocks profile sweep", () =>
             EnumControllerIndexGuard.HasPresentIndexZero(
                 [(staleHidMaestroNode, (object?)0)], id => id == staleHidMaestroNode));
+        Check("present controller scope conflict identifies its exact instance ID", () =>
+            EnumControllerIndexGuard.FindPresentIndexZero(
+                [(staleHidMaestroNode, (object?)0)], id => id == staleHidMaestroNode) == staleHidMaestroNode);
         Check("present nonzero controller index does not conflict", () =>
             !EnumControllerIndexGuard.HasPresentIndexZero(
                 [(staleHidMaestroNode, (object?)1)], _ => true));

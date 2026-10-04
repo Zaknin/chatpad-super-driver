@@ -10,6 +10,9 @@ internal static class EnumControllerIndexGuard
     private static readonly string[] EnumRoots = ["ROOT", "SWD"];
 
     internal static bool HasPresentIndexZero(RegistryKey localMachine, Func<string, bool> isPresent)
+        => FindPresentIndexZero(localMachine, isPresent) is not null;
+
+    internal static string? FindPresentIndexZero(RegistryKey localMachine, Func<string, bool> isPresent)
     {
         foreach (string enumRoot in EnumRoots)
         {
@@ -23,24 +26,28 @@ internal static class EnumControllerIndexGuard
                 {
                     using var parameters = group!.OpenSubKey(instance + @"\Device Parameters");
                     object? value = parameters?.GetValue("ControllerIndex");
-                    if (value is int index && IsConflict(index, isPresent,
-                            enumRoot + "\\" + enumerator + "\\" + instance)) return true;
+                    if (value is int index && index == ControllerIndex)
+                    {
+                        string instanceId = enumRoot + "\\" + enumerator + "\\" + instance;
+                        if (isPresent(instanceId)) return instanceId;
+                    }
                 }
             }
         }
-        return false;
+        return null;
     }
 
     internal static bool HasPresentIndexZero(IEnumerable<(string InstanceId, object? Index)> entries,
         Func<string, bool> isPresent)
+        => FindPresentIndexZero(entries, isPresent) is not null;
+
+    internal static string? FindPresentIndexZero(IEnumerable<(string InstanceId, object? Index)> entries,
+        Func<string, bool> isPresent)
     {
         foreach (var entry in entries)
-            if (entry.Index is int index && IsConflict(index, isPresent, entry.InstanceId)) return true;
-        return false;
+            if (entry.Index is int index && index == ControllerIndex && isPresent(entry.InstanceId)) return entry.InstanceId;
+        return null;
     }
-
-    private static bool IsConflict(int index, Func<string, bool> isPresent, string instanceId) =>
-        index == ControllerIndex && isPresent(instanceId);
 }
 
 internal static class DeviceNodePresence

@@ -106,6 +106,9 @@ internal sealed class BrokerPipeServer
     }
 
     private static NamedPipeServerStream CreateFirstLocalPipe(string authorizedSid)
+        => CreateFirstLocalPipe(authorizedSid, PipeName);
+
+    private static NamedPipeServerStream CreateFirstLocalPipe(string authorizedSid, string pipeName)
     {
         string sddl = "D:P(A;;GA;;;SY)(A;;GRGW;;;" + authorizedSid + ")";
         if (!ConvertStringSecurityDescriptorToSecurityDescriptor(sddl, 1, out IntPtr securityDescriptor, out _))
@@ -120,7 +123,7 @@ internal sealed class BrokerPipeServer
             };
             using var pinned = new PinnedStructure<SecurityAttributes>(attributes);
             IntPtr raw = CreateNamedPipeW(
-                @"\\.\pipe\" + PipeName,
+                @"\\.\pipe\" + pipeName,
                 PipeOpenMode, // duplex, overlapped, FILE_FLAG_FIRST_PIPE_INSTANCE
                 PipeMode, // PIPE_REJECT_REMOTE_CLIENTS
                 1,
@@ -142,10 +145,11 @@ internal sealed class BrokerPipeServer
         if (!OperatingSystem.IsWindows()) return true;
         using var identity = WindowsIdentity.GetCurrent();
         string sid = identity.User?.Value ?? throw new BackendException("broker_test_identity_missing", "Self-test cannot obtain the current user SID.");
-        using var squatter = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        string testPipeName = PipeName + ".test." + Guid.NewGuid().ToString("N");
+        using var squatter = new NamedPipeServerStream(testPipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
         try
         {
-            using var unexpected = CreateFirstLocalPipe(sid);
+            using var unexpected = CreateFirstLocalPipe(sid, testPipeName);
             return false;
         }
         catch (BackendException e)
