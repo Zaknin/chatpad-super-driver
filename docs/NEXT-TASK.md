@@ -1,10 +1,10 @@
 # Next Task
 
-Recommended objective: regenerate the package with the persistent baseline-root fix, then rerun TASK 8L-C4L1 from the user's elevated PowerShell.
+Recommended objective: rerun TASK 8L-C4L1 from the user's elevated PowerShell using the final hash-verified package.
 
-Current state: package/readiness identity passed on the user's last run. Install next failed because `Save-ChatpadC3Baseline` accepted only `artifacts`, conflicting with C4's intentional durable path under `ProgramData\ChatpadBridge`. The guard now accepts only that exact persistent private root alongside artifacts; focused tests pass. Regenerate/hash-check from the new commit. Previous run copied runtime files and secured the ProgramData parent, but stopped before baseline creation or PnP binding.
+Current state: package/readiness identity passed on the user's last run. Install next failed because `Save-ChatpadC3Baseline` accepted only `artifacts`, conflicting with C4's intentional durable path under `ProgramData\ChatpadBridge`. The guard now accepts only that exact persistent private root alongside artifacts; focused tests pass. A package is regenerated after the final continuity commit. Previous run copied runtime files and secured the ProgramData parent, but stopped before baseline creation or PnP binding.
 
-Required branch and starting point: `feature/chatpad-usermode-runner`, pushed HEAD containing this baseline guard fix. Verify branch, commit and clean status first.
+Required branch and starting point: `feature/chatpad-usermode-runner`, pushed HEAD recorded in `artifacts/task-8lc4/build-task-8lc4l1-final/build-manifest.json`. Verify branch, commit, clean status and manifest/readiness hash agreement first.
 
 First inspect: `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md`; then `artifacts/task-8lc4/build-*/build-manifest.json` and `readiness-input.json`.
 
