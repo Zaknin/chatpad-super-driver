@@ -7,7 +7,7 @@
 #include "WinUsbTransport.h"
 #include "Topology.h"
 #include "KeyboardOutput.h"
-#include "VirtualHelper.h"
+#include "VirtualBrokerController.h"
 #include <algorithm>
 #include <chrono>
 #include <deque>
@@ -133,12 +133,11 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
         log.Event("initial zero-rumble command failed win32="+std::to_string(initialRumbleStop.win32Error));return {true};
     }
 
-    HelperOptions helper;helper.executable=options.helper.wstring();helper.backend="hidmaestro";helper.allowLiveVirtual=true;helper.durationMs=604800000;
-    std::unique_ptr<VirtualHelperController> virtualController;
+    std::unique_ptr<VirtualBrokerController> virtualController;
     if(options.virtualController){
-        virtualController=std::make_unique<VirtualHelperController>(helper);
+        virtualController=std::make_unique<VirtualBrokerController>();
         if(!virtualController->Create()){
-            log.Event("HIDMaestro create failed: "+virtualController->LastError());
+            log.Event("HIDMaestro broker create failed: "+virtualController->LastError());
             counts.backendFailure=true;return counts;
         }
         if(!virtualController->SubmitState(initial)){log.Event("initial neutral/controller submission failed: "+virtualController->LastError());virtualController->Disconnect();return {true};}
@@ -223,9 +222,9 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     if(virtualController){
         virtualNeutral=virtualController->SubmitState({});
         virtualController->Disconnect();
-        const auto helperError=virtualController->LastError();
-        virtualReleased=helperError.empty();
-        if(!virtualReleased)log.Event("virtual backend cleanup failed: "+helperError);
+        const auto brokerError=virtualController->LastError();
+        virtualReleased=brokerError.empty();
+        if(!virtualReleased)log.Event("virtual broker cleanup failed: "+brokerError);
     }
     // WinUSB may already be gone; still send one bounded zero command while the
     // interface remains available, and never retry after a disconnect.
@@ -276,9 +275,6 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     if(!processMutex){log.Event("single_instance_mutex_failed win32="+std::to_string(GetLastError()));return 2;}
     if(GetLastError()==ERROR_ALREADY_EXISTS){CloseHandle(processMutex);log.Event("BLOCKED: another ChatpadBridge run session is already active");return 5;}
     struct MutexCleanup {HANDLE handle;~MutexCleanup(){if(handle)CloseHandle(handle);}} mutexCleanup{processMutex};
-    if(options.virtualController&&(options.helper.empty()||!options.helper.is_absolute()||!std::filesystem::exists(options.helper))) {
-        log.Event("BLOCKED: absolute HIDMaestro helper executable not found; pass --backend-helper or package it beside the runner");return 2;
-    }
     log.Event("application_start version=1.0.0 mode=run elevation=not_required_by_runner session=foreground");
     const auto marker=log.directory/L"session.active.json";std::error_code markerError;
     if(std::filesystem::exists(marker,markerError)){

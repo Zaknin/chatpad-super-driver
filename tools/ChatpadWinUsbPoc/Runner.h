@@ -5,7 +5,6 @@
 namespace chatpad {
 struct RunnerOptions {
     std::filesystem::path executable;
-    std::filesystem::path helper;
     std::string instanceId;
     bool verbose{};
     bool keyboard{true};

@@ -5,6 +5,7 @@
 #include "Topology.h"
 #include "KeyboardOutput.h"
 #include "VirtualHelper.h"
+#include "VirtualBrokerController.h"
 #include "C3Session.h"
 #include "Runner.h"
 #include <atomic>
@@ -129,9 +130,9 @@ int main(int argc,char** argv) {
         }
         if(command=="run" || command=="status" || command=="diagnostics" || command=="probe") {
             RunnerOptions options;options.executable=std::filesystem::absolute(std::filesystem::path(argv[0]));
-            options.helper=helperPath.empty()?options.executable.parent_path()/L"ChatpadVirtualXbox.exe":std::filesystem::absolute(std::filesystem::path(helperPath));
             options.instanceId=instance;options.verbose=verbose;options.keyboard=!noKeyboard;options.virtualController=!noVirtualController;
             if(command=="run" && backend!="hidmaestro")throw std::runtime_error("normal run requires the installed HIDMaestro backend");
+            if(command=="run" && (!helperPath.empty() || allowBridge))throw std::runtime_error("run uses the installed HIDMaestro broker; --backend-helper and --allow-live-bridge are not accepted");
             if(command!="run" && (!helperPath.empty() || noKeyboard || noVirtualController))throw std::runtime_error("runtime options apply to run only");
             if(command=="run" && !SetConsoleCtrlHandler(ConsoleHandler,TRUE))throw std::runtime_error("console handler unavailable");
             const int result=RunUserModeBridge(command,options,stopped);
@@ -141,8 +142,8 @@ int main(int argc,char** argv) {
         bool descriptor=command=="descriptors" || command=="enumerate";
         bool readController=command=="monitor-controller" || command=="monitor-all" || bridge;
         bool readChatpad=command=="monitor-chatpad" || command=="monitor-all" || command=="activate-chatpad" || bridge;
-        if(bridge && (!allowBridge || helperPath.empty() || !std::filesystem::path(helperPath).is_absolute()))
-            throw std::runtime_error("bridge requires explicit --allow-live-bridge and absolute --backend-helper; no implicit virtual creation/input injection");
+        if(bridge && (!allowBridge || !helperPath.empty()))
+            throw std::runtime_error("bridge requires explicit --allow-live-bridge and uses only the installed HIDMaestro broker; --backend-helper is not accepted");
         if(session&&(helperPath.empty()||!std::filesystem::path(helperPath).is_absolute()||activate||allowBridge))
             throw std::runtime_error("c3-session requires absolute backend-helper and staged stdin commands; no upfront activation/bridge option");
         if(!bridge && !session && (allowBridge || !helperPath.empty()))throw std::runtime_error("backend options require bridge or c3-session command");
@@ -188,11 +189,10 @@ int main(int argc,char** argv) {
         }
         std::atomic<int> failure{0};std::atomic<unsigned> controllerReports{0},chatpadReports{0};
         std::mutex motorMutex;
-        std::unique_ptr<VirtualHelperController> virtualController;
+        std::unique_ptr<VirtualBrokerController> virtualController;
         std::unique_ptr<IKeyboardOutput> output;
         if(bridge) {
-            HelperOptions options;options.executable=std::filesystem::path(helperPath).wstring();options.backend=backend;options.allowLiveVirtual=true;
-            virtualController=std::make_unique<VirtualHelperController>(options);
+            virtualController=std::make_unique<VirtualBrokerController>();
             if(!virtualController->Create()){Print("virtual backend unavailable: "+virtualController->LastError());return 12;}
             if(!virtualController->SubmitState(initialState)){Print("initial virtual submit failed: "+virtualController->LastError());return 12;}
             virtualController->SetRumbleCallback([&](uint16_t left,uint16_t right){
