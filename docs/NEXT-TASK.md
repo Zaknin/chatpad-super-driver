@@ -1,33 +1,33 @@
 # Next Task
 
-## TASK 8L-C4L2 — Repair failed-create broker cleanup
+## TASK 8L-C4L2 — Retry broker creation after read-only PnP scope check
 
-- Branch: `feature/chatpad-usermode-runner`; fix commit `299569e484ee61d993b5879ded04535e2848bb1f`, plus the current package-handoff continuity commit.
-- Latest user run reached RUNNING, then broker create failed with `broker_pipe_closed:109`. The diagnostic log records `BackendException: Create first.` from cleanup. `CreateAsync` attempted `SubmitState(default)` after `Create()` failed; cleanup threw, then `StopAsync` repeated the invalid submission and terminated the service.
-- Local fix tracks whether backend `Create()` returned successfully and submits neutral state only in that case. Callback clearing, disconnect, and dispose still run after failed creation; create errors remain surfaced. Focused regression passes.
-- Package `artifacts/task-8lc4l2/build-broker-create-failure-299569e/package` is built from the fix commit. Independent manifest readback passed 214/214. Runner SHA-256 `0041E6B4CD834FDB36721DE0E0B5961EE5CC509765F19C0FAF215871A87FDE7F`; broker SHA-256 `4EA7684E41EA6CAD32BFD8C80468E3E299EA5A925A6909F7C6C9C1FE396CFD3D`.
-- Managed suite after correction: 156 pass, 1 pipe-squatter test fails because the running broker owns the fixed pipe. C4 setup/readiness passed; native tests were skipped because native sources were unchanged. No service was stopped by this agent.
+- Branch: `feature/chatpad-usermode-runner`; source package implementation is commit `299569e484ee61d993b5879ded04535e2848bb1f`; continuity branch currently includes `76cc6b742b8bac0ca93652d96eff5dd610399868`.
+- Current state: user manually repaired `ChatpadHidMaestroBroker` with `build-broker-create-failure-299569e` and confirmed it Running as LocalSystem. Normal-user runner opened WinUSB and passed Chatpad activation, then received `virtual_scope_conflict` before virtual controller creation. Installed runner and broker hashes equal the package. The service log is stale (19:17 UTC `Create first.`), not evidence about the 19:30 UTC run.
+- Current read-only snapshot: one stale `SWD\HIDMAESTRO\HM_622C184E37F6891E` registry record has `ControllerIndex=0`, but `CM_Locate_DevNode` returns `CR_NO_SUCH_DEVNODE` and PnPUtil/Get-PnpDevice show no matching present node. The exact node present at the time of the broker failure is unknown because the error lacks its instance ID.
 
-Do not mutate or restart the service automatically. Build, commit, and push the correction, then provide one elevated `RepairBroker` command and wait. After successful repair, launch from ordinary PowerShell. If another service error occurs, use the protected service log.
+### Immediate user step
 
-After commit/push and readiness regeneration, run the following.
-
-Elevated PowerShell:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-create-failure-299569e\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
-```
-
-After successful repair, ordinary PowerShell:
+In ordinary, non-elevated PowerShell, retry the same package:
 
 ```powershell
 & "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-broker-create-failure-299569e\package\ChatpadBridge.exe" run
 ```
 
-If broker create fails again, inspect `C:\Program Files\ChatpadBridge\ChatpadBrokerService.log` before further implementation changes.
+If it reaches `state=RUNNING`, test controller input and Chatpad, then test rumble once and stop with Ctrl+C. Send the complete output through `session ended` / `state=STOPPING`.
 
-Acceptance: broker create succeeds and service remains running; verify XInput/buttons/sticks/triggers, Chatpad, rumble callback, and graceful Ctrl+C cleanup. Reconnect, crash recovery, and rejected/disconnected client survival remain to qualify. Return full logs.
+If the same `virtual_scope_conflict` appears, do not delete devices or registry keys. Capture read-only PnP state immediately and update the guard diagnostic to include the exact conflicting instance ID before another live retry.
 
-Safety: no driver/PnP/registry/device changes, trust/security changes, reboot, elevated bridge run, or HIDMaestro global cleanup. Hard-client-crash physical rumble remains outside broker cleanup scope.
+### Preconditions and safety
 
-Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, `tools/ChatpadVirtualXbox/BrokerSession.cs`, `tools/ChatpadVirtualXbox/BrokerSessionTests.cs`, and final package manifest/readiness.
+- The existing elevated `RepairBroker` succeeded; no further service repair is needed for this retry.
+- Do not run the bridge elevated. Do not stop/restart the service, remove devices, edit registry, invoke HIDMaestro global cleanup, change trust, or reboot.
+- Preserve the guard's rule that a currently present ROOT/SWD index-zero device blocks creation.
+
+### Acceptance
+
+- Broker create succeeds and service remains Running.
+- As a normal user, verify XInput slot, controller buttons/sticks/triggers, Chatpad, rumble callback to physical controller, and clean Ctrl+C virtual-device release.
+- Continue with reconnect and crash-recovery qualification only after normal runtime succeeds.
+
+Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, `docs/PROJECT-STATE.md`, `tools/ChatpadVirtualXbox/EnumControllerIndexGuard.cs`, and the package build manifest.
