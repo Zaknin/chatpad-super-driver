@@ -19,6 +19,61 @@ internal static class OfflineTests
             catch (BackendException) { return true; }
         });
         var neutral = new XboxState(0, 0, 0, 0, 0, 0, 0);
+        Check("broker ping exact v1 control frame", () =>
+        {
+            var request = BrokerProtocol.ParseControlRequest("{\"version\":1,\"id\":7,\"op\":\"ping\"}");
+            return request.Id == 7 && request.Operation == BrokerOperation.Ping;
+        });
+        Check("broker state uses unsigned 64-bit sequence", () =>
+        {
+            var state = BrokerProtocol.ParseStateFrame("{\"version\":1,\"sequence\":18446744073709551615,\"op\":\"submit-state\",\"buttons\":65535,\"leftTrigger\":255,\"rightTrigger\":0,\"lx\":-32768,\"ly\":32767,\"rx\":0,\"ry\":-1}");
+            return state.Sequence == ulong.MaxValue && state.State == new XboxState(65535, 255, 0, -32768, 32767, 0, -1);
+        });
+        Check("broker sequence is strictly monotonic and does not wrap", () =>
+        {
+            var sequence = new BrokerSequenceTracker();
+            return sequence.TryAccept(ulong.MaxValue) && !sequence.TryAccept(0) && !sequence.TryAccept(ulong.MaxValue);
+        });
+        foreach (string invalidBrokerControl in new[]
+        {
+            "{}", "{", "[]", "{\"version\":2,\"id\":1,\"op\":\"ping\"}",
+            "{\"version\":1,\"id\":-1,\"op\":\"ping\"}",
+            "{\"version\":1,\"id\":1,\"id\":2,\"op\":\"ping\"}",
+            "{\"version\":1,\"id\":1,\"op\":\"ping\",\"extra\":true}",
+            "{\"version\":1,\"id\":1,\"op\":\"quit\"}",
+            "{\"version\":1,\"id\":1,\"op\":\"ping\",\"sequence\":0}"
+        })
+        {
+            string bad = invalidBrokerControl;
+            Throws("broker rejects non-exact control schema " + passed, () => BrokerProtocol.ParseControlRequest(bad));
+        }
+        foreach (string invalidBrokerState in new[]
+        {
+            "{\"version\":1,\"sequence\":-1,\"op\":\"submit-state\",\"buttons\":0,\"leftTrigger\":0,\"rightTrigger\":0,\"lx\":0,\"ly\":0,\"rx\":0,\"ry\":0}",
+            "{\"version\":1,\"sequence\":18446744073709551616,\"op\":\"submit-state\",\"buttons\":0,\"leftTrigger\":0,\"rightTrigger\":0,\"lx\":0,\"ly\":0,\"rx\":0,\"ry\":0}",
+            "{\"version\":1,\"sequence\":0,\"op\":\"submit-state\",\"buttons\":65536,\"leftTrigger\":0,\"rightTrigger\":0,\"lx\":0,\"ly\":0,\"rx\":0,\"ry\":0}",
+            "{\"version\":1,\"sequence\":0,\"op\":\"submit-state\",\"buttons\":0,\"leftTrigger\":0,\"rightTrigger\":0,\"lx\":0,\"ly\":0,\"rx\":0,\"ry\":0,\"ry\":0}",
+            "{\"version\":1,\"sequence\":0,\"op\":\"submit-state\",\"buttons\":0,\"leftTrigger\":0,\"rightTrigger\":0,\"lx\":0,\"ly\":0,\"rx\":0,\"ry\":0,\"id\":1}"
+        })
+        {
+            string bad = invalidBrokerState;
+            Throws("broker rejects invalid state schema " + passed, () => BrokerProtocol.ParseStateFrame(bad));
+        }
+        Check("broker authorization accepts exact installed SID in active local console", () =>
+        {
+            var policy = new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001");
+            return policy.IsAuthorized(new("S-1-5-21-100-200-300-1001", 4, 4, true, false, false));
+        });
+        foreach (var peer in new[]
+        {
+            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1002", 4, 4, true, false, false),
+            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 3, 4, true, false, false),
+            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 4, 4, false, false, false),
+            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 4, 4, true, true, false),
+            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 4, 4, true, false, true)
+        })
+            Check("broker authorization rejects wrong SID, stale session, RDP, anonymous, or remote", () => !new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001").IsAuthorized(peer));
+        Throws("broker authorization rejects missing authorized SID", () => new BrokerPeerAuthorization(""));
         int contextFactories = 0;
         var runtimeMock = new MockBackend();
         IVirtualXboxController Factory() { contextFactories++; return runtimeMock; }
