@@ -25,6 +25,38 @@ internal static class OfflineTests
         Check("broker pipe uses first-instance and rejects remote clients", () =>
             (BrokerPipeServer.PipeOpenMode & BrokerPipeServer.FirstPipeInstanceFlag) != 0 &&
             (BrokerPipeServer.PipeMode & BrokerPipeServer.RejectRemoteClientsFlag) != 0);
+        Check("broker peer identity exception returns a bounded fault without escaping the connection loop", () =>
+        {
+            var frames = new List<string>();
+            var policy = new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001");
+            var result = BrokerPipeServer.CaptureAuthorizedPeerAsync(
+                () => throw new InvalidOperationException("client session unavailable"), policy,
+                (line, _) => { frames.Add(line); return ValueTask.CompletedTask; }, CancellationToken.None).GetAwaiter().GetResult();
+            if (result is not null || frames.Count != 1) return false;
+            using var fault = JsonDocument.Parse(frames[0]);
+            var root = fault.RootElement;
+            return root.EnumerateObject().Count() == 4 && root.GetProperty("version").GetInt32() == 1 &&
+                root.GetProperty("op").GetString() == "fault" &&
+                root.GetProperty("error").GetString() == "broker_peer_identity_failed" &&
+                root.GetProperty("detail").GetString() == "client session unavailable";
+        });
+        Check("broker peer pipe write failure cannot escape connection handling", () =>
+        {
+            var policy = new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001");
+            var result = BrokerPipeServer.CaptureAuthorizedPeerAsync(
+                () => throw new InvalidOperationException("client session unavailable"), policy,
+                (_, _) => ValueTask.FromException(new IOException("client disconnected")), CancellationToken.None).GetAwaiter().GetResult();
+            return result is null;
+        });
+        Check("broker session exceptions preserve the narrow backend code in a protocol fault", () =>
+        {
+            using var fault = JsonDocument.Parse(BrokerPipeServer.CreateSessionFault(new BackendException("backend_create_failed", "virtual device creation failed")));
+            var root = fault.RootElement;
+            return root.EnumerateObject().Count() == 4 && root.GetProperty("version").GetInt32() == 1 &&
+                root.GetProperty("op").GetString() == "fault" &&
+                root.GetProperty("error").GetString() == "backend_create_failed" &&
+                root.GetProperty("detail").GetString() == "virtual device creation failed";
+        });
         Check("broker pipe refuses a pre-created local pipe-name squatter", () => BrokerPipeServer.TestRejectPipeSquatting());
         var neutral = new XboxState(0, 0, 0, 0, 0, 0, 0);
         Check("broker ping exact v1 control frame", () =>

@@ -40,29 +40,31 @@ internal sealed class BrokerPipeServer
             try { await pipe.WaitForConnectionAsync(stopping).ConfigureAwait(false); }
             catch (OperationCanceledException) when (stopping.IsCancellationRequested) { break; }
 
-            var peer = WindowsClientIdentity.Capture(pipe);
-            if (!authorization.Policy.IsAuthorized(peer))
-            {
-                Console.Error.WriteLine("broker rejected peer outside the authorized active local console session");
-                continue;
-            }
+            var peer = await CaptureAuthorizedPeerAsync(
+                () => WindowsClientIdentity.Capture(pipe), authorization.Policy,
+                (line, token) => WriteFrameAsync(pipe, line, token), stopping).ConfigureAwait(false);
+            if (peer is null) continue;
 
             await using var session = new BrokerSession(backendFactory, (line, token) => WriteFrameAsync(pipe, line, token));
             using var connectionStop = CancellationTokenSource.CreateLinkedTokenSource(stopping);
             var reader = ReadClientAsync(pipe, session, connectionStop.Token);
             var stopWait = Task.Delay(Timeout.InfiniteTimeSpan, connectionStop.Token);
             var completed = await Task.WhenAny(reader, session.Faulted, stopWait).ConfigureAwait(false);
-            if (completed == session.Faulted)
-                throw new BackendException("broker_session_failed", session.Faulted.Result.Message);
+            Exception? connectionFailure = completed == session.Faulted ? session.Faulted.Result : null;
             if (completed == reader)
             {
                 try { await reader.ConfigureAwait(false); }
                 catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
-                catch (Exception e) when (!stopping.IsCancellationRequested) { Console.Error.WriteLine("broker client ended: " + e.Message); }
+                catch (Exception e) when (!stopping.IsCancellationRequested) { connectionFailure = e; }
             }
             connectionStop.Cancel();
             await session.StopAsync().ConfigureAwait(false);
             if (stopping.IsCancellationRequested) break;
+            if (connectionFailure is not null)
+            {
+                try { await WriteFrameAsync(pipe, CreateSessionFault(connectionFailure), stopping).ConfigureAwait(false); }
+                catch (Exception) when (!stopping.IsCancellationRequested) { }
+            }
         }
     }
 
@@ -171,6 +173,60 @@ internal sealed class BrokerPipeServer
         if (payload.Length > BrokerProtocol.MaximumFrameBytes + 1) throw new BackendException("broker_frame_too_large", "Server frame exceeded the fixed bound.");
         await pipe.WriteAsync(payload, token).ConfigureAwait(false);
         await pipe.FlushAsync(token).ConfigureAwait(false);
+    }
+
+    internal static async Task<BrokerPeerSnapshot?> CaptureAuthorizedPeerAsync(
+        Func<BrokerPeerSnapshot> capture,
+        BrokerPeerAuthorization policy,
+        Func<string, CancellationToken, ValueTask> writeFrame,
+        CancellationToken stopping)
+    {
+        ArgumentNullException.ThrowIfNull(capture);
+        ArgumentNullException.ThrowIfNull(policy);
+        ArgumentNullException.ThrowIfNull(writeFrame);
+        BrokerPeerSnapshot peer;
+        try { peer = capture(); }
+        catch (Exception error) when (!stopping.IsCancellationRequested)
+        {
+            await TryWriteFaultAsync(writeFrame, CreateFault("broker_peer_identity_failed", error.Message), stopping).ConfigureAwait(false);
+            return null;
+        }
+
+        if (stopping.IsCancellationRequested) return null;
+        if (!policy.IsAuthorized(peer))
+        {
+            await TryWriteFaultAsync(writeFrame, CreateFault("broker_peer_unauthorized", null), stopping).ConfigureAwait(false);
+            return null;
+        }
+        return peer;
+    }
+
+    private static async Task TryWriteFaultAsync(Func<string, CancellationToken, ValueTask> writeFrame, string frame, CancellationToken stopping)
+    {
+        try { await writeFrame(frame, stopping).ConfigureAwait(false); }
+        catch (Exception) { /* A peer that closed its pipe cannot take down the service. */ }
+    }
+
+    internal static string CreateSessionFault(Exception error)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        string code = error is BackendException backend ? backend.Code : "broker_session_failed";
+        return CreateFault(code, error.Message);
+    }
+
+    private static string CreateFault(string code, string? detail)
+    {
+        const int maximumDetailCharacters = 512;
+        if (detail is not null && detail.Length > maximumDetailCharacters) detail = detail[..maximumDetailCharacters];
+        if (detail is null)
+            return JsonSerializer.Serialize(new { version = BrokerProtocol.Version, op = "fault", error = code });
+        return JsonSerializer.Serialize(new
+        {
+            version = BrokerProtocol.Version,
+            op = "fault",
+            error = code,
+            detail
+        });
     }
 
     [StructLayout(LayoutKind.Sequential)]
