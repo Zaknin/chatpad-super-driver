@@ -1,27 +1,25 @@
 # Next Task
 
-## TASK 8L-C4L2 — Publish instance-diagnostic package, then retry live broker
+## TASK 8L-C4L2 — Install diagnostic broker package and identify live scope blocker
 
-- Implementation branch/commit: `feature/chatpad-usermode-runner` / `b621b2714ec133f2875d25d00c900da22866a95f`.
-- Package: `artifacts/task-8lc4l2/build-scope-conflict-id-b621b27/package`; manifest has 214 members; independent path/length/SHA-256 readback is 214/214. Runner SHA-256 `3A0190A4A35982F78A4FDF7FD61C1088B71696D78A1A9EAB1305CB0EA7C0441D`; broker SHA-256 `28D9DA564EC7799F7DAFC2E9A0815712EF7B6976A1BF32E0027248D074F96B58`.
-- Tests: managed 158/158; focused native broker/client and runner lifecycle 2/2; C4 setup and readiness checks passed; package/readiness/build identities match implementation commit.
-- Prepared deterministic archive: `artifacts/task-8lc4l2/publication/20261004T194810Z/task-8l-c4l2-release.zip`, SHA-256 `05CD44BF7CE9A7A933DE078B5DD641992575F0874D4F3E097B3B5A610EBB0222`. Canonical destination is `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261004T194810Z`.
-- Two normal-user runs with the previously installed package failed with `virtual_scope_conflict` after Chatpad activation. Immediate post-run device checks found no present ROOT/SWD index-zero device; exact transient instance remains unknown. New package includes that instance ID in the error while preserving fail-closed blocking.
+- Branch: `feature/chatpad-usermode-runner`; diagnostic implementation commit `b621b2714ec133f2875d25d00c900da22866a95f`; canonical release result/receipt identity commit `099da4ab13a6f46912e4993dec6c38415681680a`.
+- The new diagnostic package is published under `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261004T194810Z`. Archive SHA-256: `05CD44BF7CE9A7A933DE078B5DD641992575F0874D4F3E097B3B5A610EBB0222`. Offline tests: managed 158/158, focused native 2/2, package 214/214 exact hashes, C4 setup and readiness checks PASS.
+- Two earlier normal-user runs reached `RUNNING` and passed Chatpad activation but failed closed at the present ROOT/SWD index-zero guard. Read-only checks immediately after both runs found no matching present node, so the exact transient instance is still unknown. The new package includes the conflicting instance ID in the error response; the guard remains strict.
 
-### Remaining offline release steps
+### Manual elevated setup
 
-1. Commit and push the current continuity-only changes to `origin/feature/chatpad-usermode-runner`.
-2. Run `tools/Publish-ChatpadC4L2.ps1 -Mode Publish -UtcTimestamp '20261004T194810Z' -BuildDirectory 'artifacts/task-8lc4l2/build-scope-conflict-id-b621b27' -VerificationSummaryPath 'artifacts/task-8lc4l2/build-scope-conflict-id-b621b27/release-verification.json'`.
-3. Verify publication receipts, final `.sha256` sidecar, and canonical result manifest; append final path/hash evidence to continuity docs.
-
-### Manual live step
-
-After publication, user runs this from elevated PowerShell:
+In elevated PowerShell, run:
 
 ```powershell
 & "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-scope-conflict-id-b621b27\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
 ```
 
-Then launch the same package's `ChatpadBridge.exe run` in ordinary PowerShell. If `virtual_scope_conflict` repeats, capture the newly reported instance ID and investigate owner/presence read-only. Do not delete records/devices, weaken the guard, stop the service, or reboot. Continue acceptance only after successful virtual creation: XInput, controls, Chatpad, rumble, clean shutdown, then reconnect/crash recovery.
+After it returns PASS, run in ordinary, non-elevated PowerShell:
 
-Inspect first: latest TASK 8L-C4L2 entries in `docs/WORKLOG.md`, the exact package build manifest, and the final publication receipt.
+```powershell
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-scope-conflict-id-b621b27\package\ChatpadBridge.exe" run
+```
+
+If creation succeeds, qualify XInput/buttons/sticks/triggers, Chatpad, rumble callback, and Ctrl+C cleanup. If `virtual_scope_conflict` repeats, send the full error including its instance ID; inspect presence and ownership read-only. Do not delete devices/registry records, weaken the guard, stop the service, or reboot. Proceed to reconnect and crash-recovery testing only after the normal runtime succeeds.
+
+Inspect first: latest C4L2 entries in `docs/WORKLOG.md`, package `build-manifest.json`, final `result-manifest.json`, and `publication-receipt.json`.
