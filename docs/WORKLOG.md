@@ -14467,3 +14467,10 @@ This append records the implementation commit and first publication. The documen
 - Files: `tools/ChatpadVirtualXbox/BrokerSession.cs`, `BrokerSessionTests.cs`, and continuity docs. No durable architecture decision changed.
 - Safety: no service lifecycle/configuration mutation, device/driver/PnP/registry change, trust/security change, reboot, elevated bridge run, or HIDMaestro global cleanup was performed. `legacy/` is untouched.
 - Next: package this fix from the committed HEAD, verify all package hashes and C4 setup/readiness, push only the feature branch, and give the user one manual elevated `RepairBroker` command.
+
+## 2026-10-04 19:22 UTC — TASK 8L-C4L2 failed-create fix package handoff
+
+- Built after fix commit `299569e484ee61d993b5879ded04535e2848bb1f` using `tools/Build-ChatpadBridge.ps1 -SkipNativeTests -OutputDirectory artifacts/task-8lc4l2/build-broker-create-failure-299569e`.
+- Build manifest binds the package to branch `feature/chatpad-usermode-runner` and the fix commit. C4 setup/readiness checks passed. Independent package member readback passed 214/214 files with no missing, changed, or extra members. Runner SHA-256: `0041E6B4CD834FDB36721DE0E0B5961EE5CC509765F19C0FAF215871A87FDE7F`; broker SHA-256: `4EA7684E41EA6CAD32BFD8C80468E3E299EA5A925A6909F7C6C9C1FE396CFD3D`.
+- Packaged managed self-test reported 156 passed and one environment-limited pipe-squatter failure because the installed broker owns the fixed pipe. Native tests were skipped because native source files were unchanged. Readiness will be regenerated after the continuity commit.
+- No service operation or physical-device mutation was performed. Next: commit the package handoff, regenerate readiness, rerun focused setup checks, push only the feature branch, and provide the manual elevated RepairBroker command.
