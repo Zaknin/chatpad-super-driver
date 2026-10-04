@@ -117,7 +117,7 @@ function Test-ChatpadSourceRepositoryIdentity {
  $repository=Get-Field $Readiness 'Repository'
  if($null -eq $repository){return $false}
  $task=Get-Field $Readiness 'Task'
- $allowedBranch=if($task -ceq '8L-C4'){'feature/chatpad-usermode-runner'}else{'feature/chatpad-winusb-bridge-poc'}
+ $allowedBranch=if($task -in @('8L-C4','8L-C4L2')){'feature/chatpad-usermode-runner'}else{'feature/chatpad-winusb-bridge-poc'}
  $branch=[string](Get-Field $repository 'Branch')
  $commit=[string](Get-Field $repository 'Commit')
  return $branch -ceq $allowedBranch -and $commit -cmatch '^[0-9a-f]{40}$' -and

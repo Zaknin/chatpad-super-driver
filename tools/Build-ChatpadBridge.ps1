@@ -3,7 +3,7 @@ param([string]$OutputDirectory,[switch]$SkipNativeTests)
 Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $repo=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-if(-not $OutputDirectory){$OutputDirectory=Join-Path $repo ('artifacts/task-8lc4/build-'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ'))}
+if(-not $OutputDirectory){$OutputDirectory=Join-Path $repo ('artifacts/task-8lc4l2/build-'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ'))}
 $output=[IO.Path]::GetFullPath($OutputDirectory)
 $artifactRoot=[IO.Path]::GetFullPath((Join-Path $repo 'artifacts'))+[IO.Path]::DirectorySeparatorChar
 if(-not $output.StartsWith($artifactRoot,[StringComparison]::OrdinalIgnoreCase)){throw 'Build output must remain inside ignored artifacts.'}
@@ -29,8 +29,8 @@ if(-not $SkipNativeTests){
 $dotnet='C:/Dev/tools/dotnet10/dotnet.exe'
 $sdk=Join-Path $repo 'artifacts/task-8lc2r1/virtual/real/bin/ChatpadVirtualXbox/release/HIDMaestro.Core.dll'
 if((Get-FileHash -LiteralPath $sdk).Hash -ine 'CA45EFE79C2406EB766C972F9DFEBC4BA80E33E95923D2DF4B49B8F470434E75'){throw 'Pinned HIDMaestro SDK hash mismatch.'}
-& $dotnet publish (Join-Path $PSScriptRoot 'ChatpadVirtualXbox/ChatpadVirtualXbox.csproj') -c Release -p:EnableHidMaestro=true "-p:HidMaestroSdkPath=$sdk" "-p:BaseOutputPath=$(Join-Path $helper 'obj/bin/')" "-p:BaseIntermediateOutputPath=$(Join-Path $helper 'obj/intermediate/')" "-p:IntermediateOutputPath=$(Join-Path $helper 'obj/intermediate/')" "-p:AppHostIntermediatePath=$(Join-Path $helper 'obj/intermediate/ChatpadVirtualXbox.exe')" "-p:MSBuildProjectExtensionsPath=$(Join-Path $helper 'obj/intermediate/')" -o $helper
-if($LASTEXITCODE -ne 0){throw "HIDMaestro helper Release build failed: $LASTEXITCODE"}
+& $dotnet publish (Join-Path $PSScriptRoot 'ChatpadVirtualXbox/ChatpadVirtualXbox.csproj') -c Release -p:EnableHidMaestro=true -r win-x64 --self-contained true -p:RestoreSources=https://api.nuget.org/v3/index.json "-p:HidMaestroSdkPath=$sdk" "-p:BaseOutputPath=$(Join-Path $helper 'obj/bin/')" "-p:BaseIntermediateOutputPath=$(Join-Path $helper 'obj/intermediate/')" "-p:IntermediateOutputPath=$(Join-Path $helper 'obj/intermediate/')" "-p:AppHostIntermediatePath=$(Join-Path $helper 'obj/intermediate/ChatpadVirtualXbox.exe')" "-p:MSBuildProjectExtensionsPath=$(Join-Path $helper 'obj/intermediate/')" -o $helper
+if($LASTEXITCODE -ne 0){throw "HIDMaestro LocalSystem service Release publish failed: $LASTEXITCODE"}
 Copy-Item -LiteralPath (Join-Path $native 'build/Release/ChatpadBridge.exe') -Destination $package
 Get-ChildItem -LiteralPath $helper -File|Where-Object Extension -ne '.pdb'|Copy-Item -Destination $package
 $qualifiedHelper=Join-Path $repo 'artifacts/task-8lc2r1/virtual/real/bin/ChatpadVirtualXbox/release'
@@ -42,12 +42,12 @@ foreach($name in $pins.Keys){$source=Join-Path $sourcePackage $name;if((Get-File
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'ChatpadSetup.ps1') -Destination (Join-Path $package 'ChatpadSetup.ps1')
 $tools=Join-Path $package 'tools';New-Item -ItemType Directory -Force -Path $tools|Out-Null
 foreach($name in @('ChatpadBinding','ChatpadBinding.ps1','ChatpadHidMaestroPackage.psm1','ChatpadC4Package.psm1')){Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $tools -Recurse -Force}
-$readiness=Join-Path $repo 'artifacts/task-8lc4/readiness-input.json'
+$readiness=Join-Path $repo 'artifacts/task-8lc4l2/readiness-input.json'
 & (Join-Path $PSScriptRoot 'New-ChatpadC4Readiness.ps1') -RunnerPath (Join-Path $package 'ChatpadBridge.exe') -HelperDirectory $package -OutputPath $readiness
 if($LASTEXITCODE -ne 0){throw 'C4 readiness generation failed.'}
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Test-ChatpadC4Setup.ps1')
 if($LASTEXITCODE -ne 0){throw 'C4 setup/elevation tests failed.'}
 $files=@(Get-ChildItem -LiteralPath $package -File -Recurse|Sort-Object FullName|ForEach-Object {[pscustomobject]@{Path=$_.FullName.Substring($package.Length+1);Length=$_.Length;SHA256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
-$report=[pscustomobject]@{Schema=1;Task='8L-C4';BuiltUtc=[DateTime]::UtcNow.ToString('o');Repository=[pscustomobject]@{Branch=[string](& git.exe -C $repo branch --show-current);Commit=[string](& git.exe -C $repo rev-parse HEAD)};PackagePath=$package;RunnerPath=(Join-Path $package 'ChatpadBridge.exe');HelperPath=(Join-Path $package 'ChatpadVirtualXbox.exe');NativeCTest=$nativeCTest;C4Tests='PASS';Files=$files}
+$report=[pscustomobject]@{Schema=1;Task='8L-C4L2';BuiltUtc=[DateTime]::UtcNow.ToString('o');Repository=[pscustomobject]@{Branch=[string](& git.exe -C $repo branch --show-current);Commit=[string](& git.exe -C $repo rev-parse HEAD)};PackagePath=$package;RunnerPath=(Join-Path $package 'ChatpadBridge.exe');HelperPath=(Join-Path $package 'ChatpadVirtualXbox.exe');NativeCTest=$nativeCTest;C4Tests='PASS';Files=$files}
 $report|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $output 'build-manifest.json') -Encoding utf8
 $report|ConvertTo-Json -Depth 8

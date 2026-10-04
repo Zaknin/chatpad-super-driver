@@ -66,6 +66,9 @@ function Assert-ChatpadC4PackageIdentity {
  }
  $setupRecord=@($files|Where-Object Role -ceq 'SetupTool')[0]
  if(-not(Test-Path -LiteralPath $SetupScriptPath -PathType Leaf) -or (Get-FileHash -LiteralPath $SetupScriptPath -Algorithm SHA256).Hash -ine [string]$setupRecord.SHA256){throw 'SetupTool hash mismatch: the executing ChatpadSetup.ps1 differs from the package readiness identity.'}
+ $declaredMembers=@($packageRecords|Where-Object Role -like 'VirtualFile:*'|ForEach-Object {([string]$_.Role).Substring('VirtualFile:'.Length)}|Sort-Object -Unique)
+ $actualMembers=@(Get-ChildItem -LiteralPath $root -File | Where-Object {$_.Name -notin @('ChatpadSetup.ps1','HIDMaestro.Core.xml') -and $_.Extension -ne '.pdb'}|ForEach-Object Name|Sort-Object -Unique)
+ if(Compare-Object -ReferenceObject $declaredMembers -DifferenceObject $actualMembers -CaseSensitive){throw 'C4 package runtime member set differs from readiness; missing or unmanifested package files are not accepted.'}
  return $true
 }
 
@@ -80,4 +83,95 @@ function Assert-ChatpadC4InstalledRuntimeMember {
  return $true
 }
 
-Export-ModuleMember -Function New-ChatpadC4PackageRecord,New-ChatpadC4PackagePayloadRecords,Get-ChatpadC4ReadinessPackageRoot,Assert-ChatpadC4PackageIdentity,Assert-ChatpadC4InstalledRuntimeMember
+function Test-ChatpadBrokerSetupIdentity {
+ [CmdletBinding()]
+ param([Parameter(Mandatory)][object]$Identity,[Parameter(Mandatory)][string]$AuthorizedUserSid)
+ if($AuthorizedUserSid -notmatch '^S-1-5-21-(?:[0-9]+-){2}[0-9]+-[0-9]+$'){return $false}
+ return [bool]$Identity.Elevated -and
+  ([string]$Identity.UserSid -ceq $AuthorizedUserSid) -and
+  ([int]$Identity.TokenSessionId -ge 0) -and
+  ([int]$Identity.TokenSessionId -eq [int]$Identity.ActiveConsoleSessionId) -and
+  ([int]$Identity.WtsProtocol -eq 0) -and
+  ([string]$Identity.SessionState -ceq 'Active')
+}
+
+function Assert-ChatpadBrokerInstallRoot {
+ [CmdletBinding()]
+ param([Parameter(Mandatory)][string]$InstallRoot)
+ $programRoot=[IO.Path]::GetFullPath($env:ProgramFiles)
+ $isReparse=$false
+ $candidate=[IO.Path]::GetFullPath($InstallRoot)
+ if(Test-Path -LiteralPath $candidate){$isReparse=[bool]((Get-Item -LiteralPath $candidate -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)}
+ if(-not(Test-ChatpadBrokerInstallRootIdentity $candidate $programRoot $isReparse)){throw 'Broker install root must be the non-reparse Program Files\ChatpadBridge directory.'}
+ $root=$candidate.TrimEnd('\')
+ return $root
+}
+
+function Test-ChatpadBrokerInstallRootIdentity {
+ [CmdletBinding()]
+ param([Parameter(Mandatory)][string]$InstallRoot,[Parameter(Mandatory)][string]$ProgramFilesRoot,[Parameter(Mandatory)][bool]$IsReparsePoint)
+ if(-not[IO.Path]::IsPathRooted($InstallRoot) -or $IsReparsePoint){return $false}
+ $expected=[IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetFullPath($ProgramFilesRoot)) 'ChatpadBridge')).TrimEnd('\')
+ return [IO.Path]::GetFullPath($InstallRoot).TrimEnd('\').Equals($expected,[StringComparison]::OrdinalIgnoreCase)
+}
+
+function Resolve-ChatpadBrokerPackageRoot {
+ [CmdletBinding()]
+ param([string]$RequestedPackageRoot,[Parameter(Mandatory)][string]$ReadinessPackageRoot)
+ $readinessRoot=[IO.Path]::GetFullPath($ReadinessPackageRoot)
+ if([string]::IsNullOrWhiteSpace($RequestedPackageRoot)){return $readinessRoot}
+ $requested=[IO.Path]::GetFullPath($RequestedPackageRoot)
+ if(-not $requested.Equals($readinessRoot,[StringComparison]::OrdinalIgnoreCase)){throw 'Explicit package root does not match the package identity recorded in C4 readiness.'}
+ return $readinessRoot
+}
+
+function New-ChatpadBrokerServicePlan {
+ [CmdletBinding()]
+ param(
+  [Parameter(Mandatory)][ValidateSet('InstallBroker','RepairBroker','UninstallBroker')][string]$Mode,
+  [Parameter(Mandatory)][string]$InstallRoot,
+  [Parameter(Mandatory)][object[]]$RuntimeRecords,
+  [Parameter(Mandatory)][string]$AuthorizedUserSid
+ )
+ $root=Assert-ChatpadBrokerInstallRoot $InstallRoot
+ if($AuthorizedUserSid -notmatch '^S-1-5-21-(?:[0-9]+-){2}[0-9]+-[0-9]+$'){throw 'Authorized interactive user SID is invalid.'}
+ $names=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+ $members=@()
+ foreach($record in $RuntimeRecords){
+  $role=[string]$record.Role
+  if($role -notlike 'VirtualFile:*'){throw 'Broker runtime records must use VirtualFile:<name> roles.'}
+  $name=$role.Substring('VirtualFile:'.Length)
+  if([string]::IsNullOrWhiteSpace($name) -or [IO.Path]::GetFileName($name) -cne $name -or $name.Contains(':') -or $name -in @('.','..')){throw "Invalid service runtime member name: $name"}
+  if(-not $names.Add($name)){throw "Duplicate service runtime member name: $name"}
+  if([string]$record.SHA256 -notmatch '^[A-Fa-f0-9]{64}$'){throw "Invalid service runtime SHA-256: $name"}
+  $members+=,[pscustomobject]@{Name=$name;SourcePath=[IO.Path]::GetFullPath([string]$record.Path);TargetPath=[IO.Path]::GetFullPath((Join-Path $root $name));SHA256=([string]$record.SHA256).ToUpperInvariant()}
+ }
+ foreach($required in @('ChatpadVirtualXbox.exe','HIDMaestro.Core.dll')){if(-not $names.Contains($required)){throw "Required service runtime member is missing: $required"}}
+ $config=[ordered]@{version=1;authorizedUserSid=$AuthorizedUserSid}|ConvertTo-Json -Compress
+ $bytes=[Text.UTF8Encoding]::new($false).GetBytes($config)
+ $algorithm=[Security.Cryptography.SHA256]::Create()
+ try{$hash=([BitConverter]::ToString($algorithm.ComputeHash($bytes))).Replace('-','')}finally{$algorithm.Dispose()}
+ $exe=[IO.Path]::GetFullPath((Join-Path $root 'ChatpadVirtualXbox.exe'))
+ [pscustomobject]@{
+  Mode=$Mode;ServiceName='ChatpadHidMaestroBroker';Account='LocalSystem';StartType='Automatic'
+  AuthorizedUserSid=$AuthorizedUserSid
+  InstallRoot=$root;ExecutablePath=$exe;BinaryPathName=('"'+$exe+'" service')
+  AuthorizationPath=[IO.Path]::GetFullPath((Join-Path $root 'BrokerAuthorization.json'))
+  AuthorizationJson=$config;AuthorizationHash=$hash
+  RuntimeRecords=@($members|Sort-Object Name)
+  RecoveryActions=@([pscustomobject]@{Action='restart';DelayMilliseconds=5000},[pscustomobject]@{Action='restart';DelayMilliseconds=15000},[pscustomobject]@{Action='restart';DelayMilliseconds=30000})
+  MutationScope='service-only'
+ }
+}
+
+function Assert-ChatpadBrokerInstalledRuntimeMember {
+ [CmdletBinding()]
+ param([Parameter(Mandatory)][object]$Record,[Parameter(Mandatory)][string]$InstallRoot)
+ $root=Assert-ChatpadBrokerInstallRoot $InstallRoot
+ $target=[IO.Path]::GetFullPath((Join-Path $root ([string]$Record.Name)))
+ if(-not $target.StartsWith($root+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Installed broker member escaped Program Files\ChatpadBridge.'}
+ if(-not(Test-Path -LiteralPath $target -PathType Leaf) -or ((Get-Item -LiteralPath $target -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -or (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ine [string]$Record.SHA256){throw "Installed broker runtime member hash mismatch: $($Record.Name)"}
+ return $true
+}
+
+Export-ModuleMember -Function New-ChatpadC4PackageRecord,New-ChatpadC4PackagePayloadRecords,Get-ChatpadC4ReadinessPackageRoot,Assert-ChatpadC4PackageIdentity,Assert-ChatpadC4InstalledRuntimeMember,Test-ChatpadBrokerSetupIdentity,Test-ChatpadBrokerInstallRootIdentity,Resolve-ChatpadBrokerPackageRoot,Assert-ChatpadBrokerInstallRoot,New-ChatpadBrokerServicePlan,Assert-ChatpadBrokerInstalledRuntimeMember

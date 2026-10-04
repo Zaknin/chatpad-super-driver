@@ -22,6 +22,7 @@ internal static class BrokerSessionTests
             var output = new List<string>();
             await using var session = new BrokerSession(() => { factories++; return new MockBackend(); }, (line, _) => { lock (output) output.Add(line); return ValueTask.CompletedTask; });
             await session.HandleLineAsync(Ping(1));
+            await SpinWaitAsync(() => { lock (output) return output.Any(line => line.Contains("\"id\":1") && line.Contains("\"ok\":true")); });
             return factories == 0 && output.Any(line => line.Contains("\"id\":1") && line.Contains("\"ok\":true"));
         }).GetAwaiter().GetResult();
         Check("broker create owns one backend and destroy is idempotent", async () =>
