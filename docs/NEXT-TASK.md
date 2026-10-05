@@ -1,20 +1,24 @@
-# TASK 8L-C4L2 — Manual XUSB-gated broker repair and XInput qualification
+# TASK 8L-C4L2 — Publish and manually repair XUSB-gated broker
 
 ## Current state
 
-- Source: `feature/chatpad-usermode-runner`; implementation commit `2c554fe118eec879fbe41ee925fbc188e36dc436`; package build commit `10e178cc035c09e260b8c5d20e88e86e81b027d7`.
-- The package for build HEAD `10e178c` was published at `20261005T025900Z`, but HEAD later advanced. Do not use it for setup; its readiness identity is stale for current HEAD. A new package and readiness at a new timestamp are required.
-- The XUSB gate checks the present `{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}` interface list and exact HIDMaestro controller token. Missing interface now fails create instead of reporting a usable virtual Xbox.
-- Offline results on build HEAD `10e178c`: managed 168/168; focused native CTest 2/2; C4 setup regressions PASS; readiness archive/privacy 9/9; repository safety PASS; package hashes 214/214. Archive SHA-256 for the prior timestamp was `3A9CDDEF6803DF89AFD0CA910ECD26F7ECCC46FD6FBAE757CDDB430C21DA86ED`.
-- User's prior XInput scan returned no slots and `XInputSetState` returned 1167. Do not claim rumble or XInput pass from HID/joy.cpl behavior.
+- Required branch: `feature/chatpad-usermode-runner`; starting HEAD: `bea72ab2d7adf31561a6deaa74868456b73a93b1`. This task's continuity update is documentation-only; publish must regenerate readiness for the resulting pushed HEAD.
+- Source package: `artifacts/task-8lc4l2/build-xusb-interface-gate-bea72ab/package`, built from exact source commit `bea72ab`.
+- Offline checks: helper 168/168; focused native CTest 2/2; setup regressions repository 5/5, package 8/8, baseline 5/5, PnP restart 4/4, SCM argv 4/4; readiness artifacts 9/9; repository safety PASS; package hashes 214/214.
+- Prepared immutable destination: `20261005T030811Z`; archive SHA-256 `1166065DB57CDD92081C3BE982FD7C3BF4F1BF1B93FED5D6DFF4804710AF2661`. Final `Publish` and independent remote readback are the immediate remaining offline steps.
+- Prior package timestamp `20261005T030543Z` is bound to the old HEAD; do not use it after this docs-only commit.
+- Live evidence: physical WinUSB/Chatpad and HID inputs worked. XInput scan found no slot, `XInputSetState` returned 1167, and `C:\Program Files\ChatpadBridge\Temp\HIDMaestro` did not exist. Rumble remains unqualified.
 
-## Immediate handoff
+## Immediate next steps
 
-1. Build a fresh C4L2 package from the exact current pushed HEAD, rerun focused package checks, and publish with a new UTC timestamp. Do not reuse `20261005T025900Z`; its immutable destination already exists and refuses overwrite.
-2. After publication succeeds, give the user one exact elevated `RepairBroker` command using the new package and the commit-bound `artifacts/task-8lc4l2/readiness-input.json`. Stop and wait for the user's output.
-3. After RepairBroker passes, have the user run `ChatpadBridge.exe run` from ordinary PowerShell. If create fails, collect its new exact `xusb_companion_unavailable` or probe error. If it passes, test XInput slot visibility, buttons/sticks/triggers, Chatpad input, and brief rumble, then continue reconnect, graceful cleanup, and crash recovery qualification.
+1. Push the documentation-only commit to `origin/feature/chatpad-usermode-runner`.
+2. Run `tools/Publish-ChatpadC4L2.ps1 -Mode Publish -UtcTimestamp 20261005T030811Z -BuildDirectory artifacts/task-8lc4l2/build-xusb-interface-gate-bea72ab -VerificationSummaryPath artifacts/task-8lc4l2/build-xusb-interface-gate-bea72ab/release-verification.json`.
+3. Independently check the canonical publication's payload hashes against `.sha256` sidecars, absence of `.part` files, completion receipt, and exact pushed release identity.
+4. Give the user one elevated manual command:
+   `& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-xusb-interface-gate-bea72ab\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"`
+5. Stop and wait for the user's RepairBroker output. If PASS, next use normal-user PowerShell for runtime and XInput/rumble checks.
 
 ## Safety
 
-- Agent must not perform service lifecycle changes, driver binding, PnP/registry mutation, trust change, reboot, elevated bridge execution, or broad HIDMaestro cleanup. User performs only the separate manual elevated repair.
-- Do not edit `legacy/` or report rumble pass without physical vibration evidence.
+- Do not perform service lifecycle changes, driver binding, PnP/registry mutation, trust changes, reboot, elevated bridge execution, or global HIDMaestro cleanup.
+- Do not claim XInput or rumble pass from HID/joy.cpl behavior. `legacy/` remains immutable.

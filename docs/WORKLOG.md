@@ -14620,3 +14620,17 @@ This append records the implementation commit and first publication. The documen
 - After the documentation closeout advanced HEAD to `1361c60c00c0f993b6c222028daf57e13a8b989d`, a second `-Mode Publish` for the same timestamp was attempted so readiness would bind to that new release identity. The publisher correctly refused to overwrite the existing immutable archive. No published remote file was overwritten or removed. The first release remains intact but its readiness does not match current HEAD.
 - Do not retry the same timestamp. Build and publish the same source at current HEAD using a fresh build directory and a new timestamp; then use the new readiness and package for manual RepairBroker.
 - No service or device mutation occurred.
+
+## 2026-10-05 03:08 UTC — Prepare current XUSB-gated C4L2 release and manual repair handoff
+
+- Objective: finish focused offline verification and prepare a fresh C4L2 release with readiness identity suitable for the user's manual RepairBroker step.
+- Starting state: branch `feature/chatpad-usermode-runner`, pushed HEAD `bea72ab2d7adf31561a6deaa74868456b73a93b1`; worktree clean. The user's latest read-only command confirmed that `C:\Program Files\ChatpadBridge\Temp\HIDMaestro` does not exist.
+- Build identity: `artifacts/task-8lc4l2/build-xusb-interface-gate-bea72ab`; manifest branch/commit matched current pushed HEAD. The package requires the exact present XUSB interface for the HIDMaestro controller identity before create succeeds.
+- Focused verification: packaged helper self-test 168/168 (`liveBackendCreated=false`, `xinputCalled=false`); native CTest `broker-client` and `runner-lifecycle` 2/2; C4 setup tests PASS (repository identity 5/5, package identity 8/8, baseline 5/5, PnP restart 4/4, SCM argv 4/4); readiness archive/privacy 9/9; repository safety PASS.
+- Independent package audit: 214 expected/214 actual members; zero missing, extra, byte-length, or SHA-256 mismatches. Release verification summary is under ignored artifacts.
+- Prepare: `tools/Publish-ChatpadC4L2.ps1 -Mode Prepare -UtcTimestamp 20261005T030811Z ...` passed exact package/readiness identity and deterministic archive repeat. Canonical destination is `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T030811Z`; archive SHA-256 `1166065DB57CDD92081C3BE982FD7C3BF4F1BF1B93FED5D6DFF4804710AF2661`. This entry records preparation; final publication is the next operation after this continuity commit is pushed, and the publisher will regenerate readiness for the new HEAD.
+- A prior timestamp `20261005T030543Z` was published for commit `bea72ab`; it is immutable and its readiness becomes stale after the current docs-only commit. Do not use that destination for RepairBroker.
+- Live status remains PARTIAL: earlier normal-user run proved WinUSB/Chatpad/HID input, but XInput returned no slot and `XInputSetState` returned 1167. No XInput slot or physical rumble pass is claimed.
+- Files changed: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. `docs/DECISIONS.md` unchanged; no source files changed.
+- Safety: no service lifecycle/configuration change, driver/PnP/registry/device mutation, trust change, reboot, elevated bridge execution, or HIDMaestro global cleanup by the agent. `legacy/` untouched.
+- Next: push this docs-only commit, publish `20261005T030811Z`, independently check remote payload sidecars/no `.part`/completion receipt, then give the user the exact elevated `RepairBroker` command and stop for their output.
