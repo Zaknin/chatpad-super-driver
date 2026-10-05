@@ -14690,3 +14690,14 @@ This append records the implementation commit and first publication. The documen
 - Live status remains PARTIAL. The new bridge has not been run on hardware. The existing service was reported Running by the user; this bridge-only correction requires no new elevated RepairBroker step.
 - Safety: no service lifecycle/configuration mutation, driver/PnP/registry/device mutation, trust change, reboot, elevated bridge execution, or HIDMaestro global cleanup by the agent. `legacy/` untouched.
 - Next: inspect these continuity changes, commit/push them, publish timestamp `20261005T040900Z`, independently verify remote sidecars/receipt/no `.part`, then provide the normal-user bridge command. Wait for live output before claiming runtime recovery.
+
+## 2026-10-05 04:09 UTC — Publish rumble-recovery correction and request live retry
+
+- Objective: publish the exact pushed release identity, independently verify remote evidence, and hand off a normal-user runtime retry.
+- Release identities: package implementation/build commit `2258de10c65052a12efff8acfa30f2773dc546ad`; release identity commit `97095be21c420f55a26a7319b8a42323fd6fb6d4` on `origin/feature/chatpad-usermode-runner`.
+- Publish: `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File tools/Publish-ChatpadC4L2.ps1 -Mode Publish -UtcTimestamp 20261005T040900Z -BuildDirectory artifacts/task-8lc4l2/build-rumble-recovery-2258de1 -VerificationSummaryPath artifacts/task-8lc4l2/build-rumble-recovery-2258de1/release-verification.json` passed. Canonical directory `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T040900Z`; archive SHA-256 `C03531153A5AF9E7407970DBBBA1AC88B9155C731294A1B42541BFF3C343CD07`.
+- Independent remote readback: all six payload SHA-256 sidecars matched; receipt confirms source/part/final hashes, sidecar-last publication, and exact release commit; no `.part` files. `publication-receipt.json.sha256` file SHA-256: `B3D83689CC638D30608BED6A9D382798E9A10FFF3920F28BEE3FA8F1ABB97A3E`.
+- Files changed after publication: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog; package/build inputs did not change. Documentation closeout commit/push remains pending.
+- Live result remains PARTIAL pending user execution of the normal-user bridge. Exact command: `& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-recovery-2258de1\package\ChatpadBridge.exe" run`. No elevated RepairBroker operation is needed for this bridge-only package.
+- Safety: no live service lifecycle/configuration mutation, driver/PnP/registry/device mutation, trust change, reboot, elevated bridge execution, or HIDMaestro global cleanup by the agent. `legacy/` untouched.
+- Next: commit/push the three continuity files, then wait for the user's complete normal-user runtime output before assessing clean startup recovery. XInput, physical rumble, reconnect, and crash recovery are not newly qualified by publication.
