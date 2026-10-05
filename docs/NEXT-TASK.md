@@ -1,29 +1,48 @@
-# TASK 8L-C4L2 — Requalify reconnect after physical unplug
+# TASK 8L-C4L2 — Qualify client crash cleanup
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; current HEAD is this pushed continuity closeout commit. Runner fix is in source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
-- User-reported normal-user run previously reached Chatpad `RUNNING`, created the virtual Xbox, accepted Chatpad input, and produced a successful XInput rumble pulse. During unplug, final zero-rumble write returned Win32 433; keys and virtual state were cleaned, but the runner incorrectly stopped with `CLEANUP_FAILED` instead of reconnecting.
-- The fix defers zero-rumble recovery when device removal is confirmed and all other cleanup succeeds. It preserves the pending recovery marker and retries after the next physical open. Timeout, partial write, and key/virtual cleanup failures remain fatal.
-- Focused `runner-lifecycle` CTest passed 1/1 (24 checks); native Release runner build passed. Package: `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package`; build manifest source commit is `92a368830bb6ecfb0a990ba68051583b506d5dd0`, and 214/214 member sizes and SHA-256 values match. Readiness was refreshed for current HEAD after continuity-only changes. Runner SHA-256: `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`.
-- No broker/service implementation changed; do not repeat `RepairBroker`.
+- Branch: `feature/chatpad-usermode-runner`; runner fix source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0` is pushed. Current HEAD is this docs continuity closeout.
+- Corrected package: `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package`; package manifest has 214/214 verified files. Runner SHA-256: `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`.
+- Live normal-user test passed activation, broker/XInput creation, Chatpad input and rumble previously. In the corrected package, unplug yielded `zero-rumble cleanup deferred device_removed`, then `DEVICE_LOST` / `RECONNECTING`; after replug the runner reopened WinUSB, logged `unclean-session zero-rumble recovery succeeded`, and recreated the virtual Xbox. The user confirmed controller and Chatpad worked after reconnect.
+- Graceful stop after reconnect passed: all four cleanup flags true, `clean_shutdown=true`, `reconnect_count=1`.
+- Client hard-crash cleanup is the remaining live broker behavior. Do not repeat service repair; installed service payload is unchanged. The accepted limitation is that a hard client crash cannot stop physical rumble immediately.
 
 ## Next action
 
-Reconnect the controller before starting, then run this from ordinary, non-elevated PowerShell:
+1. Start the package runner from ordinary, non-elevated PowerShell:
 
-```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect\package\ChatpadBridge.exe" run
-```
+   ```powershell
+   & "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect\package\ChatpadBridge.exe" run
+   ```
 
-After virtual Xbox creation, unplug and replug once. Acceptance requires `zero-rumble cleanup deferred device_removed`, reconnect progress, successful WinUSB reopen, `unclean-session zero-rumble recovery succeeded`, and a second virtual Xbox creation. Stop with Ctrl+C after the recovered session is running and return the complete output.
+2. Wait for `virtual Xbox created and initial controller state submitted`. In a second ordinary PowerShell, stop only the process launched from that exact package path:
+
+   ```powershell
+   $expectedRunnerPath = 'C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect\package\ChatpadBridge.exe'
+   $matchingRunnerProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'ChatpadBridge.exe'" |
+       Where-Object { $_.ExecutablePath -ieq $expectedRunnerPath })
+   if ($matchingRunnerProcesses.Count -ne 1) { throw "Expected exactly one package runner; found $($matchingRunnerProcesses.Count). No process stopped." }
+   $matchingRunnerProcesses | Select-Object ProcessId, ExecutablePath
+   Stop-Process -Id $matchingRunnerProcesses[0].ProcessId -Force
+   Start-Sleep -Seconds 3
+   Get-PnpDevice -PresentOnly |
+       Where-Object { $_.InstanceId -like 'ROOT\VID_045E&PID_028E&IG_00\*' } |
+       Format-List Status, FriendlyName, InstanceId
+   Get-Service -Name ChatpadHidMaestroBroker | Format-List Status, StartType
+   ```
+
+   The target virtual Xbox PnP node should be absent and `ChatpadHidMaestroBroker` should still be Running. Return the PID/path, PnP result, and service result. If multiple matching processes appear, do not stop any; return the listing.
+
+3. Start the same bridge again as a normal user. Acceptance requires `unclean_previous_session=true`, successful startup zero-rumble recovery, and creation of a fresh virtual Xbox. Stop it with Ctrl+C and return the full output.
 
 ## Safety and remaining acceptance
 
-- Run the bridge only non-elevated.
-- No service install/repair, driver binding, PnP, registry, trust, boot, or device mutation by the agent; only the user-operated unplug/replug qualification is expected.
-- Report reconnect as live PASS only after the recovery sequence above. Service crash recovery, final TASK 8L-C4L2 verdict, and canonical publication remain pending.
+- The forced termination intentionally simulates only a `ChatpadBridge.exe` client crash. Match and stop exactly one process by full executable path; do not kill the LocalSystem helper or service.
+- No elevated bridge, service install/repair, driver binding, PnP mutation, registry/trust/boot change, or global HIDMaestro cleanup.
+- On hard client crash, physical motor stop is not expected; that limitation was explicitly accepted. Broker cleanup must still neutralize and destroy the virtual controller.
+- After client-crash PASS, rerun final focused verification, bind readiness to final HEAD, and use the atomic publisher for canonical TASK-8L-C4L2 artifacts. Report PASS/PARTIAL and remaining untested items honestly.
 
 ## Inspect first
 
-Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md`; confirm branch/HEAD/status and package manifest before the next live step.
+Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md`; check branch/HEAD/status and verify the package manifest/readiness before the live test.

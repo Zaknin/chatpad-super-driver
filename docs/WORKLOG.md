@@ -14845,3 +14845,14 @@ This append records the implementation commit and first publication. The documen
 - Regenerated `artifacts/task-8lc4l2/readiness-input.json` for the current branch tip after the continuity update, then reran `tools/Test-ChatpadC4Setup.ps1`: repository identity 5/5, package identity 8/8, baseline 5/5, PnP 4/4, SCM argv 4/4, broker setup/package regressions PASS. `Assert-ChatpadC4PackageIdentity` passed against all 214 package members.
 - Runner hash remains `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`; executable and helper package bytes did not change.
 - This entry accompanies the pushed documentation-only closeout; the current branch HEAD is the commit containing this state/worklog update. Live reconnect with this package is the next user-operated gate.
+
+## 2026-10-05 14:31 UTC — Live hot-unplug reconnect and graceful cleanup PASS
+
+- Objective: qualify normal-user controller unplug/replug recovery with the deferred zero-rumble fix, then confirm graceful cleanup.
+- Starting branch/HEAD: `feature/chatpad-usermode-runner` / `a50cba72b35debf4dffc65eff326ff3a43f339fc`; package `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package/ChatpadBridge.exe`, built from source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
+- User log: ordinary-user startup passed WinUSB open, all Chatpad activation stages, `state=RUNNING`, broker-created virtual Xbox, Chatpad key-data enable, and keyboard input. On physical unplug, Chatpad read returned Win32 433; `zero-rumble cleanup deferred device_removed` was logged, with `keysReleased=true`, `virtualNeutral=true`, `virtualReleased=true`, and truthful `motorsStopped=false`. The runner entered `DEVICE_LOST reconnect_count=1` and `RECONNECTING` while the device was absent.
+- After replug, WinUSB reopened, Chatpad activation passed, `unclean-session zero-rumble recovery succeeded` appeared before virtual Xbox recreation, and Chatpad key-data resumed. The user confirmed controller and Chatpad input after reconnect.
+- User stopped with Ctrl+C. Final cleanup: all four cleanup flags true; `clean_shutdown=true reconnect_count=1`. Live hot-unplug/reconnect and graceful cleanup are PASS.
+- No source changes in this live qualification. No service repair/install, device/PnP/driver/registry/trust/boot mutation, or elevated bridge; `legacy/` untouched.
+- Remaining acceptance: force-terminate exactly the package ChatpadBridge client and verify the broker removes its virtual Xbox while the service remains Running; then relaunch and verify the unclean-session zero-rumble recovery marker is consumed. Final canonical publication and full C4L2 verdict remain pending that crash-cleanup check.
+- Continuity commit/push: pending.
