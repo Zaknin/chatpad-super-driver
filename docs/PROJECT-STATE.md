@@ -1,8 +1,8 @@
 # Project State
 
-Updated 2026-10-05 after building the RDP-capable RepairBroker setup package.
+Updated 2026-10-05 after the first RDP runtime retry following RepairBroker.
 
-- Branch: `feature/chatpad-usermode-runner`; setup-fix source/build commit: `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`; release identity: this docs-only continuity closeout.
+- Branch: `feature/chatpad-usermode-runner`; setup-fix source/build commit: `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`; published package identity `20261005T070200Z` remains the runtime package in use.
 - The 2026-10-05 06:40 UTC normal-user run of the rumble-recovery package confirmed clean-start recovery skip, then failed before HIDMaestro creation with `broker_peer_unauthorized`.
 - Read-only identity check confirmed the installed broker authorization SID matches the current user's SID. `query user/session` showed the bridge running in active `rdp-tcp#1` session 1; the local `console` session had no logged-in user. This explained the authorization failure under the previous active-console-only policy.
 - The broker authorization policy is changed to accept the exact installed SID from any non-anonymous local named-pipe session, including the user's RDP session. It continues to reject mismatched SIDs and remote pipe clients. Focused offline self-test passes 168/168 after the change.
@@ -12,15 +12,17 @@ Updated 2026-10-05 after building the RDP-capable RepairBroker setup package.
 - User attempted the elevated RepairBroker command from RDP; setup rejected it at line 66 because of a second active-local-console-only identity check. The service was not repaired; no lifecycle mutation occurred.
 - The setup gate now permits an elevated setup process for the configured authorized SID from RDP and still rejects non-elevated, wrong-SID, and invalid-session identities. Focused regression passes.
 - New package `artifacts/task-8lc4l2/build-rdp-setup-session-b76336d` passed release verification: managed 504/504, focused native CTest 3/3, setup/readiness/privacy/safety checks PASS; 214/214 package files match manifest hashes. Canonical release `20261005T070200Z` is prepared with deterministic archive SHA-256 `659604F490EB19ED2F5F606A7B32BAEB8BAE1888F5893B7288CB8300135F2CCB`.
-- Installed service still has the earlier helper. The new setup package must be published and the user's manual elevated RepairBroker must succeed before retrying normal-user RDP runtime.
-- No service, PnP, driver, registry, trust, device, or boot mutation by the agent; `legacy/` untouched. Hardware XInput, rumble, reconnect, and crash recovery are still not qualified for the current broker architecture.
+- User manually ran elevated `RepairBroker` from RDP with package `build-rdp-setup-session-b76336d`; it passed, reporting the service Running as LocalSystem and 197 runtime members. This confirms the service helper was refreshed.
+- The subsequent normal-user RDP run opened WinUSB but repeated `ACTIVATING_CHATPAD` -> `DEVICE_LOST` at roughly five-second intervals. It ended cleanly on Ctrl+C after four reconnect attempts. No `controller input polling started`, activation-stage, broker-create, or virtual-Xbox lines appeared.
+- Source inspection shows `ACTIVATING_CHATPAD` is logged before `RunSession` waits up to five seconds for the first controller report. The missing polling/activation lines are consistent with that readiness wait timing out. Cause of the absent report is not yet established; this is not evidence of broker authorization, XUSB, XInput, or rumble failure.
+- No service, PnP, driver, registry, trust, device, or boot mutation by the agent; `legacy/` untouched. Hardware XInput, rumble, reconnect, and crash recovery remain unqualified for the current broker architecture.
 
 ## Next
 
-Finish atomic publication of the prepared release, then have the user run this command in elevated PowerShell to repair the broker:
+Run one bounded normal-user RDP retry while pressing a controller button promptly after launch to determine whether the first controller report was absent because the controller was idle/asleep:
 
 ```powershell
-& "C:\Dev\chatpad-super-driver\tools\ChatpadSetup.ps1" -Mode RepairBroker -PackageRoot "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rdp-setup-session-b76336d\package" -ReadinessPath "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\readiness-input.json"
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rdp-setup-session-b76336d\package\ChatpadBridge.exe" run
 ```
 
-After RepairBroker reports PASS, the user can retry `ChatpadBridge.exe run` from their ordinary RDP PowerShell. Confirm broker create reaches `state=RUNNING`, then continue XUSB/XInput and rumble qualification.
+Press A or the Xbox button once immediately. If `controller input polling started` appears, continue only until the broker result is known, then stop cleanly and report the full output. If it repeats the five-second cycle, stop with Ctrl+C and capture `%LOCALAPPDATA%\ChatpadBridge\logs\bridge.log` plus read-only controller presence/power status. Do not repair the service again unless a new package is built.

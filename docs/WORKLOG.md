@@ -14774,3 +14774,15 @@ This append records the implementation commit and first publication. The documen
 - Files changed: `tools/ChatpadSetup.ps1`, `tools/ChatpadC4Package.psm1`, `tools/Test-ChatpadC4Setup.ps1`, `docs/DECISIONS.md`, `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. Generated package, readiness, and logs remain ignored under artifacts.
 - Next: commit/push these continuity changes, atomically publish the prepared archive, independently verify sidecars/receipt/no `.part`, then give the user the exact elevated RepairBroker command. Service repair remains user-operated and has not been performed by the agent.
 - Safety: no service/PnP/device/driver/registry/trust/boot mutation, no elevated bridge, and `legacy/` untouched. Live RDP broker runtime, XInput, rumble, reconnect, and crash recovery remain unqualified.
+
+## 2026-10-05 07:21 UTC — Diagnose first RDP retry after broker repair
+
+- Objective: assess the user's first ordinary RDP runtime attempt after elevated `RepairBroker` succeeded.
+- Starting branch/HEAD: `feature/chatpad-usermode-runner` / `4dc64a29e0222618b53eed5e815450e17477cb60`; starting worktree clean.
+- Live evidence: user ran `build-rdp-setup-session-b76336d/package/ChatpadBridge.exe run` as normal user. WinUSB open passed, then the log repeated `ACTIVATING_CHATPAD` and `DEVICE_LOST` about every five seconds. User stopped with Ctrl+C after four reconnects; shutdown was `clean_shutdown=true`.
+- Code trace: `Runner.cpp` logs `ACTIVATING_CHATPAD` before entering `RunSession`. `WaitController` waits up to five seconds for a valid first controller packet. On timeout, `RunSession` returns lost without logging `controller input polling started`; therefore activation stage logs and broker create are never reached. The supplied output has no polling, activation-stage, broker-create, or virtual-Xbox event. The evidence localizes the failure to controller readiness before activation; it does not establish why the controller produced no first report.
+- Files changed: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. No source or package bytes changed.
+- Validation: read-only source trace and log comparison; no tests applicable. No service runtime, PnP, driver, registry, trust, boot, device, or HIDMaestro mutation by the agent. No elevated bridge run; `legacy/` untouched.
+- Live verdict remains PARTIAL. Broker repair success is user-reported; broker runtime authorization, XUSB interface, XInput, rumble, reconnect recovery, and crash recovery remain unqualified after repair.
+- Next: one bounded normal-user RDP retry with a controller button pressed promptly. If it still times out, capture `%LOCALAPPDATA%\ChatpadBridge\logs\bridge.log` and read-only physical controller presence/power evidence. Do not repeat RepairBroker without a new exact-HEAD package.
+- Continuity update commit/push: pending.
