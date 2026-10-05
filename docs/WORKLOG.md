@@ -14613,3 +14613,10 @@ This append records the implementation commit and first publication. The documen
 - This continuity-only commit will advance the release identity. The prepared release must be published with `-Mode Publish` after push; publisher is designed to rebind readiness to this exact docs-only release commit and commit its completion receipt last. No final publish/readback claim is made by this entry.
 - Live status remains PARTIAL. The user must manually RepairBroker from the final package; normal-user XInput, physical rumble, reconnect, cleanup and crash recovery remain unqualified.
 - Safety: no service lifecycle/configuration mutation, driver/PnP/registry/device mutation, trust/security change, reboot, elevated bridge run, or HIDMaestro global cleanup by the agent. `legacy/` untouched.
+
+## 2026-10-05 03:00 UTC — Record immutable publication overwrite refusal
+
+- The first `Publish-ChatpadC4L2.ps1 -Mode Publish` succeeded for timestamp `20261005T025900Z`, build commit `10e178cc035c09e260b8c5d20e88e86e81b027d7`, archive SHA-256 `3A9CDDEF6803DF89AFD0CA910ECD26F7ECCC46FD6FBAE757CDDB430C21DA86ED`.
+- After the documentation closeout advanced HEAD to `1361c60c00c0f993b6c222028daf57e13a8b989d`, a second `-Mode Publish` for the same timestamp was attempted so readiness would bind to that new release identity. The publisher correctly refused to overwrite the existing immutable archive. No published remote file was overwritten or removed. The first release remains intact but its readiness does not match current HEAD.
+- Do not retry the same timestamp. Build and publish the same source at current HEAD using a fresh build directory and a new timestamp; then use the new readiness and package for manual RepairBroker.
+- No service or device mutation occurred.
