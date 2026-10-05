@@ -2,10 +2,10 @@
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; starting HEAD `9c6e1c72c688393771d8665e7125eaca6f01fdff`.
+- Branch: `feature/chatpad-usermode-runner`; XUSB success-gate source commit `2c554fe118eec879fbe41ee925fbc188e36dc436` is pushed. The required package base is the exact HEAD after this continuity update is committed; resolve it with `git rev-parse HEAD`.
 - User live evidence: physical WinUSB and Chatpad work; HID/Game Controller values change. XInput enumeration found no slot and `XInputSetState` returned 1167. The service temp log directory `C:\Program Files\ChatpadBridge\Temp\HIDMaestro` was absent when checked elevated.
 - Pinned HIDMaestro source treats XUSB interface and XInput slot timeouts as nonfatal. The broker now has an exact-identity XUSB-interface gate after `CreateController`; absence fails creation instead of reporting a usable virtual Xbox.
-- Focused source verification: managed self-test 168/168; native `broker-client` and `runner-lifecycle` CTest 2/2. Source changes and package are not yet committed/built/published.
+- Focused source verification: managed self-test 168/168; native `broker-client` and `runner-lifecycle` CTest 2/2. Source changes are committed and pushed; package/readiness are not yet built or published.
 
 ## Required continuation
 

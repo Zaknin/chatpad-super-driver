@@ -14582,3 +14582,9 @@ This append records the implementation commit and first publication. The documen
 - Build artifacts are under ignored `artifacts/task-8lc4l2/xusb-qual-hid-green` and `artifacts/task-8lc4l2/xusb-qual-native`. Release package/readiness, publication, commit, and push are still pending; do not use the older `build-readiness-current-head` package for the next live repair.
 - Safety: no service lifecycle/configuration mutation, driver/PnP/registry/device mutation, trust/security change, reboot, elevated bridge run, or HIDMaestro global cleanup by the agent. `legacy/` is untouched.
 - Next: review and commit the source plus continuity updates, push only `feature/chatpad-usermode-runner`, build/audit/publish a package from that exact HEAD, and ask the user for one manual elevated RepairBroker step. On the user's normal-user retry, qualify the XUSB gate, XInput slot, rumble, then remaining lifecycle cases.
+
+## 2026-10-05 02:52 UTC — Push XUSB success-gate source correction
+
+- Follow-up to the diagnostic fix: source and initial continuity update were committed as `2c554fe118eec879fbe41ee925fbc188e36dc436` (`fix: require live XUSB companion for broker create`) and pushed to `origin/feature/chatpad-usermode-runner`.
+- A documentation-only continuity update is now being committed. The next package must bind to the exact resulting HEAD, not merely the source commit above.
+- Package/readiness generation, full package member audit, atomic publication, and the user's manual RepairBroker retry remain pending. No live service/device operation has been performed by the agent.
