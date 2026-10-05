@@ -2,35 +2,28 @@
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; source fix is based on `c0c42ca1ca087423fd709d74d6c49a337b9f961d` and is being committed with this continuity update.
-- In the user’s normal-user run, WinUSB open, Chatpad activation, virtual Xbox creation, Chatpad input, and a separate XInput rumble pulse succeeded. During unplug, the final zero-rumble write returned Win32 433; keyboard and virtual-controller cleanup succeeded, but the runner treated the unavailable physical write as fatal and exited with `CLEANUP_FAILED`.
-- The fix defers zero-rumble recovery when the device is confirmed removed, while still requiring key release and successful virtual neutralization/release. Timeouts, partial writes, and failed cleanup actions remain fatal.
-- Focused `runner-lifecycle` regression and native `ChatpadWinUsbPoc` build passed. The updated package has not yet been generated. Existing installed broker payload is unchanged; do not run `RepairBroker` for this client-only fix.
+- Branch: `feature/chatpad-usermode-runner`; runner fix is in pushed source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
+- User-reported normal-user run previously reached Chatpad `RUNNING`, created the virtual Xbox, accepted Chatpad input, and produced a successful XInput rumble pulse. During unplug, final zero-rumble write returned Win32 433; keys and virtual state were cleaned, but the runner incorrectly stopped with `CLEANUP_FAILED` instead of reconnecting.
+- The fix defers zero-rumble recovery when device removal is confirmed and all other cleanup succeeds. It preserves the pending recovery marker and retries after the next physical open. Timeout, partial write, and key/virtual cleanup failures remain fatal.
+- Focused `runner-lifecycle` CTest passed 1/1 (24 checks); native Release runner build passed. Package: `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package`; 214/214 member sizes and SHA-256 values match `build-manifest.json`. Runner SHA-256: `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`.
+- No broker/service implementation changed; do not repeat `RepairBroker`.
 
 ## Next action
 
-Build the package from the committed and pushed branch tip:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\tools\Build-ChatpadBridge.ps1" -OutputDirectory "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect" -SkipNativeTests
-```
-
-Check `build-manifest.json`, generated `readiness-input.json`, and every package member’s SHA-256 against the manifest. Then provide the user the exact ordinary, non-elevated command:
+Reconnect the controller before starting, then run this from ordinary, non-elevated PowerShell:
 
 ```powershell
 & "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect\package\ChatpadBridge.exe" run
 ```
 
-The user should reconnect the controller before starting. After the log reaches virtual Xbox creation, have them unplug and replug once. Acceptance requires `zero-rumble cleanup deferred device_removed`, reconnect progress, successful WinUSB reopen, `unclean-session zero-rumble recovery succeeded`, and a second virtual Xbox creation. Ask for the complete output and then stop after the user ends the recovered run with Ctrl+C.
+After virtual Xbox creation, unplug and replug once. Acceptance requires `zero-rumble cleanup deferred device_removed`, reconnect progress, successful WinUSB reopen, `unclean-session zero-rumble recovery succeeded`, and a second virtual Xbox creation. Stop with Ctrl+C after the recovered session is running and return the complete output.
 
-## Safety and acceptance
+## Safety and remaining acceptance
 
-- Run the bridge only from ordinary, non-elevated PowerShell.
-- Do not repeat service install/repair; service and broker code did not change.
-- Do not change driver binding, PnP, registry, trust, boot, or device state beyond the user-directed physical unplug/replug test.
-- Preserve the fatal path for timeouts, partial/failed writes, or keyboard/virtual cleanup failures.
-- Report reconnect as live PASS only after the corrected package recovers and zero-rumble recovery succeeds after replug. Full C4L2 closeout and publication remain pending.
+- Run the bridge only non-elevated.
+- No service install/repair, driver binding, PnP, registry, trust, boot, or device mutation by the agent; only the user-operated unplug/replug qualification is expected.
+- Report reconnect as live PASS only after the recovery sequence above. Service crash recovery, final TASK 8L-C4L2 verdict, and canonical publication remain pending.
 
 ## Inspect first
 
-Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md`; check branch/HEAD/status, then inspect `Runner.cpp`, `RunnerLifecycle.cpp`, and the focused lifecycle test.
+Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md`; confirm branch/HEAD/status and package manifest before the next live step.

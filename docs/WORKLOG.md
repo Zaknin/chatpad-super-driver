@@ -14829,3 +14829,12 @@ This append records the implementation commit and first publication. The documen
 - Package regeneration from the committed source, manifest/readiness SHA-256 verification, and canonical publication are pending. No driver/service install/repair, PnP, registry, device, trust, or boot mutation was performed by the agent; no elevated bridge was run. The installed broker payload is unchanged.
 - Live reconnect after a corrected package, post-replug zero-rumble success, crash recovery, and final TASK 8L-C4L2 verdict remain unqualified. The next step is to build from this source commit and hand the user a normal-user run command.
 - Commit/push: pending.
+
+## 2026-10-05 14:25 UTC — Build corrected reconnect client package
+
+- Correction/continuation: the preceding entry's package-regeneration and commit/push statuses were accurate when written and are superseded here. The fix was committed and pushed as `92a368830bb6ecfb0a990ba68051583b506d5dd0` on `feature/chatpad-usermode-runner`.
+- Build: `tools/Build-ChatpadBridge.ps1 -OutputDirectory artifacts/task-8lc4l2/build-rumble-removal-reconnect -SkipNativeTests` completed. Release targets compiled; focused package regeneration intentionally skipped the broad native CTest run. C4 setup/readiness passed: repository identity 5/5, broker setup regressions PASS, package identity 8/8, baseline 5/5, PnP 4/4, SCM argv 4/4.
+- Package manifest identity is branch `feature/chatpad-usermode-runner`, source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0`. An independent post-build inventory verified 214/214 package member paths, lengths, and SHA-256 values against `build-manifest.json`; generated readiness branch/commit and package runtime identity validation passed.
+- Runner package path: `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package/ChatpadBridge.exe`; SHA-256 `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`.
+- No service install/repair or hardware/PnP/driver/registry/trust/boot mutation. No elevated runner. The installed service payload is unchanged; no `legacy/` changes.
+- Live unplug/replug recovery using this corrected package has not yet been run. Canonical release publication and final C4L2 status remain pending until live reconnect and the other remaining qualification gates are resolved.
