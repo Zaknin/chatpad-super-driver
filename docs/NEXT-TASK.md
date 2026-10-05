@@ -1,22 +1,23 @@
-# TASK 8L-C4L2 — Live retry of startup-polling correction
+# TASK 8L-C4L2 — Publish and retry clean-start recovery correction
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; implementation/build commit `a6b304f1da41de83908f75aebfb32d9533ee728b`; release readiness identity `624d3b7e9385f4e24307f9e61840f84b0f3b1b4a`. This closeout changes documentation only.
-- Published package path: `artifacts/task-8lc4l2/build-startup-input-poll-a6b304f/package`; runner SHA-256 `5E26662C53FD5899B1AFFFD7E09E1DDA6E3C869861567F91423B0BEF66985687`.
-- Canonical immutable release: `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T035300Z`; archive SHA-256 `23BA57F588630F61D811F1A33F75A0FAA57BCAED35DFF73608CD4B66D17E0695`. Five payload sidecars, completion receipt hash, no `.part`, and release identity passed independent readback.
-- Offline checks PASS: helper 504/504 across three runs; focused CTest 3/3; setup regressions and readiness pass; 214/214 package members verified.
-- Source-order diagnosis is still a hypothesis until a normal-user hardware run confirms the startup rumble write now succeeds. User previously reported successful manual broker repair; do not request another elevated repair because service helper bytes are unchanged.
+- Required branch: `feature/chatpad-usermode-runner`; starting HEAD `344644548bec4f8ba4361b9dbe6ee0bc42c1900a`.
+- The user's latest run confirmed `controller input polling started before Chatpad activation` but still timed out the initial zero-rumble write. It reported `unclean_previous_session=false` and later reconnected eight times before Ctrl+C. This disproves the polling-gap hypothesis for this failure.
+- Source now sends startup zero-rumble only when the previous process marker exists. Clean startup skips the redundant output transfer. Failed unclean recovery stops once and preserves the marker; it does not enter a repeated reconnect/write loop. Graceful cleanup still neutralizes motors.
+- Focused verification so far: `ChatpadRunnerLifecycleTests` 17/17 and native CTest 3/3 (`controller-input-pump`, `broker-client`, `runner-lifecycle`). Build/package/publication checks remain pending.
+- User already repaired the broker successfully. Only normal-user bridge bytes change; no additional elevated service repair is expected.
 
 ## Next steps
 
-1. Ask the user to run from ordinary, non-elevated PowerShell:
-   `& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-startup-input-poll-a6b304f\package\ChatpadBridge.exe" run`
-2. Request the full output after Ctrl+C. Check for `controller input polling started before Chatpad activation`, absence of the startup zero-rumble timeout, and `virtual Xbox created and initial controller state submitted`.
-3. If virtual creation succeeds, separately resume XInput slot, Chatpad, and physical rumble qualification.
+1. Complete focused setup/readiness/publication/safety checks, inspect the diff, commit, and push only `feature/chatpad-usermode-runner`.
+2. Build a fresh package from exact pushed HEAD, verify the helper suite and all package member hashes, then atomically publish at a new UTC timestamp.
+3. Give the user the exact ordinary PowerShell command for the fresh package and request the full output after stopping.
+4. Confirm clean-start recovery is skipped, virtual controller creation succeeds, and the runner stays active. Later, separately verify unclean-session recovery and its single-attempt failure behavior.
 
 ## Safety and acceptance
 
 - Do not perform service lifecycle changes, driver binding, PnP/registry mutation, trust changes, reboot, elevated bridge execution, or HIDMaestro global cleanup.
-- Keep the initial zero-rumble command and exact XUSB interface gate strict. Do not claim XInput or rumble pass from HID/joy.cpl behavior.
-- Inspect first: `Runner.cpp`, `ControllerInputPump.{h,cpp}`, `controller-input-pump-tests.cpp`, and the release manifest/receipts.
+- Do not retry a failed unclean-session zero-rumble command automatically. Preserve the marker so recovery remains visible on a later launch.
+- Do not claim XInput or physical rumble pass until separately observed live.
+- Inspect first: `Runner.cpp`, `RunnerLifecycle.{h,cpp}`, `runner-lifecycle-tests.cpp`, and package/publisher verification records.

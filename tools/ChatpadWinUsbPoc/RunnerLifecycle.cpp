@@ -1,5 +1,8 @@
 #include "RunnerLifecycle.h"
 namespace chatpad {
+bool ShouldSendStartupZeroRumbleRecovery(bool uncleanPreviousSession) {
+    return uncleanPreviousSession;
+}
 bool RunnerLifecycle::DeviceFound() {
     if(state_!=RunnerState::WaitingForDevice)return false;
     state_=RunnerState::Opening;return true;

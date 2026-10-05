@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 namespace chatpad {
+bool ShouldSendStartupZeroRumbleRecovery(bool uncleanPreviousSession);
 enum class RunnerState : uint8_t {
     WaitingForDevice, Opening, ActivatingChatpad, Running, DeviceLost, Reconnecting, Stopping
 };

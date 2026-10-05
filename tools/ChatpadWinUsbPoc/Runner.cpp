@@ -114,8 +114,8 @@ bool WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState
     }
     return false;
 }
-struct SessionResult { bool lost{},backendFailure{},cleanupFailure{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
-SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log) {
+struct SessionResult { bool lost{},backendFailure{},cleanupFailure{},rumbleRecoveryCompleted{},rumbleRecoveryFailure{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
+SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log,bool rumbleRecoveryPending) {
     const auto sessionStart=Clock::now();
     SessionResult counts;std::atomic<bool> sessionStop{false};std::atomic<int> failure{0};
     XboxState initial{};
@@ -135,9 +135,16 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     ChatpadMaintenance maintenance(usb);
     if(!maintenance.Start(GetTickCount64())){log.Event("initial keepalive failed win32="+std::to_string(maintenance.LastResult().win32Error));return {true};}
     log.Event("Chatpad activated; keepalive started; key-data command is gated on first complete five-byte report");
-    const auto initialRumbleStop=usb.Write(0,0x01,BuildRumble(0,0),1000);
-    if(initialRumbleStop.status!=TransferStatus::Ok||initialRumbleStop.transferred!=8){
-        log.Event("initial zero-rumble command failed win32="+std::to_string(initialRumbleStop.win32Error));return {true};
+    if(rumbleRecoveryPending){
+        const auto initialRumbleStop=usb.Write(0,0x01,BuildRumble(0,0),1000);
+        if(initialRumbleStop.status!=TransferStatus::Ok||initialRumbleStop.transferred!=8){
+            log.Event("unclean-session zero-rumble recovery failed win32="+std::to_string(initialRumbleStop.win32Error));
+            counts.rumbleRecoveryFailure=true;return counts;
+        }
+        counts.rumbleRecoveryCompleted=true;
+        log.Event("unclean-session zero-rumble recovery succeeded");
+    }else{
+        log.Event("startup zero-rumble recovery skipped previous_session_clean=true");
     }
 
     std::unique_ptr<VirtualBrokerController> virtualController;
@@ -282,7 +289,9 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     struct MutexCleanup {HANDLE handle;~MutexCleanup(){if(handle)CloseHandle(handle);}} mutexCleanup{processMutex};
     log.Event("application_start version=1.0.0 mode=run elevation=not_required_by_runner session=foreground");
     const auto marker=log.directory/L"session.active.json";std::error_code markerError;
-    if(std::filesystem::exists(marker,markerError)){
+    const bool uncleanPreviousSession=std::filesystem::exists(marker,markerError);
+    if(markerError){log.Event("BLOCKED: process-lifecycle marker query failed: "+markerError.message());return 8;}
+    if(uncleanPreviousSession){
         SendInputKeyboardOutput recovery;
         const bool released=recovery.ReleaseAbandonedKeys();
         log.Event(std::string("unclean_previous_session=true stale_keyboard_release=")+(released?"PASS":"FAILED"));
@@ -293,11 +302,12 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         state<<"{\"pid\":"<<GetCurrentProcessId()<<",\"startedUtc\":true}\n";
         if(!state){log.Event("BLOCKED: could not create process-lifecycle marker");return 8;}
     }
-    struct MarkerCleanup {std::filesystem::path path;~MarkerCleanup(){std::error_code ec;std::filesystem::remove(path,ec);}} markerCleanup{marker};
+    struct MarkerCleanup {std::filesystem::path path;bool preserve{};~MarkerCleanup(){if(!preserve){std::error_code ec;std::filesystem::remove(path,ec);}}} markerCleanup{marker};
     FILETIME startCreate{},startExit{},startKernel{},startUser{};GetProcessTimes(GetCurrentProcess(),&startCreate,&startExit,&startKernel,&startUser);
     const auto processStart=Clock::now();
     RunnerLifecycle lifecycle;unsigned backoff=250;
     bool fatalBackendFailure=false;
+    bool rumbleRecoveryPending=ShouldSendStartupZeroRumbleRecovery(uncleanPreviousSession);
     while(!stop.load()){
         WinUsbTransport transport;auto devices=transport.Enumerate();
         if(!options.instanceId.empty())devices.erase(std::remove_if(devices.begin(),devices.end(),[&](const auto& d){return d.instanceId!=options.instanceId;}),devices.end());
@@ -315,8 +325,14 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         }
         backoff=250;lifecycle.Opened();log.Event("WinUSB open PASS interface_topology=qualified");
         log.Event("state=ACTIVATING_CHATPAD");
-        const auto session=RunSession(transport,options,stop,lifecycle,log);
+        const auto session=RunSession(transport,options,stop,lifecycle,log,rumbleRecoveryPending);
         transport.Close();
+        if(session.rumbleRecoveryFailure){
+            markerCleanup.preserve=true;fatalBackendFailure=true;
+            log.Event("state=PHYSICAL_OUTPUT_RECOVERY_FAILED; stopping without retrying the zero-rumble write");
+            break;
+        }
+        if(session.rumbleRecoveryCompleted)rumbleRecoveryPending=false;
         if(session.cleanupFailure){
             lifecycle.BackendFailed();fatalBackendFailure=true;
             log.Event("state=CLEANUP_FAILED; stopping this run without reopening the physical controller");
@@ -333,6 +349,7 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         lifecycle.BeginReconnect();log.Event("state=RECONNECTING backoff_ms="+std::to_string(backoff));
         SleepBounded(stop,backoff);lifecycle.Retry();backoff=(std::min)(backoff*2,5000u);
     }
+    if(rumbleRecoveryPending)markerCleanup.preserve=true;
     lifecycle.Stop();
     PROCESS_MEMORY_COUNTERS_EX memory{};memory.cb=sizeof(memory);GetProcessMemoryInfo(GetCurrentProcess(),reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&memory),sizeof(memory));
     FILETIME endCreate{},endExit{},endKernel{},endUser{};GetProcessTimes(GetCurrentProcess(),&endCreate,&endExit,&endKernel,&endUser);

@@ -4,6 +4,8 @@ using namespace chatpad;
 unsigned checks{}, failed{};
 void Check(bool value,const char* name){++checks;if(!value){++failed;std::cerr<<"FAIL: "<<name<<'\n';}}
 int main(){
+    Check(!ShouldSendStartupZeroRumbleRecovery(false),"clean prior shutdown skips redundant startup rumble write");
+    Check(ShouldSendStartupZeroRumbleRecovery(true),"unclean prior shutdown requests startup rumble recovery");
     RunnerLifecycle lifecycle;
     Check(lifecycle.State()==RunnerState::WaitingForDevice,"starts waiting for device");
     Check(lifecycle.DeviceFound()&&lifecycle.State()==RunnerState::Opening,"unplugged startup can discover device later");

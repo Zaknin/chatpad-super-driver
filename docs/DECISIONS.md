@@ -7,6 +7,13 @@
 - **Alternatives rejected:** Ignoring the timed-out write, weakening/removing zero-rumble validation, moving physical USB ownership into the service, changing virtual-controller backend, or introducing another controller reader after broker creation.
 - **Consequences:** One pump owns physical controller reads for the session; the post-create state sink receives the latest cached state and subsequent reports. Existing Chatpad reads, rumble callback, reconnect, neutral-state cleanup, and broker lifecycle remain separately verified responsibilities.
 
+## 2026-10-05 — Send startup zero-rumble only for unclean-session recovery
+
+- **Decision:** Send the initial physical zero-rumble command only when a prior `session.active.json` marker proves the previous bridge process did not exit cleanly. A clean start skips the redundant write. If an unclean-session recovery write times out, stop the current launch without retry-looping and preserve the marker for a later recovery attempt.
+- **Rationale:** The user's retry still timed out after the new log confirmed IF0/81 polling had started, disproving the previous polling-gap hypothesis. That run also reported `unclean_previous_session=false`. The approved broker specification describes startup zero-rumble as next-launch crash recovery; normal graceful shutdown already attempts motor neutralization, and normal C3 startup does not require this extra OUT transfer.
+- **Alternatives rejected:** Sending the same OUT write on every clean start, silently ignoring a failed crash-recovery write, or repeating a timed-out write across automatic reconnects.
+- **Consequences:** Ordinary clean startup can proceed to virtual-controller creation without an unnecessary physical OUT request. Unclean startup retains strict motor recovery; failure remains visible, preserves recovery state, and stops without an automatic retry loop. Graceful session cleanup continues to send and verify zero rumble.
+
 ## 2026-10-05 — Require the exact XUSB interface before broker create succeeds
 
 - **Decision:** The broker must verify that HIDMaestro published the present XUSB device interface for the exact controller identity before it returns successful virtual-controller creation to ChatpadBridge.
