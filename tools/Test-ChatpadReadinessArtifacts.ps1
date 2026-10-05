@@ -1,4 +1,5 @@
 $ErrorActionPreference='Stop'
+if($null -eq ('System.IO.Compression.ZipFile' -as [type])){Add-Type -AssemblyName System.IO.Compression.FileSystem}
 $module=Join-Path $PSScriptRoot 'ChatpadReadinessArtifacts.psm1'
 if(-not(Test-Path $module)){throw 'FAIL: readiness archive module missing'}
 Import-Module $module -Force
@@ -8,6 +9,13 @@ New-Item -ItemType Directory -Path (Join-Path $taskRoot 'input') -Force | Out-Nu
 [IO.File]::WriteAllText((Join-Path $taskRoot 'input/a.txt'),'first')
 $script:count=0
 function Assert($ok,$name){if(-not $ok){throw "FAIL: $name"};$script:count++}
+$windowsPowerShellArchive=Join-Path $taskRoot ('windows-powershell-'+[guid]::NewGuid().ToString('N')+'.zip')
+$windowsPowerShellCommand="`$ErrorActionPreference='Stop'; Import-Module '$module' -Force; New-ChatpadDeterministicArchive '$(Join-Path $taskRoot 'input')' '$windowsPowerShellArchive' | Out-Null"
+$windowsPowerShellOutput=@(& powershell.exe -NoProfile -Command $windowsPowerShellCommand 2>&1)
+if($LASTEXITCODE -ne 0){throw "FAIL: Windows PowerShell deterministic archive invocation failed: $($windowsPowerShellOutput -join ' | ')"}
+Assert (Test-Path -LiteralPath $windowsPowerShellArchive -PathType Leaf) 'Windows PowerShell 5.1 can create deterministic archive in a fresh process'
+$windowsPowerShellZip=[IO.Compression.ZipFile]::OpenRead($windowsPowerShellArchive)
+try{Assert (($windowsPowerShellZip.Entries.FullName -join '|') -ceq 'a.txt|b.txt') 'Windows PowerShell 5.1 archive contains ordered relative entries'}finally{$windowsPowerShellZip.Dispose()}
 foreach($name in @('one.zip','two.zip')){
  $destination=Join-Path $taskRoot $name
  if(Test-Path $destination){$destination=Join-Path $taskRoot ([guid]::NewGuid().ToString('N')+'.zip')}

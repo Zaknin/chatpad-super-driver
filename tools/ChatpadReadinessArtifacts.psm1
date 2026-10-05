@@ -3,6 +3,7 @@ function New-ChatpadDeterministicArchive {
  [CmdletBinding()]
  param([Parameter(Mandatory)][string]$SourceDirectory,[Parameter(Mandatory)][string]$Destination)
  $ErrorActionPreference='Stop'
+ if($null -eq ('System.IO.Compression.ZipArchive' -as [type])){Add-Type -AssemblyName System.IO.Compression}
  $root=(Resolve-Path -LiteralPath $SourceDirectory).Path
  $files=@(Get-ChildItem -LiteralPath $root -Recurse -File | Sort-Object FullName)
  if(@($files | Where-Object {($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0}).Count){throw 'Archive refuses reparse-point files.'}
