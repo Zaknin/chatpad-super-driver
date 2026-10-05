@@ -2,7 +2,7 @@
 
 Updated 2026-10-05 after normal-user crash-recovery qualification.
 
-- Branch: `feature/chatpad-usermode-runner`; starting HEAD for this closeout is `c8beb69fe88eced6a33b306b64e9c0483161974d`, pushed to origin. Runtime fix commit: `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
+- Branch: `feature/chatpad-usermode-runner`; runtime fix commit `92a368830bb6ecfb0a990ba68051583b506d5dd0` and publisher correction commit `fbf4375` are local. This documentation update is expected to become the current HEAD; starting HEAD was `c8beb69fe88eced6a33b306b64e9c0483161974d`.
 - The corrected runtime package at `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package` contains 214 members matching its build manifest; runner SHA-256 is `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`. It is bound to source commit `92a3688`; final release packaging must be rebuilt from the closeout HEAD.
 - Live normal-user runtime PASS: physical WinUSB and Chatpad activation/input; broker virtual Xbox; XInput slot and physical rumble; hot-unplug/replug, deferred zero-rumble and next-open recovery; virtual/keyboard/motor cleanup on graceful stop.
 - Client crash cleanup PASS: the user force-stopped the exact package process; the virtual controller disappeared within three seconds and the service stayed Running/Automatic. The following normal-user launch logged `unclean_previous_session=true`, recovered zero rumble, recreated the virtual Xbox, accepted Chatpad input, and ended with all cleanup flags true and `clean_shutdown=true`.

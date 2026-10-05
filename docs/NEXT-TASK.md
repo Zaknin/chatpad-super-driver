@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Branch `feature/chatpad-usermode-runner`, starting commit `c8beb69fe88eced6a33b306b64e9c0483161974d`; origin matched at task start. Publisher regression tests currently pass 8/8.
+- Branch `feature/chatpad-usermode-runner`; publisher correction commit `fbf4375` is local, and this continuity update is expected to be the final source/package HEAD. Starting commit was `c8beb69fe88eced6a33b306b64e9c0483161974d`; publisher regressions pass 9/9.
 - Normal-user end-to-end, XInput/physical rumble, Chatpad input, unplug/replug recovery, graceful cleanup, client-crash virtual cleanup, and next-launch recovery have been qualified from user-provided logs. See the latest WORKLOG entries and `artifacts/task-8lc4l2/live-qualification.json`.
 - The current package predates publisher/continuity changes. Rebuild from the exact committed closeout HEAD before release Prepare; do not reuse the old package as the final artifact.
 
