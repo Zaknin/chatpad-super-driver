@@ -1,22 +1,28 @@
-# TASK 8L-C4L2 — Qualify clean-start rumble recovery correction
+# TASK 8L-C4L2 — Trace missing XUSB companion during broker create
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; source/package build commit `2258de10c65052a12efff8acfa30f2773dc546ad`; published release identity commit `97095be21c420f55a26a7319b8a42323fd6fb6d4`.
-- The prior user run showed controller polling before activation but still timed out the startup zero-rumble write (Win32 1460) while `unclean_previous_session=false`, then reconnected eight times. Polling was not the cause.
-- The source skips startup zero-rumble after clean previous exit; an unclean previous session still gets one recovery attempt, with no automatic retry on failure. The new bytes await user live test.
-- Offline qualification passed: managed 504/504, native CTest 3/3, setup checks (identity 5, package 8, baseline 5, PnP 4), readiness/privacy 9/9, publication receipts 5/5, repository safety PASS; package 214/214 exact members.
-- Published canonical release: `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T040900Z`; archive SHA-256 `C03531153A5AF9E7407970DBBBA1AC88B9155C731294A1B42541BFF3C343CD07`. Independent remote readback passed all six sidecars, receipt identity/hash, and no `.part` files.
-- User previously reported broker RepairBroker PASS. No elevated repair is needed for this bridge-only change.
+- Branch: `feature/chatpad-usermode-runner`; source/package build commit `2258de10c65052a12efff8acfa30f2773dc546ad`; published release identity `97095be21c420f55a26a7319b8a42323fd6fb6d4`.
+- New normal-user run confirmed the rumble recovery correction: `unclean_previous_session=false` and startup zero-rumble was skipped. It then failed broker creation because the exact XUSB interface was absent.
+- SetupAPI shows the HIDMaestro ROOT node starts via `oem106.inf`/`mshidumdf`; broker cleanup deletes the node after the failed XUSB gate. Kernel-PnP logged repeated 3–5.2 second WUDFRd event-queue delays and query-remove vetoes for the SWD node. Exact cause is unresolved.
+- The product gate in `HidMaestroBackend.Create` waits 1000 ms for the interface after HIDMaestro returns. Do not increase it blindly: native broker create timeout is 30000 ms and the SDK startup already takes most of that bound.
+- Read-only watcher created at `artifacts/task-8lc4l2/monitor-xusb-interface.ps1`; a 5-second idle syntax/runtime check passed and observed zero present XUSB interfaces (expected while no controller is running).
+- The user previously reported the broker service Running. No service repair is indicated by this log.
 
 ## Next steps
 
-1. Ask the user to run `C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-recovery-2258de1\package\ChatpadBridge.exe` from ordinary PowerShell, then return the complete output after Ctrl+C.
-2. Confirm clean startup skips the recovery write and whether broker create/Chatpad runtime succeeds. Do not claim XInput or physical rumble PASS unless the user demonstrates it.
-3. Later, separately qualify unclean-session recovery and the single-attempt failure behavior.
+1. In a second ordinary PowerShell, start the read-only watcher for 60 seconds:
+
+   `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\monitor-xusb-interface.ps1" -Seconds 60 -IntervalMs 250`
+
+2. While it runs, start the published normal-user bridge in another PowerShell and return both outputs:
+
+   `& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-recovery-2258de1\package\ChatpadBridge.exe" run`
+
+3. If the exact SWD XUSB interface appears after the current one-second gate, make a minimal bounded wait/RPC timeout change with focused tests. If it never appears, investigate UMDF/PnP driver behavior; do not weaken the gate or switch backend.
 
 ## Safety
 
-- Do not change service lifecycle, driver binding, PnP/registry, trust, reboot, run an elevated bridge, or perform global HIDMaestro cleanup.
-- Preserve the unclean-session marker when its one recovery attempt fails; do not retry automatically.
-- Inspect first: `tools/ChatpadWinUsbPoc/Runner.cpp`, lifecycle tests, published readiness identity, and the user's new runtime output.
+- The watcher only enumerates present device-interface paths. It does not create/remove devices or alter service, PnP, registry, driver, trust, or boot state.
+- Do not run the bridge elevated or perform global HIDMaestro cleanup.
+- Keep the result PARTIAL until exact XUSB/XInput and subsequent rumble behavior are live-verified.

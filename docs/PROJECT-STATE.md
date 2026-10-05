@@ -1,15 +1,15 @@
 # Project State
 
-Updated 2026-10-05 after publishing the startup zero-rumble recovery correction.
+Updated 2026-10-05 after live rumble-recovery and XUSB companion checks.
 
-- Branch: `feature/chatpad-usermode-runner`; source/package build commit `2258de10c65052a12efff8acfa30f2773dc546ad`; published release identity commit `97095be21c420f55a26a7319b8a42323fd6fb6d4`.
-- Live evidence from the prior release: polling began before Chatpad activation, but startup zero-rumble timed out (Win32 1460) with `unclean_previous_session=false`, followed by eight reconnects before Ctrl+C. This disproved the polling-gap diagnosis.
-- Source correction: clean starts skip redundant startup zero-rumble. Unclean-session recovery remains a single attempt; failure stops startup and preserves the marker. Graceful cleanup still sends neutral state. This change has not yet been exercised live.
-- Offline verification: packaged managed tests 504/504; focused native CTest 3/3; setup tests repository identity 5, package identity 8, baseline 5, PnP 4; readiness/privacy 9/9; publication receipt 5/5; repository safety PASS. All 214 package members matched manifest size/SHA-256.
-- Published release: `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T040900Z`; archive SHA-256 `C03531153A5AF9E7407970DBBBA1AC88B9155C731294A1B42541BFF3C343CD07`; publication receipt sidecar SHA-256 `B3D83689CC638D30608BED6A9D382798E9A10FFF3920F28BEE3FA8F1ABB97A3E`. Independent readback verified six payload sidecars, exact release identity, and no `.part` files.
-- User previously reported RepairBroker PASS. Only bridge bytes changed; no new elevated repair is expected.
-- Safety: no live service, PnP, binding, registry, trust, device, reboot, elevated bridge, or global HIDMaestro cleanup by the agent; `legacy/` untouched.
+- Branch: `feature/chatpad-usermode-runner`; current repository state follows release commit `97095be21c420f55a26a7319b8a42323fd6fb6d4` (release archive built from `2258de10c65052a12efff8acfa30f2773dc546ad`).
+- Latest normal-user run of release `20261005T040900Z` confirmed `unclean_previous_session=false` and `startup zero-rumble recovery skipped previous_session_clean=true`. That corrects the repeated clean-start OUT timeout; this does not establish rumble output.
+- Virtual Xbox creation then failed because the exact XUSB interface `SWD#HIDMAESTRO#HM_622C184E37F6891E#{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}` was absent. The broker correctly refused HID-only success and cleaned up.
+- Read-only host evidence: SetupAPI logged the HIDMaestro ROOT node configured and started with `oem106.inf`/`mshidumdf` at 2026-10-05 04:13:35 UTC; broker cleanup deleted it at 04:13:52 UTC. Kernel-PnP logged repeated 3–5.2 second WUDFRd device-event queue delays and query-remove vetoes for the same SWD instance. These facts localize the failure to the UMDF/PnP/XUSB companion path; they do not yet prove whether the XUSB interface appears late or never appears.
+- The XUSB exact-interface gate remains necessary because HID-class input alone did not yield an XInput slot in prior C4 checks. Do not weaken it or switch backend. The gate currently polls for 1 second after HIDMaestro returns; observe interface arrival timing before changing that bound or create RPC timeout.
+- Offline release verification and publication remain PASS: managed 504/504, focused native CTest 3/3, setup/readiness/safety PASS, package inventory 214/214; archive SHA-256 `C03531153A5AF9E7407970DBBBA1AC88B9155C731294A1B42541BFF3C343CD07`.
+- Service remains Running on read-only query. Failed-create cleanup removed the controller nodes; no matching present XUSB device remained after process exit. No service, PnP, driver, registry, trust, or device mutation by the agent; `legacy/` untouched.
 
 ## Next
 
-Ask the user to run the published bridge from ordinary PowerShell and return the full output after Ctrl+C. Verify whether clean startup now reaches broker/controller operation. Keep live XInput and rumble status unqualified until observed; separately qualify unclean-session recovery later.
+Use the read-only interface monitor in `artifacts/task-8lc4l2/monitor-xusb-interface.ps1` during one normal-user bridge run. If the exact interface appears after the current one-second gate window, adjust only bounded wait/RPC timing and test offline first. If it never appears before cleanup, investigate the UMDF/HIDMaestro XUSB companion startup from the captured PnP evidence without reporting it as a rumble bug.
