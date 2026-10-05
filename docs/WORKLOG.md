@@ -14588,3 +14588,11 @@ This append records the implementation commit and first publication. The documen
 - Follow-up to the diagnostic fix: source and initial continuity update were committed as `2c554fe118eec879fbe41ee925fbc188e36dc436` (`fix: require live XUSB companion for broker create`) and pushed to `origin/feature/chatpad-usermode-runner`.
 - A documentation-only continuity update is now being committed. The next package must bind to the exact resulting HEAD, not merely the source commit above.
 - Package/readiness generation, full package member audit, atomic publication, and the user's manual RepairBroker retry remain pending. No live service/device operation has been performed by the agent.
+
+## 2026-10-05 02:55 UTC — Verify package and remediate repository-safety finding
+
+- Package built from branch `feature/chatpad-usermode-runner`, HEAD `ec4a3327d4fbed07dfcab8563e9c9c6f551d1222`, at `artifacts/task-8lc4l2/build-xusb-interface-gate`. Build manifest identity matched this pushed HEAD. C4 setup checks passed (repository 5/5, package identity 8/8, baseline 5/5, PnP restart 4/4, SCM argv 4/4); package inventory had 214 members.
+- Package validation: packaged helper self-test passed 168/168; focused native CTest `broker-client` and `runner-lifecycle` passed 2/2; readiness archive/privacy tests passed 9/9; independent audit found 214 expected/214 actual members with zero missing, extra, length, or hash mismatches.
+- Repository safety first failed because an ignored source-tree `tools/ChatpadVirtualXbox/obj` directory contained 34 generated files last written 2026-10-04 23:43, before this verification run. To preserve them and meet the repository output boundary, the directory was moved intact to `artifacts/task-8lc4l2/preexisting-source-obj-20261005T025500Z`. Repeated `Test-RepositorySafety.ps1` returned PASS, with zero tracked generated outputs and zero live mutations.
+- This verification update advances HEAD after the first package. Therefore that package is intentionally not eligible for live repair; rebuild readiness and package from the exact HEAD after this documentation commit. Publication has not started.
+- No service lifecycle/configuration mutation, driver/PnP/registry/device mutation, trust change, reboot, elevated bridge run, or HIDMaestro global cleanup occurred. `legacy/` remains untouched.
