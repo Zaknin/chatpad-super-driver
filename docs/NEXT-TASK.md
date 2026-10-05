@@ -1,24 +1,24 @@
-# TASK 8L-C4L2 — Final exact-HEAD build and canonical publication
+# TASK 8L-C4L2 — Atomic publication and closeout
 
 ## Current state
 
-- Branch `feature/chatpad-usermode-runner`, starting pushed HEAD `6ca32dfb2c64c205893026b5ae23dc6d71bb9e3c`. The archive-helper correction and continuity update in this commit are expected to be the new source HEAD; push it before rebuilding.
-- Prior package and offline verification from `6ca32df` passed (214 members; managed 504/504; native 3/3; setup/readiness/safety PASS), but Prepare exposed an archive assembly-loading failure under Windows PowerShell 5.1. The fix now passes archive/privacy 11/11 in both Windows PowerShell 5.1 and PowerShell 7.
-- The failed Prepare timestamp `20261005T145217Z` created only ignored local staging; nothing was written to the SMB destination. Use a new UTC timestamp and rebuild from the next clean pushed HEAD.
-- Live runtime, XInput/physical rumble, Chatpad, reconnect, graceful cleanup, client-crash cleanup, and following-launch recovery are qualified; see the latest WORKLOG entry and `artifacts/task-8lc4l2/live-qualification.json`.
+- Branch `feature/chatpad-usermode-runner`, pushed package source commit `18e6572073aee0ac4231e89d9c509d6a420aa37b`.
+- Fresh package `artifacts/task-8lc4l2/build-c4l2-final-v2` and readiness metadata bind to that exact branch/commit. Offline verification passed: managed 504/504, focused native CTest 3/3, setup/readiness/repository safety PASS, package 214/214.
+- Prepare succeeded at timestamp `20261005T145921Z`; deterministic archive hash is `ABA2E12546BD394C967E6D7C8C26339306FA927EA71D617725C8E2F223981A50`. The sanitized live qualification record is included. No SMB publication has happened yet.
+- Live runtime, rumble, reconnect, graceful cleanup, client crash cleanup, and following-launch recovery passed from user-provided evidence. A broker service process crash was not injected; hard-client-crash motor-stop limitation is recorded.
 
-## Objective and acceptance
+## Next action
 
-Commit/push the archive-helper correction, regression, and continuity docs. Build a fresh package from that exact HEAD; run `artifacts/task-8lc4l2/verify-offline-release.ps1`; prepare the deterministic archive with a fresh timestamp; record verification/hash/path in continuity docs; commit/push only those allowed docs; publish with the same timestamp.
+Commit/push the current docs-only verification update, then publish with:
 
-Require clean and pushed repository identity; 214-member package hash/length agreement; managed 504/504, focused native CTest 3/3, setup/readiness/repository safety PASS; deterministic repeated archive hash; live evidence included; and atomic source/part/final SHA-256 readbacks plus sidecars at `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\<UTC_TIMESTAMP>\`.
+```powershell
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Dev\chatpad-super-driver\tools\Publish-ChatpadC4L2.ps1" -Mode Publish -UtcTimestamp 20261005T145921Z -BuildDirectory "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-c4l2-final-v2"
+```
+
+Confirm atomic publisher receipts and SHA-256 sidecars for every payload and the completion receipt. Then append the returned publication evidence and set the final result in continuity docs.
 
 ## Safety
 
-- No service install/repair, driver binding, PnP, registry, trust, boot, device mutation, or elevated bridge execution.
-- Keep generated artifacts and logs under ignored `artifacts/`; `legacy/` is immutable.
+- No service setup/repair, driver binding, PnP, registry, trust, boot, device mutation, or elevated bridge run.
+- Keep staging/build artifacts under ignored `artifacts/`; `legacy/` is immutable.
 - Push only `feature/chatpad-usermode-runner`.
-
-## Inspect first
-
-Read `AGENTS.md`, project state, decisions, this file, and recent worklog. Verify the staged diff and branch; then commit/push the fix, rebuild into a fresh ignored directory, verify, Prepare with a fresh UTC timestamp, and Publish only after the continuity commit is pushed.
