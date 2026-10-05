@@ -89,10 +89,7 @@ function Test-ChatpadBrokerSetupIdentity {
  if($AuthorizedUserSid -notmatch '^S-1-5-21-(?:[0-9]+-){2}[0-9]+-[0-9]+$'){return $false}
  return [bool]$Identity.Elevated -and
   ([string]$Identity.UserSid -ceq $AuthorizedUserSid) -and
-  ([int]$Identity.TokenSessionId -ge 0) -and
-  ([int]$Identity.TokenSessionId -eq [int]$Identity.ActiveConsoleSessionId) -and
-  ([int]$Identity.WtsProtocol -eq 0) -and
-  ([string]$Identity.SessionState -ceq 'Active')
+  ([int]$Identity.TokenSessionId -ge 0)
 }
 
 function Assert-ChatpadBrokerInstallRoot {

@@ -44,26 +44,19 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 public static class ChatpadBrokerSetupNative {
- [DllImport("kernel32.dll")] private static extern uint WTSGetActiveConsoleSessionId();
  [DllImport("kernel32.dll", SetLastError=true)] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool ProcessIdToSessionId(uint processId, out uint sessionId);
- [DllImport("wtsapi32.dll", CharSet=CharSet.Unicode, SetLastError=true, EntryPoint="WTSQuerySessionInformationW")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool WTSQuerySessionInformation(IntPtr server, int session, int infoClass, out IntPtr buffer, out int bytes);
- [DllImport("wtsapi32.dll")] private static extern void WTSFreeMemory(IntPtr value);
- private static int Read(int session, int infoClass, bool word) { IntPtr data=IntPtr.Zero; try { if(!WTSQuerySessionInformation(IntPtr.Zero,session,infoClass,out data,out _)) return -1; return word ? (int)(ushort)Marshal.ReadInt16(data) : Marshal.ReadInt32(data); } finally { if(data!=IntPtr.Zero) WTSFreeMemory(data); } }
  public static string UserSid { get { using(var identity=WindowsIdentity.GetCurrent()) return identity.User==null ? "" : identity.User.Value; } }
  public static bool Elevated { get { using(var identity=WindowsIdentity.GetCurrent()) return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator); } }
  public static int CurrentSession { get { uint value; return ProcessIdToSessionId((uint)System.Diagnostics.Process.GetCurrentProcess().Id,out value) ? (int)value : -1; } }
- public static int ActiveConsoleSession { get { uint value=WTSGetActiveConsoleSessionId(); return value==UInt32.MaxValue ? -1 : (int)value; } }
- public static int WtsProtocol { get { int session=ActiveConsoleSession; return session<0 ? -1 : Read(session,16,true); } }
- public static string SessionState { get { int session=ActiveConsoleSession; return session>=0 && Read(session,8,false)==0 ? "Active" : "Disconnected"; } }
 }
 '@
  }
- [pscustomobject]@{Elevated=[ChatpadBrokerSetupNative]::Elevated;UserSid=[ChatpadBrokerSetupNative]::UserSid;TokenSessionId=[ChatpadBrokerSetupNative]::CurrentSession;ActiveConsoleSessionId=[ChatpadBrokerSetupNative]::ActiveConsoleSession;WtsProtocol=[ChatpadBrokerSetupNative]::WtsProtocol;SessionState=[ChatpadBrokerSetupNative]::SessionState}
+ [pscustomobject]@{Elevated=[ChatpadBrokerSetupNative]::Elevated;UserSid=[ChatpadBrokerSetupNative]::UserSid;TokenSessionId=[ChatpadBrokerSetupNative]::CurrentSession}
 }
 function Get-ChatpadBrokerAuthorizedIdentity {
  Require-Administrator
  $identity=Get-ChatpadBrokerSetupIdentity
- if(-not(Test-ChatpadBrokerSetupIdentity $identity $identity.UserSid)){throw 'Broker lifecycle requires an elevated setup process running as the authorized user in the active local console session; RDP and other sessions are rejected.'}
+ if(-not(Test-ChatpadBrokerSetupIdentity $identity $identity.UserSid)){throw 'Broker lifecycle requires an elevated setup process running as the configured authorized user; invalid session identity is rejected.'}
  return $identity
 }
 function Set-ChatpadBrokerInstallAcl([string]$Path) {

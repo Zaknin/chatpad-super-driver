@@ -7,6 +7,13 @@
 - **Alternatives rejected:** Keeping the console-only gate; allowing any interactive/RDP account; granting broker access by session alone; or changing the named-pipe ACL to permit remote-machine pipe clients.
 - **Consequences:** Access remains limited to the configured user SID, local pipe clients, and non-anonymous tokens. Multiple sessions of that same account may connect, while the existing single-client lease still governs controller ownership. Active-console/session fields may remain diagnostic but are not authorization criteria.
 
+# 2026-10-05 — Permit elevated broker repair from the authorized user's RDP session
+
+- **Decision:** Broker install/repair setup requires an elevated process running as the configured user identity, but does not require that process to run in the physical console session. A valid RDP session for that same user is allowed.
+- **Rationale:** The broker IPC policy now accepts the user's authenticated local RDP session, so requiring the subsequent elevated RepairBroker step to run only at the physical console would prevent updating the service payload needed to use that policy.
+- **Alternatives rejected:** Allowing setup without elevation; allowing an unrelated user SID to repair the broker; keeping a console-only setup gate; or changing remote named-pipe access.
+- **Consequences:** Setup still requires Administrator membership, an exact authorized SID match, and a valid process session. The service remains LocalSystem and continues enforcing its own SID/local-pipe authorization.
+
 ## 2026-10-05 — Keep the physical controller input pipe continuously polled during startup
 
 - **Decision:** After the first valid controller report, start one persistent IF0/81 reader before Chatpad activation and keep it active through initial rumble and virtual broker creation. Cache the newest controller state until the broker is ready, then stream that state and all following reports through the existing virtual-controller client.

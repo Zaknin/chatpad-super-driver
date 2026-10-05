@@ -5,14 +5,14 @@ Import-Module (Join-Path $PSScriptRoot 'ChatpadC4Package.psm1') -Force
 $installRoot=Join-Path $env:ProgramFiles 'ChatpadBridge'
 $approvedSid='S-1-5-21-100-200-300-1001'
 $validIdentity=[pscustomobject]@{Elevated=$true;UserSid=$approvedSid;TokenSessionId=4;ActiveConsoleSessionId=4;WtsProtocol=0;SessionState='Active'}
-if(-not(Test-ChatpadBrokerSetupIdentity $validIdentity $approvedSid)){throw 'Broker install must accept only the elevated authorized local console identity.'}
+if(-not(Test-ChatpadBrokerSetupIdentity $validIdentity $approvedSid)){throw 'Broker install must accept the elevated configured authorized identity.'}
+$rdpIdentity=[pscustomobject]@{Elevated=$true;UserSid=$approvedSid;TokenSessionId=1;ActiveConsoleSessionId=2;WtsProtocol=2;SessionState='Disconnected'}
+if(-not(Test-ChatpadBrokerSetupIdentity $rdpIdentity $approvedSid)){throw 'Broker lifecycle must accept the elevated authorized user from RDP even when the local console is inactive.'}
 foreach($identity in @(
  [pscustomobject]@{Elevated=$false;UserSid=$approvedSid;TokenSessionId=4;ActiveConsoleSessionId=4;WtsProtocol=0;SessionState='Active'},
  [pscustomobject]@{Elevated=$true;UserSid='S-1-5-21-100-200-300-1002';TokenSessionId=4;ActiveConsoleSessionId=4;WtsProtocol=0;SessionState='Active'},
- [pscustomobject]@{Elevated=$true;UserSid=$approvedSid;TokenSessionId=3;ActiveConsoleSessionId=4;WtsProtocol=0;SessionState='Active'},
- [pscustomobject]@{Elevated=$true;UserSid=$approvedSid;TokenSessionId=4;ActiveConsoleSessionId=4;WtsProtocol=2;SessionState='Active'},
- [pscustomobject]@{Elevated=$true;UserSid=$approvedSid;TokenSessionId=4;ActiveConsoleSessionId=4;WtsProtocol=0;SessionState='Disconnected'}
-)){if(Test-ChatpadBrokerSetupIdentity $identity $approvedSid){throw 'Broker install accepted non-elevated, wrong-SID, stale, RDP or inactive sessions.'}}
+ [pscustomobject]@{Elevated=$true;UserSid=$approvedSid;TokenSessionId=-1;ActiveConsoleSessionId=4;WtsProtocol=0;SessionState='Active'}
+)){if(Test-ChatpadBrokerSetupIdentity $identity $approvedSid){throw 'Broker lifecycle accepted non-elevated, wrong-SID, or invalid-session identity.'}}
 $cases=@(
  [pscustomobject]@{Name='C3 branch accepted';Readiness=[pscustomobject]@{Repository=[pscustomobject]@{Branch='feature/chatpad-winusb-bridge-poc';Commit=('a'*40)}};Current=[pscustomobject]@{Branch='feature/chatpad-winusb-bridge-poc';Commit=('a'*40)};Expected=$true},
  [pscustomobject]@{Name='C4 branch accepted only for C4 readiness';Readiness=[pscustomobject]@{Task='8L-C4';Repository=[pscustomobject]@{Branch='feature/chatpad-usermode-runner';Commit=('b'*40)}};Current=[pscustomobject]@{Branch='feature/chatpad-usermode-runner';Commit=('b'*40)};Expected=$true},
