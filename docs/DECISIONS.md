@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-05 — Defer zero-rumble recovery when USB removal is confirmed
+
+- **Decision:** If the physical controller disappears while cleanup tries to send zero rumble, treat only that physical write as deferred when keyboard release, virtual neutralization, and virtual release all succeeded. Preserve the unclean-session marker and retry zero rumble after the next successful physical reopen. Treat all other write failures and any other cleanup failure as fatal.
+- **Rationale:** A hot unplug makes a successful physical stop command impossible, but should not prevent the virtual controller from being neutralized/released or prevent the runner from reconnecting. The next session can send zero rumble before recreating the virtual controller.
+- **Alternatives rejected:** Treating device removal as a generic clean shutdown without startup recovery; terminating every unplug as `CLEANUP_FAILED`; retrying writes against the removed handle; or weakening checks for timeouts, partial writes, key release, or virtual cleanup.
+- **Consequences:** `motorsStopped=false` remains an accurate observation for the removed session. The runner reconnects only for confirmed `DeviceNotPresent` with all other cleanup successful. Pending zero-rumble recovery remains durable across stop/crash until a later session succeeds.
+
 # 2026-10-05 — Allow the authorized local user to use the broker over RDP
 
 - **Decision:** Accept broker clients from any non-anonymous, local named-pipe session whose SID exactly matches the installed authorized-user SID. Do not require that the client session equal the active physical console session or use the console protocol; an authorized user's RDP session is allowed.

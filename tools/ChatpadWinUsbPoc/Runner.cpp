@@ -114,7 +114,7 @@ bool WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState
     }
     return false;
 }
-struct SessionResult { bool lost{},backendFailure{},cleanupFailure{},rumbleRecoveryCompleted{},rumbleRecoveryFailure{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
+struct SessionResult { bool lost{},backendFailure{},cleanupFailure{},rumbleRecoveryCompleted{},rumbleRecoveryFailure{},rumbleStopPending{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
 SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log,bool rumbleRecoveryPending) {
     const auto sessionStart=Clock::now();
     SessionResult counts;std::atomic<bool> sessionStop{false};std::atomic<int> failure{0};
@@ -138,8 +138,15 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     if(rumbleRecoveryPending){
         const auto initialRumbleStop=usb.Write(0,0x01,BuildRumble(0,0),1000);
         if(initialRumbleStop.status!=TransferStatus::Ok||initialRumbleStop.transferred!=8){
-            log.Event("unclean-session zero-rumble recovery failed win32="+std::to_string(initialRumbleStop.win32Error));
-            counts.rumbleRecoveryFailure=true;return counts;
+            counts.rumbleStopPending=true;
+            if(initialRumbleStop.status==TransferStatus::DeviceNotPresent){
+                log.Event("unclean-session zero-rumble recovery deferred device_removed win32="+std::to_string(initialRumbleStop.win32Error));
+                counts.lost=true;
+            }else{
+                log.Event("unclean-session zero-rumble recovery failed win32="+std::to_string(initialRumbleStop.win32Error));
+                counts.rumbleRecoveryFailure=true;
+            }
+            return counts;
         }
         counts.rumbleRecoveryCompleted=true;
         log.Event("unclean-session zero-rumble recovery succeeded");
@@ -239,11 +246,15 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
         if(!virtualReleased)log.Event("virtual broker cleanup failed: "+brokerError);
     }
     // WinUSB may already be gone; still send one bounded zero command while the
-    // interface remains available, and never retry after a disconnect.
+    // interface remains available. Device removal defers the zero to reconnect.
     const bool motorsStopped=motorStop.status==TransferStatus::Ok&&motorStop.transferred==8;
-    counts.cleanupFailure=!keysReleased||!virtualNeutral||!virtualReleased||!motorsStopped;
+    const auto cleanupDisposition=ClassifySessionCleanup(keysReleased,virtualNeutral,virtualReleased,motorStop);
+    counts.cleanupFailure=cleanupDisposition==SessionCleanupDisposition::Failed;
+    counts.rumbleStopPending=!motorsStopped;
     if(!virtualNeutral)log.Event("virtual neutral cleanup failed");
-    if(!motorsStopped)log.Event("zero-rumble cleanup failed win32="+std::to_string(motorStop.win32Error));
+    if(cleanupDisposition==SessionCleanupDisposition::DeviceRemoved)
+        log.Event("zero-rumble cleanup deferred device_removed win32="+std::to_string(motorStop.win32Error));
+    else if(!motorsStopped)log.Event("zero-rumble cleanup failed win32="+std::to_string(motorStop.win32Error));
     log.Event(std::string("session cleanup keysReleased=")+(keysReleased?"true":"false")+
         " virtualNeutral="+(virtualNeutral?"true":"false")+" virtualReleased="+(virtualReleased?"true":"false")+
         " motorsStopped="+(motorsStopped?"true":"false"));
@@ -333,6 +344,7 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
             break;
         }
         if(session.rumbleRecoveryCompleted)rumbleRecoveryPending=false;
+        if(session.rumbleStopPending)rumbleRecoveryPending=true;
         if(session.cleanupFailure){
             lifecycle.BackendFailed();fatalBackendFailure=true;
             log.Event("state=CLEANUP_FAILED; stopping this run without reopening the physical controller");

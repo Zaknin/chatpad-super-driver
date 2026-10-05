@@ -1,7 +1,14 @@
 #pragma once
+#include "BridgeCore.h"
 #include <cstdint>
 namespace chatpad {
 bool ShouldSendStartupZeroRumbleRecovery(bool uncleanPreviousSession);
+enum class SessionCleanupDisposition : uint8_t { Complete, DeviceRemoved, Failed };
+SessionCleanupDisposition ClassifySessionCleanup(
+    bool keysReleased,
+    bool virtualNeutral,
+    bool virtualReleased,
+    const TransferResult& zeroRumbleStop);
 enum class RunnerState : uint8_t {
     WaitingForDevice, Opening, ActivatingChatpad, Running, DeviceLost, Reconnecting, Stopping
 };

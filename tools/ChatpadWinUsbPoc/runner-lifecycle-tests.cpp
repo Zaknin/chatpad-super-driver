@@ -6,6 +6,24 @@ void Check(bool value,const char* name){++checks;if(!value){++failed;std::cerr<<
 int main(){
     Check(!ShouldSendStartupZeroRumbleRecovery(false),"clean prior shutdown skips redundant startup rumble write");
     Check(ShouldSendStartupZeroRumbleRecovery(true),"unclean prior shutdown requests startup rumble recovery");
+    const TransferResult rumbleStopped{TransferStatus::Ok,0,8};
+    const TransferResult deviceRemoved{TransferStatus::DeviceNotPresent,433,0};
+    const TransferResult rumbleTimedOut{TransferStatus::Timeout,1460,0};
+    const TransferResult shortRumbleWrite{TransferStatus::Ok,0,7};
+    Check(ClassifySessionCleanup(true,true,true,rumbleStopped)==SessionCleanupDisposition::Complete,
+        "successful motor stop completes session cleanup");
+    Check(ClassifySessionCleanup(true,true,true,deviceRemoved)==SessionCleanupDisposition::DeviceRemoved,
+        "device removal during zero-rumble cleanup defers recovery to reconnect");
+    Check(ClassifySessionCleanup(false,true,true,deviceRemoved)==SessionCleanupDisposition::Failed,
+        "device removal does not mask failed key release");
+    Check(ClassifySessionCleanup(true,false,true,deviceRemoved)==SessionCleanupDisposition::Failed,
+        "device removal does not mask failed virtual neutralization");
+    Check(ClassifySessionCleanup(true,true,false,deviceRemoved)==SessionCleanupDisposition::Failed,
+        "device removal does not mask failed virtual release");
+    Check(ClassifySessionCleanup(true,true,true,rumbleTimedOut)==SessionCleanupDisposition::Failed,
+        "zero-rumble timeout remains a fatal cleanup failure");
+    Check(ClassifySessionCleanup(true,true,true,shortRumbleWrite)==SessionCleanupDisposition::Failed,
+        "short zero-rumble write remains a fatal cleanup failure");
     RunnerLifecycle lifecycle;
     Check(lifecycle.State()==RunnerState::WaitingForDevice,"starts waiting for device");
     Check(lifecycle.DeviceFound()&&lifecycle.State()==RunnerState::Opening,"unplugged startup can discover device later");

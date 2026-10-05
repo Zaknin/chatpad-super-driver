@@ -1,33 +1,36 @@
-# TASK 8L-C4L2 — Qualify RDP runtime after broker repair
+# TASK 8L-C4L2 — Requalify reconnect after physical unplug
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; begin from the current pushed branch HEAD (confirm with `git rev-parse HEAD`); runtime package source commit `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`.
-- User manually ran elevated `RepairBroker` from RDP using `artifacts/task-8lc4l2/build-rdp-setup-session-b76336d/package`; it passed and reported the service Running as LocalSystem with 197 runtime members.
-- Two subsequent normal-user RDP runs opened WinUSB, then cycled through `ACTIVATING_CHATPAD` and `DEVICE_LOST` every five seconds; the user stopped them cleanly after four and six reconnects. The user is away from the physical controller and cannot press it remotely.
-- The read-only `probe` found one present target and the expected topology, but its IF0/IN81 read failed with Win32 1460 (`ERROR_TIMEOUT`) after one second. No controller report arrived.
-- The run emitted no `controller input polling started`, activation-stage, broker-create, or virtual-Xbox messages. Source inspection shows the runner logs `ACTIVATING_CHATPAD` before waiting up to five seconds for the first controller report. This points to the physical controller readiness wait, but the reason no first report arrived is unknown.
-- Broker creation, XUSB interface, XInput, rumble, reconnect recovery, and crash recovery are not established by this run. Verdict remains PARTIAL.
-- The current build package remains runnable, but a future setup/repair must use readiness regenerated for the then-current HEAD.
+- Branch: `feature/chatpad-usermode-runner`; source fix is based on `c0c42ca1ca087423fd709d74d6c49a337b9f961d` and is being committed with this continuity update.
+- In the user’s normal-user run, WinUSB open, Chatpad activation, virtual Xbox creation, Chatpad input, and a separate XInput rumble pulse succeeded. During unplug, the final zero-rumble write returned Win32 433; keyboard and virtual-controller cleanup succeeded, but the runner treated the unavailable physical write as fatal and exited with `CLEANUP_FAILED`.
+- The fix defers zero-rumble recovery when the device is confirmed removed, while still requiring key release and successful virtual neutralization/release. Timeouts, partial writes, and failed cleanup actions remain fatal.
+- Focused `runner-lifecycle` regression and native `ChatpadWinUsbPoc` build passed. The updated package has not yet been generated. Existing installed broker payload is unchanged; do not run `RepairBroker` for this client-only fix.
 
 ## Next action
 
-Resume live qualification when physical controller input is available. Run the normal-user bridge once:
+Build the package from the committed and pushed branch tip:
 
 ```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rdp-setup-session-b76336d\package\ChatpadBridge.exe" run
+& "C:\Dev\chatpad-super-driver\tools\Build-ChatpadBridge.ps1" -OutputDirectory "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect" -SkipNativeTests
 ```
 
-Do not retry while the controller cannot be awakened. Acceptance still requires successful broker create, exact XUSB interface and XInput proof, Chatpad input, rumble callback, reconnect cleanup, and crash recovery. Do not repeat RepairBroker without a new exact-HEAD package.
+Check `build-manifest.json`, generated `readiness-input.json`, and every package member’s SHA-256 against the manifest. Then provide the user the exact ordinary, non-elevated command:
+
+```powershell
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect\package\ChatpadBridge.exe" run
+```
+
+The user should reconnect the controller before starting. After the log reaches virtual Xbox creation, have them unplug and replug once. Acceptance requires `zero-rumble cleanup deferred device_removed`, reconnect progress, successful WinUSB reopen, `unclean-session zero-rumble recovery succeeded`, and a second virtual Xbox creation. Ask for the complete output and then stop after the user ends the recovered run with Ctrl+C.
 
 ## Safety and acceptance
 
-- Do not run ChatpadBridge elevated.
-- Keep broker authorization restricted to the configured SID and local named-pipe clients; do not weaken identity checks further.
-- No automatic service, PnP, registry, device, driver, trust, boot, or HIDMaestro global cleanup.
-- `legacy/` remains immutable.
-- Continue to XUSB/XInput and rumble checks only after the runner reaches broker create. Report live statuses separately; do not infer rumble from controller enumeration or button input.
+- Run the bridge only from ordinary, non-elevated PowerShell.
+- Do not repeat service install/repair; service and broker code did not change.
+- Do not change driver binding, PnP, registry, trust, boot, or device state beyond the user-directed physical unplug/replug test.
+- Preserve the fatal path for timeouts, partial/failed writes, or keyboard/virtual cleanup failures.
+- Report reconnect as live PASS only after the corrected package recovers and zero-rumble recovery succeeds after replug. Full C4L2 closeout and publication remain pending.
 
 ## Inspect first
 
-Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md`, then inspect `tools/ChatpadWinUsbPoc/Runner.cpp` around `WaitController`, `RunSession`, and reconnect handling.
+Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md`; check branch/HEAD/status, then inspect `Runner.cpp`, `RunnerLifecycle.cpp`, and the focused lifecycle test.

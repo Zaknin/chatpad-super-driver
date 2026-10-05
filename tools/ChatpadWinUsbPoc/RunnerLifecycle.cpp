@@ -3,6 +3,18 @@ namespace chatpad {
 bool ShouldSendStartupZeroRumbleRecovery(bool uncleanPreviousSession) {
     return uncleanPreviousSession;
 }
+SessionCleanupDisposition ClassifySessionCleanup(
+    bool keysReleased,
+    bool virtualNeutral,
+    bool virtualReleased,
+    const TransferResult& zeroRumbleStop) {
+    if(!keysReleased||!virtualNeutral||!virtualReleased)return SessionCleanupDisposition::Failed;
+    if(zeroRumbleStop.status==TransferStatus::Ok&&zeroRumbleStop.transferred==8)
+        return SessionCleanupDisposition::Complete;
+    if(zeroRumbleStop.status==TransferStatus::DeviceNotPresent)
+        return SessionCleanupDisposition::DeviceRemoved;
+    return SessionCleanupDisposition::Failed;
+}
 bool RunnerLifecycle::DeviceFound() {
     if(state_!=RunnerState::WaitingForDevice)return false;
     state_=RunnerState::Opening;return true;
