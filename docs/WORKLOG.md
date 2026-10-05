@@ -14856,3 +14856,8 @@ This append records the implementation commit and first publication. The documen
 - No source changes in this live qualification. No service repair/install, device/PnP/driver/registry/trust/boot mutation, or elevated bridge; `legacy/` untouched.
 - Remaining acceptance: force-terminate exactly the package ChatpadBridge client and verify the broker removes its virtual Xbox while the service remains Running; then relaunch and verify the unclean-session zero-rumble recovery marker is consumed. Final canonical publication and full C4L2 verdict remain pending that crash-cleanup check.
 - Continuity commit/push: pending.
+
+## 2026-10-05 14:32 UTC — Record live reconnect documentation push
+
+- Correction to the preceding entry: its `Continuity commit/push: pending` status was accurate when written and is now superseded. The live reconnect state and next crash-cleanup handoff were committed as `a70b7febc5b6c869520572dbf0e95084ade54079` and pushed to `origin/feature/chatpad-usermode-runner`.
+- This entry accompanies the current docs-only closeout. After it is pushed, readiness metadata is regenerated against the resulting HEAD; package runtime bytes remain unchanged from source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
