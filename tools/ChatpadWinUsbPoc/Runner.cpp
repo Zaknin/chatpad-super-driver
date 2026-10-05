@@ -4,6 +4,7 @@
 #include <Psapi.h>
 #include "Runner.h"
 #include "RunnerLifecycle.h"
+#include "ControllerInputPump.h"
 #include "WinUsbTransport.h"
 #include "Topology.h"
 #include "KeyboardOutput.h"
@@ -119,6 +120,12 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     SessionResult counts;std::atomic<bool> sessionStop{false};std::atomic<int> failure{0};
     XboxState initial{};
     if(!WaitController(usb,appStop,initial,log))return {true};
+    // Keep IF0/81 continuously polled while activation and the broker create
+    // operation run. HIDMaestro startup can take seconds; pausing controller
+    // reads here can leave the physical output pipe unable to complete writes.
+    ControllerInputPump controllerPump(usb,initial);
+    if(!controllerPump.Start()){log.Event("controller input pump start failed");return {true};}
+    log.Event("controller input polling started before Chatpad activation");
     ActivationRunner activation(ActivationPolicy::NativeProbeRejection);
     auto delay=[&](uint32_t ms){SleepBounded(appStop,ms);};
     const auto activated=activation.Run(usb,delay,[&](const ActivationEvent& e){ActivationLog(e,log);});
@@ -140,7 +147,15 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
             log.Event("HIDMaestro broker create failed: "+virtualController->LastError());
             counts.backendFailure=true;return counts;
         }
-        if(!virtualController->SubmitState(initial)){log.Event("initial neutral/controller submission failed: "+virtualController->LastError());virtualController->Disconnect();return {true};}
+        if(!controllerPump.SetStateSink([&](const XboxState& state){
+            if(!virtualController->SubmitState(state)){
+                log.Event("virtual state submit failed: "+virtualController->LastError());failure=3;return false;
+            }
+            return true;
+        })){
+            log.Event("initial neutral/controller submission failed: "+virtualController->LastError());
+            virtualController->Disconnect();return {true};
+        }
         log.Event("virtual Xbox created and initial controller state submitted");
     }
     MonitorOutput monitor;
@@ -156,58 +171,48 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     });
 
     int lastModifiers=-1;
-    auto readLoop=[&](bool controller){
+    auto readChatpadLoop=[&]{
         try {
-            uint64_t nextMaintenance=GetTickCount64(),lastSubmit=GetTickCount64();XboxState last=initial;
+            uint64_t nextMaintenance=GetTickCount64();
             while(!appStop.load()&&!sessionStop.load()&&failure.load()==0){
-                if(!controller&&GetTickCount64()>=nextMaintenance){
+                if(GetTickCount64()>=nextMaintenance){
                     if(!maintenance.Tick(GetTickCount64())){log.Event("Chatpad keepalive failed win32="+std::to_string(maintenance.LastResult().win32Error));failure=2;break;}
                     nextMaintenance=GetTickCount64()+200;
                 }
-                std::vector<uint8_t> packet;auto result=usb.Read(controller?0:2,controller?0x81:0x84,packet,200);
-                if(result.status==TransferStatus::Timeout){
-                    if(controller&&virtualController&&GetTickCount64()-lastSubmit>=1000){
-                        if(!virtualController->SubmitState(last)){log.Event("virtual keepalive submission failed: "+virtualController->LastError());failure=3;break;}
-                        ++counts.virtualSubmissions;lastSubmit=GetTickCount64();
-                    }
-                    continue;
-                }
+                std::vector<uint8_t> packet;auto result=usb.Read(2,0x84,packet,200);
+                if(result.status==TransferStatus::Timeout)continue;
                 if(result.status==TransferStatus::Cancelled&&(sessionStop.load()||appStop.load()))break;
-                if(result.status!=TransferStatus::Ok){log.Event(std::string(controller?"controller":"Chatpad")+" read lost win32="+std::to_string(result.win32Error));failure=1;break;}
-                if(controller){
-                    ++counts.controllerPackets;XboxState state;
-                    if(ParseController(packet.data(),packet.size(),state)){
-                        last=state;
-                        if(virtualController){if(!virtualController->SubmitState(state)){log.Event("virtual state submit failed: "+virtualController->LastError());failure=3;break;}++counts.virtualSubmissions;lastSubmit=GetTickCount64();}
-                    }
-                }else{
-                    ++counts.chatpadPackets;
-                    if(!maintenance.KeyDataAttempted()&&packet.size()==5){
-                        if(!maintenance.OnCompletePacket(packet.size())){log.Event("strict key-data enable failed win32="+std::to_string(maintenance.LastResult().win32Error));failure=2;break;}
-                        log.Event("Chatpad key-data enable 0x001B succeeded");
-                    }
-                    const bool mapped=mapper.Process(packet.data(),packet.size());
-                    if(mapped){
-                        const auto modifiers=static_cast<int>(mapper.LastPacket().RawModifiers);
-                        if(options.verbose||modifiers!=lastModifiers){
-                            const auto& report=mapper.LastReport();
-                            log.Event("chatpad_layer modifiers="+std::to_string(modifiers)+" hid="+
-                                std::to_string(report.Bytes[2])+","+std::to_string(report.Bytes[3])+","+
-                                std::to_string(report.Bytes[4])+","+std::to_string(report.Bytes[5])+","+
-                                 std::to_string(report.Bytes[6])+","+std::to_string(report.Bytes[7]),options.verbose&&modifiers==lastModifiers);
-                        }
-                        lastModifiers=modifiers;
-                    }else if(mapper.LastOutputFailed()){log.Event("keyboard output failed; session stopping after forced release");failure=5;break;}
+                if(result.status!=TransferStatus::Ok){log.Event("Chatpad read lost win32="+std::to_string(result.win32Error));failure=1;break;}
+                ++counts.chatpadPackets;
+                if(!maintenance.KeyDataAttempted()&&packet.size()==5){
+                    if(!maintenance.OnCompletePacket(packet.size())){log.Event("strict key-data enable failed win32="+std::to_string(maintenance.LastResult().win32Error));failure=2;break;}
+                    log.Event("Chatpad key-data enable 0x001B succeeded");
                 }
-            }
-            (void)last;
+                const bool mapped=mapper.Process(packet.data(),packet.size());
+                if(mapped){
+                    const auto modifiers=static_cast<int>(mapper.LastPacket().RawModifiers);
+                    if(options.verbose||modifiers!=lastModifiers){
+                        const auto& report=mapper.LastReport();
+                        log.Event("chatpad_layer modifiers="+std::to_string(modifiers)+" hid="+
+                            std::to_string(report.Bytes[2])+","+std::to_string(report.Bytes[3])+","+
+                            std::to_string(report.Bytes[4])+","+std::to_string(report.Bytes[5])+","+
+                            std::to_string(report.Bytes[6])+","+std::to_string(report.Bytes[7]),options.verbose&&modifiers==lastModifiers);
+                    }
+                    lastModifiers=modifiers;
+                }else if(mapper.LastOutputFailed()){log.Event("keyboard output failed; session stopping after forced release");failure=5;break;}
+                }
         }catch(const std::exception& ex){log.Event(std::string("reader exception: ")+ex.what());failure=6;}
     };
-    std::thread controllerThread,chatpadThread;
-    if(virtualController)controllerThread=std::thread(readLoop,true);
-    chatpadThread=std::thread(readLoop,false);
-    while(!appStop.load()&&failure.load()==0)std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::thread chatpadThread;
+    chatpadThread=std::thread(readChatpadLoop);
+    while(!appStop.load()&&failure.load()==0&&!controllerPump.Failed())std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    if(controllerPump.Failed()&&failure.load()==0){
+        log.Event("controller read lost win32="+std::to_string(controllerPump.FailureWin32()));failure=1;
+    }
     sessionStop=true;maintenance.Stop();
+    controllerPump.Stop();
+    counts.controllerPackets=static_cast<unsigned>(controllerPump.ReportCount());
+    counts.virtualSubmissions=static_cast<unsigned>(controllerPump.SubmissionCount());
     TransferResult motorStop{};
     {
         std::lock_guard<std::mutex> guard(motorMutex);
@@ -216,7 +221,7 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     }
     if(virtualController)virtualController->SetRumbleCallback({});
     usb.Cancel();
-    if(controllerThread.joinable())controllerThread.join();if(chatpadThread.joinable())chatpadThread.join();
+    if(chatpadThread.joinable())chatpadThread.join();
     const bool keysReleased=mapper.ForceRelease();if(!keysReleased)log.Event("keyboard forced release failed");
     bool virtualNeutral=true,virtualReleased=true;
     if(virtualController){

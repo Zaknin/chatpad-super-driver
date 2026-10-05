@@ -20,7 +20,7 @@ if(-not(Test-Path -LiteralPath $manifestPath -PathType Leaf)){throw 'Release bui
 if(-not $VerificationSummaryPath){$VerificationSummaryPath=Join-Path $build 'release-verification.json'}
 if(-not(Test-Path -LiteralPath $VerificationSummaryPath -PathType Leaf)){throw 'Focused offline verification summary is missing.'}
 $verification=Get-Content -LiteralPath $VerificationSummaryPath -Raw|ConvertFrom-Json
-if($verification.Result -cne 'PASS' -or $verification.Managed.Failed -ne 0 -or $verification.Native.Passed -ne 2 -or $verification.Native.Failed -ne 0 -or $verification.Setup.Result -cne 'PASS' -or $verification.ReadinessArtifacts.Failed -ne 0 -or $verification.RepositorySafety.Result -cne 'PASS'){
+if($verification.Result -cne 'PASS' -or $verification.Managed.Failed -ne 0 -or $verification.Native.Passed -ne 3 -or $verification.Native.Failed -ne 0 -or $verification.Setup.Result -cne 'PASS' -or $verification.ReadinessArtifacts.Failed -ne 0 -or $verification.RepositorySafety.Result -cne 'PASS'){
  throw 'Focused offline verification summary is incomplete or contains failures.'
 }
 Import-Module (Join-Path $PSScriptRoot 'ChatpadC4Package.psm1') -Force
@@ -142,9 +142,9 @@ $result=[ordered]@{
  Schema=1;Task='8L-C4L2';Result='PARTIAL';Branch=$identity.Branch;Commit=$identity.Commit;PackageBuildCommit=$prepared.BuildCommit
  CanonicalPath=$prepared.CanonicalPath;ArchiveSHA256=$prepared.ArchiveSHA256;DeterministicArchiveVerified=$true
  OfflineEvidence=$evidence;ReadinessIdentityPath='readiness-identity.json';LocalReadinessIdentityVerified=$true
- ServiceLifecycle='UNTESTED_PENDING_USER_ELEVATED_INSTALL';IPCAuthentication='OFFLINE_POLICY_PASS_LIVE_UNTESTED';NormalUserRuntime='UNTESTED'
+ ServiceInstallation='USER_INSTALL_AND_REPAIR_PASS';ServiceLifecycle='RUNNING; LIFECYCLE_QUALIFICATION_PENDING';IPCAuthentication='OFFLINE_POLICY_PASS_LIVE_UNTESTED';NormalUserRuntime='PENDING_STARTUP_FIX_RETRY'
  XInput='UNTESTED';Chatpad='UNTESTED';Rumble='UNTESTED';Reconnect='UNTESTED';CrashRecovery='UNTESTED'
- LiveGateCommand='Run the exact elevated ChatpadSetup.ps1 -Mode InstallBroker command supplied in the handoff; then qualify run from a normal-user PowerShell.'
+ LiveGateCommand='Run the package ChatpadBridge.exe run from an ordinary, non-elevated PowerShell and return the complete output.'
  PublicationReadback='Pending'
 }
 $destination=[string]$prepared.CanonicalPath

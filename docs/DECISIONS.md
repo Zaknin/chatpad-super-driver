@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-05 — Keep the physical controller input pipe continuously polled during startup
+
+- **Decision:** After the first valid controller report, start one persistent IF0/81 reader before Chatpad activation and keep it active through initial rumble and virtual broker creation. Cache the newest controller state until the broker is ready, then stream that state and all following reports through the existing virtual-controller client.
+- **Rationale:** A live normal-user run timed out the required initial physical zero-rumble write before broker creation. The runner had paused IF0/81 reads between its initial readiness report and the later controller thread, while the C3 session continuously polled input. Keeping the input reader active removes this startup gap without changing the backend or relaxing the physical-write gate. Hardware confirmation remains required.
+- **Alternatives rejected:** Ignoring the timed-out write, weakening/removing zero-rumble validation, moving physical USB ownership into the service, changing virtual-controller backend, or introducing another controller reader after broker creation.
+- **Consequences:** One pump owns physical controller reads for the session; the post-create state sink receives the latest cached state and subsequent reports. Existing Chatpad reads, rumble callback, reconnect, neutral-state cleanup, and broker lifecycle remain separately verified responsibilities.
+
 ## 2026-10-05 — Require the exact XUSB interface before broker create succeeds
 
 - **Decision:** The broker must verify that HIDMaestro published the present XUSB device interface for the exact controller identity before it returns successful virtual-controller creation to ChatpadBridge.
