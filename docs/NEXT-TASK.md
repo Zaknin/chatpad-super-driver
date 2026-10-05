@@ -1,23 +1,22 @@
-# TASK 8L-C4L2 — Qualify startup controller polling fix
+# TASK 8L-C4L2 — Validate startup controller polling fix
 
 ## Current state
 
-- Required branch: `feature/chatpad-usermode-runner`; current source correction is based on `b3a1bbba832842da508172dae2c9553bef41130b`.
-- The user manually ran `RepairBroker` successfully. The service payload is unchanged by this native runner fix; do not ask for another elevated repair unless later package evidence shows the service runtime changed.
-- Normal-user log showed `initial zero-rumble command failed win32=1460` (once 121) before virtual controller creation. Source now continuously polls physical IF0/81 from before activation through broker creation and streams the latest state after create. This is an unverified hardware hypothesis until the next run.
-- Focused native checks passed 3/3 (`controller-input-pump`, `broker-client`, `runner-lifecycle`); pump unit checks passed 7/7. Fresh exact-HEAD package, package hash audit, publication, and commit/push remain pending.
-- Prior release `20261005T030811Z` is already published, SHA-256 `1166065DB57CDD92081C3BE982FD7C3BF4F1BF1B93FED5D6DFF4804710AF2661`; never overwrite it. Use a new UTC timestamp.
+- Branch: `feature/chatpad-usermode-runner`; package implementation/build commit `a6b304f1da41de83908f75aebfb32d9533ee728b`. Current change after build is limited to `docs/PROJECT-STATE.md`, `docs/WORKLOG.md`, and this file; publisher will regenerate readiness for the resulting pushed commit.
+- Fresh package: `artifacts/task-8lc4l2/build-startup-input-poll-a6b304f/package`; manifest has 214 members and runner SHA-256 `5E26662C53FD5899B1AFFFD7E09E1DDA6E3C869861567F91423B0BEF66985687`.
+- Verification PASS: managed helper 504/504 across three runs; focused CTest 3/3; setup and readiness checks PASS; package inventory exact. Prepared immutable release `20261005T035300Z`, archive SHA-256 `23BA57F588630F61D811F1A33F75A0FAA57BCAED35DFF73608CD4B66D17E0695`.
+- The user already repaired the broker successfully. Its helper payload is unchanged; do not request another elevated repair for this runner-only correction.
+- Source diagnosis remains a hypothesis until normal-user hardware retry confirms the initial zero-rumble write now succeeds.
 
 ## Next steps
 
-1. Complete the narrow offline checks, update the release verification summary, inspect the complete diff, commit, and push only `feature/chatpad-usermode-runner`.
-2. Build a fresh package from exact pushed HEAD with `tools/Build-ChatpadBridge.ps1 -SkipNativeTests`, then run focused `ctest` and packaged helper/setup/readiness checks. Audit every package member against its generated manifest.
-3. Prepare and atomically publish a fresh PARTIAL C4L2 artifact under `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\<UTC_TIMESTAMP>\`; independently read back hashes and sidecars.
-4. Ask the user to run the published package's `ChatpadBridge.exe run` from ordinary, non-elevated PowerShell and return the complete log. Confirm the new `controller input polling started before Chatpad activation` event, no initial zero-rumble timeout, and virtual-controller creation before resuming XInput/rumble tests.
+1. Commit/push only the docs-only package-preparation update on `feature/chatpad-usermode-runner`.
+2. Run `tools/Publish-ChatpadC4L2.ps1 -Mode Publish -UtcTimestamp 20261005T035300Z -BuildDirectory artifacts/task-8lc4l2/build-startup-input-poll-a6b304f -VerificationSummaryPath artifacts/task-8lc4l2/build-startup-input-poll-a6b304f/release-verification.json`.
+3. Independently verify canonical payload SHA-256 sidecars, no `.part`, final completion receipt, and readiness release identity.
+4. Give the user the package's exact normal-user command `& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-startup-input-poll-a6b304f\package\ChatpadBridge.exe" run` and wait for the complete log.
 
 ## Safety and acceptance
 
 - Do not perform service lifecycle changes, driver binding, PnP/registry mutation, trust changes, reboot, elevated bridge execution, or HIDMaestro global cleanup.
-- Do not weaken the initial zero-rumble command or exact XUSB interface gate. `1460` and `121` mean the bounded USB write failed/timed out; the source-order diagnosis remains a hypothesis until a live retry.
-- PASS for this correction requires the normal-user log to pass initial zero-rumble, create the XUSB-gated virtual controller, and remain running; XInput slot and physical rumble are separately qualified afterward.
-- Inspect first: `tools/ChatpadWinUsbPoc/ControllerInputPump.{h,cpp}`, `controller-input-pump-tests.cpp`, `Runner.cpp`, `CMakeLists.txt`, and the focused C4L2 build/publish scripts.
+- Keep initial zero-rumble and exact XUSB interface validation strict. Confirm startup polling event, successful zero-rumble write, and virtual controller creation from the user's log. Then separately resume XInput and physical rumble qualification.
+- Inspect first: `Runner.cpp`, `ControllerInputPump.{h,cpp}`, `controller-input-pump-tests.cpp`, and the package/publisher verification records.
