@@ -65,16 +65,20 @@ function Assert-InventoryMatches {
 function Get-OfflineEvidence {
  param($Inventory,$Verification)
  [ordered]@{
-  Schema=1;Task='8L-C4L2';Result='PARTIAL';Scope='Offline implementation and package qualification only'
+  Schema=1;Task='8L-C4L2';Result='PASS';Scope='Offline implementation and package qualification only'
   Tests=[ordered]@{ManagedSuite=$Verification.Managed.Passed;ManagedFailures=$Verification.Managed.Failed;FocusedNativeCTest=$Verification.Native.Passed;FocusedNativeFailures=$Verification.Native.Failed;SetupRepositoryIdentity=$Verification.Setup.RepositoryIdentity;SetupPackageIdentity=$Verification.Setup.PackageIdentity;SetupBaseline=$Verification.Setup.Baseline;SetupPnPResult=$Verification.Setup.PnPResult;ReadinessArtifacts=$Verification.ReadinessArtifacts.Passed;RepositorySafety='PASS'}
   Package=[ordered]@{Members=@($Inventory).Count;ExactMemberSetVerified=$true;AllLengthsAndSHA256Verified=$true;SelfContainedWinX64=$true}
-  Live=[ordered]@{ServiceInstallation='UNTESTED';ServiceLifecycle='UNTESTED';IPCAuthentication='OFFLINE_POLICY_TESTED_LIVE_UNTESTED';XInput='UNTESTED';Chatpad='UNTESTED';RumbleCallback='UNTESTED';Reconnect='UNTESTED';GracefulCleanup='UNTESTED';ClientCrashRecovery='UNTESTED';ServiceCrashRecovery='UNTESTED'}
+   LiveQualificationReference='live-qualification.json is a separate user-provided live evidence record in this archive.'
   Safety=[ordered]@{ElevatedServiceInstallPerformed=$false;DriverBindingChanged=$false;PnPMutated=$false;RegistryMutated=$false;DeviceCreated=$false;TrustChanged=$false;Rebooted=$false}
  }
 }
 
 $buildManifest=Get-Content -LiteralPath $manifestPath -Raw|ConvertFrom-Json
 if($buildManifest.Task -cne '8L-C4L2' -or $buildManifest.C4Tests -cne 'PASS'){throw 'Build manifest task or setup test result is invalid.'}
+$liveQualificationInput=Join-Path $artifacts 'live-qualification.json'
+if(-not(Test-Path -LiteralPath $liveQualificationInput -PathType Leaf)){throw 'C4L2 user-provided live qualification record is missing.'}
+$liveQualification=Get-Content -LiteralPath $liveQualificationInput -Raw|ConvertFrom-Json
+if(-not (Test-ChatpadC4L2LiveQualification $liveQualification)){throw 'C4L2 live qualification record is incomplete or contains unsupported PASS claims.'}
 $identity=Get-RepositoryIdentity
 $buildCommit=[string]$buildManifest.Repository.Commit
 if($Mode -eq 'Prepare'){
@@ -96,11 +100,15 @@ if($Mode -eq 'Prepare'){
  $inventory|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $stage 'package-sha256-inventory.json') -Encoding utf8
  $offline=Get-OfflineEvidence $inventory $verification
  $offline|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $stage 'offline-evidence.json') -Encoding utf8
+ $liveQualificationArchivePath=Join-Path $stage 'live-qualification.json'
+ Copy-Item -LiteralPath $liveQualificationInput -Destination $liveQualificationArchivePath
+ $liveQualificationHash=(Get-FileHash -LiteralPath $liveQualificationArchivePath -Algorithm SHA256).Hash
+ if($liveQualificationHash -cne (Get-FileHash -LiteralPath $liveQualificationInput -Algorithm SHA256).Hash){throw 'Live qualification archive copy hash mismatch.'}
  $archive=Join-Path $local 'task-8l-c4l2-release.zip'
  $archiveHash=New-ChatpadDeterministicArchive $stage $archive
  $second=Join-Path $local 'determinism-check.zip'
  if((New-ChatpadDeterministicArchive $stage $second) -cne $archiveHash){throw 'C4L2 deterministic archive repeat hash mismatch.'}
- $prepared=[ordered]@{Schema=1;Task='8L-C4L2';UtcTimestamp=$UtcTimestamp;Branch=$identity.Branch;BuildCommit=$buildCommit;CanonicalPath=('\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\'+$UtcTimestamp);BuildDirectory=$build;PackageRoot=$package;ArchivePath=$archive;ArchiveSHA256=$archiveHash;PackageInventoryPath=(Join-Path $stage 'package-sha256-inventory.json');PackageInventorySHA256=(Get-FileHash (Join-Path $stage 'package-sha256-inventory.json')).Hash;OfflineEvidencePath=(Join-Path $stage 'offline-evidence.json');ArchiveMembers=@(Get-ChildItem -LiteralPath $stage -Recurse -File).Count;PackageMembers=$inventory.Count;PreparedUtc=[DateTime]::UtcNow.ToString('o')}
+ $prepared=[ordered]@{Schema=1;Task='8L-C4L2';UtcTimestamp=$UtcTimestamp;Branch=$identity.Branch;BuildCommit=$buildCommit;CanonicalPath=('\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\'+$UtcTimestamp);BuildDirectory=$build;PackageRoot=$package;ArchivePath=$archive;ArchiveSHA256=$archiveHash;PackageInventoryPath=(Join-Path $stage 'package-sha256-inventory.json');PackageInventorySHA256=(Get-FileHash (Join-Path $stage 'package-sha256-inventory.json')).Hash;OfflineEvidencePath=(Join-Path $stage 'offline-evidence.json');LiveQualificationPath=$liveQualificationArchivePath;LiveQualificationSHA256=$liveQualificationHash;ArchiveMembers=@(Get-ChildItem -LiteralPath $stage -Recurse -File).Count;PackageMembers=$inventory.Count;PreparedUtc=[DateTime]::UtcNow.ToString('o')}
  $prepared|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $local 'prepared-release.json') -Encoding utf8
  Write-Output "PREPARED $($prepared.CanonicalPath)"
  Write-Output "ARCHIVE SHA256 $archiveHash"
@@ -124,6 +132,9 @@ $archivedInventory=Get-Content -LiteralPath $inventoryPath -Raw|ConvertFrom-Json
 Assert-InventoryMatches @($archivedInventory) $inventory
 $buildCommitIdentity=[string]$buildManifest.Repository.Commit
 if($buildCommitIdentity -cne [string]$prepared.BuildCommit){throw 'Build manifest changed since archive preparation.'}
+if(-not(Test-Path -LiteralPath $prepared.LiveQualificationPath -PathType Leaf) -or (Get-FileHash -LiteralPath $prepared.LiveQualificationPath -Algorithm SHA256).Hash -cne [string]$prepared.LiveQualificationSHA256){throw 'Prepared live qualification evidence hash mismatch.'}
+$liveQualification=Get-Content -LiteralPath $prepared.LiveQualificationPath -Raw|ConvertFrom-Json
+if(-not (Test-ChatpadC4L2LiveQualification $liveQualification)){throw 'Prepared live qualification record no longer validates.'}
 
 # Rebind readiness metadata to the exact pushed release commit. The post-build commit is restricted above to continuity documents only.
 $readinessPath=Join-Path $artifacts 'readiness-input.json'
@@ -138,20 +149,20 @@ $publicIdentity=[ordered]@{Schema=1;Task='8L-C4L2';Repository=$identity;PackageA
 $publicIdentityPath=Join-Path (Split-Path -Parent $preparedPath) 'readiness-identity.json'
 $publicIdentity|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $publicIdentityPath -Encoding utf8
 $evidence=Get-Content -LiteralPath $prepared.OfflineEvidencePath -Raw|ConvertFrom-Json
+$qualificationSummary=New-ChatpadC4L2QualificationSummary -Qualification $liveQualification -LiveQualificationSHA256 $prepared.LiveQualificationSHA256
 $result=[ordered]@{
- Schema=1;Task='8L-C4L2';Result='PARTIAL';Branch=$identity.Branch;Commit=$identity.Commit;PackageBuildCommit=$prepared.BuildCommit
+ Schema=1;Task='8L-C4L2';Branch=$identity.Branch;Commit=$identity.Commit;PackageBuildCommit=$prepared.BuildCommit
  CanonicalPath=$prepared.CanonicalPath;ArchiveSHA256=$prepared.ArchiveSHA256;DeterministicArchiveVerified=$true
- OfflineEvidence=$evidence;ReadinessIdentityPath='readiness-identity.json';LocalReadinessIdentityVerified=$true
- ServiceInstallation='USER_INSTALL_AND_REPAIR_PASS';ServiceLifecycle='RUNNING; LIFECYCLE_QUALIFICATION_PENDING';IPCAuthentication='OFFLINE_POLICY_PASS_LIVE_UNTESTED';NormalUserRuntime='PENDING_STARTUP_FIX_RETRY'
- XInput='UNTESTED';Chatpad='UNTESTED';Rumble='UNTESTED';Reconnect='UNTESTED';CrashRecovery='UNTESTED'
- LiveGateCommand='Run the package ChatpadBridge.exe run from an ordinary, non-elevated PowerShell and return the complete output.'
+ OfflineEvidence=$evidence;LiveQualification=$liveQualification;LiveQualificationSHA256=$prepared.LiveQualificationSHA256;ReadinessIdentityPath='readiness-identity.json';LocalReadinessIdentityVerified=$true
  PublicationReadback='Pending'
 }
+foreach($entry in $qualificationSummary.GetEnumerator()){$result[$entry.Key]=$entry.Value}
 $destination=[string]$prepared.CanonicalPath
 $payloads=@(
  [pscustomobject]@{Path=$prepared.ArchivePath;Name='task-8l-c4l2-release.zip'},
  [pscustomobject]@{Path=$inventoryPath;Name='package-sha256-inventory.json'},
  [pscustomobject]@{Path=$prepared.OfflineEvidencePath;Name='offline-evidence.json'},
+ [pscustomobject]@{Path=$prepared.LiveQualificationPath;Name='live-qualification.json'},
  [pscustomobject]@{Path=$publicIdentityPath;Name='readiness-identity.json'}
 )
 $receipts=@(foreach($item in $payloads){Publish-ChatpadArtifact -SourcePath $item.Path -DestinationDirectory $destination -FileName $item.Name})

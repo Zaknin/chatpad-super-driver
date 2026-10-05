@@ -1,20 +1,14 @@
 # Project State
 
-Updated 2026-10-05 after live hot-unplug/reconnect qualification.
+Updated 2026-10-05 after normal-user crash-recovery qualification.
 
-- Branch: `feature/chatpad-usermode-runner`; runner source fix is pushed as `92a368830bb6ecfb0a990ba68051583b506d5dd0`; current HEAD is this pushed continuity update.
-- Corrected package: `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package`. Build manifest binds runner bytes to source commit `92a3688`; all 214 package members match declared sizes and SHA-256. Runner SHA-256 is `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`. Regenerate readiness after the current docs-only closeout to bind it to current HEAD.
-- User-reported normal-user live run passed WinUSB open, Chatpad activation, broker virtual Xbox creation, Chatpad key-data, keyboard input, and XInput rumble. During unplug, Win32 433 produced deferred zero-rumble cleanup; keys were released and the virtual controller neutralized and released. The runner entered reconnect, waited while the target was absent, reopened WinUSB after replug, sent startup zero-rumble recovery successfully, and recreated the virtual Xbox. The user confirmed controller and Chatpad input worked after reconnect.
-- User stopped the recovered run with Ctrl+C. Final cleanup was `keysReleased=true virtualNeutral=true virtualReleased=true motorsStopped=true`; `clean_shutdown=true reconnect_count=1`.
-- Live reconnect and graceful cleanup are PASS. Client process crash/disconnect cleanup is also PASS: the user force-stopped only package PID 27348, the target virtual Xbox was absent from `Get-PnpDevice -PresentOnly` after three seconds, and `ChatpadHidMaestroBroker` remained `Running / Automatic`.
-- The remaining live check is a fresh client start after the crash: verify `unclean_previous_session=true`, startup zero-rumble recovery, and new virtual Xbox creation. Final C4L2 closeout and canonical artifact publication remain pending this check. No service, PnP, driver, registry, trust, device, or boot mutation was performed by the agent; `legacy/` remains untouched.
+- Branch: `feature/chatpad-usermode-runner`; starting HEAD for this closeout is `c8beb69fe88eced6a33b306b64e9c0483161974d`, pushed to origin. Runtime fix commit: `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
+- The corrected runtime package at `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package` contains 214 members matching its build manifest; runner SHA-256 is `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`. It is bound to source commit `92a3688`; final release packaging must be rebuilt from the closeout HEAD.
+- Live normal-user runtime PASS: physical WinUSB and Chatpad activation/input; broker virtual Xbox; XInput slot and physical rumble; hot-unplug/replug, deferred zero-rumble and next-open recovery; virtual/keyboard/motor cleanup on graceful stop.
+- Client crash cleanup PASS: the user force-stopped the exact package process; the virtual controller disappeared within three seconds and the service stayed Running/Automatic. The following normal-user launch logged `unclean_previous_session=true`, recovered zero rumble, recreated the virtual Xbox, accepted Chatpad input, and ended with all cleanup flags true and `clean_shutdown=true`.
+- The release publisher had stale hard-coded `UNTESTED`/pending statuses. Its source now validates and archives a separate sanitized live qualification record. Focused publisher regressions pass 9/9 (five atomic-receipt checks and four live-manifest/result-summary checks). Final package regeneration, offline release verification, and canonical publication are pending.
+- Scope limits: a hard ChatpadBridge crash cannot immediately stop physical rumble; next-launch zero-rumble recovery passed. A crash of the Windows broker service itself was not injected. No service install/repair, driver binding, PnP, registry, trust, boot, or device mutation was performed by the agent; `legacy/` is untouched.
 
 ## Next
 
-Restart the corrected package as a normal user and return the output through clean Ctrl+C shutdown:
-
-```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect\package\ChatpadBridge.exe" run
-```
-
-The prior user-operated crash test stopped exact package PID 27348. The virtual Xbox was absent from the present PnP list three seconds later and the broker service remained `Running / Automatic`. This restart should report `unclean_previous_session=true`, successful zero-rumble recovery, and a fresh virtual Xbox. Physical motor stopping after a hard bridge crash is an accepted limitation. After this output, complete the remaining release verification/publication steps.
+Commit/push the publisher and continuity changes on this branch, build a fresh package from that exact HEAD, run `artifacts/task-8lc4l2/verify-offline-release.ps1`, then prepare and publish the canonical TASK-8L-C4L2 archive through `tools/Publish-ChatpadC4L2.ps1` and the existing atomic publisher. Keep the normal-user live qualification record and build outputs under ignored `artifacts/`; do not repeat live setup or mutate the service/device.

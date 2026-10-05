@@ -14872,3 +14872,16 @@ This append records the implementation commit and first publication. The documen
 - No source changes. No service install/repair, driver, PnP, registry, trust, boot, or device mutation by the agent; no elevated bridge; `legacy/` untouched.
 - Next: restart the same package normally; verify `unclean_previous_session=true`, successful zero-rumble recovery, fresh virtual Xbox and Chatpad input, then stop cleanly. Canonical release publication remains pending.
 - Continuity commit/push: pending.
+
+## 2026-10-05 14:45 UTC — Live restart recovery PASS and release metadata correction
+
+- Objective: complete the post-crash normal-user recovery gate and make the canonical C4L2 release metadata reflect the live evidence already collected.
+- Starting branch/HEAD: `feature/chatpad-usermode-runner` / `c8beb69fe88eced6a33b306b64e9c0483161974d`; the worktree was clean and the branch matched origin.
+- Latest user log: the normal-user process reported `unclean_previous_session=true stale_keyboard_release=PASS`, opened WinUSB, activated Chatpad, reached `RUNNING`, sent `unclean-session zero-rumble recovery succeeded`, created the virtual Xbox, enabled Chatpad input, and ended with `keysReleased=true virtualNeutral=true virtualReleased=true motorsStopped=true`, `clean_shutdown=true`, `reconnect_count=0`.
+- Investigation found `tools/Publish-ChatpadC4L2.ps1` still emitted stale `UNTESTED` and pending labels for service lifecycle, normal-user runtime, XInput, Chatpad, rumble, reconnect, and crash recovery. Added validation and archive binding for a sanitized live-qualification record; final manifest now derives those results from the record and distinguishes untested broker-service crash injection from tested client-crash cleanup/restart recovery.
+- Added ignored `artifacts/task-8lc4l2/live-qualification.json`, summarized from user-provided logs without the physical device serial. Its current SHA-256 is `146348F8DB7F922A0F65410D34853073AEDBFC175D751C6C5AA735B010E2B39E`.
+- Files changed: `tools/ChatpadC4L2Publication.psm1`, `tools/Publish-ChatpadC4L2.ps1`, `tools/Test-ChatpadC4L2Publication.ps1`, `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. `docs/DECISIONS.md` unchanged; no runtime code changed.
+- TDD evidence: the live-manifest regression first failed because `Test-ChatpadC4L2LiveQualification` did not exist; a second regression then failed because the result-summary constructor was absent. After implementation, focused publication tests pass: atomic publisher receipts 5/5 and live qualification/result-summary checks 4/4. The ignored qualification JSON passes the same validator and produces current PASS fields while preserving `ServiceProcessCrashRecovery=NOT_TESTED`. `git diff --check` passed.
+- Final package rebuild from the updated pushed HEAD, full offline release verification, and canonical atomic publication are still pending. The stale prior readiness/package are not used for final publication.
+- Safety: no service install/repair, driver, PnP, registry, trust, boot, device, or elevated bridge action by the agent. `legacy/` untouched. Accepted limitation: a hard bridge crash cannot immediately stop physical rumble; following launch recovered zero rumble. Broker service process failure was not injected.
+- Commit/push: pending.

@@ -1,31 +1,23 @@
-# TASK 8L-C4L2 — Verify recovery after client crash
+# TASK 8L-C4L2 — Final offline release verification and publication
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; runner fix source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0` is pushed. Current HEAD is this docs-only continuity closeout.
-- Corrected package: `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package`; build manifest has 214/214 verified members. Runner SHA-256: `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`.
-- Live normal-user run passed WinUSB, Chatpad activation/input, broker virtual Xbox, XInput rumble, unplug/replug reconnect, deferred zero-rumble, post-replug rumble recovery, and graceful cleanup (`reconnect_count=1`).
-- Client disconnect cleanup PASS: the user force-stopped the single exact-path runner process PID 27348. After three seconds, the target virtual Xbox was absent from the present PnP query and `ChatpadHidMaestroBroker` remained `Running / Automatic`.
-- Next verify a new bridge process consumes the preserved unclean-session marker. The physical motor stop after a hard client crash is an accepted limitation.
+- Branch `feature/chatpad-usermode-runner`, starting commit `c8beb69fe88eced6a33b306b64e9c0483161974d`; origin matched at task start. Publisher regression tests currently pass 8/8.
+- Normal-user end-to-end, XInput/physical rumble, Chatpad input, unplug/replug recovery, graceful cleanup, client-crash virtual cleanup, and next-launch recovery have been qualified from user-provided logs. See the latest WORKLOG entries and `artifacts/task-8lc4l2/live-qualification.json`.
+- The current package predates publisher/continuity changes. Rebuild from the exact committed closeout HEAD before release Prepare; do not reuse the old package as the final artifact.
 
-## Next action
+## Objective and acceptance
 
-Run the corrected package again from ordinary, non-elevated PowerShell:
+Build the final exact-HEAD package, regenerate readiness, run `artifacts/task-8lc4l2/verify-offline-release.ps1`, prepare a deterministic release archive, update continuity docs with the verification identity, then publish via `tools/Publish-ChatpadC4L2.ps1 -Mode Publish`.
 
-```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-removal-reconnect\package\ChatpadBridge.exe" run
-```
+Acceptance: clean/pushed branch identity; package/readiness/manifest hashes agree; offline verification summary passes (managed suite 3 runs, focused native CTest 3/3, setup/readiness/repository safety PASS); live record validates and is included in the archive; archive repeat hash is deterministic; atomic publisher source/part/final hash readbacks and SHA-256 completion sidecars pass under `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\<UTC_TIMESTAMP>\`.
 
-Acceptance requires `unclean_previous_session=true`, `unclean-session zero-rumble recovery succeeded`, a fresh virtual Xbox, Chatpad key-data/input, and clean Ctrl+C shutdown. Return the complete output. Then run final focused verification, refresh readiness for final HEAD, and prepare/publish the canonical TASK-8L-C4L2 release using the existing atomic publisher.
+## Safety
 
-## Safety and acceptance
+- No service install/repair, driver binding, PnP, registry, trust, boot, device mutation, or elevated bridge run.
+- Keep generated builds, sanitized live record, verification output, and staging under ignored `artifacts/`.
+- `legacy/` is immutable. Push only `feature/chatpad-usermode-runner`.
 
-- Run ChatpadBridge only from a normal user process.
-- Do not repeat service install/repair; installed service payload is unchanged.
-- Do not change driver binding, PnP, registry, trust, boot, or device state. No further forced termination is needed for the client cleanup gate.
-- Do not expect a hard bridge-process crash to stop physical rumble; verify broker cleanup of the virtual Xbox and marker-driven recovery on the subsequent launch.
-- Report service lifecycle, IPC, XInput, Chatpad, rumble, reconnect, cleanup, and crash recovery independently. Keep overall status PARTIAL until the restart result and final artifact publication are verified.
+## Inspect and run first
 
-## Inspect first
-
-Read `AGENTS.md`, `docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, and the latest `docs/WORKLOG.md`; check branch/HEAD/status and confirm the package manifest/readiness identity.
+Read `AGENTS.md`, project state, decisions, this file, and recent worklog; verify branch/status/HEAD and the live qualification input. Then build to a fresh ignored directory (for example `artifacts/task-8lc4l2/build-c4l2-final`), verify, prepare with a fresh UTC timestamp, make only allowed continuity-doc updates after Prepare, commit/push them, and Publish using the same timestamp.
