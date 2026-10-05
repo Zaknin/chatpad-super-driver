@@ -14602,3 +14602,14 @@ This append records the implementation commit and first publication. The documen
 - The source and continuity branch HEAD `34d8d65122e1af5d15ed0f2340dbac7d6748fc2c` was pushed clean. Its package at `artifacts/task-8lc4l2/build-xusb-interface-gate-34d8d65` passed the same 168/168 helper, focused native CTest 2/2, setup test counts, readiness archive/privacy 9/9, and repository-safety PASS. Independent member audit: 214 expected/214 actual, zero mismatches.
 - This worklog/project-state update advances HEAD. The verified package from `34d8d65` is intentionally not eligible for live repair; build and publish one final package from the exact new pushed HEAD before giving the user the elevated command.
 - No live service or device operation was performed by the agent.
+
+## 2026-10-05 02:59 UTC — Prepare final XUSB-gated C4L2 package
+
+- Objective: build and prepare the XUSB-gated release from the final pushed implementation/continuity HEAD for manual live RepairBroker.
+- Identity: branch `feature/chatpad-usermode-runner`, package build commit `10e178cc035c09e260b8c5d20e88e86e81b027d7`, package path `artifacts/task-8lc4l2/build-xusb-interface-gate-10e178c/package`.
+- Build/setup: `Build-ChatpadBridge.ps1 -SkipNativeTests` passed; C4 setup tests passed (repository identity 5/5, package identity 8/8, baseline path 5/5, PnP restart 4/4, SCM native argv 4/4). The focused native CTest run passed `broker-client` and `runner-lifecycle` 2/2.
+- Verification: packaged helper self-test 168/168; readiness archive/privacy 9/9; repository safety PASS; independent package audit 214/214 members with zero missing, extra, byte-length, or SHA-256 mismatches. Build manifest branch/commit matches the pushed HEAD.
+- Prepare: `tools/Publish-ChatpadC4L2.ps1 -Mode Prepare -UtcTimestamp 20261005T025900Z` passed exact readiness/package identity checks and deterministic archive repeat. Target `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T025900Z`; archive SHA-256 `3A9CDDEF6803DF89AFD0CA910ECD26F7ECCC46FD6FBAE757CDDB430C21DA86ED`.
+- This continuity-only commit will advance the release identity. The prepared release must be published with `-Mode Publish` after push; publisher is designed to rebind readiness to this exact docs-only release commit and commit its completion receipt last. No final publish/readback claim is made by this entry.
+- Live status remains PARTIAL. The user must manually RepairBroker from the final package; normal-user XInput, physical rumble, reconnect, cleanup and crash recovery remain unqualified.
+- Safety: no service lifecycle/configuration mutation, driver/PnP/registry/device mutation, trust/security change, reboot, elevated bridge run, or HIDMaestro global cleanup by the agent. `legacy/` untouched.

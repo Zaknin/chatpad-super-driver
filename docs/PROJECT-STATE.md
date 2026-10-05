@@ -1,16 +1,14 @@
 # Project State
 
-Updated 2026-10-05 during TASK 8L-C4L2 XInput/rumble diagnosis.
+Updated 2026-10-05 for the final offline C4L2 package handoff.
 
-- Branch: `feature/chatpad-usermode-runner`; XUSB success-gate source commit `2c554fe118eec879fbe41ee925fbc188e36dc436` is pushed. Build package only after reading the current HEAD following this continuity update.
-- Live status: normal-user WinUSB, Chatpad, HID input and controller values work. The user's XInput scan found no connected slot; `XInputSetState` returned 1167, so rumble is not qualified. The broker service was last read as Running under LocalSystem.
-- Diagnosis: the expected `hmswd` log is absent from the service's actual temp directory, `C:\Program Files\ChatpadBridge\Temp\HIDMaestro`. Pinned HIDMaestro 1.10.1 source waits for the XUSB interface and XInput slot but does not fail controller creation when those waits time out. The broker therefore could report virtual creation after HID-only setup.
-- Source correction: broker success now requires the exact present XUSB interface class `{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}` for the HIDMaestro controller token. Failure is surfaced as `xusb_companion_unavailable` and triggers normal owned-controller cleanup. It does not verify interactive-session XInput slot visibility; live confirmation is still required.
-- Focused verification so far: managed offline helper 168/168; focused native CTest `broker-client` and `runner-lifecycle` 2/2. No live service repair or runtime was performed by the agent.
-- Repository safety initially found an ignored .NET `obj` tree under the source directory. It was preserved, not deleted, under `artifacts/task-8lc4l2/preexisting-source-obj-20261005T025500Z`; the repeated safety check passed.
-- Package/readiness: source correction is committed and pushed. A package from `34d8d65122e1af5d15ed0f2340dbac7d6748fc2c` passed a 214/214 member SHA-256 audit, helper 168/168, native CTest 2/2, setup checks, readiness archive/privacy 9/9, and repository safety. This documentation closeout advances HEAD, so that package is not for live setup; rebuild/publish from the new pushed HEAD. The previous `build-readiness-current-head` package also predates this correction.
-- Safety: no service lifecycle/configuration mutation, PnP/registry/device mutation, trust change, reboot, elevated bridge run, or HIDMaestro global cleanup by the agent. `legacy/` is untouched.
+- Branch: `feature/chatpad-usermode-runner`; XUSB gate implementation commit `2c554fe118eec879fbe41ee925fbc188e36dc436`; latest package build commit `10e178cc035c09e260b8c5d20e88e86e81b027d7`.
+- Live status: the user's earlier normal-user run proved WinUSB, Chatpad, HID input and changing Game Controller values. XInput returned no slot and `XInputSetState` returned 1167; rumble is not qualified. The service was last observed Running as LocalSystem. The user has not yet repaired from the XUSB-gated package.
+- Source behavior: broker create now requires the exact present XUSB interface for the returned HIDMaestro controller token. If absent it returns `xusb_companion_unavailable` and performs owned-controller cleanup. This necessary device-side gate does not establish an interactive XInput slot or rumble.
+- Verification: packaged managed self-test 168/168; focused native CTest `broker-client` and `runner-lifecycle` 2/2; setup checks repository 5/5, package identity 8/8, baseline 5/5, PnP restart 4/4, SCM argv 4/4; readiness archive/privacy 9/9; repository safety PASS. The exact package inventory audited 214/214 members with zero length or hash mismatches.
+- Release: package build directory `artifacts/task-8lc4l2/build-xusb-interface-gate-10e178c`; prepared canonical target `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T025900Z`; deterministic archive SHA-256 `3A9CDDEF6803DF89AFD0CA910ECD26F7ECCC46FD6FBAE757CDDB430C21DA86ED`. Atomic publication follows the current continuity-only commit and refreshes readiness to that release identity.
+- Safety: agent did not modify the live service, driver/PnP/registry/device state, trust, boot settings, or perform a reboot, elevated bridge run, or HIDMaestro global cleanup. `legacy/` is untouched.
 
 ## Next
 
-Commit and push the correction and continuity updates. Build and audit a package/readiness from that exact pushed HEAD, publish it atomically, and give the user one elevated `RepairBroker` command. After the user's manual repair, qualify XInput slot availability and rumble in a normal-user run before lifecycle testing.
+Complete the prepared atomic publication, then the user manually runs the exact elevated `RepairBroker` command from the handoff. After repair, normal-user runtime must prove the exact XUSB gate, XInput slot, physical rumble, and remaining lifecycle cases.
