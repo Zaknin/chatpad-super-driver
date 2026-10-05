@@ -190,6 +190,19 @@ internal static class OfflineTests
                 staleHidMaestroNode.ToLowerInvariant()));
         Check("present-device ID matching does not accept prefixes", () =>
             !DeviceNodePresence.ContainsInstanceId("SWD\\HIDMAESTRO\\HM_622C184E37F6891E_EXTRA\0\0", staleHidMaestroNode));
+        const string expectedXusbInterface = @"\\?\SWD#HIDMAESTRO#HM_622C184E37F6891E#{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}";
+        Check("XUSB companion qualification accepts the exact controller interface", () =>
+            XusbInterfaceQualification.HasExpectedInterface([expectedXusbInterface], staleHidMaestroNode));
+        Check("XUSB companion qualification rejects a different controller identity", () =>
+            !XusbInterfaceQualification.HasExpectedInterface([expectedXusbInterface.Replace("HM_622C184E37F6891E", "HM_FFFFFFFFFFFFFFFF")], staleHidMaestroNode));
+        Check("XUSB companion qualification requires exact interface identity", () =>
+            !XusbInterfaceQualification.HasExpectedInterface([expectedXusbInterface + "-OTHER"], staleHidMaestroNode));
+        Check("XUSB companion qualification rejects the HID parent interface", () =>
+            !XusbInterfaceQualification.HasExpectedInterface([expectedXusbInterface.Replace("EC87F1E3-C13B-4100-B5F7-8B84D54260CB", "4D1E55B2-F16F-11CF-88CB-001111000030")], staleHidMaestroNode));
+        Check("XUSB companion qualification rejects absent interfaces", () =>
+            !XusbInterfaceQualification.HasExpectedInterface([], staleHidMaestroNode));
+        Check("XUSB companion qualification rejects malformed parent identity", () =>
+            !XusbInterfaceQualification.HasExpectedInterface([expectedXusbInterface], "ROOT\\VID_045E&PID_028E&IG_00\\"));
         Check("present-device multi-string parsing stops at its double-null terminator", () =>
         {
             char[] chars = "SWD\\HIDMAESTRO\\HM_622C184E37F6891E\0\0SPURIOUS\0\0".ToCharArray();

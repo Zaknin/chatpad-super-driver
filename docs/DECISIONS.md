@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-05 — Require the exact XUSB interface before broker create succeeds
+
+- **Decision:** The broker must verify that HIDMaestro published the present XUSB device interface for the exact controller identity before it returns successful virtual-controller creation to ChatpadBridge.
+- **Rationale:** The pinned HIDMaestro v1.10.1 setup path treats XUSB interface and XInput slot timeouts as nonfatal and may return a HID controller that works in `joy.cpl` without an XInput slot. The broker's previous create acknowledgment was therefore weaker than the product's XInput/rumble contract.
+- **Alternatives rejected:** Trusting `HMContext.CreateController` alone; accepting any XUSB interface from another controller; marking HID/DirectInput functionality as proof of XInput; or changing the approved backend.
+- **Consequences:** A missing exact XUSB interface now fails broker creation and is visible to the normal-user client. This is a necessary device-side gate, not a substitute for live XInput slot and physical rumble qualification.
+
 ## 2026-10-04 — Keep the normal-user bridge and move HIDMaestro into a scoped broker service
 
 - **Decision:** Preserve `ChatpadBridge.exe` as a normal-user owner of physical WinUSB, Chatpad, keyboard injection, parsing, and physical rumble. Add a `ChatpadVirtualXbox.exe` Windows Service mode as the sole owner of the pinned HIDMaestro virtual controller. Connect them through a versioned local named pipe whose DACL grants only `SYSTEM` and the specifically authorized installed interactive-user SID; validate that SID and the active local console session, and reject RDP/remote peers. Use correlated bounded RPCs only for `ping`, `create`, and `destroy`; stream sequenced state frames one-way through bounded latest-value queues, with rumble callbacks. Require the user's separate elevated setup step before any live service lifecycle operation.

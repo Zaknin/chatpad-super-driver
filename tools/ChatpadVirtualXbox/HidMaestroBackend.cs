@@ -1,6 +1,7 @@
 #if HIDMAESTRO
 using HIDMaestro;
 using Microsoft.Win32;
+using System.Reflection;
 
 namespace ChatpadVirtualXbox;
 
@@ -79,6 +80,16 @@ internal sealed class SdkXboxController : IVirtualXboxController
             ownsMetadata = true;
             phase = "create_virtual_controller";
             controller = context.CreateController(profile, "chatpad360-winusb-poc");
+            phase = "verify_xusb_interface";
+            var instanceIdProperty = typeof(HMController).GetProperty("InstanceId", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new BackendException("xusb_instance_id_unavailable", "Pinned HIDMaestro runtime no longer exposes its qualified controller instance identity.");
+            string instanceId = instanceIdProperty.GetValue(controller) as string
+                ?? throw new BackendException("xusb_instance_id_unavailable", "HIDMaestro returned no controller instance identity.");
+            if (!XusbInterfaceQualification.WaitForExpectedInterface(instanceId, 1000))
+            {
+                string token = XusbInterfaceQualification.GetControllerToken(instanceId) ?? "invalid";
+                throw new BackendException("xusb_companion_unavailable", $"HIDMaestro returned a controller, but the matching XUSB interface SWD#HIDMAESTRO#{token}#{{{XusbInterfaceQualification.InterfaceClass:D}}} is not present.");
+            }
             phase = "subscribe_controller_output";
             controller.OutputReceived += OnOutput;
         }

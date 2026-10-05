@@ -1,13 +1,15 @@
 # Project State
 
-Updated 2026-10-05 after the stale-readiness setup rejection.
+Updated 2026-10-05 during TASK 8L-C4L2 XInput/rumble diagnosis.
 
-- Branch: `feature/chatpad-usermode-runner`; latest pushed HEAD before this continuity update `5e4d101a7c2b289c4ed8cc53294eca7c3c97bbf9`; presence-guard source commit `160d6054682d0fcadaa68c1e2b79c0d07b67a27b`.
-- Live: The user's RepairBroker attempt with the `a93a107` package failed at the readiness branch/commit guard before reading SCM service state or invoking `sc.exe`. It made no service changes. Broker was last observed Running as LocalSystem before this attempt. The corrected package is published but cannot be installed from the current checkout because readiness commit `a93a1070add5a539f889a2fceb8bd69c6e34fccc` does not match current HEAD `5e4d101a7c2b289c4ed8cc53294eca7c3c97bbf9`.
-- Guard correction: Windows SDK `cfg.h` defines status bit `0x2` as `DN_DRIVER_LOADED`, not device presence. The broker now queries `CM_GETIDLIST_FILTER_PRESENT` and exact-matches returned IDs; the index-zero guard remains fail-closed for truly present devices. TDD covers stale IDs, case-insensitive exact matching, prefix rejection, and multi-string termination.
-- Previous package: `artifacts/task-8lc4l2/build-present-device-list-a93a107/package`, built from `a93a1070add5a539f889a2fceb8bd69c6e34fccc`. Its 214-member hash audit remains valid for that package, but RepairBroker correctly rejected its stale readiness identity.
-- Verification on the previous package/source: managed self-test 162/162; focused native CTest 2/2; C4 setup repository identity 5/5, package identity 8/8, baseline 5/5, PnP restart 4/4, SCM argv 4/4, readiness archive/privacy 9/9. Previous package was published atomically and remote sidecar readback verified 6/6 payloads. A fresh package from the current pushed HEAD is required before setup. Live virtual Xbox/XInput/rumble qualification remains incomplete.
-- Prior publication: `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261004T194810Z`, archive SHA-256 `05CD44BF7CE9A7A933DE078B5DD641992575F0874D4F3E097B3B5A610EBB0222`.
-- Previous publication: `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261004T200803Z`; archive SHA-256 `760C1A11047A829F5D05308E724438B29901AC2FD4ABFA4FA295B2D5F8C8DDB9`. It contains readiness for `a93a107`, so do not use it for setup against later HEAD.
-- Next: publish a package and readiness bound to the exact final pushed HEAD after this continuity update. Then the user manually repairs from that package in elevated PowerShell and retries it in ordinary PowerShell. The live run must establish whether the explicit present-device filter clears the prior conflict before XInput, rumble, and lifecycle qualification can continue.
-- Safety: no service lifecycle/configuration change, device/driver/PnP/registry mutation, trust/security change, reboot, elevated bridge run, or HIDMaestro global cleanup was performed by the agent. `legacy/` is untouched.
+- Branch: `feature/chatpad-usermode-runner`; starting commit for the current source change: `9c6e1c72c688393771d8665e7125eaca6f01fdff`.
+- Live status: normal-user WinUSB, Chatpad, HID input and controller values work. The user's XInput scan found no connected slot; `XInputSetState` returned 1167, so rumble is not qualified. The broker service was last read as Running under LocalSystem.
+- Diagnosis: the expected `hmswd` log is absent from the service's actual temp directory, `C:\Program Files\ChatpadBridge\Temp\HIDMaestro`. Pinned HIDMaestro 1.10.1 source waits for the XUSB interface and XInput slot but does not fail controller creation when those waits time out. The broker therefore could report virtual creation after HID-only setup.
+- Source correction in progress: broker success now requires the exact present XUSB interface class `{EC87F1E3-C13B-4100-B5F7-8B84D54260CB}` for the HIDMaestro controller token. Failure is surfaced as `xusb_companion_unavailable` and triggers normal owned-controller cleanup. It does not verify interactive-session XInput slot visibility; live confirmation is still required.
+- Focused verification so far: managed offline helper 168/168; focused native CTest `broker-client` and `runner-lifecycle` 2/2. No live service repair or runtime was performed by the agent.
+- Package/readiness: current source correction is not yet committed or packaged. The previous `build-readiness-current-head` package predates this correction and must not be used for the next repair.
+- Safety: no service lifecycle/configuration mutation, PnP/registry/device mutation, trust change, reboot, elevated bridge run, or HIDMaestro global cleanup by the agent. `legacy/` is untouched.
+
+## Next
+
+Commit and push the correction and continuity updates. Build and audit a package/readiness from that exact pushed HEAD, publish it atomically, and give the user one elevated `RepairBroker` command. After the user's manual repair, qualify XInput slot availability and rumble in a normal-user run before lifecycle testing.
