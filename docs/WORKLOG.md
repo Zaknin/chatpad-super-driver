@@ -14861,3 +14861,14 @@ This append records the implementation commit and first publication. The documen
 
 - Correction to the preceding entry: its `Continuity commit/push: pending` status was accurate when written and is now superseded. The live reconnect state and next crash-cleanup handoff were committed as `a70b7febc5b6c869520572dbf0e95084ade54079` and pushed to `origin/feature/chatpad-usermode-runner`.
 - This entry accompanies the current docs-only closeout. After it is pushed, readiness metadata is regenerated against the resulting HEAD; package runtime bytes remain unchanged from source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
+
+## 2026-10-05 14:36 UTC — Live client crash cleanup PASS
+
+- Objective: verify the LocalSystem broker cleans up the virtual controller when the normal-user ChatpadBridge process exits abruptly.
+- Starting branch/HEAD: `feature/chatpad-usermode-runner` / `6b2e2542d050af8081fbdfc6e23649fcead4751b`; corrected runner package is source-bound to `92a368830bb6ecfb0a990ba68051583b506d5dd0`.
+- User first confirmed normal-user startup reached `state=RUNNING`, Chatpad activation, and `virtual Xbox created and initial controller state submitted`.
+- In a second ordinary PowerShell, the user found exactly one matching package process, PID 27348, and force-stopped it. After a three-second wait, `Get-PnpDevice -PresentOnly` showed no `ROOT\VID_045E&PID_028E&IG_00\*` virtual Xbox node. `Get-Service ChatpadHidMaestroBroker` reported `Running`, `Automatic`.
+- Live client-disconnect cleanup is PASS: the broker released the virtual XInput device and the service remained available. Startup marker consumption after relaunch is not yet tested. The accepted limitation remains that a hard client crash cannot stop physical rumble immediately.
+- No source changes. No service install/repair, driver, PnP, registry, trust, boot, or device mutation by the agent; no elevated bridge; `legacy/` untouched.
+- Next: restart the same package normally; verify `unclean_previous_session=true`, successful zero-rumble recovery, fresh virtual Xbox and Chatpad input, then stop cleanly. Canonical release publication remains pending.
+- Continuity commit/push: pending.
