@@ -14714,3 +14714,17 @@ This append records the implementation commit and first publication. The documen
 - Files changed: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, this append-only log, and ignored diagnostic watcher under artifacts. No source or durable decision change; retain the strict XUSB gate and same backend.
 - Safety: no live service lifecycle/configuration mutation, driver/PnP/registry/device mutation, trust change, reboot, elevated bridge execution, or HIDMaestro global cleanup by the agent. `legacy/` untouched.
 - Next: ask the user to run the read-only watcher for 60 seconds in a second normal PowerShell while launching the published bridge once. If the exact interface appears after the 1-second window, adjust bounded wait/RPC timeout with focused tests. If absent through cleanup, investigate UMDF/PnP startup. Do not call this a rumble failure or claim XInput/rumble PASS.
+
+## 2026-10-05 06:42 UTC — Diagnose broker authorization failure in RDP session
+
+- Objective: continue live qualification after the user's clean-start run skipped zero-rumble recovery but failed broker create with `broker_peer_unauthorized`.
+- Starting branch/HEAD: `feature/chatpad-usermode-runner` / `09acee749437256f5625a94b9cbea7bf97ed69f9`; worktree was clean and synchronized with `origin`.
+- Investigation: read the repository continuity documents and broker authorization implementation. Read installed `C:\Program Files\ChatpadBridge\BrokerAuthorization.json` without copying the machine-specific SID into tracked files. Its authorized SID matched `whoami /user`. `query.exe user` and `query.exe session` showed this PowerShell process in active `rdp-tcp#1` session 1 and no signed-in user in the local `console` session. `ChatpadHidMaestroBroker` was Running.
+- Root cause: approved authorization requires the authorized identity from the active local console session and rejects RDP/remote sessions. The observed RDP run is therefore denied before HIDMaestro create. This is not evidence of XUSB or rumble failure; the service did not create a virtual controller. The watcher output returned only its idle `xusbInterfaceCount=0` baseline, not an observation during backend creation.
+- Startup result: `unclean_previous_session=false` and `startup zero-rumble recovery skipped previous_session_clean=true`; clean-start path confirmed. Physical rumble remains untested.
+- Files changed: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. No durable decision change; the local-console-only policy was already approved.
+- Commands: read-only `whoami /user`, current PowerShell session ID, `query.exe user`, `query.exe session`, service status, installed broker authorization config, and service log tail. No tests applicable to this documentation-only diagnosis.
+- Validation: identity/config SID match PASS; local session mismatch confirmed; service Running; diagnosis is consistent with `broker_peer_unauthorized`. No new package was built or published.
+- Safety: no service/device/PnP/registry/driver/trust/boot mutation, no elevated bridge, and no HIDMaestro global cleanup by the agent; `legacy/` untouched.
+- Next: user must sign in locally at the physical console and start the same bridge package from a normal-user PowerShell in that console session. After successful broker creation, continue XUSB/XInput/rumble qualification.
+- Commit/push: pending continuity commit; only the requested branch may be pushed.

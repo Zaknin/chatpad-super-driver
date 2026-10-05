@@ -1,28 +1,31 @@
-# TASK 8L-C4L2 — Trace missing XUSB companion during broker create
+# TASK 8L-C4L2 — Continue live qualification from local console
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; source/package build commit `2258de10c65052a12efff8acfa30f2773dc546ad`; published release identity `97095be21c420f55a26a7319b8a42323fd6fb6d4`.
-- New normal-user run confirmed the rumble recovery correction: `unclean_previous_session=false` and startup zero-rumble was skipped. It then failed broker creation because the exact XUSB interface was absent.
-- SetupAPI shows the HIDMaestro ROOT node starts via `oem106.inf`/`mshidumdf`; broker cleanup deletes the node after the failed XUSB gate. Kernel-PnP logged repeated 3–5.2 second WUDFRd event-queue delays and query-remove vetoes for the SWD node. Exact cause is unresolved.
-- The product gate in `HidMaestroBackend.Create` waits 1000 ms for the interface after HIDMaestro returns. Do not increase it blindly: native broker create timeout is 30000 ms and the SDK startup already takes most of that bound.
-- Read-only watcher created at `artifacts/task-8lc4l2/monitor-xusb-interface.ps1`; a 5-second idle syntax/runtime check passed and observed zero present XUSB interfaces (expected while no controller is running).
-- The user previously reported the broker service Running. No service repair is indicated by this log.
+- Branch: `feature/chatpad-usermode-runner`; starting HEAD for this documentation update: `09acee749437256f5625a94b9cbea7bf97ed69f9`.
+- The user ran package `artifacts/task-8lc4l2/build-rumble-recovery-2258de1/package/ChatpadBridge.exe` as a normal user. Chatpad activation succeeded and clean-start zero-rumble recovery was correctly skipped. Broker create then failed with `broker_peer_unauthorized`.
+- Read-only checks confirmed the installed broker authorization SID matches the current account. The bridge process was in active RDP session `rdp-tcp#1` ID 1; `query session` showed no signed-in user at the local console. The service was Running.
+- The approved broker policy restricts access to the specifically authorized user in the active local interactive console session and rejects RDP/remote sessions. This failure is expected in the observed RDP context. Do not change the authorization policy.
+- Broker authorization failed before HIDMaestro create, so this run says nothing about XUSB, XInput, or rumble. The watcher output included only its zero-interface idle baseline, not an observation during successful create.
+- Current live verdict remains PARTIAL. Physical XInput, rumble callback/output, reconnect, and crash recovery have not been qualified under the broker architecture.
 
-## Next steps
+## Next action
 
-1. In a second ordinary PowerShell, start the read-only watcher for 60 seconds:
+Ask the user to sign in locally at the physical machine and run the bridge from an ordinary PowerShell opened in that local console session (not an RDP terminal):
 
-   `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\monitor-xusb-interface.ps1" -Seconds 60 -IntervalMs 250`
+```powershell
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-recovery-2258de1\package\ChatpadBridge.exe" run
+```
 
-2. While it runs, start the published normal-user bridge in another PowerShell and return both outputs:
-
-   `& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rumble-recovery-2258de1\package\ChatpadBridge.exe" run`
-
-3. If the exact SWD XUSB interface appears after the current one-second gate, make a minimal bounded wait/RPC timeout change with focused tests. If it never appears, investigate UMDF/PnP driver behavior; do not weaken the gate or switch backend.
+Return the full output. Continue only after `broker_peer_unauthorized` is gone and broker creation reaches `state=RUNNING`. Then qualify exact XUSB interface/XInput slot and rumble. The read-only watcher may be run concurrently from a second normal-user PowerShell in the same local console session if interface-arrival timing still needs observation.
 
 ## Safety
 
-- The watcher only enumerates present device-interface paths. It does not create/remove devices or alter service, PnP, registry, driver, trust, or boot state.
-- Do not run the bridge elevated or perform global HIDMaestro cleanup.
-- Keep the result PARTIAL until exact XUSB/XInput and subsequent rumble behavior are live-verified.
+- Do not weaken local-console/SID authorization or permit RDP clients.
+- Do not run ChatpadBridge elevated; do not perform service repair, PnP/registry/device/driver/trust/boot mutation, or global HIDMaestro cleanup for this authorization result.
+- Preserve the exact XUSB interface gate and HIDMaestro backend.
+- Keep the result PARTIAL until local-console broker, XInput, physical rumble, reconnect, and crash-recovery evidence is collected.
+
+## Inspect first
+
+`docs/PROJECT-STATE.md`, `docs/DECISIONS.md`, this file, latest `docs/WORKLOG.md` entries, `tools/ChatpadVirtualXbox/BrokerPeerAuthorization.cs`, `tools/ChatpadVirtualXbox/WindowsClientIdentity.cs`, and `tools/ChatpadBridge` broker connection code.
