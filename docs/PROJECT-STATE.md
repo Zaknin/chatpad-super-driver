@@ -1,8 +1,8 @@
 # Project State
 
-Updated 2026-10-05 after repeated RDP controller-readiness timeouts.
+Updated 2026-10-05 after the read-only RDP controller probe timed out.
 
-- Branch: `feature/chatpad-usermode-runner`; current state is this documentation closeout following pushed diagnosis commit `9658104e453c0a7bd9a40da9e824adf942fb2a79`; setup-fix source/build commit: `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`; published package identity `20261005T070200Z` remains the runtime package in use.
+- Branch: `feature/chatpad-usermode-runner`; current documentation closeout follows pushed RDP diagnosis commit `abbd05232a50ffcd897bf3275daf7bfb16231bed`; setup-fix source/build commit: `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`; published package identity `20261005T070200Z` remains the runtime package in use.
 - The 2026-10-05 06:40 UTC normal-user run of the rumble-recovery package confirmed clean-start recovery skip, then failed before HIDMaestro creation with `broker_peer_unauthorized`.
 - Read-only identity check confirmed the installed broker authorization SID matches the current user's SID. `query user/session` showed the bridge running in active `rdp-tcp#1` session 1; the local `console` session had no logged-in user. This explained the authorization failure under the previous active-console-only policy.
 - The broker authorization policy is changed to accept the exact installed SID from any non-anonymous local named-pipe session, including the user's RDP session. It continues to reject mismatched SIDs and remote pipe clients. Focused offline self-test passes 168/168 after the change.
@@ -15,15 +15,16 @@ Updated 2026-10-05 after repeated RDP controller-readiness timeouts.
 - User manually ran elevated `RepairBroker` from RDP with package `build-rdp-setup-session-b76336d`; it passed, reporting the service Running as LocalSystem and 197 runtime members. This confirms the service helper was refreshed.
 - The subsequent normal-user RDP run opened WinUSB but repeated `ACTIVATING_CHATPAD` -> `DEVICE_LOST` at roughly five-second intervals. It ended cleanly on Ctrl+C after four reconnect attempts. No `controller input polling started`, activation-stage, broker-create, or virtual-Xbox lines appeared.
 - A second normal-user RDP run repeated the same pattern for six reconnect attempts and was stopped cleanly with Ctrl+C. The user is away from the physical controller and cannot press it remotely.
-- Source inspection shows `ACTIVATING_CHATPAD` is logged before `RunSession` waits up to five seconds for the first controller report. The missing polling/activation lines are consistent with that readiness wait timing out. Cause of the absent report is not yet established; this is not evidence of broker authorization, XUSB, XInput, or rumble failure.
+- The subsequent read-only `probe` reported `target_count=1`, `state=DEVICE_PRESENT`, and the expected live WinUSB topology, including IF0 endpoint IN81. Its one-second read returned `probe=FAILED controller_win32=1460` (`ERROR_TIMEOUT`); no controller input report arrived in that interval.
+- Source inspection shows `ACTIVATING_CHATPAD` is logged before `RunSession` waits up to five seconds for the first controller report. The repeated five-second losses match that readiness wait timing out. Cause of the absent report is not established; this is not evidence of broker authorization, XUSB, XInput, or rumble failure.
 - No service, PnP, driver, registry, trust, device, or boot mutation by the agent; `legacy/` untouched. Hardware XInput, rumble, reconnect, and crash recovery remain unqualified for the current broker architecture.
 
 ## Next
 
-Run the existing read-only one-packet probe from normal-user PowerShell. It opens WinUSB and attempts one IF0/IN81 read for one second; it does not write to the device or contact the broker:
+Live qualification is waiting for a controller input report. The remote user is away from the physical controller, and the probe confirms the device is present but IF0/IN81 returns `ERROR_TIMEOUT`. Do not repeat the looping `run` or probe while the physical controller cannot be awakened. When physical interaction is available, run the normal-user bridge once and verify it reaches `controller input polling started`, activation stages, and broker create:
 
 ```powershell
-& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rdp-setup-session-b76336d\package\ChatpadBridge.exe" probe
+& "C:\Dev\chatpad-super-driver\artifacts\task-8lc4l2\build-rdp-setup-session-b76336d\package\ChatpadBridge.exe" run
 ```
 
-Return the complete output. `probe=PASS` confirms a controller packet reaches this RDP process; a failed probe means a usable first report was not received during this bounded read. Do not run another looping `run` attempt until the probe result is understood, and do not repeat RepairBroker unless a new package is built.
+Do not repeat RepairBroker unless a new package is built. No virtual-controller or rumble acceptance may be claimed until the runner receives physical reports and broker/XInput evidence is captured.

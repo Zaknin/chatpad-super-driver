@@ -14802,3 +14802,16 @@ This append records the implementation commit and first publication. The documen
 - Safety: no service, device, PnP, registry, driver, trust, or boot mutation by the agent; no elevated bridge; `legacy/` untouched.
 - Live verdict remains PARTIAL. The absent input report's cause, broker runtime, XUSB, XInput, rumble, reconnect recovery, and crash recovery remain unqualified.
 - Continuity commit/push: pending.
+
+## 2026-10-05 07:30 UTC — Confirm controller input endpoint timeout over RDP
+
+- Objective: interpret the user's read-only `ChatpadBridge.exe probe` result and identify the live qualification gate.
+- Starting branch/HEAD: `feature/chatpad-usermode-runner` / `abbd05232a50ffcd897bf3275daf7bfb16231bed`; worktree clean.
+- Probe evidence: `target_count=1`, runtime process STOPPED, marker absent, physical instance `USB\VID_045E&PID_028E\1C21F10` present. Live WinUSB topology matches the expected configuration and exposes interface 0 endpoint IN81. The bounded 1000 ms read ended `probe=FAILED controller_win32=1460`; the local Windows error text identifies 1460 as “The timeout period expired.”
+- Interpretation: the input endpoint did not return a controller report during the probe. This matches the runner's five-second initial readiness timeout. It does not establish whether the controller is asleep, powered off, or otherwise withholding reports. The probe did not activate Chatpad, contact the broker, create XUSB, or test rumble.
+- User is physically away and cannot wake the controller. No more looping runtime/probe attempts are useful until physical input is available.
+- Files changed: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. Source/package bytes unchanged; no tests applicable.
+- Safety: no service, device, PnP, registry, driver, trust, boot, or HIDMaestro mutation by the agent; no elevated bridge; `legacy/` untouched.
+- Verdict remains PARTIAL; live controller input, broker, XUSB/XInput, Chatpad under broker, rumble, reconnect, and crash recovery remain unqualified after RepairBroker.
+- Next: resume one normal-user `run` only when physical controller input can be produced. Do not request button input over RDP while the user is away.
+- Continuity commit/push: pending.
