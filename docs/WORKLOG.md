@@ -14791,3 +14791,14 @@ This append records the implementation commit and first publication. The documen
 
 - Correction to the preceding entry: its “commit/push: pending” status was true when that entry was written and is now superseded. The diagnosis and continuity update was committed as `9658104e453c0a7bd9a40da9e824adf942fb2a79` and pushed to `origin/feature/chatpad-usermode-runner`.
 - This entry updates the current-state and next-task references to start from the current pushed branch HEAD. It changes documentation only; no source or package bytes changed.
+
+## 2026-10-05 07:24 UTC — Record second RDP readiness timeout
+
+- Objective: incorporate the user's second normal-user RDP run and replace the unusable physical-button retry instruction.
+- Live evidence: the same package again opened WinUSB, emitted `ACTIVATING_CHATPAD`, and retried after five seconds without controller-polling, activation-stage, or broker-create messages. The user stopped after six reconnects with `clean_shutdown=true`.
+- The user is away from the physical controller and cannot press it. No further physical interaction is requested.
+- Code inspection: the existing `probe` command opens WinUSB and performs one bounded 1000 ms read on IF0/IN81; it does not write to the device or contact the broker. Next step is this read-only probe, not another looping runner attempt.
+- Files changed: `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog. No source/package bytes changed; no tests applicable.
+- Safety: no service, device, PnP, registry, driver, trust, or boot mutation by the agent; no elevated bridge; `legacy/` untouched.
+- Live verdict remains PARTIAL. The absent input report's cause, broker runtime, XUSB, XInput, rumble, reconnect recovery, and crash recovery remain unqualified.
+- Continuity commit/push: pending.
