@@ -2,7 +2,7 @@
 
 Updated 2026-10-05 after the first RDP runtime retry following RepairBroker.
 
-- Branch: `feature/chatpad-usermode-runner`; setup-fix source/build commit: `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`; published package identity `20261005T070200Z` remains the runtime package in use.
+- Branch: `feature/chatpad-usermode-runner`; current state is this documentation closeout following pushed diagnosis commit `9658104e453c0a7bd9a40da9e824adf942fb2a79`; setup-fix source/build commit: `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`; published package identity `20261005T070200Z` remains the runtime package in use.
 - The 2026-10-05 06:40 UTC normal-user run of the rumble-recovery package confirmed clean-start recovery skip, then failed before HIDMaestro creation with `broker_peer_unauthorized`.
 - Read-only identity check confirmed the installed broker authorization SID matches the current user's SID. `query user/session` showed the bridge running in active `rdp-tcp#1` session 1; the local `console` session had no logged-in user. This explained the authorization failure under the previous active-console-only policy.
 - The broker authorization policy is changed to accept the exact installed SID from any non-anonymous local named-pipe session, including the user's RDP session. It continues to reject mismatched SIDs and remote pipe clients. Focused offline self-test passes 168/168 after the change.

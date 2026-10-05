@@ -14786,3 +14786,8 @@ This append records the implementation commit and first publication. The documen
 - Live verdict remains PARTIAL. Broker repair success is user-reported; broker runtime authorization, XUSB interface, XInput, rumble, reconnect recovery, and crash recovery remain unqualified after repair.
 - Next: one bounded normal-user RDP retry with a controller button pressed promptly. If it still times out, capture `%LOCALAPPDATA%\ChatpadBridge\logs\bridge.log` and read-only physical controller presence/power evidence. Do not repeat RepairBroker without a new exact-HEAD package.
 - Continuity update commit/push: pending.
+
+## 2026-10-05 07:22 UTC — Record diagnosis continuity push
+
+- Correction to the preceding entry: its “commit/push: pending” status was true when that entry was written and is now superseded. The diagnosis and continuity update was committed as `9658104e453c0a7bd9a40da9e824adf942fb2a79` and pushed to `origin/feature/chatpad-usermode-runner`.
+- This entry updates the current-state and next-task references to start from the current pushed branch HEAD. It changes documentation only; no source or package bytes changed.

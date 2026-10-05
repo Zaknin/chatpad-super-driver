@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Branch: `feature/chatpad-usermode-runner`; runtime package source commit `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`; current continuity HEAD before this update: `4dc64a29e0222618b53eed5e815450e17477cb60`.
+- Branch: `feature/chatpad-usermode-runner`; begin from the current pushed branch HEAD (confirm with `git rev-parse HEAD`); runtime package source commit `b76336dd021cc561fa9cfe4f65b1dcc33c78da7b`.
 - User manually ran elevated `RepairBroker` from RDP using `artifacts/task-8lc4l2/build-rdp-setup-session-b76336d/package`; it passed and reported the service Running as LocalSystem with 197 runtime members.
 - First subsequent normal-user RDP run opened WinUSB, then cycled through `ACTIVATING_CHATPAD` and `DEVICE_LOST` every five seconds; user stopped it with Ctrl+C after four reconnects.
 - The run emitted no `controller input polling started`, activation-stage, broker-create, or virtual-Xbox messages. Source inspection shows the runner logs `ACTIVATING_CHATPAD` before waiting up to five seconds for the first controller report. This points to the physical controller readiness wait, but the reason no first report arrived is unknown.
