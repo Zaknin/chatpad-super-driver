@@ -14728,3 +14728,14 @@ This append records the implementation commit and first publication. The documen
 - Safety: no service/device/PnP/registry/driver/trust/boot mutation, no elevated bridge, and no HIDMaestro global cleanup by the agent; `legacy/` untouched.
 - Next: user must sign in locally at the physical console and start the same bridge package from a normal-user PowerShell in that console session. After successful broker creation, continue XUSB/XInput/rumble qualification.
 - Commit/push: pending continuity commit; only the requested branch may be pushed.
+
+## 2026-10-05 06:55 UTC — Permit the configured local user to connect through RDP
+
+- Objective: allow the specifically authorized user to use the LocalSystem broker from their RDP session at work after `broker_peer_unauthorized` blocked a normal-user run.
+- Starting branch/HEAD: `feature/chatpad-usermode-runner` / `667a4eb9976d8f78b91b3d54e1ea675d1aace4d1`; starting worktree clean.
+- Design applied: authorization no longer requires the client to be in the active physical console session. It still requires the exact installed user SID, a non-anonymous identity, a valid session ID, and a local named-pipe client. Other user SIDs and remote pipe clients remain denied. Existing single-client ownership stays unchanged.
+- TDD: added an RDP-session acceptance regression first. The compiled pre-fix self-test failed exactly that assertion (167 passed, 1 failed). After the policy implementation, focused helper build succeeded with 0 warnings/errors and `self-test` passed 168/168; the suite reported `liveBackendCreated=false` and `xinputCalled=false`.
+- Build notes: first standard helper build failed restore because the host's .NET 10 SDK lacked the net9 targeting packs. The net10 build-script attempt compiled but stopped before tests because that SDK directory lacked redistributable `LICENSE` notices. The focused net10 build was then run directly with the pinned local SDK reference and project NuGet.Config; this produced the 168/168 result. These environment/tool invocation failures were not counted as test passes.
+- Files changed: `BrokerPeerAuthorization.cs`, `OfflineTests.cs`, `docs/DECISIONS.md`, `docs/PROJECT-STATE.md`, `docs/NEXT-TASK.md`, and this append-only worklog.
+- Package/service state: the currently installed LocalSystem service still has the old helper. Rebuild/recreate the exact package from the new commit, verify member hashes and readiness identity, publish atomically, then provide the user the exact elevated `RepairBroker` command. Do not repair the service automatically.
+- Live status remains PARTIAL: no post-change service install/repair or RDP runtime was performed; XInput, physical rumble, reconnect, and crash recovery remain unqualified. No PnP/driver/registry/trust/boot/device mutation by the agent; `legacy/` untouched.

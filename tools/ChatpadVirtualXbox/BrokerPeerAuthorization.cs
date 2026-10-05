@@ -19,8 +19,7 @@ internal sealed class BrokerPeerAuthorization
     }
 
     public bool IsAuthorized(BrokerPeerSnapshot peer) =>
-        !peer.IsAnonymous && !peer.IsRemoteClient && peer.IsLocalConsoleSession &&
-        peer.SessionId >= 0 && peer.SessionId == peer.ActiveConsoleSessionId &&
+        !peer.IsAnonymous && !peer.IsRemoteClient && peer.SessionId >= 0 &&
         string.Equals(peer.UserSid, authorizedSid, StringComparison.OrdinalIgnoreCase);
 
     private static bool IsUserSid(string? sid) => sid is not null &&

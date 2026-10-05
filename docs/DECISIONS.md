@@ -1,5 +1,12 @@
 # Decisions
 
+# 2026-10-05 — Allow the authorized local user to use the broker over RDP
+
+- **Decision:** Accept broker clients from any non-anonymous, local named-pipe session whose SID exactly matches the installed authorized-user SID. Do not require that the client session equal the active physical console session or use the console protocol; an authorized user's RDP session is allowed.
+- **Rationale:** The authorized user operates this machine over RDP from work. The previous active-console-only gate rejected that user's legitimate local broker request before virtual-controller creation.
+- **Alternatives rejected:** Keeping the console-only gate; allowing any interactive/RDP account; granting broker access by session alone; or changing the named-pipe ACL to permit remote-machine pipe clients.
+- **Consequences:** Access remains limited to the configured user SID, local pipe clients, and non-anonymous tokens. Multiple sessions of that same account may connect, while the existing single-client lease still governs controller ownership. Active-console/session fields may remain diagnostic but are not authorization criteria.
+
 ## 2026-10-05 — Keep the physical controller input pipe continuously polled during startup
 
 - **Decision:** After the first valid controller report, start one persistent IF0/81 reader before Chatpad activation and keep it active through initial rumble and virtual broker creation. Cache the newest controller state until the broker is ready, then stream that state and all following reports through the existing virtual-controller client.

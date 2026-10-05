@@ -138,15 +138,19 @@ internal static class OfflineTests
             var policy = new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001");
             return policy.IsAuthorized(new("S-1-5-21-100-200-300-1001", 4, 4, true, false, false));
         });
+        Check("broker authorization accepts exact installed SID in a local RDP session", () =>
+        {
+            var policy = new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001");
+            return policy.IsAuthorized(new("S-1-5-21-100-200-300-1001", 1, 2, false, false, false));
+        });
         foreach (var peer in new[]
         {
             new BrokerPeerSnapshot("S-1-5-21-100-200-300-1002", 4, 4, true, false, false),
-            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 3, 4, true, false, false),
-            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 4, 4, false, false, false),
+            new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", -1, 4, false, false, false),
             new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 4, 4, true, true, false),
             new BrokerPeerSnapshot("S-1-5-21-100-200-300-1001", 4, 4, true, false, true)
         })
-            Check("broker authorization rejects wrong SID, stale session, RDP, anonymous, or remote", () => !new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001").IsAuthorized(peer));
+            Check("broker authorization rejects wrong SID, invalid session, anonymous, or remote peer", () => !new BrokerPeerAuthorization("S-1-5-21-100-200-300-1001").IsAuthorized(peer));
         Throws("broker authorization rejects missing authorized SID", () => new BrokerPeerAuthorization(""));
         int contextFactories = 0;
         var runtimeMock = new MockBackend();
