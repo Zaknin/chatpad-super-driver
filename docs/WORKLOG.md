@@ -14838,3 +14838,10 @@ This append records the implementation commit and first publication. The documen
 - Runner package path: `artifacts/task-8lc4l2/build-rumble-removal-reconnect/package/ChatpadBridge.exe`; SHA-256 `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`.
 - No service install/repair or hardware/PnP/driver/registry/trust/boot mutation. No elevated runner. The installed service payload is unchanged; no `legacy/` changes.
 - Live unplug/replug recovery using this corrected package has not yet been run. Canonical release publication and final C4L2 status remain pending until live reconnect and the other remaining qualification gates are resolved.
+
+## 2026-10-05 14:30 UTC — Rebind readiness after continuity updates
+
+- The package build manifest correctly binds the executable bytes to source commit `92a368830bb6ecfb0a990ba68051583b506d5dd0`. A later documentation-only continuity commit updates the pushed branch tip without changing runner or helper bytes.
+- Regenerated `artifacts/task-8lc4l2/readiness-input.json` for the current branch tip after the continuity update, then reran `tools/Test-ChatpadC4Setup.ps1`: repository identity 5/5, package identity 8/8, baseline 5/5, PnP 4/4, SCM argv 4/4, broker setup/package regressions PASS. `Assert-ChatpadC4PackageIdentity` passed against all 214 package members.
+- Runner hash remains `860B27E194ADF6F449AC3B4B9C2B57CA77F95EE362CF6A18F7BA9460A8F3B88D`; executable and helper package bytes did not change.
+- This entry accompanies the pushed documentation-only closeout; the current branch HEAD is the commit containing this state/worklog update. Live reconnect with this package is the next user-operated gate.
