@@ -2,8 +2,8 @@
 
 Updated 2026-10-10 during TASK 8L-C5 wired-controller status-packet handling.
 
-- Branch: `feature/chatpad-usermode-runner`. Verified base HEAD before this change: `abb4e06348d04f2d77b2b9b568d9418042af9bb6`, clean and pushed. The previous state documents incorrectly named `cd6a21c` as current HEAD; `abb4e063` had already committed and pushed the probe diagnostics.
-- Expected HEAD after this closeout: the TASK 8L-C5 status-packet implementation commit containing this state and worklog update; resolve its exact hash with `git rev-parse HEAD`.
+- Branch: `feature/chatpad-usermode-runner`. TASK 8L-C5 implementation commit `4cadcb3b2f3480461ce3d7916da1765cc2a78ae8` is pushed to `origin`; it follows the verified base `abb4e06348d04f2d77b2b9b568d9418042af9bb6`. The previous state documents incorrectly named `cd6a21c` as current HEAD; `abb4e063` had already committed and pushed the probe diagnostics.
+- The current closeout adds only continuity documentation after implementation commit `4cadcb3`; use the branch HEAD and verify its exact hash with `git rev-parse HEAD` before continuing.
 - C4L2 remains complete and published. Earlier C4L2 package identity, hashes, and live service qualification remain recorded in `docs/WORKLOG.md`.
 - Strict controller-state parsing remains unchanged: exactly 20 bytes, header `00 14`, plus the existing reserved-button validation. Readiness and the runtime input pump now classify only the four exact known wired status packets (`01 03 02`, `02 03 00`, `03 03 03`, `08 03 00`) as non-controller status. Readiness uses one absolute five-second deadline; all other malformed reports are rejected.
 - Focused Release verification: `ChatpadBridgeTests` 544/544, controller-input-pump 10/10, focused CTest 2/2. The full C5 runner and diagnostic executable built successfully under ignored `artifacts/task-8lc5/status-packet-fix/`.

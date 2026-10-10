@@ -1,6 +1,6 @@
 # TASK 8L-C5 — verify post-sleep physical recovery
 
-- Required branch: `feature/chatpad-usermode-runner`. Start from the status-packet implementation commit produced by the current task; verify the exact HEAD and clean status first.
+- Required branch: `feature/chatpad-usermode-runner`. Start from the current pushed branch HEAD, whose status-packet implementation commit is `4cadcb3b2f3480461ce3d7916da1765cc2a78ae8`; verify the exact tip and clean status first.
 - Current state: strict parser unchanged; exact known wired Xbox 360 3-byte status packets are skipped by readiness and runtime input. Focused Release tests pass (bridge 544/544, input pump 10/10, CTest 2/2). The live probe passed before the sleep/reconnect attempt, skipping `08 03 00` before a valid 20-byte `00 14` report. Normal-user controller input, Chatpad, and physical rumble were confirmed.
 - Latest recovery evidence: after the attempted sleep/reconnect window, runner reads timed out with Win32 1460, then 15 reconnect/activation attempts failed to reach a controller report. The stopped runner's read-only probe failed after 5 seconds with nine read timeouts, last Win32 1460. A pending zero-rumble recovery marker remains.
 - Next action: after the user power-cycles only the physical controller's USB connection for 10 seconds, rerun the new `ChatpadWinUsbPoc.exe probe`. If it passes, run the normal-user bridge and recheck controller, Chatpad, and rumble. Do not start runtime while probe fails.

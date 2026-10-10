@@ -15179,3 +15179,9 @@ This append records the implementation commit and first publication. The documen
 - Sleep/reconnect remains PARTIAL: runner cleanup and virtual release succeeded, but the physical WinUSB read path timed out with 1460; 15 reconnect attempts did not receive a controller report. A separate read-only probe then timed out after 5 seconds with nine read timeouts and last Win32 1460. Current read-only snapshot: runner stopped, broker service Running, physical USB target enumerated. No further probe is to run until the user power-cycles the physical USB connection; if the next read-only probe passes, only then repeat normal-user runtime validation.
 - No driver rebinding, PnP removal, `RemoveAllVirtualControllers`, service/registry/trust/boot/power-setting changes, or edits under `legacy/`. No new package was published. C5 is not complete until physical WinUSB recovery and the remaining sleep/reconnect check pass.
 - Commit/push: this implementation and continuity update are being committed and pushed to `feature/chatpad-usermode-runner`; the task commit is the resulting branch HEAD.
+
+## 2026-10-10 13:27 UTC — TASK 8L-C5 implementation commit pushed
+
+- Implementation and continuity commit: `4cadcb3b2f3480461ce3d7916da1765cc2a78ae8` (`fix(runner): skip known wired controller status packets`).
+- Push result: PASS; `origin/feature/chatpad-usermode-runner` advanced from `abb4e06348d04f2d77b2b9b568d9418042af9bb6` to the implementation commit. Only the requested branch was pushed.
+- The next physical step remains a USB power-cycle followed by one read-only probe. Do not launch runtime if that probe fails.
