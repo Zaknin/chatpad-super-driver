@@ -15261,3 +15261,9 @@ This append records the implementation commit and first publication. The documen
 - A short follow-up run did not reach RUNNING: each readiness attempt returned to `DEVICE_LOST` after about five seconds despite successful opens. The captured events did not expose the read Win32 status. It was stopped cleanly after two reconnect attempts; no further reads or sleep test were performed. Final read-only snapshot showed broker Running/Automatic, physical target still WINUSB ProblemCode 0, no runner or present virtual Xbox, and no session marker. `post-run-snapshot-and-logs.txt` contains the snapshot and relevant bridge log tail.
 - C5 remains PARTIAL: the LED packet regression and one post-reboot strict probe pass; normal-user Chatpad and rumble were observed, but controller report telemetry is contradictory and the follow-up could not reacquire state reports. Post-S3 recovery remains unqualified. Next work should use a single bounded diagnostic window to correlate physical button presses with IF0 transfer status/bytes/classification before another runtime or S3 attempt.
 - No S3 test, driver rebind, USB power change, service/registry/trust/boot change, diagnostic-channel change, broad PnP cleanup, `RemoveAllVirtualControllers`, session-marker deletion, artifact publication, or edit under `legacy/`. Build and diagnostic outputs remain under ignored `artifacts/`.
+
+## 2026-10-10 15:45 UTC — TASK 8L-C5 LED-packet implementation commit pushed
+
+- Commit: `5371b01` (`fix: classify wired Xbox LED packets`), containing the focused classifier/readiness/input-pump tests and TASK 8L-C5 continuity updates.
+- Push result: PASS; `origin/feature/chatpad-usermode-runner` advanced from `ff44634bf0f5106618bc4ea963159a91d58e5ac4` to `5371b01`. Only the requested feature branch was pushed.
+- The C5 diagnostic and qualification state remains PARTIAL as recorded above; no live system changes followed the bounded read-only snapshot.

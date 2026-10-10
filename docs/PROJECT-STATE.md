@@ -2,7 +2,7 @@
 
 Updated 2026-10-10 after the approved TASK 8L-C5 LED-packet classification and bounded live check.
 
-- Branch: `feature/chatpad-usermode-runner`; implementation baseline `ff44634bf0f5106618bc4ea963159a91d58e5ac4`; this update is intended for the next commit on that branch.
+- Branch: `feature/chatpad-usermode-runner`; TASK 8L-C5 LED-packet implementation commit `5371b01` is pushed to origin. Start further work from the current branch tip and verify it with `git rev-parse HEAD`.
 - `ParseController()` remains strict: exactly 20 bytes, header `00 14`, and existing reserved-button validation. The packet classifier now skips only three-byte `01 03 00..0F` LED-command packets plus the three separately documented status signatures. Other malformed packets remain invalid. Readiness keeps its fixed five-second deadline; the input pump ignores classified non-controller packets.
 - Focused Release verification: bridge core 561/561; input-pump 10/10; CTest `bridge|controller-input-pump` 2/2. Runner rebuilt at `artifacts/task-8lc5/status-packet-fix/native-bt/Release/ChatpadBridge.exe`, SHA-256 `A5605A3DE636564405167E97ADC61858DED4D51BDAEFC220EE767B726EC63BF1`.
 - Post-reboot read-only state before probe: broker `ChatpadHidMaestroBroker` Running/Automatic as LocalSystem; physical `USB\VID_045E&PID_028E\1C21F10` on WINUSB, INF `oem104.inf`, ProblemCode 0; no runner or present virtual Xbox; prior session marker present.
