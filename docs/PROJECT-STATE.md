@@ -2,7 +2,7 @@
 
 Updated 2026-10-10 after the bounded IF0 capture and controller-report accounting fix.
 
-- Branch: `feature/chatpad-usermode-runner`; this follow-up started at `56c62236dd2643b66c6886979b264588b40fffb8` (the requested earlier `73f0e146...` had advanced through pushed documentation commits). The closeout implementation and continuity update are in the current work.
+- Branch: `feature/chatpad-usermode-runner`; this follow-up started at `56c62236dd2643b66c6886979b264588b40fffb8` (the requested earlier `73f0e146...` had advanced through pushed documentation commits). Implementation and continuity commit `f0fdcdf` was pushed to this branch; the current metadata follow-up is documentation-only.
 - Controller parsing remains strict: exactly 20 bytes with header `00 14`; known status packets remain non-controller traffic and malformed reports remain rejected.
 - Production session telemetry previously omitted the single valid report consumed by `WaitController` before `ControllerInputPump` starts. It now reports `controllerReports` as readiness plus pump reports and separately logs `readinessControllerReports` and `controllerPumpReports`. Virtual submissions remain a separate counter. This corrects the known count-scope bug but does not establish whether later physical input was lost.
 - Focused Release build passed for `ChatpadBridgeTests`, `ChatpadControllerInputPumpTests`, and `ChatpadWinUsbPoc`. Core tests: 572/572; pump tests: 10/10; focused CTest bridge/pump: 2/2.

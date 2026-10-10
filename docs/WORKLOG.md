@@ -15315,3 +15315,9 @@ This append records the implementation commit and first publication. The documen
 - No runner, Chatpad activation, rumble/LED output, keyboard injection, sleep/reboot, USB ETW, binding/power/PnP/service/session-marker mutation, broad cleanup, `RemoveAllVirtualControllers`, or edits under `legacy/` occurred. No build outputs were committed; they remain under ignored `artifacts/`.
 - C5 remains PARTIAL. Await user confirmation whether actuation occurred. If active input was attempted, request separate approval for a targeted USBHUB3/UCX/USBXHCI ETW capture; otherwise require a new explicit start signal before another bounded monitor. Do not start a full runner until changing strict reports are observed.
 - Commit and push: recorded in the closeout commit on `feature/chatpad-usermode-runner`.
+
+## 2026-10-10 18:20 UTC — TASK 8L-C5 report-count closeout pushed
+
+- Implementation and continuity commit: `f0fdcdf` (`fix: include readiness report in session totals`).
+- Push result: PASS; `origin/feature/chatpad-usermode-runner` advanced from `56c62236dd2643b66c6886979b264588b40fffb8` to `f0fdcdf`. Only the requested branch was pushed.
+- Capture remains inconclusive about active actuation pending the user's answer; C5 remains PARTIAL. The exact capture, telemetry correction, focused tests, and safety boundaries are recorded in the preceding 18:15 WORKLOG entry.

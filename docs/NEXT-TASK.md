@@ -1,6 +1,6 @@
 # TASK 8L-C5 — correlate IF0 input and production telemetry
 
-- Required branch: `feature/chatpad-usermode-runner`; verify the current pushed tip with `git rev-parse HEAD`.
+- Required branch: `feature/chatpad-usermode-runner`; source baseline commit `f0fdcdf` (report-count correction). Verify the current pushed tip with `git rev-parse HEAD` before continuing.
 - Current implementation: strict controller parsing and detailed read-only IF0 monitoring remain in place. Production `controllerReports` now includes the readiness report consumed before the pump starts and separately reports pump-only count. Latest focused tests passed: core 572/572, pump 10/10, CTest bridge/pump 2/2.
 - Latest live capture: `artifacts/task-8lc5/controller-input-capture/monitor-controller-20261010T181528Z.log` (SHA-256 `7BDF4CA48A63795FF9A20D8414BBA0960E9F4C1BF699F646A29BDA216D78ED28`). It recorded one valid neutral report, followed by 74 timeouts Win32 1460; changing reports 0. User confirmation of whether they actuated A/B and the left stick in that capture is pending.
 - First obtain the user's answer about actuation. If they did not actuate, wait for a new explicit `начинай` before one further 15-second read-only monitor; announce the imminent start immediately before execution and let them press A/B and move the left stick. If they confirm they did actuate, do not start the normal runner: the capture did not record changing controller reports, so request separate authorization for one narrowly scoped USBHUB3/UCX/USBXHCI ETW capture.
