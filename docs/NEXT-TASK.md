@@ -1,6 +1,6 @@
 # TASK 8L-C5 — classify the post-reboot 01 03 0e packet
 
-- Required branch: `feature/chatpad-usermode-runner`; baseline at this continuation: `303b29eb9a06e3c30964fa0027baad53fdca44a0`.
+- Required branch: `feature/chatpad-usermode-runner`; source baseline is `303b29eb9a06e3c30964fa0027baad53fdca44a0`; start from the current branch tip when resuming this task.
 - Live state after reboot: broker Running/Automatic; physical target `USB\VID_045E&PID_028E\1C21F10` present on WINUSB with ProblemCode 0; no runner or virtual Xbox; `session.active.json` remains present.
 - Exactly one strict probe was run from `artifacts/task-8lc5/status-packet-fix/native-bt/Release/ChatpadBridge.exe`. It failed with exit 6 on a successful 3-byte transfer `01 03 0e`, not on Win32 1460. The complete result is `artifacts/task-8lc5/post-reboot-303b29e/probe-full.txt`.
 - The subsequent bounded read-only monitor at `artifacts/task-8lc5/post-reboot-303b29e/monitor-controller-20s.txt` captured known status packets and three valid `00 14` reports; all captured button masks were zero even though the user reported pressing a button. Do not treat this as strict-probe PASS or runtime acceptance.

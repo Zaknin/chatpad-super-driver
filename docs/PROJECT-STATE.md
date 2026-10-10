@@ -2,7 +2,7 @@
 
 Updated 2026-10-10 after the post-reboot TASK 8L-C5 probe.
 
-- Branch: `feature/chatpad-usermode-runner`; implementation baseline at inspection: `303b29eb9a06e3c30964fa0027baad53fdca44a0`. This continuation records diagnostics only; no code has changed.
+- Branch: `feature/chatpad-usermode-runner`; current tip is a docs-only continuation of implementation baseline `303b29eb9a06e3c30964fa0027baad53fdca44a0`. No code has changed in this continuation.
 - Controller parsing remains strict: exactly 20 bytes, header `00 14`, and existing reserved-button validation. Probe/input-pump skip only the currently documented exact known packets.
 - Previous focused verification remains: Release CTest 2/2, bridge tests 545/545, input-pump tests 10/10. Runner binary SHA-256: `4C8828946B150C5E490630E0F1EC8F5FB546FF33FABD888CF2D7CC88030D90C4`.
 - Windows booted successfully at `2026-10-10T15:22:56Z`. One strict probe at `15:28:22Z` failed with exit 6 after a successful 3-byte read of `01 03 0e` (`invalid_controller_report`); there was no Win32 transfer error and no `1460` on that probe. No runner was launched.
