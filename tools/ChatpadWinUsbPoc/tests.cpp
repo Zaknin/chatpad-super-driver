@@ -152,6 +152,12 @@ static void ControllerReadinessTests() {
     Check(invalid.Observe(301,{TransferStatus::Error,31,0},valid.data(),valid.size(),state)==ControllerReadinessDecision::TransferFailed,
         "Win32 transfer failure remains distinct from malformed report and readiness timeout");
 }
+static void ControllerSessionCountTests() {
+    Check(TotalControllerReports(1,0)==1,
+        "session total includes the valid report consumed during readiness before the pump starts");
+    Check(TotalControllerReports(1,7)==8,
+        "session total combines readiness and pump reports");
+}
 static void ControllerTests() {
     XboxState s{}; auto p=Neutral();
     Check(ParseController(p.data(),p.size(),s) && !s.buttons && !s.lx && !s.leftTrigger,"neutral controller");
@@ -315,7 +321,7 @@ static void LifecycleTests() {
     }
 }
 int main() {
-    PacketHexTests();ControllerMonitorDiagnosticsTests();ControllerReadinessTests();ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
+    PacketHexTests();ControllerMonitorDiagnosticsTests();ControllerReadinessTests();ControllerSessionCountTests();ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
     std::cout<<"{\"suite\":\"ChatpadWinUsbPocCore\",\"total\":"<<total<<",\"passed\":"<<total-failed<<",\"failed\":"<<failed<<",\"liveMutation\":false}\n";
     return failed?1:0;
 }

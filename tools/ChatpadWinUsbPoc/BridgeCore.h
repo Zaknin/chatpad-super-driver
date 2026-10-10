@@ -14,6 +14,7 @@ struct XboxState {
     uint8_t leftTrigger{}, rightTrigger{};
     int16_t lx{}, ly{}, rx{}, ry{};
 };
+uint64_t TotalControllerReports(uint64_t readinessReports, uint64_t pumpReports);
 bool ParseController(const uint8_t* data, size_t size, XboxState& out);
 std::string PacketHex(const uint8_t* data, size_t size);
 std::vector<uint8_t> BuildRumble(uint16_t left, uint16_t right);

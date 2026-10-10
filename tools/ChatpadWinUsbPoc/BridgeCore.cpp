@@ -6,6 +6,9 @@ extern "C" {
 #include "ChatpadLiveTransferPolicy.h"
 }
 namespace chatpad {
+uint64_t TotalControllerReports(uint64_t readinessReports,uint64_t pumpReports) {
+    return readinessReports+pumpReports;
+}
 static int16_t SignedLe(const uint8_t* data) {
     const unsigned bits=unsigned(data[0])|(unsigned(data[1])<<8);
     return static_cast<int16_t>(bits<32768?static_cast<int>(bits):static_cast<int>(bits)-65536);

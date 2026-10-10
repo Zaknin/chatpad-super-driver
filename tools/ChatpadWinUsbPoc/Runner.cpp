@@ -271,7 +271,8 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     sessionStop=true;maintenance.Stop();
     controllerPump.Stop();
     if(controllerPump.FailureStatus()==TransferStatus::DeviceNotPresent)physicalDeviceRemovalObserved=true;
-    counts.controllerPackets=static_cast<unsigned>(controllerPump.ReportCount());
+    const auto controllerPumpReports=controllerPump.ReportCount();
+    counts.controllerPackets=static_cast<unsigned>(TotalControllerReports(1,controllerPumpReports));
     counts.virtualSubmissions=static_cast<unsigned>(controllerPump.SubmissionCount());
     TransferResult motorStop{};
     {
@@ -311,7 +312,8 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     counts.lost=failure.load()!=0;
     counts.elapsedMs=static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-sessionStart).count());
     const auto seconds=(std::max)(0.001,counts.elapsedMs/1000.0);
-    log.Event("session ended controllerReports="+std::to_string(counts.controllerPackets)+" chatpadReports="+
+    log.Event("session ended controllerReports="+std::to_string(counts.controllerPackets)+
+        " readinessControllerReports=1 controllerPumpReports="+std::to_string(controllerPumpReports)+" chatpadReports="+
         std::to_string(counts.chatpadPackets)+" virtualSubmissions="+std::to_string(counts.virtualSubmissions)+
         " controllerRateHz="+std::to_string(counts.controllerPackets/seconds)+" virtualRateHz="+
         std::to_string(counts.virtualSubmissions/seconds)+" elapsedMs="+std::to_string(counts.elapsedMs));
