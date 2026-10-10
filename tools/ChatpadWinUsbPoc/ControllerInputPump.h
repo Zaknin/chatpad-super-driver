@@ -18,6 +18,7 @@ public:
     void Stop();
     bool Failed() const;
     uint32_t FailureWin32() const;
+    TransferStatus FailureStatus() const;
     uint64_t ReportCount() const;
     uint64_t SubmissionCount() const;
 private:
@@ -30,6 +31,7 @@ private:
     std::thread thread_;
     std::atomic<bool> stopping_{false};
     bool started_{},failed_{};
+    TransferStatus failureStatus_{TransferStatus::Error};
     uint32_t failureWin32_{};
     uint64_t reports_{},submissions_{};
     std::chrono::steady_clock::time_point lastSubmission_{};

@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <iostream>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <thread>
 using namespace chatpad;
@@ -17,7 +18,8 @@ public:
     TransferResult Read(uint8_t interfaceNumber,uint8_t endpoint,std::vector<uint8_t>& data,uint32_t) override {
         if(interfaceNumber!=0||endpoint!=0x81)return {TransferStatus::Error,87,0};
         std::unique_lock<std::mutex> lock(mutex_);
-        if(!ready_.wait_for(lock,std::chrono::milliseconds(10),[&]{return !packets_.empty();}))return {TransferStatus::Timeout,1460,0};
+        if(!ready_.wait_for(lock,std::chrono::milliseconds(10),[&]{return failure_.has_value()||!packets_.empty();}))return {TransferStatus::Timeout,1460,0};
+        if(failure_){const auto result=*failure_;failure_.reset();return result;}
         data=std::move(packets_.front());packets_.pop();return {TransferStatus::Ok,0,data.size()};
     }
     TransferResult Write(uint8_t,uint8_t,const std::vector<uint8_t>& data,uint32_t) override { return {TransferStatus::Ok,0,data.size()}; }
@@ -28,10 +30,15 @@ public:
         {std::lock_guard<std::mutex> lock(mutex_);packets_.push(std::move(packet));}
         ready_.notify_one();
     }
+    void FailNextRead(TransferResult failure) {
+        {std::lock_guard<std::mutex> lock(mutex_);failure_=failure;}
+        ready_.notify_one();
+    }
 private:
     std::mutex mutex_;
     std::condition_variable ready_;
     std::queue<std::vector<uint8_t>> packets_;
+    std::optional<TransferResult> failure_;
 };
 bool WaitUntil(const std::function<bool()>& predicate) {
     const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(2);
@@ -41,8 +48,8 @@ bool WaitUntil(const std::function<bool()>& predicate) {
 }
 
 int main(){
-    unsigned failed{};
-    auto check=[&](bool value,const char* name){if(!value){++failed;std::cerr<<"FAIL: "<<name<<'\n';}};
+    unsigned checks{},failed{};
+    auto check=[&](bool value,const char* name){++checks;if(!value){++failed;std::cerr<<"FAIL: "<<name<<'\n';}};
     QueuedTransport transport;ControllerInputPump pump(transport,{});
     transport.Push(1);transport.Push(4);
     check(pump.Start(),"controller polling starts");
@@ -62,6 +69,13 @@ int main(){
     }
     pump.Stop();
     check(!pump.Failed(),"normal pump stop is clean");
-    std::cout<<(7-failed)<<" checks, "<<failed<<" failures\n";
+    QueuedTransport removedTransport;ControllerInputPump removedPump(removedTransport,{});
+    removedTransport.FailNextRead({TransferStatus::DeviceNotPresent,433,0});
+    check(removedPump.Start(),"controller pump starts for device-removal status capture");
+    check(WaitUntil([&]{return removedPump.Failed();}),"device removal fails controller input pump");
+    check(removedPump.FailureStatus()==TransferStatus::DeviceNotPresent&&removedPump.FailureWin32()==433,
+        "controller pump preserves the device-removal status for cleanup classification");
+    removedPump.Stop();
+    std::cout<<(checks-failed)<<" checks, "<<failed<<" failures\n";
     return failed?1:0;
 }

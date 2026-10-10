@@ -23,6 +23,8 @@ struct TransferResult {
     uint32_t win32Error{};
     size_t transferred{};
 };
+enum class ControllerProbeClassification { TransferFailed, ReportRejected, ReportAccepted };
+ControllerProbeClassification ClassifyControllerProbe(const TransferResult&, const uint8_t*, size_t, XboxState&);
 struct EndpointInfo { uint8_t address{}, type{}; uint16_t maxPacketSize{}; };
 struct InterfaceInfo { uint8_t number{}, alternateSetting{}; std::vector<EndpointInfo> endpoints; };
 struct DeviceInfo {

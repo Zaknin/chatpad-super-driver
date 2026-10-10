@@ -18,6 +18,11 @@ bool ParseController(const uint8_t* data,size_t size,XboxState& out) {
     out={buttons,data[4],data[5],SignedLe(data+6),SignedLe(data+8),SignedLe(data+10),SignedLe(data+12)};
     return true;
 }
+ControllerProbeClassification ClassifyControllerProbe(const TransferResult& transfer,const uint8_t* data,size_t size,XboxState& out) {
+    out={};
+    if(transfer.status!=TransferStatus::Ok)return ControllerProbeClassification::TransferFailed;
+    return ParseController(data,size,out)?ControllerProbeClassification::ReportAccepted:ControllerProbeClassification::ReportRejected;
+}
 // Source-backed wired Xbox format; uint16 XInput motor values use their high byte.
 // This packet encoding is offline-qualified, not a claim of physical rumble acceptance.
 std::vector<uint8_t> BuildRumble(uint16_t left,uint16_t right) {

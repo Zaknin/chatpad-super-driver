@@ -7,12 +7,16 @@ SessionCleanupDisposition ClassifySessionCleanup(
     bool keysReleased,
     bool virtualNeutral,
     bool virtualReleased,
-    const TransferResult& zeroRumbleStop) {
+    const TransferResult& zeroRumbleStop,
+    bool physicalDeviceRemovalObserved,
+    bool physicalTransportTimeoutObserved) {
     if(!keysReleased||!virtualNeutral||!virtualReleased)return SessionCleanupDisposition::Failed;
     if(zeroRumbleStop.status==TransferStatus::Ok&&zeroRumbleStop.transferred==8)
         return SessionCleanupDisposition::Complete;
-    if(zeroRumbleStop.status==TransferStatus::DeviceNotPresent)
+    if(physicalDeviceRemovalObserved||zeroRumbleStop.status==TransferStatus::DeviceNotPresent)
         return SessionCleanupDisposition::DeviceRemoved;
+    if(physicalTransportTimeoutObserved&&zeroRumbleStop.status==TransferStatus::Timeout)
+        return SessionCleanupDisposition::ReconnectAfterTransportTimeout;
     return SessionCleanupDisposition::Failed;
 }
 bool RunnerLifecycle::DeviceFound() {

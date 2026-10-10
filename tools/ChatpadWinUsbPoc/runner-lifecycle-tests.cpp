@@ -10,6 +10,7 @@ int main(){
     const TransferResult deviceRemoved{TransferStatus::DeviceNotPresent,433,0};
     const TransferResult rumbleTimedOut{TransferStatus::Timeout,1460,0};
     const TransferResult shortRumbleWrite{TransferStatus::Ok,0,7};
+    const TransferResult badCommand{TransferStatus::Error,22,0};
     Check(ClassifySessionCleanup(true,true,true,rumbleStopped)==SessionCleanupDisposition::Complete,
         "successful motor stop completes session cleanup");
     Check(ClassifySessionCleanup(true,true,true,deviceRemoved)==SessionCleanupDisposition::DeviceRemoved,
@@ -22,8 +23,24 @@ int main(){
         "device removal does not mask failed virtual release");
     Check(ClassifySessionCleanup(true,true,true,rumbleTimedOut)==SessionCleanupDisposition::Failed,
         "zero-rumble timeout remains a fatal cleanup failure");
+    Check(ClassifySessionCleanup(true,true,true,rumbleTimedOut,false,true)==SessionCleanupDisposition::ReconnectAfterTransportTimeout,
+        "correlated transport and zero-rumble timeouts reconnect after strict cleanup");
+    Check(ClassifySessionCleanup(true,true,true,rumbleTimedOut,false,false)==SessionCleanupDisposition::Failed,
+        "zero-rumble timeout without an observed transport timeout remains fatal");
+    Check(ClassifySessionCleanup(true,true,true,badCommand,false,true)==SessionCleanupDisposition::Failed,
+        "generic zero-rumble failure remains fatal despite an observed transport timeout");
+    Check(ClassifySessionCleanup(false,true,true,rumbleTimedOut,false,true)==SessionCleanupDisposition::Failed,
+        "transport timeout does not mask failed key release");
+    Check(ClassifySessionCleanup(true,false,true,rumbleTimedOut,false,true)==SessionCleanupDisposition::Failed,
+        "transport timeout does not mask failed virtual neutralization");
+    Check(ClassifySessionCleanup(true,true,false,rumbleTimedOut,false,true)==SessionCleanupDisposition::Failed,
+        "transport timeout does not mask failed virtual release");
     Check(ClassifySessionCleanup(true,true,true,shortRumbleWrite)==SessionCleanupDisposition::Failed,
         "short zero-rumble write remains a fatal cleanup failure");
+    Check(ClassifySessionCleanup(true,true,true,badCommand,true)==SessionCleanupDisposition::DeviceRemoved,
+        "confirmed device removal defers a secondary bad-command rumble-stop error");
+    Check(ClassifySessionCleanup(true,true,true,badCommand,false)==SessionCleanupDisposition::Failed,
+        "bad-command rumble-stop error remains fatal without confirmed device removal");
     RunnerLifecycle lifecycle;
     Check(lifecycle.State()==RunnerState::WaitingForDevice,"starts waiting for device");
     Check(lifecycle.DeviceFound()&&lifecycle.State()==RunnerState::Opening,"unplugged startup can discover device later");

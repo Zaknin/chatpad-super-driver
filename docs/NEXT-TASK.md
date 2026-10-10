@@ -1,10 +1,10 @@
-# No pending task
+# TASK 8L-C5 — investigate the rejected post-recovery controller report
 
-TASK 8L-C4L2 is complete and published.
-
-- Branch: `feature/chatpad-usermode-runner`.
-- Release identity: `57697ec4e74c78ef46efda8b72398a78ac1a26b3`; package build identity: `18e6572073aee0ac4231e89d9c509d6a420aa37b`.
-- Canonical artifact directory: `\\192.168.23.63\Torrents\Codex\Chatpad-360-driver\TASK-8L-C4L2\20261005T145921Z`.
-- Result: PASS. Runtime evidence, offline test totals, archive SHA-256, and remaining test limits are in `docs/PROJECT-STATE.md` and the last `docs/WORKLOG.md` entry.
-
-No follow-up work is authorized or required. Wait for a new user objective.
+- Required branch: `feature/chatpad-usermode-runner`; start from its current pushed HEAD. The C5 sequence began at `cd6a21c0fc44673871571ae7c8cbe535bf6786c3`; retain all C5 implementation and history.
+- Current state: C5 Phases 1–3 passed; Phase 4 remains incomplete after three failed automatic S3 recoveries. The WER dump is absent, so the exact `HIDMaestro.dll` UMDF verifier violation remains unknown and is not established as the cause of WinUSB recovery failures.
+- Latest runtime evidence: the normal-user runner previously passed controller, Chatpad, rumble, and graceful cleanup. After shutdown and USB recovery, a new read-only probe opened the physical WinUSB device but received a 3-byte report: `transferred_bytes=3 packet_bytes=3 type=3 declared_length=3 button_bits=n/a`; `ParseController` correctly rejected it and probe returned exit 6. This is not a valid controller report and is not Win32 1460. Runner remains stopped; do not launch it until a probe passes.
+- Diagnostic implementation: `ClassifyControllerProbe` separates transfer status from parser rejection without changing parser acceptance or USB I/O. Focused regression coverage is 523/523; CTest `bridge` is 1/1. Diagnostic binary is `artifacts/task-8lc5/probe-diagnostics-build/native-bt/Release/ChatpadWinUsbPoc.exe`, SHA-256 `775A453875E9FE80D368184C36C8247929FFBF35652D9F5DD5EC690488E3F114`.
+- Next objective: determine, from existing source/report definitions and narrowly scoped offline evidence, why IF0/IN81 produced a 3-byte type-3 report during the probe. Keep the strict 20-byte parser unchanged. If another live check is necessary, use read-only `probe` only; run the Chatpad session only after `probe=PASS`.
+- Safety restrictions: no driver binding or service changes, PnP removal, registry, boot, or power-setting changes; never call `RemoveAllVirtualControllers`; preserve `legacy/`; do not infer an S3 root cause from the missing dump or this short read.
+- Remaining C5 acceptance: long idle, broker/bridge crash recovery, sleep/wake recovery, reboot/logoff/autostart/Fast Startup, LED behavior, appropriate final test suite, atomic publication, final commit and push. Do not claim C5 PASS before required live evidence is complete.
+- Inspect first: `docs/PROJECT-STATE.md`, the latest C5 worklog entry, `git status`, `Runner.cpp::Inspect`, and the current controller report format/WinUSB read implementation.

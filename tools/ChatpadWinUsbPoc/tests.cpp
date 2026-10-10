@@ -60,6 +60,15 @@ static std::array<uint8_t,20> Neutral() { std::array<uint8_t,20> p{}; p[1]=20; r
 static void ControllerTests() {
     XboxState s{}; auto p=Neutral();
     Check(ParseController(p.data(),p.size(),s) && !s.buttons && !s.lx && !s.leftTrigger,"neutral controller");
+    Check(ClassifyControllerProbe({TransferStatus::Timeout,1460,0},p.data(),p.size(),s)==ControllerProbeClassification::TransferFailed,
+        "probe timeout remains transfer failure even with a valid-looking packet buffer");
+    Check(ClassifyControllerProbe({TransferStatus::Error,0,0},nullptr,0,s)==ControllerProbeClassification::TransferFailed,
+        "probe transfer error is distinct when Win32 code is zero");
+    Check(ClassifyControllerProbe({TransferStatus::Ok,0,p.size()},p.data(),p.size(),s)==ControllerProbeClassification::ReportAccepted,
+        "probe accepts a valid controller report");
+    auto rejectedProbe=Neutral();rejectedProbe[2]=0;rejectedProbe[3]=0x08;
+    Check(ClassifyControllerProbe({TransferStatus::Ok,0,rejectedProbe.size()},rejectedProbe.data(),rejectedProbe.size(),s)==ControllerProbeClassification::ReportRejected,
+        "probe report parser rejection is distinct from transport failure");
     for(unsigned bit=0;bit<16;++bit) {
         p=Neutral(); unsigned mask=1u<<bit; p[2]=static_cast<uint8_t>(mask); p[3]=static_cast<uint8_t>(mask>>8);
         bool parsed=ParseController(p.data(),p.size(),s);

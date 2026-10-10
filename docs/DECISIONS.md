@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-06 — Require independent removal evidence to defer rumble cleanup
+
+- **Decision:** Defer a failed zero-rumble cleanup write when the physical device's removal was independently observed as `TransferStatus::DeviceNotPresent` by either the controller input pump or the Chatpad read path. Keep generic write errors fatal when no removal evidence exists. Keyboard release, virtual neutralization, and virtual release remain mandatory for reconnect.
+- **Rationale:** A live unplug returned Win32 433 from the Chatpad read, followed by Win32 22 (`ERROR_BAD_COMMAND`) from the bounded zero-rumble write. Treating the secondary write status alone as fatal stopped the runner despite confirmed removal and successful keyboard/virtual cleanup, preventing the already-qualified reconnect path.
+- **Alternatives rejected:** Treat every failed rumble write as device removal; allow any cleanup failure to reconnect; infer removal from Win32 22 alone; or weaken keyboard/virtual cleanup requirements.
+- **Consequences:** Confirmed removal records `motorsStopped=false` and preserves pending zero-rumble recovery for the next successful physical reopen. A timeout, generic error, partial write, or unconfirmed Win32 22 still fails cleanup. Focused regression coverage protects both confirmed and unconfirmed cases.
+
 ## 2026-10-05 — Defer zero-rumble recovery when USB removal is confirmed
 
 - **Decision:** If the physical controller disappears while cleanup tries to send zero rumble, treat only that physical write as deferred when keyboard release, virtual neutralization, and virtual release all succeeded. Preserve the unclean-session marker and retry zero rumble after the next successful physical reopen. Treat all other write failures and any other cleanup failure as fatal.

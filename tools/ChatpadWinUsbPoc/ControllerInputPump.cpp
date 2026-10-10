@@ -27,6 +27,7 @@ void ControllerInputPump::Stop(){
 }
 bool ControllerInputPump::Failed()const{std::lock_guard<std::mutex> guard(mutex_);return failed_;}
 uint32_t ControllerInputPump::FailureWin32()const{std::lock_guard<std::mutex> guard(mutex_);return failureWin32_;}
+TransferStatus ControllerInputPump::FailureStatus()const{std::lock_guard<std::mutex> guard(mutex_);return failureStatus_;}
 uint64_t ControllerInputPump::ReportCount()const{std::lock_guard<std::mutex> guard(mutex_);return reports_;}
 uint64_t ControllerInputPump::SubmissionCount()const{std::lock_guard<std::mutex> guard(mutex_);return submissions_;}
 bool ControllerInputPump::SubmitLocked(const XboxState& state){
@@ -45,7 +46,7 @@ void ControllerInputPump::Run(){
             continue;
         }
         if(result.status!=TransferStatus::Ok){
-            std::lock_guard<std::mutex> guard(mutex_);failed_=true;failureWin32_=result.win32Error;break;
+            std::lock_guard<std::mutex> guard(mutex_);failed_=true;failureStatus_=result.status;failureWin32_=result.win32Error;break;
         }
         std::lock_guard<std::mutex> guard(mutex_);
         ++reports_;

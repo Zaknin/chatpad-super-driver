@@ -3,12 +3,14 @@
 #include <cstdint>
 namespace chatpad {
 bool ShouldSendStartupZeroRumbleRecovery(bool uncleanPreviousSession);
-enum class SessionCleanupDisposition : uint8_t { Complete, DeviceRemoved, Failed };
+enum class SessionCleanupDisposition : uint8_t { Complete, DeviceRemoved, ReconnectAfterTransportTimeout, Failed };
 SessionCleanupDisposition ClassifySessionCleanup(
     bool keysReleased,
     bool virtualNeutral,
     bool virtualReleased,
-    const TransferResult& zeroRumbleStop);
+    const TransferResult& zeroRumbleStop,
+    bool physicalDeviceRemovalObserved=false,
+    bool physicalTransportTimeoutObserved=false);
 enum class RunnerState : uint8_t {
     WaitingForDevice, Opening, ActivatingChatpad, Running, DeviceLost, Reconnecting, Stopping
 };
