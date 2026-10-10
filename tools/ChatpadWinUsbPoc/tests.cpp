@@ -64,19 +64,32 @@ static void PacketHexTests() {
 }
 static void ControllerReadinessTests() {
     XboxState state{};
-    const std::array<std::array<uint8_t,3>,4> statuses{{
-        {{0x01,0x03,0x02}},{{0x02,0x03,0x00}},{{0x03,0x03,0x03}},{{0x08,0x03,0x00}}
+    const std::array<std::array<uint8_t,3>,3> statuses{{
+        {{0x02,0x03,0x00}},{{0x03,0x03,0x03}},{{0x08,0x03,0x00}}
     }};
     for(const auto& packet:statuses)
         Check(ClassifyControllerPacket(packet.data(),packet.size(),state)==ControllerPacketClassification::NonControllerStatus,
             "only documented three-byte status packet signatures are classified as status");
 
+    for(unsigned pattern=0;pattern<=0x0f;++pattern) {
+        const std::array<uint8_t,3> led{{0x01,0x03,static_cast<uint8_t>(pattern)}};
+        Check(ClassifyControllerPacket(led.data(),led.size(),state)==ControllerPacketClassification::NonControllerStatus,
+            "Xbox 360 three-byte LED command family is classified as non-controller traffic");
+    }
+    const std::array<uint8_t,3> ledOutOfRange{{0x01,0x03,0x10}};
+    Check(ClassifyControllerPacket(ledOutOfRange.data(),ledOutOfRange.size(),state)==ControllerPacketClassification::Invalid,
+        "three-byte LED-shaped packet outside the documented command range remains invalid");
+    const std::array<uint8_t,3> wrongLedPrefix{{0x01,0x04,0x0e}};
+    Check(ClassifyControllerPacket(wrongLedPrefix.data(),wrongLedPrefix.size(),state)==ControllerPacketClassification::Invalid,
+        "three-byte packet with non-LED prefix remains invalid");
+
     const auto valid=Neutral();
+    const std::array<uint8_t,3> observedLed{{0x01,0x03,0x0e}};
     ControllerReadiness exactObserved(100,5000);
-    Check(exactObserved.Observe(100,{TransferStatus::Ok,0,statuses[2].size()},statuses[2].data(),statuses[2].size(),state)==ControllerReadinessDecision::Waiting,
-        "observed 03 03 03 status packet is skipped while readiness remains inside its deadline");
+    Check(exactObserved.Observe(100,{TransferStatus::Ok,0,observedLed.size()},observedLed.data(),observedLed.size(),state)==ControllerReadinessDecision::Waiting,
+        "observed 01 03 0e LED packet is skipped while readiness remains inside its deadline");
     Check(exactObserved.Observe(101,{TransferStatus::Ok,0,valid.size()},valid.data(),valid.size(),state)==ControllerReadinessDecision::Ready,
-        "valid report following exact 03 03 03 status packet completes readiness");
+        "valid report following observed LED packet completes readiness");
 
     ControllerReadiness several(200,5000);
     for(size_t i=0;i<statuses.size();++i)
@@ -90,10 +103,10 @@ static void ControllerReadinessTests() {
         deadline.ReadTimeoutMs(5999,500)==1 && deadline.ReadTimeoutMs(6000,500)==0,
         "per-read timeout shrinks against one fixed overall deadline");
     for(uint64_t now: {1000ull,2500ull,4000ull,5999ull})
-        Check(deadline.Observe(now,{TransferStatus::Ok,0,statuses[2].size()},statuses[2].data(),statuses[2].size(),state)==ControllerReadinessDecision::Waiting,
-            "status-only traffic never completes readiness before the fixed deadline");
+        Check(deadline.Observe(now,{TransferStatus::Ok,0,observedLed.size()},observedLed.data(),observedLed.size(),state)==ControllerReadinessDecision::Waiting,
+            "LED-command-only traffic never completes readiness before the fixed deadline");
     Check(deadline.Observe(6000,{TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerReadinessDecision::TimedOut,
-        "status-only traffic ends as readiness timeout at the original deadline");
+        "LED-command-only traffic ends as readiness timeout at the original deadline");
     ControllerReadiness readTimeouts(400,1000);
     Check(readTimeouts.Observe(400,{TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerReadinessDecision::ReadTimedOut &&
         readTimeouts.Observe(1399,{TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerReadinessDecision::ReadTimedOut &&

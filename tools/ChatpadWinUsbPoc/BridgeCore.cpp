@@ -38,9 +38,13 @@ ControllerProbeClassification ClassifyControllerProbe(const TransferResult& tran
 ControllerPacketClassification ClassifyControllerPacket(const uint8_t* data,size_t size,XboxState& out) {
     out={};
     if(ParseController(data,size,out))return ControllerPacketClassification::ControllerReport;
-    // Exact wired Xbox 360 status/response packets documented by Linux xpad.
-    // Do not generalize this signature: other short or type-zero packets remain invalid.
-    static constexpr uint8_t knownStatuses[][3]={{0x01,0x03,0x02},{0x02,0x03,0x00},{0x03,0x03,0x03},{0x08,0x03,0x00}};
+    // Wired Xbox 360 LED output packets use 01 03 <command>, command 0..15.
+    // These three-byte packets can appear on IF0/IN81 but are not controller state.
+    // Keep the prefix and command range exact; other short packets remain invalid.
+    if(data&&size==3&&data[0]==0x01&&data[1]==0x03&&data[2]<=0x0f)
+        return ControllerPacketClassification::NonControllerStatus;
+    // Exact additional wired Xbox 360 status/response packets documented by Linux xpad.
+    static constexpr uint8_t knownStatuses[][3]={{0x02,0x03,0x00},{0x03,0x03,0x03},{0x08,0x03,0x00}};
     if(data&&size==3)for(const auto& packet:knownStatuses)
         if(data[0]==packet[0]&&data[1]==packet[1]&&data[2]==packet[2])return ControllerPacketClassification::NonControllerStatus;
     return ControllerPacketClassification::Invalid;

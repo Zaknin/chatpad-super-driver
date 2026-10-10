@@ -129,7 +129,7 @@ bool WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState
         if(decision==ControllerReadinessDecision::ReadTimedOut){++readTimeoutCount;lastReadTimeoutWin32=result.win32Error;continue;}
         if(decision==ControllerReadinessDecision::Waiting){
             if(result.status==TransferStatus::Ok&&ClassifyControllerPacket(packet.data(),packet.size(),state)==ControllerPacketClassification::NonControllerStatus)
-                log.Event("controller readiness skipped known status packet bytes="+std::to_string(packet.size())+" hex="+Hex(packet),true);
+            log.Event("controller readiness skipped non-controller packet bytes="+std::to_string(packet.size())+" hex="+Hex(packet),true);
             continue;
         }
         if(decision==ControllerReadinessDecision::TimedOut){log.Event("controller readiness timed out read_timeout_count="+std::to_string(readTimeoutCount)+
@@ -349,7 +349,7 @@ int Inspect(const std::string& command,const RunnerOptions& options) {
         if(decision==ControllerReadinessDecision::ReadTimedOut){++readTimeoutCount;lastReadTimeoutWin32=read.win32Error;continue;}
         if(decision==ControllerReadinessDecision::Waiting){
             if(read.status==TransferStatus::Ok&&ClassifyControllerPacket(packet.data(),packet.size(),state)==ControllerPacketClassification::NonControllerStatus){
-                ++skippedStatuses;std::cout<<"probe=status_packet skipped=true bytes="<<packet.size()<<" report_hex="<<Hex(packet)<<"\n";
+                ++skippedStatuses;std::cout<<"probe=non_controller_packet skipped=true bytes="<<packet.size()<<" report_hex="<<Hex(packet)<<"\n";
             }
             continue;
         }

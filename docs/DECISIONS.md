@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-10 — Recognize the wired Xbox 360 LED-command family on the input endpoint
+
+- **Decision:** Keep `ParseController` strict for 20-byte `00 14` reports. In addition to the separately documented status signatures, classify only an exact three-byte `01 03 <command>` packet with `<command>` in `00..0F` as non-controller traffic. Readiness continues under its original absolute deadline, and the input pump skips the packet without changing or submitting controller state.
+- **Rationale:** The live probe received `01 03 0e`, a valid wired Xbox 360 LED-command shape documented by upstream xpad. The earlier exact-signature list rejected that protocol-defined non-controller packet and prevented readiness from reaching later valid reports.
+- **Alternatives rejected:** Weakening `ParseController`; accepting arbitrary three-byte or nonzero-type packets; expanding the command range beyond `00..0F`; or extending readiness for each skipped packet.
+- **Consequences:** All sixteen command values are covered by classifier tests; out-of-range and wrong-prefix packets remain invalid. C5 still requires telemetry-backed controller-input confirmation and post-S3 recovery.
+
 ## 2026-10-10 — Keep wired Xbox 360 status packets out of controller state
 
 - **Decision:** Keep `ParseController` strict for 20-byte `00 14` controller reports. Classify only the exact documented wired status packets `01 03 02`, `02 03 00`, `03 03 03`, and `08 03 00` as non-controller status. Readiness skips them within one fixed deadline; the runtime pump ignores them without changing or submitting Xbox state.
