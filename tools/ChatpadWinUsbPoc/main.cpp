@@ -65,6 +65,44 @@ void ControllerLine(const std::vector<uint8_t>& data) {
     } else text<<"rejected controller type/length";
     Print(text.str());
 }
+const char* TransferStatusName(TransferStatus status) {
+    switch(status) {
+    case TransferStatus::Ok:return "Ok";
+    case TransferStatus::Stall:return "Stall";
+    case TransferStatus::Timeout:return "Timeout";
+    case TransferStatus::Cancelled:return "Cancelled";
+    case TransferStatus::AccessDenied:return "AccessDenied";
+    case TransferStatus::DeviceNotPresent:return "DeviceNotPresent";
+    case TransferStatus::Error:return "Error";
+    }
+    return "Unknown";
+}
+const char* ControllerMonitorClassificationName(ControllerMonitorReadClassification classification) {
+    switch(classification) {
+    case ControllerMonitorReadClassification::ControllerReport:return "ControllerReport";
+    case ControllerMonitorReadClassification::NonControllerStatus:return "NonControllerStatus";
+    case ControllerMonitorReadClassification::Invalid:return "Invalid";
+    case ControllerMonitorReadClassification::Timeout:return "Timeout";
+    case ControllerMonitorReadClassification::TransferFailure:return "TransferFailure";
+    }
+    return "Unknown";
+}
+void ControllerMonitorLine(const TransferResult& transfer,const std::vector<uint8_t>& data,
+    ControllerMonitorReadClassification classification,const XboxState& state,uint64_t elapsedMs) {
+    std::ostringstream text;
+    text<<"IF0 IN81 elapsedMs="<<elapsedMs<<" transferStatus="<<TransferStatusName(transfer.status)
+        <<" Win32="<<transfer.win32Error<<" transferred="<<transfer.transferred
+        <<" packetLength="<<data.size()<<" classification="<<ControllerMonitorClassificationName(classification);
+    if(transfer.status==TransferStatus::Ok)text<<" raw="<<Hex(data);
+    if(classification==ControllerMonitorReadClassification::ControllerReport) {
+        text<<" buttons=0x"<<std::hex<<state.buttons<<std::dec;
+        const char* names[]={"Up","Down","Left","Right","Start","Back","LS","RS","LB","RB","Guide","Reserved","A","B","X","Y"};
+        for(unsigned i=0;i<16;++i)if(state.buttons&(1u<<i))text<<' '<<names[i];
+        text<<" LT="<<static_cast<unsigned>(state.leftTrigger)<<" RT="<<static_cast<unsigned>(state.rightTrigger)
+            <<" L=("<<state.lx<<','<<state.ly<<") R=("<<state.rx<<','<<state.ry<<')';
+    }
+    Print(text.str());
+}
 bool ChatpadLine(const std::vector<uint8_t>& data,KeyboardMapper& mapper) {
     std::ostringstream text;text<<"IF2 IN84 raw="<<Hex(data);
     const bool mapped=mapper.Process(data.data(),data.size());
@@ -188,6 +226,9 @@ int main(int argc,char** argv) {
             Print("activation complete: strict write4 and final read5 succeeded with exact lengths; rejected optional probes are not hardware acceptance evidence");
         }
         std::atomic<int> failure{0};std::atomic<unsigned> controllerReports{0},chatpadReports{0};
+        const bool detailedControllerMonitor=command=="monitor-controller";
+        ControllerMonitorDiagnostics controllerMonitorDiagnostics;
+        const uint64_t controllerMonitorStartedAt=Now();
         std::mutex motorMutex;
         std::unique_ptr<VirtualBrokerController> virtualController;
         std::unique_ptr<IKeyboardOutput> output;
@@ -229,6 +270,12 @@ int main(int argc,char** argv) {
                     }
                     std::vector<uint8_t> data;
                     auto result=usb.Read(controller?0:2,controller?0x81:0x84,data,200);
+                    ControllerMonitorReadClassification monitorClassification=ControllerMonitorReadClassification::TransferFailure;
+                    XboxState monitorState{};
+                    if(controller && detailedControllerMonitor) {
+                        monitorClassification=controllerMonitorDiagnostics.Observe(result,data.data(),data.size(),monitorState);
+                        ControllerMonitorLine(result,data,monitorClassification,monitorState,Now()-controllerMonitorStartedAt);
+                    }
                     if(result.status==TransferStatus::Timeout){
                         // Preserve current state and helper liveness when the USB
                         // controller sends only changes. No fabricated transition.
@@ -238,14 +285,21 @@ int main(int argc,char** argv) {
                         continue;
                     }
                     if(result.status==TransferStatus::Cancelled && stopped)break;
-                    if(result.status!=TransferStatus::Ok){Print("read failed Win32="+std::to_string(result.win32Error));failure=8;break;}
+                    if(result.status!=TransferStatus::Ok){if(!detailedControllerMonitor)Print("read failed Win32="+std::to_string(result.win32Error));failure=8;break;}
                     if(controller){
-                        ++controllerReports;ControllerLine(data);
-                        XboxState state;
-                        if(virtualController && ParseController(data.data(),data.size(),state)) {
-                            lastState=state;
-                            if(!virtualController->SubmitState(state)){Print("virtual submit failed: "+virtualController->LastError());failure=12;}
-                            submittedAt=Now();
+                        if(detailedControllerMonitor) {
+                            if(monitorClassification==ControllerMonitorReadClassification::ControllerReport)++controllerReports;
+                        } else {
+                            ControllerLine(data);
+                            XboxState state;
+                            if(ClassifyControllerPacket(data.data(),data.size(),state)==ControllerPacketClassification::ControllerReport) {
+                                ++controllerReports;
+                                if(virtualController) {
+                                    lastState=state;
+                                    if(!virtualController->SubmitState(state)){Print("virtual submit failed: "+virtualController->LastError());failure=12;}
+                                    submittedAt=Now();
+                                }
+                            }
                         }
                     }
                     else {
@@ -278,7 +332,17 @@ int main(int argc,char** argv) {
         outputCleanup.Run();
         usb.Cancel();
         usb.Close();SetConsoleCtrlHandler(ConsoleHandler,FALSE);
-        Print("capture complete controllerReports="+std::to_string(controllerReports)+" chatpadReports="+std::to_string(chatpadReports)+(bridge?" injection=explicit bridge":" injection=disabled"));
+        if(detailedControllerMonitor) {
+            const auto& counts=controllerMonitorDiagnostics.Counts();
+            Print("capture complete successfulReadCompletions="+std::to_string(counts.successfulReadCompletions)+
+                " controllerReports="+std::to_string(counts.controllerReports)+
+                " changingControllerReports="+std::to_string(counts.changingControllerReports)+
+                " nonControllerStatusPackets="+std::to_string(counts.nonControllerStatusPackets)+
+                " invalidPackets="+std::to_string(counts.invalidPackets)+
+                " timeoutCompletions="+std::to_string(counts.timeoutCompletions)+
+                " timeout1460Completions="+std::to_string(counts.timeout1460Completions)+
+                " transferFailures="+std::to_string(counts.transferFailures)+" chatpadReports=0 injection=disabled");
+        } else Print("capture complete controllerReports="+std::to_string(controllerReports)+" chatpadReports="+std::to_string(chatpadReports)+(bridge?" injection=explicit bridge":" injection=disabled"));
         if(failure!=0)return failure;
         // A silent monitor window is not transport acceptance.
         if((readController && controllerReports==0)||(readChatpad && chatpadReports==0))return 10;

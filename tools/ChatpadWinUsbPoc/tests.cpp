@@ -62,6 +62,35 @@ static void PacketHexTests() {
     Check(PacketHex(packet.data(),packet.size())=="010302",
         "packet diagnostic hex preserves every byte in order");
 }
+static void ControllerMonitorDiagnosticsTests() {
+    ControllerMonitorDiagnostics monitor;
+    XboxState state{};
+    Check(monitor.Observe({TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerMonitorReadClassification::Timeout,
+        "monitor distinguishes Win32 1460 read timeout from packet classifications");
+    Check(monitor.Observe({TransferStatus::Timeout,121,0},nullptr,0,state)==ControllerMonitorReadClassification::Timeout,
+        "monitor records timeouts with other Win32 codes separately");
+    const std::array<uint8_t,3> status{{0x03,0x03,0x03}};
+    Check(monitor.Observe({TransferStatus::Ok,0,status.size()},status.data(),status.size(),state)==ControllerMonitorReadClassification::NonControllerStatus,
+        "monitor records known Xbox status packet without treating it as controller state");
+    auto neutral=Neutral();
+    Check(monitor.Observe({TransferStatus::Ok,0,neutral.size()},neutral.data(),neutral.size(),state)==ControllerMonitorReadClassification::ControllerReport,
+        "monitor counts a strict valid controller report");
+    Check(monitor.Observe({TransferStatus::Ok,0,neutral.size()},neutral.data(),neutral.size(),state)==ControllerMonitorReadClassification::ControllerReport,
+        "monitor retains repeated valid unchanged controller reports");
+    auto changed=neutral;changed[2]=0x10;changed[6]=0x34;changed[7]=0x12;
+    Check(monitor.Observe({TransferStatus::Ok,0,changed.size()},changed.data(),changed.size(),state)==ControllerMonitorReadClassification::ControllerReport,
+        "monitor counts changed valid controller state");
+    std::array<uint8_t,19> malformed{};malformed[1]=20;
+    Check(monitor.Observe({TransferStatus::Ok,0,malformed.size()},malformed.data(),malformed.size(),state)==ControllerMonitorReadClassification::Invalid,
+        "monitor keeps malformed controller candidate distinct from status and valid report");
+    Check(monitor.Observe({TransferStatus::Error,31,0},nullptr,0,state)==ControllerMonitorReadClassification::TransferFailure,
+        "monitor keeps failed USB transfer distinct from timeout and packet classifications");
+    const auto& counts=monitor.Counts();
+    Check(counts.successfulReadCompletions==5 && counts.controllerReports==3 && counts.changingControllerReports==1 &&
+        counts.nonControllerStatusPackets==1 && counts.invalidPackets==1 && counts.timeoutCompletions==2 &&
+        counts.timeout1460Completions==1 && counts.transferFailures==1,
+        "monitor summary counts completions, valid changes, statuses, invalid packets, timeouts and failures independently");
+}
 static void ControllerReadinessTests() {
     XboxState state{};
     const std::array<std::array<uint8_t,3>,3> statuses{{
@@ -286,7 +315,7 @@ static void LifecycleTests() {
     }
 }
 int main() {
-    PacketHexTests();ControllerReadinessTests();ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
+    PacketHexTests();ControllerMonitorDiagnosticsTests();ControllerReadinessTests();ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
     std::cout<<"{\"suite\":\"ChatpadWinUsbPocCore\",\"total\":"<<total<<",\"passed\":"<<total-failed<<",\"failed\":"<<failed<<",\"liveMutation\":false}\n";
     return failed?1:0;
 }

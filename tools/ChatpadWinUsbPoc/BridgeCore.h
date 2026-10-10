@@ -26,6 +26,26 @@ struct TransferResult {
 };
 enum class ControllerPacketClassification { ControllerReport, NonControllerStatus, Invalid };
 ControllerPacketClassification ClassifyControllerPacket(const uint8_t*, size_t, XboxState&);
+enum class ControllerMonitorReadClassification { ControllerReport, NonControllerStatus, Invalid, Timeout, TransferFailure };
+struct ControllerMonitorCounts {
+    uint64_t successfulReadCompletions{};
+    uint64_t controllerReports{};
+    uint64_t changingControllerReports{};
+    uint64_t nonControllerStatusPackets{};
+    uint64_t invalidPackets{};
+    uint64_t timeoutCompletions{};
+    uint64_t timeout1460Completions{};
+    uint64_t transferFailures{};
+};
+class ControllerMonitorDiagnostics final {
+public:
+    ControllerMonitorReadClassification Observe(const TransferResult&, const uint8_t*, size_t, XboxState&);
+    const ControllerMonitorCounts& Counts() const { return counts_; }
+private:
+    ControllerMonitorCounts counts_{};
+    XboxState previousState_{};
+    bool hasPreviousState_{};
+};
 enum class ControllerProbeClassification { TransferFailed, ReportRejected, NonControllerStatus, ReportAccepted };
 ControllerProbeClassification ClassifyControllerProbe(const TransferResult&, const uint8_t*, size_t, XboxState&);
 enum class ControllerReadinessDecision { Waiting, ReadTimedOut, Ready, TimedOut, TransferFailed, ReportRejected };

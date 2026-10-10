@@ -49,6 +49,40 @@ ControllerPacketClassification ClassifyControllerPacket(const uint8_t* data,size
         if(data[0]==packet[0]&&data[1]==packet[1]&&data[2]==packet[2])return ControllerPacketClassification::NonControllerStatus;
     return ControllerPacketClassification::Invalid;
 }
+ControllerMonitorReadClassification ControllerMonitorDiagnostics::Observe(
+    const TransferResult& transfer,const uint8_t* data,size_t size,XboxState& out) {
+    out={};
+    if(transfer.status==TransferStatus::Timeout) {
+        ++counts_.timeoutCompletions;
+        if(transfer.win32Error==1460)++counts_.timeout1460Completions;
+        return ControllerMonitorReadClassification::Timeout;
+    }
+    if(transfer.status!=TransferStatus::Ok) {
+        ++counts_.transferFailures;
+        return ControllerMonitorReadClassification::TransferFailure;
+    }
+    ++counts_.successfulReadCompletions;
+    ControllerPacketClassification classification=ControllerPacketClassification::Invalid;
+    if(transfer.transferred==size)
+        classification=ClassifyControllerPacket(data,size,out);
+    if(classification==ControllerPacketClassification::ControllerReport) {
+        ++counts_.controllerReports;
+        if(hasPreviousState_ && (previousState_.buttons!=out.buttons ||
+            previousState_.leftTrigger!=out.leftTrigger || previousState_.rightTrigger!=out.rightTrigger ||
+            previousState_.lx!=out.lx || previousState_.ly!=out.ly ||
+            previousState_.rx!=out.rx || previousState_.ry!=out.ry))
+            ++counts_.changingControllerReports;
+        previousState_=out;hasPreviousState_=true;
+        return ControllerMonitorReadClassification::ControllerReport;
+    }
+    out={};
+    if(classification==ControllerPacketClassification::NonControllerStatus) {
+        ++counts_.nonControllerStatusPackets;
+        return ControllerMonitorReadClassification::NonControllerStatus;
+    }
+    ++counts_.invalidPackets;
+    return ControllerMonitorReadClassification::Invalid;
+}
 ControllerReadiness::ControllerReadiness(uint64_t startedAtMs,uint64_t windowMs) {
     const auto maximum=static_cast<uint64_t>(-1);
     deadlineMs_=windowMs>maximum-startedAtMs?maximum:startedAtMs+windowMs;
