@@ -15281,3 +15281,9 @@ This append records the implementation commit and first publication. The documen
 - Final read-only check: bridge processes 0, virtual devices 0, broker Running, physical target Status OK. No sleep/reboot, runner, Chatpad activation, rumble/LED output, keyboard injection, binding/USB-power/PnP/service/session-marker changes, broad cleanup, `RemoveAllVirtualControllers`, or edits under `legacy/` occurred.
 - C5 remains PARTIAL. The next specific physical diagnostic is one correlated Windows USB ETW trace of USBHUB3/UCX/USBXHCI transfer events during a bounded read-only monitor and confirmed physical button/stick input. It is an additional live trace; do not start it until the user explicitly authorizes it. No architecture redesign is indicated by this capture.
 - Implementation and continuity updates are being committed and pushed only to `feature/chatpad-usermode-runner`.
+
+## 2026-10-10 17:06 UTC — TASK 8L-C5 IF0 diagnostic implementation pushed
+
+- Implementation and initial continuity commit: `52ce953` (`diag: expose IF0 controller read outcomes`).
+- Push result: PASS; `origin/feature/chatpad-usermode-runner` advanced from `73f0e1464fab73e28480e8382aafed089f96d4fc` to `52ce953`. Only the requested branch was pushed.
+- The 15-second physical IF0 capture remains a failure to observe reports, not a passing input qualification. C5 remains PARTIAL; no full runner or sleep test was started.

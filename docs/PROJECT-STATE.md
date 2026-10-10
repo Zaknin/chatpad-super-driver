@@ -2,7 +2,7 @@
 
 Updated 2026-10-10 after one bounded TASK 8L-C5 IF0 controller-input capture.
 
-- Branch: `feature/chatpad-usermode-runner`; verify the current tip before continuing. The starting tip for this task was `73f0e1464fab73e28480e8382aafed089f96d4fc`; this closeout commit contains the monitor diagnostics and continuity updates.
+- Branch: `feature/chatpad-usermode-runner`; implementation commit `52ce953` is pushed. The starting tip for this task was `73f0e1464fab73e28480e8382aafed089f96d4fc`; verify the current tip with `git rev-parse HEAD` before continuing.
 - `ParseController()` remains strict: exactly 20 bytes, header `00 14`, with existing reserved-button validation. Exact known status packets remain non-controller traffic; malformed packets remain invalid.
 - Monitor diagnostics now report successful reads, transfer status and Win32 code, byte count, packet length/hex, strict classification, decoded controller fields, changing valid-state count, timeout count including 1460, and transfer failures. Focused Release core tests passed 570/570; controller input-pump tests passed 10/10; CTest `bridge|controller-input-pump` passed 2/2. Release executable: `artifacts/task-8lc5/status-packet-fix/native-bt/Release/ChatpadBridge.exe`, SHA-256 `A8A638947297E196CE1A7F7854B71F7BE44722C71521419B4ADD620A33C83F73`.
 - Live precheck at `2026-10-10T17:05:36Z`: broker `ChatpadHidMaestroBroker` Running/Automatic as LocalSystem; physical `USB\VID_045E&PID_028E\1C21F10` Status OK, WINUSB, ProblemCode 0; no bridge process and no present virtual controller.
