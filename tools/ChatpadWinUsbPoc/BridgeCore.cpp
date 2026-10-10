@@ -21,7 +21,43 @@ bool ParseController(const uint8_t* data,size_t size,XboxState& out) {
 ControllerProbeClassification ClassifyControllerProbe(const TransferResult& transfer,const uint8_t* data,size_t size,XboxState& out) {
     out={};
     if(transfer.status!=TransferStatus::Ok)return ControllerProbeClassification::TransferFailed;
-    return ParseController(data,size,out)?ControllerProbeClassification::ReportAccepted:ControllerProbeClassification::ReportRejected;
+    switch(ClassifyControllerPacket(data,size,out)) {
+    case ControllerPacketClassification::ControllerReport:return ControllerProbeClassification::ReportAccepted;
+    case ControllerPacketClassification::NonControllerStatus:return ControllerProbeClassification::NonControllerStatus;
+    case ControllerPacketClassification::Invalid:return ControllerProbeClassification::ReportRejected;
+    }
+    return ControllerProbeClassification::ReportRejected;
+}
+ControllerPacketClassification ClassifyControllerPacket(const uint8_t* data,size_t size,XboxState& out) {
+    out={};
+    if(ParseController(data,size,out))return ControllerPacketClassification::ControllerReport;
+    // Exact wired Xbox 360 status/response packets documented by Linux xpad.
+    // Do not generalize this signature: other short or type-zero packets remain invalid.
+    static constexpr uint8_t knownStatuses[][3]={{0x01,0x03,0x02},{0x02,0x03,0x00},{0x03,0x03,0x03},{0x08,0x03,0x00}};
+    if(data&&size==3)for(const auto& packet:knownStatuses)
+        if(data[0]==packet[0]&&data[1]==packet[1]&&data[2]==packet[2])return ControllerPacketClassification::NonControllerStatus;
+    return ControllerPacketClassification::Invalid;
+}
+ControllerReadiness::ControllerReadiness(uint64_t startedAtMs,uint64_t windowMs) {
+    const auto maximum=static_cast<uint64_t>(-1);
+    deadlineMs_=windowMs>maximum-startedAtMs?maximum:startedAtMs+windowMs;
+}
+uint32_t ControllerReadiness::ReadTimeoutMs(uint64_t nowMs,uint32_t maximumMs) const {
+    if(nowMs>=deadlineMs_)return 0;
+    const uint64_t remaining=deadlineMs_-nowMs;
+    return remaining<maximumMs?static_cast<uint32_t>(remaining):maximumMs;
+}
+ControllerReadinessDecision ControllerReadiness::Observe(uint64_t nowMs,const TransferResult& transfer,
+    const uint8_t* data,size_t size,XboxState& state) const {
+    if(nowMs>=deadlineMs_)return ControllerReadinessDecision::TimedOut;
+    if(transfer.status==TransferStatus::Timeout)return ControllerReadinessDecision::ReadTimedOut;
+    if(transfer.status!=TransferStatus::Ok)return ControllerReadinessDecision::TransferFailed;
+    switch(ClassifyControllerPacket(data,size,state)) {
+    case ControllerPacketClassification::ControllerReport:return ControllerReadinessDecision::Ready;
+    case ControllerPacketClassification::NonControllerStatus:return ControllerReadinessDecision::Waiting;
+    case ControllerPacketClassification::Invalid:return ControllerReadinessDecision::ReportRejected;
+    }
+    return ControllerReadinessDecision::ReportRejected;
 }
 // Source-backed wired Xbox format; uint16 XInput motor values use their high byte.
 // This packet encoding is offline-qualified, not a claim of physical rumble acceptance.

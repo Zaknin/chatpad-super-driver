@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-10 — Keep wired Xbox 360 status packets out of controller state
+
+- **Decision:** Keep `ParseController` strict for 20-byte `00 14` controller reports. Classify only the exact documented wired status packets `01 03 02`, `02 03 00`, `03 03 03`, and `08 03 00` as non-controller status. Readiness skips them within one fixed deadline; the runtime pump ignores them without changing or submitting Xbox state.
+- **Rationale:** Wired Xbox 360 controllers can emit status/response packets after connection or output commands. Upstream xpad documents these examples and drops nonzero-type packets before state parsing: [Linux commit 1ff5fa3c6732f08e01ae12f12286d4728c9e4d86](https://cos.googlesource.com/third_party/kernel/%2B/1ff5fa3c6732f08e01ae12f12286d4728c9e4d86).
+- **Alternatives rejected:** Weakening controller-state parsing; accepting any three-byte or any nonzero-type packet as status; allowing status traffic to restart the overall readiness deadline; or submitting status bytes as virtual controller state.
+- **Consequences:** Unknown or malformed packets remain rejected. Per-read timeout/Win32 details remain distinct from overall readiness timeout. Focused tests cover status-then-report, multiple statuses, status-only deadline, malformed candidates, transfer errors, and runtime-pump non-submission.
+
 ## 2026-10-06 — Require independent removal evidence to defer rumble cleanup
 
 - **Decision:** Defer a failed zero-rumble cleanup write when the physical device's removal was independently observed as `TransferStatus::DeviceNotPresent` by either the controller input pump or the Chatpad read path. Keep generic write errors fatal when no removal evidence exists. Keyboard release, virtual neutralization, and virtual release remain mandatory for reconnect.

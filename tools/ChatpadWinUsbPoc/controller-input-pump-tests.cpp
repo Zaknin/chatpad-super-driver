@@ -27,6 +27,9 @@ public:
     void Close() override {}
     void Push(uint16_t buttons) {
         std::vector<uint8_t> packet(20);packet[1]=20;packet[2]=static_cast<uint8_t>(buttons);packet[3]=static_cast<uint8_t>(buttons>>8);
+        PushPacket(std::move(packet));
+    }
+    void PushPacket(std::vector<uint8_t> packet) {
         {std::lock_guard<std::mutex> lock(mutex_);packets_.push(std::move(packet));}
         ready_.notify_one();
     }
@@ -51,9 +54,10 @@ int main(){
     unsigned checks{},failed{};
     auto check=[&](bool value,const char* name){++checks;if(!value){++failed;std::cerr<<"FAIL: "<<name<<'\n';}};
     QueuedTransport transport;ControllerInputPump pump(transport,{});
-    transport.Push(1);transport.Push(4);
+    transport.PushPacket({0x03,0x03,0x03});transport.Push(1);
+    transport.PushPacket({0x01,0x03,0x02});transport.PushPacket({0x02,0x03,0x00});transport.Push(4);
     check(pump.Start(),"controller polling starts");
-    check(WaitUntil([&]{return pump.ReportCount()>=2;}),"controller reports keep flowing before virtual backend exists");
+    check(WaitUntil([&]{return pump.ReportCount()>=2;}),"status packets do not block valid controller reports before virtual backend exists");
     std::mutex statesMutex;std::vector<XboxState> states;
     const bool sinkAccepted=pump.SetStateSink([&](const XboxState& state){std::lock_guard<std::mutex> lock(statesMutex);states.push_back(state);return true;});
     check(sinkAccepted,"virtual state sink attaches");
@@ -61,11 +65,11 @@ int main(){
         std::lock_guard<std::mutex> lock(statesMutex);
         check(!states.empty()&&states.front().buttons==4,"sink starts from latest startup report");
     }
-    transport.Push(8);
-    check(WaitUntil([&]{std::lock_guard<std::mutex> lock(statesMutex);return states.size()>=2;}),"post-create controller report reaches virtual sink");
+    transport.PushPacket({0x08,0x03,0x00});transport.Push(8);
+    check(WaitUntil([&]{return pump.ReportCount()>=3;}),"valid controller report after status reaches input pump");
     {
         std::lock_guard<std::mutex> lock(statesMutex);
-        check(states.size()>=2&&states.back().buttons==8,"newest report follows initial state");
+        check(states.size()==2&&states.back().buttons==8,"status packets never submit or mutate virtual Xbox state");
     }
     pump.Stop();
     check(!pump.Failed(),"normal pump stop is clean");

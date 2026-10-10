@@ -57,6 +57,54 @@ struct MockKeyboard : IKeyboardOutput {
     bool ForceRelease() override { ++forceCalls; if(failRelease) return false; held.fill(false); return true; }
 };
 static std::array<uint8_t,20> Neutral() { std::array<uint8_t,20> p{}; p[1]=20; return p; }
+static void ControllerReadinessTests() {
+    XboxState state{};
+    const std::array<std::array<uint8_t,3>,4> statuses{{
+        {{0x01,0x03,0x02}},{{0x02,0x03,0x00}},{{0x03,0x03,0x03}},{{0x08,0x03,0x00}}
+    }};
+    for(const auto& packet:statuses)
+        Check(ClassifyControllerPacket(packet.data(),packet.size(),state)==ControllerPacketClassification::NonControllerStatus,
+            "only documented three-byte status packet signatures are classified as status");
+
+    const auto valid=Neutral();
+    ControllerReadiness exactObserved(100,5000);
+    Check(exactObserved.Observe(100,{TransferStatus::Ok,0,statuses[2].size()},statuses[2].data(),statuses[2].size(),state)==ControllerReadinessDecision::Waiting,
+        "observed 03 03 03 status packet is skipped while readiness remains inside its deadline");
+    Check(exactObserved.Observe(101,{TransferStatus::Ok,0,valid.size()},valid.data(),valid.size(),state)==ControllerReadinessDecision::Ready,
+        "valid report following exact 03 03 03 status packet completes readiness");
+
+    ControllerReadiness several(200,5000);
+    for(size_t i=0;i<statuses.size();++i)
+        Check(several.Observe(200+i*10,{TransferStatus::Ok,0,statuses[i].size()},statuses[i].data(),statuses[i].size(),state)==ControllerReadinessDecision::Waiting,
+            "multiple known status packets remain non-terminal while readiness deadline is open");
+    Check(several.Observe(250,{TransferStatus::Ok,0,valid.size()},valid.data(),valid.size(),state)==ControllerReadinessDecision::Ready,
+        "valid report after multiple known status packets completes readiness");
+
+    ControllerReadiness deadline(1000,5000);
+    Check(deadline.ReadTimeoutMs(1000,500)==500 && deadline.ReadTimeoutMs(5500,500)==500 &&
+        deadline.ReadTimeoutMs(5999,500)==1 && deadline.ReadTimeoutMs(6000,500)==0,
+        "per-read timeout shrinks against one fixed overall deadline");
+    for(uint64_t now: {1000ull,2500ull,4000ull,5999ull})
+        Check(deadline.Observe(now,{TransferStatus::Ok,0,statuses[2].size()},statuses[2].data(),statuses[2].size(),state)==ControllerReadinessDecision::Waiting,
+            "status-only traffic never completes readiness before the fixed deadline");
+    Check(deadline.Observe(6000,{TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerReadinessDecision::TimedOut,
+        "status-only traffic ends as readiness timeout at the original deadline");
+    ControllerReadiness readTimeouts(400,1000);
+    Check(readTimeouts.Observe(400,{TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerReadinessDecision::ReadTimedOut &&
+        readTimeouts.Observe(1399,{TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerReadinessDecision::ReadTimedOut &&
+        readTimeouts.Observe(1400,{TransferStatus::Timeout,1460,0},nullptr,0,state)==ControllerReadinessDecision::TimedOut,
+        "intermediate Win32 read timeouts stay distinct while the original overall deadline remains fixed");
+
+    std::array<uint8_t,19> malformed{};malformed[1]=20;
+    Check(ClassifyControllerPacket(malformed.data(),malformed.size(),state)==ControllerPacketClassification::Invalid &&
+        ClassifyControllerProbe({TransferStatus::Ok,0,malformed.size()},malformed.data(),malformed.size(),state)==ControllerProbeClassification::ReportRejected,
+        "wrong-length type-zero controller candidate remains rejected");
+    ControllerReadiness invalid(300,5000);
+    Check(invalid.Observe(300,{TransferStatus::Ok,0,malformed.size()},malformed.data(),malformed.size(),state)==ControllerReadinessDecision::ReportRejected,
+        "malformed controller candidate fails readiness instead of being accepted or treated as a status packet");
+    Check(invalid.Observe(301,{TransferStatus::Error,31,0},valid.data(),valid.size(),state)==ControllerReadinessDecision::TransferFailed,
+        "Win32 transfer failure remains distinct from malformed report and readiness timeout");
+}
 static void ControllerTests() {
     XboxState s{}; auto p=Neutral();
     Check(ParseController(p.data(),p.size(),s) && !s.buttons && !s.lx && !s.leftTrigger,"neutral controller");
@@ -220,7 +268,7 @@ static void LifecycleTests() {
     }
 }
 int main() {
-    ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
+    ControllerReadinessTests();ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
     std::cout<<"{\"suite\":\"ChatpadWinUsbPocCore\",\"total\":"<<total<<",\"passed\":"<<total-failed<<",\"failed\":"<<failed<<",\"liveMutation\":false}\n";
     return failed?1:0;
 }

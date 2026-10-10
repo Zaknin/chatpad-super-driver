@@ -116,13 +116,29 @@ void ActivationLog(const ActivationEvent& event,Log& log) {
         " bytes="+std::to_string(event.result.transferred)+" disposition="+ActivationDisposition(event));
 }
 bool WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState& state,Log& log) {
-    const auto deadline=Clock::now()+std::chrono::seconds(5);
-    while(!stop.load()&&Clock::now()<deadline){
-        std::vector<uint8_t> packet;auto result=usb.Read(0,0x81,packet,500);
-        if(result.status==TransferStatus::Timeout)continue;
-        if(result.status!=TransferStatus::Ok){log.Event("device open readiness failed win32="+std::to_string(result.win32Error));return false;}
-        if(ParseController(packet.data(),packet.size(),state))return true;
-        log.Event("controller readiness packet rejected",true);
+    constexpr uint64_t readinessWindowMs=5000;
+    const auto started=GetTickCount64();ControllerReadiness readiness(started,readinessWindowMs);
+    size_t readTimeoutCount{};uint32_t lastReadTimeoutWin32{};
+    while(!stop.load()){
+        const auto now=GetTickCount64();const auto timeout=readiness.ReadTimeoutMs(now,500);
+        if(timeout==0){log.Event("controller readiness timed out read_timeout_count="+std::to_string(readTimeoutCount)+
+            " last_read_win32="+(readTimeoutCount?std::to_string(lastReadTimeoutWin32):"n/a"),true);return false;}
+        std::vector<uint8_t> packet;auto result=usb.Read(0,0x81,packet,timeout);
+        const auto decision=readiness.Observe(GetTickCount64(),result,packet.data(),packet.size(),state);
+        if(decision==ControllerReadinessDecision::Ready)return true;
+        if(decision==ControllerReadinessDecision::ReadTimedOut){++readTimeoutCount;lastReadTimeoutWin32=result.win32Error;continue;}
+        if(decision==ControllerReadinessDecision::Waiting){
+            if(result.status==TransferStatus::Ok&&ClassifyControllerPacket(packet.data(),packet.size(),state)==ControllerPacketClassification::NonControllerStatus)
+                log.Event("controller readiness skipped known status packet bytes="+std::to_string(packet.size())+" hex="+Hex(packet),true);
+            continue;
+        }
+        if(decision==ControllerReadinessDecision::TimedOut){log.Event("controller readiness timed out read_timeout_count="+std::to_string(readTimeoutCount)+
+            " last_read_win32="+(readTimeoutCount?std::to_string(lastReadTimeoutWin32):"n/a"),true);return false;}
+        if(decision==ControllerReadinessDecision::TransferFailed){
+            log.Event("device open readiness failed status="+std::string(TransferStatusName(result.status))+" win32="+std::to_string(result.win32Error));
+            return false;
+        }
+        log.Event("controller readiness invalid report bytes="+std::to_string(packet.size()),true);return false;
     }
     return false;
 }
@@ -316,30 +332,45 @@ int Inspect(const std::string& command,const RunnerOptions& options) {
     const auto json=TopologyJson(transport.Device(),transport.RawConfiguration(),"live WinUSB topology; no driver mutation");
     std::cout<<json<<"\n";
     if(command=="diagnostics")return 0;
-    XboxState state{};std::vector<uint8_t> packet;
-    const auto read=transport.Read(0,0x81,packet,1000);
-    const auto classification=ClassifyControllerProbe(read,packet.data(),packet.size(),state);
-    if(classification==ControllerProbeClassification::TransferFailed) {
-        std::cout<<"probe=FAILED reason=transfer status="<<TransferStatusName(read.status)
-            <<" controller_win32="<<read.win32Error<<" transferred_bytes="<<read.transferred
-            <<" packet_bytes="<<packet.size()<<"\n";
-        return 6;
-    }
-    if(classification==ControllerProbeClassification::ReportRejected) {
+    XboxState state{};std::vector<uint8_t> packet;constexpr uint64_t readinessWindowMs=5000;
+    const auto started=GetTickCount64();ControllerReadiness readiness(started,readinessWindowMs);
+    size_t skippedStatuses{},readTimeoutCount{};uint32_t lastReadTimeoutWin32{};
+    for(;;){
+        const auto now=GetTickCount64();const auto timeout=readiness.ReadTimeoutMs(now,500);
+        if(timeout==0){std::cout<<"probe=FAILED reason=readiness_timeout overall_timeout_ms="<<readinessWindowMs
+            <<" skipped_status_packets="<<skippedStatuses<<" read_timeout_count="<<readTimeoutCount
+            <<" last_read_win32="<<(readTimeoutCount?std::to_string(lastReadTimeoutWin32):"n/a")<<"\n";return 6;}
+        const auto read=transport.Read(0,0x81,packet,timeout);
+        const auto decision=readiness.Observe(GetTickCount64(),read,packet.data(),packet.size(),state);
+        if(decision==ControllerReadinessDecision::Ready){
+            std::cout<<"probe=PASS controller_report_bytes="<<packet.size()<<" report_hex="<<Hex(packet)
+                <<" skipped_status_packets="<<skippedStatuses<<"\n";return 0;
+        }
+        if(decision==ControllerReadinessDecision::ReadTimedOut){++readTimeoutCount;lastReadTimeoutWin32=read.win32Error;continue;}
+        if(decision==ControllerReadinessDecision::Waiting){
+            if(read.status==TransferStatus::Ok&&ClassifyControllerPacket(packet.data(),packet.size(),state)==ControllerPacketClassification::NonControllerStatus){
+                ++skippedStatuses;std::cout<<"probe=status_packet skipped=true bytes="<<packet.size()<<" report_hex="<<Hex(packet)<<"\n";
+            }
+            continue;
+        }
+        if(decision==ControllerReadinessDecision::TimedOut){std::cout<<"probe=FAILED reason=readiness_timeout overall_timeout_ms="<<readinessWindowMs
+            <<" skipped_status_packets="<<skippedStatuses<<" read_timeout_count="<<readTimeoutCount
+            <<" last_read_win32="<<(readTimeoutCount?std::to_string(lastReadTimeoutWin32):"n/a")<<"\n";return 6;}
+        if(decision==ControllerReadinessDecision::TransferFailed){
+            std::cout<<"probe=FAILED reason=transfer status="<<TransferStatusName(read.status)
+                <<" controller_win32="<<read.win32Error<<" transferred_bytes="<<read.transferred
+                <<" packet_bytes="<<packet.size()<<" skipped_status_packets="<<skippedStatuses<<"\n";return 6;
+        }
         std::cout<<"probe=FAILED reason=invalid_controller_report transferred_bytes="<<read.transferred
             <<" packet_bytes="<<packet.size();
         if(packet.size()>=1)std::cout<<" type="<<static_cast<unsigned>(packet[0]);
         else std::cout<<" type=n/a";
         if(packet.size()>=2)std::cout<<" declared_length="<<static_cast<unsigned>(packet[1]);
         else std::cout<<" declared_length=n/a";
-        if(packet.size()>=4) {
-            const unsigned buttonBits=unsigned(packet[2])|(unsigned(packet[3])<<8);
-            std::cout<<" button_bits="<<buttonBits;
-        } else std::cout<<" button_bits=n/a";
-        std::cout<<"\n";
-        return 6;
+        if(packet.size()>=4){const unsigned buttonBits=unsigned(packet[2])|(unsigned(packet[3])<<8);std::cout<<" button_bits="<<buttonBits;}
+        else std::cout<<" button_bits=n/a";
+        std::cout<<" skipped_status_packets="<<skippedStatuses<<"\n";return 6;
     }
-    std::cout<<"probe=PASS controller_report_bytes="<<packet.size()<<" report_hex="<<Hex(packet)<<"\n";return 0;
 }
 }
 

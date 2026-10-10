@@ -23,8 +23,19 @@ struct TransferResult {
     uint32_t win32Error{};
     size_t transferred{};
 };
-enum class ControllerProbeClassification { TransferFailed, ReportRejected, ReportAccepted };
+enum class ControllerPacketClassification { ControllerReport, NonControllerStatus, Invalid };
+ControllerPacketClassification ClassifyControllerPacket(const uint8_t*, size_t, XboxState&);
+enum class ControllerProbeClassification { TransferFailed, ReportRejected, NonControllerStatus, ReportAccepted };
 ControllerProbeClassification ClassifyControllerProbe(const TransferResult&, const uint8_t*, size_t, XboxState&);
+enum class ControllerReadinessDecision { Waiting, ReadTimedOut, Ready, TimedOut, TransferFailed, ReportRejected };
+class ControllerReadiness final {
+public:
+    ControllerReadiness(uint64_t startedAtMs, uint64_t windowMs);
+    uint32_t ReadTimeoutMs(uint64_t nowMs, uint32_t maximumMs) const;
+    ControllerReadinessDecision Observe(uint64_t nowMs, const TransferResult&, const uint8_t*, size_t, XboxState&) const;
+private:
+    uint64_t deadlineMs_{};
+};
 struct EndpointInfo { uint8_t address{}, type{}; uint16_t maxPacketSize{}; };
 struct InterfaceInfo { uint8_t number{}, alternateSetting{}; std::vector<EndpointInfo> endpoints; };
 struct DeviceInfo {

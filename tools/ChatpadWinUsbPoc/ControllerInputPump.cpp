@@ -48,13 +48,13 @@ void ControllerInputPump::Run(){
         if(result.status!=TransferStatus::Ok){
             std::lock_guard<std::mutex> guard(mutex_);failed_=true;failureStatus_=result.status;failureWin32_=result.win32Error;break;
         }
-        std::lock_guard<std::mutex> guard(mutex_);
-        ++reports_;
         XboxState state;
-        if(ParseController(packet.data(),packet.size(),state)){
-            latest_=state;
-            if(sink_&&!SubmitLocked(latest_)){stopping_=true;break;}
-        }
+        const auto classification=ClassifyControllerPacket(packet.data(),packet.size(),state);
+        if(classification==ControllerPacketClassification::NonControllerStatus)continue;
+        if(classification!=ControllerPacketClassification::ControllerReport)continue;
+        std::lock_guard<std::mutex> guard(mutex_);
+        ++reports_;latest_=state;
+        if(sink_&&!SubmitLocked(latest_)){stopping_=true;break;}
     }
 }
 }
