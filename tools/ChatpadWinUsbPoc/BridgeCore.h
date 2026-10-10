@@ -15,6 +15,7 @@ struct XboxState {
     int16_t lx{}, ly{}, rx{}, ry{};
 };
 bool ParseController(const uint8_t* data, size_t size, XboxState& out);
+std::string PacketHex(const uint8_t* data, size_t size);
 std::vector<uint8_t> BuildRumble(uint16_t left, uint16_t right);
 std::vector<uint8_t> BuildPlayerLed(uint8_t pattern);
 enum class TransferStatus { Ok, Stall, Timeout, Cancelled, AccessDenied, DeviceNotPresent, Error };

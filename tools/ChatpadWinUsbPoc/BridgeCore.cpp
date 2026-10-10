@@ -18,6 +18,13 @@ bool ParseController(const uint8_t* data,size_t size,XboxState& out) {
     out={buttons,data[4],data[5],SignedLe(data+6),SignedLe(data+8),SignedLe(data+10),SignedLe(data+12)};
     return true;
 }
+std::string PacketHex(const uint8_t* data,size_t size) {
+    if(!data&&size)return {};
+    static constexpr char digits[]="0123456789abcdef";
+    std::string result;result.reserve(size*2);
+    for(size_t i=0;i<size;++i){result.push_back(digits[data[i]>>4]);result.push_back(digits[data[i]&0x0f]);}
+    return result;
+}
 ControllerProbeClassification ClassifyControllerProbe(const TransferResult& transfer,const uint8_t* data,size_t size,XboxState& out) {
     out={};
     if(transfer.status!=TransferStatus::Ok)return ControllerProbeClassification::TransferFailed;

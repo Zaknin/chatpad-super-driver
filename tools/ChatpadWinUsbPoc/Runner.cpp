@@ -362,7 +362,7 @@ int Inspect(const std::string& command,const RunnerOptions& options) {
                 <<" packet_bytes="<<packet.size()<<" skipped_status_packets="<<skippedStatuses<<"\n";return 6;
         }
         std::cout<<"probe=FAILED reason=invalid_controller_report transferred_bytes="<<read.transferred
-            <<" packet_bytes="<<packet.size();
+            <<" packet_bytes="<<packet.size()<<" report_hex="<<PacketHex(packet.data(),packet.size());
         if(packet.size()>=1)std::cout<<" type="<<static_cast<unsigned>(packet[0]);
         else std::cout<<" type=n/a";
         if(packet.size()>=2)std::cout<<" declared_length="<<static_cast<unsigned>(packet[1]);

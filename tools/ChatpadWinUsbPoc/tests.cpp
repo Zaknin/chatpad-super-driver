@@ -57,6 +57,11 @@ struct MockKeyboard : IKeyboardOutput {
     bool ForceRelease() override { ++forceCalls; if(failRelease) return false; held.fill(false); return true; }
 };
 static std::array<uint8_t,20> Neutral() { std::array<uint8_t,20> p{}; p[1]=20; return p; }
+static void PacketHexTests() {
+    const std::array<uint8_t,3> packet{{0x01,0x03,0x02}};
+    Check(PacketHex(packet.data(),packet.size())=="010302",
+        "packet diagnostic hex preserves every byte in order");
+}
 static void ControllerReadinessTests() {
     XboxState state{};
     const std::array<std::array<uint8_t,3>,4> statuses{{
@@ -268,7 +273,7 @@ static void LifecycleTests() {
     }
 }
 int main() {
-    ControllerReadinessTests();ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
+    PacketHexTests();ControllerReadinessTests();ControllerTests();ActivationTests();MaintenanceTests();KeyboardTests();LifecycleTests();
     std::cout<<"{\"suite\":\"ChatpadWinUsbPocCore\",\"total\":"<<total<<",\"passed\":"<<total-failed<<",\"failed\":"<<failed<<",\"liveMutation\":false}\n";
     return failed?1:0;
 }
