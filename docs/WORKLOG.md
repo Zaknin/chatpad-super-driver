@@ -15196,3 +15196,9 @@ This append records the implementation commit and first publication. The documen
 - Updated read-only probe passed with `02 03 00`, `03 03 03`, and `08 03 00` skipped, then a valid 20-byte `00 14` report. It did not reproduce the earlier type-1 packet.
 - Normal-user runtime started successfully after the probe. Startup stale-keyboard release and zero-rumble recovery passed; controller polling began, virtual Xbox creation succeeded, and Chatpad key-data enabled. A guarded slot-0 `12000/9000` 900-ms rumble pulse was sent; the broker log recorded callback active then inactive. User confirmation of current buttons/sticks, Chatpad typing, and physical rumble is pending. The S3/reconnect check after this recovery is also pending.
 - No driver rebind, PnP removal, `RemoveAllVirtualControllers`, service/registry/trust/boot/power-setting mutation, publication, or edit under `legacy/`. The runner remains active while awaiting user input. C5 remains incomplete; commit/push will be recorded after closeout.
+
+## 2026-10-10 13:38 UTC — TASK 8L-C5 packet-hex diagnostic commit pushed
+
+- Commit: `5fe602e4a63c12e7875f11627f852b39ca3153bf` (`diag: include rejected controller packet bytes in probe`). It contains the tested `PacketHex` helper, invalid-report hex output, and live-state continuation updates.
+- Push result: PASS; `origin/feature/chatpad-usermode-runner` advanced from `2efff47bb2869ed09da12ab1536d3cc99f942488` to this commit. No other branch was pushed.
+- The normal-user runner remained active during this source/documentation closeout. User feedback on the current button/Chatpad/physical-rumble checks and the next S3 cycle is still required.
