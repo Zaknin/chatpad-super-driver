@@ -34,7 +34,7 @@ internal sealed class WindowsPhysicalDeviceRecovery : IPhysicalDeviceRecovery
     private static readonly Guid WinUsbInterfaceGuid = new("B6A5D05E-7E18-4DF1-8E47-12F072DE2C36");
     private const uint DigcfPresent = 0x00000002;
     private const uint DigcfDeviceInterface = 0x00000010;
-    private const uint SpdrpHardwareId = 0x00000000;
+    private const uint SpdrpHardwareId = 0x00000001;
     private const uint SpdrpService = 0x00000004;
     private const uint RegSz = 1;
     private const uint RegMultiSz = 7;
@@ -152,6 +152,11 @@ internal sealed class WindowsPhysicalDeviceRecovery : IPhysicalDeviceRecovery
             if (!SetupDiGetDeviceRegistryPropertyW(set, ref deviceData, property, out propertyType, buffer, (uint)buffer.Length, out _))
                 throw new Win32Exception(Marshal.GetLastWin32Error(), "SetupDiGetDeviceRegistryPropertyW retry failed.");
         }
+        return DecodeStringProperty(property, propertyType, buffer);
+    }
+
+    private static string DecodeStringProperty(uint property, uint propertyType, byte[] buffer)
+    {
         uint expectedType = property == SpdrpHardwareId ? RegMultiSz : RegSz;
         if (propertyType != expectedType)
             throw new InvalidOperationException("Device identity property has unexpected registry type " + propertyType + ".");

@@ -27,6 +27,8 @@ internal static class BrokerSessionTests
             !PhysicalDeviceIdentity.IsExactWinUsbTarget(new("USB\\VID_045E&PID_028E\\SERIAL", "WinUSB", new[] { "USB\\VID_045E&PID_028EFAKE" }, 1)) &&
             !PhysicalDeviceIdentity.IsExactWinUsbTarget(new("USB\\VID_045E&PID_028E\\SERIAL", "WinUSB", new[] { "USB\\VID_0000&PID_0000" }, 1)))
         ).GetAwaiter().GetResult();
+        Check("physical recovery decodes the SetupAPI hardware-ID property as REG_MULTI_SZ", () => Task.FromResult(
+            DecodeHardwareIdProperty())).GetAwaiter().GetResult();
         Check("physical recovery requires exactly one matching candidate", () => Task.FromResult(
             PhysicalDeviceIdentity.UniqueTargetError(Array.Empty<PhysicalDeviceCandidate>()) == "broker_physical_target_not_found" &&
             PhysicalDeviceIdentity.UniqueTargetError(new[] { new PhysicalDeviceCandidate("USB\\VID_045E&PID_028E\\SERIAL", "WinUSB", new[] { "USB\\VID_045E&PID_028E" }, 1) }).Length == 0 &&
@@ -177,6 +179,22 @@ internal static class BrokerSessionTests
     {
         try { BrokerProtocol.ParseControlRequest(request); return false; }
         catch (BackendException e) { return e.Code == "broker_protocol_error"; }
+    }
+
+    private static bool DecodeHardwareIdProperty()
+    {
+        var decoder = typeof(WindowsPhysicalDeviceRecovery).GetMethod(
+            "DecodeStringProperty", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        if (decoder is null) return false;
+        const string first = "USB\\VID_045E&PID_028E&REV_0114";
+        const string second = "USB\\VID_045E&PID_028E";
+        byte[] raw = System.Text.Encoding.Unicode.GetBytes(first + "\0" + second + "\0\0");
+        try
+        {
+            string? decoded = decoder.Invoke(null, new object[] { 1u, 7u, raw }) as string;
+            return decoded == first + "\0" + second;
+        }
+        catch (System.Reflection.TargetInvocationException) { return false; }
     }
 
     private sealed class BlockingBackend : IVirtualXboxController
