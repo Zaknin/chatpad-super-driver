@@ -15347,3 +15347,9 @@ This append records the implementation commit and first publication. The documen
 - Files changed: `tools/ChatpadWinUsbPoc/ControllerInputPump.cpp`, `ControllerInputPump.h`, `Runner.cpp`, `controller-input-pump-tests.cpp`; `docs/PROJECT-STATE.md`; this append-only `docs/WORKLOG.md`; `docs/NEXT-TASK.md`. Generated build outputs remain under ignored `artifacts/task-8lc5/status-packet-fix/native-bt/`; runtime log remains under the user's local AppData directory.
 - No S3/reboot, binding, USB power, PnP, service, manual session-marker cleanup, `RemoveAllVirtualControllers`, broad cleanup, or `legacy/` edit occurred. C5 remains PARTIAL until recovery after sleep is separately authorized and successfully qualified. No durable architecture decision changed.
 - Commit and push: to be recorded by the closeout commit on `feature/chatpad-usermode-runner`.
+
+## 2026-10-11 07:12 UTC — TASK 8L-C5 implementation publication record
+
+- Implementation and continuity commit: `67f8998ded4d38533a6c1bc8676a6c285268954d` (`diag: record active controller pump capture`).
+- Push result: PASS; `origin/feature/chatpad-usermode-runner` advanced from `4b5c0f7ca03e8f9653123f8ddf97e107f5b51298` to `67f8998ded4d38533a6c1bc8676a6c285268954d`. Only the requested branch was pushed.
+- This append records the actual implementation publication after the C5 active capture. A docs-only follow-up updates the current source baseline and the next-task pointer; the final response reports the branch tip.

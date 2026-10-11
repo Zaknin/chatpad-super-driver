@@ -2,7 +2,7 @@
 
 Updated 2026-10-11 after the authorized active controller-pump capture.
 
-- Branch: `feature/chatpad-usermode-runner`. Source and test changes are being closed out from baseline `4b5c0f7ca03e8f9653123f8ddf97e107f5b51298`; see the enclosing commit for the updated HEAD.
+- Branch: `feature/chatpad-usermode-runner`; implementation and diagnostic tests are in pushed commit `67f8998ded4d38533a6c1bc8676a6c285268954d`. A following docs-only commit records publication and is the branch tip for the next checkout; verify `git rev-parse HEAD` before continuing.
 - Verified toolchain: Visual Studio 2022 Release build passed for `ChatpadControllerInputPumpTests` and `ChatpadWinUsbPoc`. Focused pump suite passed 15/15 checks and CTest `controller-input-pump` passed 1/1. `git diff --check` passed.
 - Controller parsing remains strict: exactly 20 bytes with header `00 14`. Pump diagnostics now report read attempts/completions, all/change reports, status/invalid packets, timeouts including Win32 1460, and transfer failures. No parsing or runtime behavior was relaxed.
 - Authorized non-elevated PTY run `2026-10-11T07:10:38.722Z`–`07:11:09.821Z` reached RUNNING, created the virtual Xbox, enabled Chatpad key-data, and received active button/stick input during the prompted window. Counts: total controller reports 1,435 (readiness 1, pump 1,434), changing pump reports 1,433, Chatpad reports 56, virtual submissions 1,450; pump attempts 1,528, successful reads 1,434, timeouts 94 (all Win32 1460), status/invalid/other transfer failures 0. Clean shutdown: keys released, virtual neutral/released, motors stopped.

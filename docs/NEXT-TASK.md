@@ -1,6 +1,6 @@
 # TASK 8L-C5 — controlled post-sleep recovery qualification
 
-- Required branch: `feature/chatpad-usermode-runner`; current implementation baseline is commit `4b5c0f7ca03e8f9653123f8ddf97e107f5b51298` plus the C5 pump-diagnostics closeout commit containing this continuation update. Verify `git rev-parse HEAD` and `git status` before continuing.
+- Required branch: `feature/chatpad-usermode-runner`; implementation baseline is pushed commit `67f8998ded4d38533a6c1bc8676a6c285268954d`. The branch tip may include a later docs-only publication record; verify `git rev-parse HEAD` and `git status` before continuing.
 - Current evidence: strict controller parsing remains 20-byte `00 14`. A user-authorized active non-elevated run at `2026-10-11T07:10:38.722Z`–`07:11:09.821Z` received 1,434 pump reports, 1,433 changing, with 94 Win32 1460 timeouts and no invalid/status/transfer-failure packets; cleanup passed. The previously observed one-report production discrepancy was not reproduced, but its original cause is unknown.
 - C5 remains PARTIAL: no successful recovery-after-S3 qualification has been completed. Do not run another sleep/reboot test unless the user explicitly resumes that phase.
 - Before any resumed live test, ask for a clear start confirmation. Then verify normal-user shell, broker Running/Automatic, physical WinUSB target Status OK/ProblemCode 0, and no runner/virtual node/session marker. Use PTY for the runner; tell the user only after RUNNING, and stop only after the user says `готово` (or stop and report a clear pre-RUNNING failure).
