@@ -15382,3 +15382,9 @@ This append records the implementation commit and first publication. The documen
 - Validation: focused Release CTest `runner-lifecycle|controller-input-pump` passed 2/2; full release build passed all native CTests 10/10 and virtual-broker offline tests 157/157 with `liveBackendCreated:false`, `xinputCalled:false`; setup/repository identity 5/5, package identity 8/8, baseline paths 5/5, PnP restart-result 4/4, SCM argv 4/4. `git diff --check` passed. Build output: `artifacts/task-8lc5/s3-recovery-build-precommit-final-20261011/`, manifest still binds starting HEAD and is not installable. Runner SHA-256 `0B5BF86EEE8952CD643761DFC51A5B1D1E5B0E6A9DA665DE635A2080C22C80F9`; broker apphost SHA-256 `F0426071FC117448CBCC8FBE2670B75195751671511E228E42BE42F7D723022C`; 214 package members.
 - The user confirmed the second XInput rumble pulse. No driver binding, USB power setting, service configuration, PnP node, runner process, session marker, reboot, or S3 state was changed by this verification step. No package was installed or published.
 - Remaining: commit and push only the requested branch, rebuild and hash-audit at the pushed HEAD, then request the user's elevated `RepairBroker` run. Strict probe, baseline, and three post-fix S3 cycles remain outstanding; C5 remains PARTIAL.
+
+## 2026-10-11 09:59 UTC — TASK 8L-C5 implementation commit
+
+- Committed the bounded recovery implementation and its continuity records on `feature/chatpad-usermode-runner`: `cba6b26` (`fix: recover physical controller after S3 transport loss`), based on `71ba3db837afc9d05cd8668acb832eff1cad85b4`.
+- The final pre-commit build/hash audit is recorded above; it deliberately cannot be installed because its manifest names the parent HEAD. The current package will be rebuilt only after pushing the final branch tip.
+- Push and post-push package generation are still pending. No live service repair or S3 test has been performed with this implementation.
