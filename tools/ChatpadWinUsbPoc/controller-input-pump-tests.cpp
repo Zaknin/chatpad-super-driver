@@ -54,9 +54,10 @@ int main(){
     unsigned checks{},failed{};
     auto check=[&](bool value,const char* name){++checks;if(!value){++failed;std::cerr<<"FAIL: "<<name<<'\n';}};
     QueuedTransport transport;ControllerInputPump pump(transport,{});
+    transport.FailNextRead({TransferStatus::Timeout,1460,0});
     transport.PushPacket({0x03,0x03,0x03});transport.Push(1);
     transport.PushPacket({0x01,0x03,0x02});transport.PushPacket({0x02,0x03,0x00});
-    transport.PushPacket({0x01,0x03,0x0e});transport.Push(4);
+    transport.PushPacket({0x01,0x03,0x0e});transport.PushPacket({0x00,0x13});transport.Push(4);
     check(pump.Start(),"controller polling starts");
     check(WaitUntil([&]{return pump.ReportCount()>=2;}),"status packets do not block valid controller reports before virtual backend exists");
     std::mutex statesMutex;std::vector<XboxState> states;
@@ -74,12 +75,23 @@ int main(){
     }
     pump.Stop();
     check(!pump.Failed(),"normal pump stop is clean");
+    const auto diagnostics=pump.Diagnostics();
+    check(diagnostics.successfulReadCompletions==10,"pump diagnostics count successful USB read completions");
+    check(diagnostics.controllerReports==3&&diagnostics.changingControllerReports==3,
+        "pump diagnostics distinguish all reports from changing controller states");
+    check(diagnostics.nonControllerStatusPackets==6&&diagnostics.invalidPackets==1,
+        "pump diagnostics retain status and invalid packet classifications");
+    check(diagnostics.timeoutCompletions>=1&&diagnostics.timeout1460Completions>=1,
+        "pump diagnostics retain Win32 1460 timeout completions");
     QueuedTransport removedTransport;ControllerInputPump removedPump(removedTransport,{});
     removedTransport.FailNextRead({TransferStatus::DeviceNotPresent,433,0});
     check(removedPump.Start(),"controller pump starts for device-removal status capture");
     check(WaitUntil([&]{return removedPump.Failed();}),"device removal fails controller input pump");
     check(removedPump.FailureStatus()==TransferStatus::DeviceNotPresent&&removedPump.FailureWin32()==433,
         "controller pump preserves the device-removal status for cleanup classification");
+    const auto removedDiagnostics=removedPump.Diagnostics();
+    check(removedDiagnostics.transferFailures==1&&removedDiagnostics.lastFailureWin32==433,
+        "pump diagnostics preserve non-timeout transfer failures and Win32 code");
     removedPump.Stop();
     std::cout<<(checks-failed)<<" checks, "<<failed<<" failures\n";
     return failed?1:0;

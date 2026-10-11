@@ -2,6 +2,12 @@
 #include <utility>
 
 namespace chatpad {
+namespace {
+bool SameState(const XboxState& left,const XboxState& right){
+    return left.buttons==right.buttons&&left.leftTrigger==right.leftTrigger&&left.rightTrigger==right.rightTrigger&&
+        left.lx==right.lx&&left.ly==right.ly&&left.rx==right.rx&&left.ry==right.ry;
+}
+}
 ControllerInputPump::ControllerInputPump(IPhysicalTransport& transport,const XboxState& initial)
     :transport_(transport),latest_(initial) {}
 ControllerInputPump::~ControllerInputPump(){Stop();}
@@ -30,6 +36,7 @@ uint32_t ControllerInputPump::FailureWin32()const{std::lock_guard<std::mutex> gu
 TransferStatus ControllerInputPump::FailureStatus()const{std::lock_guard<std::mutex> guard(mutex_);return failureStatus_;}
 uint64_t ControllerInputPump::ReportCount()const{std::lock_guard<std::mutex> guard(mutex_);return reports_;}
 uint64_t ControllerInputPump::SubmissionCount()const{std::lock_guard<std::mutex> guard(mutex_);return submissions_;}
+ControllerInputPumpDiagnostics ControllerInputPump::Diagnostics()const{std::lock_guard<std::mutex> guard(mutex_);return diagnostics_;}
 bool ControllerInputPump::SubmitLocked(const XboxState& state){
     if(!sink_)return true;
     if(!sink_(state)){failed_=true;return false;}
@@ -38,21 +45,35 @@ bool ControllerInputPump::SubmitLocked(const XboxState& state){
 void ControllerInputPump::Run(){
     while(!stopping_){
         std::vector<uint8_t> packet;
+        {std::lock_guard<std::mutex> guard(mutex_);++diagnostics_.readAttempts;}
         const auto result=transport_.Read(0,0x81,packet,200);
         if(result.status==TransferStatus::Cancelled&&stopping_)break;
         if(result.status==TransferStatus::Timeout){
             std::lock_guard<std::mutex> guard(mutex_);
+            ++diagnostics_.timeoutCompletions;
+            diagnostics_.lastTimeoutWin32=result.win32Error;
+            if(result.win32Error==1460)++diagnostics_.timeout1460Completions;
             if(sink_&&std::chrono::steady_clock::now()-lastSubmission_>=std::chrono::seconds(1)&&!SubmitLocked(latest_))stopping_=true;
             continue;
         }
         if(result.status!=TransferStatus::Ok){
-            std::lock_guard<std::mutex> guard(mutex_);failed_=true;failureStatus_=result.status;failureWin32_=result.win32Error;break;
+            std::lock_guard<std::mutex> guard(mutex_);
+            ++diagnostics_.transferFailures;
+            diagnostics_.lastFailureStatus=result.status;
+            diagnostics_.lastFailureWin32=result.win32Error;
+            failed_=true;failureStatus_=result.status;failureWin32_=result.win32Error;break;
+        }
+        {
+            std::lock_guard<std::mutex> guard(mutex_);
+            ++diagnostics_.successfulReadCompletions;
         }
         XboxState state;
         const auto classification=ClassifyControllerPacket(packet.data(),packet.size(),state);
-        if(classification==ControllerPacketClassification::NonControllerStatus)continue;
-        if(classification!=ControllerPacketClassification::ControllerReport)continue;
         std::lock_guard<std::mutex> guard(mutex_);
+        if(classification==ControllerPacketClassification::NonControllerStatus){++diagnostics_.nonControllerStatusPackets;continue;}
+        if(classification!=ControllerPacketClassification::ControllerReport){++diagnostics_.invalidPackets;continue;}
+        if(!SameState(latest_,state))++diagnostics_.changingControllerReports;
+        ++diagnostics_.controllerReports;
         ++reports_;latest_=state;
         if(sink_&&!SubmitLocked(latest_)){stopping_=true;break;}
     }

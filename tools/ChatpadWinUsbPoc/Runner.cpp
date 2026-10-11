@@ -272,6 +272,7 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     controllerPump.Stop();
     if(controllerPump.FailureStatus()==TransferStatus::DeviceNotPresent)physicalDeviceRemovalObserved=true;
     const auto controllerPumpReports=controllerPump.ReportCount();
+    const auto controllerPumpDiagnostics=controllerPump.Diagnostics();
     counts.controllerPackets=static_cast<unsigned>(TotalControllerReports(1,controllerPumpReports));
     counts.virtualSubmissions=static_cast<unsigned>(controllerPump.SubmissionCount());
     TransferResult motorStop{};
@@ -316,7 +317,18 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
         " readinessControllerReports=1 controllerPumpReports="+std::to_string(controllerPumpReports)+" chatpadReports="+
         std::to_string(counts.chatpadPackets)+" virtualSubmissions="+std::to_string(counts.virtualSubmissions)+
         " controllerRateHz="+std::to_string(counts.controllerPackets/seconds)+" virtualRateHz="+
-        std::to_string(counts.virtualSubmissions/seconds)+" elapsedMs="+std::to_string(counts.elapsedMs));
+        std::to_string(counts.virtualSubmissions/seconds)+" elapsedMs="+std::to_string(counts.elapsedMs)+
+        " pumpReadAttempts="+std::to_string(controllerPumpDiagnostics.readAttempts)+
+        " pumpReadSuccesses="+std::to_string(controllerPumpDiagnostics.successfulReadCompletions)+
+        " pumpChangingReports="+std::to_string(controllerPumpDiagnostics.changingControllerReports)+
+        " pumpStatusPackets="+std::to_string(controllerPumpDiagnostics.nonControllerStatusPackets)+
+        " pumpInvalidPackets="+std::to_string(controllerPumpDiagnostics.invalidPackets)+
+        " pumpTimeouts="+std::to_string(controllerPumpDiagnostics.timeoutCompletions)+
+        " pumpTimeout1460="+std::to_string(controllerPumpDiagnostics.timeout1460Completions)+
+        " pumpLastTimeoutWin32="+std::to_string(controllerPumpDiagnostics.lastTimeoutWin32)+
+        " pumpTransferFailures="+std::to_string(controllerPumpDiagnostics.transferFailures)+
+        " pumpLastFailureStatus="+(controllerPumpDiagnostics.transferFailures?TransferStatusName(controllerPumpDiagnostics.lastFailureStatus):"none")+
+        " pumpLastFailureWin32="+(controllerPumpDiagnostics.transferFailures?std::to_string(controllerPumpDiagnostics.lastFailureWin32):"n/a"));
     return counts;
 }
 int Inspect(const std::string& command,const RunnerOptions& options) {
