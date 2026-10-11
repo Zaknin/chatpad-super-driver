@@ -15388,3 +15388,10 @@ This append records the implementation commit and first publication. The documen
 - Committed the bounded recovery implementation and its continuity records on `feature/chatpad-usermode-runner`: `cba6b26` (`fix: recover physical controller after S3 transport loss`), based on `71ba3db837afc9d05cd8668acb832eff1cad85b4`.
 - The final pre-commit build/hash audit is recorded above; it deliberately cannot be installed because its manifest names the parent HEAD. The current package will be rebuilt only after pushing the final branch tip.
 - Push and post-push package generation are still pending. No live service repair or S3 test has been performed with this implementation.
+
+## 2026-10-11 10:01 UTC — TASK 8L-C5 pushed implementation and verified package candidate
+
+- Push result: PASS; `origin/feature/chatpad-usermode-runner` advanced from `71ba3db837afc9d05cd8668acb832eff1cad85b4` to continuity HEAD `796afd104e36c25e91a6bc35c8eb21af70b3a055`, including implementation commit `cba6b26`.
+- Post-push command: `pwsh -NoProfile -ExecutionPolicy Bypass -File tools/Build-ChatpadBridge.ps1 -OutputDirectory artifacts/task-8lc5/s3-recovery-build-796afd104e36-20261011`. PASS: manifest repository identity matches that pushed HEAD; all native CTests 10/10; offline broker 157/157 (`liveBackendCreated=false`, `xinputCalled=false`); setup/readiness/package checks 5/5 repository, 8/8 package, 5/5 baseline, 4/4 PnP restart, 4/4 SCM argv. Independent package readback: 214 manifest members, 214 files, all SHA-256 values match.
+- This package candidate is superseded by the current documentation-only continuity update; its manifest therefore must not be used for live installation. After pushing the final docs update, rebuild and hash-audit the package once at that final branch tip.
+- No live service repair, PnP operation, driver-binding or USB-power change, reboot, or new S3 cycle was performed. C5 remains PARTIAL.
