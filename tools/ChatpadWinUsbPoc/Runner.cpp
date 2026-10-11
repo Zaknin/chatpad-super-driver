@@ -115,40 +115,63 @@ void ActivationLog(const ActivationEvent& event,Log& log) {
     log.Event("activation stage="+std::to_string(event.step)+" win32="+std::to_string(event.result.win32Error)+
         " bytes="+std::to_string(event.result.transferred)+" disposition="+ActivationDisposition(event));
 }
-bool WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState& state,Log& log) {
+enum class InitialReadinessResult { Ready, Stopped, PhysicalTimeout, DeviceRemoved, Failed };
+InitialReadinessResult WaitController(WinUsbTransport& usb,const std::atomic<bool>& stop,XboxState& state,Log& log) {
     constexpr uint64_t readinessWindowMs=5000;
     const auto started=GetTickCount64();ControllerReadiness readiness(started,readinessWindowMs);
-    size_t readTimeoutCount{};uint32_t lastReadTimeoutWin32{};
+    PhysicalReadinessTracker readHistory;uint32_t lastReadWin32{};
     while(!stop.load()){
         const auto now=GetTickCount64();const auto timeout=readiness.ReadTimeoutMs(now,500);
-        if(timeout==0){log.Event("controller readiness timed out read_timeout_count="+std::to_string(readTimeoutCount)+
-            " last_read_win32="+(readTimeoutCount?std::to_string(lastReadTimeoutWin32):"n/a"),true);return false;}
+        if(timeout==0){
+            const bool recoveryCandidate=readHistory.RecoveryCandidate(stop.load());
+            log.Event("controller readiness timed out read_timeout_count="+std::to_string(readHistory.TimeoutCount())+
+                " last_read_status="+(readHistory.TimeoutCount()?TransferStatusName(readHistory.LastStatus()):"n/a")+
+                " last_read_win32="+(readHistory.TimeoutCount()?std::to_string(lastReadWin32):"n/a")+
+                " physical_recovery_candidate="+(recoveryCandidate?"true":"false"));
+            return recoveryCandidate?InitialReadinessResult::PhysicalTimeout:InitialReadinessResult::Failed;
+        }
         std::vector<uint8_t> packet;auto result=usb.Read(0,0x81,packet,timeout);
+        readHistory.Record(result.status);lastReadWin32=result.win32Error;
         const auto decision=readiness.Observe(GetTickCount64(),result,packet.data(),packet.size(),state);
-        if(decision==ControllerReadinessDecision::Ready)return true;
-        if(decision==ControllerReadinessDecision::ReadTimedOut){++readTimeoutCount;lastReadTimeoutWin32=result.win32Error;continue;}
+        if(decision==ControllerReadinessDecision::Ready)return InitialReadinessResult::Ready;
+        if(decision==ControllerReadinessDecision::ReadTimedOut)continue;
         if(decision==ControllerReadinessDecision::Waiting){
             if(result.status==TransferStatus::Ok&&ClassifyControllerPacket(packet.data(),packet.size(),state)==ControllerPacketClassification::NonControllerStatus)
             log.Event("controller readiness skipped non-controller packet bytes="+std::to_string(packet.size())+" hex="+Hex(packet),true);
             continue;
         }
-        if(decision==ControllerReadinessDecision::TimedOut){log.Event("controller readiness timed out read_timeout_count="+std::to_string(readTimeoutCount)+
-            " last_read_win32="+(readTimeoutCount?std::to_string(lastReadTimeoutWin32):"n/a"),true);return false;}
+        if(decision==ControllerReadinessDecision::TimedOut){
+            const bool recoveryCandidate=readHistory.RecoveryCandidate(stop.load());
+            log.Event("controller readiness timed out read_timeout_count="+std::to_string(readHistory.TimeoutCount())+
+                " last_read_status="+(readHistory.TimeoutCount()?TransferStatusName(readHistory.LastStatus()):"n/a")+
+                " last_read_win32="+(readHistory.TimeoutCount()?std::to_string(lastReadWin32):"n/a")+
+                " physical_recovery_candidate="+(recoveryCandidate?"true":"false"));
+            return recoveryCandidate?InitialReadinessResult::PhysicalTimeout:InitialReadinessResult::Failed;
+        }
         if(decision==ControllerReadinessDecision::TransferFailed){
             log.Event("device open readiness failed status="+std::string(TransferStatusName(result.status))+" win32="+std::to_string(result.win32Error));
-            return false;
+            return result.status==TransferStatus::DeviceNotPresent?InitialReadinessResult::DeviceRemoved:InitialReadinessResult::Failed;
         }
-        log.Event("controller readiness invalid report bytes="+std::to_string(packet.size()),true);return false;
+        log.Event("controller readiness invalid report bytes="+std::to_string(packet.size()),true);return InitialReadinessResult::Failed;
     }
-    return false;
+    return InitialReadinessResult::Stopped;
 }
-struct SessionResult { bool lost{},backendFailure{},cleanupFailure{},rumbleRecoveryCompleted{},rumbleRecoveryFailure{},rumbleStopPending{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
+struct SessionResult { bool lost{},backendFailure{},cleanupFailure{},rumbleRecoveryCompleted{},rumbleRecoveryFailure{},rumbleStopPending{},physicalRecoveryNeeded{},physicalDeviceRemovalObserved{},recoveryQualified{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
 SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log,bool rumbleRecoveryPending) {
     const auto sessionStart=Clock::now();
+    const auto sessionStartTick=GetTickCount64();
     SessionResult counts;std::atomic<bool> sessionStop{false};std::atomic<bool> physicalDeviceRemovalObserved{false};
+    std::atomic<unsigned> chatpadReportCount{0};
     std::atomic<bool> physicalTransportTimeoutObserved{false};std::atomic<int> failure{0};
     XboxState initial{};
-    if(!WaitController(usb,appStop,initial,log))return {true};
+    const auto readinessResult=WaitController(usb,appStop,initial,log);
+    if(readinessResult!=InitialReadinessResult::Ready){
+        SessionResult result;
+        result.lost=readinessResult!=InitialReadinessResult::Stopped;
+        result.physicalRecoveryNeeded=readinessResult==InitialReadinessResult::PhysicalTimeout&&!appStop.load();
+        result.physicalDeviceRemovalObserved=readinessResult==InitialReadinessResult::DeviceRemoved;
+        return result;
+    }
     // Keep IF0/81 continuously polled while activation and the broker create
     // operation run. HIDMaestro startup can take seconds; pausing controller
     // reads here can leave the physical output pipe unable to complete writes.
@@ -162,7 +185,13 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     if(!lifecycle.Activated())return {true};
     log.Event("state=RUNNING");
     ChatpadMaintenance maintenance(usb);
-    if(!maintenance.Start(GetTickCount64())){log.Event("initial keepalive failed win32="+std::to_string(maintenance.LastResult().win32Error));return {true};}
+    if(!maintenance.Start(GetTickCount64())){
+        const auto result=maintenance.LastResult();
+        log.Event("initial keepalive failed win32="+std::to_string(result.win32Error));
+        counts.lost=true;
+        counts.physicalRecoveryNeeded=result.status==TransferStatus::Timeout&&!appStop.load();
+        return counts;
+    }
     log.Event("Chatpad activated; keepalive started; key-data command is gated on first complete five-byte report");
     if(rumbleRecoveryPending){
         const auto initialRumbleStop=usb.Write(0,0x01,BuildRumble(0,0),1000);
@@ -170,11 +199,13 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
             counts.rumbleStopPending=true;
             if(initialRumbleStop.status==TransferStatus::DeviceNotPresent){
                 log.Event("unclean-session zero-rumble recovery deferred device_removed win32="+std::to_string(initialRumbleStop.win32Error));
-                counts.lost=true;
+                counts.lost=true;physicalDeviceRemovalObserved=true;
             }else{
+                if(initialRumbleStop.status==TransferStatus::Timeout)physicalTransportTimeoutObserved=true;
                 log.Event("unclean-session zero-rumble recovery failed win32="+std::to_string(initialRumbleStop.win32Error));
                 counts.rumbleRecoveryFailure=true;
             }
+            counts.physicalRecoveryNeeded=physicalTransportTimeoutObserved.load()&&!appStop.load();
             return counts;
         }
         counts.rumbleRecoveryCompleted=true;
@@ -224,6 +255,7 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     });
 
     int lastModifiers=-1;
+    bool recoveryQualified=false;
     auto readChatpadLoop=[&]{
         try {
             uint64_t nextMaintenance=GetTickCount64();
@@ -242,7 +274,7 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
                     if(result.status==TransferStatus::DeviceNotPresent)physicalDeviceRemovalObserved=true;
                     log.Event("Chatpad read lost win32="+std::to_string(result.win32Error));failure=1;break;
                 }
-                ++counts.chatpadPackets;
+                ++chatpadReportCount;
                 if(!maintenance.KeyDataAttempted()&&packet.size()==5){
                     if(!maintenance.OnCompletePacket(packet.size())){log.Event("strict key-data enable failed win32="+std::to_string(maintenance.LastResult().win32Error));failure=2;break;}
                     log.Event("Chatpad key-data enable 0x001B succeeded");
@@ -264,7 +296,11 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     };
     std::thread chatpadThread;
     chatpadThread=std::thread(readChatpadLoop);
-    while(!appStop.load()&&failure.load()==0&&!controllerPump.Failed())std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    while(!appStop.load()&&failure.load()==0&&!controllerPump.Failed()){
+        if(!recoveryQualified&&GetTickCount64()-sessionStartTick>=10000&&controllerPump.ReportCount()>=10&&
+            chatpadReportCount.load()>0&&!physicalTransportTimeoutObserved.load())recoveryQualified=true;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     if(controllerPump.Failed()&&failure.load()==0){
         log.Event("controller read lost win32="+std::to_string(controllerPump.FailureWin32()));failure=1;
     }
@@ -284,6 +320,7 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     if(virtualController)virtualController->SetRumbleCallback({});
     usb.Cancel();
     if(chatpadThread.joinable())chatpadThread.join();
+    counts.chatpadPackets=chatpadReportCount.load();
     const bool keysReleased=mapper.ForceRelease();if(!keysReleased)log.Event("keyboard forced release failed");
     bool virtualNeutral=true,virtualReleased=true;
     if(virtualController){
@@ -300,6 +337,10 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
         physicalDeviceRemovalObserved.load(),physicalTransportTimeoutObserved.load());
     counts.cleanupFailure=cleanupDisposition==SessionCleanupDisposition::Failed;
     counts.rumbleStopPending=!motorsStopped;
+    counts.physicalDeviceRemovalObserved=physicalDeviceRemovalObserved.load();
+    counts.physicalRecoveryNeeded=physicalTransportTimeoutObserved.load()&&!physicalDeviceRemovalObserved.load()&&
+        !counts.cleanupFailure&&!counts.backendFailure&&!appStop.load();
+    counts.recoveryQualified=recoveryQualified;
     if(!virtualNeutral)log.Event("virtual neutral cleanup failed");
     if(cleanupDisposition==SessionCleanupDisposition::DeviceRemoved)
         log.Event("zero-rumble cleanup deferred device_removed win32="+std::to_string(motorStop.win32Error));
@@ -416,6 +457,7 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     const auto processStart=Clock::now();
     RunnerLifecycle lifecycle;unsigned backoff=250;
     bool fatalBackendFailure=false;
+    bool physicalRestartAttempted=false;
     bool rumbleRecoveryPending=ShouldSendStartupZeroRumbleRecovery(uncleanPreviousSession);
     while(!stop.load()){
         WinUsbTransport transport;auto devices=transport.Enumerate();
@@ -436,6 +478,29 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         log.Event("state=ACTIVATING_CHATPAD");
         const auto session=RunSession(transport,options,stop,lifecycle,log,rumbleRecoveryPending);
         transport.Close();
+        if(session.recoveryQualified)physicalRestartAttempted=false;
+        const auto physicalRecovery=PlanPhysicalRecovery(session.physicalRecoveryNeeded,
+            session.physicalDeviceRemovalObserved,session.cleanupFailure,session.backendFailure,stop.load(),physicalRestartAttempted);
+        if(physicalRecovery==PhysicalRecoveryAction::StopAfterPriorAttempt){
+            markerCleanup.preserve=true;fatalBackendFailure=true;
+            log.Event("state=PHYSICAL_RECOVERY_CIRCUIT_OPEN; exact-target PnP restart was already attempted for this outage");
+            break;
+        }
+        if(physicalRecovery==PhysicalRecoveryAction::RestartExactTarget){
+            physicalRestartAttempted=true;
+            rumbleRecoveryPending=true;
+            VirtualBrokerController recovery;
+            if(!recovery.RecoverPhysicalDevice()){
+                fatalBackendFailure=true;
+                log.Event("state=PHYSICAL_RECOVERY_FAILED; exact-target broker restart failed: "+recovery.LastError());
+                break;
+            }
+            log.Event("physical recovery exact USB 045E:028E WinUSB target restarted by broker");
+            if(lifecycle.DeviceLost())log.Event("state=DEVICE_LOST reconnect_count="+std::to_string(lifecycle.ReconnectCount()));
+            lifecycle.BeginReconnect();log.Event("state=RECONNECTING physical_recovery=true backoff_ms="+std::to_string(backoff));
+            SleepBounded(stop,backoff);lifecycle.Retry();backoff=(std::min)(backoff*2,5000u);
+            continue;
+        }
         if(session.rumbleRecoveryFailure){
             markerCleanup.preserve=true;fatalBackendFailure=true;
             log.Event("state=PHYSICAL_OUTPUT_RECOVERY_FAILED; stopping without retrying the zero-rumble write");

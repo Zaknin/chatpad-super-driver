@@ -11,6 +11,25 @@ SessionCleanupDisposition ClassifySessionCleanup(
     const TransferResult& zeroRumbleStop,
     bool physicalDeviceRemovalObserved=false,
     bool physicalTransportTimeoutObserved=false);
+enum class PhysicalRecoveryAction : uint8_t { None, RestartExactTarget, StopAfterPriorAttempt };
+PhysicalRecoveryAction PlanPhysicalRecovery(
+    bool physicalTransportTimeoutObserved,
+    bool physicalDeviceRemovalObserved,
+    bool cleanupFailure,
+    bool backendFailure,
+    bool userStop,
+    bool restartAlreadyAttempted);
+bool IsPhysicalReadinessTimeoutCandidate(uint32_t timedOutReadCount, TransferStatus lastReadStatus, bool userStop);
+class PhysicalReadinessTracker final {
+public:
+    void Record(TransferStatus status);
+    uint32_t TimeoutCount() const;
+    TransferStatus LastStatus() const;
+    bool RecoveryCandidate(bool userStop) const;
+private:
+    uint32_t timeoutCount_{};
+    TransferStatus lastStatus_{TransferStatus::Error};
+};
 enum class RunnerState : uint8_t {
     WaitingForDevice, Opening, ActivatingChatpad, Running, DeviceLost, Reconnecting, Stopping
 };

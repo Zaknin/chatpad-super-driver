@@ -19,6 +19,30 @@ SessionCleanupDisposition ClassifySessionCleanup(
         return SessionCleanupDisposition::ReconnectAfterTransportTimeout;
     return SessionCleanupDisposition::Failed;
 }
+PhysicalRecoveryAction PlanPhysicalRecovery(
+    bool physicalTransportTimeoutObserved,
+    bool physicalDeviceRemovalObserved,
+    bool cleanupFailure,
+    bool backendFailure,
+    bool userStop,
+    bool restartAlreadyAttempted) {
+    if(!physicalTransportTimeoutObserved||physicalDeviceRemovalObserved||cleanupFailure||backendFailure||userStop)
+        return PhysicalRecoveryAction::None;
+    if(restartAlreadyAttempted)return PhysicalRecoveryAction::StopAfterPriorAttempt;
+    return PhysicalRecoveryAction::RestartExactTarget;
+}
+bool IsPhysicalReadinessTimeoutCandidate(uint32_t timedOutReadCount,TransferStatus lastReadStatus,bool userStop) {
+    return !userStop&&timedOutReadCount>0&&lastReadStatus==TransferStatus::Timeout;
+}
+void PhysicalReadinessTracker::Record(TransferStatus status) {
+    lastStatus_=status;
+    if(status==TransferStatus::Timeout)++timeoutCount_;
+}
+uint32_t PhysicalReadinessTracker::TimeoutCount() const { return timeoutCount_; }
+TransferStatus PhysicalReadinessTracker::LastStatus() const { return lastStatus_; }
+bool PhysicalReadinessTracker::RecoveryCandidate(bool userStop) const {
+    return IsPhysicalReadinessTimeoutCandidate(timeoutCount_,lastStatus_,userStop);
+}
 bool RunnerLifecycle::DeviceFound() {
     if(state_!=RunnerState::WaitingForDevice)return false;
     state_=RunnerState::Opening;return true;

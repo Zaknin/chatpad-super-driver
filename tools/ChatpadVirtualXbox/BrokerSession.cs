@@ -7,6 +7,7 @@ internal sealed class BrokerSession : IAsyncDisposable
 {
     private readonly Func<IVirtualXboxController> backendFactory;
     private readonly Func<string, CancellationToken, ValueTask> writeLine;
+    private readonly IPhysicalDeviceRecovery? physicalDeviceRecovery;
     private readonly Channel<string> output = Channel.CreateBounded<string>(new BoundedChannelOptions(32)
     {
         FullMode = BoundedChannelFullMode.Wait, SingleReader = true, SingleWriter = false
@@ -26,12 +27,15 @@ internal sealed class BrokerSession : IAsyncDisposable
     private int lastControlId = -1;
     private volatile bool connected;
     private bool backendCreated;
+    private bool physicalRecoveryAttempted;
     private bool disposed;
 
-    public BrokerSession(Func<IVirtualXboxController> backendFactory, Func<string, CancellationToken, ValueTask> writeLine)
+    public BrokerSession(Func<IVirtualXboxController> backendFactory, Func<string, CancellationToken, ValueTask> writeLine,
+        IPhysicalDeviceRecovery? physicalDeviceRecovery = null)
     {
         this.backendFactory = backendFactory;
         this.writeLine = writeLine;
+        this.physicalDeviceRecovery = physicalDeviceRecovery;
         outputPump = OutputLoopAsync();
         statePump = StateLoopAsync();
     }
@@ -68,6 +72,18 @@ internal sealed class BrokerSession : IAsyncDisposable
                     break;
                 case BrokerOperation.Destroy:
                     await DestroyAsync().ConfigureAwait(false);
+                    await QueueAsync(new { version = BrokerProtocol.Version, id = request.Id, ok = true }).ConfigureAwait(false);
+                    break;
+                case BrokerOperation.RecoverPhysical:
+                    if (connected || backend is not null || backendCreated)
+                        throw new BackendException("broker_physical_recovery_requires_destroy", "Destroy the virtual Xbox lease before physical-device recovery.");
+                    if (physicalDeviceRecovery is null)
+                        throw new BackendException("broker_physical_recovery_unavailable", "The fixed physical-device recovery operation is unavailable.");
+                    if (physicalRecoveryAttempted)
+                        throw new BackendException("broker_physical_recovery_already_attempted", "Only one fixed physical-device restart is allowed per broker connection.");
+                    physicalRecoveryAttempted = true;
+                    var recovery = await physicalDeviceRecovery.RestartExactTargetAsync(stopped.Token).ConfigureAwait(false);
+                    if (!recovery.Success) throw new BackendException(recovery.Code, recovery.Detail);
                     await QueueAsync(new { version = BrokerProtocol.Version, id = request.Id, ok = true }).ConfigureAwait(false);
                     break;
                 default:

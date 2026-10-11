@@ -41,6 +41,37 @@ int main(){
         "confirmed device removal defers a secondary bad-command rumble-stop error");
     Check(ClassifySessionCleanup(true,true,true,badCommand,false)==SessionCleanupDisposition::Failed,
         "bad-command rumble-stop error remains fatal without confirmed device removal");
+    Check(PlanPhysicalRecovery(true,false,false,false,false,false)==PhysicalRecoveryAction::RestartExactTarget,
+        "persistent physical transport timeout requests one fixed-target recovery");
+    Check(PlanPhysicalRecovery(false,false,false,false,false,false)==PhysicalRecoveryAction::None,
+        "ordinary interrupt read timeouts alone do not request PnP recovery");
+    Check(PlanPhysicalRecovery(true,true,false,false,false,false)==PhysicalRecoveryAction::None,
+        "confirmed device removal waits for replug instead of PnP restarting");
+    Check(PlanPhysicalRecovery(true,false,true,false,false,false)==PhysicalRecoveryAction::None,
+        "failed cleanup prevents physical PnP recovery");
+    Check(PlanPhysicalRecovery(true,false,false,true,false,false)==PhysicalRecoveryAction::None,
+        "virtual backend failure does not trigger physical PnP recovery");
+    Check(PlanPhysicalRecovery(true,false,false,false,true,false)==PhysicalRecoveryAction::None,
+        "user stop does not trigger physical PnP recovery");
+    Check(PlanPhysicalRecovery(true,false,false,false,false,true)==PhysicalRecoveryAction::StopAfterPriorAttempt,
+        "one failed recovery attempt opens a circuit breaker for the current outage");
+    Check(IsPhysicalReadinessTimeoutCandidate(10,TransferStatus::Timeout,false),
+        "bounded controller readiness timeouts qualify for exact-target recovery");
+    Check(!IsPhysicalReadinessTimeoutCandidate(0,TransferStatus::Timeout,false),
+        "status-only readiness deadline does not trigger physical restart");
+    Check(!IsPhysicalReadinessTimeoutCandidate(10,TransferStatus::Timeout,true),
+        "user stop during readiness never triggers physical restart");
+    Check(!IsPhysicalReadinessTimeoutCandidate(10,TransferStatus::DeviceNotPresent,false),
+        "confirmed physical removal waits for replug instead of restart");
+    PhysicalReadinessTracker readinessHistory;
+    readinessHistory.Record(TransferStatus::Timeout);
+    Check(readinessHistory.RecoveryCandidate(false),
+        "last completed WinUSB read timeout qualifies readiness recovery");
+    readinessHistory.Record(TransferStatus::Ok);
+    Check(!readinessHistory.RecoveryCandidate(false),
+        "successful status-packet read after timeout blocks readiness recovery");
+    Check(readinessHistory.TimeoutCount()==1&&readinessHistory.LastStatus()==TransferStatus::Ok,
+        "readiness tracker retains timeout count and most recent completion separately");
     RunnerLifecycle lifecycle;
     Check(lifecycle.State()==RunnerState::WaitingForDevice,"starts waiting for device");
     Check(lifecycle.DeviceFound()&&lifecycle.State()==RunnerState::Opening,"unplugged startup can discover device later");

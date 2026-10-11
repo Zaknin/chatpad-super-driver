@@ -53,7 +53,11 @@ void ControllerInputPump::Run(){
             ++diagnostics_.timeoutCompletions;
             diagnostics_.lastTimeoutWin32=result.win32Error;
             if(result.win32Error==1460)++diagnostics_.timeout1460Completions;
-            if(sink_&&std::chrono::steady_clock::now()-lastSubmission_>=std::chrono::seconds(1)&&!SubmitLocked(latest_))stopping_=true;
+            // A timeout is an empty interval on this interrupt endpoint, not
+            // evidence that the device was removed or the pipe stalled. Keep
+            // listening; only a non-timeout transfer failure ends the pump.
+            if(sink_&&std::chrono::steady_clock::now()-lastSubmission_>=std::chrono::seconds(1)&&
+                !SubmitLocked(latest_))stopping_=true;
             continue;
         }
         if(result.status!=TransferStatus::Ok){

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ChatpadVirtualXbox;
 
-internal enum BrokerOperation { Ping, Create, Destroy }
+internal enum BrokerOperation { Ping, Create, Destroy, RecoverPhysical }
 
 internal sealed record BrokerControlRequest(int Id, BrokerOperation Operation);
 internal sealed record BrokerStateFrame(ulong Sequence, XboxState State);
@@ -32,6 +32,7 @@ internal static class BrokerProtocol
             "ping" => BrokerOperation.Ping,
             "create" => BrokerOperation.Create,
             "destroy" => BrokerOperation.Destroy,
+            "recover-physical" => BrokerOperation.RecoverPhysical,
             _ => throw Invalid("Unknown broker control operation.")
         };
         return new BrokerControlRequest(id, parsed);

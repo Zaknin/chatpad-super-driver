@@ -45,6 +45,8 @@ public:
     VirtualBrokerController();
     ~VirtualBrokerController() override;
     bool Create() override;
+    // Uses the same authenticated service pipe to request its fixed, no-argument physical Xbox recovery operation.
+    bool RecoverPhysicalDevice();
     bool SubmitState(const XboxState&) override;
     void SetRumbleCallback(RumbleCallback) override;
     void Disconnect() override;

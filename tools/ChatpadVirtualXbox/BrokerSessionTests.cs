@@ -16,6 +16,26 @@ internal static class BrokerSessionTests
         string Destroy(int id) => $$"""{"version":1,"id":{{id}},"op":"destroy"}""";
         string State(ulong sequence, ushort buttons) => $$"""{"version":1,"sequence":{{sequence}},"op":"submit-state","buttons":{{buttons}},"leftTrigger":0,"rightTrigger":0,"lx":0,"ly":0,"rx":0,"ry":0}""";
 
+        Check("physical recovery control has no caller-selected target", () => Task.FromResult(
+            BrokerProtocol.ParseControlRequest("{\"version\":1,\"id\":1,\"op\":\"recover-physical\"}").Operation.ToString() == "RecoverPhysical" &&
+            RejectsControlTarget("{\"version\":1,\"id\":1,\"op\":\"recover-physical\",\"instanceId\":\"USB\\\\VID_045E&PID_028E\\\\anything\"}"))
+        ).GetAwaiter().GetResult();
+        Check("physical recovery identity accepts only exact WinUSB Xbox candidates", () => Task.FromResult(
+            PhysicalDeviceIdentity.IsExactWinUsbTarget(new("USB\\VID_045E&PID_028E\\SERIAL", "WinUSB", new[] { "USB\\VID_045E&PID_028E&REV_0114" }, 1)) &&
+            !PhysicalDeviceIdentity.IsExactWinUsbTarget(new("USB\\VID_045E&PID_028F\\SERIAL", "WinUSB", new[] { "USB\\VID_045E&PID_028F" }, 1)) &&
+            !PhysicalDeviceIdentity.IsExactWinUsbTarget(new("USB\\VID_045E&PID_028E\\SERIAL", "HidUsb", new[] { "USB\\VID_045E&PID_028E" }, 1)) &&
+            !PhysicalDeviceIdentity.IsExactWinUsbTarget(new("USB\\VID_045E&PID_028E\\SERIAL", "WinUSB", new[] { "USB\\VID_045E&PID_028EFAKE" }, 1)) &&
+            !PhysicalDeviceIdentity.IsExactWinUsbTarget(new("USB\\VID_045E&PID_028E\\SERIAL", "WinUSB", new[] { "USB\\VID_0000&PID_0000" }, 1)))
+        ).GetAwaiter().GetResult();
+        Check("physical recovery requires exactly one matching candidate", () => Task.FromResult(
+            PhysicalDeviceIdentity.UniqueTargetError(Array.Empty<PhysicalDeviceCandidate>()) == "broker_physical_target_not_found" &&
+            PhysicalDeviceIdentity.UniqueTargetError(new[] { new PhysicalDeviceCandidate("USB\\VID_045E&PID_028E\\SERIAL", "WinUSB", new[] { "USB\\VID_045E&PID_028E" }, 1) }).Length == 0 &&
+            PhysicalDeviceIdentity.UniqueTargetError(new[] {
+                new PhysicalDeviceCandidate("USB\\VID_045E&PID_028E\\ONE", "WinUSB", new[] { "USB\\VID_045E&PID_028E" }, 1),
+                new PhysicalDeviceCandidate("USB\\VID_045E&PID_028E\\TWO", "WinUSB", new[] { "USB\\VID_045E&PID_028E" }, 2)
+            }) == "broker_physical_target_ambiguous")
+        ).GetAwaiter().GetResult();
+
         Check("broker ping does not construct backend", async () =>
         {
             int factories = 0;
@@ -24,6 +44,38 @@ internal static class BrokerSessionTests
             await session.HandleLineAsync(Ping(1));
             await SpinWaitAsync(() => { lock (output) return output.Any(line => line.Contains("\"id\":1") && line.Contains("\"ok\":true")); });
             return factories == 0 && output.Any(line => line.Contains("\"id\":1") && line.Contains("\"ok\":true"));
+        }).GetAwaiter().GetResult();
+        Check("physical recovery runs only on an empty broker lease", async () =>
+        {
+            int recoveries = 0;
+            var output = new List<string>();
+            var recovery = new MockPhysicalDeviceRecovery(() => { recoveries++; return new(true, "", ""); });
+            await using var session = new BrokerSession(() => new MockBackend(), (line, _) => { lock (output) output.Add(line); return ValueTask.CompletedTask; }, recovery);
+            await session.HandleLineAsync("{\"version\":1,\"id\":1,\"op\":\"recover-physical\"}");
+            await SpinWaitAsync(() => { lock (output) return output.Any(line => line.Contains("\"id\":1") && line.Contains("\"ok\":true")); });
+            bool repeatedRejected = false;
+            try { await session.HandleLineAsync("{\"version\":1,\"id\":2,\"op\":\"recover-physical\"}"); }
+            catch (BackendException e) { repeatedRejected = e.Code == "broker_physical_recovery_already_attempted"; }
+            return recoveries == 1 && repeatedRejected && output.Any(line => line.Contains("\"id\":1") && line.Contains("\"ok\":true"));
+        }).GetAwaiter().GetResult();
+        Check("physical recovery cannot run while the virtual lease exists", async () =>
+        {
+            int recoveries = 0;
+            var backend = new MockBackend();
+            var recovery = new MockPhysicalDeviceRecovery(() => { recoveries++; return new(true, "", ""); });
+            await using var session = new BrokerSession(() => backend, (_, _) => ValueTask.CompletedTask, recovery);
+            await session.HandleLineAsync(Create(1));
+            bool rejected = false;
+            try { await session.HandleLineAsync("{\"version\":1,\"id\":2,\"op\":\"recover-physical\"}"); }
+            catch (BackendException e) { rejected = e.Code == "broker_physical_recovery_requires_destroy"; }
+            return rejected && recoveries == 0 && backend.Connected;
+        }).GetAwaiter().GetResult();
+        Check("failed physical recovery stays a visible failure", async () =>
+        {
+            var recovery = new MockPhysicalDeviceRecovery(() => new(false, "broker_physical_recovery_failed", "test failure"));
+            await using var session = new BrokerSession(() => new MockBackend(), (_, _) => ValueTask.CompletedTask, recovery);
+            try { await session.HandleLineAsync("{\"version\":1,\"id\":1,\"op\":\"recover-physical\"}"); return false; }
+            catch (BackendException e) { return e.Code == "broker_physical_recovery_failed"; }
         }).GetAwaiter().GetResult();
         Check("broker create owns one backend and destroy is idempotent", async () =>
         {
@@ -121,6 +173,12 @@ internal static class BrokerSessionTests
         }
     }
 
+    private static bool RejectsControlTarget(string request)
+    {
+        try { BrokerProtocol.ParseControlRequest(request); return false; }
+        catch (BackendException e) { return e.Code == "broker_protocol_error"; }
+    }
+
     private sealed class BlockingBackend : IVirtualXboxController
     {
         private readonly MockBackend inner = new();
@@ -143,6 +201,11 @@ internal static class BrokerSessionTests
         public void SetRumbleCallback(Action<Rumble> callback) => inner.SetRumbleCallback(callback);
         public void Disconnect() => inner.Disconnect();
         public void Dispose() { ReleaseFirstSubmit.Set(); inner.Dispose(); }
+    }
+
+    private sealed class MockPhysicalDeviceRecovery(Func<PhysicalDeviceRecoveryResult> result) : IPhysicalDeviceRecovery
+    {
+        public Task<PhysicalDeviceRecoveryResult> RestartExactTargetAsync(CancellationToken stopping) => Task.FromResult(result());
     }
 
     private sealed class FailingCreateBackend : IVirtualXboxController

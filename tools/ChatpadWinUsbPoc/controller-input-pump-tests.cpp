@@ -83,6 +83,18 @@ int main(){
         "pump diagnostics retain status and invalid packet classifications");
     check(diagnostics.timeoutCompletions>=1&&diagnostics.timeout1460Completions>=1,
         "pump diagnostics retain Win32 1460 timeout completions");
+    QueuedTransport idleTransport;
+    ControllerInputPump idlePump(idleTransport,{});
+    check(idlePump.Start(),"controller pump starts for an idle report interval");
+    check(WaitUntil([&]{return idlePump.Diagnostics().timeout1460Completions>=20;}),
+        "idle input can produce more than the former reset-and-fail threshold of Win32 1460 timeouts");
+    check(!idlePump.Failed(),"ordinary consecutive Win32 1460 idle timeouts do not mark the controller lost");
+    check(idlePump.Diagnostics().timeout1460Completions>=20,
+        "idle timeout diagnostics continue counting while the pump remains active");
+    idleTransport.Push(0x1000);
+    check(WaitUntil([&]{return idlePump.ReportCount()==1;}),
+        "controller input resumes normally after a long idle timeout interval");
+    idlePump.Stop();
     QueuedTransport removedTransport;ControllerInputPump removedPump(removedTransport,{});
     removedTransport.FailNextRead({TransferStatus::DeviceNotPresent,433,0});
     check(removedPump.Start(),"controller pump starts for device-removal status capture");

@@ -22,6 +22,7 @@ constexpr uint32_t MaximumFrameBytes = 4096;
 constexpr uint32_t RequestTimeoutMs = 5000;
 constexpr uint32_t CreateTimeoutMs = 30000;
 constexpr uint32_t DestroyTimeoutMs = 30000;
+constexpr uint32_t PhysicalRecoveryTimeoutMs = 25000;
 
 struct JsonValue {
     enum class Kind { String, Number, Boolean } kind{Kind::String};
@@ -444,6 +445,23 @@ struct VirtualBrokerController::Impl {
         created = true; connected = true; return true;
     }
 
+    bool RecoverPhysicalDevice() {
+        if (pipe != INVALID_HANDLE_VALUE || connected.load() || created.load()) {
+            Fail("broker_physical_recovery_client_not_idle"); return false;
+        }
+        failed = false; stopping = false; created = false; nextControlId = 1;
+        { std::lock_guard<std::mutex> lock(errorMutex); error.clear(); }
+        states.Reset();
+        { std::lock_guard<std::mutex> lock(outputMutex); controlQueue.clear(); }
+        if (!OpenPipe()) { StopTransport(); return false; }
+        writer = std::thread([this] { WriterLoop(); }); reader = std::thread([this] { ReaderLoop(); });
+        if (!Request("ping", RequestTimeoutMs) || !Request("recover-physical", PhysicalRecoveryTimeoutMs)) {
+            StopTransport(); return false;
+        }
+        StopTransport();
+        return true;
+    }
+
     bool Submit(const XboxState& state) {
         if (!connected.load() || !created.load() || failed.load()) return false;
         BrokerStateFrame published{};
@@ -465,6 +483,7 @@ struct VirtualBrokerController::Impl {
 VirtualBrokerController::VirtualBrokerController() : impl_(std::make_unique<Impl>()) {}
 VirtualBrokerController::~VirtualBrokerController() { Disconnect(); }
 bool VirtualBrokerController::Create() { return impl_->Create(); }
+bool VirtualBrokerController::RecoverPhysicalDevice() { return impl_->RecoverPhysicalDevice(); }
 bool VirtualBrokerController::SubmitState(const XboxState& state) { return impl_->Submit(state); }
 void VirtualBrokerController::SetRumbleCallback(RumbleCallback callback) { std::lock_guard<std::mutex> lock(impl_->callbackMutex); impl_->callback = std::move(callback); }
 void VirtualBrokerController::Disconnect() { impl_->Disconnect(); }
