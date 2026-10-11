@@ -8,6 +8,7 @@ internal sealed class BrokerSession : IAsyncDisposable
     private readonly Func<IVirtualXboxController> backendFactory;
     private readonly Func<string, CancellationToken, ValueTask> writeLine;
     private readonly IPhysicalDeviceRecovery? physicalDeviceRecovery;
+    private readonly BrokerPowerEpochTracker powerEpoch;
     private readonly Channel<string> output = Channel.CreateBounded<string>(new BoundedChannelOptions(32)
     {
         FullMode = BoundedChannelFullMode.Wait, SingleReader = true, SingleWriter = false
@@ -27,15 +28,16 @@ internal sealed class BrokerSession : IAsyncDisposable
     private int lastControlId = -1;
     private volatile bool connected;
     private bool backendCreated;
-    private bool physicalRecoveryAttempted;
     private bool disposed;
 
     public BrokerSession(Func<IVirtualXboxController> backendFactory, Func<string, CancellationToken, ValueTask> writeLine,
-        IPhysicalDeviceRecovery? physicalDeviceRecovery = null)
+        IPhysicalDeviceRecovery? physicalDeviceRecovery = null, BrokerPowerEpochTracker? powerEpoch = null)
     {
         this.backendFactory = backendFactory;
         this.writeLine = writeLine;
         this.physicalDeviceRecovery = physicalDeviceRecovery;
+        this.powerEpoch = powerEpoch ?? new BrokerPowerEpochTracker();
+        this.powerEpoch.Resumed += OnPowerResumed;
         outputPump = OutputLoopAsync();
         statePump = StateLoopAsync();
     }
@@ -65,7 +67,7 @@ internal sealed class BrokerSession : IAsyncDisposable
             switch (request.Operation)
             {
                 case BrokerOperation.Ping:
-                    await QueueAsync(new { version = BrokerProtocol.Version, id = request.Id, ok = true }).ConfigureAwait(false);
+                    await QueueAsync(new { version = BrokerProtocol.Version, id = request.Id, ok = true, resumeEpoch = powerEpoch.CurrentEpoch }).ConfigureAwait(false);
                     break;
                 case BrokerOperation.Create:
                     await CreateAsync(request.Id).ConfigureAwait(false);
@@ -79,9 +81,8 @@ internal sealed class BrokerSession : IAsyncDisposable
                         throw new BackendException("broker_physical_recovery_requires_destroy", "Destroy the virtual Xbox lease before physical-device recovery.");
                     if (physicalDeviceRecovery is null)
                         throw new BackendException("broker_physical_recovery_unavailable", "The fixed physical-device recovery operation is unavailable.");
-                    if (physicalRecoveryAttempted)
-                        throw new BackendException("broker_physical_recovery_already_attempted", "Only one fixed physical-device restart is allowed per broker connection.");
-                    physicalRecoveryAttempted = true;
+                    if (!powerEpoch.TryClaimPhysicalRecovery())
+                        throw new BackendException("broker_physical_recovery_already_attempted", "Only one fixed physical-device restart is allowed per resume epoch.");
                     var recovery = await physicalDeviceRecovery.RestartExactTargetAsync(stopped.Token).ConfigureAwait(false);
                     if (!recovery.Success) throw new BackendException(recovery.Code, recovery.Detail);
                     await QueueAsync(new { version = BrokerProtocol.Version, id = request.Id, ok = true }).ConfigureAwait(false);
@@ -160,6 +161,14 @@ internal sealed class BrokerSession : IAsyncDisposable
             SignalFault(new BackendException("broker_output_backpressure", "Bounded rumble/control output queue is full."));
     }
 
+    private void OnPowerResumed(ulong epoch)
+    {
+        if (stopped.IsCancellationRequested) return;
+        string frame = JsonSerializer.Serialize(new { version = BrokerProtocol.Version, op = "power-resume", epoch });
+        if (!output.Writer.TryWrite(frame))
+            SignalFault(new BackendException("broker_output_backpressure", "Bounded power/control output queue is full."));
+    }
+
     private async Task StateLoopAsync()
     {
         try
@@ -212,6 +221,7 @@ internal sealed class BrokerSession : IAsyncDisposable
     {
         if (disposed) return;
         disposed = true;
+        powerEpoch.Resumed -= OnPowerResumed;
         connected = false;
         stopped.Cancel();
         states.Writer.TryComplete();

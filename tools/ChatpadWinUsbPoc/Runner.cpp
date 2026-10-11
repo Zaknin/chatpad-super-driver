@@ -156,8 +156,8 @@ InitialReadinessResult WaitController(WinUsbTransport& usb,const std::atomic<boo
     }
     return InitialReadinessResult::Stopped;
 }
-struct SessionResult { bool lost{},backendFailure{},cleanupFailure{},rumbleRecoveryCompleted{},rumbleRecoveryFailure{},rumbleStopPending{},physicalRecoveryNeeded{},physicalDeviceRemovalObserved{},recoveryQualified{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{}; };
-SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log,bool rumbleRecoveryPending) {
+struct SessionResult { bool lost{},backendFailure{},cleanupFailure{},rumbleRecoveryCompleted{},rumbleRecoveryFailure{},rumbleStopPending{},physicalRecoveryNeeded{},physicalDeviceRemovalObserved{},recoveryQualified{},resumeDetected{};unsigned controllerPackets{},chatpadPackets{},virtualSubmissions{};uint64_t elapsedMs{},resumeEpoch{}; };
+SessionResult RunSession(WinUsbTransport& usb,VirtualBrokerController& broker,uint64_t sessionEpoch,const RunnerOptions& options,const std::atomic<bool>& appStop,RunnerLifecycle& lifecycle,Log& log,bool rumbleRecoveryPending) {
     const auto sessionStart=Clock::now();
     const auto sessionStartTick=GetTickCount64();
     SessionResult counts;std::atomic<bool> sessionStop{false};std::atomic<bool> physicalDeviceRemovalObserved{false};
@@ -165,6 +165,7 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     std::atomic<bool> physicalTransportTimeoutObserved{false};std::atomic<int> failure{0};
     XboxState initial{};
     const auto readinessResult=WaitController(usb,appStop,initial,log);
+    if(broker.ResumeEpoch()>sessionEpoch){SessionResult result;result.resumeDetected=true;result.resumeEpoch=broker.ResumeEpoch();return result;}
     if(readinessResult!=InitialReadinessResult::Ready){
         SessionResult result;
         result.lost=readinessResult!=InitialReadinessResult::Stopped;
@@ -214,21 +215,21 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
         log.Event("startup zero-rumble recovery skipped previous_session_clean=true");
     }
 
-    std::unique_ptr<VirtualBrokerController> virtualController;
+    bool brokerCreated=false;
     if(options.virtualController){
-        virtualController=std::make_unique<VirtualBrokerController>();
-        if(!virtualController->Create()){
-            log.Event("HIDMaestro broker create failed: "+virtualController->LastError());
+        if(!broker.Create()){
+            log.Event("HIDMaestro broker create failed: "+broker.LastError());
             counts.backendFailure=true;return counts;
         }
+        brokerCreated=true;
         if(!controllerPump.SetStateSink([&](const XboxState& state){
-            if(!virtualController->SubmitState(state)){
-                log.Event("virtual state submit failed: "+virtualController->LastError());failure=3;return false;
+            if(!broker.SubmitState(state)){
+                log.Event("virtual state submit failed: "+broker.LastError());failure=3;return false;
             }
             return true;
         })){
-            log.Event("initial neutral/controller submission failed: "+virtualController->LastError());
-            virtualController->Disconnect();return {true};
+            log.Event("initial neutral/controller submission failed: "+broker.LastError());
+            (void)broker.Destroy();return {true};
         }
         log.Event("virtual Xbox created and initial controller state submitted");
     }
@@ -237,7 +238,7 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     IKeyboardOutput& selectedOutput=options.keyboard?static_cast<IKeyboardOutput&>(keyboardOutput):static_cast<IKeyboardOutput&>(monitor);
     KeyboardMapper mapper(selectedOutput);
     std::mutex motorMutex;bool motorAvailable=true;bool rumbleOutputActive=false;
-    if(virtualController)virtualController->SetRumbleCallback([&](uint16_t left,uint16_t right){
+    if(brokerCreated)broker.SetRumbleCallback([&](uint16_t left,uint16_t right){
         std::lock_guard<std::mutex> guard(motorMutex);
         if(!motorAvailable||sessionStop.load())return;
         const auto result=usb.Write(0,0x01,BuildRumble(left,right),1000);
@@ -296,11 +297,12 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
     };
     std::thread chatpadThread;
     chatpadThread=std::thread(readChatpadLoop);
-    while(!appStop.load()&&failure.load()==0&&!controllerPump.Failed()){
+    while(!appStop.load()&&failure.load()==0&&!controllerPump.Failed()&&broker.ResumeEpoch()<=sessionEpoch){
         if(!recoveryQualified&&GetTickCount64()-sessionStartTick>=10000&&controllerPump.ReportCount()>=10&&
             chatpadReportCount.load()>0&&!physicalTransportTimeoutObserved.load())recoveryQualified=true;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+    if(broker.ResumeEpoch()>sessionEpoch){counts.resumeDetected=true;counts.resumeEpoch=broker.ResumeEpoch();log.Event("state=RESUME_DETECTED epoch="+std::to_string(counts.resumeEpoch));}
     if(controllerPump.Failed()&&failure.load()==0){
         log.Event("controller read lost win32="+std::to_string(controllerPump.FailureWin32()));failure=1;
     }
@@ -317,17 +319,19 @@ SessionResult RunSession(WinUsbTransport& usb,const RunnerOptions& options,const
         motorAvailable=false;
         motorStop=usb.Write(0,0x01,BuildRumble(0,0),1000);
     }
-    if(virtualController)virtualController->SetRumbleCallback({});
+    if(motorStop.status==TransferStatus::Timeout)physicalTransportTimeoutObserved=true;
+    if(brokerCreated)broker.SetRumbleCallback({});
     usb.Cancel();
     if(chatpadThread.joinable())chatpadThread.join();
     counts.chatpadPackets=chatpadReportCount.load();
     const bool keysReleased=mapper.ForceRelease();if(!keysReleased)log.Event("keyboard forced release failed");
     bool virtualNeutral=true,virtualReleased=true;
-    if(virtualController){
-        virtualNeutral=virtualController->SubmitState({});
-        virtualController->Disconnect();
-        const auto brokerError=virtualController->LastError();
-        virtualReleased=brokerError.empty();
+    if(brokerCreated){
+        virtualReleased=broker.Destroy();
+        // The broker's destroy operation submits neutral state before releasing
+        // the HIDMaestro backend; it is ordered with lifecycle control messages.
+        virtualNeutral=virtualReleased;
+        const auto brokerError=broker.LastError();
         if(!virtualReleased)log.Event("virtual broker cleanup failed: "+brokerError);
     }
     // WinUSB may already be gone; still send one bounded zero command while the
@@ -437,6 +441,10 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     if(!processMutex){log.Event("single_instance_mutex_failed win32="+std::to_string(GetLastError()));return 2;}
     if(GetLastError()==ERROR_ALREADY_EXISTS){CloseHandle(processMutex);log.Event("BLOCKED: another ChatpadBridge run session is already active");return 5;}
     struct MutexCleanup {HANDLE handle;~MutexCleanup(){if(handle)CloseHandle(handle);}} mutexCleanup{processMutex};
+    HANDLE stopEvent=CreateEventW(nullptr,TRUE,FALSE,L"Local\\ChatpadBridge.Stop.v1");
+    if(!stopEvent){log.Event("runner stop event creation failed win32="+std::to_string(GetLastError()));return 2;}
+    std::thread stopWatcher([&stop,stopEvent]{if(WaitForSingleObject(stopEvent,INFINITE)==WAIT_OBJECT_0)stop=true;});
+    struct StopWatcherCleanup {HANDLE event;std::thread& thread;~StopWatcherCleanup(){SetEvent(event);if(thread.joinable())thread.join();CloseHandle(event);}} stopWatcherCleanup{stopEvent,stopWatcher};
     log.Event("application_start version=1.0.0 mode=run elevation=not_required_by_runner session=foreground");
     const auto marker=log.directory/L"session.active.json";std::error_code markerError;
     const bool uncleanPreviousSession=std::filesystem::exists(marker,markerError);
@@ -456,10 +464,36 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
     FILETIME startCreate{},startExit{},startKernel{},startUser{};GetProcessTimes(GetCurrentProcess(),&startCreate,&startExit,&startKernel,&startUser);
     const auto processStart=Clock::now();
     RunnerLifecycle lifecycle;unsigned backoff=250;
+    VirtualBrokerController broker;
+    RecoveryEpochGate recoveryEpoch;
     bool fatalBackendFailure=false;
-    bool physicalRestartAttempted=false;
+    bool wakePending=false,waitForNextEpoch=false;
     bool rumbleRecoveryPending=ShouldSendStartupZeroRumbleRecovery(uncleanPreviousSession);
     while(!stop.load()){
+        if(!broker.ConnectForNotifications()){
+            log.Event("state=WAITING_FOR_BROKER detail="+broker.LastError());
+            SleepBounded(stop,5000);continue;
+        }
+        const uint64_t brokerEpoch=broker.ResumeEpoch();
+        if(recoveryEpoch.ObserveEpoch(brokerEpoch)){
+            wakePending=true;waitForNextEpoch=false;rumbleRecoveryPending=true;backoff=250;
+            log.Event("state=RESUME_EPOCH epoch="+std::to_string(brokerEpoch));
+            if(lifecycle.State()==RunnerState::WaitingForRecovery)(void)lifecycle.ResumeRecovery();
+        }
+        if(waitForNextEpoch){
+            (void)lifecycle.WaitForRecovery();
+            log.Event("state=WAITING_FOR_RECOVERY epoch="+std::to_string(recoveryEpoch.CurrentEpoch())+
+                " physical_handle=closed virtual_controller=absent");
+            uint64_t observed{};
+            if(broker.WaitForResume(recoveryEpoch.CurrentEpoch(),1000,observed)){
+                if(recoveryEpoch.ObserveEpoch(observed)){
+                    wakePending=true;waitForNextEpoch=false;rumbleRecoveryPending=true;backoff=250;
+                    (void)lifecycle.ResumeRecovery();
+                    log.Event("state=RESUME_EPOCH epoch="+std::to_string(observed));
+                }
+            }
+            continue;
+        }
         WinUsbTransport transport;auto devices=transport.Enumerate();
         if(!options.instanceId.empty())devices.erase(std::remove_if(devices.begin(),devices.end(),[&](const auto& d){return d.instanceId!=options.instanceId;}),devices.end());
         if(devices.size()!=1){
@@ -476,29 +510,44 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         }
         backoff=250;lifecycle.Opened();log.Event("WinUSB open PASS interface_topology=qualified");
         log.Event("state=ACTIVATING_CHATPAD");
-        const auto session=RunSession(transport,options,stop,lifecycle,log,rumbleRecoveryPending);
+        const uint64_t sessionEpoch=broker.ResumeEpoch();
+        const auto session=RunSession(transport,broker,sessionEpoch,options,stop,lifecycle,log,rumbleRecoveryPending);
         transport.Close();
-        if(session.recoveryQualified)physicalRestartAttempted=false;
+        if(session.resumeDetected){
+            if(recoveryEpoch.ObserveEpoch(session.resumeEpoch)){
+                wakePending=true;waitForNextEpoch=false;rumbleRecoveryPending=true;backoff=250;
+                log.Event("state=RESUME_EPOCH epoch="+std::to_string(session.resumeEpoch));
+            }
+            if(lifecycle.DeviceLost())log.Event("state=DEVICE_LOST reconnect_count="+std::to_string(lifecycle.ReconnectCount()));
+            (void)lifecycle.BeginReconnect();(void)lifecycle.Retry();
+            log.Event("state=RECONNECTING reason=resume backoff_ms=0");
+            continue;
+        }
+        if(session.recoveryQualified){wakePending=false;waitForNextEpoch=false;log.Event("resume recovery qualified with changing controller reports");}
         const auto physicalRecovery=PlanPhysicalRecovery(session.physicalRecoveryNeeded,
-            session.physicalDeviceRemovalObserved,session.cleanupFailure,session.backendFailure,stop.load(),physicalRestartAttempted);
-        if(physicalRecovery==PhysicalRecoveryAction::StopAfterPriorAttempt){
-            markerCleanup.preserve=true;fatalBackendFailure=true;
-            log.Event("state=PHYSICAL_RECOVERY_CIRCUIT_OPEN; exact-target PnP restart was already attempted for this outage");
-            break;
+            session.physicalDeviceRemovalObserved,session.cleanupFailure,session.backendFailure,stop.load(),recoveryEpoch.RecoveryAttempted());
+        if(physicalRecovery==PhysicalRecoveryAction::WaitForRecovery){
+            waitForNextEpoch=true;
+            log.Event("state=PHYSICAL_RECOVERY_CIRCUIT_OPEN; waiting for a new broker resume epoch");
+            continue;
         }
         if(physicalRecovery==PhysicalRecoveryAction::RestartExactTarget){
-            physicalRestartAttempted=true;
+            recoveryEpoch.MarkRecoveryAttempted();
             rumbleRecoveryPending=true;
-            VirtualBrokerController recovery;
-            if(!recovery.RecoverPhysicalDevice()){
-                fatalBackendFailure=true;
-                log.Event("state=PHYSICAL_RECOVERY_FAILED; exact-target broker restart failed: "+recovery.LastError());
-                break;
+            if(!broker.RecoverPhysicalDevice()){
+                waitForNextEpoch=true;
+                log.Event("state=PHYSICAL_RECOVERY_FAILED; quiet wait for next resume epoch: "+broker.LastError());
+                continue;
             }
             log.Event("physical recovery exact USB 045E:028E WinUSB target restarted by broker");
             if(lifecycle.DeviceLost())log.Event("state=DEVICE_LOST reconnect_count="+std::to_string(lifecycle.ReconnectCount()));
             lifecycle.BeginReconnect();log.Event("state=RECONNECTING physical_recovery=true backoff_ms="+std::to_string(backoff));
             SleepBounded(stop,backoff);lifecycle.Retry();backoff=(std::min)(backoff*2,5000u);
+            continue;
+        }
+        if(wakePending&&!session.recoveryQualified&&!session.cleanupFailure&&!session.backendFailure&&!stop.load()){
+            waitForNextEpoch=true;
+            log.Event("state=WAITING_FOR_RECOVERY; bounded post-resume readiness did not produce changing controller reports");
             continue;
         }
         if(session.rumbleRecoveryFailure){
@@ -525,6 +574,7 @@ int RunUserModeBridge(const std::string& command,const RunnerOptions& options,st
         SleepBounded(stop,backoff);lifecycle.Retry();backoff=(std::min)(backoff*2,5000u);
     }
     if(rumbleRecoveryPending)markerCleanup.preserve=true;
+    broker.Disconnect();
     lifecycle.Stop();
     PROCESS_MEMORY_COUNTERS_EX memory{};memory.cb=sizeof(memory);GetProcessMemoryInfo(GetCurrentProcess(),reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&memory),sizeof(memory));
     FILETIME endCreate{},endExit{},endKernel{},endUser{};GetProcessTimes(GetCurrentProcess(),&endCreate,&endExit,&endKernel,&endUser);

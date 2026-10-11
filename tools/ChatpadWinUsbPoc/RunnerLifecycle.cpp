@@ -28,8 +28,23 @@ PhysicalRecoveryAction PlanPhysicalRecovery(
     bool restartAlreadyAttempted) {
     if(!physicalTransportTimeoutObserved||physicalDeviceRemovalObserved||cleanupFailure||backendFailure||userStop)
         return PhysicalRecoveryAction::None;
-    if(restartAlreadyAttempted)return PhysicalRecoveryAction::StopAfterPriorAttempt;
+    if(restartAlreadyAttempted)return PhysicalRecoveryAction::WaitForRecovery;
     return PhysicalRecoveryAction::RestartExactTarget;
+}
+bool RecoveryEpochGate::ObserveEpoch(uint64_t epoch) {
+    if (!initialized_) {
+        initialized_ = true;
+        currentEpoch_ = epoch;
+        recoveryAttempted_ = false;
+        // The broker retains its resume epoch even when no client is connected.
+        // A runner launched after wake must therefore treat a nonzero initial
+        // value as a new recovery trigger rather than as an already-seen baseline.
+        return epoch != 0;
+    }
+    if (epoch <= currentEpoch_) return false;
+    currentEpoch_ = epoch;
+    recoveryAttempted_ = false;
+    return true;
 }
 bool IsPhysicalReadinessTimeoutCandidate(uint32_t timedOutReadCount,TransferStatus lastReadStatus,bool userStop) {
     return !userStop&&timedOutReadCount>0&&lastReadStatus==TransferStatus::Timeout;
@@ -70,6 +85,16 @@ bool RunnerLifecycle::BeginReconnect() {
 bool RunnerLifecycle::Retry() {
     if(state_!=RunnerState::Reconnecting)return false;
     state_=RunnerState::WaitingForDevice;return true;
+}
+bool RunnerLifecycle::WaitForRecovery() {
+    if (state_ == RunnerState::Stopping) return false;
+    state_ = RunnerState::WaitingForRecovery;
+    return true;
+}
+bool RunnerLifecycle::ResumeRecovery() {
+    if (state_ != RunnerState::WaitingForRecovery) return false;
+    state_ = RunnerState::WaitingForDevice;
+    return true;
 }
 void RunnerLifecycle::Stop(){state_=RunnerState::Stopping;}
 }

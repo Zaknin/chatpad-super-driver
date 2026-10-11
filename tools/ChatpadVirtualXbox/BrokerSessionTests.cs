@@ -60,6 +60,47 @@ internal static class BrokerSessionTests
             catch (BackendException e) { repeatedRejected = e.Code == "broker_physical_recovery_already_attempted"; }
             return recoveries == 1 && repeatedRejected && output.Any(line => line.Contains("\"id\":1") && line.Contains("\"ok\":true"));
         }).GetAwaiter().GetResult();
+        Check("broker session reports the retained resume epoch and receives live resume events", async () =>
+        {
+            var power = new BrokerPowerEpochTracker();
+            var output = new List<string>();
+            await using var session = new BrokerSession(() => new MockBackend(), (line, _) => { lock (output) output.Add(line); return ValueTask.CompletedTask; }, powerEpoch: power);
+            await session.HandleLineAsync(Ping(1));
+            await SpinWaitAsync(() => { lock (output) return output.Count >= 1; });
+            power.Observe(BrokerPowerEpochTracker.SuspendEvent, 1000);
+            power.Observe(BrokerPowerEpochTracker.ResumeAutomaticEvent, 2000);
+            await SpinWaitAsync(() => { lock (output) return output.Any(line => line.Contains("power-resume") && line.Contains("\"epoch\":1")); });
+            lock (output)
+                return output.Any(line => line.Contains("\"resumeEpoch\":0")) && output.Any(line => line.Contains("power-resume") && line.Contains("\"epoch\":1"));
+        }).GetAwaiter().GetResult();
+        Check("broker ping recovers a resume epoch after the runner was disconnected during wake", async () =>
+        {
+            var power = new BrokerPowerEpochTracker();
+            power.Observe(BrokerPowerEpochTracker.SuspendEvent, 1000);
+            power.Observe(BrokerPowerEpochTracker.ResumeSuspendEvent, 2000);
+            var output = new List<string>();
+            await using var session = new BrokerSession(() => new MockBackend(), (line, _) => { lock (output) output.Add(line); return ValueTask.CompletedTask; }, powerEpoch: power);
+            await session.HandleLineAsync(Ping(1));
+            await SpinWaitAsync(() => { lock (output) return output.Any(line => line.Contains("\"resumeEpoch\":1")); });
+            lock (output) return output.Any(line => line.Contains("\"resumeEpoch\":1"));
+        }).GetAwaiter().GetResult();
+        Check("physical recovery circuit resets for a new broker-wide resume epoch", async () =>
+        {
+            int recoveries = 0;
+            var power = new BrokerPowerEpochTracker();
+            var recovery = new MockPhysicalDeviceRecovery(() => { recoveries++; return new(true, "", ""); });
+            await using var first = new BrokerSession(() => new MockBackend(), (_, _) => ValueTask.CompletedTask, recovery, power);
+            await first.HandleLineAsync("{\"version\":1,\"id\":1,\"op\":\"recover-physical\"}");
+            await first.StopAsync();
+            await using var second = new BrokerSession(() => new MockBackend(), (_, _) => ValueTask.CompletedTask, recovery, power);
+            bool sameEpochRejected = false;
+            try { await second.HandleLineAsync("{\"version\":1,\"id\":1,\"op\":\"recover-physical\"}"); }
+            catch (BackendException e) { sameEpochRejected = e.Code == "broker_physical_recovery_already_attempted"; }
+            power.Observe(BrokerPowerEpochTracker.SuspendEvent, 1000);
+            power.Observe(BrokerPowerEpochTracker.ResumeAutomaticEvent, 2000);
+            await second.HandleLineAsync("{\"version\":1,\"id\":2,\"op\":\"recover-physical\"}");
+            return sameEpochRejected && recoveries == 2;
+        }).GetAwaiter().GetResult();
         Check("physical recovery cannot run while the virtual lease exists", async () =>
         {
             int recoveries = 0;

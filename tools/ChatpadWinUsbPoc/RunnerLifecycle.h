@@ -11,7 +11,7 @@ SessionCleanupDisposition ClassifySessionCleanup(
     const TransferResult& zeroRumbleStop,
     bool physicalDeviceRemovalObserved=false,
     bool physicalTransportTimeoutObserved=false);
-enum class PhysicalRecoveryAction : uint8_t { None, RestartExactTarget, StopAfterPriorAttempt };
+enum class PhysicalRecoveryAction : uint8_t { None, RestartExactTarget, WaitForRecovery };
 PhysicalRecoveryAction PlanPhysicalRecovery(
     bool physicalTransportTimeoutObserved,
     bool physicalDeviceRemovalObserved,
@@ -20,6 +20,16 @@ PhysicalRecoveryAction PlanPhysicalRecovery(
     bool userStop,
     bool restartAlreadyAttempted);
 bool IsPhysicalReadinessTimeoutCandidate(uint32_t timedOutReadCount, TransferStatus lastReadStatus, bool userStop);
+class RecoveryEpochGate final {
+public:
+    bool ObserveEpoch(uint64_t epoch);
+    uint64_t CurrentEpoch() const { return currentEpoch_; }
+    bool RecoveryAttempted() const { return recoveryAttempted_; }
+    void MarkRecoveryAttempted() { recoveryAttempted_ = true; }
+private:
+    uint64_t currentEpoch_{};
+    bool initialized_{}, recoveryAttempted_{};
+};
 class PhysicalReadinessTracker final {
 public:
     void Record(TransferStatus status);
@@ -31,7 +41,7 @@ private:
     TransferStatus lastStatus_{TransferStatus::Error};
 };
 enum class RunnerState : uint8_t {
-    WaitingForDevice, Opening, ActivatingChatpad, Running, DeviceLost, Reconnecting, Stopping
+    WaitingForDevice, WaitingForRecovery, Opening, ActivatingChatpad, Running, DeviceLost, Reconnecting, Stopping
 };
 class RunnerLifecycle final {
 public:
@@ -44,6 +54,8 @@ public:
     bool DeviceLost();
     bool BeginReconnect();
     bool Retry();
+    bool WaitForRecovery();
+    bool ResumeRecovery();
     void Stop();
 private:
     RunnerState state_{RunnerState::WaitingForDevice};

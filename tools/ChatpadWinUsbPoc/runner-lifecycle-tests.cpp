@@ -53,8 +53,28 @@ int main(){
         "virtual backend failure does not trigger physical PnP recovery");
     Check(PlanPhysicalRecovery(true,false,false,false,true,false)==PhysicalRecoveryAction::None,
         "user stop does not trigger physical PnP recovery");
-    Check(PlanPhysicalRecovery(true,false,false,false,false,true)==PhysicalRecoveryAction::StopAfterPriorAttempt,
-        "one failed recovery attempt opens a circuit breaker for the current outage");
+    Check(PlanPhysicalRecovery(true,false,false,false,false,true)==PhysicalRecoveryAction::WaitForRecovery,
+        "one failed recovery attempt enters a quiet wait instead of terminating the runner");
+    RecoveryEpochGate recoveryEpoch;
+    Check(!recoveryEpoch.ObserveEpoch(0)&&recoveryEpoch.CurrentEpoch()==0&&!recoveryEpoch.RecoveryAttempted(),
+        "initial broker epoch zero establishes the physical recovery budget");
+    recoveryEpoch.MarkRecoveryAttempted();
+    Check(recoveryEpoch.RecoveryAttempted()&&!recoveryEpoch.ObserveEpoch(0),
+        "duplicate epoch does not reset a spent physical recovery budget");
+    Check(recoveryEpoch.ObserveEpoch(1)&&recoveryEpoch.CurrentEpoch()==1&&!recoveryEpoch.RecoveryAttempted(),
+        "new resume epoch resets the circuit breaker exactly once");
+    Check(!recoveryEpoch.ObserveEpoch(0)&&recoveryEpoch.CurrentEpoch()==1&&!recoveryEpoch.RecoveryAttempted(),
+        "stale epoch cannot roll recovery state backward");
+    RecoveryEpochGate launchedAfterResume;
+    Check(launchedAfterResume.ObserveEpoch(7)&&launchedAfterResume.CurrentEpoch()==7&&!launchedAfterResume.RecoveryAttempted(),
+        "runner launched after resume treats retained nonzero broker epoch as a recovery trigger");
+    Check(!launchedAfterResume.ObserveEpoch(7)&&launchedAfterResume.CurrentEpoch()==7,
+        "reconnected runner does not replay the same retained wake epoch");
+    RunnerLifecycle quietWait;
+    Check(quietWait.WaitForRecovery()&&quietWait.State()==RunnerState::WaitingForRecovery&&!quietWait.DeviceFound(),
+        "circuit-open lifecycle waits without starting physical I/O");
+    Check(quietWait.ResumeRecovery()&&quietWait.State()==RunnerState::WaitingForDevice&&quietWait.DeviceFound(),
+        "a newer broker epoch reopens device discovery");
     Check(IsPhysicalReadinessTimeoutCandidate(10,TransferStatus::Timeout,false),
         "bounded controller readiness timeouts qualify for exact-target recovery");
     Check(!IsPhysicalReadinessTimeoutCandidate(0,TransferStatus::Timeout,false),

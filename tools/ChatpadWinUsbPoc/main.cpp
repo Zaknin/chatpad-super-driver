@@ -30,6 +30,32 @@ BOOL WINAPI ConsoleHandler(DWORD event) {
     }
     return FALSE;
 }
+constexpr wchar_t RunnerStopEventName[]=L"Local\\ChatpadBridge.Stop.v1";
+constexpr wchar_t LauncherStopEventName[]=L"Local\\ChatpadBridge.LauncherStop.v1";
+int StopRunnerCommand() {
+    HANDLE event=OpenEventW(EVENT_MODIFY_STATE,FALSE,RunnerStopEventName);
+    const DWORD runnerError=event?0:GetLastError();
+    HANDLE launcher=OpenEventW(EVENT_MODIFY_STATE,FALSE,LauncherStopEventName);
+    const DWORD launcherError=launcher?0:GetLastError();
+    if(!event&&!launcher){if(runnerError==ERROR_FILE_NOT_FOUND&&launcherError==ERROR_FILE_NOT_FOUND){std::cout<<"ChatpadBridge is not running.\n";return 0;}std::cerr<<"Cannot open ChatpadBridge stop events; Win32="<<(runnerError!=ERROR_FILE_NOT_FOUND?runnerError:launcherError)<<"\n";return 2;}
+    BOOL signaled=TRUE;DWORD error=0;
+    if(launcher&&!SetEvent(launcher)){signaled=FALSE;error=GetLastError();}
+    if(event&&!SetEvent(event)){signaled=FALSE;if(error==0)error=GetLastError();}
+    if(event)CloseHandle(event);if(launcher)CloseHandle(launcher);
+    if(!signaled){std::cerr<<"Cannot request ChatpadBridge graceful stop; Win32="<<error<<"\n";return 2;}
+    std::cout<<"ChatpadBridge graceful stop requested.\n";return 0;
+}
+int StartRunnerCommand() {
+    wchar_t module[32768]{};DWORD length=GetModuleFileNameW(nullptr,module,static_cast<DWORD>(std::size(module)));
+    if(length==0||length>=std::size(module)){std::cerr<<"Cannot resolve ChatpadBridge executable path.\n";return 2;}
+    std::filesystem::path launcher=std::filesystem::path(module).parent_path()/L"ChatpadBridgeStart.exe";
+    if(!std::filesystem::is_regular_file(launcher)){std::cerr<<"Hidden launcher is not installed: "<<launcher.string()<<"\n";return 2;}
+    std::wstring command=L"\""+launcher.wstring()+L"\"";STARTUPINFOW startup{};startup.cb=sizeof(startup);PROCESS_INFORMATION process{};
+    if(!CreateProcessW(launcher.c_str(),command.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,launcher.parent_path().c_str(),&startup,&process)){
+        std::cerr<<"Cannot start hidden ChatpadBridge launcher; Win32="<<GetLastError()<<"\n";return 2;
+    }
+    CloseHandle(process.hThread);CloseHandle(process.hProcess);std::cout<<"Hidden ChatpadBridge launcher started.\n";return 0;
+}
 uint64_t Now(){return GetTickCount64();}
 std::string Timestamp() {
     SYSTEMTIME now{};GetSystemTime(&now);char result[40]{};
@@ -146,6 +172,8 @@ int main(int argc,char** argv) {
     try {
         if(argc<2)throw std::runtime_error("command required: run|status|diagnostics|probe|enumerate|descriptors|monitor-controller|monitor-chatpad|activate-chatpad|monitor-all|bridge");
         std::string command=argv[1],instance,jsonFile,fixture,helperPath,backend="hidmaestro";
+        if(command=="stop"){if(argc!=2)throw std::runtime_error("stop accepts no options");return StopRunnerCommand();}
+        if(command=="start"){if(argc!=2)throw std::runtime_error("start accepts no options");return StartRunnerCommand();}
         bool bridge=command=="bridge",session=command=="c3-session",allowBridge=false;
         bool verbose=false,noKeyboard=false,noVirtualController=false;
         unsigned seconds=15;bool activate=command=="activate-chatpad" || bridge,jsonOnly=false;
@@ -172,9 +200,9 @@ int main(int argc,char** argv) {
             if(command=="run" && backend!="hidmaestro")throw std::runtime_error("normal run requires the installed HIDMaestro backend");
             if(command=="run" && (!helperPath.empty() || allowBridge))throw std::runtime_error("run uses the installed HIDMaestro broker; --backend-helper and --allow-live-bridge are not accepted");
             if(command!="run" && (!helperPath.empty() || noKeyboard || noVirtualController))throw std::runtime_error("runtime options apply to run only");
-            if(command=="run" && !SetConsoleCtrlHandler(ConsoleHandler,TRUE))throw std::runtime_error("console handler unavailable");
+            const bool consoleHandlerInstalled=command=="run"&&SetConsoleCtrlHandler(ConsoleHandler,TRUE)!=FALSE;
             const int result=RunUserModeBridge(command,options,stopped);
-            if(command=="run")SetConsoleCtrlHandler(ConsoleHandler,FALSE);
+            if(consoleHandlerInstalled)SetConsoleCtrlHandler(ConsoleHandler,FALSE);
             return result;
         }
         bool descriptor=command=="descriptors" || command=="enumerate";

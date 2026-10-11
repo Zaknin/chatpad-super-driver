@@ -222,6 +222,11 @@ bool ParseBrokerServerMessage(const std::string& json, BrokerServerMessage& out)
     if (!parser.Parse(fields) || !ProtocolVersion(fields)) return false;
     uint64_t version{}, id{}, left{}, right{};
     if (Text(fields, "op", out.error)) {
+        if (out.error == "power-resume") {
+            uint64_t epoch{};
+            if (!Exact(fields, {"version", "op", "epoch"}) || !UInt(fields, "epoch", UINT64_MAX, epoch) || epoch == 0) return false;
+            out.kind = BrokerServerMessageKind::PowerResume; out.resumeEpoch = epoch; out.hasResumeEpoch = true; return true;
+        }
         if (out.error == "rumble") {
             if (!Exact(fields, {"version", "op", "leftMotor", "rightMotor"}) ||
                 !UInt(fields, "leftMotor", UINT16_MAX, left) || !UInt(fields, "rightMotor", UINT16_MAX, right)) return false;
@@ -237,7 +242,11 @@ bool ParseBrokerServerMessage(const std::string& json, BrokerServerMessage& out)
     }
     if (!UInt(fields, "id", INT32_MAX, id) || !Bool(fields, "ok", out.ok)) return false;
     if (out.ok) {
-        if (!Exact(fields, {"version", "id", "ok"})) return false;
+        if (Exact(fields, {"version", "id", "ok", "resumeEpoch"})) {
+            uint64_t epoch{};
+            if (!UInt(fields, "resumeEpoch", UINT64_MAX, epoch)) return false;
+            out.resumeEpoch = epoch; out.hasResumeEpoch = true;
+        } else if (!Exact(fields, {"version", "id", "ok"})) return false;
     } else {
         if (fields.find("operation") != fields.end() ||
             !(Exact(fields, {"version", "id", "ok", "error"}) || Exact(fields, {"version", "id", "ok", "error", "detail"})) ||
@@ -263,9 +272,10 @@ struct VirtualBrokerController::Impl {
     HANDLE pipe{INVALID_HANDLE_VALUE};
     HANDLE wakeEvent{};
     std::atomic<bool> stopping{}, failed{}, connected{}, created{};
+    std::atomic<uint64_t> resumeEpoch{};
     mutable std::mutex errorMutex, callbackMutex, outputMutex, responseMutex;
     std::mutex controlCallMutex;
-    std::condition_variable outputCondition, responseCondition;
+    std::condition_variable outputCondition, responseCondition, resumeCondition;
     std::deque<std::string> controlQueue;
     BrokerStateMailbox states;
     std::thread writer, reader;
@@ -273,6 +283,15 @@ struct VirtualBrokerController::Impl {
     RumbleCallback callback;
     uint32_t nextControlId{1}, waitingId{};
     bool awaitingResponse{}, responseReceived{}, responseOk{};
+    uint64_t responseResumeEpoch{};
+    bool responseHasResumeEpoch{};
+    std::mutex resumeMutex;
+
+    void ObserveResumeEpoch(uint64_t epoch) {
+        uint64_t current = resumeEpoch.load();
+        while (epoch > current && !resumeEpoch.compare_exchange_weak(current, epoch)) {}
+        if (epoch > current) resumeCondition.notify_all();
+    }
 
     void Fail(const std::string& message) {
         bool expected = false;
@@ -387,13 +406,18 @@ struct VirtualBrokerController::Impl {
                         try { copied(static_cast<uint16_t>(message.leftMotor), static_cast<uint16_t>(message.rightMotor)); }
                         catch (...) { Fail("physical_rumble_callback_failed"); return; }
                     }
+                } else if (message.kind == BrokerServerMessageKind::PowerResume) {
+                    ObserveResumeEpoch(message.resumeEpoch);
                 } else if (message.kind == BrokerServerMessageKind::Fault) {
                     Fail("broker_service_fault:" + message.error + (message.detail.empty() ? "" : ":" + message.detail));
                     return;
                 } else {
+                    if (message.hasResumeEpoch) ObserveResumeEpoch(message.resumeEpoch);
                     std::lock_guard<std::mutex> lock(responseMutex);
                     if (!awaitingResponse || message.id != waitingId || responseReceived) { Fail("broker_response_correlation_failed"); return; }
                     responseReceived = true; responseOk = message.ok;
+                    responseResumeEpoch = message.resumeEpoch;
+                    responseHasResumeEpoch = message.hasResumeEpoch;
                     if (!message.ok) { std::lock_guard<std::mutex> errorLock(errorMutex); error = message.error + (message.detail.empty() ? "" : ":" + message.detail); }
                     responseCondition.notify_all();
                 }
@@ -401,13 +425,14 @@ struct VirtualBrokerController::Impl {
         }
     }
 
-    bool Request(const char* operation, uint32_t timeoutMs) {
+    bool Request(const char* operation, uint32_t timeoutMs, uint64_t* returnedEpoch = nullptr) {
         std::lock_guard<std::mutex> callLock(controlCallMutex);
         if (failed.load() || stopping.load() || pipe == INVALID_HANDLE_VALUE || nextControlId > INT32_MAX) return false;
         const uint32_t id = nextControlId++;
         {
             std::lock_guard<std::mutex> lock(responseMutex);
             waitingId = id; awaitingResponse = true; responseReceived = false; responseOk = false;
+            responseResumeEpoch = 0; responseHasResumeEpoch = false;
         }
         const std::string request = "{\"version\":1,\"id\":" + std::to_string(id) + ",\"op\":\"" + operation + "\"}";
         {
@@ -421,6 +446,7 @@ struct VirtualBrokerController::Impl {
             awaitingResponse = false; Fail(std::string("broker_") + operation + "_timeout"); return false;
         }
         if (!responseReceived || !responseOk) { awaitingResponse = false; return false; }
+        if (returnedEpoch && responseHasResumeEpoch) *returnedEpoch = responseResumeEpoch;
         awaitingResponse = false; return true;
     }
 
@@ -429,37 +455,37 @@ struct VirtualBrokerController::Impl {
         if (pipe != INVALID_HANDLE_VALUE) CancelIoEx(pipe, nullptr);
         if (reader.joinable() && reader.get_id() != std::this_thread::get_id()) reader.join();
         if (writer.joinable() && writer.get_id() != std::this_thread::get_id()) writer.join();
-        CloseHandleIfValid(pipe); CloseHandleIfValid(wakeEvent);
+        CloseHandleIfValid(pipe); pipe = INVALID_HANDLE_VALUE;
+        CloseHandleIfValid(wakeEvent);
     }
 
-    bool Create() {
-        if (connected.load()) { Fail("broker_already_connected"); return false; }
+    bool ConnectForNotifications() {
+        if (pipe != INVALID_HANDLE_VALUE && !failed.load() && !stopping.load()) return true;
+        if (pipe != INVALID_HANDLE_VALUE) StopTransport();
         failed = false; stopping = false; created = false; nextControlId = 1;
         { std::lock_guard<std::mutex> lock(errorMutex); error.clear(); }
         states.Reset();
         { std::lock_guard<std::mutex> lock(outputMutex); controlQueue.clear(); }
         if (!OpenPipe()) { StopTransport(); return false; }
         writer = std::thread([this] { WriterLoop(); }); reader = std::thread([this] { ReaderLoop(); });
-        if (!Request("ping", RequestTimeoutMs)) { StopTransport(); return false; }
-        if (!Request("create", CreateTimeoutMs)) { StopTransport(); return false; }
+        uint64_t epoch{};
+        if (!Request("ping", RequestTimeoutMs, &epoch)) { StopTransport(); return false; }
+        ObserveResumeEpoch(epoch);
+        return true;
+    }
+
+    bool Create() {
+        if (created.load()) { Fail("broker_already_created"); return false; }
+        if (!ConnectForNotifications()) return false;
+        if (!Request("create", CreateTimeoutMs)) return false;
         created = true; connected = true; return true;
     }
 
     bool RecoverPhysicalDevice() {
-        if (pipe != INVALID_HANDLE_VALUE || connected.load() || created.load()) {
+        if (connected.load() || created.load()) {
             Fail("broker_physical_recovery_client_not_idle"); return false;
         }
-        failed = false; stopping = false; created = false; nextControlId = 1;
-        { std::lock_guard<std::mutex> lock(errorMutex); error.clear(); }
-        states.Reset();
-        { std::lock_guard<std::mutex> lock(outputMutex); controlQueue.clear(); }
-        if (!OpenPipe()) { StopTransport(); return false; }
-        writer = std::thread([this] { WriterLoop(); }); reader = std::thread([this] { ReaderLoop(); });
-        if (!Request("ping", RequestTimeoutMs) || !Request("recover-physical", PhysicalRecoveryTimeoutMs)) {
-            StopTransport(); return false;
-        }
-        StopTransport();
-        return true;
+        return ConnectForNotifications() && Request("recover-physical", PhysicalRecoveryTimeoutMs);
     }
 
     bool Submit(const XboxState& state) {
@@ -469,11 +495,19 @@ struct VirtualBrokerController::Impl {
         outputCondition.notify_one(); return true;
     }
 
+    bool Destroy() {
+        if (!created.load()) return !failed.load();
+        // Stop the state stream before enqueueing the control operation. This
+        // prevents an unsent cached frame from arriving after destroy.
+        states.Reset();
+        if (failed.load() || !Request("destroy", DestroyTimeoutMs)) return false;
+        connected = false; created = false;
+        return true;
+    }
+
     void Disconnect() {
         if (pipe == INVALID_HANDLE_VALUE) { connected = false; created = false; return; }
-        if (created.load() && !failed.load()) {
-            if (!Request("destroy", DestroyTimeoutMs) && Error().empty()) Fail("broker_destroy_failed");
-        }
+        if (created.load() && !Destroy() && Error().empty()) Fail("broker_destroy_failed");
         connected = false; created = false;
         { std::lock_guard<std::mutex> lock(callbackMutex); callback = {}; }
         StopTransport();
@@ -484,7 +518,18 @@ VirtualBrokerController::VirtualBrokerController() : impl_(std::make_unique<Impl
 VirtualBrokerController::~VirtualBrokerController() { Disconnect(); }
 bool VirtualBrokerController::Create() { return impl_->Create(); }
 bool VirtualBrokerController::RecoverPhysicalDevice() { return impl_->RecoverPhysicalDevice(); }
+bool VirtualBrokerController::ConnectForNotifications() { return impl_->ConnectForNotifications(); }
+bool VirtualBrokerController::WaitForResume(uint64_t afterEpoch, uint32_t timeoutMs, uint64_t& observedEpoch) {
+    std::unique_lock<std::mutex> lock(impl_->resumeMutex);
+    if (!impl_->resumeCondition.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this, afterEpoch] {
+        return impl_->resumeEpoch.load() > afterEpoch || impl_->failed.load() || impl_->stopping.load();
+    })) return false;
+    observedEpoch = impl_->resumeEpoch.load();
+    return observedEpoch > afterEpoch;
+}
+uint64_t VirtualBrokerController::ResumeEpoch() const { return impl_->resumeEpoch.load(); }
 bool VirtualBrokerController::SubmitState(const XboxState& state) { return impl_->Submit(state); }
+bool VirtualBrokerController::Destroy() { return impl_->Destroy(); }
 void VirtualBrokerController::SetRumbleCallback(RumbleCallback callback) { std::lock_guard<std::mutex> lock(impl_->callbackMutex); impl_->callback = std::move(callback); }
 void VirtualBrokerController::Disconnect() { impl_->Disconnect(); }
 std::string VirtualBrokerController::LastError() const { return impl_->Error(); }

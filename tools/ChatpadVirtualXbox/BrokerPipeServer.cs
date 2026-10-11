@@ -25,13 +25,15 @@ internal sealed class BrokerPipeServer
     private readonly string installRoot;
     private readonly Func<IVirtualXboxController> backendFactory;
     private readonly IPhysicalDeviceRecovery physicalDeviceRecovery;
+    private readonly BrokerPowerEpochTracker powerEpoch;
     internal sealed record AuthorizedPeerHandshake(string InitialFrame, BrokerPeerSnapshot Peer);
 
-    public BrokerPipeServer(string installRoot, Func<IVirtualXboxController> backendFactory)
+    public BrokerPipeServer(string installRoot, Func<IVirtualXboxController> backendFactory, BrokerPowerEpochTracker? powerEpoch = null)
     {
         this.installRoot = BrokerRuntimePaths.ValidateInstallRoot(installRoot);
         this.backendFactory = backendFactory;
         physicalDeviceRecovery = new WindowsPhysicalDeviceRecovery();
+        this.powerEpoch = powerEpoch ?? new BrokerPowerEpochTracker();
     }
 
     public async Task RunAsync(CancellationToken stopping)
@@ -62,7 +64,7 @@ internal sealed class BrokerPipeServer
             }
             if (handshake is null) continue;
 
-            await using var session = new BrokerSession(backendFactory, (line, token) => WriteFrameAsync(pipe, line, token), physicalDeviceRecovery);
+            await using var session = new BrokerSession(backendFactory, (line, token) => WriteFrameAsync(pipe, line, token), physicalDeviceRecovery, powerEpoch);
             using var connectionStop = CancellationTokenSource.CreateLinkedTokenSource(stopping);
             var reader = ReadClientAsync(pipe, session, handshake.InitialFrame, connectionStop.Token);
             var stopWait = Task.Delay(Timeout.InfiniteTimeSpan, connectionStop.Token);

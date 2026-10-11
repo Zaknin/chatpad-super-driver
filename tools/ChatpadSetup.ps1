@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
- [Parameter(Mandatory)][ValidateSet('Install','InstallBroker','Status','Repair','RepairBroker','Uninstall','UninstallBroker','RestoreMicrosoftXbox')][string]$Mode,
+ [Parameter(Mandatory)][ValidateSet('Install','InstallBroker','Status','Repair','RepairBroker','Uninstall','UninstallBroker','RestoreMicrosoftXbox','EnableAutostart','DisableAutostart','AutostartStatus')][string]$Mode,
  [string]$PackageRoot,
  [string]$ReadinessPath,
  [string]$BaselinePath,
@@ -34,8 +34,8 @@ function Get-SetupBaseline {
  Get-Content -LiteralPath $candidate -Raw|ConvertFrom-Json
 }
 function Assert-RunnerStopped {
- $running=@(Get-Process -Name ChatpadBridge -ErrorAction SilentlyContinue)
- if($running.Count){throw 'Stop ChatpadBridge run before Repair, RestoreMicrosoftXbox or Uninstall; no process was terminated automatically.'}
+ $running=@(Get-Process -Name ChatpadBridge,ChatpadBridgeStart -ErrorAction SilentlyContinue)
+ if($running.Count){throw 'Stop ChatpadBridge with ChatpadBridge.exe stop before service repair or uninstall; no process was terminated automatically.'}
 }
 function Get-ChatpadBrokerSetupIdentity {
  if(-not ('ChatpadBrokerSetupNative' -as [type])){
@@ -133,7 +133,9 @@ function Set-ChatpadBrokerAuthorizationHash($Plan) {
  $key='HKLM:\SYSTEM\CurrentControlSet\Services\ChatpadHidMaestroBroker\Parameters'
  New-Item -Path $key -Force|Out-Null
  New-ItemProperty -LiteralPath $key -Name AuthorizationSha256 -PropertyType String -Value $Plan.AuthorizationHash -Force|Out-Null
- if((Get-ItemProperty -LiteralPath $key -Name AuthorizationSha256).AuthorizationSha256 -cne $Plan.AuthorizationHash){throw 'Service Parameters authorization hash readback mismatch.'}
+ New-ItemProperty -LiteralPath $key -Name AuthorizedUserSid -PropertyType String -Value $Plan.AuthorizedUserSid -Force|Out-Null
+ $parameters=Get-ItemProperty -LiteralPath $key -Name AuthorizationSha256,AuthorizedUserSid
+ if($parameters.AuthorizationSha256 -cne $Plan.AuthorizationHash -or $parameters.AuthorizedUserSid -cne $Plan.AuthorizedUserSid){throw 'Service Parameters authorization hash/user SID readback mismatch.'}
 }
 function Configure-ChatpadBrokerService($Plan,[bool]$Create) {
  if($Create){Invoke-ChatpadBrokerSc -Arguments (New-ChatpadBrokerScArguments -Operation Create -Plan $Plan)}
@@ -196,6 +198,32 @@ function Get-ChatpadBrokerStatus {
  $service=Get-ChatpadBrokerServiceRecord
  [pscustomobject]@{ServiceName='ChatpadHidMaestroBroker';Installed=[bool]$service;State=if($service){$service.State}else{'NotInstalled'};StartMode=if($service){$service.StartMode}else{$null};StartName=if($service){$service.StartName}else{$null};PathName=if($service){$service.PathName}else{$null};IdentityValid=if($service){try{Assert-ChatpadBrokerInstalledServiceIdentity $service|Out-Null;$true}catch{$false}}else{$false};Elevated=([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))}
 }
+function Get-ChatpadAutostartStatus {
+ $launcher=[IO.Path]::GetFullPath((Join-Path $env:ProgramFiles 'ChatpadBridge\ChatpadBridgeStart.exe'))
+ $key='HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+ $value=$null;if(Test-Path -LiteralPath $key){$value=(Get-ItemProperty -LiteralPath $key -Name ChatpadBridge -ErrorAction SilentlyContinue).ChatpadBridge}
+ $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+ $authorized=$null;$parameters='HKLM:\SYSTEM\CurrentControlSet\Services\ChatpadHidMaestroBroker\Parameters'
+ if(Test-Path -LiteralPath $parameters){$authorized=(Get-ItemProperty -LiteralPath $parameters -Name AuthorizedUserSid -ErrorAction SilentlyContinue).AuthorizedUserSid}
+ [pscustomobject]@{Enabled=([string]$value -ceq ('"'+$launcher+'"'));RunValue=$value;LauncherPath=$launcher;LauncherInstalled=(Test-Path -LiteralPath $launcher -PathType Leaf);CurrentUserSid=$sid;BrokerAuthorizedUserSid=$authorized;UserAuthorized=([string]$authorized -ceq $sid)}
+}
+function Enable-ChatpadAutostart {
+ $status=Get-ChatpadAutostartStatus
+ if(-not $status.LauncherInstalled){throw 'Hidden ChatpadBridgeStart.exe is not installed under Program Files; install or repair the current package first.'}
+ if(-not $status.UserAuthorized){throw 'Current Windows user does not match the broker authorized SID; run RepairBroker from the intended user account first.'}
+ $key='HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+ New-Item -Path $key -Force|Out-Null
+ $expected='"'+$status.LauncherPath+'"'
+ New-ItemProperty -LiteralPath $key -Name ChatpadBridge -PropertyType String -Value $expected -Force|Out-Null
+ $actual=(Get-ItemProperty -LiteralPath $key -Name ChatpadBridge).ChatpadBridge
+ if($actual -cne $expected){throw 'HKCU Run autostart readback mismatch.'}
+ Get-ChatpadAutostartStatus
+}
+function Disable-ChatpadAutostart {
+ $key='HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+ if(Test-Path -LiteralPath $key){Remove-ItemProperty -LiteralPath $key -Name ChatpadBridge -ErrorAction SilentlyContinue}
+ Get-ChatpadAutostartStatus
+}
 function Initialize-PrivateStateDirectory {
  New-Item -ItemType Directory -Force -Path $stateDirectory|Out-Null
  $acl=Get-Acl -LiteralPath $stateDirectory
@@ -218,7 +246,7 @@ function Install-Bridge {
  Require-Administrator
  Assert-RunnerStopped
  if(-not(Test-Path -LiteralPath $ReadinessPath -PathType Leaf)){throw 'C4 readiness file is missing; build the Release package first.'}
- if(-not(Test-Path -LiteralPath (Join-Path $PackageRoot 'ChatpadBridge.exe') -PathType Leaf) -or -not(Test-Path -LiteralPath (Join-Path $PackageRoot 'ChatpadVirtualXbox.exe') -PathType Leaf)){throw 'Release runner/helper package is incomplete.'}
+ if(-not(Test-Path -LiteralPath (Join-Path $PackageRoot 'ChatpadBridge.exe') -PathType Leaf) -or -not(Test-Path -LiteralPath (Join-Path $PackageRoot 'ChatpadBridgeStart.exe') -PathType Leaf) -or -not(Test-Path -LiteralPath (Join-Path $PackageRoot 'ChatpadVirtualXbox.exe') -PathType Leaf)){throw 'Release runner/hidden launcher/helper package is incomplete.'}
  $readiness=Get-Content -LiteralPath $ReadinessPath -Raw|ConvertFrom-Json
  $branch=[string](& git.exe -C $repo branch --show-current);$head=[string](& git.exe -C $repo rev-parse HEAD)
  if($LASTEXITCODE -ne 0 -or $readiness.Repository.Branch -cne $branch -or $readiness.Repository.Commit -cne $head){throw 'Readiness branch/commit is stale; regenerate immediately before setup.'}
@@ -275,6 +303,9 @@ switch($Mode){
   $recognized=Get-ChatpadRecognizedState $status
   [pscustomobject]@{Mode='Status';ReadOnly=$true;Elevated=([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator));RecognizedState=$recognized;Target=$status.Target;ClassLowerFilters=$status.ClassLowerFilters;ClassUpperFilters=$status.ClassUpperFilters;InstallRecordPath=$installRecord;HidMaestroRuntime='query with ChatpadVirtualXbox.exe backend-status';BrokerService=(Get-ChatpadBrokerStatus)}|ConvertTo-Json -Depth 12
  }
+ 'EnableAutostart' {Enable-ChatpadAutostart|Format-List}
+ 'DisableAutostart' {Disable-ChatpadAutostart|Format-List}
+ 'AutostartStatus' {Get-ChatpadAutostartStatus|Format-List}
  'InstallBroker' {Install-ChatpadBroker}
  'RepairBroker' {Install-ChatpadBroker -Repair}
  'UninstallBroker' {Remove-ChatpadBrokerService}

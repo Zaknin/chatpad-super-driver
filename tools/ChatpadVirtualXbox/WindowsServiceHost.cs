@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.Principal;
+using System.Threading.Channels;
 
 namespace ChatpadVirtualXbox;
 
@@ -15,12 +16,15 @@ internal static class WindowsServiceHost
     private const uint ServiceRunning = 4;
     private const uint ServiceAcceptStop = 1;
     private const uint ServiceAcceptShutdown = 4;
+    private const uint ServiceAcceptPowerEvent = 0x00000040;
     private const uint ControlStop = 1;
     private const uint ControlShutdown = 5;
     private const uint ControlPreshutdown = 15;
+    private const uint ControlPowerEvent = 13;
     private static readonly ServiceMainCallback MainCallback = ServiceMain;
     private static readonly ServiceHandlerCallback HandlerCallback = HandleControl;
     private static readonly CancellationTokenSource Stop = new();
+    private static readonly Channel<(uint EventType, long Tick)> PowerEventSignals = Channel.CreateUnbounded<(uint, long)>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = false });
     private static IntPtr statusHandle;
     private static ServiceStatus status;
     private static uint serviceExitCode;
@@ -42,6 +46,7 @@ internal static class WindowsServiceHost
         if (statusHandle == IntPtr.Zero) { serviceExitCode = (uint)Marshal.GetLastWin32Error(); return; }
         Report(ServiceStartPending, 0, 30000, 1);
         string? diagnosticRoot = null;
+        Task? powerWorker = null;
         try
         {
             string root = ValidateServiceProcess();
@@ -51,13 +56,17 @@ internal static class WindowsServiceHost
             Directory.CreateDirectory(scratch);
             Environment.SetEnvironmentVariable("TEMP", scratch, EnvironmentVariableTarget.Process);
             Environment.SetEnvironmentVariable("TMP", scratch, EnvironmentVariableTarget.Process);
-            Report(ServiceRunning, ServiceAcceptStop | ServiceAcceptShutdown, 0, 0);
+            var powerEpoch = new BrokerPowerEpochTracker();
+            powerWorker = ProcessPowerEventsAsync(powerEpoch, Stop.Token);
+            Report(ServiceRunning, ServiceAcceptStop | ServiceAcceptShutdown | ServiceAcceptPowerEvent, 0, 0);
 #if HIDMAESTRO
-            var server = new BrokerPipeServer(root, () => new HidMaestroBackend(allowLive: true));
+            var server = new BrokerPipeServer(root, () => new HidMaestroBackend(allowLive: true), powerEpoch);
             server.RunAsync(Stop.Token).GetAwaiter().GetResult();
 #else
             throw new BackendException("service_unavailable", "Service host was built without the pinned HIDMaestro runtime.");
 #endif
+            Stop.Cancel();
+            powerWorker.GetAwaiter().GetResult();
         }
         catch (Exception e)
         {
@@ -74,6 +83,12 @@ internal static class WindowsServiceHost
         }
         finally
         {
+            Stop.Cancel();
+            if (powerWorker is not null)
+            {
+                try { powerWorker.GetAwaiter().GetResult(); }
+                catch (OperationCanceledException) { }
+            }
             Report(ServiceStopped, 0, 0, 0);
         }
     }
@@ -93,6 +108,12 @@ internal static class WindowsServiceHost
 
     private static uint HandleControl(uint control, uint eventType, IntPtr eventData, IntPtr context)
     {
+        if (control == ControlPowerEvent)
+        {
+            if (eventType is BrokerPowerEpochTracker.SuspendEvent or BrokerPowerEpochTracker.ResumeAutomaticEvent or BrokerPowerEpochTracker.ResumeSuspendEvent)
+                _ = PowerEventSignals.Writer.TryWrite((eventType, Environment.TickCount64));
+            return 0;
+        }
         if (control is ControlStop or ControlShutdown or ControlPreshutdown)
         {
             Report(ServiceStopPending, 0, 30000, 1);
@@ -100,6 +121,16 @@ internal static class WindowsServiceHost
             return 0;
         }
         return 120; // ERROR_CALL_NOT_IMPLEMENTED
+    }
+
+    private static async Task ProcessPowerEventsAsync(BrokerPowerEpochTracker tracker, CancellationToken stopping)
+    {
+        try
+        {
+            await foreach (var notification in PowerEventSignals.Reader.ReadAllAsync(stopping).ConfigureAwait(false))
+                _ = tracker.Observe(notification.EventType, notification.Tick);
+        }
+        catch (OperationCanceledException) when (stopping.IsCancellationRequested) { }
     }
 
     private static void Report(uint state, uint acceptedControls, uint waitHint, uint checkpoint)

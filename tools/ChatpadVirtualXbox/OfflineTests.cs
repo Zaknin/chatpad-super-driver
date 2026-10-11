@@ -22,6 +22,26 @@ internal static class OfflineTests
         passed += brokerSessionTests.Passed;
         failed += brokerSessionTests.Failed;
         failures.AddRange(brokerSessionTests.Failures);
+        Check("broker power events coalesce resume notifications and preserve the epoch without a client", () =>
+        {
+            var power = new BrokerPowerEpochTracker();
+            var observed = new List<ulong>();
+            power.Resumed += observed.Add;
+            power.Observe(BrokerPowerEpochTracker.SuspendEvent, 1000);
+            bool first = power.Observe(BrokerPowerEpochTracker.ResumeAutomaticEvent, 2000);
+            bool duplicate = power.Observe(BrokerPowerEpochTracker.ResumeSuspendEvent, 2500);
+            power.Observe(BrokerPowerEpochTracker.SuspendEvent, 40000);
+            bool next = power.Observe(BrokerPowerEpochTracker.ResumeSuspendEvent, 41000);
+            return first && !duplicate && next && power.CurrentEpoch == 2 && observed.SequenceEqual(new ulong[] { 1, 2 });
+        });
+        Check("broker fixed physical recovery is limited once per resume epoch", () =>
+        {
+            var power = new BrokerPowerEpochTracker();
+            if (!power.TryClaimPhysicalRecovery() || power.TryClaimPhysicalRecovery()) return false;
+            power.Observe(BrokerPowerEpochTracker.SuspendEvent, 1000);
+            power.Observe(BrokerPowerEpochTracker.ResumeAutomaticEvent, 2000);
+            return power.CurrentEpoch == 1 && power.TryClaimPhysicalRecovery() && !power.TryClaimPhysicalRecovery();
+        });
         Check("broker service failure log records UTC time, exception type, and cause", () =>
         {
             var timestamp = new DateTimeOffset(2026, 10, 4, 18, 47, 0, TimeSpan.Zero);

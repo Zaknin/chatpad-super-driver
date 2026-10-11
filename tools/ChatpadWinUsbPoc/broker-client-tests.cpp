@@ -15,15 +15,26 @@ int main() {
     BrokerStateFrame taken{};
     Check(mailbox.TryTake(taken) && taken.sequence == 3 && taken.state.buttons == 3, "bounded mailbox coalesces to the newest state");
     Check(!mailbox.TryTake(taken), "mailbox does not retain an unbounded state backlog");
+    Check(mailbox.Publish(XboxState{4}, taken), "mailbox accepts a frame before lease teardown");
+    mailbox.Reset();
+    Check(!mailbox.TryTake(taken) && mailbox.Publish(XboxState{5}, taken) && taken.sequence == 1,
+        "lease destroy clears cached state before control teardown and resets sequence");
     BrokerServerMessage response{};
     Check(ParseBrokerServerMessage("{\"version\":1,\"id\":42,\"ok\":true}", response) && response.id == 42 && response.ok, "strict correlated control response parses");
+    BrokerServerMessage ping{};
+    Check(ParseBrokerServerMessage("{\"version\":1,\"id\":1,\"ok\":true,\"resumeEpoch\":7}", ping) && ping.hasResumeEpoch && ping.resumeEpoch == 7,
+        "ping carries the current resume epoch when no runner was connected during wake");
     BrokerServerMessage rumble{};
     Check(ParseBrokerServerMessage("{\"version\":1,\"op\":\"rumble\",\"leftMotor\":321,\"rightMotor\":654}", rumble) && rumble.kind == BrokerServerMessageKind::Rumble && rumble.leftMotor == 321 && rumble.rightMotor == 654, "rumble callback frame is separate from control responses");
     Check(ParseBrokerServerMessage("{\"version\":1,\"op\":\"fault\",\"error\":\"state_failed\",\"detail\":\"backend closed\"}", rumble) && rumble.kind == BrokerServerMessageKind::Fault && rumble.error == "state_failed", "asynchronous broker fault is distinct from callbacks and responses");
+    BrokerServerMessage resume{};
+    Check(ParseBrokerServerMessage("{\"version\":1,\"op\":\"power-resume\",\"epoch\":7}", resume) &&
+        resume.kind == BrokerServerMessageKind::PowerResume && resume.resumeEpoch == 7, "broker resume event carries a monotonic 64-bit epoch");
     for (const char* bad : {
         "{\"version\":2,\"id\":1,\"ok\":true}",
         "{\"version\":1,\"id\":1,\"id\":2,\"ok\":true}",
         "{\"version\":1,\"id\":1,\"ok\":true,\"extra\":1}",
+        "{\"version\":1,\"op\":\"power-resume\",\"epoch\":-1}",
         "{\"version\":1,\"op\":\"rumble\",\"leftMotor\":65536,\"rightMotor\":0}"
     }) Check(!ParseBrokerServerMessage(bad, rumble), "unknown, duplicate, wrong-version and out-of-range server frame rejected");
     BrokerServerIdentitySnapshot systemPeer{80, 80, "ChatpadHidMaestroBroker", true, L"LocalSystem",

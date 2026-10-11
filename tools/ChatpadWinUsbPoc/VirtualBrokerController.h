@@ -23,10 +23,12 @@ private:
     BrokerStateFrame pending_{};
 };
 
-enum class BrokerServerMessageKind { ControlResponse, Rumble, Fault };
+enum class BrokerServerMessageKind { ControlResponse, Rumble, Fault, PowerResume };
 struct BrokerServerMessage {
     BrokerServerMessageKind kind{BrokerServerMessageKind::ControlResponse};
     uint32_t id{}, leftMotor{}, rightMotor{};
+    uint64_t resumeEpoch{};
+    bool hasResumeEpoch{};
     bool ok{};
     std::string error, detail;
 };
@@ -47,7 +49,13 @@ public:
     bool Create() override;
     // Uses the same authenticated service pipe to request its fixed, no-argument physical Xbox recovery operation.
     bool RecoverPhysicalDevice();
+    // Keep one authenticated idle pipe open so service power epochs remain observable
+    // while the physical controller is unavailable.
+    bool ConnectForNotifications();
+    bool WaitForResume(uint64_t afterEpoch, uint32_t timeoutMs, uint64_t& observedEpoch);
+    uint64_t ResumeEpoch() const;
     bool SubmitState(const XboxState&) override;
+    bool Destroy();
     void SetRumbleCallback(RumbleCallback) override;
     void Disconnect() override;
     std::string LastError() const;

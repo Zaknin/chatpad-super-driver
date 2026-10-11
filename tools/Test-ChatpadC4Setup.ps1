@@ -27,7 +27,7 @@ foreach($case in $cases){
 $packageRoot=Join-Path ([IO.Path]::GetTempPath()) ('chatpad-c4-package-'+[guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $packageRoot|Out-Null
 try{
- foreach($name in @('ChatpadBridge.exe','ChatpadVirtualXbox.exe','ChatpadVirtualXbox.dll','HIDMaestro.Core.dll','ChatpadSetup.ps1')){
+ foreach($name in @('ChatpadBridge.exe','ChatpadBridgeStart.exe','ChatpadVirtualXbox.exe','ChatpadVirtualXbox.dll','HIDMaestro.Core.dll','ChatpadSetup.ps1')){
   Set-Content -LiteralPath (Join-Path $packageRoot $name) -Value ('current package bytes: '+$name) -NoNewline
  }
  $payloads=New-ChatpadC4PackagePayloadRecords $packageRoot
