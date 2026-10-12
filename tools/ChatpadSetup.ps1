@@ -198,13 +198,20 @@ function Get-ChatpadBrokerStatus {
  $service=Get-ChatpadBrokerServiceRecord
  [pscustomobject]@{ServiceName='ChatpadHidMaestroBroker';Installed=[bool]$service;State=if($service){$service.State}else{'NotInstalled'};StartMode=if($service){$service.StartMode}else{$null};StartName=if($service){$service.StartName}else{$null};PathName=if($service){$service.PathName}else{$null};IdentityValid=if($service){try{Assert-ChatpadBrokerInstalledServiceIdentity $service|Out-Null;$true}catch{$false}}else{$false};Elevated=([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))}
 }
+function Get-ChatpadOptionalPropertyValue {
+ param([AllowNull()][object]$InputObject,[Parameter(Mandatory)][string]$Name)
+ if($null -eq $InputObject){return $null}
+ $property=$InputObject.PSObject.Properties[$Name]
+ if($null -eq $property){return $null}
+ $property.Value
+}
 function Get-ChatpadAutostartStatus {
  $launcher=[IO.Path]::GetFullPath((Join-Path $env:ProgramFiles 'ChatpadBridge\ChatpadBridgeStart.exe'))
  $key='HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
- $value=$null;if(Test-Path -LiteralPath $key){$value=(Get-ItemProperty -LiteralPath $key -Name ChatpadBridge -ErrorAction SilentlyContinue).ChatpadBridge}
+ $value=$null;if(Test-Path -LiteralPath $key){$value=Get-ChatpadOptionalPropertyValue (Get-ItemProperty -LiteralPath $key -Name ChatpadBridge -ErrorAction SilentlyContinue) 'ChatpadBridge'}
  $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
  $authorized=$null;$parameters='HKLM:\SYSTEM\CurrentControlSet\Services\ChatpadHidMaestroBroker\Parameters'
- if(Test-Path -LiteralPath $parameters){$authorized=(Get-ItemProperty -LiteralPath $parameters -Name AuthorizedUserSid -ErrorAction SilentlyContinue).AuthorizedUserSid}
+ if(Test-Path -LiteralPath $parameters){$authorized=Get-ChatpadOptionalPropertyValue (Get-ItemProperty -LiteralPath $parameters -Name AuthorizedUserSid -ErrorAction SilentlyContinue) 'AuthorizedUserSid'}
  [pscustomobject]@{Enabled=([string]$value -ceq ('"'+$launcher+'"'));RunValue=$value;LauncherPath=$launcher;LauncherInstalled=(Test-Path -LiteralPath $launcher -PathType Leaf);CurrentUserSid=$sid;BrokerAuthorizedUserSid=$authorized;UserAuthorized=([string]$authorized -ceq $sid)}
 }
 function Enable-ChatpadAutostart {

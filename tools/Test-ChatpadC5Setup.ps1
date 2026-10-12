@@ -10,10 +10,16 @@ $tokens=$null;$parseErrors=$null
 $ast=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'ChatpadSetup.ps1'),[ref]$tokens,[ref]$parseErrors)
 if(@($parseErrors).Count){throw 'ChatpadSetup.ps1 failed PowerShell AST parsing.'}
 $functions=@{}
-foreach($name in @('Enable-ChatpadAutostart','Disable-ChatpadAutostart','Get-ChatpadAutostartStatus')){
+foreach($name in @('Enable-ChatpadAutostart','Disable-ChatpadAutostart','Get-ChatpadAutostartStatus','Get-ChatpadOptionalPropertyValue')){
  $node=$ast.Find({param($item) $item -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $item.Name -ceq $name},$true)
  if(-not $node){throw "Missing autostart function: $name"};$functions[$name]=$node.Extent.Text
 }
+$functions['Get-ChatpadOptionalPropertyValue'] | Invoke-Expression
+$missingValue=Get-ChatpadOptionalPropertyValue ([pscustomobject]@{Other='present'}) 'ChatpadBridge'
+if($null -ne $missingValue){throw 'Missing optional registry property must produce null under StrictMode.'}
+$presentValue=Get-ChatpadOptionalPropertyValue ([pscustomobject]@{ChatpadBridge='"C:\Program Files\ChatpadBridge\ChatpadBridgeStart.exe"'}) 'ChatpadBridge'
+if($presentValue -cne '"C:\Program Files\ChatpadBridge\ChatpadBridgeStart.exe"'){throw 'Present optional registry property was not returned unchanged.'}
+if($functions['Get-ChatpadAutostartStatus'] -notmatch 'Get-ChatpadOptionalPropertyValue'){throw 'Autostart status must read optional registry properties safely.'}
 if($setup -notmatch "ValidateSet\([^\)]*'EnableAutostart'" -or $setup -notmatch "'EnableAutostart' \{Enable-ChatpadAutostart" -or $setup -notmatch "'DisableAutostart' \{Disable-ChatpadAutostart" -or $setup -notmatch "'AutostartStatus' \{Get-ChatpadAutostartStatus") {throw 'Autostart modes are not all wired through setup dispatch.'}
 if($functions['Enable-ChatpadAutostart'] -match 'Require-Administrator|Start-Service|sc\.exe|RunAs'){throw 'Per-user autostart enable must not require elevation or mutate the service.'}
 if($functions['Enable-ChatpadAutostart'] -notmatch 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' -or $functions['Enable-ChatpadAutostart'] -notmatch 'UserAuthorized' -or $functions['Get-ChatpadAutostartStatus'] -notmatch 'AuthorizedUserSid') {throw 'Autostart must be limited to the broker-authorized user.'}
@@ -30,4 +36,4 @@ $resetIndex=$launcher.IndexOf('ResetEvent(runnerStop)');$createIndex=$launcher.I
 if($resetIndex -lt 0 -or $createIndex -lt $resetIndex -or $runner -match 'ResetEvent\(stopEvent\)') {throw 'Launcher must clear its stop event before creating the child, and the child must not erase a concurrent stop request.'}
 if($launcher -match 'ShellExecute|runas|powershell|ChatpadVirtualXbox\.exe'){throw 'Launcher must not elevate, invoke PowerShell, or run the broker executable.'}
 if($setup -notmatch 'AuthorizedUserSid' -or $setup -notmatch 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\ChatpadHidMaestroBroker\\Parameters'){throw 'Broker repair must persist the authorized SID for current-user autostart validation.'}
-Write-Output 'C5 autostart/launcher regressions: 11/11 PASS'
+Write-Output 'C5 autostart/launcher regressions: 15/15 PASS'
