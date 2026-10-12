@@ -15451,3 +15451,9 @@ This append records the implementation commit and first publication. The documen
 - Files changed: `tools/ChatpadSetup.ps1`, `tools/Test-ChatpadC5Setup.ps1`, `docs/PROJECT-STATE.md`, this append-only worklog, and `docs/NEXT-TASK.md`. Previous exact-commit package verification remains valid for its bytes (215/215 manifest hashes; native CTest 10/10; C4 setup regressions; C5 setup 11/11; offline virtual broker 180/180), but that package embeds the faulty setup script and is not to be used for autostart setup.
 - No HKCU Run entry was created, no runner was started, and no sleep/reboot, PnP operation, driver binding/power change, session-marker deletion, or broad virtual-controller cleanup was performed. C5 remains PARTIAL.
 - Next: commit/push this narrow fix with continuity docs, rebuild from the resulting clean branch tip, audit all manifest hashes, run packaged AutostartStatus/EnableAutostart, then qualify hidden normal-user runtime before another S3 test. Commit/push and rebuilt package remain pending.
+
+## 2026-10-12 02:59 UTC — TASK 8L-C5 autostart fix commit recorded
+
+- Follow-up to the preceding entry: source/test/continuity changes were committed as `6d5ec88b8aae8d9264a50aae4c29d04fc83b3d61` (`fix: handle absent autostart registry value`) on `feature/chatpad-usermode-runner`.
+- Focused verification remains green: C4 setup regressions, C5 setup regressions 15/15, and source `AutostartStatus` with no existing HKCU Run value. `git diff --check` passed before commit.
+- Push and exact-tip package rebuild/hash audit remain pending. No autostart value, runner, PnP or sleep state was changed.

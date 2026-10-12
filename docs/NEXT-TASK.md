@@ -1,7 +1,7 @@
 # TASK 8L-C5 — rebuild after optional autostart-value fix, then normal-user qualification
 
 - Required branch: `feature/chatpad-usermode-runner`.
-- Starting point: the autostart-status regression fix and continuity commit expected as a child of `ea2b415cb8f825b489b552f4149299d9693d770b`; resolve exact HEAD with `git rev-parse HEAD` and verify the pushed branch before building.
+- Starting point: autostart-status fix `6d5ec88b8aae8d9264a50aae4c29d04fc83b3d61` plus its continuity closeout commit being created as a child; resolve exact tip with `git rev-parse HEAD` and verify the pushed branch before building.
 - Current live preconditions from 2026-10-12: user RepairBroker PASS; broker Running/Automatic, LocalSystem, 198 runtime members; physical `USB\VID_045E&PID_028E\1C21F10` OK/WINUSB/Problem 0; no exact virtual Xbox node or runner process. Strict probe from the prior package returned a valid 20-byte `00 14` report. `session.active.json` exists and must be left for startup recovery.
 - Immediate issue: the old package's `AutostartStatus` threw when the optional HKCU Run value did not exist. Source now uses a guarded optional-property accessor; focused test has red/green evidence and source-mode status succeeds. The previous package contains stale setup-script bytes.
 - First: push the exact commit, run `tools/Build-ChatpadBridge.ps1` to a new ignored artifact directory, verify manifest branch/commit and every package member hash, and run the C4/C5 setup tests plus the offline virtual-broker self-test. Do not use the previous package for further setup actions.
